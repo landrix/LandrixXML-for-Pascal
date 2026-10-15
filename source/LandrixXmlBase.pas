@@ -72,7 +72,8 @@ type
     xecNamespace,        { namespace error (undeclared prefix, ...) }
     xecInvalidChar,      { character not allowed by XML 1.0 }
     xecLimit,            { resource limit exceeded (depth, size, ...) }
-    xecWrite             { the writer was asked to produce invalid XML }
+    xecWrite,            { the writer was asked to produce invalid XML }
+    xecConversion        { a value has no valid xs:* lexical form }
   );
 
   { All errors raised by LandrixXml. Line and Column are 1-based (Column in
@@ -179,6 +180,24 @@ function LandrixXmlHashBytes(P: PAnsiChar; Len: Integer; Seed: Cardinal): Cardin
 { Appends the base64 encoding (RFC 4648, with padding, no line breaks) of
   Size bytes to Dest. }
 procedure LandrixXmlBase64Encode(const Data; Size: Integer; Dest: TLandrixXmlBuffer);
+
+{ Strict xs:base64Binary check of Len bytes at P: RFC 4648 alphabet, XML
+  white space (TAB, LF, CR, space) allowed anywhere, padding required and
+  only at the end, unused bits of the last group must be zero. Returns
+  True and the decoded size, or False and the offset of the first bad byte
+  (Len for a truncated group). }
+function LandrixXmlValidateBase64Buf(P: PAnsiChar; Len: Integer;
+  out DecodedSize: Integer; out BadOffset: Integer): Boolean;
+
+{ Decodes Len bytes at P (checked as above) and appends the bytes to Dest.
+  Raises ELandrixXmlError (xecConversion, Offset = position in the input)
+  before anything is appended. }
+procedure LandrixXmlBase64Decode(P: PAnsiChar; Len: Integer; Dest: TLandrixXmlBuffer);
+
+{ Like LandrixXmlBase64Decode, but writes to Stream in blocks of 48 KB, so
+  large attachments are never held twice in memory. The input is checked
+  completely before the first byte is written. }
+procedure LandrixXmlBase64DecodeToStream(P: PAnsiChar; Len: Integer; Stream: TStream);
 
 { --- Validation --------------------------------------------------------- }
 
@@ -518,6 +537,171 @@ begin
     else
       Dst[2] := '=';
     Dst[3] := '=';
+  end;
+end;
+
+{ Value of a base64 symbol, -1 for anything else. }
+function Base64Value(C: AnsiChar): Integer;
+begin
+  case C of
+    'A'..'Z': Result := Ord(C) - Ord('A');
+    'a'..'z': Result := Ord(C) - Ord('a') + 26;
+    '0'..'9': Result := Ord(C) - Ord('0') + 52;
+    '+': Result := 62;
+    '/': Result := 63;
+  else
+    Result := -1;
+  end;
+end;
+
+function IsBase64Space(C: AnsiChar): Boolean;
+begin
+  Result := (C = ' ') or (C = #9) or (C = #10) or (C = #13);
+end;
+
+function LandrixXmlValidateBase64Buf(P: PAnsiChar; Len: Integer;
+  out DecodedSize: Integer; out BadOffset: Integer): Boolean;
+var
+  I, N, Pad, V, Bits, BitsPos: Integer;
+  Ended: Boolean;
+begin
+  Result := False;
+  DecodedSize := 0;
+  BadOffset := -1;
+  if Len < 0 then
+    RaiseInvalidArgument('Negative base64 input length');
+  N := 0;          { symbols in the current group of four }
+  Pad := 0;        { '=' in the current group }
+  Ended := False;  { a padded group was complete: nothing may follow }
+  Bits := 0;       { value and position of the last data symbol }
+  BitsPos := 0;
+  for I := 0 to Len - 1 do
+  begin
+    if IsBase64Space(P[I]) then
+      Continue;
+    if Ended then
+    begin
+      BadOffset := I;
+      Exit;
+    end;
+    if P[I] = '=' then
+    begin
+      if N < 2 then
+      begin
+        BadOffset := I;
+        Exit;
+      end;
+      { the unused low bits of the last data symbol must be zero }
+      if ((N = 2) and (Bits and 15 <> 0)) or ((N = 3) and (Pad = 0) and (Bits and 3 <> 0)) then
+      begin
+        BadOffset := BitsPos;
+        Exit;
+      end;
+      Inc(Pad);
+    end
+    else
+    begin
+      V := Base64Value(P[I]);
+      if (V < 0) or (Pad > 0) then
+      begin
+        BadOffset := I;
+        Exit;
+      end;
+      Bits := V;
+      BitsPos := I;
+    end;
+    Inc(N);
+    if N = 4 then
+    begin
+      Inc(DecodedSize, 3 - Pad);
+      Ended := Pad > 0;
+      N := 0;
+      Pad := 0;
+    end;
+  end;
+  if N <> 0 then
+  begin
+    BadOffset := Len;
+    DecodedSize := 0;
+    Exit;
+  end;
+  Result := True;
+end;
+
+{ Decodes already validated input; output goes to Dest, which is flushed
+  to Stream in blocks when Stream is assigned. }
+procedure Base64DecodeValid(P: PAnsiChar; Len: Integer; Dest: TLandrixXmlBuffer;
+  Stream: TStream);
+var
+  I, N, Pad: Integer;
+  Quad: Cardinal;
+  Bytes: array[0..2] of Byte;
+begin
+  N := 0;
+  Pad := 0;
+  Quad := 0;
+  for I := 0 to Len - 1 do
+  begin
+    if IsBase64Space(P[I]) then
+      Continue;
+    Quad := Quad shl 6;
+    if P[I] = '=' then
+      Inc(Pad)
+    else
+      Quad := Quad or Cardinal(Base64Value(P[I]));
+    Inc(N);
+    if N = 4 then
+    begin
+      Bytes[0] := Byte(Quad shr 16);
+      Bytes[1] := Byte(Quad shr 8);
+      Bytes[2] := Byte(Quad);
+      Dest.Append(PAnsiChar(@Bytes)^, 3 - Pad);
+      if (Stream <> nil) and (Dest.Size >= 49152) then
+      begin
+        Dest.WriteToStream(Stream);
+        Dest.Clear;
+      end;
+      N := 0;
+      Pad := 0;
+      Quad := 0;
+    end;
+  end;
+  if (Stream <> nil) and (Dest.Size > 0) then
+  begin
+    Dest.WriteToStream(Stream);
+    Dest.Clear;
+  end;
+end;
+
+procedure RaiseInvalidBase64(Offset: Integer);
+begin
+  raise ELandrixXmlError.CreateAt(xecConversion, 'Invalid base64 data', 0, 0, Offset);
+end;
+
+procedure LandrixXmlBase64Decode(P: PAnsiChar; Len: Integer; Dest: TLandrixXmlBuffer);
+var
+  Size, Bad: Integer;
+begin
+  if not LandrixXmlValidateBase64Buf(P, Len, Size, Bad) then
+    RaiseInvalidBase64(Bad);
+  Dest.Reserve(Dest.Size + Size);
+  Base64DecodeValid(P, Len, Dest, nil);
+end;
+
+procedure LandrixXmlBase64DecodeToStream(P: PAnsiChar; Len: Integer; Stream: TStream);
+var
+  Size, Bad: Integer;
+  Block: TLandrixXmlBuffer;
+begin
+  if Stream = nil then
+    RaiseInvalidArgument('Stream must not be nil');
+  if not LandrixXmlValidateBase64Buf(P, Len, Size, Bad) then
+    RaiseInvalidBase64(Bad);
+  Block := TLandrixXmlBuffer.Create;
+  try
+    Base64DecodeValid(P, Len, Block, Stream);
+  finally
+    Block.Free;
   end;
 end;
 

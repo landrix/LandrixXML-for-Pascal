@@ -41,3 +41,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   by reader and writer; the namespace constants moved here from the reader.
 - The W3C conformance run also copies every accepted document through the
   writer and checks that it reads back identically.
+- `LandrixXmlConvert`: locale-independent conversion of xs:decimal
+  (Currency exact via its scaled integer, Double correctly rounded up to 15
+  significant digits), xs:long/xs:int, xs:boolean, xs:date, xs:dateTime,
+  xs:time (parts record with time zone, or TDateTime as written) and the
+  CII date formats 102 and 610. Rounding is half away from zero.
+- `LandrixXmlBase`: strict base64 decoder into a buffer or a stream, and
+  the error code `xecConversion`.
+- Conversion test data generated with Python's decimal and struct modules
+  as an independent oracle (`tools/gen-convert-testdata.py`).

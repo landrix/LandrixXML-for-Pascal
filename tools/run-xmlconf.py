@@ -47,7 +47,8 @@ URL = "https://www.w3.org/XML/Test/xmlts20130923.tar.gz"
 # Error codes of TLandrixXmlErrorCode
 CODES = {0: "None", 1: "General", 2: "InvalidArgument", 3: "InvalidOperation",
          4: "InvalidUnicode", 5: "Encoding", 6: "Syntax", 7: "Namespace",
-         8: "InvalidChar", 9: "Limit", 10: "Write"}
+         8: "InvalidChar", 9: "Limit", 10: "Write",
+         11: "Conversion"}
 
 ATTR_RE = re.compile(r"""([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')""")
 TEST_RE = re.compile(r"<TEST\s+([^>]*)>", re.S)
