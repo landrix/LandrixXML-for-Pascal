@@ -5,6 +5,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- `TLandrixXmlReader.ReadElementText` (`Utf8`, `W` and native variants):
+  reads the text content of a simple element up to its end tag. Text and
+  CDATA are joined, comments and processing instructions are ignored. A
+  child element raises the new error code `xecUnexpectedElement`; the
+  reader stays usable and stands on the child's start tag.
+- `TLandrixXmlReader.ElementPath` (`Utf8`, `W` and native variants): the
+  path of the current element with qualified names and without indices,
+  e.g. `/Invoice/cac:InvoiceLine/cbc:ID`; also available after an error,
+  for the element in which it occurred.
+- `tools/fuzz.py`: differential fuzzing against expat.
+
 ## [0.1.0] - 2026-10-15
 
 First release.

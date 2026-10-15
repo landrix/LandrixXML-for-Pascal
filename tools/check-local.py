@@ -34,7 +34,7 @@ LOCAL = os.path.join(ROOT, "tests", "data", "local")
 FOLDERS = ("xrechnung", "zugferd", "gaeb")
 CODES = {0: "None", 1: "General", 2: "InvalidArgument", 3: "InvalidOperation",
          4: "InvalidUnicode", 5: "Encoding", 6: "Syntax", 7: "Namespace",
-         8: "InvalidChar", 9: "Limit", 10: "Write", 11: "Conversion"}
+         8: "InvalidChar", 9: "Limit", 10: "Write", 11: "Conversion", 12: "UnexpectedElement"}
 
 
 def expat_ok(path):

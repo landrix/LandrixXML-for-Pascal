@@ -490,6 +490,8 @@ begin
   CheckEquals(8, Ord(xecInvalidChar), 'xecInvalidChar');
   CheckEquals(9, Ord(xecLimit), 'xecLimit');
   CheckEquals(10, Ord(xecWrite), 'xecWrite');
+  CheckEquals(11, Ord(xecConversion), 'xecConversion');
+  CheckEquals(12, Ord(xecUnexpectedElement), 'xecUnexpectedElement');
 end;
 
 procedure TestEscapeForMessage;

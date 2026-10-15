@@ -38,6 +38,8 @@
     the next Read, Skip or load. Use the ...Utf8, ...W or native accessors
     for copies.
   - After an error the reader is dead: Read raises xecInvalidOperation.
+    Exceptions: API misuse (xecInvalidOperation) and xecUnexpectedElement
+    from ReadElementText; the document is not at fault there.
     Stopping early leaves the rest of the document unchecked. }
 
 unit LandrixXmlReader;
@@ -205,6 +207,23 @@ type
     { On xttStartElement: reads (and checks) the whole subtree and stops on
       the matching xttEndElement. Otherwise does nothing. }
     procedure Skip;
+    { On xttStartElement: reads to the matching xttEndElement and stops
+      there (like Skip). Returns the text and CDATA content joined, without
+      trimming; comments and processing instructions are ignored; <a/>
+      gives ''. A child element raises xecUnexpectedElement at the child's
+      position; the reader stays usable and stands on the child's start
+      tag (Skip it to continue). Other tokens raise xecInvalidOperation. }
+    function ReadElementTextUtf8: TLandrixXmlUtf8;
+    function ReadElementTextW: TLandrixXmlWide;
+    function ReadElementText: string;
+    { Path of the current element (start or end tag) or of the enclosing
+      element (other tokens), for messages: '/Invoice/cac:InvoiceLine/cbc:ID'.
+      Qualified names as written, no sibling indices; '' outside the root
+      element. Also available after an error: then the path of the element
+      in which the error occurred. }
+    function ElementPathUtf8: TLandrixXmlUtf8;
+    function ElementPathW: TLandrixXmlWide;
+    function ElementPath: string;
     { Reads all remaining tokens (from the current position) and passes them
       to Handler, then calls Handler.EndDocument. }
     procedure Run(Handler: TLandrixXmlHandler);
@@ -1627,6 +1646,80 @@ begin
   while Read do
     if (FToken = xttEndElement) and (FDepth = D) then
       Exit;
+end;
+
+function TLandrixXmlReader.ReadElementTextUtf8: TLandrixXmlUtf8;
+var
+  D: Integer;
+begin
+  CheckLiveState;
+  if FToken <> xttStartElement then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation,
+      'ReadElementText needs a start element');
+  Result := '';
+  D := FDepth;
+  while Read do
+    case FToken of
+      xttText, xttCData:
+        if Result = '' then
+          Result := ValueUtf8
+        else
+          Result := Result + ValueUtf8;
+      xttStartElement:
+        raise ELandrixXmlError.CreateAt(xecUnexpectedElement, 'Element "' +
+          LandrixXmlEscapeForMessage(NameUtf8, 60) + '" inside the text of "' +
+          LandrixXmlEscapeForMessage(LandrixXmlSpanToUtf8(MakeSpan(
+          FElems[D].NameP, FElems[D].NameLen)), 60) + '"', Line, Column, Offset);
+      xttEndElement:
+        if FDepth = D then
+          Exit;
+    else
+      ; { comments and processing instructions }
+    end;
+end;
+
+function TLandrixXmlReader.ReadElementTextW: TLandrixXmlWide;
+begin
+  Result := LandrixXmlUtf8ToWide(ReadElementTextUtf8);
+end;
+
+function TLandrixXmlReader.ReadElementText: string;
+begin
+  Result := LandrixXmlUtf8ToString(ReadElementTextUtf8);
+end;
+
+function TLandrixXmlReader.ElementPathUtf8: TLandrixXmlUtf8;
+var
+  I, Len: Integer;
+  P: PAnsiChar;
+begin
+  { no CheckLiveState: after an error the stack still describes where it
+    happened }
+  Len := 0;
+  for I := 0 to FElemCount - 1 do
+    Inc(Len, FElems[I].NameLen + 1);
+  Result := '';
+  if Len = 0 then
+    Exit;
+  SetLength(Result, Len);
+  P := PAnsiChar(Result);
+  for I := 0 to FElemCount - 1 do
+  begin
+    P^ := '/';
+    Inc(P);
+    Move(FElems[I].NameP^, P^, FElems[I].NameLen);
+    Inc(P, FElems[I].NameLen);
+  end;
+end;
+
+function TLandrixXmlReader.ElementPathW: TLandrixXmlWide;
+begin
+  Result := LandrixXmlUtf8ToWide(ElementPathUtf8);
+end;
+
+function TLandrixXmlReader.ElementPath: string;
+begin
+  Result := LandrixXmlUtf8ToString(ElementPathUtf8);
 end;
 
 procedure TLandrixXmlReader.Run(Handler: TLandrixXmlHandler);

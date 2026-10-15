@@ -375,6 +375,143 @@ begin
   end;
 end;
 
+procedure TestReadElementText;
+var
+  Reader: TLandrixXmlReader;
+begin
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromUtf8(A('<r><a>12<!-- x -->3<?pi d?>&amp;<![CDATA[<4>]]> 5 </a>' +
+      '<b/><c></c><d>') + Utf8Bytes([$C3, $A4]) + A('</d><e>x</e></r>'));
+    Check(Reader.Read and Reader.Read, 'positioned on a');
+    CheckEqualsUtf8(A('123&<4> 5 '), Reader.ReadElementTextUtf8, 'joined text');
+    Check(Reader.TokenType = xttEndElement, 'stops on the end tag');
+    CheckEqualsUtf8(A('a'), Reader.NameUtf8, 'end tag of a');
+    Check(Reader.Read, 'b');
+    CheckEqualsUtf8(A(''), Reader.ReadElementTextUtf8, 'empty element');
+    CheckEqualsUtf8(A('b'), Reader.NameUtf8, 'end of b');
+    Check(Reader.TokenType = xttEndElement, 'end token of <b/>');
+    Check(Reader.Read, 'c');
+    CheckEqualsUtf8(A(''), Reader.ReadElementTextUtf8, 'no content');
+    Check(Reader.Read, 'd');
+    CheckEqualsWide(Wide([$E4]), Reader.ReadElementTextW, 'wide variant');
+    Check(Reader.Read, 'e');
+    CheckEqualsStr('x', Reader.ReadElementText, 'native variant');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end of r');
+    try
+      Reader.ReadElementTextUtf8;
+      FailNotRaised('not on a start element');
+    except
+      on E: ELandrixXmlError do
+        CheckErrorCode(xecInvalidOperation, E.Code, 'wrong token');
+    end;
+    Check(Reader.Read = False, 'reader still usable after misuse');
+
+    { a child element: error at the child, the reader stays usable }
+    Reader.LoadFromUtf8(A('<r><a>x<b>y</b>z</a><c>w</c></r>'));
+    Check(Reader.Read and Reader.Read, 'positioned on a');
+    try
+      Reader.ReadElementTextUtf8;
+      FailNotRaised('child element');
+    except
+      on E: ELandrixXmlError do
+      begin
+        CheckErrorCode(xecUnexpectedElement, E.Code, 'child element code');
+        CheckEquals(1, E.Line, 'child line');
+        CheckEquals(8, E.Column, 'child column');
+        CheckEqualsInt64(7, E.Offset, 'child offset');
+      end;
+    end;
+    Check(Reader.TokenType = xttStartElement, 'stands on the child');
+    CheckEqualsUtf8(A('b'), Reader.NameUtf8, 'child name');
+    CheckEqualsUtf8(A('/r/a/b'), Reader.ElementPathUtf8, 'path of the child');
+    CheckEquals(2, Reader.Depth, 'depth of the child');
+    Reader.Skip;
+    Check(Reader.Read and (Reader.TokenType = xttText), 'text after the child');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end of a');
+    Check(Reader.Read, 'c');
+    CheckEqualsUtf8(A('w'), Reader.ReadElementTextUtf8, 'continues after the error');
+    CheckEquals(1, Reader.Depth, 'depth of the end tag');
+
+    { an empty child element; the message names both elements }
+    Reader.LoadFromUtf8(A('<r><p:a xmlns:p="urn:p">x<p:b/></p:a></r>'));
+    Check(Reader.Read and Reader.Read, 'positioned on p:a');
+    try
+      Reader.ReadElementTextUtf8;
+      FailNotRaised('empty child element');
+    except
+      on E: ELandrixXmlError do
+      begin
+        CheckErrorCode(xecUnexpectedElement, E.Code, 'empty child code');
+        Check(Pos('"p:b"', E.Message) > 0, 'message names the child: ' + E.Message);
+        Check(Pos('"p:a"', E.Message) > 0, 'message names the parent: ' + E.Message);
+      end;
+    end;
+    Check(Reader.IsEmptyElement, 'stands on <p:b/>');
+    Reader.Skip;
+    CheckEqualsUtf8(A('p:b'), Reader.NameUtf8, 'end of the empty child');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end of p:a');
+    CheckEqualsUtf8(A('p:a'), Reader.NameUtf8, 'end of p:a name');
+
+    { malformed content still kills the reader }
+    Reader.LoadFromUtf8(A('<r><a>x</b></r>'));
+    Check(Reader.Read and Reader.Read, 'positioned on a (malformed)');
+    try
+      Reader.ReadElementTextUtf8;
+      FailNotRaised('malformed content');
+    except
+      on E: ELandrixXmlError do
+        CheckErrorCode(xecSyntax, E.Code, 'malformed code');
+    end;
+    CheckEqualsUtf8(A('/r/a'), Reader.ElementPathUtf8, 'path after the error');
+    try
+      Reader.Read;
+      FailNotRaised('dead after a syntax error');
+    except
+      on E: ELandrixXmlError do
+        CheckErrorCode(xecInvalidOperation, E.Code, 'dead reader');
+    end;
+  finally
+    Reader.Free;
+  end;
+end;
+
+procedure TestElementPath;
+var
+  Reader: TLandrixXmlReader;
+begin
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromUtf8(A('<?xml version="1.0"?><!-- c --><Invoice xmlns:cbc="urn:c">' +
+      '<cbc:ID>1</cbc:ID><L><x/></L></Invoice><?pi?>'));
+    CheckEqualsUtf8(A(''), Reader.ElementPathUtf8, 'before the first token');
+    Check(Reader.Read and (Reader.TokenType = xttComment), 'prolog comment');
+    CheckEqualsUtf8(A(''), Reader.ElementPathUtf8, 'prolog');
+    Check(Reader.Read, 'root');
+    CheckEqualsUtf8(A('/Invoice'), Reader.ElementPathUtf8, 'root start');
+    Check(Reader.Read, 'ID');
+    CheckEqualsUtf8(A('/Invoice/cbc:ID'), Reader.ElementPathUtf8, 'ID start');
+    Check(Reader.Read and (Reader.TokenType = xttText), 'text');
+    CheckEqualsUtf8(A('/Invoice/cbc:ID'), Reader.ElementPathUtf8, 'text in ID');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'ID end');
+    CheckEqualsUtf8(A('/Invoice/cbc:ID'), Reader.ElementPathUtf8, 'ID end tag');
+    Check(Reader.Read and Reader.Read, 'x');
+    CheckEqualsStr('/Invoice/L/x', Reader.ElementPath, 'x start (native)');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'x end');
+    CheckEqualsWide(Wide([Ord('/'), Ord('I'), Ord('n'), Ord('v'), Ord('o'), Ord('i'),
+      Ord('c'), Ord('e'), Ord('/'), Ord('L'), Ord('/'), Ord('x')]),
+      Reader.ElementPathW, 'end tag of <x/> (wide)');
+    Check(Reader.Read and Reader.Read, 'root end');
+    CheckEqualsUtf8(A('/Invoice'), Reader.ElementPathUtf8, 'root end tag');
+    Check(Reader.Read and (Reader.TokenType = xttProcessingInstruction), 'epilog');
+    CheckEqualsUtf8(A(''), Reader.ElementPathUtf8, 'epilog');
+    Check(not Reader.Read, 'end');
+    CheckEqualsUtf8(A(''), Reader.ElementPathUtf8, 'end of document');
+  finally
+    Reader.Free;
+  end;
+end;
+
 type
   TCountingHandler = class(TLandrixXmlHandler)
   public
@@ -730,6 +867,8 @@ begin
   RegisterTest('Reader.Accessors', TestAccessors);
   RegisterTest('Reader.UnicodeValues', TestUnicodeValues);
   RegisterTest('Reader.Skip', TestSkip);
+  RegisterTest('Reader.ReadElementText', TestReadElementText);
+  RegisterTest('Reader.ElementPath', TestElementPath);
   RegisterTest('Reader.Handler', TestHandler);
   RegisterTest('Reader.Positions', TestPositions);
   RegisterTest('Reader.PositionsConverted', TestPositionsConverted);

@@ -94,20 +94,11 @@ try
         if Reader.NamespaceUriUtf8 = NsCbc then
         begin
           if Reader.LocalNameUtf8 = 'ID' then
-          begin
-            Reader.Read;               { the text inside }
-            Number := Reader.Value;
-          end
+            Number := Reader.ReadElementText   { the text inside }
           else if Reader.LocalNameUtf8 = 'IssueDate' then
-          begin
-            Reader.Read;
-            Issued := LandrixXmlParseDate(Reader.ValueUtf8);
-          end
+            Issued := LandrixXmlParseDate(Reader.ReadElementTextUtf8)
           else if InTotal and (Reader.LocalNameUtf8 = 'PayableAmount') then
-          begin
-            Reader.Read;
-            Amount := LandrixXmlParseCurrency(Reader.ValueUtf8);
-          end;
+            Amount := LandrixXmlParseCurrency(Reader.ReadElementTextUtf8);
         end
         else if (Reader.NamespaceUriUtf8 = NsCac) and
           (Reader.LocalNameUtf8 = 'LegalMonetaryTotal') then
@@ -122,7 +113,14 @@ end;
 ```
 
 Elements are matched by namespace URI and local name, so the prefixes
-used in the document do not matter. `Reader.Skip` skips a whole subtree.
+used in the document do not matter. `ReadElementText` reads the text of a
+simple element up to its end tag: text and CDATA are joined, comments are
+ignored, and a child element raises `xecUnexpectedElement` (the reader stays
+on the child, so it can be skipped). `Reader.Skip` skips a whole subtree.
+`Reader.ElementPath` gives the path of the current element, such as
+`/Invoice/cac:InvoiceLine/cbc:ID`, for messages about skipped elements;
+after an `ELandrixXmlError` it still tells in which element the error
+occurred.
 
 ### Reading GAEB long texts (mixed content) with the DOM
 
@@ -257,6 +255,12 @@ and the parsers also take a pointer and a length (`...Buf`).
 - Real-world XRechnung, ZUGFeRD and GAEB files (kept locally, not in the
   repository) are round-tripped through the DOM, and damaged copies must be
   rejected cleanly.
+- `tools/fuzz.py` derives randomly damaged documents from the test files
+  and compares the verdict with expat; every variant must either be read
+  or be rejected with `ELandrixXmlError`, and accepted ones must survive
+  the writer and DOM round trips. 50,000 variants per run, built with range
+  and overflow checking: no crash, no other exception, no unexplained
+  difference.
 
 ## Performance
 

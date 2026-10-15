@@ -93,20 +93,11 @@ begin
           if Reader.NamespaceUriUtf8 = NsCbc then
           begin
             if Reader.LocalNameUtf8 = 'ID' then
-            begin
-              Reader.Read;               { the text inside }
-              Number := Reader.Value;
-            end
+              Number := Reader.ReadElementText   { the text inside }
             else if Reader.LocalNameUtf8 = 'IssueDate' then
-            begin
-              Reader.Read;
-              Issued := LandrixXmlParseDate(Reader.ValueUtf8);
-            end
+              Issued := LandrixXmlParseDate(Reader.ReadElementTextUtf8)
             else if InTotal and (Reader.LocalNameUtf8 = 'PayableAmount') then
-            begin
-              Reader.Read;
-              Amount := LandrixXmlParseCurrency(Reader.ValueUtf8);
-            end;
+              Amount := LandrixXmlParseCurrency(Reader.ReadElementTextUtf8);
           end
           else if (Reader.NamespaceUriUtf8 = NsCac) and
             (Reader.LocalNameUtf8 = 'LegalMonetaryTotal') then

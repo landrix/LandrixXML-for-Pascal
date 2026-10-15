@@ -73,7 +73,8 @@ type
     xecInvalidChar,      { character not allowed by XML 1.0 }
     xecLimit,            { resource limit exceeded (depth, size, ...) }
     xecWrite,            { the writer was asked to produce invalid XML }
-    xecConversion        { a value has no valid xs:* lexical form }
+    xecConversion,       { a value has no valid xs:* lexical form }
+    xecUnexpectedElement { an element where the caller expects text only }
   );
 
   { All errors raised by LandrixXml. Line and Column are 1-based (Column in
