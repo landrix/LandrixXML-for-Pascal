@@ -10,8 +10,9 @@
     <path> TAB ERR TAB <code> TAB <line> TAB <column> TAB <message>
     <path> TAB RTFAIL TAB <message>
   For every accepted document it also copies the token stream through
-  TLandrixXmlWriter and reads the output again; RTFAIL means the second
-  token stream differs from the first (a writer defect).
+  TLandrixXmlWriter and loads, saves and reloads it with TLandrixXmlDocument;
+  RTFAIL means a token stream differs from the original (a writer or DOM
+  defect).
   Used by tools/run-xmlconf.py with the W3C XML conformance test suite.
 
   Usage: LandrixXmlConformance <list-file> }
@@ -29,7 +30,8 @@ uses
   Classes,
   LandrixXmlBase,
   LandrixXmlReader,
-  LandrixXmlWriter;
+  LandrixXmlWriter,
+  LandrixXmlDom;
 
 { Canonical form of the current token. Emptiness (<a/> vs <a></a>) is not
   part of it: the writer always writes <a/> for empty elements. }
@@ -91,6 +93,7 @@ end;
 function RoundTrip(const Path: string; Reader: TLandrixXmlReader): string;
 var
   Writer: TLandrixXmlWriter;
+  Doc: TLandrixXmlDocument;
   First, Second: TLandrixXmlUtf8;
 begin
   Result := '';
@@ -120,6 +123,26 @@ begin
       Result := 'token streams differ';
   finally
     Writer.Free;
+  end;
+  if Result <> '' then
+    Exit;
+  Doc := TLandrixXmlDocument.Create;
+  try
+    try
+      Doc.LoadFromFile(Path);
+      Reader.LoadFromUtf8(Doc.SaveToUtf8);
+      Second := Tokens(Reader);
+    except
+      on E: Exception do
+      begin
+        Result := 'DOM round trip failed: ' + E.ClassName + ': ' + E.Message;
+        Exit;
+      end;
+    end;
+    if First <> Second then
+      Result := 'DOM token streams differ';
+  finally
+    Doc.Free;
   end;
 end;
 

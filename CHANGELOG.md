@@ -50,3 +50,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the error code `xecConversion`.
 - Conversion test data generated with Python's decimal and struct modules
   as an independent oracle (`tools/gen-convert-testdata.py`).
+- `LandrixXmlDom`: document object model `TLandrixXmlDocument` /
+  `TLandrixXmlNode` built from the pull reader and saved through the
+  streaming writer. Interned names, search by namespace and local name
+  (or local name only), mixed content, line and column per node, optional
+  dropping of white space between elements, comments and PIs, building
+  and moving nodes with namespace handling, subtrees taken over from a
+  reader, freeing and saving without recursion.
+- The W3C conformance run also loads, saves and reloads every accepted
+  document through the DOM.
