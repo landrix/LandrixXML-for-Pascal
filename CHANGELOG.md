@@ -18,9 +18,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/fuzz.py`: differential fuzzing against expat.
 
 ### Changed
-- DOM nodes are smaller (88 instead of 112 bytes on Delphi 13 Win64, 80
-  instead of 104 on Free Pascal Win64): about 20 % less memory for a loaded
-  document. No API change.
+- DOM nodes are smaller: text, CDATA and comment nodes take 56 instead of
+  112 bytes on Delphi 13 Win64 (48 instead of 104 on Free Pascal Win64),
+  elements 88 instead of 112 (80 instead of 104). A loaded indented
+  document needs about a third less memory. The public API is unchanged;
+  internally, elements, the document, PIs and the DOCTYPE are instances of
+  the new descendant `TLandrixXmlContainerNode`, which
+  `TLandrixXmlDocument` now derives from, and `TLandrixXmlNode.CreateNode`
+  raises `xecInvalidArgument` when class and node type do not fit.
 
 ## [0.1.0] - 2026-10-15
 

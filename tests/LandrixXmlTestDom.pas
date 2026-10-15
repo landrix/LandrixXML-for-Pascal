@@ -201,6 +201,95 @@ begin
   end;
 end;
 
+{ Text, CDATA and comment nodes are smaller objects without children and
+  attributes: every reading member answers 0/nil/'', changing members
+  raise, and the internal node classes cannot be mixed up. }
+procedure TestSmallNodes;
+var
+  Doc: TLandrixXmlDocument;
+  T, Cm: TLandrixXmlNode;
+  L: TList;
+  V: TLandrixXmlUtf8;
+begin
+  Doc := Load('<r><a x="1">t<![CDATA[c]]><!--m--><?pi d?></a></r>');
+  L := TList.Create;
+  try
+    T := Doc.Root[0][0];
+    Cm := Doc.Root[0][2];
+    Check(T.NodeType = xntText, 'text node');
+    CheckEquals(0, T.ChildCount, 'ChildCount of text');
+    CheckEquals(0, T.AttributeCount, 'AttributeCount of text');
+    Check(T.FirstChild = nil, 'FirstChild of text');
+    Check(T.LastChild = nil, 'LastChild of text');
+    Check(T.FirstChildElement = nil, 'FirstChildElement of text');
+    Check(T.FindChild('', 'a') = nil, 'FindChild on text');
+    Check(T.FindChildLocal('a') = nil, 'FindChildLocal on text');
+    CheckEquals(0, T.FindChildren('', 'a', L), 'FindChildren on text');
+    Check(T.FindDescendant('', 'a') = nil, 'FindDescendant on text');
+    CheckEquals(-1, T.AttributeIndex('', 'x'), 'AttributeIndex on text');
+    Check(not T.TryAttributeValueUtf8('', 'x', V), 'TryAttributeValue on text');
+    CheckEqualsUtf8('', T.NameUtf8, 'NameUtf8 of text');
+    CheckEqualsUtf8('', T.LocalNameUtf8, 'LocalNameUtf8 of text');
+    CheckEqualsUtf8('', T.PrefixUtf8, 'PrefixUtf8 of text');
+    CheckEqualsUtf8('', T.NamespaceUriUtf8, 'NamespaceUriUtf8 of text');
+    CheckEqualsUtf8('t', T.TextUtf8, 'TextUtf8 of text');
+    CheckEqualsStr('/r/a/text()', T.NodePath, 'NodePath of text');
+    T.ClearAttributes;
+    T.Clear;
+    CheckEquals(1, Doc.Root[0].AttributeCount, 'element keeps its attribute');
+    CheckEqualsStr('pi', Doc.Root[0][3].Name, 'PI keeps its target');
+    try
+      Check(T.Children[0] = nil, 'not reached');
+      FailNotRaised('Children on text');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidArgument, E, 'Children on text');
+    end;
+    try
+      T.AttributeValueUtf8(0);
+      FailNotRaised('attribute by index on text');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidArgument, E, 'attribute by index on text');
+    end;
+    try
+      Cm.AppendChild(Doc.Root[0]);
+      FailNotRaised('AppendChild on a comment');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidOperation, E, 'AppendChild on a comment');
+    end;
+    try
+      T.SetAttribute('y', '2');
+      FailNotRaised('SetAttribute on text');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidOperation, E, 'SetAttribute on text');
+    end;
+    try
+      T.RemoveAttributeAt(0);
+      FailNotRaised('RemoveAttributeAt on text');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidArgument, E, 'RemoveAttributeAt on text');
+    end;
+    try
+      TLandrixXmlNode.CreateNode(Doc, xntElement).Free;
+      FailNotRaised('element created as a small node');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidArgument, E, 'CreateNode guard');
+    end;
+    Doc.Root.AddElement('c').AddTextUtf8('x');
+    CheckEqualsStr('x', Doc.Root.ChildText('', 'c'), 'text added through the API');
+    Doc.Root[1].TextUtf8 := 'y';
+    CheckEqualsStr('<r><a x="1">T"t"C"c"!"m"?pi"d"</a><c>T"y"</c></r>', Dump(Doc), 'tree');
+  finally
+    L.Free;
+    Doc.Free;
+  end;
+end;
+
 procedure TestAccessors;
 var
   Doc: TLandrixXmlDocument;
@@ -714,6 +803,7 @@ begin
   RegisterTest('Dom.InsertChildChecks', TestInsertChildChecks);
   RegisterTest('Dom.LoadAndNavigate', TestLoadAndNavigate);
   RegisterTest('Dom.SearchHelpers', TestSearchHelpers);
+  RegisterTest('Dom.SmallNodes', TestSmallNodes);
   RegisterTest('Dom.Accessors', TestAccessors);
   RegisterTest('Dom.WhitespaceModes', TestWhitespaceModes);
   RegisterTest('Dom.LoadOptions', TestLoadOptions);

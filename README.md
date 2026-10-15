@@ -240,7 +240,8 @@ and the parsers also take a pointer and a length (`...Buf`).
   line ends may be written differently.
 - **White-space dropping** (`WhitespaceMode := xwmDropBetweenElements`) is
   lossy by design: in `<p><span>A</span> <span>B</span></p>` the space
-  between the spans is dropped. The default keeps everything.
+  between the spans is dropped. The default keeps everything. In indented
+  files it removes about half of the nodes and a quarter of the memory.
 
 ## Conformance and tests
 
@@ -270,9 +271,9 @@ Measured with `tools/perf.ps1` on a 47 MB indented GAEB-like document
 | | Delphi 13 Win64 | Free Pascal 3.2.2 Win64 | Delphi 6 |
 |---|---|---|---|
 | Pull reader | 0.3 s | 0.5 s | 0.3 s |
-| DOM load | 1.2 s | 1.7 s | 1.5 s |
-| DOM save | 1.4 s | 1.7 s | 1.1 s |
-| Peak memory with the DOM | 589 MB | 587 MB | 376 MB |
+| DOM load | 1.1 s | 1.6 s | 1.4 s |
+| DOM save | 1.1 s | 1.4 s | 1.1 s |
+| Peak memory with the DOM | 448 MB | 445 MB | 320 MB |
 
 The peaks include the generated test document in memory several times
 (source, reader input, saved output). The peak of a run with the pull

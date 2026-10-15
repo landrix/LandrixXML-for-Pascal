@@ -20,9 +20,11 @@
     end;
 
   Rules (see PLAN.md decision log):
-  - One node class; NodeType tells the kind. Reading members return ''/nil/0
-    on node types they do not apply to, changing members raise
-    xecInvalidOperation.
+  - One public node class; NodeType tells the kind. Reading members return
+    ''/nil/0 on node types they do not apply to, changing members raise
+    xecInvalidOperation. (Internally, elements, the document, PIs and the
+    DOCTYPE are instances of a descendant that holds names, children and
+    attributes, so the many text nodes stay small.)
   - The document is a node: its children are comments, PIs, the DOCTYPE and
     the root element in source order. Root is the document element.
   - Names are interned per document. FindChild(NamespaceUri, LocalName)
@@ -128,28 +130,28 @@ type
   end;
 
   TLandrixXmlDocument = class;
+  TLandrixXmlContainerNode = class;
 
+  { Text, CDATA and comment nodes are instances of this class itself. }
   TLandrixXmlNode = class
   private
     { Field order chosen for size (pointers, Integers, then small fields):
       a document holds millions of nodes. Do not append fields casually. }
     FDocument: TLandrixXmlDocument;
-    FParent: TLandrixXmlNode;
-    FName: TLandrixXmlName;
+    FParent: TLandrixXmlContainerNode;
     FValue: TLandrixXmlUtf8;
-    FChildren: array of TLandrixXmlNode;
-    FAttrs: array of TLandrixXmlAttribute;
     { position in the parent; without parent the slot in the document's
       list of detached nodes, -1 if not listed there }
     FIndex: Integer;
-    FChildCount: Integer;
-    FAttrCount: Integer;
     FLine: Integer;
     FColumn: Integer;
     FNodeType: TLandrixXmlNodeType;
     FIsEmpty: Boolean;
     FIsWhitespace: Boolean;
+    function GetParent: TLandrixXmlNode;
     function GetIndexInParent: Integer;
+    function GetChildCount: Integer;
+    function GetAttributeCount: Integer;
     function GetChild(Index: Integer): TLandrixXmlNode;
     function GetFirstChild: TLandrixXmlNode;
     function GetLastChild: TLandrixXmlNode;
@@ -174,25 +176,22 @@ type
     procedure CheckElement(const Operation: string);
     procedure CheckContainer(const Operation: string);
     procedure CheckAttrIndex(Index: Integer);
-    procedure InsertAt(Index: Integer; Node: TLandrixXmlNode);
     procedure Unlink;
     procedure FreeChildren;
-    function NewChild(NodeType: TLandrixXmlNodeType): TLandrixXmlNode;
-    procedure AddAttr(Name: TLandrixXmlName; const Value: TLandrixXmlUtf8);
-    function DeclaredPrefixIndex(const Prefix: TLandrixXmlUtf8): Integer;
     procedure EnsureDeclarations;
   public
-    { Internal: nodes are created by the document and by AddElement & co. }
+    { Internal: nodes are created by the document and by AddElement & co.
+      Raises xecInvalidArgument when the class does not fit the node type. }
     constructor CreateNode(ADocument: TLandrixXmlDocument; ANodeType: TLandrixXmlNodeType);
     { Unlinks the node from its parent and frees it with its subtree. }
     destructor Destroy; override;
 
     property NodeType: TLandrixXmlNodeType read FNodeType;
     property Document: TLandrixXmlDocument read FDocument;
-    property Parent: TLandrixXmlNode read FParent;
+    property Parent: TLandrixXmlNode read GetParent;
     { position among the parent's children, -1 without parent }
     property IndexInParent: Integer read GetIndexInParent;
-    property ChildCount: Integer read FChildCount;
+    property ChildCount: Integer read GetChildCount;
     property Children[Index: Integer]: TLandrixXmlNode read GetChild; default;
     property FirstChild: TLandrixXmlNode read GetFirstChild;
     property LastChild: TLandrixXmlNode read GetLastChild;
@@ -232,7 +231,7 @@ type
     property Text: string read GetText write SetText;
 
     { --- attributes (elements) --- }
-    property AttributeCount: Integer read FAttrCount;
+    property AttributeCount: Integer read GetAttributeCount;
     function AttributeNameUtf8(Index: Integer): TLandrixXmlUtf8;
     function AttributePrefixUtf8(Index: Integer): TLandrixXmlUtf8;
     function AttributeLocalNameUtf8(Index: Integer): TLandrixXmlUtf8;
@@ -320,7 +319,23 @@ type
     procedure WriteTo(Writer: TLandrixXmlWriter);
   end;
 
-  TLandrixXmlDocument = class(TLandrixXmlNode)
+  { Internal: elements, the document, PIs and the DOCTYPE. Work with
+    TLandrixXmlNode; this class only adds the fields text nodes do not
+    need. }
+  TLandrixXmlContainerNode = class(TLandrixXmlNode)
+  private
+    FName: TLandrixXmlName;
+    FChildren: array of TLandrixXmlNode;
+    FAttrs: array of TLandrixXmlAttribute;
+    FChildCount: Integer;
+    FAttrCount: Integer;
+    procedure InsertAt(Index: Integer; Node: TLandrixXmlNode);
+    function NewChild(NodeType: TLandrixXmlNodeType): TLandrixXmlNode;
+    procedure AddAttr(Name: TLandrixXmlName; const Value: TLandrixXmlUtf8);
+    function DeclaredPrefixIndex(const Prefix: TLandrixXmlUtf8): Integer;
+  end;
+
+  TLandrixXmlDocument = class(TLandrixXmlContainerNode)
   private
     FNames: TLandrixXmlNameTable;
     FDetachedNodes: TList;
@@ -495,6 +510,43 @@ begin
     RaiseNs('Name must not contain a colon: "' + LandrixXmlEscapeForMessage(Name, 60) + '"');
 end;
 
+const
+  ContainerTypes = [xntDocument, xntElement, xntProcessingInstruction, xntDocumentType];
+
+{ The node as a container; nil for text, CDATA and comment nodes. }
+function AsContainer(N: TLandrixXmlNode): TLandrixXmlContainerNode;
+begin
+  if N is TLandrixXmlContainerNode then
+    Result := TLandrixXmlContainerNode(N)
+  else
+    Result := nil;
+end;
+
+{ Checked cast for code paths that have already checked the node type. }
+function Cont(N: TLandrixXmlNode): TLandrixXmlContainerNode;
+begin
+  if not (N is TLandrixXmlContainerNode) then
+    raise ELandrixXmlError.CreateCode(xecGeneral, 'Internal error: node without children');
+  Result := TLandrixXmlContainerNode(N);
+end;
+
+{ Name of an element, PI or DOCTYPE; nil for other nodes. }
+function NameOf(N: TLandrixXmlNode): TLandrixXmlName;
+begin
+  if N is TLandrixXmlContainerNode then
+    Result := TLandrixXmlContainerNode(N).FName
+  else
+    Result := nil;
+end;
+
+function NewNodeOf(Doc: TLandrixXmlDocument; NodeType: TLandrixXmlNodeType): TLandrixXmlNode;
+begin
+  if NodeType in ContainerTypes then
+    Result := TLandrixXmlContainerNode.CreateNode(Doc, NodeType)
+  else
+    Result := TLandrixXmlNode.CreateNode(Doc, NodeType);
+end;
+
 { O(1) removal from the document's list of detached nodes: the last entry
   takes the free slot. }
 procedure RemoveDetached(Node: TLandrixXmlNode);
@@ -513,15 +565,19 @@ end;
 { first element child (the root element of a document) }
 function GetRoot_(Doc: TLandrixXmlNode): TLandrixXmlNode;
 var
+  C: TLandrixXmlContainerNode;
   I: Integer;
 begin
-  for I := 0 to Doc.FChildCount - 1 do
-    if Doc.FChildren[I].FNodeType = xntElement then
+  Result := nil;
+  C := AsContainer(Doc);
+  if C = nil then
+    Exit;
+  for I := 0 to C.FChildCount - 1 do
+    if C.FChildren[I].FNodeType = xntElement then
     begin
-      Result := Doc.FChildren[I];
+      Result := C.FChildren[I];
       Exit;
     end;
-  Result := nil;
 end;
 
 { --- name table ------------------------------------------------------------ }
@@ -693,9 +749,11 @@ constructor TLandrixXmlNode.CreateNode(ADocument: TLandrixXmlDocument;
   ANodeType: TLandrixXmlNodeType);
 begin
   inherited Create;
+  FIndex := -1;
+  if (ANodeType in ContainerTypes) <> (Self is TLandrixXmlContainerNode) then
+    RaiseArg('Nodes are created by the document and the Add... methods');
   FDocument := ADocument;
   FNodeType := ANodeType;
-  FIndex := -1;
 end;
 
 destructor TLandrixXmlNode.Destroy;
@@ -714,24 +772,30 @@ procedure TLandrixXmlNode.FreeChildren;
 var
   Stack: TList;
   N: TLandrixXmlNode;
+  C, NC: TLandrixXmlContainerNode;
   I: Integer;
 begin
-  if FChildCount = 0 then
+  C := AsContainer(Self);
+  if (C = nil) or (C.FChildCount = 0) then
     Exit;
   Stack := TList.Create;
   try
-    for I := 0 to FChildCount - 1 do
-      Stack.Add(FChildren[I]);
-    FChildCount := 0;
-    FChildren := nil;
+    for I := 0 to C.FChildCount - 1 do
+      Stack.Add(C.FChildren[I]);
+    C.FChildCount := 0;
+    C.FChildren := nil;
     while Stack.Count > 0 do
     begin
       N := TLandrixXmlNode(Stack[Stack.Count - 1]);
       Stack.Delete(Stack.Count - 1);
-      for I := 0 to N.FChildCount - 1 do
-        Stack.Add(N.FChildren[I]);
-      N.FChildCount := 0;
-      N.FChildren := nil;
+      NC := AsContainer(N);
+      if NC <> nil then
+      begin
+        for I := 0 to NC.FChildCount - 1 do
+          Stack.Add(NC.FChildren[I]);
+        NC.FChildCount := 0;
+        NC.FChildren := nil;
+      end;
       N.FParent := nil;
       N.FIndex := -1;
       N.Free;
@@ -743,7 +807,7 @@ end;
 
 procedure TLandrixXmlNode.Unlink;
 var
-  P: TLandrixXmlNode;
+  P: TLandrixXmlContainerNode;
   I: Integer;
 begin
   P := FParent;
@@ -758,7 +822,7 @@ begin
   FIndex := -1;
 end;
 
-procedure TLandrixXmlNode.InsertAt(Index: Integer; Node: TLandrixXmlNode);
+procedure TLandrixXmlContainerNode.InsertAt(Index: Integer; Node: TLandrixXmlNode);
 var
   I: Integer;
 begin
@@ -778,6 +842,33 @@ begin
   Node.FIndex := Index;
   Node.FParent := Self;
   Inc(FChildCount);
+end;
+
+function TLandrixXmlNode.GetParent: TLandrixXmlNode;
+begin
+  Result := FParent;
+end;
+
+function TLandrixXmlNode.GetChildCount: Integer;
+var
+  C: TLandrixXmlContainerNode;
+begin
+  C := AsContainer(Self);
+  if C = nil then
+    Result := 0
+  else
+    Result := C.FChildCount;
+end;
+
+function TLandrixXmlNode.GetAttributeCount: Integer;
+var
+  C: TLandrixXmlContainerNode;
+begin
+  C := AsContainer(Self);
+  if C = nil then
+    Result := 0
+  else
+    Result := C.FAttrCount;
 end;
 
 function TLandrixXmlNode.GetIndexInParent: Integer;
@@ -811,8 +902,10 @@ end;
 procedure TLandrixXmlNode.InsertChild(Index: Integer; Node: TLandrixXmlNode);
 var
   A: TLandrixXmlNode;
+  C: TLandrixXmlContainerNode;
 begin
   CheckContainer('InsertChild');
+  C := Cont(Self);
   if Node = nil then
     RaiseArg('Node must not be nil');
   if Node.FDocument <> FDocument then
@@ -836,50 +929,59 @@ begin
   else if Node.FNodeType = xntDocumentType then
     RaiseOp('A document type declaration belongs to the document');
   { validate first: a failing call changes nothing }
-  if Node.FParent = Self then
+  if Node.FParent = C then
   begin
-    if (Index < 0) or (Index > FChildCount) then
+    if (Index < 0) or (Index > C.FChildCount) then
       RaiseArg('Child index out of range');
     if Node.FIndex < Index then
       Dec(Index);
   end
-  else if (Index < 0) or (Index > FChildCount) then
+  else if (Index < 0) or (Index > C.FChildCount) then
     RaiseArg('Child index out of range');
   if Node.FParent <> nil then
     Node.Unlink
   else if Node.FIndex >= 0 then
     RemoveDetached(Node);
-  InsertAt(Index, Node);
+  C.InsertAt(Index, Node);
   if Node.FNodeType = xntElement then
     Node.EnsureDeclarations;
 end;
 
 procedure TLandrixXmlNode.AppendChild(Node: TLandrixXmlNode);
 begin
-  InsertChild(FChildCount, Node);
+  InsertChild(GetChildCount, Node);
 end;
 
 { --- navigation ---------------------------------------------------------------- }
 
 function TLandrixXmlNode.GetChild(Index: Integer): TLandrixXmlNode;
+var
+  C: TLandrixXmlContainerNode;
 begin
-  if (Index < 0) or (Index >= FChildCount) then
+  C := AsContainer(Self);
+  if (C = nil) or (Index < 0) or (Index >= C.FChildCount) then
     RaiseArg('Child index out of range');
-  Result := FChildren[Index];
+  Result := C.FChildren[Index];
 end;
 
 function TLandrixXmlNode.GetFirstChild: TLandrixXmlNode;
+var
+  C: TLandrixXmlContainerNode;
 begin
-  if FChildCount > 0 then
-    Result := FChildren[0]
+  C := AsContainer(Self);
+  if (C <> nil) and (C.FChildCount > 0) then
+    Result := C.FChildren[0]
   else
     Result := nil;
 end;
 
 function TLandrixXmlNode.GetLastChild: TLandrixXmlNode;
+var
+  C: TLandrixXmlContainerNode;
 begin
-  if FChildCount > 0 then
-    Result := FChildren[FChildCount - 1]
+  C := AsContainer(Self);
+  if (C <> nil) and (C.FChildCount > 0) then
+    Result := C.FChildren[C.FChildCount - 1]
   else
     Result := nil;
 end;
@@ -906,16 +1008,8 @@ begin
 end;
 
 function TLandrixXmlNode.FirstChildElement: TLandrixXmlNode;
-var
-  I: Integer;
 begin
-  for I := 0 to FChildCount - 1 do
-    if FChildren[I].FNodeType = xntElement then
-    begin
-      Result := FChildren[I];
-      Exit;
-    end;
-  Result := nil;
+  Result := GetRoot_(Self);
 end;
 
 function TLandrixXmlNode.NextSiblingElement: TLandrixXmlNode;
@@ -936,9 +1030,12 @@ end;
 { --- names and values ------------------------------------------------------- }
 
 function TLandrixXmlNode.GetNameUtf8: TLandrixXmlUtf8;
+var
+  N: TLandrixXmlName;
 begin
-  if FName <> nil then
-    Result := FName.FQualifiedName
+  N := NameOf(Self);
+  if N <> nil then
+    Result := N.FQualifiedName
   else
     Result := '';
 end;
@@ -954,9 +1051,12 @@ begin
 end;
 
 function TLandrixXmlNode.GetPrefixUtf8: TLandrixXmlUtf8;
+var
+  N: TLandrixXmlName;
 begin
-  if FName <> nil then
-    Result := FName.FPrefix
+  N := NameOf(Self);
+  if N <> nil then
+    Result := N.FPrefix
   else
     Result := '';
 end;
@@ -967,9 +1067,12 @@ begin
 end;
 
 function TLandrixXmlNode.GetLocalNameUtf8: TLandrixXmlUtf8;
+var
+  N: TLandrixXmlName;
 begin
-  if FName <> nil then
-    Result := FName.FLocalName
+  N := NameOf(Self);
+  if N <> nil then
+    Result := N.FLocalName
   else
     Result := '';
 end;
@@ -985,9 +1088,12 @@ begin
 end;
 
 function TLandrixXmlNode.GetNamespaceUriUtf8: TLandrixXmlUtf8;
+var
+  N: TLandrixXmlName;
 begin
-  if FName <> nil then
-    Result := FName.FNamespaceUri
+  N := NameOf(Self);
+  if N <> nil then
+    Result := N.FNamespaceUri
   else
     Result := '';
 end;
@@ -1041,6 +1147,7 @@ var
   Buf: TLandrixXmlBuffer;
   Stack: TList;
   N: TLandrixXmlNode;
+  C, NC: TLandrixXmlContainerNode;
   I: Integer;
 begin
   if not (FNodeType in [xntDocument, xntElement]) then
@@ -1048,16 +1155,17 @@ begin
     Result := FValue;
     Exit;
   end;
-  if (FChildCount = 1) and (FChildren[0].FNodeType in [xntText, xntCData]) then
+  C := TLandrixXmlContainerNode(Self);
+  if (C.FChildCount = 1) and (C.FChildren[0].FNodeType in [xntText, xntCData]) then
   begin
-    Result := FChildren[0].FValue;
+    Result := C.FChildren[0].FValue;
     Exit;
   end;
   Buf := TLandrixXmlBuffer.Create;
   Stack := TList.Create;
   try
-    for I := FChildCount - 1 downto 0 do
-      Stack.Add(FChildren[I]);
+    for I := C.FChildCount - 1 downto 0 do
+      Stack.Add(C.FChildren[I]);
     while Stack.Count > 0 do
     begin
       N := TLandrixXmlNode(Stack[Stack.Count - 1]);
@@ -1065,8 +1173,11 @@ begin
       if N.FNodeType in [xntText, xntCData] then
         Buf.AppendUtf8(N.FValue)
       else if N.FNodeType = xntElement then
-        for I := N.FChildCount - 1 downto 0 do
-          Stack.Add(N.FChildren[I]);
+      begin
+        NC := TLandrixXmlContainerNode(N);
+        for I := NC.FChildCount - 1 downto 0 do
+          Stack.Add(NC.FChildren[I]);
+      end;
     end;
     Result := Buf.AsUtf8;
   finally
@@ -1087,7 +1198,7 @@ begin
   CheckUtf8(Value);
   FreeChildren;
   if Value <> '' then
-    NewChild(xntText).FValue := Value;
+    Cont(Self).NewChild(xntText).FValue := Value;
 end;
 
 function TLandrixXmlNode.GetTextW: TLandrixXmlWide;
@@ -1126,7 +1237,7 @@ end;
 
 procedure TLandrixXmlNode.CheckAttrIndex(Index: Integer);
 begin
-  if (Index < 0) or (Index >= FAttrCount) then
+  if (Index < 0) or (Index >= GetAttributeCount) then
     RaiseArg('Attribute index out of range');
 end;
 
@@ -1135,31 +1246,31 @@ end;
 function TLandrixXmlNode.AttributeNameUtf8(Index: Integer): TLandrixXmlUtf8;
 begin
   CheckAttrIndex(Index);
-  Result := FAttrs[Index].Name.FQualifiedName;
+  Result := TLandrixXmlContainerNode(Self).FAttrs[Index].Name.FQualifiedName;
 end;
 
 function TLandrixXmlNode.AttributePrefixUtf8(Index: Integer): TLandrixXmlUtf8;
 begin
   CheckAttrIndex(Index);
-  Result := FAttrs[Index].Name.FPrefix;
+  Result := TLandrixXmlContainerNode(Self).FAttrs[Index].Name.FPrefix;
 end;
 
 function TLandrixXmlNode.AttributeLocalNameUtf8(Index: Integer): TLandrixXmlUtf8;
 begin
   CheckAttrIndex(Index);
-  Result := FAttrs[Index].Name.FLocalName;
+  Result := TLandrixXmlContainerNode(Self).FAttrs[Index].Name.FLocalName;
 end;
 
 function TLandrixXmlNode.AttributeNamespaceUriUtf8(Index: Integer): TLandrixXmlUtf8;
 begin
   CheckAttrIndex(Index);
-  Result := FAttrs[Index].Name.FNamespaceUri;
+  Result := TLandrixXmlContainerNode(Self).FAttrs[Index].Name.FNamespaceUri;
 end;
 
 function TLandrixXmlNode.AttributeValueUtf8(Index: Integer): TLandrixXmlUtf8;
 begin
   CheckAttrIndex(Index);
-  Result := FAttrs[Index].Value;
+  Result := TLandrixXmlContainerNode(Self).FAttrs[Index].Value;
 end;
 
 function TLandrixXmlNode.AttributeValueW(Index: Integer): TLandrixXmlWide;
@@ -1175,22 +1286,25 @@ end;
 function TLandrixXmlNode.IsNamespaceDeclaration(Index: Integer): Boolean;
 begin
   CheckAttrIndex(Index);
-  Result := FAttrs[Index].Name.FNamespaceUri = LandrixXmlNamespaceXmlns;
+  Result := TLandrixXmlContainerNode(Self).FAttrs[Index].Name.FNamespaceUri =
+    LandrixXmlNamespaceXmlns;
 end;
 
 function TLandrixXmlNode.AttributeIndex(const NamespaceUri, LocalName: TLandrixXmlUtf8): Integer;
 var
   Id: Integer;
+  C: TLandrixXmlContainerNode;
 begin
   Result := -1;
-  if (FAttrCount = 0) or (FDocument = nil) then
+  C := AsContainer(Self);
+  if (C = nil) or (C.FAttrCount = 0) or (FDocument = nil) then
     Exit;
   Id := FDocument.FNames.FindExpanded(PAnsiChar(NamespaceUri), Length(NamespaceUri),
     PAnsiChar(LocalName), Length(LocalName));
   if Id < 0 then
     Exit;
-  for Result := 0 to FAttrCount - 1 do
-    if FAttrs[Result].Name.FExpandedId = Id then
+  for Result := 0 to C.FAttrCount - 1 do
+    if C.FAttrs[Result].Name.FExpandedId = Id then
       Exit;
   Result := -1;
 end;
@@ -1207,7 +1321,7 @@ var
 begin
   I := AttributeIndex(NamespaceUri, LocalName);
   if I >= 0 then
-    Result := FAttrs[I].Value
+    Result := TLandrixXmlContainerNode(Self).FAttrs[I].Value
   else
     Result := '';
 end;
@@ -1231,7 +1345,7 @@ begin
   I := AttributeIndex(NamespaceUri, LocalName);
   Result := I >= 0;
   if Result then
-    Value := FAttrs[I].Value
+    Value := TLandrixXmlContainerNode(Self).FAttrs[I].Value
   else
     Value := '';
 end;
@@ -1254,7 +1368,7 @@ begin
   Value := LandrixXmlUtf8ToString(V);
 end;
 
-procedure TLandrixXmlNode.AddAttr(Name: TLandrixXmlName; const Value: TLandrixXmlUtf8);
+procedure TLandrixXmlContainerNode.AddAttr(Name: TLandrixXmlName; const Value: TLandrixXmlUtf8);
 begin
   if FAttrCount = Length(FAttrs) then
   begin
@@ -1269,7 +1383,7 @@ begin
 end;
 
 { Index of this element's own declaration of Prefix, -1 if none. }
-function TLandrixXmlNode.DeclaredPrefixIndex(const Prefix: TLandrixXmlUtf8): Integer;
+function TLandrixXmlContainerNode.DeclaredPrefixIndex(const Prefix: TLandrixXmlUtf8): Integer;
 var
   N: TLandrixXmlName;
 begin
@@ -1312,10 +1426,10 @@ begin
   begin
     if N.FNodeType = xntElement then
     begin
-      I := N.DeclaredPrefixIndex(Prefix);
+      I := TLandrixXmlContainerNode(N).DeclaredPrefixIndex(Prefix);
       if I >= 0 then
       begin
-        NamespaceUri := N.FAttrs[I].Value;
+        NamespaceUri := TLandrixXmlContainerNode(N).FAttrs[I].Value;
         { xmlns="" undeclares the default namespace }
         Result := (Prefix <> '') or (NamespaceUri <> '');
         Exit;
@@ -1330,8 +1444,10 @@ procedure TLandrixXmlNode.DeclareNamespace(const Prefix, NamespaceUri: TLandrixX
 var
   I: Integer;
   Name: TLandrixXmlName;
+  C: TLandrixXmlContainerNode;
 begin
   CheckElement('DeclareNamespace');
+  C := Cont(Self);
   if Prefix <> '' then
     CheckNcName(Prefix);
   CheckUtf8(NamespaceUri);
@@ -1349,21 +1465,21 @@ begin
     if (Prefix <> '') and (NamespaceUri = '') then
       RaiseNs('A prefix must not be bound to an empty namespace name');
   end;
-  I := DeclaredPrefixIndex(Prefix);
+  I := C.DeclaredPrefixIndex(Prefix);
   if I >= 0 then
   begin
-    if FAttrs[I].Value <> NamespaceUri then
+    if C.FAttrs[I].Value <> NamespaceUri then
       RaiseNs('The prefix is already declared with another namespace on this element');
     Exit;
   end;
   if Prefix <> '' then
   begin
-    if (FName.FPrefix = Prefix) and (FName.FNamespaceUri <> NamespaceUri) then
+    if (C.FName.FPrefix = Prefix) and (C.FName.FNamespaceUri <> NamespaceUri) then
       RaiseNs('The declaration would change the namespace of the element');
-    for I := 0 to FAttrCount - 1 do
-      if (FAttrs[I].Name.FPrefix = Prefix) and
-        (FAttrs[I].Name.FNamespaceUri <> LandrixXmlNamespaceXmlns) and
-        (FAttrs[I].Name.FNamespaceUri <> NamespaceUri) then
+    for I := 0 to C.FAttrCount - 1 do
+      if (C.FAttrs[I].Name.FPrefix = Prefix) and
+        (C.FAttrs[I].Name.FNamespaceUri <> LandrixXmlNamespaceXmlns) and
+        (C.FAttrs[I].Name.FNamespaceUri <> NamespaceUri) then
         RaiseNs('The declaration would change the namespace of an attribute');
   end;
   if Prefix = '' then
@@ -1372,7 +1488,7 @@ begin
   else
     Name := FDocument.FNames.Intern('xmlns', 5, PAnsiChar(Prefix), Length(Prefix),
       LandrixXmlNamespaceXmlns, Length(LandrixXmlNamespaceXmlns));
-  AddAttr(Name, NamespaceUri);
+  C.AddAttr(Name, NamespaceUri);
 end;
 
 procedure TLandrixXmlNode.SetAttributeNsUtf8(const NamespaceUri, Prefix, LocalName,
@@ -1381,8 +1497,10 @@ var
   Uri: TLandrixXmlUtf8;
   I: Integer;
   Name: TLandrixXmlName;
+  C: TLandrixXmlContainerNode;
 begin
   CheckElement('SetAttribute');
+  C := Cont(Self);
   CheckNcName(LocalName);
   CheckUtf8(Value);
   if NamespaceUri = '' then
@@ -1402,14 +1520,14 @@ begin
   end;
   Name := FDocument.FNames.Intern(PAnsiChar(Prefix), Length(Prefix), PAnsiChar(LocalName),
     Length(LocalName), PAnsiChar(NamespaceUri), Length(NamespaceUri));
-  for I := 0 to FAttrCount - 1 do
-    if FAttrs[I].Name.FExpandedId = Name.FExpandedId then
+  for I := 0 to C.FAttrCount - 1 do
+    if C.FAttrs[I].Name.FExpandedId = Name.FExpandedId then
     begin
-      FAttrs[I].Name := Name;
-      FAttrs[I].Value := Value;
+      C.FAttrs[I].Name := Name;
+      C.FAttrs[I].Value := Value;
       Exit;
     end;
-  AddAttr(Name, Value);
+  C.AddAttr(Name, Value);
 end;
 
 procedure TLandrixXmlNode.SetAttributeUtf8(const QName, Value: TLandrixXmlUtf8);
@@ -1454,13 +1572,15 @@ end;
 procedure TLandrixXmlNode.RemoveAttributeAt(Index: Integer);
 var
   I: Integer;
+  C: TLandrixXmlContainerNode;
 begin
   CheckAttrIndex(Index);
-  for I := Index to FAttrCount - 2 do
-    FAttrs[I] := FAttrs[I + 1];
-  Dec(FAttrCount);
-  FAttrs[FAttrCount].Name := nil;
-  FAttrs[FAttrCount].Value := '';
+  C := Cont(Self);
+  for I := Index to C.FAttrCount - 2 do
+    C.FAttrs[I] := C.FAttrs[I + 1];
+  Dec(C.FAttrCount);
+  C.FAttrs[C.FAttrCount].Name := nil;
+  C.FAttrs[C.FAttrCount].Value := '';
 end;
 
 function TLandrixXmlNode.RemoveAttribute(const NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
@@ -1474,9 +1594,14 @@ begin
 end;
 
 procedure TLandrixXmlNode.ClearAttributes;
+var
+  C: TLandrixXmlContainerNode;
 begin
-  FAttrs := nil;
-  FAttrCount := 0;
+  C := AsContainer(Self);
+  if C = nil then
+    Exit;
+  C.FAttrs := nil;
+  C.FAttrCount := 0;
 end;
 
 { --- searching ------------------------------------------------------------------ }
@@ -1484,65 +1609,89 @@ end;
 function TLandrixXmlNode.FindChild(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlNode;
 var
   Id, I: Integer;
+  C: TLandrixXmlContainerNode;
+  N: TLandrixXmlNode;
 begin
   Result := nil;
-  if (FChildCount = 0) or (FDocument = nil) then
+  C := AsContainer(Self);
+  if (C = nil) or (C.FChildCount = 0) or (FDocument = nil) then
     Exit;
   Id := FDocument.FNames.FindExpanded(PAnsiChar(NamespaceUri), Length(NamespaceUri),
     PAnsiChar(LocalName), Length(LocalName));
   if Id < 0 then
     Exit;
-  for I := 0 to FChildCount - 1 do
-    if (FChildren[I].FNodeType = xntElement) and (FChildren[I].FName.FExpandedId = Id) then
+  for I := 0 to C.FChildCount - 1 do
+  begin
+    N := C.FChildren[I];
+    if (N.FNodeType = xntElement) and
+      (TLandrixXmlContainerNode(N).FName.FExpandedId = Id) then
     begin
-      Result := FChildren[I];
+      Result := N;
       Exit;
     end;
+  end;
 end;
 
 function TLandrixXmlNode.FindChildLocal(const LocalName: TLandrixXmlUtf8): TLandrixXmlNode;
 var
   I: Integer;
+  C: TLandrixXmlContainerNode;
+  N: TLandrixXmlNode;
 begin
-  for I := 0 to FChildCount - 1 do
-    if (FChildren[I].FNodeType = xntElement) and (FChildren[I].FName.FLocalName = LocalName) then
+  Result := nil;
+  C := AsContainer(Self);
+  if C = nil then
+    Exit;
+  for I := 0 to C.FChildCount - 1 do
+  begin
+    N := C.FChildren[I];
+    if (N.FNodeType = xntElement) and
+      (TLandrixXmlContainerNode(N).FName.FLocalName = LocalName) then
     begin
-      Result := FChildren[I];
+      Result := N;
       Exit;
     end;
-  Result := nil;
+  end;
 end;
 
 function TLandrixXmlNode.FindChildren(const NamespaceUri, LocalName: TLandrixXmlUtf8;
   List: TList): Integer;
 var
   Id, I: Integer;
+  C: TLandrixXmlContainerNode;
+  N: TLandrixXmlNode;
 begin
   Result := 0;
   if List = nil then
     RaiseArg('List must not be nil');
-  if (FChildCount = 0) or (FDocument = nil) then
+  C := AsContainer(Self);
+  if (C = nil) or (C.FChildCount = 0) or (FDocument = nil) then
     Exit;
   Id := FDocument.FNames.FindExpanded(PAnsiChar(NamespaceUri), Length(NamespaceUri),
     PAnsiChar(LocalName), Length(LocalName));
   if Id < 0 then
     Exit;
-  for I := 0 to FChildCount - 1 do
-    if (FChildren[I].FNodeType = xntElement) and (FChildren[I].FName.FExpandedId = Id) then
+  for I := 0 to C.FChildCount - 1 do
+  begin
+    N := C.FChildren[I];
+    if (N.FNodeType = xntElement) and
+      (TLandrixXmlContainerNode(N).FName.FExpandedId = Id) then
     begin
-      List.Add(FChildren[I]);
+      List.Add(N);
       Inc(Result);
     end;
+  end;
 end;
 
 function TLandrixXmlNode.FindDescendant(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlNode;
 var
   Id, I: Integer;
   Stack: TList;
-  N: TLandrixXmlNode;
+  C, E: TLandrixXmlContainerNode;
 begin
   Result := nil;
-  if (FChildCount = 0) or (FDocument = nil) then
+  C := AsContainer(Self);
+  if (C = nil) or (C.FChildCount = 0) or (FDocument = nil) then
     Exit;
   Id := FDocument.FNames.FindExpanded(PAnsiChar(NamespaceUri), Length(NamespaceUri),
     PAnsiChar(LocalName), Length(LocalName));
@@ -1550,21 +1699,22 @@ begin
     Exit;
   Stack := TList.Create;
   try
-    for I := FChildCount - 1 downto 0 do
-      Stack.Add(FChildren[I]);
+    for I := C.FChildCount - 1 downto 0 do
+      Stack.Add(C.FChildren[I]);
     while Stack.Count > 0 do
     begin
-      N := TLandrixXmlNode(Stack[Stack.Count - 1]);
+      { only elements are tested below; others are never dereferenced }
+      E := TLandrixXmlContainerNode(Stack[Stack.Count - 1]);
       Stack.Delete(Stack.Count - 1);
-      if N.FNodeType <> xntElement then
+      if E.FNodeType <> xntElement then
         Continue;
-      if N.FName.FExpandedId = Id then
+      if E.FName.FExpandedId = Id then
       begin
-        Result := N;
+        Result := E;
         Exit;
       end;
-      for I := N.FChildCount - 1 downto 0 do
-        Stack.Add(N.FChildren[I]);
+      for I := E.FChildCount - 1 downto 0 do
+        Stack.Add(E.FChildren[I]);
     end;
   finally
     Stack.Free;
@@ -1594,7 +1744,7 @@ end;
 
 function TLandrixXmlNode.NodePathUtf8: TLandrixXmlUtf8;
 var
-  N: TLandrixXmlNode;
+  N, Sibling: TLandrixXmlNode;
   Step: TLandrixXmlUtf8;
   I, Same, Pos: Integer;
 begin
@@ -1605,19 +1755,22 @@ begin
     case N.FNodeType of
       xntElement:
         begin
-          Step := N.FName.FQualifiedName;
+          Step := TLandrixXmlContainerNode(N).FName.FQualifiedName;
           if N.FParent <> nil then
           begin
             Same := 0;
             Pos := 0;
             for I := 0 to N.FParent.FChildCount - 1 do
-              if (N.FParent.FChildren[I].FNodeType = xntElement) and
-                (N.FParent.FChildren[I].FName = N.FName) then
+            begin
+              Sibling := N.FParent.FChildren[I];
+              if (Sibling.FNodeType = xntElement) and
+                (TLandrixXmlContainerNode(Sibling).FName = TLandrixXmlContainerNode(N).FName) then
               begin
                 Inc(Same);
-                if N.FParent.FChildren[I] = N then
+                if Sibling = N then
                   Pos := Same;
               end;
+            end;
             if Same > 1 then
               Step := Step + '[' + LandrixXmlStringToUtf8(IntToStr(Pos)) + ']';
           end;
@@ -1647,9 +1800,9 @@ end;
 
 { --- building ---------------------------------------------------------------- }
 
-function TLandrixXmlNode.NewChild(NodeType: TLandrixXmlNodeType): TLandrixXmlNode;
+function TLandrixXmlContainerNode.NewChild(NodeType: TLandrixXmlNodeType): TLandrixXmlNode;
 begin
-  Result := TLandrixXmlNode.CreateNode(FDocument, NodeType);
+  Result := NewNodeOf(FDocument, NodeType);
   InsertAt(FChildCount, Result);
 end;
 
@@ -1678,9 +1831,10 @@ begin
   else
     NeedDecl := not SameAscii(Prefix, 'xml') and
       (not LookupNamespace(Prefix, Uri) or (Uri <> NamespaceUri));
-  Result := NewChild(xntElement);
-  Result.FName := FDocument.FNames.Intern(PAnsiChar(Prefix), Length(Prefix),
-    PAnsiChar(LocalName), Length(LocalName), PAnsiChar(NamespaceUri), Length(NamespaceUri));
+  Result := Cont(Self).NewChild(xntElement);
+  TLandrixXmlContainerNode(Result).FName := FDocument.FNames.Intern(PAnsiChar(Prefix),
+    Length(Prefix), PAnsiChar(LocalName), Length(LocalName), PAnsiChar(NamespaceUri),
+    Length(NamespaceUri));
   if NeedDecl then
     Result.DeclareNamespace(Prefix, NamespaceUri);
 end;
@@ -1715,7 +1869,7 @@ function TLandrixXmlNode.AddTextUtf8(const Value: TLandrixXmlUtf8): TLandrixXmlN
 begin
   CheckElement('AddText');
   CheckUtf8(Value);
-  Result := NewChild(xntText);
+  Result := Cont(Self).NewChild(xntText);
   Result.FValue := Value;
 end;
 
@@ -1733,7 +1887,7 @@ function TLandrixXmlNode.AddCDataUtf8(const Value: TLandrixXmlUtf8): TLandrixXml
 begin
   CheckElement('AddCData');
   CheckUtf8(Value);
-  Result := NewChild(xntCData);
+  Result := Cont(Self).NewChild(xntCData);
   Result.FValue := Value;
 end;
 
@@ -1751,7 +1905,7 @@ function TLandrixXmlNode.AddCommentUtf8(const Value: TLandrixXmlUtf8): TLandrixX
 begin
   CheckContainer('AddComment');
   CheckUtf8(Value);
-  Result := NewChild(xntComment);
+  Result := Cont(Self).NewChild(xntComment);
   Result.FValue := Value;
 end;
 
@@ -1771,8 +1925,9 @@ begin
   CheckContainer('AddProcessingInstruction');
   CheckNcName(Target);
   CheckUtf8(Data);
-  Result := NewChild(xntProcessingInstruction);
-  Result.FName := FDocument.FNames.Intern(nil, 0, PAnsiChar(Target), Length(Target), nil, 0);
+  Result := Cont(Self).NewChild(xntProcessingInstruction);
+  TLandrixXmlContainerNode(Result).FName := FDocument.FNames.Intern(nil, 0,
+    PAnsiChar(Target), Length(Target), nil, 0);
   Result.FValue := Data;
 end;
 
@@ -1781,7 +1936,7 @@ end;
 procedure TLandrixXmlNode.EnsureDeclarations;
 var
   Stack: TList;
-  N: TLandrixXmlNode;
+  N: TLandrixXmlContainerNode;
   I: Integer;
   Uri: TLandrixXmlUtf8;
 
@@ -1808,7 +1963,8 @@ begin
     Stack.Add(Self);
     while Stack.Count > 0 do
     begin
-      N := TLandrixXmlNode(Stack[Stack.Count - 1]);
+      { only elements are tested below; others are never dereferenced }
+      N := TLandrixXmlContainerNode(Stack[Stack.Count - 1]);
       Stack.Delete(Stack.Count - 1);
       if N.FNodeType <> xntElement then
         Continue;
@@ -1836,7 +1992,7 @@ end;
 
 { --- writing ------------------------------------------------------------------- }
 
-function HasTextChild(N: TLandrixXmlNode): Boolean;
+function HasTextChild(N: TLandrixXmlContainerNode): Boolean;
 var
   I: Integer;
 begin
@@ -1849,10 +2005,10 @@ begin
   Result := False;
 end;
 
-procedure WriteStart(N: TLandrixXmlNode; Writer: TLandrixXmlWriter; Outer: Boolean);
+procedure WriteStart(N: TLandrixXmlContainerNode; Writer: TLandrixXmlWriter; Outer: Boolean);
 var
   I, J: Integer;
-  A: TLandrixXmlNode;
+  A: TLandrixXmlContainerNode;
   Seen: TList;
   Name: TLandrixXmlName;
 begin
@@ -1890,10 +2046,11 @@ end;
 
 procedure TLandrixXmlNode.WriteTo(Writer: TLandrixXmlWriter);
 var
-  Nodes: array of TLandrixXmlNode;
+  Nodes: array of TLandrixXmlContainerNode;
   NextChild: array of Integer;
   Top: Integer;
-  N, C: TLandrixXmlNode;
+  N: TLandrixXmlContainerNode;
+  C: TLandrixXmlNode;
   I: Integer;
 begin
   if Writer = nil then
@@ -1901,8 +2058,9 @@ begin
   case FNodeType of
     xntDocument:
       begin
-        for I := 0 to FChildCount - 1 do
-          FChildren[I].WriteTo(Writer);
+        N := TLandrixXmlContainerNode(Self);
+        for I := 0 to N.FChildCount - 1 do
+          N.FChildren[I].WriteTo(Writer);
         Exit;
       end;
     xntText:
@@ -1922,12 +2080,13 @@ begin
       end;
     xntProcessingInstruction:
       begin
-        Writer.ProcessingInstructionUtf8(FName.FQualifiedName, FValue);
+        Writer.ProcessingInstructionUtf8(TLandrixXmlContainerNode(Self).FName.FQualifiedName,
+          FValue);
         Exit;
       end;
     xntDocumentType:
       begin
-        Writer.DocumentType(FName.FQualifiedName, FValue);
+        Writer.DocumentType(TLandrixXmlContainerNode(Self).FName.FQualifiedName, FValue);
         Exit;
       end;
   else
@@ -1937,9 +2096,10 @@ begin
   NextChild := nil;
   SetLength(Nodes, 16);
   SetLength(NextChild, 16);
-  WriteStart(Self, Writer, True);
+  N := TLandrixXmlContainerNode(Self);
+  WriteStart(N, Writer, True);
   Top := 0;
-  Nodes[0] := Self;
+  Nodes[0] := N;
   NextChild[0] := 0;
   while Top >= 0 do
   begin
@@ -1954,14 +2114,14 @@ begin
     Inc(NextChild[Top]);
     if C.FNodeType = xntElement then
     begin
-      WriteStart(C, Writer, False);
+      WriteStart(TLandrixXmlContainerNode(C), Writer, False);
       Inc(Top);
       if Top = Length(Nodes) then
       begin
         SetLength(Nodes, 2 * Top);
         SetLength(NextChild, 2 * Top);
       end;
-      Nodes[Top] := C;
+      Nodes[Top] := TLandrixXmlContainerNode(C);
       NextChild[Top] := 0;
     end
     else
@@ -2033,7 +2193,7 @@ end;
 
 type
   TBuildLevel = record
-    Node: TLandrixXmlNode;
+    Node: TLandrixXmlContainerNode;
     Start: Integer;
     Preserve: Boolean;
     HasText: Boolean;
@@ -2050,6 +2210,7 @@ var
   Levels: array of TBuildLevel;
   LevelCount: Integer;
   N: TLandrixXmlNode;
+  E, T: TLandrixXmlContainerNode;
   I, J, K, Count: Integer;
   Drop: Boolean;
   Done: Boolean;
@@ -2067,7 +2228,7 @@ var
 
   function NewNode(NodeType: TLandrixXmlNodeType): TLandrixXmlNode;
   begin
-    Result := TLandrixXmlNode.CreateNode(Self, NodeType);
+    Result := NewNodeOf(Self, NodeType);
     Result.FLine := Reader.Line;
     Result.FColumn := Reader.Column;
     Push(Result);
@@ -2085,12 +2246,12 @@ var
 
   procedure StartElement;
   var
-    E: TLandrixXmlNode;
+    E: TLandrixXmlContainerNode;
     A: Integer;
     S1, S2, S3: TLandrixXmlSpan;
     Preserve: Boolean;
   begin
-    E := NewNode(xntElement);
+    E := TLandrixXmlContainerNode(NewNode(xntElement));
     S1 := Reader.PrefixSpan;
     S2 := Reader.LocalNameSpan;
     S3 := Reader.NamespaceUriSpan;
@@ -2147,13 +2308,13 @@ begin
         xttEndElement:
           begin
             Dec(LevelCount);
-            N := Levels[LevelCount].Node;
+            E := Levels[LevelCount].Node;
             Count := PendingCount - Levels[LevelCount].Start;
             Drop := (FWhitespaceMode = xwmDropBetweenElements) and
               not Levels[LevelCount].Preserve and not Levels[LevelCount].HasText;
             if Count > 0 then
             begin
-              SetLength(N.FChildren, Count);
+              SetLength(E.FChildren, Count);
               K := 0;
               for I := Levels[LevelCount].Start to PendingCount - 1 do
               begin
@@ -2163,14 +2324,14 @@ begin
                   Pending[I] := nil;
                   Continue;
                 end;
-                N.FChildren[K] := Pending[I];
-                Pending[I].FParent := N;
+                E.FChildren[K] := Pending[I];
+                Pending[I].FParent := E;
                 Pending[I].FIndex := K;
                 Inc(K);
-                N.FChildCount := K;
+                E.FChildCount := K;
               end;
               if K < Count then
-                SetLength(N.FChildren, K);
+                SetLength(E.FChildren, K);
             end;
             PendingCount := Levels[LevelCount].Start;
             if Subtree and (LevelCount = 0) then
@@ -2197,29 +2358,30 @@ begin
         xttProcessingInstruction:
           if FKeepProcessingInstructions then
           begin
-            N := NewNode(xntProcessingInstruction);
-            N.FName := FNames.Intern(nil, 0, Reader.NameSpan.P, Reader.NameSpan.Len, nil, 0);
-            N.FValue := Reader.ValueUtf8;
+            E := TLandrixXmlContainerNode(NewNode(xntProcessingInstruction));
+            E.FName := FNames.Intern(nil, 0, Reader.NameSpan.P, Reader.NameSpan.Len, nil, 0);
+            E.FValue := Reader.ValueUtf8;
           end;
         xttDocumentType:
           begin
-            N := NewNode(xntDocumentType);
-            N.FName := FNames.Intern(nil, 0, Reader.NameSpan.P, Reader.NameSpan.Len, nil, 0);
-            N.FValue := Reader.ValueUtf8;
+            E := TLandrixXmlContainerNode(NewNode(xntDocumentType));
+            E.FName := FNames.Intern(nil, 0, Reader.NameSpan.P, Reader.NameSpan.Len, nil, 0);
+            E.FValue := Reader.ValueUtf8;
           end;
       else
         ;
       end;
     end;
     { attach the top-level nodes }
+    T := Cont(Target);
     if Subtree then
     begin
       Result := Pending[0];
-      Target.InsertAt(Target.FChildCount, Result);
+      T.InsertAt(T.FChildCount, Result);
     end
     else
       for J := 0 to PendingCount - 1 do
-        Target.InsertAt(Target.FChildCount, Pending[J]);
+        T.InsertAt(T.FChildCount, Pending[J]);
     PendingCount := 0;
   except
     for J := PendingCount - 1 downto 0 do
