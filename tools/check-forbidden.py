@@ -9,7 +9,7 @@ A line may opt out of the identifier checks with the marker comment
 ``NativeInt`` inside a ``{$IF CompilerVersion >= 20.0}`` branch).
 
 Usage: python tools/check-forbidden.py [path ...]
-Default paths: source, tests, samples.
+Default paths: source, tests, samples, examples.
 """
 
 import os
@@ -236,7 +236,7 @@ def check_file(path, violations):
 
 def main(argv):
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    paths = argv[1:] or [os.path.join(root, d) for d in ("source", "tests", "samples")]
+    paths = argv[1:] or [os.path.join(root, d) for d in ("source", "tests", "samples", "examples")]
     files = []
     for p in paths:
         if os.path.isfile(p):

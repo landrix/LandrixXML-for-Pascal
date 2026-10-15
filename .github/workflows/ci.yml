@@ -44,6 +44,16 @@ jobs:
           fi
           ./build/ci-checked/LandrixXmlTests "$PWD"
 
+      - name: Build and run the README examples
+        run: |
+          mkdir -p build/examples
+          fpc -B -vewnhi -Fusource -Fisource -FUbuild/examples -FEbuild/examples examples/LandrixXmlExamples.dpr | tee build/examples/build.log
+          test ${PIPESTATUS[0]} -eq 0
+          if grep -E '\.(pas|inc|dpr|lpr)\([0-9]+(,[0-9]+)?\) (Warning|Hint|Note)' build/examples/build.log; then
+            exit 1
+          fi
+          ./build/examples/LandrixXmlExamples
+
       - name: W3C XML conformance suite
         run: |
           mkdir -p build/fpc322-linux

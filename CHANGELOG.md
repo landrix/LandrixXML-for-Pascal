@@ -59,6 +59,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   reader, freeing and saving without recursion.
 - The W3C conformance run also loads, saves and reloads every accepted
   document through the DOM.
+- README with examples, string strategy, limitations and measurements;
+  the examples are compiled and run as `examples/LandrixXmlExamples.dpr`
+  (also in CI).
 - Performance measurement `tests/LandrixXmlPerf.dpr` with
   `tools/perf.ps1` (times and peak memory for reader and DOM).
 - The DOM shares identical white-space text values while loading, which
