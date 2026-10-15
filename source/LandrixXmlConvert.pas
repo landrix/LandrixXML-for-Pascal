@@ -616,11 +616,47 @@ begin
 {$ENDIF}
 end;
 
+{ True if Digits * 10^Exp10 (Digits without leading zeros) is at or near
+  the largest double. Checked before Val, because Val may overflow there
+  (FPC rounds inexactly; on x86 the overflow raises EOverflow, on x87 even
+  delayed to a later instruction). Values within about 15 ulps of the
+  largest double are conservatively reported as out of range. }
+function AboveMaxDouble(const Digits: AnsiString; Exp10: Integer): Boolean;
+const
+  { the first 15 digits of the largest double, 1.79769313486231570e308 }
+  Limit: AnsiString = '179769313486231';
+var
+  IntDigits, I: Integer;
+  C: AnsiChar;
+begin
+  IntDigits := Length(Digits) + Exp10;
+  if IntDigits <> 309 then
+  begin
+    Result := IntDigits > 309;
+    Exit;
+  end;
+  for I := 1 to Length(Limit) do
+  begin
+    if I <= Length(Digits) then
+      C := Digits[I]
+    else
+      C := '0';
+    if C <> Limit[I] then
+    begin
+      Result := C > Limit[I];
+      Exit;
+    end;
+  end;
+  { prefix equal to the limit: conservatively out of range }
+  Result := True;
+end;
+
 function DoubleCore(P: PAnsiChar; Len: Integer; out Value: Double;
   out Reason: Integer): Integer;
 var
   Neg: Boolean;
   IntS, IntE, FracS, FracE, I, Exp10, N, Digit: Integer;
+  Sticky: Boolean;
   Digits: AnsiString;
   M: Int64;
   S: string;
@@ -654,7 +690,7 @@ begin
     Result := -1;
     Exit;
   end;
-  if Length(Digits) + Exp10 > 309 then
+  if AboveMaxDouble(Digits, Exp10) then
   begin
     Reason := erRange;
     Result := IntS;
@@ -685,7 +721,22 @@ begin
       Exit;
     end;
   end;
-  { long mantissas: the RTL (locale-independent, input validated above) }
+  { long mantissas: the RTL (locale-independent, input validated above).
+    At most 20 significant digits: FPC's Val rejects strings longer than
+    255 characters and Delphi 13 Win64 returns 0 for very long ones; the
+    20th digit is made non-zero when a dropped digit was, so the rounding
+    direction is kept. }
+  if Length(Digits) > 20 then
+  begin
+    Sticky := False;
+    for I := 21 to Length(Digits) do
+      if Digits[I] <> '0' then
+        Sticky := True;
+    Inc(Exp10, Length(Digits) - 20);
+    SetLength(Digits, 20);
+    if Sticky and (Digits[20] = '0') then
+      Digits[20] := '1';
+  end;
   S := '';
   SetLength(S, Length(Digits));
   for I := 1 to Length(Digits) do
@@ -753,7 +804,8 @@ begin
   E := 0;
   Power := 1;
   if A >= 1 then
-    while (A >= Power * 10) and (E < 400) do
+    { stops at 1e23 (the formatting limit), so Power never overflows }
+    while (A >= Power * 10) and (E < 23) do
     begin
       Power := Power * 10;
       Inc(E);

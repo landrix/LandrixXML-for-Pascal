@@ -294,6 +294,17 @@ begin
   Bad(1, '1,5', 1, 'comma');
   Bad(1, '1' + StringOfChar('0', 400), -1, 'too large');
   Bad(1, '18' + StringOfChar('0', 307), -1, 'above the largest double');
+  Bad(1, '17976931348623159' + StringOfChar('0', 292), -1, 'just above the largest double');
+  { more than 15 digits go through the RTL (may be off by one ulp) }
+  Bad(1, '17976931348623157' + StringOfChar('0', 292), -1,
+    'within 15 ulps of the largest double: conservatively out of range');
+  D := LandrixXmlParseDouble(U('17976931348623' + StringOfChar('0', 295)));
+  CheckEqualsStr('7FE', IntToHex((PInt64(@D)^ shr 52) and $FFF, 3), 'near the largest double');
+  D := LandrixXmlParseDouble(U('0.' + StringOfChar('7', 600)));
+  Check(Abs(D - Dbl('0.7777777777777777')) < Dbl('0.0000000000000002'),
+    'very long mantissa (more than 255 characters)');
+  D := LandrixXmlParseDouble(U('0.' + StringOfChar('0', 400) + '1'));
+  CheckEqualsStr('0000000000000000', IntToHex(PInt64(@D)^, 16), 'underflow to zero');
   CheckEqualsStr('1000000000000000000000.00', N(LandrixXmlFormatDouble(Dbl('1' +
     StringOfChar('0', 21)), 2)), '1e21');
   CheckEqualsStr('123456789012346000.00', N(LandrixXmlFormatDouble(Dbl('123456789012345678'), 2)),
