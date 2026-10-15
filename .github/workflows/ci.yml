@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  fpc-linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Free Pascal
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fp-compiler fp-units-base
+          fpc -iV
+
+      - name: Check forbidden language features
+        run: python3 tools/check-forbidden.py
+
+      - name: Build tests
+        run: |
+          mkdir -p build/ci
+          fpc -B -vewnhi -Fusource -Fisource -FUbuild/ci -FEbuild/ci tests/LandrixXmlTests.dpr | tee build/ci/build.log
+          test ${PIPESTATUS[0]} -eq 0
+
+      - name: Fail on warnings, hints and notes in own code
+        run: |
+          if grep -E '\.(pas|inc|dpr|lpr)\([0-9]+(,[0-9]+)?\) (Warning|Hint|Note)' build/ci/build.log; then
+            exit 1
+          fi
+
+      - name: Run tests
+        run: ./build/ci/LandrixXmlTests "$PWD"

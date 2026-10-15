@@ -1,0 +1,17 @@
+# Delphi 6 IDE expects CRLF line endings in source files.
+*.pas    text eol=crlf
+*.inc    text eol=crlf
+*.dpr    text eol=crlf
+*.lpr    text eol=crlf
+*.dpk    text eol=crlf
+*.bat    text eol=crlf
+*.cmd    text eol=crlf
+*.ps1    text eol=crlf
+
+*.sh     text eol=lf
+*.py     text eol=lf
+*.yml    text eol=lf
+*.md     text eol=lf
+
+# Test data must stay byte-exact (encodings, BOMs, line endings).
+tests/data/** -text
