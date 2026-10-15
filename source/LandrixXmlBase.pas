@@ -107,7 +107,9 @@ type
     FCapacity: Integer;
   public
     destructor Destroy; override;
-    { Sets Size to 0 and keeps the allocated memory. }
+    { Sets Size to 0 and keeps the allocated memory. Like Truncate it
+      writes the #0 sentinel at the new end, so do not use the old content
+      afterwards (e.g. as source of an Append). }
     procedure Clear;
     { Ensures Capacity >= MinCapacity. }
     procedure Reserve(MinCapacity: Integer);
@@ -115,6 +117,10 @@ type
     procedure Truncate(NewSize: Integer);
     procedure Append(const Data; Count: Integer);
     procedure AppendByte(B: Byte);
+    { Grows Size by Count bytes and returns a pointer to the new,
+      uninitialised region (or nil for Count = 0). The pointer is valid until
+      the next call that may grow the buffer. }
+    function Extend(Count: Integer): PAnsiChar;
     procedure AppendUtf8(const S: TLandrixXmlUtf8);
     { Appends 7-bit ASCII text; raises on bytes >= $80. }
     procedure AppendAscii(const S: AnsiString);
@@ -763,6 +769,24 @@ begin
       Reserve(FSize + Count);
   end;
   Move(Src^, FData[FSize], Count);
+  Inc(FSize, Count);
+  FData[FSize] := #0;
+end;
+
+function TLandrixXmlBuffer.Extend(Count: Integer): PAnsiChar;
+begin
+  if Count < 0 then
+    RaiseInvalidArgument('Negative count');
+  if Count = 0 then
+  begin
+    Result := nil;
+    Exit;
+  end;
+  if Count > MaxInt - 1 - FSize then
+    RaiseLimit(SMaxBufferSize);
+  if FSize + Count > FCapacity then
+    Reserve(FSize + Count);
+  Result := FData + FSize;
   Inc(FSize, Count);
   FData[FSize] := #0;
 end;

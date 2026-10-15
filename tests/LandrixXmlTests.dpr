@@ -20,7 +20,8 @@ uses
   SysUtils,
   LandrixXmlTestFramework,
   LandrixXmlTestSelf,
-  LandrixXmlTestBase;
+  LandrixXmlTestBase,
+  LandrixXmlTestEncoding;
 
 function FilterParam: string;
 var
@@ -35,5 +36,6 @@ end;
 begin
   LandrixXmlTestSelf.Register;
   LandrixXmlTestBase.Register;
+  LandrixXmlTestEncoding.Register;
   ExitCode := RunAllTests(FilterParam);
 end.

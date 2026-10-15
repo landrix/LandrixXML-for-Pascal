@@ -17,3 +17,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   that Delphi 6 does not support.
 - `tools/build.ps1`: builds and runs the tests with all local toolchains.
 - GitHub Actions CI with Free Pascal on Linux.
+- `LandrixXmlEncoding`: `TLandrixXmlInput` detects the input encoding (byte
+  order mark, XML declaration) and normalizes UTF-8, UTF-16 LE/BE,
+  ISO-8859-1, Windows-1252, ISO-8859-15 and US-ASCII to UTF-8. Strict by
+  default; opt-in repair via `FallbackEncoding` and `Latin1AsWindows1252`.
+  Error positions refer to the original bytes. Shared XML declaration
+  scanner `LandrixXmlScanDeclaration`.
+- `TLandrixXmlBuffer.Extend`.
+- Encoding test files generated with Python's codecs as an independent
+  oracle (`tools/gen-encoding-testdata.py`).

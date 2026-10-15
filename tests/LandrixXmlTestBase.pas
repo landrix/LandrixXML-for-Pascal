@@ -737,6 +737,46 @@ begin
   end;
 end;
 
+procedure TestBufferExtend;
+var
+  Buf: TLandrixXmlBuffer;
+  P: PAnsiChar;
+begin
+  Buf := TLandrixXmlBuffer.Create;
+  try
+    Check(Buf.Extend(0) = nil, 'Extend(0) returns nil');
+    Buf.AppendAscii('ab');
+    P := Buf.Extend(3);
+    CheckEquals(5, Buf.Size, 'Size after Extend');
+    P[0] := 'x';
+    P[1] := 'y';
+    P[2] := 'z';
+    CheckEqualsUtf8(Utf8Bytes([$61, $62, $78, $79, $7A]), Buf.AsUtf8, 'content after Extend');
+    CheckEquals(0, Ord(Buf.Data[5]), 'sentinel after Extend');
+    P := Buf.Extend(10000);
+    Check(P = Buf.Data + 5, 'Extend returns the new region after growth');
+    CheckEquals(10005, Buf.Size, 'Size after growing Extend');
+    CheckEquals(0, Ord(Buf.Data[10005]), 'sentinel after growing Extend');
+    try
+      Buf.Extend(-1);
+      FailNotRaised('ELandrixXmlError for negative Extend');
+    except
+      on E: ELandrixXmlError do
+        CheckErrorCode(xecInvalidArgument, E.Code, 'negative Extend');
+    end;
+    try
+      Buf.Extend(MaxInt);
+      FailNotRaised('ELandrixXmlError for Extend overflow');
+    except
+      on E: ELandrixXmlError do
+        CheckErrorCode(xecLimit, E.Code, 'Extend overflow');
+    end;
+    CheckEquals(10005, Buf.Size, 'failed Extend leaves Size unchanged');
+  finally
+    Buf.Free;
+  end;
+end;
+
 procedure TestBufferLarge;
 var
   Buf: TLandrixXmlBuffer;
@@ -784,6 +824,7 @@ begin
   RegisterTest('Buffer.AppendCodePoint', TestBufferAppendCodePoint);
   RegisterTest('Buffer.InvalidArguments', TestBufferInvalidArguments);
   RegisterTest('Buffer.StreamAndCopy', TestBufferStreamAndCopy);
+  RegisterTest('Buffer.Extend', TestBufferExtend);
   RegisterTest('Buffer.Large', TestBufferLarge);
 end;
 
