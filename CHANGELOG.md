@@ -30,3 +30,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with namespaces (zero-copy spans plus UTF-8, wide and native accessors,
   `Skip`, lazy line/column, `MaxDepth`), push adapter `TLandrixXmlHandler`.
   DOCTYPE is skipped and reported; DTD entities are not expanded.
+- `LandrixXmlWriter`: streaming writer `TLandrixXmlWriter` (UTF-8 output to
+  memory, a stream or a file). Automatic XML declaration, optional BOM,
+  lexical namespaces with scope checks plus `...Ns` methods that declare
+  prefixes automatically, escaping that survives a read-back unchanged,
+  errors for characters and constructs that XML 1.0 cannot represent,
+  atomic calls (a rejected call changes nothing), optional indentation that
+  never touches mixed content, base64 output from buffers and streams.
+- `LandrixXmlBase`: XML name checks, FNV-1a hash and base64 encoder shared
+  by reader and writer; the namespace constants moved here from the reader.
+- The W3C conformance run also copies every accepted document through the
+  writer and checks that it reads back identically.

@@ -8,6 +8,10 @@
   line) with TLandrixXmlReader and prints one result line per file:
     <path> TAB OK
     <path> TAB ERR TAB <code> TAB <line> TAB <column> TAB <message>
+    <path> TAB RTFAIL TAB <message>
+  For every accepted document it also copies the token stream through
+  TLandrixXmlWriter and reads the output again; RTFAIL means the second
+  token stream differs from the first (a writer defect).
   Used by tools/run-xmlconf.py with the W3C XML conformance test suite.
 
   Usage: LandrixXmlConformance <list-file> }
@@ -24,13 +28,107 @@ uses
   SysUtils,
   Classes,
   LandrixXmlBase,
-  LandrixXmlReader;
+  LandrixXmlReader,
+  LandrixXmlWriter;
+
+{ Canonical form of the current token. Emptiness (<a/> vs <a></a>) is not
+  part of it: the writer always writes <a/> for empty elements. }
+function TokenKey(Reader: TLandrixXmlReader): TLandrixXmlUtf8;
+var
+  I: Integer;
+begin
+  Result := LandrixXmlStringToUtf8(IntToStr(Ord(Reader.TokenType))) + '|' +
+    Reader.NameUtf8 + '|' + Reader.NamespaceUriUtf8 + '|' + Reader.ValueUtf8;
+  if Reader.TokenType = xttStartElement then
+    for I := 0 to Reader.AttributeCount - 1 do
+      Result := Result + '|' + Reader.AttributeNameUtf8(I) + '{' +
+        Reader.AttributeNamespaceUriUtf8(I) + '}=' + Reader.AttributeValueUtf8(I);
+  Result := Result + #10;
+end;
+
+{ Copies the document to Writer; returns the token keys of the input. }
+function CopyDocument(Reader: TLandrixXmlReader; Writer: TLandrixXmlWriter): TLandrixXmlUtf8;
+var
+  I: Integer;
+begin
+  Result := '';
+  while Reader.Read do
+  begin
+    Result := Result + TokenKey(Reader);
+    case Reader.TokenType of
+      xttStartElement:
+        begin
+          Writer.StartElement(Reader.NameUtf8);
+          for I := 0 to Reader.AttributeCount - 1 do
+            Writer.AttributeUtf8(Reader.AttributeNameUtf8(I), Reader.AttributeValueUtf8(I));
+        end;
+      xttEndElement:
+        Writer.EndElement;
+      xttText:
+        Writer.TextUtf8(Reader.ValueUtf8);
+      xttCData:
+        Writer.CDataUtf8(Reader.ValueUtf8);
+      xttComment:
+        Writer.CommentUtf8(Reader.ValueUtf8);
+      xttProcessingInstruction:
+        Writer.ProcessingInstructionUtf8(Reader.NameUtf8, Reader.ValueUtf8);
+      xttDocumentType:
+        Writer.DocumentType(Reader.NameUtf8, Reader.ValueUtf8);
+    else
+      ;
+    end;
+  end;
+  Writer.EndDocument;
+end;
+
+function Tokens(Reader: TLandrixXmlReader): TLandrixXmlUtf8;
+begin
+  Result := '';
+  while Reader.Read do
+    Result := Result + TokenKey(Reader);
+end;
+
+function RoundTrip(const Path: string; Reader: TLandrixXmlReader): string;
+var
+  Writer: TLandrixXmlWriter;
+  First, Second: TLandrixXmlUtf8;
+begin
+  Result := '';
+  Writer := TLandrixXmlWriter.Create;
+  try
+    try
+      Reader.LoadFromFile(Path);
+      First := CopyDocument(Reader, Writer);
+    except
+      on E: Exception do
+      begin
+        Result := 'writing failed: ' + E.ClassName + ': ' + E.Message;
+        Exit;
+      end;
+    end;
+    try
+      Reader.LoadFromUtf8(Writer.AsUtf8);
+      Second := Tokens(Reader);
+    except
+      on E: Exception do
+      begin
+        Result := 'output not well-formed: ' + E.Message;
+        Exit;
+      end;
+    end;
+    if First <> Second then
+      Result := 'token streams differ';
+  finally
+    Writer.Free;
+  end;
+end;
 
 var
   List: TStringList;
   Reader: TLandrixXmlReader;
   I: Integer;
-  Path: string;
+  Path, Msg: string;
+  Ok: Boolean;
 
 begin
   if ParamCount < 1 then
@@ -48,16 +146,25 @@ begin
       Path := Trim(List[I]);
       if Path = '' then
         Continue;
+      Ok := False;
       try
         Reader.LoadFromFile(Path);
         while Reader.Read do
           ;
-        WriteLn(Path, #9, 'OK');
+        Ok := True;
       except
         on E: ELandrixXmlError do
           WriteLn(Path, #9, 'ERR', #9, Ord(E.Code), #9, E.Line, #9, E.Column, #9, E.Message);
         on E: Exception do
           WriteLn(Path, #9, 'EXC', #9, E.ClassName, #9, E.Message);
+      end;
+      if Ok then
+      begin
+        Msg := RoundTrip(Path, Reader);
+        if Msg = '' then
+          WriteLn(Path, #9, 'OK')
+        else
+          WriteLn(Path, #9, 'RTFAIL', #9, Msg);
       end;
     end;
   finally

@@ -18,6 +18,9 @@ their own categories instead of as failures:
     ISO-8859-15/US-ASCII are rejected;
   - external entities and external DTDs are never read.
 
+Every accepted document is also copied through TLandrixXmlWriter and read
+again; a different token stream is reported as "FAIL writer round trip".
+
 Usage:
   python tools/run-xmlconf.py [--exe PATH] [--verbose]
 Build the helper first, e.g.
@@ -169,6 +172,9 @@ def main():
 
     for t in tests:
         r = results.get(t["FILE"], ["MISSING"])
+        if r[0] == "RTFAIL":
+            add("FAIL writer round trip", t, " ".join(r[1:]))
+            r = ["OK"]
         ours = r[0] == "OK"
         exp_ok, exp_msg, exp_after = run_expat(t["FILE"])
         want = t["TYPE"] != "not-wf"

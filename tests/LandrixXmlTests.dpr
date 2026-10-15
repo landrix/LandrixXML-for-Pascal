@@ -23,7 +23,8 @@ uses
   LandrixXmlTestBase,
   LandrixXmlTestEncoding,
   LandrixXmlTestReader,
-  LandrixXmlTestReaderErrors;
+  LandrixXmlTestReaderErrors,
+  LandrixXmlTestWriter;
 
 function FilterParam: string;
 var
@@ -41,5 +42,6 @@ begin
   LandrixXmlTestEncoding.Register;
   LandrixXmlTestReader.Register;
   LandrixXmlTestReaderErrors.Register;
+  LandrixXmlTestWriter.Register;
   ExitCode := RunAllTests(FilterParam);
 end.

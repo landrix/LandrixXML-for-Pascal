@@ -53,8 +53,6 @@ uses
   LandrixXmlEncoding;
 
 const
-  LandrixXmlNamespaceXml = 'http://www.w3.org/XML/1998/namespace';
-  LandrixXmlNamespaceXmlns = 'http://www.w3.org/2000/xmlns/';
   LandrixXmlDefaultMaxDepth = 256;
 
 type
@@ -352,42 +350,6 @@ begin
   Result := SameBytes(P, Len, PAnsiChar(S), Length(S));
 end;
 
-function HashBytes(P: PAnsiChar; Len: Integer; Seed: Cardinal): Cardinal;
-var
-  I: Integer;
-begin
-  { FNV-1a }
-  Result := Seed;
-  for I := 0 to Len - 1 do
-    { computed in Int64 and masked: the wrap-around is intended and must not
-      trip overflow or range checking in projects compiled with Q+/R+ }
-    Result := Cardinal((Int64(Result xor Ord(P[I])) * 16777619) and $FFFFFFFF);
-end;
-
-{ --- name characters (XML 1.0 fifth edition) ------------------------------ }
-
-function IsNameStartCodePoint(C: Cardinal): Boolean;
-begin
-  if C < $80 then
-    Result := AnsiChar(C) in NameStartAscii
-  else
-    Result := ((C >= $C0) and (C <= $D6)) or ((C >= $D8) and (C <= $F6)) or
-      ((C >= $F8) and (C <= $2FF)) or ((C >= $370) and (C <= $37D)) or
-      ((C >= $37F) and (C <= $1FFF)) or ((C >= $200C) and (C <= $200D)) or
-      ((C >= $2070) and (C <= $218F)) or ((C >= $2C00) and (C <= $2FEF)) or
-      ((C >= $3001) and (C <= $D7FF)) or ((C >= $F900) and (C <= $FDCF)) or
-      ((C >= $FDF0) and (C <= $FFFD)) or ((C >= $10000) and (C <= $EFFFF));
-end;
-
-function IsNameCodePoint(C: Cardinal): Boolean;
-begin
-  if C < $80 then
-    Result := AnsiChar(C) in NameAscii
-  else
-    Result := IsNameStartCodePoint(C) or (C = $B7) or
-      ((C >= $300) and (C <= $36F)) or ((C >= $203F) and (C <= $2040));
-end;
-
 { --- TLandrixXmlHandler --------------------------------------------------- }
 
 { the default implementations ignore their parameter }
@@ -664,7 +626,7 @@ begin
   else
   begin
     N := LandrixXmlDecodeUtf8(P, Integer(FEnd - P), CodePoint);
-    if (N = 0) or not IsNameStartCodePoint(CodePoint) then
+    if (N = 0) or not LandrixXmlIsNameStartChar(CodePoint) then
       Fail(xecSyntax, 'Name expected', P);
     Inc(P, N);
   end;
@@ -680,7 +642,7 @@ begin
     else
     begin
       N := LandrixXmlDecodeUtf8(P, Integer(FEnd - P), CodePoint);
-      if (N > 0) and IsNameCodePoint(CodePoint) then
+      if (N > 0) and LandrixXmlIsNameChar(CodePoint) then
         Inc(P, N)
       else
         Break;
@@ -710,7 +672,7 @@ begin
   if (Result = 0) or (Result = Len - 1) then
     Fail(xecNamespace, 'Qualified name with empty prefix or local part', Start + Result);
   N := LandrixXmlDecodeUtf8(Start + Result + 1, Len - Result - 1, CodePoint);
-  if (N = 0) or (CodePoint = Ord(':')) or not IsNameStartCodePoint(CodePoint) then
+  if (N = 0) or (CodePoint = Ord(':')) or not LandrixXmlIsNameStartChar(CodePoint) then
     Fail(xecNamespace, 'Invalid local name in qualified name', Start + Result + 1);
 end;
 
@@ -1229,11 +1191,11 @@ begin
     if not Relevant(I) then
       Continue;
     if Expanded then
-      H := HashBytes(FAttrs[I].NameP + FAttrs[I].ColonPos + 1,
+      H := LandrixXmlHashBytes(FAttrs[I].NameP + FAttrs[I].ColonPos + 1,
         FAttrs[I].NameLen - FAttrs[I].ColonPos - 1,
-        HashBytes(FAttrs[I].NsP, FAttrs[I].NsLen, 2166136261))
+        LandrixXmlHashBytes(FAttrs[I].NsP, FAttrs[I].NsLen, LandrixXmlHashSeed))
     else
-      H := HashBytes(FAttrs[I].NameP, FAttrs[I].NameLen, 2166136261);
+      H := LandrixXmlHashBytes(FAttrs[I].NameP, FAttrs[I].NameLen, LandrixXmlHashSeed);
     Slot := Integer(H and Cardinal(Size - 1));
     while FHashTable[Slot] >= 0 do
     begin

@@ -42,6 +42,10 @@ const
   { Highest Unicode code point. }
   LandrixXmlMaxCodePoint = $10FFFF;
 
+  { Namespace names bound to the reserved prefixes xml and xmlns. }
+  LandrixXmlNamespaceXml = 'http://www.w3.org/XML/1998/namespace';
+  LandrixXmlNamespaceXmlns = 'http://www.w3.org/2000/xmlns/';
+
 type
 {$IFDEF LANDRIXXML_UNICODE}
   TLandrixXmlUtf8 = UTF8String;
@@ -152,6 +156,29 @@ function LandrixXmlEncodeUtf8(CodePoint: Cardinal; Dest: PAnsiChar): Integer;
 { True if CodePoint matches the XML 1.0 Char production:
   #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] }
 function LandrixXmlIsXmlChar(CodePoint: Cardinal): Boolean;
+
+{ XML 1.0 fifth edition NameStartChar and NameChar. The colon is included
+  (namespace rules are checked separately). }
+function LandrixXmlIsNameStartChar(CodePoint: Cardinal): Boolean;
+function LandrixXmlIsNameChar(CodePoint: Cardinal): Boolean;
+
+{ Checks that the Len bytes at P form a strictly valid UTF-8 XML Name.
+  Returns the offset of the first offending byte, or -1 if valid (an empty
+  name reports offset 0). }
+function LandrixXmlCheckName(P: PAnsiChar; Len: Integer): Integer;
+
+{ FNV-1a hash over Len bytes, continuing from Seed (start with
+  LandrixXmlHashSeed). Used for duplicate checks and name tables. }
+const
+  LandrixXmlHashSeed = Cardinal(2166136261);
+
+function LandrixXmlHashBytes(P: PAnsiChar; Len: Integer; Seed: Cardinal): Cardinal;
+
+{ --- Base64 ------------------------------------------------------------- }
+
+{ Appends the base64 encoding (RFC 4648, with padding, no line breaks) of
+  Size bytes to Dest. }
+procedure LandrixXmlBase64Encode(const Data; Size: Integer; Dest: TLandrixXmlBuffer);
 
 { --- Validation --------------------------------------------------------- }
 
@@ -364,6 +391,134 @@ begin
     Result := True
   else
     Result := (CodePoint >= $10000) and (CodePoint <= LandrixXmlMaxCodePoint);
+end;
+
+function LandrixXmlIsNameStartChar(CodePoint: Cardinal): Boolean;
+begin
+  if CodePoint < $80 then
+    Result := ((CodePoint >= Ord('A')) and (CodePoint <= Ord('Z'))) or
+      ((CodePoint >= Ord('a')) and (CodePoint <= Ord('z'))) or
+      (CodePoint = Ord('_')) or (CodePoint = Ord(':'))
+  else
+    Result := ((CodePoint >= $C0) and (CodePoint <= $D6)) or
+      ((CodePoint >= $D8) and (CodePoint <= $F6)) or
+      ((CodePoint >= $F8) and (CodePoint <= $2FF)) or
+      ((CodePoint >= $370) and (CodePoint <= $37D)) or
+      ((CodePoint >= $37F) and (CodePoint <= $1FFF)) or
+      ((CodePoint >= $200C) and (CodePoint <= $200D)) or
+      ((CodePoint >= $2070) and (CodePoint <= $218F)) or
+      ((CodePoint >= $2C00) and (CodePoint <= $2FEF)) or
+      ((CodePoint >= $3001) and (CodePoint <= $D7FF)) or
+      ((CodePoint >= $F900) and (CodePoint <= $FDCF)) or
+      ((CodePoint >= $FDF0) and (CodePoint <= $FFFD)) or
+      ((CodePoint >= $10000) and (CodePoint <= $EFFFF));
+end;
+
+function LandrixXmlIsNameChar(CodePoint: Cardinal): Boolean;
+begin
+  if CodePoint < $80 then
+    Result := LandrixXmlIsNameStartChar(CodePoint) or
+      ((CodePoint >= Ord('0')) and (CodePoint <= Ord('9'))) or
+      (CodePoint = Ord('-')) or (CodePoint = Ord('.'))
+  else
+    Result := LandrixXmlIsNameStartChar(CodePoint) or (CodePoint = $B7) or
+      ((CodePoint >= $300) and (CodePoint <= $36F)) or
+      ((CodePoint >= $203F) and (CodePoint <= $2040));
+end;
+
+function LandrixXmlCheckName(P: PAnsiChar; Len: Integer): Integer;
+var
+  I, N: Integer;
+  CodePoint: Cardinal;
+begin
+  Result := 0;
+  if Len <= 0 then
+    Exit;
+  I := 0;
+  while I < Len do
+  begin
+    N := LandrixXmlDecodeUtf8(P + I, Len - I, CodePoint);
+    if N = 0 then
+    begin
+      Result := I;
+      Exit;
+    end;
+    if I = 0 then
+    begin
+      if not LandrixXmlIsNameStartChar(CodePoint) then
+        Exit;
+    end
+    else if not LandrixXmlIsNameChar(CodePoint) then
+    begin
+      Result := I;
+      Exit;
+    end;
+    Inc(I, N);
+  end;
+  Result := -1;
+end;
+
+function LandrixXmlHashBytes(P: PAnsiChar; Len: Integer; Seed: Cardinal): Cardinal;
+var
+  I: Integer;
+begin
+  Result := Seed;
+  for I := 0 to Len - 1 do
+    { computed in Int64 and masked: the wrap-around is intended and must not
+      trip overflow or range checking in projects compiled with Q+/R+ }
+    Result := Cardinal((Int64(Result xor Ord(P[I])) * 16777619) and $FFFFFFFF);
+end;
+
+{ --- Base64 ------------------------------------------------------------- }
+
+const
+  Base64Chars: array[0..63] of AnsiChar =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+procedure LandrixXmlBase64Encode(const Data; Size: Integer; Dest: TLandrixXmlBuffer);
+var
+  Src: PAnsiChar;
+  Dst: PAnsiChar;
+  I, Full, Rest: Integer;
+  V: Cardinal;
+begin
+  if Size < 0 then
+    RaiseInvalidArgument('Negative base64 input size');
+  if Size = 0 then
+    Exit;
+  if Size > (MaxInt div 4) * 3 - 3 then
+    RaiseLimit('Base64 input too large');
+  Src := PAnsiChar(@Data);
+  Full := Size div 3;
+  Rest := Size - Full * 3;
+  if Rest > 0 then
+    Dst := Dest.Extend((Full + 1) * 4)
+  else
+    Dst := Dest.Extend(Full * 4);
+  for I := 0 to Full - 1 do
+  begin
+    V := (Cardinal(Ord(Src[0])) shl 16) or (Cardinal(Ord(Src[1])) shl 8) or
+      Cardinal(Ord(Src[2]));
+    Dst[0] := Base64Chars[(V shr 18) and 63];
+    Dst[1] := Base64Chars[(V shr 12) and 63];
+    Dst[2] := Base64Chars[(V shr 6) and 63];
+    Dst[3] := Base64Chars[V and 63];
+    Inc(Src, 3);
+    Inc(Dst, 4);
+  end;
+  if Rest > 0 then
+  begin
+    V := Cardinal(Ord(Src[0])) shl 16;
+    if Rest = 2 then
+      V := V or (Cardinal(Ord(Src[1])) shl 8);
+    Dst[0] := Base64Chars[(V shr 18) and 63];
+    Dst[1] := Base64Chars[(V shr 12) and 63];
+    if Rest = 2 then
+      Dst[2] := Base64Chars[(V shr 6) and 63]
+    else
+      Dst[2] := '=';
+    Dst[3] := '=';
+  end;
 end;
 
 { --- Validation --------------------------------------------------------- }
