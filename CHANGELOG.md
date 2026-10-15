@@ -59,6 +59,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   reader, freeing and saving without recursion.
 - The W3C conformance run also loads, saves and reloads every accepted
   document through the DOM.
+- Performance measurement `tests/LandrixXmlPerf.dpr` with
+  `tools/perf.ps1` (times and peak memory for reader and DOM).
+- The DOM shares identical white-space text values while loading, which
+  lowers the memory of indented documents.
 - Real-world test: files placed in the git-ignored `tests/data/local`
   (XRechnung, ZUGFeRD, GAEB) are round-tripped through the DOM, damaged
   copies must be rejected cleanly, and `tools/check-local.py` cross-checks

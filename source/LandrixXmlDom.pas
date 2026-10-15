@@ -2043,6 +2043,9 @@ var
   I, J, K, Count: Integer;
   Drop: Boolean;
   Done: Boolean;
+  { white-space-only text values are shared: indented documents repeat the
+    same few strings millions of times }
+  WsCache: array[0..63] of TLandrixXmlUtf8;
 
   procedure Push(Node: TLandrixXmlNode);
   begin
@@ -2058,6 +2061,16 @@ var
     Result.FLine := Reader.Line;
     Result.FColumn := Reader.Column;
     Push(Result);
+  end;
+
+  function SharedWhitespace(const Span: TLandrixXmlSpan): TLandrixXmlUtf8;
+  var
+    Slot: Integer;
+  begin
+    Slot := Integer(LandrixXmlHashBytes(Span.P, Span.Len, LandrixXmlHashSeed) and 63);
+    if not SameBuf(Span.P, Span.Len, WsCache[Slot]) then
+      WsCache[Slot] := SpanStr(Span.P, Span.Len);
+    Result := WsCache[Slot];
   end;
 
   procedure StartElement;
@@ -2159,7 +2172,11 @@ begin
               N := NewNode(xntText)
             else
               N := NewNode(xntCData);
-            N.FValue := Reader.ValueUtf8;
+            if (Reader.TokenType = xttText) and Reader.IsWhitespace and
+              (Reader.ValueSpan.Len <= 256) then
+              N.FValue := SharedWhitespace(Reader.ValueSpan)
+            else
+              N.FValue := Reader.ValueUtf8;
             N.FIsWhitespace := (Reader.TokenType = xttText) and Reader.IsWhitespace;
             if not N.FIsWhitespace and (LevelCount > 0) then
               Levels[LevelCount - 1].HasText := True;
