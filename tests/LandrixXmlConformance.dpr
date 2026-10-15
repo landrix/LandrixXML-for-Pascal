@@ -4,11 +4,13 @@
   Licensed under the MIT License. See the LICENSE file in the project root
   or https://opensource.org/licenses/MIT for the full license text.
 
-  Conformance helper: reads every file named in a list file (one path per
-  line) with TLandrixXmlReader and prints one result line per file:
-    <path> TAB OK
-    <path> TAB ERR TAB <code> TAB <line> TAB <column> TAB <message>
-    <path> TAB RTFAIL TAB <message>
+  Conformance helper: reads every file named in a list file (UTF-8, one
+  path per line) with TLandrixXmlReader and prints one result line per file,
+  identified by its 0-based line number in the list (paths may contain
+  characters the console cannot show):
+    <index> TAB OK
+    <index> TAB ERR TAB <code> TAB <line> TAB <column> TAB <message>
+    <index> TAB RTFAIL TAB <message>
   For every accepted document it also copies the token stream through
   TLandrixXmlWriter and loads, saves and reloads it with TLandrixXmlDocument;
   RTFAIL means a token stream differs from the original (a writer or DOM
@@ -146,6 +148,43 @@ begin
   end;
 end;
 
+{ Lines of a UTF-8 text file, converted to native strings. }
+procedure ReadList(const FileName: string; List: TStringList);
+var
+  F: TFileStream;
+  Data, Line: TLandrixXmlUtf8;
+  I, Start, Len: Integer;
+begin
+  F := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    Data := '';
+    SetLength(Data, Integer(F.Size));
+    if Length(Data) > 0 then
+      F.ReadBuffer(PAnsiChar(Data)^, Length(Data));
+  finally
+    F.Free;
+  end;
+  Start := 1;
+  { skip a UTF-8 byte order mark }
+  if (Length(Data) >= 3) and (Ord(Data[1]) = $EF) and (Ord(Data[2]) = $BB) and (Ord(Data[3]) = $BF) then
+    Start := 4;
+  for I := Start to Length(Data) + 1 do
+    if (I > Length(Data)) or (Data[I] = #10) then
+    begin
+      Len := I - Start;
+      if (Len > 0) and (Data[Start + Len - 1] = #13) then
+        Dec(Len);
+      Line := '';
+      if Len > 0 then
+      begin
+        SetLength(Line, Len);
+        Move(PAnsiChar(Data)[Start - 1], PAnsiChar(Line)^, Len);
+      end;
+      List.Add(LandrixXmlUtf8ToString(Line));
+      Start := I + 1;
+    end;
+end;
+
 var
   List: TStringList;
   Reader: TLandrixXmlReader;
@@ -163,7 +202,7 @@ begin
   List := TStringList.Create;
   Reader := TLandrixXmlReader.Create;
   try
-    List.LoadFromFile(ParamStr(1));
+    ReadList(ParamStr(1), List);
     for I := 0 to List.Count - 1 do
     begin
       Path := Trim(List[I]);
@@ -177,17 +216,17 @@ begin
         Ok := True;
       except
         on E: ELandrixXmlError do
-          WriteLn(Path, #9, 'ERR', #9, Ord(E.Code), #9, E.Line, #9, E.Column, #9, E.Message);
+          WriteLn(I, #9, 'ERR', #9, Ord(E.Code), #9, E.Line, #9, E.Column, #9, E.Message);
         on E: Exception do
-          WriteLn(Path, #9, 'EXC', #9, E.ClassName, #9, E.Message);
+          WriteLn(I, #9, 'EXC', #9, E.ClassName, #9, E.Message);
       end;
       if Ok then
       begin
         Msg := RoundTrip(Path, Reader);
         if Msg = '' then
-          WriteLn(Path, #9, 'OK')
+          WriteLn(I, #9, 'OK')
         else
-          WriteLn(Path, #9, 'RTFAIL', #9, Msg);
+          WriteLn(I, #9, 'RTFAIL', #9, Msg);
       end;
     end;
   finally

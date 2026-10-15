@@ -126,14 +126,19 @@ def run_landrix(exe, files):
         lst.write("\n".join(files))
         name = lst.name
     try:
-        out = subprocess.run([exe, name], capture_output=True, check=False).stdout
+        proc = subprocess.run([exe, name], capture_output=True, check=False)
+        out = proc.stdout
+        if proc.returncode != 0:
+            # a crash of the helper is a tooling problem, not a per-file result
+            print("helper exited with %d: %s" % (proc.returncode,
+                  proc.stderr.decode("utf-8", "replace").strip()[:500]))
     finally:
         os.unlink(name)
     results = {}
     for line in out.decode("utf-8", "replace").splitlines():
         parts = line.split("\t")
-        if len(parts) >= 2:
-            results[os.path.normpath(parts[0])] = parts[1:]
+        if len(parts) >= 2 and parts[0].isdigit() and int(parts[0]) < len(files):
+            results[os.path.normpath(files[int(parts[0])])] = parts[1:]
     return results
 
 
