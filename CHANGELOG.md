@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-15
+
+First release.
+
 ### Added
 - `LandrixXml.inc`: central compiler switches for Delphi 6 to Delphi 13 and
   Free Pascal.
@@ -70,3 +74,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (XRechnung, ZUGFeRD, GAEB) are round-tripped through the DOM, damaged
   copies must be rejected cleanly, and `tools/check-local.py` cross-checks
   the classification with expat.
+
+[Unreleased]: https://github.com/LandrixSoftware/LandrixXML-for-Pascal/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/LandrixSoftware/LandrixXML-for-Pascal/releases/tag/v0.1.0
