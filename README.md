@@ -4,8 +4,8 @@ A small, fast and dependency-free XML library for **Delphi 6 through
 Delphi 13** and **Free Pascal 3.2+**: a pull reader, a streaming writer, a
 DOM and locale-independent conversion helpers for XML Schema values.
 
-> **Status:** version 0.1.0, the first release. The API may still change
-> in details before 1.0; see the [CHANGELOG](CHANGELOG.md).
+> **Status:** version 0.2.0. The API may still change in details before
+> 1.0; see the [CHANGELOG](CHANGELOG.md).
 
 ## Features
 
@@ -114,8 +114,8 @@ end;
 
 Elements are matched by namespace URI and local name, so the prefixes
 used in the document do not matter. `ReadElementText` reads the text of a
-simple element up to its end tag: text and CDATA are joined, comments are
-ignored, and a child element raises `xecUnexpectedElement` (the reader stays
+simple element up to its end tag: text and CDATA are joined, comments and PIs
+are ignored, and a child element raises `xecUnexpectedElement` (the reader stays
 on the child, so it can be skipped). `Reader.Skip` skips a whole subtree.
 `Reader.ElementPath` gives the path of the current element, such as
 `/Invoice/cac:InvoiceLine/cbc:ID`, for messages about skipped elements;
