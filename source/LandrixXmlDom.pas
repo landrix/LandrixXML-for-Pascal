@@ -131,22 +131,25 @@ type
 
   TLandrixXmlNode = class
   private
-    FNodeType: TLandrixXmlNodeType;
+    { Field order chosen for size (pointers, Integers, then small fields):
+      a document holds millions of nodes. Do not append fields casually. }
     FDocument: TLandrixXmlDocument;
     FParent: TLandrixXmlNode;
-    FIndex: Integer;
     FName: TLandrixXmlName;
     FValue: TLandrixXmlUtf8;
     FChildren: array of TLandrixXmlNode;
-    FChildCount: Integer;
     FAttrs: array of TLandrixXmlAttribute;
+    { position in the parent; without parent the slot in the document's
+      list of detached nodes, -1 if not listed there }
+    FIndex: Integer;
+    FChildCount: Integer;
     FAttrCount: Integer;
     FLine: Integer;
     FColumn: Integer;
+    FNodeType: TLandrixXmlNodeType;
     FIsEmpty: Boolean;
     FIsWhitespace: Boolean;
-    FDetached: Boolean;
-    FDetachedSlot: Integer;
+    function GetIndexInParent: Integer;
     function GetChild(Index: Integer): TLandrixXmlNode;
     function GetFirstChild: TLandrixXmlNode;
     function GetLastChild: TLandrixXmlNode;
@@ -188,7 +191,7 @@ type
     property Document: TLandrixXmlDocument read FDocument;
     property Parent: TLandrixXmlNode read FParent;
     { position among the parent's children, -1 without parent }
-    property IndexInParent: Integer read FIndex;
+    property IndexInParent: Integer read GetIndexInParent;
     property ChildCount: Integer read FChildCount;
     property Children[Index: Integer]: TLandrixXmlNode read GetChild; default;
     property FirstChild: TLandrixXmlNode read GetFirstChild;
@@ -501,10 +504,10 @@ var
 begin
   List := Node.FDocument.FDetachedNodes;
   Last := TLandrixXmlNode(List[List.Count - 1]);
-  List[Node.FDetachedSlot] := Last;
-  Last.FDetachedSlot := Node.FDetachedSlot;
+  List[Node.FIndex] := Last;
+  Last.FIndex := Node.FIndex;
   List.Delete(List.Count - 1);
-  Node.FDetached := False;
+  Node.FIndex := -1;
 end;
 
 { first element child (the root element of a document) }
@@ -699,7 +702,7 @@ destructor TLandrixXmlNode.Destroy;
 begin
   if FParent <> nil then
     Unlink
-  else if FDetached and (FDocument <> nil) and (FDocument <> Self) then
+  else if (FIndex >= 0) and (FDocument <> nil) and (FDocument <> Self) then
     RemoveDetached(Self);
   FreeChildren;
   inherited Destroy;
@@ -730,7 +733,7 @@ begin
       N.FChildCount := 0;
       N.FChildren := nil;
       N.FParent := nil;
-      N.FDetached := False;
+      N.FIndex := -1;
       N.Free;
     end;
   finally
@@ -777,6 +780,14 @@ begin
   Inc(FChildCount);
 end;
 
+function TLandrixXmlNode.GetIndexInParent: Integer;
+begin
+  if FParent = nil then
+    Result := -1
+  else
+    Result := FIndex;
+end;
+
 procedure TLandrixXmlNode.Detach;
 begin
   if FNodeType = xntDocument then
@@ -784,8 +795,7 @@ begin
   if FParent = nil then
     Exit;
   Unlink;
-  FDetached := True;
-  FDetachedSlot := Integer(FDocument.FDetachedNodes.Add(Self));
+  FIndex := Integer(FDocument.FDetachedNodes.Add(Self));
 end;
 
 procedure TLandrixXmlNode.Remove;
@@ -837,7 +847,7 @@ begin
     RaiseArg('Child index out of range');
   if Node.FParent <> nil then
     Node.Unlink
-  else if Node.FDetached then
+  else if Node.FIndex >= 0 then
     RemoveDetached(Node);
   InsertAt(Index, Node);
   if Node.FNodeType = xntElement then
@@ -1992,7 +2002,7 @@ begin
   begin
     N := TLandrixXmlNode(FDetachedNodes[FDetachedNodes.Count - 1]);
     FDetachedNodes.Delete(FDetachedNodes.Count - 1);
-    N.FDetached := False;
+    N.FIndex := -1;
     N.Free;
   end;
   FVersion := '';

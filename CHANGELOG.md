@@ -17,6 +17,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   for the element in which it occurred.
 - `tools/fuzz.py`: differential fuzzing against expat.
 
+### Changed
+- DOM nodes are smaller (88 instead of 112 bytes on Delphi 13 Win64, 80
+  instead of 104 on Free Pascal Win64): about 20 % less memory for a loaded
+  document. No API change.
+
 ## [0.1.0] - 2026-10-15
 
 First release.

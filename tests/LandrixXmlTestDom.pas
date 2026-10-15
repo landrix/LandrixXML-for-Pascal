@@ -435,6 +435,7 @@ begin
     CheckEquals(2, Root.ChildCount, 'detached');
     CheckEquals(1, C.IndexInParent, 'indices renumbered');
     Check(B.Parent = nil, 'detached node has no parent');
+    CheckEquals(-1, B.IndexInParent, 'detached node has no index');
     Root.InsertChild(0, B);
     CheckEqualsStr('<r><b></b><a></a><c></c></r>', Dump(Doc), 'inserted at the front');
     Root.AppendChild(B);
@@ -691,6 +692,10 @@ begin
     B.Remove;
     Root.AppendChild(C);
     CheckEqualsStr('<r><a></a><c></c></r>', Dump(Doc), 'detached nodes removed and re-added');
+    Root.AddElement('d').Detach;
+    Root.AddElement('e').Detach;
+    Doc.Clear;
+    Check(Doc.Root = nil, 'Clear with detached nodes outstanding');
     try
       Doc.Standalone := 'maybe';
       FailNotRaised('ELandrixXmlError for Standalone');
