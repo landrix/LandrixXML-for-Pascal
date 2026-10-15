@@ -656,6 +656,12 @@ begin
     CheckEqualsInt64(6, Input.OriginalOffset(3), 'UTF-16: after umlaut');
     CheckEqualsInt64(10, Input.OriginalOffset(7), 'UTF-16: after emoji (surrogate pair)');
     CheckEqualsInt64(12, Input.OriginalOffset(8), 'UTF-16: EOF');
+    { the checkpoint cache must give the same results in any order }
+    CheckEqualsInt64(6, Input.OriginalOffset(3), 'UTF-16: descending query');
+    CheckEqualsInt64(4, Input.OriginalOffset(1), 'UTF-16: descending again');
+    CheckEqualsInt64(10, Input.OriginalOffset(7), 'UTF-16: zig-zag up');
+    CheckEqualsInt64(2, Input.OriginalOffset(0), 'UTF-16: back to start');
+    CheckEqualsInt64(10, Input.OriginalOffset(5), 'UTF-16: inside the emoji rounds up');
   finally
     Input.Free;
   end;

@@ -92,6 +92,10 @@ type
     { start of the declared encoding name (for error positions) }
     FDeclBody: PAnsiChar;
     FDeclStart: Integer;
+    { OriginalOffset checkpoint: units (characters or UTF-16 code units)
+      counted in FData[0..FMapUtf8) }
+    FMapUtf8: Integer;
+    FMapUnits: Int64;
     procedure RaiseDeclError(const Msg: string);
     procedure SetFallbackEncoding(Value: TLandrixXmlEncoding);
     procedure ResetState;
@@ -565,6 +569,8 @@ end;
 
 procedure TLandrixXmlInput.ResetState;
 begin
+  FMapUtf8 := 0;
+  FMapUnits := 0;
   FData := @ZeroByte;
   FSize := 0;
   FBomSize := 0;
@@ -1076,8 +1082,10 @@ end;
 
 function TLandrixXmlInput.OriginalOffset(Utf8Offset: Integer): Int64;
 var
-  I, Units: Integer;
+  I, From: Integer;
+  Units: Int64;
   B: Byte;
+  Utf16: Boolean;
 begin
   if Utf8Offset < 0 then
   begin
@@ -1087,27 +1095,35 @@ begin
   if Utf8Offset > FSize then
     Utf8Offset := FSize;
   case FSourceEncoding of
-    xenIso88591, xenWindows1252, xenIso885915:
+    xenIso88591, xenWindows1252, xenIso885915, xenUtf16LE, xenUtf16BE:
       begin
-        { one original byte per character }
-        Result := 0;
-        for I := 0 to Utf8Offset - 1 do
-          if (Ord(FData[I]) and $C0) <> $80 then
-            Inc(Result);
-        Inc(Result, FBomSize);
-      end;
-    xenUtf16LE, xenUtf16BE:
-      begin
-        Units := 0;
-        for I := 0 to Utf8Offset - 1 do
+        { count characters (single-byte) or UTF-16 code units; continue from
+          the checkpoint so that ascending queries cost O(n) in total }
+        Utf16 := FSourceEncoding in [xenUtf16LE, xenUtf16BE];
+        if Utf8Offset >= FMapUtf8 then
+        begin
+          From := FMapUtf8;
+          Units := FMapUnits;
+        end
+        else
+        begin
+          From := 0;
+          Units := 0;
+        end;
+        for I := From to Utf8Offset - 1 do
         begin
           B := Ord(FData[I]);
-          if B >= $F0 then
+          if Utf16 and (B >= $F0) then
             Inc(Units, 2)
           else if (B and $C0) <> $80 then
             Inc(Units);
         end;
-        Result := FBomSize + 2 * Int64(Units);
+        FMapUtf8 := Utf8Offset;
+        FMapUnits := Units;
+        if Utf16 then
+          Result := FBomSize + 2 * Units
+        else
+          Result := FBomSize + Units;
       end;
   else
     Result := FBomSize + Int64(Utf8Offset);

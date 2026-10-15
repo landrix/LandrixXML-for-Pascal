@@ -21,7 +21,9 @@ uses
   LandrixXmlTestFramework,
   LandrixXmlTestSelf,
   LandrixXmlTestBase,
-  LandrixXmlTestEncoding;
+  LandrixXmlTestEncoding,
+  LandrixXmlTestReader,
+  LandrixXmlTestReaderErrors;
 
 function FilterParam: string;
 var
@@ -37,5 +39,7 @@ begin
   LandrixXmlTestSelf.Register;
   LandrixXmlTestBase.Register;
   LandrixXmlTestEncoding.Register;
+  LandrixXmlTestReader.Register;
+  LandrixXmlTestReaderErrors.Register;
   ExitCode := RunAllTests(FilterParam);
 end.

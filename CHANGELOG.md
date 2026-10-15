@@ -26,3 +26,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `TLandrixXmlBuffer.Extend`.
 - Encoding test files generated with Python's codecs as an independent
   oracle (`tools/gen-encoding-testdata.py`).
+- `LandrixXmlReader`: pull reader `TLandrixXmlReader` for well-formed XML 1.0
+  with namespaces (zero-copy spans plus UTF-8, wide and native accessors,
+  `Skip`, lazy line/column, `MaxDepth`), push adapter `TLandrixXmlHandler`.
+  DOCTYPE is skipped and reported; DTD entities are not expanded.
