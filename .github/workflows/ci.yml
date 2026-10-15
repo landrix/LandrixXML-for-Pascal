@@ -33,3 +33,19 @@ jobs:
 
       - name: Run tests
         run: ./build/ci/LandrixXmlTests "$PWD"
+
+      - name: Build and run tests with overflow and range checking
+        run: |
+          mkdir -p build/ci-checked
+          fpc -B -vewnhi -Co -Cr -Fusource -Fisource -FUbuild/ci-checked -FEbuild/ci-checked tests/LandrixXmlTests.dpr | tee build/ci-checked/build.log
+          test ${PIPESTATUS[0]} -eq 0
+          if grep -E '\.(pas|inc|dpr|lpr)\([0-9]+(,[0-9]+)?\) (Warning|Hint|Note)' build/ci-checked/build.log; then
+            exit 1
+          fi
+          ./build/ci-checked/LandrixXmlTests "$PWD"
+
+      - name: W3C XML conformance suite
+        run: |
+          mkdir -p build/fpc322-linux
+          fpc -B -Fusource -Fisource -FUbuild/fpc322-linux -FEbuild/fpc322-linux tests/LandrixXmlConformance.dpr
+          python3 tools/run-xmlconf.py --exe build/fpc322-linux/LandrixXmlConformance

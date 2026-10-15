@@ -13,7 +13,11 @@
     d6 d7                                    Delphi 6 / Delphi 7 (Win32)
     d13-win32 d13-win64                      Delphi 13
     mac                                      FPC 3.2.4 on the Mac via SSH
-  Sets: min (fpc322-linux, d6, d13-win32), all (everything above).
+  Append "-checked" to any local toolchain (e.g. fpc322-linux-checked,
+  d6-checked) to build with overflow and range checking, as consuming
+  projects may do in debug builds.
+  Sets: min (fpc322-linux, fpc322-linux-checked, d6, d13-win32),
+        all (everything above plus d6-checked and d13-win64-checked).
 
 .EXAMPLE
   ./tools/build.ps1                 # minimum set
@@ -38,10 +42,10 @@ $LocalBin = Join-Path $env:USERPROFILE '.local\bin'
 $MacRunner = Join-Path $env:USERPROFILE '.local\share\remote-toolchains\macos-fpc\Run-PascalProgram.ps1'
 
 $Sets = @{
-  'min' = @('fpc322-linux', 'd6', 'd13-win32')
-  'all' = @('fpc322-linux', 'fpc324-linux', 'fpc331-linux',
+  'min' = @('fpc322-linux', 'fpc322-linux-checked', 'd6', 'd13-win32')
+  'all' = @('fpc322-linux', 'fpc322-linux-checked', 'fpc324-linux', 'fpc331-linux',
             'fpc322-win32', 'fpc322-win64', 'fpc331-winarm',
-            'd6', 'd7', 'd13-win32', 'd13-win64', 'mac')
+            'd6', 'd6-checked', 'd7', 'd13-win32', 'd13-win64', 'd13-win64-checked', 'mac')
 }
 
 $expanded = @()
@@ -71,32 +75,36 @@ function Invoke-Toolchain([string]$Name) {
   $exe = $null
   $log = @()
   $runCmd = $null
+  $Base = $Name -replace '-checked$', ''
+  $Checked = $Base -ne $Name
+  $fpcChecks = if ($Checked) { @('-Co', '-Cr') } else { @() }
+  $dccChecks = if ($Checked) { @('-$Q+', '-$R+') } else { @() }
 
-  switch -Regex ($Name) {
+  switch -Regex ($Base) {
     '^fpc(\d+)-linux$' {
       $fpc = "~/.local/bin/fpc$($Matches[1])"
-      $cmd = "cd '$WslRoot' && $fpc -B -vewnhi -Fusource -Fisource -FU$out -FE$out $Program 2>&1"
+      $cmd = "cd '$WslRoot' && $fpc -B -vewnhi $($fpcChecks -join ' ') -Fusource -Fisource -FU$out -FE$out $Program 2>&1"
       $log = & wsl.exe -e bash -lc $cmd
       $code = $LASTEXITCODE
       $runCmd = { & wsl.exe -e bash -lc "cd '$WslRoot' && ./build/$Name/$ProgramName" }
     }
     '^fpc\d+-win(32|64|arm)$' {
-      $wrapper = Join-Path $LocalBin "$Name.cmd"
-      $log = & $wrapper -B -vewnhi -Fusource -Fisource "-FU$out" "-FE$out" $Program 2>&1
+      $wrapper = Join-Path $LocalBin "$Base.cmd"
+      $log = & $wrapper -B -vewnhi @fpcChecks -Fusource -Fisource "-FU$out" "-FE$out" $Program 2>&1
       $code = $LASTEXITCODE
       $exe = "$out/$ProgramName.exe"
     }
     '^d(6|7)$' {
       $d = if ($Matches[1] -eq '6') { $Delphi6 } else { $Delphi7 }
       $winOut = $out -replace '/', '\'
-      $log = & "$d\Bin\dcc32.exe" -B -Q -W -H "-U$d\Lib;source;tests" '-Isource' "-N$winOut" "-E$winOut" ($Program -replace '/', '\') 2>&1
+      $log = & "$d\Bin\dcc32.exe" -B -Q -W -H @dccChecks "-U$d\Lib;source;tests" '-Isource' "-N$winOut" "-E$winOut" ($Program -replace '/', '\') 2>&1
       $code = $LASTEXITCODE
       $exe = "$out/$ProgramName.exe"
     }
     '^d13-win(32|64)$' {
       $bits = $Matches[1]
       $dcc = if ($bits -eq '32') { 'dcc32.exe' } else { 'dcc64.exe' }
-      $log = & "$Delphi13\bin\$dcc" -B -Q -W -H '-NSSystem;System.Win;Winapi' "-U$Delphi13\lib\win$bits\release;source;tests" '-Isource' "-NU$out" "-E$out" $Program 2>&1
+      $log = & "$Delphi13\bin\$dcc" -B -Q -W -H @dccChecks '-NSSystem;System.Win;Winapi' "-U$Delphi13\lib\win$bits\release;source;tests" '-Isource' "-NU$out" "-E$out" $Program 2>&1
       $code = $LASTEXITCODE
       $exe = "$out/$ProgramName.exe"
     }

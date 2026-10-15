@@ -95,3 +95,6 @@ GTAGS
 # Python caches
 __pycache__/
 *.pyc
+
+# W3C XML conformance test suite (downloaded by tools/run-xmlconf.py)
+tests/data/xmlconf-suite/
