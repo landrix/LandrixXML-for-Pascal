@@ -283,7 +283,8 @@ reader only was about 110 MB, most of it the generated document itself.
 
 Tested, also with overflow and range checking enabled:
 
-- Delphi 6, Delphi 7, Delphi 13 (Win32 and Win64)
+- Delphi 6, Delphi 7, Delphi 13 (Win32 and Win64); Delphi 13 macOS ARM64
+  compiles without warnings (not run)
 - Free Pascal 3.2.2 on Windows (i386, x86_64), Linux (aarch64; x86_64 in
   CI)
 - Free Pascal 3.2.4 on Linux (aarch64) and macOS (aarch64)

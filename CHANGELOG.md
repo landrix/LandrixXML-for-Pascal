@@ -5,6 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Delphi 13 macOS ARM64: no more W1072 warnings where `TStream.Read`
+  returns a 64-bit `Longint`.
+- Free Pascal on macOS AArch64: no more note about `Move` not being inlined
+  in `ElementPath`, which appeared depending on the order units are
+  compiled in.
+
 ## [0.2.0] - 2026-10-15
 
 ### Added

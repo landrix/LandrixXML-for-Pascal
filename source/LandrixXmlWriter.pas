@@ -1757,7 +1757,8 @@ begin
           Eof := True;
           Break;
         end;
-        N := Stream.Read(FChunk[Filled], Want);
+        { TStream.Read returns Longint, 64 bits on 64-bit POSIX Delphi }
+        N := Integer(Stream.Read(FChunk[Filled], Want));
         if N <= 0 then
         begin
           if Remaining > 0 then

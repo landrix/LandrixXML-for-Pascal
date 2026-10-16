@@ -1690,8 +1690,8 @@ end;
 
 function TLandrixXmlReader.ElementPathUtf8: TLandrixXmlUtf8;
 var
-  I, Len: Integer;
-  P: PAnsiChar;
+  I, J, Len: Integer;
+  P, Q: PAnsiChar;
 begin
   { no CheckLiveState: after an error the stack still describes where it
     happened }
@@ -1707,7 +1707,11 @@ begin
   begin
     P^ := '/';
     Inc(P);
-    Move(FElems[I].NameP^, P^, FElems[I].NameLen);
+    { a plain loop: with Move, FPC 3.2.4 on aarch64-darwin reported note
+      6058 (Move not inlined) here in some builds despite LandrixXml.inc }
+    Q := FElems[I].NameP;
+    for J := 0 to FElems[I].NameLen - 1 do
+      P[J] := Q[J];
     Inc(P, FElems[I].NameLen);
   end;
 end;

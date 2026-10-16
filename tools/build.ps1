@@ -12,12 +12,17 @@
     fpc322-win32 fpc322-win64 fpc331-winarm  FPC on Windows
     d6 d7                                    Delphi 6 / Delphi 7 (Win32)
     d13-win32 d13-win64                      Delphi 13
+    d13-osxarm64                             Delphi 13 macOS ARM64 (LLVM back end),
+                                             compile only: every unit under source/
+                                             and tests/ is compiled, nothing is
+                                             linked or run (no macOS SDK imported)
     mac                                      FPC 3.2.4 on the Mac via SSH
   Append "-checked" to any local toolchain (e.g. fpc322-linux-checked,
   d6-checked) to build with overflow and range checking, as consuming
   projects may do in debug builds.
   Sets: min (fpc322-linux, fpc322-linux-checked, d6, d13-win32),
-        all (everything above plus d6-checked and d13-win64-checked).
+        all (everything above plus d6-checked, d13-win64-checked and
+        d13-osxarm64).
 
 .EXAMPLE
   ./tools/build.ps1                 # minimum set
@@ -45,7 +50,8 @@ $Sets = @{
   'min' = @('fpc322-linux', 'fpc322-linux-checked', 'd6', 'd13-win32')
   'all' = @('fpc322-linux', 'fpc322-linux-checked', 'fpc324-linux', 'fpc331-linux',
             'fpc322-win32', 'fpc322-win64', 'fpc331-winarm',
-            'd6', 'd6-checked', 'd7', 'd13-win32', 'd13-win64', 'd13-win64-checked', 'mac')
+            'd6', 'd6-checked', 'd7', 'd13-win32', 'd13-win64', 'd13-win64-checked',
+            'd13-osxarm64', 'mac')
 }
 
 $expanded = @()
@@ -107,6 +113,30 @@ function Invoke-Toolchain([string]$Name) {
       $log = & "$Delphi13\bin\$dcc" -B -Q -W -H @dccChecks '-NSSystem;System.Win;Winapi' "-U$Delphi13\lib\win$bits\release;source;tests" '-Isource' "-NU$out" "-E$out" $Program 2>&1
       $code = $LASTEXITCODE
       $exe = "$out/$ProgramName.exe"
+    }
+    '^d13-osxarm64$' {
+      # Compile only: linking needs the macOS SDK (imported through PAServer),
+      # which is not set up. -Program is ignored here.
+      $code = 0
+      $log = @()
+      $units = @(Get-ChildItem source -Filter *.pas | Sort-Object Name) +
+               @(Get-ChildItem tests -Filter *.pas | Sort-Object Name)
+      foreach ($unit in $units) {
+        $log += "--- $($unit.Name)"
+        $log += & "$Delphi13\bin\dccosxarm64.exe" -B -Q -W -H @dccChecks '-NSSystem' "-U$Delphi13\lib\osxarm64\release;source;tests" '-Isource' "-NU$out" $unit.FullName 2>&1
+        if ($LASTEXITCODE -ne 0) { $code = $LASTEXITCODE }
+      }
+      $log = @($log | ForEach-Object { "$_" })
+      $log | Set-Content -Encoding utf8 "$out/build.log"
+      $diag = Count-OwnDiagnostics $log
+      if ($code -ne 0) {
+        # later units keep compiling, so show the error lines, not only the tail
+        $log | Where-Object { $_ -match 'Fehler|Error|Schwerwiegend|Fatal' } | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+      } else {
+        $diag | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
+        Write-Host '  compiled only (not linked, tests not run)'
+      }
+      return @{ Name = $Name; Build = $code; Diag = $diag.Count; Run = $null; Log = $log }
     }
     '^mac$' {
       if (-not (Test-Path $MacRunner)) { throw "Mac runner not found: $MacRunner" }

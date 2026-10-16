@@ -13,6 +13,12 @@ unit LandrixXmlTestWriter;
 
 {$I LandrixXml.inc}
 
+{$IFDEF LANDRIXXML_UNICODE}
+  { DeleteFile is an inline routine on Delphi's POSIX targets and needs
+    Posix.Unistd to be expanded (hint H2443); call it out of line. }
+  {$INLINE OFF}
+{$ENDIF}
+
 interface
 
 procedure Register;

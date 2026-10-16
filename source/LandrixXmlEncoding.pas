@@ -615,7 +615,8 @@ begin
       FRaw.Reserve(Integer(Remaining) + ChunkSize);
     repeat
       P := FRaw.Extend(ChunkSize);
-      Got := Stream.Read(P^, ChunkSize);
+      { TStream.Read returns Longint, 64 bits on 64-bit POSIX Delphi }
+      Got := Integer(Stream.Read(P^, ChunkSize));
       if Got < 0 then
         Got := 0;
       FRaw.Truncate(FRaw.Size - ChunkSize + Got);
