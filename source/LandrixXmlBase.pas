@@ -80,7 +80,8 @@ type
     xecArithmetic,       { division by zero or an arithmetic result out of range }
     xecRegex,            { invalid regular expression or replacement string }
     xecUnsupported,      { valid input using a construct this library does not support }
-    xecSchema            { an XML Schema that is invalid or cannot be resolved }
+    xecSchema,           { an XML Schema that is invalid or cannot be resolved }
+    xecXPath             { an XPath expression with a static or dynamic error }
   );
 
   { All errors raised by LandrixXml. Line and Column are 1-based (Column in

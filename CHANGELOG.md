@@ -68,6 +68,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a keyref outside the scope of its key is reported as
   `KeyRefOutOfScope`. `tools/gen-xsdvalidator-testdata.py` generates the
   test cases, `tests/data/xsdvalidator/edge` holds one small case per rule.
+- `LandrixXmlXPathTree`: a read-only tree of a document in the XPath data
+  model, built from the pull reader or from a DOM: nodes in document order
+  in flat arrays, attributes as nodes, text and CDATA merged, numbered
+  expanded names, string values and the locations SchXslt writes.
+- `LandrixXmlXPath`: XPath 2.0 lexer, parser and syntax tree for the part of
+  the language the EN16931, XRechnung, Peppol and Factur-X rules use, with
+  a static context (namespaces, variables, user functions); unsupported
+  constructs are static errors. `ELandrixXmlXPathError` carries the W3C
+  error code; new error code `xecXPath`.
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
   `LandrixXmlXsdValueText` and `LandrixXmlXsdValueKey`. Messages quote
   values whole, show values in Xerces' canonical form (decimals, float and

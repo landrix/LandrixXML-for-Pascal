@@ -33,6 +33,8 @@ uses
   LandrixXmlTestXsdTypes,
   LandrixXmlTestXsdContent,
   LandrixXmlTestXsdValidator,
+  LandrixXmlTestXPathTree,
+  LandrixXmlTestXPath,
   LandrixXmlTestLocal;
 
 function FilterParam: string;
@@ -60,6 +62,8 @@ begin
   LandrixXmlTestXsdTypes.Register;
   LandrixXmlTestXsdContent.Register;
   LandrixXmlTestXsdValidator.Register;
+  LandrixXmlTestXPathTree.Register;
+  LandrixXmlTestXPath.Register;
   LandrixXmlTestLocal.Register;
   ExitCode := RunAllTests(FilterParam);
 end.
