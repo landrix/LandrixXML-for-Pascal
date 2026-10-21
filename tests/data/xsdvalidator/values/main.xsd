@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- White space in values as Xerces normalizes them (collapsed for string-based
+     types, trimmed for numbers and IDs), repeated IDs, simple content with
+     element children. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:complexType name="SC"><xs:simpleContent><xs:extension base="xs:int"><xs:attribute name="a" type="xs:int"/></xs:extension></xs:simpleContent></xs:complexType>
+<xs:element name="r"><xs:complexType><xs:sequence>
+  <xs:element name="i" type="xs:int" maxOccurs="unbounded"/>
+  <xs:element name="n" type="xs:NCName" maxOccurs="unbounded"/>
+  <xs:element name="s" type="xs:string" maxOccurs="unbounded"/>
+  <xs:element name="id" type="xs:ID" maxOccurs="unbounded"/>
+  <xs:element name="sc" type="SC" maxOccurs="unbounded"/>
+  <xs:element name="w"><xs:complexType><xs:attribute name="x" type="xs:int"/><xs:attribute name="idattr" type="xs:ID"/><xs:attribute name="nc" type="xs:NCName"/></xs:complexType></xs:element>
+  <xs:element name="w2"><xs:complexType><xs:attribute name="idattr" type="xs:ID"/></xs:complexType></xs:element>
+</xs:sequence></xs:complexType></xs:element></xs:schema>

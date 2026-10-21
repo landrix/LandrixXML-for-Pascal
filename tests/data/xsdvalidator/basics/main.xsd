@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simple and complex types, attributes, fixed and default values,
+     empty, mixed and element-only content, ID and IDREF. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:basics" targetNamespace="urn:basics"
+  elementFormDefault="qualified">
+  <xs:simpleType name="Code">
+    <xs:restriction base="xs:token"><xs:pattern value="[A-Z]{2}[0-9]?"/><xs:maxLength value="3"/></xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Amount">
+    <xs:restriction base="xs:decimal"><xs:totalDigits value="6"/><xs:fractionDigits value="2"/>
+      <xs:minInclusive value="-1000"/></xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Color">
+    <xs:restriction base="xs:string"><xs:enumeration value="red"/><xs:enumeration value="green"/></xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="IntOrAuto">
+    <xs:union memberTypes="xs:int"><xs:simpleType><xs:restriction base="xs:token"><xs:enumeration value="auto"/></xs:restriction></xs:simpleType></xs:union>
+  </xs:simpleType>
+  <xs:complexType name="Price">
+    <xs:simpleContent><xs:extension base="Amount"><xs:attribute name="currency" type="Code" use="required"/></xs:extension></xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="SmallPrice">
+    <xs:simpleContent><xs:restriction base="Price"><xs:maxExclusive value="100"/></xs:restriction></xs:simpleContent>
+  </xs:complexType>
+  <xs:attribute name="schema" type="xs:string" fixed="v1"/>
+  <xs:element name="order">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="id" type="xs:ID"/>
+        <xs:element name="code" type="Code"/>
+        <xs:element name="color" type="Color" minOccurs="0" default="red"/>
+        <xs:element name="price" type="Price"/>
+        <xs:element name="small" type="SmallPrice" minOccurs="0"/>
+        <xs:element name="size" type="IntOrAuto" minOccurs="0"/>
+        <xs:element name="note" minOccurs="0">
+          <xs:complexType mixed="true"><xs:sequence><xs:element name="b" type="xs:string" minOccurs="0" maxOccurs="unbounded"/></xs:sequence></xs:complexType>
+        </xs:element>
+        <xs:element name="flag" minOccurs="0"><xs:complexType/></xs:element>
+        <xs:element name="version" type="xs:string" fixed="1.0" minOccurs="0"/>
+        <xs:element name="link" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType><xs:attribute name="to" type="xs:IDREF" use="required"/><xs:attribute name="kind" type="xs:string" fixed="ref"/>
+            <xs:attribute name="when"><xs:simpleType><xs:restriction base="xs:date"><xs:minInclusive value="2000-01-01"/></xs:restriction></xs:simpleType></xs:attribute></xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="number" type="xs:positiveInteger" use="required"/>
+      <xs:attribute name="date" type="xs:date"/>
+      <xs:attribute name="uid" type="xs:ID"/>
+      <xs:attribute ref="schema"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,11 @@
+file a.xml
+error 1 38 cvc-identity-constraint.4.2.2 Duplicate key value [1.0E2] declared for identity constraint "K" of element "R".
+
+file b.xml
+error 1 33 cvc-identity-constraint.4.2.2 Duplicate key value [0.0E1] declared for identity constraint "K" of element "R".
+
+file c.xml
+error 1 36 cvc-identity-constraint.4.2.2 Duplicate key value [NaN] declared for identity constraint "K" of element "R".
+
+file d.xml
+error 1 36 cvc-identity-constraint.4.2.2 Duplicate key value [INF] declared for identity constraint "K" of element "R".

@@ -1,0 +1,74 @@
+file 00.xml
+error 1 23 cvc-identity-constraint.4.3 Key 'KR' with value '1.0E2' not found for identity constraint of element 'R'.
+
+file 01.xml
+error 1 23 cvc-identity-constraint.4.3 Key 'KR' with value '1.0E-1' not found for identity constraint of element 'R'.
+
+file 02.xml
+error 1 23 cvc-identity-constraint.4.3 Key 'KR' with value '3.0E-1' not found for identity constraint of element 'R'.
+
+file 03.xml
+error 1 24 cvc-identity-constraint.4.3 Key 'KR' with value '2.0E23' not found for identity constraint of element 'R'.
+
+file 04.xml
+error 1 24 cvc-identity-constraint.4.3 Key 'KR' with value '1.0E23' not found for identity constraint of element 'R'.
+
+file 05.xml
+error 1 27 cvc-identity-constraint.4.3 Key 'KR' with value '1.4E-45' not found for identity constraint of element 'R'.
+
+file 06.xml
+error 1 25 cvc-identity-constraint.4.3 Key 'KR' with value '1.4E-45' not found for identity constraint of element 'R'.
+
+file 07.xml
+error 1 34 cvc-identity-constraint.4.3 Key 'KR' with value '1.1754944E-38' not found for identity constraint of element 'R'.
+
+file 08.xml
+error 1 32 cvc-identity-constraint.4.3 Key 'KR' with value '3.4028235E38' not found for identity constraint of element 'R'.
+
+file 09.xml
+error 1 28 cvc-identity-constraint.4.3 Key 'KR' with value '1.6777216E7' not found for identity constraint of element 'R'.
+
+file 10.xml
+error 1 25 cvc-identity-constraint.4.3 Key 'KR' with value '1.0E7' not found for identity constraint of element 'R'.
+
+file 11.xml
+error 1 29 cvc-identity-constraint.4.3 Key 'KR' with value '1.2345679E8' not found for identity constraint of element 'R'.
+
+file 12.xml
+error 1 24 cvc-identity-constraint.4.3 Key 'KR' with value '0.0E1' not found for identity constraint of element 'R'.
+
+file 13.xml
+error 1 29 cvc-identity-constraint.4.3 Key 'KR' with value '1.0000001E0' not found for identity constraint of element 'R'.
+
+file 14.xml
+error 1 30 cvc-identity-constraint.4.3 Key 'KR' with value '3.3333334E-1' not found for identity constraint of element 'R'.
+
+file 15.xml
+error 1 30 cvc-identity-constraint.4.3 Key 'KR' with value '8.589974E9' not found for identity constraint of element 'R'.
+
+file 16.xml
+error 1 26 cvc-identity-constraint.4.3 Key 'KR' with value '2.0E-3' not found for identity constraint of element 'R'.
+
+file 17.xml
+error 1 26 cvc-identity-constraint.4.3 Key 'KR' with value '1.0E-4' not found for identity constraint of element 'R'.
+
+file 18.xml
+error 1 32 cvc-identity-constraint.4.3 Key 'KR' with value '7.038531E-26' not found for identity constraint of element 'R'.
+
+file 19.xml
+error 1 23 cvc-identity-constraint.4.3 Key 'KR' with value '1.1E0' not found for identity constraint of element 'R'.
+
+file 20.xml
+error 1 29 cvc-identity-constraint.4.3 Key 'KR' with value '1.2345678E0' not found for identity constraint of element 'R'.
+
+file 21.xml
+error 1 30 cvc-identity-constraint.4.3 Key 'KR' with value '9.99999E-7' not found for identity constraint of element 'R'.
+
+file 22.xml
+error 1 27 cvc-identity-constraint.4.3 Key 'KR' with value '4.2E-45' not found for identity constraint of element 'R'.
+
+file 23.xml
+error 1 26 cvc-identity-constraint.4.3 Key 'KR' with value '1.0E-3' not found for identity constraint of element 'R'.
+
+file 24.xml
+error 1 25 cvc-identity-constraint.4.3 Key 'KR' with value '1.0E-3' not found for identity constraint of element 'R'.

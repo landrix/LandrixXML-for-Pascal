@@ -1,0 +1,10 @@
+file a.xml
+error 1 18 cvc-id.3 A field of identity constraint 'K' matched element 'R', but this element does not have a simple type.
+error 1 39 cvc-id.3 A field of identity constraint 'K' matched element 'R', but this element does not have a simple type.
+
+file b.xml
+error 1 26 cvc-id.3 A field of identity constraint 'K' matched element 'R', but this element does not have a simple type.
+error 1 54 cvc-identity-constraint.4.2.1.a Element "R" has no value for the key "K".
+
+file c.xml
+error 1 21 cvc-id.3 A field of identity constraint 'K' matched element 'R', but this element does not have a simple type.

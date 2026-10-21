@@ -1,0 +1,13 @@
+file a.xml
+error 1 96 cvc-identity-constraint.4.3 Key 'KE' with value '2000-12Z' not found for identity constraint of element 'R'.
+error 1 96 cvc-identity-constraint.4.3 Key 'KD' with value '2000Z' not found for identity constraint of element 'R'.
+error 1 96 cvc-identity-constraint.4.3 Key 'KC' with value '--02-29Z' not found for identity constraint of element 'R'.
+error 1 96 cvc-identity-constraint.4.3 Key 'KB' with value '--01Z' not found for identity constraint of element 'R'.
+error 1 96 cvc-identity-constraint.4.3 Key 'KA' with value '---31Z' not found for identity constraint of element 'R'.
+
+file b.xml
+error 1 96 cvc-identity-constraint.4.3 Key 'KE' with value '2001-12Z' not found for identity constraint of element 'R'.
+error 1 96 cvc-identity-constraint.4.3 Key 'KD' with value '-0001Z' not found for identity constraint of element 'R'.
+error 1 96 cvc-identity-constraint.4.3 Key 'KC' with value '--12-31Z' not found for identity constraint of element 'R'.
+error 1 96 cvc-identity-constraint.4.3 Key 'KB' with value '--11Z' not found for identity constraint of element 'R'.
+error 1 96 cvc-identity-constraint.4.3 Key 'KA' with value '---31Z' not found for identity constraint of element 'R'.

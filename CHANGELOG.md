@@ -51,6 +51,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   validator. `XsdOracle` now reports a runtime exception of the JDK's
   validator as `jdk-exception` and goes on with the next document.
 - `TLandrixXmlUtf8Array` moved from `LandrixXmlRegex` to `LandrixXmlBase`.
+- `LandrixXmlXsdSchema`, `LandrixXmlXsdSchemaLoader`, `LandrixXmlXsdValidator`:
+  an XML Schema 1.0 validator. Schemas are loaded at run time (include,
+  import, redefine also of schemas without target namespace, groups,
+  attribute groups, derivation, wildcards, identity constraints) into an
+  immutable set that validators in several threads can share. Documents
+  are validated while they are read or as a loaded DOM, with the errors,
+  messages, order and recovery of the validator of the Java runtime;
+  positions as Xerces reports them when reading, paths such as
+  `/Invoice/cac:InvoiceLine[2]/cbc:ID[1]` and the schema file and line of
+  each error. Unsupported constructs are rejected at load time
+  (`xecUnsupported`), invalid schemas raise the new code `xecSchema`;
+  `xsi:type` and `xsi:nil` in documents are reported as unsupported.
+  Elements without a declaration are assessed laxly with `anyType`;
+  identity constraints follow Xerces' value tables and XPath matching,
+  a keyref outside the scope of its key is reported as
+  `KeyRefOutOfScope`. `tools/gen-xsdvalidator-testdata.py` generates the
+  test cases, `tests/data/xsdvalidator/edge` holds one small case per rule.
+- `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
+  `LandrixXmlXsdValueText` and `LandrixXmlXsdValueKey`. Messages quote
+  values whole, show values in Xerces' canonical form (decimals, float and
+  double as `1.5E3`, dates and times moved to UTC, hexBinary in upper
+  case) and normalize white space as Xerces does.
 - `tools/XsdOracle.java` and `tools/gen-xsdtypes-testdata.py`: test oracle
   and test data generator for simple types; `tools/gen-xml10-name-tables.py`
   generates the XML 1.0 Fourth Edition name character classes Xerces uses

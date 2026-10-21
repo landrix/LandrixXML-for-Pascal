@@ -1,0 +1,6 @@
+file u.xml
+
+file u2.xml
+error 1 74 cvc-complex-type.3.2.2 Attribute 'p:a' is not allowed to appear in element 'R2'.
+error 1 74 cvc-complex-type.3.2.2 Attribute 'b' is not allowed to appear in element 'R2'.
+error 1 74 cvc-complex-type.3.2.2 Attribute 'o:c' is not allowed to appear in element 'R2'.

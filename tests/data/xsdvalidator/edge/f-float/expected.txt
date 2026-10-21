@@ -1,0 +1,7 @@
+file a.xml
+error 1 12 cvc-maxInclusive-valid Value '2' is not facet-valid with respect to maxInclusive '1.5E0' for type '#AnonType_dR'.
+error 1 12 cvc-type.3.1.3 The value '2' of element 'd' is not valid.
+error 1 23 cvc-minExclusive-valid Value '-100' is not facet-valid with respect to minExclusive '-1.0E2' for type '#AnonType_dR'.
+error 1 23 cvc-type.3.1.3 The value '-100' of element 'd' is not valid.
+error 1 33 cvc-maxInclusive-valid Value '1e1' is not facet-valid with respect to maxInclusive '1.5E0' for type '#AnonType_dR'.
+error 1 33 cvc-type.3.1.3 The value '1e1' of element 'd' is not valid.

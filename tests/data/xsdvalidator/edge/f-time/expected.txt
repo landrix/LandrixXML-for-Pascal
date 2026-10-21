@@ -1,0 +1,3 @@
+file a.xml
+error 1 20 cvc-minInclusive-valid Value '00:30:00Z' is not facet-valid with respect to minInclusive '01:00:00Z' for type '#AnonType_dR'.
+error 1 20 cvc-type.3.1.3 The value '00:30:00Z' of element 'd' is not valid.

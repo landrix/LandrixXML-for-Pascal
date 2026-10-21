@@ -1,0 +1,8 @@
+file c.xml
+
+file e.xml
+
+file e2.xml
+error 1 9 cvc-complex-type.2.1 Element 'E' must have no character or element information item [children], because the type's content type is empty.
+
+file e3.xml

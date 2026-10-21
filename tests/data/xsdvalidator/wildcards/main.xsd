@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Element and attribute wildcards (strict, lax, skip, ##other, lists),
+     xs:anyType content and elements without a type. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:wild" xmlns:o="urn:other"
+  targetNamespace="urn:wild" elementFormDefault="qualified">
+  <xs:import namespace="urn:other" schemaLocation="other.xsd"/>
+  <xs:element name="known" type="xs:int"/>
+  <xs:attribute name="gattr" type="xs:int"/>
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="strict"><xs:complexType><xs:sequence><xs:any namespace="##other" maxOccurs="unbounded"/></xs:sequence></xs:complexType></xs:element>
+        <xs:element name="lax"><xs:complexType><xs:sequence><xs:any processContents="lax" maxOccurs="unbounded"/></xs:sequence>
+          <xs:anyAttribute namespace="##targetNamespace" processContents="lax"/></xs:complexType></xs:element>
+        <xs:element name="skip"><xs:complexType><xs:sequence><xs:any namespace="##any" processContents="skip" minOccurs="0" maxOccurs="unbounded"/></xs:sequence>
+          <xs:anyAttribute processContents="skip"/></xs:complexType></xs:element>
+        <xs:element name="list"><xs:complexType><xs:sequence><xs:any namespace="urn:other ##local" maxOccurs="2"/></xs:sequence>
+          <xs:anyAttribute namespace="urn:other" processContents="strict"/></xs:complexType></xs:element>
+        <xs:element name="anything" type="xs:anyType"/>
+        <xs:element name="untyped"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

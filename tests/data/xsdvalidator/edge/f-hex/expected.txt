@@ -1,0 +1,3 @@
+file a.xml
+error 1 13 cvc-enumeration-valid Value 'AC' is not facet-valid with respect to enumeration '[AB, 0F]'. It must be a value from the enumeration.
+error 1 13 cvc-type.3.1.3 The value 'AC' of element 'd' is not valid.

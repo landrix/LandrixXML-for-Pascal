@@ -1,0 +1,3 @@
+file f.xml
+error 1 46 cvc-identity-constraint.3 Field "./p:n" of identity constraint "U3" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 46 cvc-identity-constraint.3 Field "./p:n" of identity constraint "U2" matches more than one value within the scope of its selector; fields must match unique values.

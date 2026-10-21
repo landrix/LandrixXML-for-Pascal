@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="urn:wild" xmlns:o="urn:other" xmlns:u="urn:unknown">
+  <strict><o:x>2026-10-21</o:x></strict>
+  <lax xmlns:w="urn:wild" w:gattr="5"><known>3</known><u:free a="1"><u:deep/></u:free><o:x>2026-01-01</o:x></lax>
+  <skip u:any="1"><whatever><x/></whatever><known>notanint</known></skip>
+  <list o:oattr="true"><o:x>2026-02-02</o:x><plain xmlns=""/></list>
+  <anything a="1">text<known>4</known><u:z/></anything>
+  <untyped><u:q/>text</untyped>
+</root>

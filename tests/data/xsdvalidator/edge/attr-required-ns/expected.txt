@@ -1,0 +1,4 @@
+file miss.xml
+error 1 19 cvc-complex-type.4 Attribute 'loc' belonging to namespace 'urn:p', must appear on element 'R'.
+error 1 19 cvc-complex-type.4 Attribute 'g' belonging to namespace 'urn:p', must appear on element 'R'.
+error 1 19 cvc-complex-type.4 Attribute 'u' must appear on element 'R'.

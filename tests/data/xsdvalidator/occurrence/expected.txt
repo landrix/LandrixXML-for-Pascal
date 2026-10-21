@@ -1,0 +1,114 @@
+file few.xml
+error 3 20 cvc-complex-type.2.4.g Invalid content was found starting with element 'z'. '"urn:occ":a' is expected to occur a minimum of '2' times in the current sequence. One more instance is required to satisfy this constraint.
+error 4 22 cvc-complex-type.2.4.b The content of element 'cnt' is not complete. One of '{"urn:occ":a}' is expected.
+error 5 54 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:occ":c}'. One of '{"urn:occ":e}' is expected.
+
+file invalid.xml
+error 3 35 cvc-complex-type.2.4.e 'a' can occur a maximum of '3' times in the current sequence. This limit was exceeded. At this point one of '{"urn:occ":z}' is expected.
+
+file jdkcrash.xml
+jdk-exception
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a unknown="1"/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 4 32 cvc-type.3.1.1 Element 'a' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>-1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact><exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 5 53 cvc-complex-type.2.4.d Invalid content was found starting with element 'exact'. No child element is expected at this point.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact><rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  \n</root>\n
+error 3 51 cvc-complex-type.2.4.d Invalid content was found starting with element 'rep'. No child element is expected at this point.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a></a><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a>1.005</a><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><d/><f/><e/></exact>\n</root>\n
+error 5 34 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:occ":f}'. One of '{"urn:occ":c, "urn:occ":d, "urn:occ":e}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a>  a  b  </a><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/>-1</exact>\n</root>\n
+error 5 48 cvc-complex-type.2.3 Element 'exact' cannot have character [children], because the type's content type is element-only.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z>2026-13-01</z></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 4 46 cvc-complex-type.2.4.b The content of element 'cnt' is not complete. One of '{"urn:occ":a, "urn:occ":z}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+jdk-exception
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a>x</a><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c>true</c><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <exact><a>1</a><a>2</a><a>3</a><z/></exact>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 3 13 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:occ":a}'. One of '{"urn:occ":c, "urn:occ":d}' is expected.
+error 4 8 cvc-complex-type.2.4.d Invalid content was found starting with element 'cnt'. No child element is expected at this point.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><c/></exact>\n</root>\n
+error 5 38 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:occ":c}'. One of '{"urn:occ":e}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f>-1</f><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a unknown="1"/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 4 28 cvc-type.3.1.1 Element 'a' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 3 40 cvc-complex-type.2.4.d Invalid content was found starting with element 'z'. No child element is expected at this point.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a>-1</a><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><a/><c/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 4 16 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:occ":c}'. One of '{"urn:occ":a, "urn:occ":z}' is expected.
+error 4 50 cvc-complex-type.2.4.b The content of element 'cnt' is not complete. One of '{"urn:occ":a}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c unknown="1"/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 4 24 cvc-type.3.1.1 Element 'c' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  \n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><z>1</z><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 3 11 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:occ":z}'. One of '{"urn:occ":a}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a unknown="1">1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 3 23 cvc-type.3.1.1 Element 'a' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a unknown="1"/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 4 44 cvc-type.3.1.1 Element 'a' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><a/><a/><c/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 4 20 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:occ":c}'. One of '{"urn:occ":a, "urn:occ":z}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/>true</exact>\n</root>\n
+error 5 50 cvc-complex-type.2.3 Element 'exact' cannot have character [children], because the type's content type is element-only.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e>x</e></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>999999999</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><d/><d/><c/><c/><e/><f/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/><e/></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a unknown="1"/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 4 52 cvc-type.3.1.1 Element 'a' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e>true</e></exact>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:occ">\n  <rep><a>1</a><a>1</a><a>2</a><a>3</a><z/></rep>\n  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>\n  <exact><c/><d/><d/><c/><e/><f/><e/></exact>\n</root>\n
+error 3 35 cvc-complex-type.2.4.e 'a' can occur a maximum of '3' times in the current sequence. This limit was exceeded. At this point one of '{"urn:occ":z}' is expected.

@@ -1,0 +1,2 @@
+file a.xml
+error 1 26 cvc-identity-constraint.4.1 Duplicate unique value [AB] declared for identity constraint "U" of element "R".

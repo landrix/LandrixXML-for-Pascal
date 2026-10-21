@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v2" number="0" extra="1">
+  <id>x1</id>
+  <code>de12</code>
+  <color>blue</color>
+  <price>1234.567</price>
+  <small currency="EU">100</small>
+  <size>big</size>
+  <note>Text <i>x</i></note>
+  <flag>text</flag>
+  <version>2.0</version>
+  <link to="nowhere" kind="other" when="1999-01-01"/>
+  <link to="x1"><x/></link>
+  text
+</order>

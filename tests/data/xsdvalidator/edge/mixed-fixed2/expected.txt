@@ -1,0 +1,7 @@
+file m.xml
+error 1 14 cvc-elt.5.2.2.2.1 The value ' x ' of element 'm' does not match the fixed {value constraint} value 'x'.
+error 1 26 cvc-elt.5.2.2.1 Element 'm' must have no element information item [children].
+error 1 26 cvc-elt.5.2.2.2.1 The value '' of element 'm' does not match the fixed {value constraint} value 'x'.
+error 1 37 cvc-elt.5.2.2.1 Element 'm' must have no element information item [children].
+error 1 37 cvc-elt.5.2.2.2.1 The value '' of element 'm' does not match the fixed {value constraint} value 'x'.
+error 1 54 cvc-elt.5.2.2.2.1 The value 'xx' of element 'm' does not match the fixed {value constraint} value 'x'.

@@ -1,0 +1,1 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:p="urn:p" targetNamespace="urn:p"><xs:element name="g" type="xs:int"/><xs:attribute name="at" type="xs:int"/></xs:schema>

@@ -1,0 +1,1 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="R"><xs:complexType><xs:sequence><xs:element name="g" type="xs:int" fixed="3" maxOccurs="unbounded"/><xs:element name="t" type="xs:token" fixed="a b" maxOccurs="unbounded"/><xs:element name="s" type="xs:string" fixed="a" maxOccurs="unbounded"/></xs:sequence></xs:complexType></xs:element></xs:schema>

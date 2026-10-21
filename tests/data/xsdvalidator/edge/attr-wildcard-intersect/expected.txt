@@ -1,0 +1,3 @@
+file i.xml
+error 1 73 cvc-complex-type.3.2.2 Attribute 'p:a' is not allowed to appear in element 'R'.
+error 1 73 cvc-complex-type.3.2.2 Attribute 'b' is not allowed to appear in element 'R'.

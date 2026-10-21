@@ -134,6 +134,7 @@ type
   private
     FNamespaceUri: TLandrixXmlUtf8;
     FName: TLandrixXmlUtf8;
+    FAnonymousName: TLandrixXmlUtf8;
     FBase: TLandrixXmlXsdSimpleType;
     FVariety: TLandrixXmlXsdVariety;
     FPrimitive: TLandrixXmlXsdPrimitive;
@@ -155,10 +156,10 @@ type
     FTotalDigits: Integer;
     FFractionDigits: Integer;
     procedure InitFacets;
-    function DisplayName: string;
     function CheckFacets(const Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
     function ValidatorName: string;
     function HasPatterns: Boolean;
+    function IsTrimmedType: Boolean;
     function CheckPatterns(const Value: TLandrixXmlXsdValue; const TypeName: string;
       out Error: TLandrixXmlXsdError): Boolean;
     function ParseFacetValue(const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
@@ -184,12 +185,19 @@ type
       out Error: TLandrixXmlXsdError): Boolean;
     property NamespaceUri: TLandrixXmlUtf8 read FNamespaceUri;
     property Name: TLandrixXmlUtf8 read FName;
+    { For an anonymous type: the name messages use, as the schema loader
+      gives it (Xerces' #AnonType_ followed by the names of the enclosing
+      declarations). }
+    property AnonymousName: TLandrixXmlUtf8 read FAnonymousName write FAnonymousName;
     property Base: TLandrixXmlXsdSimpleType read FBase;
     property Variety: TLandrixXmlXsdVariety read FVariety;
     property Primitive: TLandrixXmlXsdPrimitive read FPrimitive;
     property LexicalRule: TLandrixXmlXsdLexicalRule read FLexicalRule;
     property WhiteSpace: TLandrixXmlXsdWhiteSpace read FWhiteSpace;
     property Builtin: Boolean read FBuiltin;
+    { The name Xerces uses for the type in messages: the name, the
+      AnonymousName, or #AnonType_ and the name of the nearest named base. }
+    function DisplayName: string;
     { True if AType is this type or one of its base types (to recognize ID
       and IDREF values). }
     function IsDerivedFrom(AType: TLandrixXmlXsdSimpleType): Boolean;
@@ -199,6 +207,20 @@ type
   nil if it is unknown or not supported. The types are shared; never free
   them. }
 function LandrixXmlXsdBuiltinType(const LocalName: TLandrixXmlUtf8): TLandrixXmlXsdSimpleType;
+
+{ A value as Xerces prints it in messages, its canonical form: a decimal
+  with ".0" unless its type is an integer type, a boolean as true or
+  false, float and double as 1.5E3 (zero as 0.0E1), dates and times with
+  a time zone moved to UTC ("2025-12-31Z"), hexBinary in upper case,
+  base64Binary without white space, other values in their normalized
+  lexical form. }
+function LandrixXmlXsdValueText(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
+
+{ A key for comparing values as Xerces does for identity constraints:
+  equal keys for equal values (0 and -0, all NaNs, the same instant in
+  different time zones), different keys for values of different
+  primitive types (integer types count as decimal). }
+function LandrixXmlXsdValueKey(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
 
 { -1, 0, 1, or LandrixXmlXsdIncomparable. }
 function LandrixXmlXsdCompareValues(const A, B: TLandrixXmlXsdValue): Integer;
@@ -269,9 +291,10 @@ begin
   SetLength(Result, N);
 end;
 
+{ Values are quoted whole, as Xerces does. }
 function Quote(const S: TLandrixXmlUtf8): string;
 begin
-  Result := '''' + LandrixXmlEscapeForMessage(S, 200) + '''';
+  Result := '''' + LandrixXmlEscapeForMessage(S, MaxInt) + '''';
 end;
 
 procedure SetError(out Error: TLandrixXmlXsdError; const Code, Msg: string);
@@ -1425,6 +1448,11 @@ function TLandrixXmlXsdSimpleType.DisplayName: string;
 var
   T: TLandrixXmlXsdSimpleType;
 begin
+  if (FName = '') and (FAnonymousName <> '') then
+  begin
+    Result := LandrixXmlUtf8ToString(FAnonymousName);
+    Exit;
+  end;
   T := Self;
   while (T <> nil) and (T.FName = '') do
     T := T.FBase;
@@ -1580,6 +1608,411 @@ begin
     Quote(TLandrixXmlRegex(FPatterns[0]).Source) + ' for type ''' + TypeName + '''.');
 end;
 
+{ --- canonical forms and keys as Xerces has them ---------------------- }
+
+function XercesMaxDay(Year, Month: Integer): Integer;
+begin
+  if (Month = 4) or (Month = 6) or (Month = 9) or (Month = 11) then
+    Result := 30
+  else if Month = 2 then
+  begin
+    if (Year mod 4 = 0) and ((Year mod 100 <> 0) or (Year mod 400 = 0)) then
+      Result := 29
+    else
+      Result := 28;
+  end
+  else
+    Result := 31;
+end;
+
+function FloorDiv(A, B: Integer): Integer;
+begin
+  Result := A div B;
+  if (A mod B <> 0) and ((A < 0) <> (B < 0)) then
+    Dec(Result);
+end;
+
+function ValuePrimitive(const Value: TLandrixXmlXsdValue): TLandrixXmlXsdPrimitive;
+begin
+  Result := Value.Primitive;
+  if Value.MemberType <> nil then
+    Result := Value.MemberType.Primitive;
+end;
+
+{ The fields of a date or time value as Xerces keeps them: missing parts
+  get its placeholders (year 2000, month 1, day 1, or 15 for xs:time),
+  24:00:00 is the start of the next day, and a value with a time zone is
+  moved to UTC the way Xerces' normalize does it. }
+function XercesDateTime(const Value: TLandrixXmlXsdValue): TLandrixXmlXsdDateTime;
+var
+  Kind: TLandrixXmlXsdPrimitive;
+  Temp, Carry, MaxDay: Integer;
+begin
+  Kind := ValuePrimitive(Value);
+  Result := Value.DateTime;
+  if not (Kind in [xspDateTime, xspDate, xspGYearMonth, xspGYear]) then
+    Result.Year := 2000;
+  if Result.Month = 0 then
+    Result.Month := 1;
+  if Result.Day = 0 then
+  begin
+    if Kind = xspTime then
+      Result.Day := 15
+    else
+      Result.Day := 1;
+  end;
+  if Result.Hour = 24 then
+  begin
+    Result.Hour := 0;
+    Inc(Result.Day);
+    if Result.Day > XercesMaxDay(Result.Year, Result.Month) then
+    begin
+      Result.Day := 1;
+      Inc(Result.Month);
+      if Result.Month > 12 then
+      begin
+        Result.Month := 1;
+        Inc(Result.Year);
+        if Result.Year = 0 then
+          Result.Year := 1;
+      end;
+    end;
+  end;
+  if not Result.HasTimeZone or (Result.TimeZone = 0) then
+    Exit;
+  Temp := Result.Minute - Result.TimeZone mod 60;
+  Carry := FloorDiv(Temp, 60);
+  Result.Minute := Temp - Carry * 60;
+  Temp := Result.Hour - Result.TimeZone div 60 + Carry;
+  Carry := FloorDiv(Temp, 24);
+  Result.Hour := Temp - Carry * 24;
+  Result.Day := Result.Day + Carry;
+  while True do
+  begin
+    MaxDay := XercesMaxDay(Result.Year, Result.Month);
+    if Result.Day < 1 then
+    begin
+      Result.Day := Result.Day + XercesMaxDay(Result.Year, Result.Month - 1);
+      Carry := -1;
+    end
+    else if Result.Day > MaxDay then
+    begin
+      Result.Day := Result.Day - MaxDay;
+      Carry := 1;
+    end
+    else
+      Break;
+    Temp := Result.Month + Carry;
+    Result.Month := Temp - 1 - FloorDiv(Temp - 1, 12) * 12 + 1;
+    Result.Year := Result.Year + FloorDiv(Temp - 1, 12);
+    if Result.Year = 0 then
+    begin
+      if Result.TimeZone < 0 then
+        Result.Year := 1
+      else
+        Result.Year := -1;
+    end;
+  end;
+end;
+
+function Digits2(Value: Integer): TLandrixXmlUtf8;
+begin
+  Result := LandrixXmlStringToUtf8(IntToStr(Value));
+  if (Value >= 0) and (Value < 10) then
+    Result := '0' + Result;
+end;
+
+function YearText(Year: Integer): TLandrixXmlUtf8;
+var
+  Sign: TLandrixXmlUtf8;
+begin
+  Sign := '';
+  if Year < 0 then
+  begin
+    Sign := '-';
+    Year := -Year;
+  end;
+  Result := LandrixXmlStringToUtf8(IntToStr(Year));
+  while Length(Result) < 4 do
+    Result := '0' + Result;
+  Result := Sign + Result;
+end;
+
+{ Xerces' dateToString of the type. }
+function DateTimeText(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
+var
+  D: TLandrixXmlXsdDateTime;
+  Seconds: TLandrixXmlUtf8;
+begin
+  D := XercesDateTime(Value);
+  Seconds := LandrixXmlFormatDecimal(D.Second);
+  if LandrixXmlDecimalCompare(D.Second, LandrixXmlDecimalFromInt64(10)) < 0 then
+    Seconds := '0' + Seconds;
+  case ValuePrimitive(Value) of
+    xspDateTime:
+      Result := YearText(D.Year) + '-' + Digits2(D.Month) + '-' + Digits2(D.Day) + 'T' + Digits2(D.Hour) + ':' +
+        Digits2(D.Minute) + ':' + Seconds;
+    xspDate:
+      Result := YearText(D.Year) + '-' + Digits2(D.Month) + '-' + Digits2(D.Day);
+    xspTime:
+      Result := Digits2(D.Hour) + ':' + Digits2(D.Minute) + ':' + Seconds;
+    xspGYearMonth:
+      Result := YearText(D.Year) + '-' + Digits2(D.Month);
+    xspGYear:
+      Result := YearText(D.Year);
+    xspGMonthDay:
+      Result := '--' + Digits2(D.Month) + '-' + Digits2(D.Day);
+    xspGDay:
+      Result := '---' + Digits2(D.Day);
+  else
+    Result := '--' + Digits2(D.Month);
+  end;
+  if D.HasTimeZone then
+    Result := Result + 'Z';
+end;
+
+{ Java's Float.toString or Double.toString (the shortest digits that read
+  back, the closest of them, at least two), written as Xerces' canonical
+  form d.dddEn; "0.0E1" for zero. }
+function FloatingText(const Value: TLandrixXmlXsdValue; IsFloat: Boolean): TLandrixXmlUtf8;
+var
+  D, Back: TLandrixXmlDouble;
+  Exact, Digits, Rest, Floor, Ceil, Candidate, Mantissa: TLandrixXmlUtf8;
+  I, Point, Exp10, P, MaxDigits, CeilExp: Integer;
+  Sign: TLandrixXmlUtf8;
+  FloorOk, CeilOk, Exact0: Boolean;
+
+  function Text(const Ds: TLandrixXmlUtf8; E: Integer): TLandrixXmlUtf8;
+  begin
+    Result := Copy(Ds, 1, 1) + '.' + Copy(Ds, 2, MaxInt) + 'E' + LandrixXmlStringToUtf8(IntToStr(E));
+  end;
+
+  function ReadsBack(const Ds: TLandrixXmlUtf8; E: Integer): Boolean;
+  var
+    T: TLandrixXmlUtf8;
+  begin
+    T := Text(Ds, E);
+    Back := LandrixXmlDoubleParse(T);
+    if IsFloat then
+      Back := FloatFromLexical(T, Back);
+    Result := Back.Bits = D.Bits;
+  end;
+
+begin
+  D := Value.DoubleValue;
+  if LandrixXmlDoubleIsNaN(D) then
+  begin
+    Result := 'NaN';
+    Exit;
+  end;
+  if LandrixXmlDoubleIsInfinite(D) then
+  begin
+    if LandrixXmlDoubleSignBit(D) then
+      Result := '-INF'
+    else
+      Result := 'INF';
+    Exit;
+  end;
+  if LandrixXmlDoubleIsZero(D) then
+  begin
+    Result := '0.0E1';
+    Exit;
+  end;
+  Sign := '';
+  if LandrixXmlDoubleSignBit(D) then
+  begin
+    Sign := '-';
+    D := LandrixXmlDoubleNegate(D);
+  end;
+  { the exact value as significant digits and the exponent of the first }
+  Exact := LandrixXmlFormatDecimal(LandrixXmlDoubleToDecimal(D));
+  Point := Length(Exact) + 1;
+  for I := 1 to Length(Exact) do
+    if Exact[I] = '.' then
+      Point := I;
+  Digits := Copy(Exact, 1, Point - 1) + Copy(Exact, Point + 1, MaxInt);
+  Exp10 := Point - 2;
+  I := 1;
+  while (I < Length(Digits)) and (Digits[I] = '0') do
+  begin
+    Inc(I);
+    Dec(Exp10);
+  end;
+  Digits := Copy(Digits, I, MaxInt);
+  if IsFloat then
+    MaxDigits := 9
+  else
+    MaxDigits := 17;
+  Mantissa := '';
+  for P := 2 to MaxDigits do
+  begin
+    Floor := Copy(Digits, 1, P);
+    while Length(Floor) < P do
+      Floor := Floor + '0';
+    Rest := Copy(Digits, P + 1, MaxInt);
+    Exact0 := True;
+    for I := 1 to Length(Rest) do
+      if Rest[I] <> '0' then
+        Exact0 := False;
+    FloorOk := ReadsBack(Floor, Exp10);
+    CeilOk := False;
+    Ceil := '';
+    CeilExp := Exp10;
+    if not Exact0 then
+    begin
+      { the next decimal with P digits }
+      Ceil := Floor;
+      I := P;
+      while (I >= 1) and (Ceil[I] = '9') do
+      begin
+        Ceil[I] := '0';
+        Dec(I);
+      end;
+      if I >= 1 then
+        Ceil[I] := AnsiChar(Ord(Ceil[I]) + 1)
+      else
+      begin
+        Ceil := '1' + Copy(Ceil, 1, P - 1);
+        Inc(CeilExp);
+      end;
+      CeilOk := ReadsBack(Ceil, CeilExp);
+    end;
+    if FloorOk and CeilOk then
+    begin
+      { the closer one; on a tie the one with the even last digit }
+      Candidate := '5';
+      while Length(Candidate) < Length(Rest) do
+        Candidate := Candidate + '0';
+      if (Rest > Candidate) or ((Rest = Candidate) and (Ord(Floor[P]) mod 2 = 1)) then
+        FloorOk := False
+      else
+        CeilOk := False;
+    end;
+    if FloorOk then
+    begin
+      Mantissa := Floor;
+      Break;
+    end;
+    if CeilOk then
+    begin
+      Mantissa := Ceil;
+      Exp10 := CeilExp;
+      Break;
+    end;
+  end;
+  if Mantissa = '' then
+    Mantissa := Copy(Digits, 1, MaxDigits);
+  while (Length(Mantissa) > 1) and (Mantissa[Length(Mantissa)] = '0') do
+    SetLength(Mantissa, Length(Mantissa) - 1);
+  if Length(Mantissa) = 1 then
+    Mantissa := Mantissa + '0';
+  Result := Sign + Text(Mantissa, Exp10);
+end;
+
+function AsciiUpper(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I: Integer;
+begin
+  Result := S;
+  for I := 1 to Length(Result) do
+    if Result[I] in ['a'..'z'] then
+      Result[I] := AnsiChar(Ord(Result[I]) - 32);
+end;
+
+function WithoutWhiteSpace(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I, N: Integer;
+begin
+  Result := '';
+  SetLength(Result, Length(S));
+  N := 0;
+  for I := 1 to Length(S) do
+    if not (S[I] in [' ', #9, #10, #13]) then
+    begin
+      Inc(N);
+      Result[N] := S[I];
+    end;
+  SetLength(Result, N);
+end;
+
+function ValueTextAs(const Value: TLandrixXmlXsdValue; IsInteger: Boolean): TLandrixXmlUtf8;
+var
+  I: Integer;
+  HasPoint: Boolean;
+begin
+  case ValuePrimitive(Value) of
+    xspDecimal:
+      begin
+        Result := LandrixXmlFormatDecimal(Value.DecimalValue);
+        if IsInteger then
+          Exit;
+        HasPoint := False;
+        for I := 1 to Length(Result) do
+          if Result[I] = '.' then
+            HasPoint := True;
+        if not HasPoint then
+          Result := Result + '.0';
+      end;
+    xspBoolean:
+      if Value.BooleanValue then
+        Result := 'true'
+      else
+        Result := 'false';
+    xspFloat:
+      Result := FloatingText(Value, True);
+    xspDouble:
+      Result := FloatingText(Value, False);
+    xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth:
+      Result := DateTimeText(Value);
+    xspHexBinary:
+      Result := AsciiUpper(Value.Text);
+    xspBase64Binary:
+      Result := WithoutWhiteSpace(Value.Text);
+  else
+    Result := Value.Text;
+  end;
+end;
+
+function LandrixXmlXsdValueText(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
+begin
+  Result := ValueTextAs(Value, (Value.MemberType <> nil) and (Value.MemberType.LexicalRule = xslInteger));
+end;
+
+function LandrixXmlXsdValueKey(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
+var
+  P: TLandrixXmlXsdPrimitive;
+  D: TLandrixXmlXsdDateTime;
+begin
+  P := ValuePrimitive(Value);
+  case P of
+    xspDecimal:
+      Result := LandrixXmlFormatDecimal(Value.DecimalValue);
+    xspFloat, xspDouble:
+      if LandrixXmlDoubleIsNaN(Value.DoubleValue) then
+        Result := 'NaN'
+      else if LandrixXmlDoubleIsZero(Value.DoubleValue) then
+        Result := '0'
+      else
+        Result := LandrixXmlStringToUtf8(IntToHex(Value.DoubleValue.Bits, 16));
+    xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth:
+      begin
+        D := XercesDateTime(Value);
+        if D.HasTimeZone then
+          Result := 'Z'
+        else
+          Result := 'L';
+        Result := Result + LandrixXmlStringToUtf8(IntToStr(D.Year) + ':' + IntToStr(D.Month) + ':' +
+          IntToStr(D.Day) + ':' + IntToStr(D.Hour) + ':' + IntToStr(D.Minute)) + ':' +
+          LandrixXmlFormatDecimal(D.Second);
+      end;
+    xspBoolean, xspHexBinary, xspBase64Binary:
+      Result := ValueTextAs(Value, False);
+  else
+    Result := Value.Text;
+  end;
+  Result := LandrixXmlStringToUtf8(IntToStr(Ord(P))) + ':' + Result;
+end;
+
 function EnumerationText(const Values: TLandrixXmlXsdValueArray; Count: Integer): string;
 var
   I: Integer;
@@ -1589,12 +2022,7 @@ begin
   begin
     if I > 0 then
       Result := Result + ', ';
-    Result := Result + LandrixXmlEscapeForMessage(Values[I].Text, 40);
-    if Length(Result) > 300 then
-    begin
-      Result := Result + ', ...';
-      Break;
-    end;
+    Result := Result + LandrixXmlEscapeForMessage(LandrixXmlXsdValueText(Values[I]), MaxInt);
   end;
   Result := Result + ']';
 end;
@@ -1607,11 +2035,12 @@ begin
     TypeName + '''.';
 end;
 
+{ T is the type that defines the bound. }
 function BoundMessage(const Value: TLandrixXmlXsdValue; const Facet: string;
-  const Bound: TLandrixXmlXsdBound; const TypeName: string): string;
+  const Bound: TLandrixXmlXsdBound; T: TLandrixXmlXsdSimpleType; const TypeName: string): string;
 begin
   Result := 'Value ' + Quote(Value.Text) + ' is not facet-valid with respect to ' + Facet + ' ' +
-    Quote(Bound.Value.Text) + ' for type ''' + TypeName + '''.';
+    Quote(ValueTextAs(Bound.Value, T.LexicalRule = xslInteger)) + ' for type ''' + TypeName + '''.';
 end;
 
 { The facets other than patterns, in the order in which Xerces checks its
@@ -1711,7 +2140,7 @@ begin
     C := LandrixXmlXsdCompareValues(Value, T.FMaxInclusive.Value);
     if (C = 1) or (C = LandrixXmlXsdIncomparable) then
     begin
-      SetError(Error, 'cvc-maxInclusive-valid', BoundMessage(Value, 'maxInclusive', T.FMaxInclusive, TypeName));
+      SetError(Error, 'cvc-maxInclusive-valid', BoundMessage(Value, 'maxInclusive', T.FMaxInclusive, T, TypeName));
       Exit;
     end;
   end;
@@ -1721,7 +2150,7 @@ begin
     T := T.FBase;
   if (T <> nil) and (LandrixXmlXsdCompareValues(Value, T.FMaxExclusive.Value) <> -1) then
   begin
-    SetError(Error, 'cvc-maxExclusive-valid', BoundMessage(Value, 'maxExclusive', T.FMaxExclusive, TypeName));
+    SetError(Error, 'cvc-maxExclusive-valid', BoundMessage(Value, 'maxExclusive', T.FMaxExclusive, T, TypeName));
     Exit;
   end;
   { minInclusive }
@@ -1733,7 +2162,7 @@ begin
     C := LandrixXmlXsdCompareValues(Value, T.FMinInclusive.Value);
     if (C = -1) or (C = LandrixXmlXsdIncomparable) then
     begin
-      SetError(Error, 'cvc-minInclusive-valid', BoundMessage(Value, 'minInclusive', T.FMinInclusive, TypeName));
+      SetError(Error, 'cvc-minInclusive-valid', BoundMessage(Value, 'minInclusive', T.FMinInclusive, T, TypeName));
       Exit;
     end;
   end;
@@ -1743,7 +2172,7 @@ begin
     T := T.FBase;
   if (T <> nil) and (LandrixXmlXsdCompareValues(Value, T.FMinExclusive.Value) <> 1) then
   begin
-    SetError(Error, 'cvc-minExclusive-valid', BoundMessage(Value, 'minExclusive', T.FMinExclusive, TypeName));
+    SetError(Error, 'cvc-minExclusive-valid', BoundMessage(Value, 'minExclusive', T.FMinExclusive, T, TypeName));
     Exit;
   end;
   Result := True;
@@ -1757,6 +2186,19 @@ begin
   while (T <> nil) and (T.FPatterns = nil) do
     T := T.FBase;
   Result := T <> nil;
+end;
+
+var
+  IdTypeCache: TLandrixXmlXsdSimpleType = nil;
+  IdRefTypeCache: TLandrixXmlXsdSimpleType = nil;
+
+function TLandrixXmlXsdSimpleType.IsTrimmedType: Boolean;
+begin
+  if FPrimitive = xspString then
+    Result := ((IdTypeCache <> nil) and IsDerivedFrom(IdTypeCache)) or
+      ((IdRefTypeCache <> nil) and IsDerivedFrom(IdRefTypeCache))
+  else
+    Result := not (FPrimitive in [xspAnySimpleType, xspBase64Binary]);
 end;
 
 function Trimmed(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
@@ -1817,9 +2259,11 @@ begin
       DisplayName + '''.');
     Exit;
   end;
-  { Xerces only trims an anyURI, unless a pattern facet applies, which
-    makes it collapse the value first }
-  if (FPrimitive = xspAnyURI) and not HasPatterns then
+  { Xerces collapses only string-based values; the others (numbers,
+    booleans, dates, binary, anyURI, ID, IDREF) are only trimmed unless a
+    pattern facet applies, which makes it collapse them first. Internal
+    white space makes them invalid either way, but messages show it. }
+  if (FWhiteSpace = xwsCollapse) and IsTrimmedType and not HasPatterns then
     Normalized := Trimmed(Text)
   else
     Normalized := LandrixXmlXsdNormalizeWhiteSpace(Text, FWhiteSpace);
@@ -1843,7 +2287,7 @@ begin
     { Xerces defines language by a pattern facet and reports that }
     if FLexicalRule = xslLanguage then
       SetError(Error, 'cvc-pattern-valid', 'Value ' + Quote(Normalized) +
-        ' is not facet-valid with respect to pattern ''[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*'' for type ''' +
+        ' is not facet-valid with respect to pattern ''([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*'' for type ''' +
         TypeName + '''.')
     else
       SetError(Error, 'cvc-datatype-valid.1.2.1', Quote(Normalized) + ' is not a valid value for ''' +
@@ -1956,6 +2400,8 @@ end;
 initialization
   { created here, not on first use, so that concurrent readers are safe }
   CreateBuiltinTypes;
+  IdTypeCache := Find('ID');
+  IdRefTypeCache := Find('IDREF');
 
 finalization
   BuiltinTypes.Free;

@@ -1,0 +1,6 @@
+file a.xml
+error 1 24 cvc-complex-type.2.3 Element 'c' cannot have character [children], because the type's content type is element-only.
+error 1 31 cvc-complex-type.2.4.d Invalid content was found starting with element 'x'. No child element is expected at this point.
+error 1 43 cvc-complex-type.2.1 Element 'd' must have no character or element information item [children], because the type's content type is empty.
+error 1 54 cvc-complex-type.2.1 Element 'd' must have no character or element information item [children], because the type's content type is empty.
+error 1 62 cvc-complex-type.2.4.d Invalid content was found starting with element 'x'. No child element is expected at this point.

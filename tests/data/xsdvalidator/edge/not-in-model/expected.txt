@@ -1,0 +1,11 @@
+file a.xml
+error 1 19 cvc-complex-type.2.4.d Invalid content was found starting with element 'zz'. No child element is expected at this point.
+error 1 19 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 19 cvc-attribute.3 The value 'x' of attribute 'at' on element 'zz' is not valid with respect to its type, 'int'.
+error 1 27 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 27 cvc-type.3.1.3 The value 'x' of element 'g' is not valid.
+
+file b.xml
+error 1 8 cvc-complex-type.2.4.a Invalid content was found starting with element 'zz'. One of '{a}' is expected.
+error 1 16 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 16 cvc-type.3.1.3 The value 'x' of element 'g' is not valid.

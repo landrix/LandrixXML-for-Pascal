@@ -1,0 +1,6 @@
+file a.xml
+error 1 112 cvc-identity-constraint.4.1 Duplicate unique value [2026-01-01T10:00:00Z] declared for identity constraint "U" of element "R".
+error 1 112 cvc-identity-constraint.4.1 Duplicate unique value [1.0] declared for identity constraint "W" of element "R".
+error 1 171 cvc-identity-constraint.4.1 Duplicate unique value [1.0] declared for identity constraint "W" of element "R".
+error 1 219 cvc-identity-constraint.4.1 Duplicate unique value [2026-01-01T10:00:00] declared for identity constraint "U" of element "R".
+error 1 219 cvc-identity-constraint.4.1 Duplicate unique value [2026-01-02Z] declared for identity constraint "X" of element "R".

@@ -1,0 +1,5 @@
+file a.xml
+error 1 21 cvc-elt.5.2.2.1 Element 'm' must have no element information item [children].
+error 1 21 cvc-elt.5.2.2.2.1 The value 'b' of element 'm' does not match the fixed {value constraint} value 'ab'.
+error 1 42 cvc-elt.5.2.2.1 Element 'm' must have no element information item [children].
+error 1 42 cvc-elt.5.2.2.2.1 The value '' of element 'm' does not match the fixed {value constraint} value 'ab'.

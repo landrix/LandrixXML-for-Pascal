@@ -1,0 +1,3 @@
+file r.xml
+error 1 16 cvc-maxInclusive-valid Value '10' is not facet-valid with respect to maxInclusive '9' for type '#AnonType_S'.
+error 1 16 cvc-complex-type.2.2 Element 'R' must have no element [children], and the value must be valid.

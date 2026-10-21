@@ -1,0 +1,1 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:redefine schemaLocation="libg.xsd"><xs:group name="G"><xs:sequence><xs:group ref="G"/><xs:element name="b"/></xs:sequence></xs:group></xs:redefine><xs:element name="R"><xs:complexType><xs:group ref="G"/></xs:complexType></xs:element></xs:schema>

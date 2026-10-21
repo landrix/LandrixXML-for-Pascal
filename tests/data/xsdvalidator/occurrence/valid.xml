@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="urn:occ">
+  <rep><a>1</a><a>2</a><a>3</a><z/></rep>
+  <cnt><c/><a/><a/><a/><a/><a/><a/><a/><z/></cnt>
+  <exact><c/><d/><d/><c/><e/><f/><e/></exact>
+</root>

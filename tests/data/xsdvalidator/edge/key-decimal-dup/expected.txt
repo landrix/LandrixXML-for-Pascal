@@ -1,0 +1,14 @@
+file a.xml
+error 1 34 cvc-identity-constraint.4.2.2 Duplicate key value [1.0] declared for identity constraint "K" of element "R".
+
+file b.xml
+error 1 33 cvc-identity-constraint.4.2.2 Duplicate key value [0.0] declared for identity constraint "K" of element "R".
+
+file c.xml
+error 1 38 cvc-identity-constraint.4.2.2 Duplicate key value [0.0] declared for identity constraint "K" of element "R".
+
+file d.xml
+error 1 22 cvc-identity-constraint.4.3 Key 'KR' with value '0.0' not found for identity constraint of element 'R'.
+
+file e.xml
+error 1 25 cvc-identity-constraint.4.3 Key 'KR' with value '1.1' not found for identity constraint of element 'R'.

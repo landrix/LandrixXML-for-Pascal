@@ -1,0 +1,1 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:redefine schemaLocation="lib.xsd"><xs:complexType name="T"><xs:complexContent><xs:extension base="T"><xs:sequence><xs:element name="child" type="T" minOccurs="0"/></xs:sequence></xs:extension></xs:complexContent></xs:complexType></xs:redefine><xs:element name="R" type="T"/></xs:schema>

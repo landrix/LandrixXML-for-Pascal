@@ -1,0 +1,4 @@
+file bad.xml
+error 1 35 cvc-identity-constraint.4.3 Key 'KR' with value '2' not found for identity constraint of element 'R'.
+
+file ok.xml

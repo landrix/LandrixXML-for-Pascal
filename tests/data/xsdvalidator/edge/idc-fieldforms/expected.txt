@@ -1,0 +1,13 @@
+file f.xml
+error 1 46 cvc-identity-constraint.3 Field "./p:*" of identity constraint "A7" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 46 cvc-identity-constraint.3 Field "./*" of identity constraint "A6" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 46 cvc-identity-constraint.3 Field "./p:n" of identity constraint "A5" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 46 cvc-identity-constraint.3 Field ".//p:n" of identity constraint "A3" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 57 cvc-identity-constraint.3 Field ".//p:n" of identity constraint "A3" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 65 cvc-identity-constraint.3 Field "./p:w/p:n" of identity constraint "A8" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 65 cvc-identity-constraint.3 Field "./p:w/p:n" of identity constraint "A4" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 65 cvc-identity-constraint.3 Field ".//p:n" of identity constraint "A3" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 69 cvc-id.3 A field of identity constraint 'A7' matched element 'R', but this element does not have a simple type.
+error 1 69 cvc-identity-constraint.3 Field "./p:*" of identity constraint "A7" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 69 cvc-id.3 A field of identity constraint 'A6' matched element 'R', but this element does not have a simple type.
+error 1 69 cvc-identity-constraint.3 Field "./*" of identity constraint "A6" matches more than one value within the scope of its selector; fields must match unique values.

@@ -1,0 +1,8 @@
+file a.xml
+error 1 40 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "U1" of element "R".
+error 1 48 cvc-identity-constraint.4.1 Duplicate unique value [x] declared for identity constraint "U2" of element "R".
+error 1 61 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "U1" of element "R".
+error 1 77 cvc-identity-constraint.3 Field "./*" of identity constraint "K3" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 77 cvc-identity-constraint.3 Field "./a|./b" of identity constraint "U2" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 81 cvc-identity-constraint.4.2.1.b Not enough values specified for <key name="K3"> identity constraint specified for element "R".
+error 1 85 cvc-identity-constraint.4.2.1.a Element "R" has no value for the key "K3".

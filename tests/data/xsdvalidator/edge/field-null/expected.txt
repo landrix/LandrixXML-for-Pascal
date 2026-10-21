@@ -1,0 +1,16 @@
+file a.xml
+error 1 18 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 18 cvc-attribute.3 The value 'x' of attribute 'id' on element 'item' is not valid with respect to its type, 'int'.
+error 1 32 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 32 cvc-attribute.3 The value 'x' of attribute 'id' on element 'item' is not valid with respect to its type, 'int'.
+error 1 45 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 45 cvc-attribute.3 The value 'x' of attribute 'to' on element 'ref' is not valid with respect to its type, 'int'.
+
+file b.xml
+error 1 11 cvc-identity-constraint.4.2.1.a Element "R" has no value for the key "K".
+error 1 18 cvc-identity-constraint.4.2.1.a Element "R" has no value for the key "K".
+
+file c.xml
+error 1 31 cvc-datatype-valid.1.2.1 'y' is not a valid value for 'integer'.
+error 1 31 cvc-attribute.3 The value 'y' of attribute 'to' on element 'ref' is not valid with respect to its type, 'int'.
+error 1 48 cvc-identity-constraint.4.3 Key 'KR' with value 'null' not found for identity constraint of element 'R'.

@@ -1,0 +1,10 @@
+file a.xml
+error 1 28 cvc-identity-constraint.4.3 Key 'KR' with value '00:00:00' not found for identity constraint of element 'R'.
+
+file b.xml
+error 1 34 cvc-identity-constraint.4.3 Key 'KR' with value '18:30:00Z' not found for identity constraint of element 'R'.
+
+file c.xml
+
+file d.xml
+error 1 30 cvc-identity-constraint.4.3 Key 'KR' with value '01:02:03.5' not found for identity constraint of element 'R'.

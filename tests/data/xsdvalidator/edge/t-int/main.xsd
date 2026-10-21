@@ -1,0 +1,1 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="R"><xs:complexType><xs:sequence><xs:element name="d" maxOccurs="unbounded"><xs:complexType><xs:attribute name="v" type="xs:integer"/></xs:complexType></xs:element></xs:sequence></xs:complexType><xs:unique name="U"><xs:selector xpath="d"/><xs:field xpath="@v"/></xs:unique></xs:element></xs:schema>

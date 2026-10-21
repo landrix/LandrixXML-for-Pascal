@@ -1,0 +1,8 @@
+file a.xml
+error 1 44 cvc-identity-constraint.4.2.2 Duplicate key value [1] declared for identity constraint "K" of element "R".
+error 1 65 cvc-identity-constraint.4.2.1.a Element "R" has no value for the key "K".
+error 1 95 cvc-identity-constraint.4.3 Key 'KR' with value '2' not found for identity constraint of element 'R'.
+
+file b.xml
+error 1 24 cvc-identity-constraint.4.2.1.a Element "R" has no value for the key "K".
+error 1 48 cvc-identity-constraint.4.3 Key 'KR' with value '1' not found for identity constraint of element 'R'.

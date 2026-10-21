@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="urn:deriv" xmlns:o="urn:other">
+  <d rev="1" lang="de" mode="x"><title>T</title><sub>S</sub><a>5</a></d>
+  <d rev="2"><title>T</title><o:ext v="3"/></d>
+  <r rev="0"><title>R</title></r>
+  <item ID="i1"><Name>N</Name><Qty>2.5</Qty></item>
+  <short>abcde</short>
+  <shared>true</shared>
+</root>

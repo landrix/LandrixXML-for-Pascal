@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<r xmlns="urn:t">
+  <item id="a" n="3"/>
+  <item id="b"/>
+  <ref to="a" n="3"/>
+</r>

@@ -1,0 +1,7 @@
+file a.xml
+error 1 28 cvc-identity-constraint.4.1 Duplicate unique value [1.0E0] declared for identity constraint "U" of element "R".
+error 1 53 cvc-datatype-valid.1.2.1 '+INF' is not a valid value for 'float'.
+error 1 53 cvc-attribute.3 The value '+INF' of attribute 'v' on element 'd' is not valid with respect to its type, 'float'.
+error 1 74 cvc-identity-constraint.4.1 Duplicate unique value [0.0E1] declared for identity constraint "U" of element "R".
+error 1 98 cvc-identity-constraint.4.1 Duplicate unique value [NaN] declared for identity constraint "U" of element "R".
+error 1 125 cvc-identity-constraint.4.1 Duplicate unique value [1.5E3] declared for identity constraint "U" of element "R".

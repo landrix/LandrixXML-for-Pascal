@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- no target namespace: takes the namespace of the redefining schema -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:complexType name="tgItem">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Qty" type="xs:decimal" minOccurs="0"/>
+      <xs:element name="Remark" type="tgShort" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="ID" type="xs:string"/>
+  </xs:complexType>
+  <xs:simpleType name="tgShort"><xs:restriction base="xs:string"><xs:maxLength value="10"/></xs:restriction></xs:simpleType>
+</xs:schema>

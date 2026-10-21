@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:deriv" targetNamespace="urn:deriv"
+  elementFormDefault="qualified">
+  <xs:group name="Head">
+    <xs:sequence><xs:element name="title" type="xs:string"/><xs:element name="sub" type="xs:string" minOccurs="0"/></xs:sequence>
+  </xs:group>
+  <xs:attributeGroup name="Common">
+    <xs:attribute name="lang" type="xs:language"/>
+    <xs:attribute name="rev" type="xs:nonNegativeInteger" use="required"/>
+  </xs:attributeGroup>
+  <xs:element name="shared" type="xs:boolean"/>
+</xs:schema>

@@ -79,7 +79,8 @@ type
     xecUnexpectedElement, { an element where the caller expects text only }
     xecArithmetic,       { division by zero or an arithmetic result out of range }
     xecRegex,            { invalid regular expression or replacement string }
-    xecUnsupported       { valid input using a construct this library does not support }
+    xecUnsupported,      { valid input using a construct this library does not support }
+    xecSchema            { an XML Schema that is invalid or cannot be resolved }
   );
 
   { All errors raised by LandrixXml. Line and Column are 1-based (Column in

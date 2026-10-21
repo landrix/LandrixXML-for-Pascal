@@ -1,0 +1,1 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="R"><xs:complexType><xs:sequence><xs:element name="a" minOccurs="0"/></xs:sequence></xs:complexType></xs:element><xs:element name="E"><xs:complexType/></xs:element></xs:schema>

@@ -1,0 +1,4 @@
+file a.xml
+error 1 14 cvc-elt.5.2.2.2.2 The value ' 4 ' of element 'g' does not match the {value constraint} value '3'.
+error 1 59 cvc-elt.5.2.2.2.2 The value 'a  c' of element 't' does not match the {value constraint} value 'a b'.
+error 1 68 cvc-elt.5.2.2.2.2 The value ' a' of element 's' does not match the {value constraint} value 'a'.

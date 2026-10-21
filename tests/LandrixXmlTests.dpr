@@ -32,6 +32,7 @@ uses
   LandrixXmlTestRegex,
   LandrixXmlTestXsdTypes,
   LandrixXmlTestXsdContent,
+  LandrixXmlTestXsdValidator,
   LandrixXmlTestLocal;
 
 function FilterParam: string;
@@ -58,6 +59,7 @@ begin
   LandrixXmlTestRegex.Register;
   LandrixXmlTestXsdTypes.Register;
   LandrixXmlTestXsdContent.Register;
+  LandrixXmlTestXsdValidator.Register;
   LandrixXmlTestLocal.Register;
   ExitCode := RunAllTests(FilterParam);
 end.

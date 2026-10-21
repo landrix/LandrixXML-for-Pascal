@@ -1,0 +1,155 @@
+file invalid.xml
+error 2 83 cvc-attribute.4 The value 'v2' of attribute 'b:schema' on element 'order' is not valid with respect to its fixed {value constraint}. The attribute must have a value of 'v1'.
+error 2 83 cvc-minInclusive-valid Value '0' is not facet-valid with respect to minInclusive '1' for type 'positiveInteger'.
+error 2 83 cvc-attribute.3 The value '0' of attribute 'number' on element 'order' is not valid with respect to its type, 'positiveInteger'.
+error 2 83 cvc-complex-type.3.2.2 Attribute 'extra' is not allowed to appear in element 'order'.
+error 4 20 cvc-pattern-valid Value 'de12' is not facet-valid with respect to pattern '[A-Z]{2}[0-9]?' for type 'Code'.
+error 4 20 cvc-type.3.1.3 The value 'de12' of element 'code' is not valid.
+error 5 22 cvc-enumeration-valid Value 'blue' is not facet-valid with respect to enumeration '[red, green]'. It must be a value from the enumeration.
+error 5 22 cvc-type.3.1.3 The value 'blue' of element 'color' is not valid.
+error 6 10 cvc-complex-type.4 Attribute 'currency' must appear on element 'price'.
+error 6 26 cvc-fractionDigits-valid Value '1234.567' has 3 fraction digits, but the number of fraction digits has been limited to 2.
+error 6 26 cvc-complex-type.2.2 Element 'price' must have no element [children], and the value must be valid.
+error 7 35 cvc-maxExclusive-valid Value '100' is not facet-valid with respect to maxExclusive '100.0' for type '#AnonType_SmallPrice'.
+error 7 35 cvc-complex-type.2.2 Element 'small' must have no element [children], and the value must be valid.
+error 8 19 cvc-datatype-valid.1.2.3 'big' is not a valid value of union type 'IntOrAuto'.
+error 8 19 cvc-type.3.1.3 The value 'big' of element 'size' is not valid.
+error 9 17 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":i}'. One of '{"urn:basics":b}' is expected.
+error 10 20 cvc-complex-type.2.1 Element 'flag' must have no character or element information item [children], because the type's content type is empty.
+error 11 25 cvc-elt.5.2.2.2.2 The value '2.0' of element 'version' does not match the {value constraint} value '1.0'.
+error 12 54 cvc-complex-type.3.1 Value 'other' of attribute 'kind' of element 'link' is not valid with respect to the corresponding attribute use. Attribute 'kind' has a fixed value of 'ref'.
+error 12 54 cvc-minInclusive-valid Value '1999-01-01' is not facet-valid with respect to minInclusive '2000-01-01' for type '#AnonType_whenlinkorder'.
+error 12 54 cvc-attribute.3 The value '1999-01-01' of attribute 'when' on element 'link' is not valid with respect to its type, '#AnonType_whenlinkorder'.
+error 13 28 cvc-complex-type.2.1 Element 'link' must have no character or element information item [children], because the type's content type is empty.
+error 15 9 cvc-complex-type.2.3 Element 'order' cannot have character [children], because the type's content type is element-only.
+error 15 9 cvc-id.1 There is no ID/IDREF binding for IDREF 'nowhere'.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/><color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 5 19 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":color}'. One of '{"urn:basics":price}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  \n  <link to="o1"/>\n</order>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text  more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size unknown="1">auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 8 21 cvc-type.3.1.1 Element 'size' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>2026-13-01<b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>  a  b  </id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 3 20 cvc-datatype-valid.1.2.1 'a  b' is not a valid value for 'NCName'.
+error 3 20 cvc-type.3.1.3 The value '  a  b  ' of element 'id' is not valid.
+error 14 9 cvc-id.1 There is no ID/IDREF binding for IDREF 'x1'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color>true</color>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 5 22 cvc-enumeration-valid Value 'true' is not facet-valid with respect to enumeration '[red, green]'. It must be a value from the enumeration.
+error 5 22 cvc-type.3.1.3 The value 'true' of element 'color' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>1.005</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  \n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <color/><size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 8 11 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":color}'. One of '{"urn:basics":size, "urn:basics":note, "urn:basics":flag, "urn:basics":version, "urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  \n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 5 11 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":color}'. One of '{"urn:basics":code}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="-5">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 7 24 cvc-pattern-valid Value '-5' is not facet-valid with respect to pattern '[A-Z]{2}[0-9]?' for type 'Code'.
+error 7 24 cvc-attribute.3 The value '-5' of attribute 'currency' on element 'small' is not valid with respect to its type, 'Code'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <link to="o1"/><id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  \n</order>\n
+error 3 18 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":link}'. One of '{"urn:basics":id}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note unknown="1">Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 9 21 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'note'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <version>1.0</version><small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  \n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 7 46 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":small}'. One of '{"urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <small>1.0</small>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 11 10 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":small}'. One of '{"urn:basics":version, "urn:basics":link}' is expected.
+error 11 10 cvc-complex-type.4 Attribute 'currency' must appear on element 'small'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  \n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 12 39 cvc-complex-type.4 Attribute 'to' must appear on element 'link'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>true</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 14 9 cvc-id.1 There is no ID/IDREF binding for IDREF 'x1'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <link currency="EU">99.99</link>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 7 23 cvc-complex-type.3.2.2 Attribute 'currency' is not allowed to appear in element 'link'.
+error 7 23 cvc-complex-type.4 Attribute 'to' must appear on element 'link'.
+error 7 35 cvc-complex-type.2.1 Element 'link' must have no character or element information item [children], because the type's content type is empty.
+error 8 9 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":size}'. One of '{"urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">1.005</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 6 37 cvc-fractionDigits-valid Value '1.005' has 3 fraction digits, but the number of fraction digits has been limited to 2.
+error 6 37 cvc-complex-type.2.2 Element 'price' must have no element [children], and the value must be valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b unknown="1">bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 9 29 cvc-type.3.1.1 Element 'b' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small>99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 7 10 cvc-complex-type.4 Attribute 'currency' must appear on element 'small'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code><code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 4 25 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":code}'. One of '{"urn:basics":color, "urn:basics":price}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  \n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 4 9 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":code}'. One of '{"urn:basics":id}' is expected.
+error 14 9 cvc-id.1 There is no ID/IDREF binding for IDREF 'x1'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  \n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link/>\n</order>\n
+error 13 10 cvc-complex-type.4 Attribute 'to' must appear on element 'link'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version><version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 11 34 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":version}'. One of '{"urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id><id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 3 18 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":id}'. One of '{"urn:basics":code}' is expected.
+error 3 25 cvc-id.2 There are multiple occurrences of ID value 'x1'.
+error 3 25 cvc-type.3.1.3 The value 'x1' of element 'id' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size><size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 8 26 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":size}'. One of '{"urn:basics":note, "urn:basics":flag, "urn:basics":version, "urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">  a  b  </small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 7 40 cvc-datatype-valid.1.2.1 'a  b' is not a valid value for 'decimal'.
+error 7 40 cvc-complex-type.2.2 Element 'small' must have no element [children], and the value must be valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="0">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 7 23 cvc-pattern-valid Value '0' is not facet-valid with respect to pattern '[A-Z]{2}[0-9]?' for type 'Code'.
+error 7 23 cvc-attribute.3 The value '0' of attribute 'currency' on element 'small' is not valid with respect to its type, 'Code'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  \n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <color/><link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 12 11 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":color}'. One of '{"urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <flag>auto</flag>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 8 20 cvc-complex-type.2.1 Element 'flag' must have no character or element information item [children], because the type's content type is empty.
+error 9 9 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":note}'. One of '{"urn:basics":version, "urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price><price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 6 58 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":price}'. One of '{"urn:basics":small, "urn:basics":size, "urn:basics":note, "urn:basics":flag, "urn:basics":version, "urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  \n  <size>auto</size>\n  <small currency="EU">99.99</small><note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 9 24 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":small}'. One of '{"urn:basics":note, "urn:basics":flag, "urn:basics":version, "urn:basics":link}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03" unknown="1"/>\n  <link to="o1"/>\n</order>\n
+error 12 59 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'link'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  \n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 7 24 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":small}'. One of '{"urn:basics":price}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  \n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <id>x1</id><size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 4 9 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":code}'. One of '{"urn:basics":id}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  <id>x1</id>\n  <code>DE1</code>\n  <color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  \n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">\n  \n  <code>DE1</code>\n  <id>x1</id><color/>\n  <price currency="EU">12.50</price>\n  <small currency="EU">99.99</small>\n  <size>auto</size>\n  <note>Text <b>bold</b> more</note>\n  <flag/>\n  <version>1.0</version>\n  <link to="x1" kind="ref" when="2001-02-03"/>\n  <link to="o1"/>\n</order>\n
+error 4 9 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:basics":code}'. One of '{"urn:basics":id}' is expected.

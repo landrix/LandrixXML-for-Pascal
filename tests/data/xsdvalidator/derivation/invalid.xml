@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="urn:deriv" xmlns:o="urn:other">
+  <d lang="d e"><title>T</title><a>x</a></d>
+  <d rev="2"><title>T</title><sub>S</sub><o:ext/><a>1</a></d>
+  <r rev="0" lang="de"><title>R</title><sub>S</sub></r>
+  <item><Name>N</Name><Remark>r</Remark></item>
+  <short>abcdef</short>
+  <shared>maybe</shared>
+</root>

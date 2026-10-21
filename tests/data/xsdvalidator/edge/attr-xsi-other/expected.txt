@@ -1,0 +1,5 @@
+file x.xml
+error 1 109 cvc-complex-type.3.2.2 Attribute 'xsi:foo' is not allowed to appear in element 'R'.
+
+file y.xml
+error 1 103 cvc-type.3.1.1 Element 'S' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'xsi:foo' was found.

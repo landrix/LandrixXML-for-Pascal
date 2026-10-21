@@ -1,0 +1,6 @@
+file m.xml
+error 1 12 cvc-elt.5.2.2.2.1 The value 'y' of element 'm' does not match the fixed {value constraint} value 'x'.
+
+file m2.xml
+
+file m3.xml

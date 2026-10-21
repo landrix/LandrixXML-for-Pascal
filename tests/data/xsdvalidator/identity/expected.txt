@@ -1,0 +1,20 @@
+file doc1.xml
+
+file doc2.xml
+error 4 17 cvc-identity-constraint.4.2.2 Duplicate key value [a] declared for identity constraint "k" of element "r".
+
+file doc3.xml
+error 3 10 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "k".
+
+file doc4.xml
+error 9 23 cvc-identity-constraint.4.1 Duplicate unique value [5] declared for identity constraint "any" of element "r".
+
+file doc5.xml
+error 6 23 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "any" of element "r".
+error 7 20 cvc-identity-constraint.4.1 Duplicate unique value [2.0,1] declared for identity constraint "u" of element "r".
+
+file doc6.xml
+error 6 5 cvc-identity-constraint.4.3 Key 'kr' with value 'x' not found for identity constraint of element 'r'.
+
+file doc7.xml
+error 5 22 cvc-complex-type.3.2.2 Attribute 'n' is not allowed to appear in element 'ref'.

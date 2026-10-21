@@ -1,0 +1,4 @@
+file r.xml
+
+file r2.xml
+error 1 23 cvc-complex-type.2.4.a Invalid content was found starting with element 'x'. One of '{child}' is expected.

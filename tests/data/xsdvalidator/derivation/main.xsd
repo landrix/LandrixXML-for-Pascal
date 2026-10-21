@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Derivation by extension and restriction, model and attribute groups,
+     include, import and the redefinition of a schema without target
+     namespace (as the GAEB library schema is used). -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:deriv" xmlns:o="urn:other"
+  targetNamespace="urn:deriv" elementFormDefault="qualified">
+  <xs:import namespace="urn:other" schemaLocation="other.xsd"/>
+  <xs:include schemaLocation="common.xsd"/>
+  <xs:redefine schemaLocation="lib.xsd">
+    <xs:complexType name="tgItem">
+      <xs:complexContent>
+        <xs:restriction base="tgItem">
+          <xs:sequence><xs:element name="Name" type="xs:string"/><xs:element name="Qty" type="xs:decimal" minOccurs="0"/></xs:sequence>
+          <xs:attribute name="ID" type="xs:string" use="required"/>
+        </xs:restriction>
+      </xs:complexContent>
+    </xs:complexType>
+    <xs:simpleType name="tgShort"><xs:restriction base="tgShort"><xs:maxLength value="5"/></xs:restriction></xs:simpleType>
+  </xs:redefine>
+  <xs:complexType name="Base">
+    <xs:sequence><xs:group ref="Head"/></xs:sequence>
+    <xs:attributeGroup ref="Common"/>
+  </xs:complexType>
+  <xs:complexType name="Derived">
+    <xs:complexContent>
+      <xs:extension base="Base">
+        <xs:choice><xs:element name="a" type="xs:int"/><xs:element ref="o:ext"/></xs:choice>
+        <xs:attribute name="mode" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Restricted">
+    <xs:complexContent>
+      <xs:restriction base="Base">
+        <xs:sequence><xs:element name="title" type="xs:string"/></xs:sequence>
+        <xs:attribute name="lang" use="prohibited"/>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="d" type="Derived" maxOccurs="unbounded"/>
+        <xs:element name="r" type="Restricted" minOccurs="0"/>
+        <xs:element name="item" type="tgItem" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="short" type="tgShort" minOccurs="0"/>
+        <xs:element ref="shared" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

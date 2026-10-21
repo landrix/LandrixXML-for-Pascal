@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<order xmlns="urn:basics" xmlns:b="urn:basics" b:schema="v1" number="1" date="2026-10-21" uid="o1">
+  <id>x1</id>
+  <code>DE1</code>
+  <color></color>
+  <price currency="EU">12.50</price>
+  <small currency="EU">99.99</small>
+  <size>auto</size>
+  <note>Text <b>bold</b> more</note>
+  <flag/>
+  <version>1.0</version>
+  <link to="x1" kind="ref" when="2001-02-03"/>
+  <link to="o1"/>
+</order>

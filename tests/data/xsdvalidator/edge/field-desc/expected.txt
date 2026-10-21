@@ -1,0 +1,17 @@
+file a.xml
+error 1 46 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "U" of element "R".
+error 1 46 cvc-identity-constraint.4.2.2 Duplicate key value [1] declared for identity constraint "K" of element "R".
+
+file b.xml
+error 1 29 cvc-identity-constraint.3 Field "./a/n|./n" of identity constraint "U" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 29 cvc-identity-constraint.3 Field ".//n" of identity constraint "K" matches more than one value within the scope of its selector; fields must match unique values.
+
+file c.xml
+error 1 46 cvc-identity-constraint.4.1 Duplicate unique value [3] declared for identity constraint "U" of element "R".
+error 1 46 cvc-identity-constraint.4.2.2 Duplicate key value [3] declared for identity constraint "K" of element "R".
+error 1 58 cvc-identity-constraint.3 Field "./a/n|./n" of identity constraint "U" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 58 cvc-identity-constraint.3 Field ".//n" of identity constraint "K" matches more than one value within the scope of its selector; fields must match unique values.
+
+file d.xml
+error 1 33 cvc-identity-constraint.3 Field "./a/n|./n" of identity constraint "U" matches more than one value within the scope of its selector; fields must match unique values.
+error 1 33 cvc-identity-constraint.3 Field ".//n" of identity constraint "K" matches more than one value within the scope of its selector; fields must match unique values.

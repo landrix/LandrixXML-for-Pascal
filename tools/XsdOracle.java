@@ -12,9 +12,10 @@
  *   file TAB line TAB column TAB code TAB message
  *
  * where code is the leading "cvc-..." identifier of the message. Messages
- * are English and UTF-8 encoded. If the JDK's validator throws a runtime
- * exception for a document (it does when an element exceeds a counted
- * maxOccurs), the line reads file TAB 0 TAB 0 TAB jdk-exception TAB class.
+ * are English and UTF-8 encoded; control characters appear as U+XXXX.
+ * If the JDK's validator throws a runtime exception for a document (it
+ * does when an element exceeds a counted maxOccurs), the line reads
+ * file TAB 0 TAB 0 TAB jdk-exception TAB class.
  * Exit code 0 even if documents are invalid; 2 on usage or schema errors.
  *
  *   javac --release 17 -d OUT tools/XsdOracle.java
@@ -72,8 +73,23 @@ public class XsdOracle {
         }
     }
 
+    // control characters (tabs, line feeds of values) as U+XXXX, so that a
+    // message stays on one line without losing them
+    static String escapeControls(String s) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c < 0x20) {
+                b.append(String.format("U+%04X", (int) c));
+            } else {
+                b.append(c);
+            }
+        }
+        return b.toString();
+    }
+
     static void print(String name, SAXParseException e) {
-        String message = e.getMessage() == null ? "" : e.getMessage().replace('\t', ' ').replace('\n', ' ');
+        String message = escapeControls(e.getMessage() == null ? "" : e.getMessage());
         String code = "";
         int colon = message.indexOf(':');
         if (message.startsWith("cvc-") && colon > 0) {

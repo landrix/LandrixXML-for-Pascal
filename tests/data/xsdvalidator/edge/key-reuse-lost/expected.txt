@@ -1,0 +1,4 @@
+file a.xml
+error 1 63 cvc-identity-constraint.4.3 Key 'KR' with value '1' not found for identity constraint of element 'R'.
+
+file b.xml

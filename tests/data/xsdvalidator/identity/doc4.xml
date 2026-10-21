@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<r xmlns="urn:t">
+  <item id="a">
+  <code>1.0</code>
+  </item>
+  <item id="b" n="5">
+  <code>1</code>
+  </item>
+  <item id="c" n="5"/>
+</r>

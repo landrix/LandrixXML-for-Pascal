@@ -1,0 +1,2 @@
+file s.xml
+error 1 55 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "A" of element "R".

@@ -1,0 +1,4 @@
+file dup.xml
+
+file union.xml
+error 1 76 cvc-identity-constraint.4.3 Key 'KR' with value '1' not found for identity constraint of element 'R'.

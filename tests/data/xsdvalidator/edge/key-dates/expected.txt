@@ -1,0 +1,28 @@
+file a.xml
+error 1 75 cvc-identity-constraint.4.2.2 Duplicate key value [2001-01-01T10:00:00Z] declared for identity constraint "K" of element "R".
+
+file b.xml
+
+file c.xml
+error 1 68 cvc-identity-constraint.4.2.2 Duplicate key value [2001-01-02T00:00:00] declared for identity constraint "K" of element "R".
+
+file d.xml
+error 1 75 cvc-identity-constraint.4.2.2 Duplicate key value [2001-01-01T10:00:05.5Z] declared for identity constraint "K" of element "R".
+
+file e.xml
+error 1 53 cvc-identity-constraint.4.3 Key 'KR' with value '2001-01-01T10:00:05.123456789012Z' not found for identity constraint of element 'R'.
+
+file f.xml
+error 1 46 cvc-identity-constraint.4.3 Key 'KR' with value '0001-01-01T01:00:00Z' not found for identity constraint of element 'R'.
+
+file g.xml
+error 1 45 cvc-identity-constraint.4.3 Key 'KR' with value '-0001-12-31T23:30:00Z' not found for identity constraint of element 'R'.
+
+file h.xml
+error 1 44 cvc-identity-constraint.4.3 Key 'KR' with value '2001-01-01T10:00:00Z' not found for identity constraint of element 'R'.
+
+file i.xml
+error 1 42 cvc-identity-constraint.4.3 Key 'KR' with value '2001-01-01T10:00:00.1Z' not found for identity constraint of element 'R'.
+
+file j.xml
+error 1 48 cvc-identity-constraint.4.3 Key 'KR' with value '2001-01-01T10:00:00.0000001Z' not found for identity constraint of element 'R'.

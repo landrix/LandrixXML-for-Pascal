@@ -1,0 +1,7 @@
+file a.xml
+error 1 32 cvc-identity-constraint.4.2.2 Duplicate key value [0AFF] declared for identity constraint "H" of element "R".
+error 1 61 cvc-identity-constraint.4.2.2 Duplicate key value [YWJj] declared for identity constraint "B" of element "R".
+
+file b.xml
+error 1 32 cvc-datatype-valid.1.2.1 'YR==' is not a valid value for 'base64Binary'.
+error 1 32 cvc-attribute.3 The value 'YR==' of attribute 'id' on element 'b' is not valid with respect to its type, 'base64Binary'.

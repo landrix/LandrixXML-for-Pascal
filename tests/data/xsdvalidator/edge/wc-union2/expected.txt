@@ -1,0 +1,5 @@
+file a.xml
+error 1 89 cvc-complex-type.3.2.2 Attribute 'x' is not allowed to appear in element 'e2'.
+error 1 89 cvc-complex-type.3.2.2 Attribute 'p:x' is not allowed to appear in element 'e2'.
+error 1 124 cvc-complex-type.3.2.2 Attribute 'p:x' is not allowed to appear in element 'e3'.
+error 1 124 cvc-complex-type.3.2.2 Attribute 'c:x' is not allowed to appear in element 'e3'.

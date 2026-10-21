@@ -1,0 +1,1 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="R"><xs:complexType><xs:sequence><xs:element name="d" maxOccurs="unbounded"><xs:simpleType><xs:restriction base="xs:gYearMonth"><xs:enumeration value="2026-01-14:00"/><xs:maxInclusive value="2026-01Z"/></xs:restriction></xs:simpleType></xs:element></xs:sequence></xs:complexType></xs:element></xs:schema>

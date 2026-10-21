@@ -1,0 +1,7 @@
+file a.xml
+error 1 33 cvc-identity-constraint.4.2.2 Duplicate key value [1] declared for identity constraint "K" of element "R".
+
+file b.xml
+
+file c.xml
+error 1 35 cvc-identity-constraint.4.3 Key 'KR' with value '1' not found for identity constraint of element 'R'.

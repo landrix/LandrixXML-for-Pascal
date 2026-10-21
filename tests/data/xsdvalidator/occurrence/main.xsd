@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Finite occurrence bounds as in GAEB (3, 7, 10) in the three ways
+     Xerces checks them, nested groups, xs:maxOccurs="0" particles. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:occ" targetNamespace="urn:occ"
+  elementFormDefault="qualified">
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="rep" minOccurs="0"><xs:complexType><xs:sequence>
+          <xs:element name="a" type="xs:string" minOccurs="2" maxOccurs="3"/><xs:element name="z" type="xs:string"/>
+        </xs:sequence></xs:complexType></xs:element>
+        <xs:element name="cnt" minOccurs="0"><xs:complexType><xs:sequence>
+          <xs:choice minOccurs="0"><xs:element name="c" type="xs:string"/><xs:element name="d" type="xs:string"/></xs:choice>
+          <xs:element name="a" type="xs:string" minOccurs="2" maxOccurs="7"/><xs:element name="z" type="xs:string"/>
+        </xs:sequence></xs:complexType></xs:element>
+        <xs:element name="exact" minOccurs="0"><xs:complexType><xs:sequence>
+          <xs:choice maxOccurs="10"><xs:element name="c" type="xs:string"/><xs:element name="d" type="xs:string" maxOccurs="2"/></xs:choice>
+          <xs:element name="gone" type="xs:string" minOccurs="0" maxOccurs="0"/>
+          <xs:sequence minOccurs="0" maxOccurs="unbounded"><xs:element name="e" type="xs:string"/><xs:element name="f" type="xs:string" minOccurs="0"/></xs:sequence>
+        </xs:sequence></xs:complexType></xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

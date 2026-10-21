@@ -1,0 +1,8 @@
+file s.xml
+error 1 15 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+error 1 23 cvc-complex-type.2.4.d Invalid content was found starting with element 'x'. No child element is expected at this point.
+error 1 34 cvc-complex-type.2.4.d Invalid content was found starting with element 'q'. No child element is expected at this point.
+
+file s2.xml
+error 1 12 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+error 1 28 cvc-complex-type.2.3 Element 'z' cannot have character [children], because the type's content type is element-only.

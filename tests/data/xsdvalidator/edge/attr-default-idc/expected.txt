@@ -1,0 +1,2 @@
+file d.xml
+error 1 18 cvc-identity-constraint.4.1 Duplicate unique value [d] declared for identity constraint "U" of element "R".
