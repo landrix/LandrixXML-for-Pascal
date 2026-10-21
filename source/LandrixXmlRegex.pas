@@ -424,7 +424,7 @@ begin
   if Max = Unbounded then
     Total := Int64(Min) * Len + Len + 2
   else
-    Total := Int64(Min) * Len + Int64(Max - Min) * (Len + 1);
+    Total := Int64(Min) * Len + (Int64(Max) - Min) * (Int64(Len) + 1);
   if Total > MaxInstructions then
     RaiseTooLarge;
   SetLength(Result, Integer(Total));
