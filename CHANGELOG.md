@@ -36,6 +36,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `tools/gen-unicode-tables.py` generates the table.
 - `tools/gen-regex-testdata.py`: regular expression test cases with
   results from Saxon.
+- `LandrixXmlXsdTypes`: XML Schema 1.0 simple types (the built-in types,
+  restriction with facets, unions) with the same checks, order and
+  `cvc-...` codes as the XML Schema validator of the Java runtime used by
+  the KoSIT validator.
+- `tools/XsdOracle.java` and `tools/gen-xsdtypes-testdata.py`: test oracle
+  and test data generator for simple types; `tools/gen-xml10-name-tables.py`
+  generates the XML 1.0 Fourth Edition name character classes Xerces uses
+  for Name, NCName, ID and IDREF.
 - New error code `xecArithmetic` (division by zero, exponent out of range).
 - `tools/gen-decimal-testdata.py`: generates the decimal test cases and
   optionally checks them against Saxon.

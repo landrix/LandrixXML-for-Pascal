@@ -1,0 +1,81 @@
+b-string	string
+b-normalizedString	normalizedString
+b-token	token
+b-language	language
+b-Name	Name
+b-NCName	NCName
+b-ID	ID
+b-IDREF	IDREF
+b-NMTOKEN	NMTOKEN
+b-boolean	boolean
+b-decimal	decimal
+b-integer	integer
+b-nonPositiveInteger	nonPositiveInteger
+b-negativeInteger	negativeInteger
+b-long	long
+b-int	int
+b-short	short
+b-byte	byte
+b-nonNegativeInteger	nonNegativeInteger
+b-unsignedLong	unsignedLong
+b-unsignedInt	unsignedInt
+b-unsignedShort	unsignedShort
+b-unsignedByte	unsignedByte
+b-positiveInteger	positiveInteger
+b-float	float
+b-double	double
+b-dateTime	dateTime
+b-time	time
+b-date	date
+b-gYearMonth	gYearMonth
+b-gYear	gYear
+b-gMonthDay	gMonthDay
+b-gDay	gDay
+b-gMonth	gMonth
+b-hexBinary	hexBinary
+b-base64Binary	base64Binary
+b-anyURI	anyURI
+ns40	normalizedString	maxLength=40
+tok35	token	minLength=1	maxLength=35
+len3	string	length=3
+enumNs	normalizedString	enumeration=Yes	enumeration=No	enumeration=a  b
+enumTok	token	enumeration=Yes	enumeration=a  b
+pat	normalizedString	pattern=[0-9]{0,17}
+pat2	pat	pattern=[1-9][0-9]*	pattern=0
+patEnum	token	pattern=[a-z]+	enumeration=abc	enumeration=x1
+patLen	patEnum	maxLength=2
+blank	string	pattern= {2,2} {9,9}.{69,69}
+dec9_6	decimal	totalDigits=9	fractionDigits=6
+dec4_2	decimal	totalDigits=4	fractionDigits=2	maxInclusive=50
+posMax	positiveInteger	maxInclusive=999
+intRange	integer	minInclusive=-5	maxInclusive=5
+decExcl	decimal	minExclusive=0	maxExclusive=1.5
+floatPos	float	minExclusive=0
+dblRange	double	minInclusive=-1e3	maxInclusive=INF
+gymEnum	gYearMonth	enumeration=2013-10	enumeration=2021-05
+dateRange	date	minInclusive=2000-01-01	maxExclusive=2100-01-01
+iban	normalizedString	pattern=[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}
+b64len	base64Binary	maxLength=3
+hexlen	hexBinary	length=2
+uriMax	anyURI	maxLength=10
+collapseStr	string	whiteSpace=collapse	maxLength=3
+replaceStr	string	whiteSpace=replace	enumeration= a 
+enumDec	decimal	enumeration=1.50	enumeration=-0
+patBool	boolean	pattern=true|false
+enumDbl	double	enumeration=1e2	enumeration=NaN
+enum123	decimal	enumeration=1	enumeration=2	enumeration=3
+enum123max2	enum123	maxInclusive=2
+max5	string	maxLength=5
+max5len3	max5	length=3
+frac1	decimal	fractionDigits=1
+frac1tot3	frac1	totalDigits=3
+timeMax	time	maxInclusive=16:00:30
+timeMinZ	time	minInclusive=02:00:00Z
+dateEnumNeg	date	enumeration=-0001-03-01	enumeration=-0004-02-29
+b64enum	base64Binary	enumeration=QUJD
+floatMin1	float	minExclusive=1
+uriEnum	anyURI	enumeration=a b	enumeration=c  d
+uriPatEnum	anyURI	pattern=.*	enumeration=a b
+uriLen4	anyURI	length=4
+u-enum-any	union	enumNs	string
+u-int-tok	union	b-int	enumTok

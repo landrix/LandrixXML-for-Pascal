@@ -1,0 +1,2312 @@
+b-string		
+b-string	a	
+b-string	 a 	
+b-string	hex:610962	
+b-string	hex:6C696E650A627265616B	
+b-string	hex:C3A9C3A9	
+b-string	<&>	
+b-string	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
+b-string	a:b	
+b-string	:a	
+b-string	1a	
+b-string	-a	
+b-string	a-b.c	
+b-string	_x	
+b-string	hex:C3A9	
+b-string	hex:C2B761	
+b-string	hex:61C2B7	
+b-string	hex:E281B0	
+b-string	a b	
+b-string	hex:CC8061	
+b-string	hex:F09F9880	
+b-string	abc	
+b-string	x1	
+b-string	ABC	
+b-string	xyz	
+b-string	ab	
+b-string	Yes	
+b-string	No	
+b-string	a  b	
+b-string	 Yes 	
+b-string	12345678901234567	
+b-string	0	
+b-string	007	
+b-string	123456789012345678	
+b-string	DE89370400440532013000	
+b-string	de89	
+b-string	b1	
+b-string	-	
+b-string	-90b-a9	
+b-string	a-10b2	
+b-normalizedString		
+b-normalizedString	a	
+b-normalizedString	 a 	
+b-normalizedString	hex:610962	
+b-normalizedString	hex:6C696E650A627265616B	
+b-normalizedString	hex:C3A9C3A9	
+b-normalizedString	<&>	
+b-normalizedString	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
+b-normalizedString	a:b	
+b-normalizedString	:a	
+b-normalizedString	1a	
+b-normalizedString	-a	
+b-normalizedString	a-b.c	
+b-normalizedString	_x	
+b-normalizedString	hex:C3A9	
+b-normalizedString	hex:C2B761	
+b-normalizedString	hex:61C2B7	
+b-normalizedString	hex:E281B0	
+b-normalizedString	a b	
+b-normalizedString	hex:CC8061	
+b-normalizedString	hex:F09F9880	
+b-normalizedString	abc	
+b-normalizedString	x1	
+b-normalizedString	ABC	
+b-normalizedString	xyz	
+b-normalizedString	ab	
+b-normalizedString	Yes	
+b-normalizedString	No	
+b-normalizedString	a  b	
+b-normalizedString	 Yes 	
+b-normalizedString	12345678901234567	
+b-normalizedString	0	
+b-normalizedString	007	
+b-normalizedString	123456789012345678	
+b-normalizedString	DE89370400440532013000	
+b-normalizedString	de89	
+b-normalizedString	a909a:0-	
+b-normalizedString	:0200-1	
+b-token		
+b-token	a	
+b-token	 a 	
+b-token	hex:610962	
+b-token	hex:6C696E650A627265616B	
+b-token	hex:C3A9C3A9	
+b-token	<&>	
+b-token	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
+b-token	a:b	
+b-token	:a	
+b-token	1a	
+b-token	-a	
+b-token	a-b.c	
+b-token	_x	
+b-token	hex:C3A9	
+b-token	hex:C2B761	
+b-token	hex:61C2B7	
+b-token	hex:E281B0	
+b-token	a b	
+b-token	hex:CC8061	
+b-token	hex:F09F9880	
+b-token	abc	
+b-token	x1	
+b-token	ABC	
+b-token	xyz	
+b-token	ab	
+b-token	Yes	
+b-token	No	
+b-token	a  b	
+b-token	 Yes 	
+b-token	12345678901234567	
+b-token	0	
+b-token	007	
+b-token	123456789012345678	
+b-token	DE89370400440532013000	
+b-token	de89	
+b-token	:b 1b2	
+b-token	9:011-:9	
+b-token	099 2:2	
+b-token	-	
+b-language	de	
+b-language	de-DE	
+b-language	de-DE-x	
+b-language	x-klingon	
+b-language	toolonglang	cvc-pattern-valid
+b-language	de-	cvc-pattern-valid
+b-language	-de	cvc-pattern-valid
+b-language	1de	cvc-pattern-valid
+b-language	de-1999	
+b-language		cvc-pattern-valid
+b-Name	a	
+b-Name	a:b	
+b-Name	:a	
+b-Name	1a	cvc-datatype-valid.1.2.1
+b-Name	-a	cvc-datatype-valid.1.2.1
+b-Name	a-b.c	
+b-Name	_x	
+b-Name	hex:C3A9	
+b-Name	hex:C2B761	cvc-datatype-valid.1.2.1
+b-Name	hex:61C2B7	
+b-Name	hex:E281B0	cvc-datatype-valid.1.2.1
+b-Name	a b	cvc-datatype-valid.1.2.1
+b-Name		cvc-datatype-valid.1.2.1
+b-Name	hex:CC8061	cvc-datatype-valid.1.2.1
+b-Name	hex:F09F9880	cvc-datatype-valid.1.2.1
+b-Name	abc	
+b-Name	x1	
+b-Name	ABC	
+b-Name	xyz	
+b-Name	ab	
+b-Name	Yes	
+b-Name	No	
+b-Name	a  b	cvc-datatype-valid.1.2.1
+b-Name	 a 	
+b-Name	 Yes 	
+b-Name	12345678901234567	cvc-datatype-valid.1.2.1
+b-Name	0	cvc-datatype-valid.1.2.1
+b-Name	007	cvc-datatype-valid.1.2.1
+b-Name	123456789012345678	cvc-datatype-valid.1.2.1
+b-Name	DE89370400440532013000	
+b-Name	de89	
+b-Name	b :92-a-	cvc-datatype-valid.1.2.1
+b-Name	9  :	cvc-datatype-valid.1.2.1
+b-Name	a0:	
+b-Name	09:22-1:	cvc-datatype-valid.1.2.1
+b-NCName	a	
+b-NCName	a:b	cvc-datatype-valid.1.2.1
+b-NCName	:a	cvc-datatype-valid.1.2.1
+b-NCName	1a	cvc-datatype-valid.1.2.1
+b-NCName	-a	cvc-datatype-valid.1.2.1
+b-NCName	a-b.c	
+b-NCName	_x	
+b-NCName	hex:C3A9	
+b-NCName	hex:C2B761	cvc-datatype-valid.1.2.1
+b-NCName	hex:61C2B7	
+b-NCName	hex:E281B0	cvc-datatype-valid.1.2.1
+b-NCName	a b	cvc-datatype-valid.1.2.1
+b-NCName		cvc-datatype-valid.1.2.1
+b-NCName	hex:CC8061	cvc-datatype-valid.1.2.1
+b-NCName	hex:F09F9880	cvc-datatype-valid.1.2.1
+b-NCName	abc	
+b-NCName	x1	
+b-NCName	ABC	
+b-NCName	xyz	
+b-NCName	ab	
+b-NCName	Yes	
+b-NCName	No	
+b-NCName	a  b	cvc-datatype-valid.1.2.1
+b-NCName	 a 	
+b-NCName	 Yes 	
+b-NCName	12345678901234567	cvc-datatype-valid.1.2.1
+b-NCName	0	cvc-datatype-valid.1.2.1
+b-NCName	007	cvc-datatype-valid.1.2.1
+b-NCName	123456789012345678	cvc-datatype-valid.1.2.1
+b-NCName	DE89370400440532013000	
+b-NCName	de89	
+b-NCName	: ::09	cvc-datatype-valid.1.2.1
+b-NCName	2:0:9-2	cvc-datatype-valid.1.2.1
+b-NCName	2a::2-	cvc-datatype-valid.1.2.1
+b-ID	a	
+b-ID	a:b	cvc-datatype-valid.1.2.1
+b-ID	:a	cvc-datatype-valid.1.2.1
+b-ID	1a	cvc-datatype-valid.1.2.1
+b-ID	-a	cvc-datatype-valid.1.2.1
+b-ID	a-b.c	
+b-ID	_x	
+b-ID	hex:C3A9	
+b-ID	hex:C2B761	cvc-datatype-valid.1.2.1
+b-ID	hex:61C2B7	
+b-ID	hex:E281B0	cvc-datatype-valid.1.2.1
+b-ID	a b	cvc-datatype-valid.1.2.1
+b-ID		cvc-datatype-valid.1.2.1
+b-ID	hex:CC8061	cvc-datatype-valid.1.2.1
+b-ID	hex:F09F9880	cvc-datatype-valid.1.2.1
+b-ID	abc	
+b-ID	x1	
+b-ID	ABC	
+b-ID	xyz	
+b-ID	ab	
+b-ID	Yes	
+b-ID	No	
+b-ID	a  b	cvc-datatype-valid.1.2.1
+b-ID	 a 	
+b-ID	 Yes 	
+b-ID	12345678901234567	cvc-datatype-valid.1.2.1
+b-ID	0	cvc-datatype-valid.1.2.1
+b-ID	007	cvc-datatype-valid.1.2.1
+b-ID	123456789012345678	cvc-datatype-valid.1.2.1
+b-ID	DE89370400440532013000	
+b-ID	de89	
+b-ID	 : 	cvc-datatype-valid.1.2.1
+b-ID	:	cvc-datatype-valid.1.2.1
+b-ID	abba	
+b-ID	a101b 2	cvc-datatype-valid.1.2.1
+b-IDREF	a	
+b-IDREF	a:b	cvc-datatype-valid.1.2.1
+b-IDREF	:a	cvc-datatype-valid.1.2.1
+b-IDREF	1a	cvc-datatype-valid.1.2.1
+b-IDREF	-a	cvc-datatype-valid.1.2.1
+b-IDREF	a-b.c	
+b-IDREF	_x	
+b-IDREF	hex:C3A9	
+b-IDREF	hex:C2B761	cvc-datatype-valid.1.2.1
+b-IDREF	hex:61C2B7	
+b-IDREF	hex:E281B0	cvc-datatype-valid.1.2.1
+b-IDREF	a b	cvc-datatype-valid.1.2.1
+b-IDREF		cvc-datatype-valid.1.2.1
+b-IDREF	hex:CC8061	cvc-datatype-valid.1.2.1
+b-IDREF	hex:F09F9880	cvc-datatype-valid.1.2.1
+b-IDREF	abc	
+b-IDREF	x1	
+b-IDREF	ABC	
+b-IDREF	xyz	
+b-IDREF	ab	
+b-IDREF	Yes	
+b-IDREF	No	
+b-IDREF	a  b	cvc-datatype-valid.1.2.1
+b-IDREF	 a 	
+b-IDREF	 Yes 	
+b-IDREF	12345678901234567	cvc-datatype-valid.1.2.1
+b-IDREF	0	cvc-datatype-valid.1.2.1
+b-IDREF	007	cvc-datatype-valid.1.2.1
+b-IDREF	123456789012345678	cvc-datatype-valid.1.2.1
+b-IDREF	DE89370400440532013000	
+b-IDREF	de89	
+b-IDREF	b  1	cvc-datatype-valid.1.2.1
+b-IDREF	 11-2--b	cvc-datatype-valid.1.2.1
+b-IDREF	9290	cvc-datatype-valid.1.2.1
+b-IDREF	b1:0	cvc-datatype-valid.1.2.1
+b-NMTOKEN	a	
+b-NMTOKEN	a:b	
+b-NMTOKEN	:a	
+b-NMTOKEN	1a	
+b-NMTOKEN	-a	
+b-NMTOKEN	a-b.c	
+b-NMTOKEN	_x	
+b-NMTOKEN	hex:C3A9	
+b-NMTOKEN	hex:C2B761	
+b-NMTOKEN	hex:61C2B7	
+b-NMTOKEN	hex:E281B0	cvc-datatype-valid.1.2.1
+b-NMTOKEN	a b	cvc-datatype-valid.1.2.1
+b-NMTOKEN		cvc-datatype-valid.1.2.1
+b-NMTOKEN	hex:CC8061	
+b-NMTOKEN	hex:F09F9880	cvc-datatype-valid.1.2.1
+b-NMTOKEN	abc	
+b-NMTOKEN	x1	
+b-NMTOKEN	ABC	
+b-NMTOKEN	xyz	
+b-NMTOKEN	ab	
+b-NMTOKEN	Yes	
+b-NMTOKEN	No	
+b-NMTOKEN	a  b	cvc-datatype-valid.1.2.1
+b-NMTOKEN	 a 	
+b-NMTOKEN	 Yes 	
+b-NMTOKEN	12345678901234567	
+b-NMTOKEN	0	
+b-NMTOKEN	007	
+b-NMTOKEN	123456789012345678	
+b-NMTOKEN	DE89370400440532013000	
+b-NMTOKEN	de89	
+b-NMTOKEN	a0a9 a	cvc-datatype-valid.1.2.1
+b-NMTOKEN	-:	
+b-NMTOKEN	:0:-0:	
+b-NMTOKEN	29a1 0	cvc-datatype-valid.1.2.1
+b-boolean	true	
+b-boolean	false	
+b-boolean	1	
+b-boolean	0	
+b-boolean	TRUE	cvc-datatype-valid.1.2.1
+b-boolean	yes	cvc-datatype-valid.1.2.1
+b-boolean	 true 	
+b-boolean		cvc-datatype-valid.1.2.1
+b-decimal	0	
+b-decimal	-0	
+b-decimal	+1.50	
+b-decimal	.5	
+b-decimal	5.	
+b-decimal	1e5	cvc-datatype-valid.1.2.1
+b-decimal	1,5	cvc-datatype-valid.1.2.1
+b-decimal		cvc-datatype-valid.1.2.1
+b-decimal	 12 	
+b-decimal	123456789.1234567	
+b-decimal	00012.300	
+b-decimal	-999.99	
+b-decimal	50	
+b-decimal	50.00	
+b-decimal	50.01	
+b-decimal	1.5	
+b-decimal	1.49	
+b-decimal	0.0001	
+b-decimal	abc	cvc-datatype-valid.1.2.1
+b-decimal	12345	
+b-decimal	123.456	
+b-decimal	-1	
+b-decimal	1	
+b-decimal	+7	
+b-decimal	007	
+b-decimal	1.0	
+b-decimal	1.	
+b-decimal	2147483647	
+b-decimal	2147483648	
+b-decimal	-2147483649	
+b-decimal	9223372036854775807	
+b-decimal	9223372036854775808	
+b-decimal	18446744073709551615	
+b-decimal	18446744073709551616	
+b-decimal	127	
+b-decimal	128	
+b-decimal	-128	
+b-decimal	-129	
+b-decimal	255	
+b-decimal	256	
+b-decimal	32767	
+b-decimal	65536	
+b-decimal	-5	
+b-decimal	5	
+b-decimal	6	
+b-decimal	999	
+b-decimal	1000	
+b-integer	0	
+b-integer	-1	
+b-integer	1	
+b-integer	+7	
+b-integer	007	
+b-integer	1.0	cvc-datatype-valid.1.2.1
+b-integer	1.	cvc-datatype-valid.1.2.1
+b-integer	2147483647	
+b-integer	2147483648	
+b-integer	-2147483649	
+b-integer	9223372036854775807	
+b-integer	9223372036854775808	
+b-integer	18446744073709551615	
+b-integer	18446744073709551616	
+b-integer	127	
+b-integer	128	
+b-integer	-128	
+b-integer	-129	
+b-integer	255	
+b-integer	256	
+b-integer	32767	
+b-integer	65536	
+b-integer	-5	
+b-integer	5	
+b-integer	6	
+b-integer	999	
+b-integer	1000	
+b-nonPositiveInteger	0	
+b-nonPositiveInteger	-1	
+b-nonPositiveInteger	1	cvc-maxInclusive-valid
+b-nonPositiveInteger	+7	cvc-maxInclusive-valid
+b-nonPositiveInteger	007	cvc-maxInclusive-valid
+b-nonPositiveInteger	1.0	cvc-datatype-valid.1.2.1
+b-nonPositiveInteger	1.	cvc-datatype-valid.1.2.1
+b-nonPositiveInteger	2147483647	cvc-maxInclusive-valid
+b-nonPositiveInteger	2147483648	cvc-maxInclusive-valid
+b-nonPositiveInteger	-2147483649	
+b-nonPositiveInteger	9223372036854775807	cvc-maxInclusive-valid
+b-nonPositiveInteger	9223372036854775808	cvc-maxInclusive-valid
+b-nonPositiveInteger	18446744073709551615	cvc-maxInclusive-valid
+b-nonPositiveInteger	18446744073709551616	cvc-maxInclusive-valid
+b-nonPositiveInteger	127	cvc-maxInclusive-valid
+b-nonPositiveInteger	128	cvc-maxInclusive-valid
+b-nonPositiveInteger	-128	
+b-nonPositiveInteger	-129	
+b-nonPositiveInteger	255	cvc-maxInclusive-valid
+b-nonPositiveInteger	256	cvc-maxInclusive-valid
+b-nonPositiveInteger	32767	cvc-maxInclusive-valid
+b-nonPositiveInteger	65536	cvc-maxInclusive-valid
+b-nonPositiveInteger	-5	
+b-nonPositiveInteger	5	cvc-maxInclusive-valid
+b-nonPositiveInteger	6	cvc-maxInclusive-valid
+b-nonPositiveInteger	999	cvc-maxInclusive-valid
+b-nonPositiveInteger	1000	cvc-maxInclusive-valid
+b-negativeInteger	0	cvc-maxInclusive-valid
+b-negativeInteger	-1	
+b-negativeInteger	1	cvc-maxInclusive-valid
+b-negativeInteger	+7	cvc-maxInclusive-valid
+b-negativeInteger	007	cvc-maxInclusive-valid
+b-negativeInteger	1.0	cvc-datatype-valid.1.2.1
+b-negativeInteger	1.	cvc-datatype-valid.1.2.1
+b-negativeInteger	2147483647	cvc-maxInclusive-valid
+b-negativeInteger	2147483648	cvc-maxInclusive-valid
+b-negativeInteger	-2147483649	
+b-negativeInteger	9223372036854775807	cvc-maxInclusive-valid
+b-negativeInteger	9223372036854775808	cvc-maxInclusive-valid
+b-negativeInteger	18446744073709551615	cvc-maxInclusive-valid
+b-negativeInteger	18446744073709551616	cvc-maxInclusive-valid
+b-negativeInteger	127	cvc-maxInclusive-valid
+b-negativeInteger	128	cvc-maxInclusive-valid
+b-negativeInteger	-128	
+b-negativeInteger	-129	
+b-negativeInteger	255	cvc-maxInclusive-valid
+b-negativeInteger	256	cvc-maxInclusive-valid
+b-negativeInteger	32767	cvc-maxInclusive-valid
+b-negativeInteger	65536	cvc-maxInclusive-valid
+b-negativeInteger	-5	
+b-negativeInteger	5	cvc-maxInclusive-valid
+b-negativeInteger	6	cvc-maxInclusive-valid
+b-negativeInteger	999	cvc-maxInclusive-valid
+b-negativeInteger	1000	cvc-maxInclusive-valid
+b-long	0	
+b-long	-1	
+b-long	1	
+b-long	+7	
+b-long	007	
+b-long	1.0	cvc-datatype-valid.1.2.1
+b-long	1.	cvc-datatype-valid.1.2.1
+b-long	2147483647	
+b-long	2147483648	
+b-long	-2147483649	
+b-long	9223372036854775807	
+b-long	9223372036854775808	cvc-maxInclusive-valid
+b-long	18446744073709551615	cvc-maxInclusive-valid
+b-long	18446744073709551616	cvc-maxInclusive-valid
+b-long	127	
+b-long	128	
+b-long	-128	
+b-long	-129	
+b-long	255	
+b-long	256	
+b-long	32767	
+b-long	65536	
+b-long	-5	
+b-long	5	
+b-long	6	
+b-long	999	
+b-long	1000	
+b-int	0	
+b-int	-1	
+b-int	1	
+b-int	+7	
+b-int	007	
+b-int	1.0	cvc-datatype-valid.1.2.1
+b-int	1.	cvc-datatype-valid.1.2.1
+b-int	2147483647	
+b-int	2147483648	cvc-maxInclusive-valid
+b-int	-2147483649	cvc-minInclusive-valid
+b-int	9223372036854775807	cvc-maxInclusive-valid
+b-int	9223372036854775808	cvc-maxInclusive-valid
+b-int	18446744073709551615	cvc-maxInclusive-valid
+b-int	18446744073709551616	cvc-maxInclusive-valid
+b-int	127	
+b-int	128	
+b-int	-128	
+b-int	-129	
+b-int	255	
+b-int	256	
+b-int	32767	
+b-int	65536	
+b-int	-5	
+b-int	5	
+b-int	6	
+b-int	999	
+b-int	1000	
+b-short	0	
+b-short	-1	
+b-short	1	
+b-short	+7	
+b-short	007	
+b-short	1.0	cvc-datatype-valid.1.2.1
+b-short	1.	cvc-datatype-valid.1.2.1
+b-short	2147483647	cvc-maxInclusive-valid
+b-short	2147483648	cvc-maxInclusive-valid
+b-short	-2147483649	cvc-minInclusive-valid
+b-short	9223372036854775807	cvc-maxInclusive-valid
+b-short	9223372036854775808	cvc-maxInclusive-valid
+b-short	18446744073709551615	cvc-maxInclusive-valid
+b-short	18446744073709551616	cvc-maxInclusive-valid
+b-short	127	
+b-short	128	
+b-short	-128	
+b-short	-129	
+b-short	255	
+b-short	256	
+b-short	32767	
+b-short	65536	cvc-maxInclusive-valid
+b-short	-5	
+b-short	5	
+b-short	6	
+b-short	999	
+b-short	1000	
+b-byte	0	
+b-byte	-1	
+b-byte	1	
+b-byte	+7	
+b-byte	007	
+b-byte	1.0	cvc-datatype-valid.1.2.1
+b-byte	1.	cvc-datatype-valid.1.2.1
+b-byte	2147483647	cvc-maxInclusive-valid
+b-byte	2147483648	cvc-maxInclusive-valid
+b-byte	-2147483649	cvc-minInclusive-valid
+b-byte	9223372036854775807	cvc-maxInclusive-valid
+b-byte	9223372036854775808	cvc-maxInclusive-valid
+b-byte	18446744073709551615	cvc-maxInclusive-valid
+b-byte	18446744073709551616	cvc-maxInclusive-valid
+b-byte	127	
+b-byte	128	cvc-maxInclusive-valid
+b-byte	-128	
+b-byte	-129	cvc-minInclusive-valid
+b-byte	255	cvc-maxInclusive-valid
+b-byte	256	cvc-maxInclusive-valid
+b-byte	32767	cvc-maxInclusive-valid
+b-byte	65536	cvc-maxInclusive-valid
+b-byte	-5	
+b-byte	5	
+b-byte	6	
+b-byte	999	cvc-maxInclusive-valid
+b-byte	1000	cvc-maxInclusive-valid
+b-nonNegativeInteger	0	
+b-nonNegativeInteger	-1	cvc-minInclusive-valid
+b-nonNegativeInteger	1	
+b-nonNegativeInteger	+7	
+b-nonNegativeInteger	007	
+b-nonNegativeInteger	1.0	cvc-datatype-valid.1.2.1
+b-nonNegativeInteger	1.	cvc-datatype-valid.1.2.1
+b-nonNegativeInteger	2147483647	
+b-nonNegativeInteger	2147483648	
+b-nonNegativeInteger	-2147483649	cvc-minInclusive-valid
+b-nonNegativeInteger	9223372036854775807	
+b-nonNegativeInteger	9223372036854775808	
+b-nonNegativeInteger	18446744073709551615	
+b-nonNegativeInteger	18446744073709551616	
+b-nonNegativeInteger	127	
+b-nonNegativeInteger	128	
+b-nonNegativeInteger	-128	cvc-minInclusive-valid
+b-nonNegativeInteger	-129	cvc-minInclusive-valid
+b-nonNegativeInteger	255	
+b-nonNegativeInteger	256	
+b-nonNegativeInteger	32767	
+b-nonNegativeInteger	65536	
+b-nonNegativeInteger	-5	cvc-minInclusive-valid
+b-nonNegativeInteger	5	
+b-nonNegativeInteger	6	
+b-nonNegativeInteger	999	
+b-nonNegativeInteger	1000	
+b-unsignedLong	0	
+b-unsignedLong	-1	cvc-minInclusive-valid
+b-unsignedLong	1	
+b-unsignedLong	+7	
+b-unsignedLong	007	
+b-unsignedLong	1.0	cvc-datatype-valid.1.2.1
+b-unsignedLong	1.	cvc-datatype-valid.1.2.1
+b-unsignedLong	2147483647	
+b-unsignedLong	2147483648	
+b-unsignedLong	-2147483649	cvc-minInclusive-valid
+b-unsignedLong	9223372036854775807	
+b-unsignedLong	9223372036854775808	
+b-unsignedLong	18446744073709551615	
+b-unsignedLong	18446744073709551616	cvc-maxInclusive-valid
+b-unsignedLong	127	
+b-unsignedLong	128	
+b-unsignedLong	-128	cvc-minInclusive-valid
+b-unsignedLong	-129	cvc-minInclusive-valid
+b-unsignedLong	255	
+b-unsignedLong	256	
+b-unsignedLong	32767	
+b-unsignedLong	65536	
+b-unsignedLong	-5	cvc-minInclusive-valid
+b-unsignedLong	5	
+b-unsignedLong	6	
+b-unsignedLong	999	
+b-unsignedLong	1000	
+b-unsignedInt	0	
+b-unsignedInt	-1	cvc-minInclusive-valid
+b-unsignedInt	1	
+b-unsignedInt	+7	
+b-unsignedInt	007	
+b-unsignedInt	1.0	cvc-datatype-valid.1.2.1
+b-unsignedInt	1.	cvc-datatype-valid.1.2.1
+b-unsignedInt	2147483647	
+b-unsignedInt	2147483648	
+b-unsignedInt	-2147483649	cvc-minInclusive-valid
+b-unsignedInt	9223372036854775807	cvc-maxInclusive-valid
+b-unsignedInt	9223372036854775808	cvc-maxInclusive-valid
+b-unsignedInt	18446744073709551615	cvc-maxInclusive-valid
+b-unsignedInt	18446744073709551616	cvc-maxInclusive-valid
+b-unsignedInt	127	
+b-unsignedInt	128	
+b-unsignedInt	-128	cvc-minInclusive-valid
+b-unsignedInt	-129	cvc-minInclusive-valid
+b-unsignedInt	255	
+b-unsignedInt	256	
+b-unsignedInt	32767	
+b-unsignedInt	65536	
+b-unsignedInt	-5	cvc-minInclusive-valid
+b-unsignedInt	5	
+b-unsignedInt	6	
+b-unsignedInt	999	
+b-unsignedInt	1000	
+b-unsignedShort	0	
+b-unsignedShort	-1	cvc-minInclusive-valid
+b-unsignedShort	1	
+b-unsignedShort	+7	
+b-unsignedShort	007	
+b-unsignedShort	1.0	cvc-datatype-valid.1.2.1
+b-unsignedShort	1.	cvc-datatype-valid.1.2.1
+b-unsignedShort	2147483647	cvc-maxInclusive-valid
+b-unsignedShort	2147483648	cvc-maxInclusive-valid
+b-unsignedShort	-2147483649	cvc-minInclusive-valid
+b-unsignedShort	9223372036854775807	cvc-maxInclusive-valid
+b-unsignedShort	9223372036854775808	cvc-maxInclusive-valid
+b-unsignedShort	18446744073709551615	cvc-maxInclusive-valid
+b-unsignedShort	18446744073709551616	cvc-maxInclusive-valid
+b-unsignedShort	127	
+b-unsignedShort	128	
+b-unsignedShort	-128	cvc-minInclusive-valid
+b-unsignedShort	-129	cvc-minInclusive-valid
+b-unsignedShort	255	
+b-unsignedShort	256	
+b-unsignedShort	32767	
+b-unsignedShort	65536	cvc-maxInclusive-valid
+b-unsignedShort	-5	cvc-minInclusive-valid
+b-unsignedShort	5	
+b-unsignedShort	6	
+b-unsignedShort	999	
+b-unsignedShort	1000	
+b-unsignedByte	0	
+b-unsignedByte	-1	cvc-minInclusive-valid
+b-unsignedByte	1	
+b-unsignedByte	+7	
+b-unsignedByte	007	
+b-unsignedByte	1.0	cvc-datatype-valid.1.2.1
+b-unsignedByte	1.	cvc-datatype-valid.1.2.1
+b-unsignedByte	2147483647	cvc-maxInclusive-valid
+b-unsignedByte	2147483648	cvc-maxInclusive-valid
+b-unsignedByte	-2147483649	cvc-minInclusive-valid
+b-unsignedByte	9223372036854775807	cvc-maxInclusive-valid
+b-unsignedByte	9223372036854775808	cvc-maxInclusive-valid
+b-unsignedByte	18446744073709551615	cvc-maxInclusive-valid
+b-unsignedByte	18446744073709551616	cvc-maxInclusive-valid
+b-unsignedByte	127	
+b-unsignedByte	128	
+b-unsignedByte	-128	cvc-minInclusive-valid
+b-unsignedByte	-129	cvc-minInclusive-valid
+b-unsignedByte	255	
+b-unsignedByte	256	cvc-maxInclusive-valid
+b-unsignedByte	32767	cvc-maxInclusive-valid
+b-unsignedByte	65536	cvc-maxInclusive-valid
+b-unsignedByte	-5	cvc-minInclusive-valid
+b-unsignedByte	5	
+b-unsignedByte	6	
+b-unsignedByte	999	cvc-maxInclusive-valid
+b-unsignedByte	1000	cvc-maxInclusive-valid
+b-positiveInteger	0	cvc-minInclusive-valid
+b-positiveInteger	-1	cvc-minInclusive-valid
+b-positiveInteger	1	
+b-positiveInteger	+7	
+b-positiveInteger	007	
+b-positiveInteger	1.0	cvc-datatype-valid.1.2.1
+b-positiveInteger	1.	cvc-datatype-valid.1.2.1
+b-positiveInteger	2147483647	
+b-positiveInteger	2147483648	
+b-positiveInteger	-2147483649	cvc-minInclusive-valid
+b-positiveInteger	9223372036854775807	
+b-positiveInteger	9223372036854775808	
+b-positiveInteger	18446744073709551615	
+b-positiveInteger	18446744073709551616	
+b-positiveInteger	127	
+b-positiveInteger	128	
+b-positiveInteger	-128	cvc-minInclusive-valid
+b-positiveInteger	-129	cvc-minInclusive-valid
+b-positiveInteger	255	
+b-positiveInteger	256	
+b-positiveInteger	32767	
+b-positiveInteger	65536	
+b-positiveInteger	-5	cvc-minInclusive-valid
+b-positiveInteger	5	
+b-positiveInteger	6	
+b-positiveInteger	999	
+b-positiveInteger	1000	
+b-float	0	
+b-float	-0	
+b-float	1e5	
+b-float	1.e5	
+b-float	 1e5 	
+b-float	+INF	cvc-datatype-valid.1.2.1
+b-float	INF	
+b-float	-INF	
+b-float	NaN	
+b-float	nan	cvc-datatype-valid.1.2.1
+b-float	1E400	
+b-float	1e-400	
+b-float	.5e1	
+b-float	1e	cvc-datatype-valid.1.2.1
+b-float	e1	cvc-datatype-valid.1.2.1
+b-float	1.5E+3	
+b-float	-1e3	
+b-float	-1001	
+b-float	3.4028235e38	
+b-float	3.4028236e38	
+b-float	1e-46	
+b-float	1.4e-45	
+b-float	0x1	cvc-datatype-valid.1.2.1
+b-float	100	
+b-float	1e2	
+b-float	abc	cvc-datatype-valid.1.2.1
+b-double	0	
+b-double	-0	
+b-double	1e5	
+b-double	1.e5	
+b-double	 1e5 	
+b-double	+INF	cvc-datatype-valid.1.2.1
+b-double	INF	
+b-double	-INF	
+b-double	NaN	
+b-double	nan	cvc-datatype-valid.1.2.1
+b-double	1E400	
+b-double	1e-400	
+b-double	.5e1	
+b-double	1e	cvc-datatype-valid.1.2.1
+b-double	e1	cvc-datatype-valid.1.2.1
+b-double	1.5E+3	
+b-double	-1e3	
+b-double	-1001	
+b-double	3.4028235e38	
+b-double	3.4028236e38	
+b-double	1e-46	
+b-double	1.4e-45	
+b-double	0x1	cvc-datatype-valid.1.2.1
+b-double	100	
+b-double	1e2	
+b-double	abc	cvc-datatype-valid.1.2.1
+b-dateTime	2026-10-21T12:00:00	
+b-dateTime	2026-10-21T24:00:00	
+b-dateTime	2026-10-21T24:00:01	cvc-datatype-valid.1.2.1
+b-dateTime	2026-10-21T12:00:00Z	
+b-dateTime	2026-10-21T12:00:00.123+02:00	
+b-dateTime	2026-10-21T12:00	cvc-datatype-valid.1.2.1
+b-dateTime	2026-10-21	cvc-datatype-valid.1.2.1
+b-dateTime	0000-01-01T00:00:00	cvc-datatype-valid.1.2.1
+b-dateTime	-0001-01-01T00:00:00	
+b-dateTime	12026-10-21T00:00:00	
+b-dateTime	02026-10-21T00:00:00	cvc-datatype-valid.1.2.1
+b-dateTime	2026-10-21T12:60:00	cvc-datatype-valid.1.2.1
+b-dateTime	2026-10-21T12:00:00+14:00	
+b-dateTime	2026-10-21T12:00:00-14:01	cvc-datatype-valid.1.2.1
+b-dateTime	2026-10-21T12:00:00.	cvc-datatype-valid.1.2.1
+b-dateTime	abc	cvc-datatype-valid.1.2.1
+b-time	12:00:00	
+b-time	24:00:00	
+b-time	23:59:59.999	
+b-time	23:59:60	cvc-datatype-valid.1.2.1
+b-time	12:00	cvc-datatype-valid.1.2.1
+b-time	12:00:00Z	
+b-time	12:00:00+05:30	
+b-time	7:00:00	cvc-datatype-valid.1.2.1
+b-date	2026-10-21	
+b-date	2024-02-29	
+b-date	2026-02-29	cvc-datatype-valid.1.2.1
+b-date	1900-02-29	cvc-datatype-valid.1.2.1
+b-date	2000-02-29	
+b-date	2026-13-01	cvc-datatype-valid.1.2.1
+b-date	2026-00-10	cvc-datatype-valid.1.2.1
+b-date	2026-01-00	cvc-datatype-valid.1.2.1
+b-date	2026-04-31	cvc-datatype-valid.1.2.1
+b-date	0000-01-01	cvc-datatype-valid.1.2.1
+b-date	-0001-12-31	
+b-date	2026-10-21Z	
+b-date	2026-10-21+01:00	
+b-date	2026-1-21	cvc-datatype-valid.1.2.1
+b-date	26-10-21	cvc-datatype-valid.1.2.1
+b-date	 2026-10-21 	
+b-date	1999-12-31	
+b-date	2100-01-01	
+b-date	2099-12-31	
+b-date	2000-01-01Z	
+b-date	2147483647-01-01	
+b-date	-2147483648-01-01	
+b-date	2147483648-01-01	cvc-datatype-valid.1.2.1
+b-date	-0400-02-29	
+b-date	-0004-02-29	
+b-date	-0005-02-29	cvc-datatype-valid.1.2.1
+b-date	-0001-02-29	cvc-datatype-valid.1.2.1
+b-gYearMonth	2013-10	
+b-gYearMonth	2021-05	
+b-gYearMonth	2013-13	cvc-datatype-valid.1.2.1
+b-gYearMonth	2013-1	cvc-datatype-valid.1.2.1
+b-gYearMonth	2013-10Z	
+b-gYearMonth	-2013-10	
+b-gYearMonth	2013	cvc-datatype-valid.1.2.1
+b-gYearMonth	2013-10-01	cvc-datatype-valid.1.2.1
+b-gYear	2026	
+b-gYear	0000	cvc-datatype-valid.1.2.1
+b-gYear	-0001	
+b-gYear	26	cvc-datatype-valid.1.2.1
+b-gYear	2026Z	
+b-gYear	12026	
+b-gMonthDay	--02-29	
+b-gMonthDay	--02-30	cvc-datatype-valid.1.2.1
+b-gMonthDay	--12-31	
+b-gMonthDay	--13-01	cvc-datatype-valid.1.2.1
+b-gMonthDay	02-29	cvc-datatype-valid.1.2.1
+b-gMonthDay	--1-01	cvc-datatype-valid.1.2.1
+b-gDay	---31	
+b-gDay	---32	cvc-datatype-valid.1.2.1
+b-gDay	---00	cvc-datatype-valid.1.2.1
+b-gDay	--31	cvc-datatype-valid.1.2.1
+b-gDay	---31Z	
+b-gMonth	--12	
+b-gMonth	--13	cvc-datatype-valid.1.2.1
+b-gMonth	--00	cvc-datatype-valid.1.2.1
+b-gMonth	-12	cvc-datatype-valid.1.2.1
+b-gMonth	--12Z	
+b-gMonth	--12--	
+b-hexBinary		
+b-hexBinary	00	
+b-hexBinary	0a0B	
+b-hexBinary	ABC	cvc-datatype-valid.1.2.1
+b-hexBinary	GG	cvc-datatype-valid.1.2.1
+b-hexBinary	0F0F	
+b-hexBinary	 0f 	
+b-base64Binary		
+b-base64Binary	QUJD	
+b-base64Binary	QUJD RA==	
+b-base64Binary	QUJ	cvc-datatype-valid.1.2.1
+b-base64Binary	QUJD===	cvc-datatype-valid.1.2.1
+b-base64Binary	QQ==	
+b-base64Binary	QR==	cvc-datatype-valid.1.2.1
+b-base64Binary	QUE=	
+b-base64Binary	QUF=	cvc-datatype-valid.1.2.1
+b-base64Binary	Q U J D	
+b-base64Binary	hex:51554A440A	
+b-base64Binary	!!!!	cvc-datatype-valid.1.2.1
+b-anyURI		
+b-anyURI	http://example.org/a?b#c	
+b-anyURI	http://a b	
+b-anyURI	::	cvc-datatype-valid.1.2.1
+b-anyURI	a:b	
+b-anyURI	1a:b	cvc-datatype-valid.1.2.1
+b-anyURI	urn:isbn:123	
+b-anyURI	%41	
+b-anyURI	%4	cvc-datatype-valid.1.2.1
+b-anyURI	%zz	cvc-datatype-valid.1.2.1
+b-anyURI	#a#b	cvc-datatype-valid.1.2.1
+b-anyURI	/rel/path	
+b-anyURI	mailto:info@example.org	
+b-anyURI	hex:C3A4	
+b-anyURI	http://x/yyyyyyyyyyyyyyyyyyyy	
+b-anyURI	http:	cvc-datatype-valid.1.2.1
+b-anyURI	a:	cvc-datatype-valid.1.2.1
+b-anyURI	urn:	cvc-datatype-valid.1.2.1
+b-anyURI	mailto:	cvc-datatype-valid.1.2.1
+b-anyURI	a:#	cvc-datatype-valid.1.2.1
+b-anyURI	s:#x	cvc-datatype-valid.1.2.1
+b-anyURI	///	
+b-anyURI	//?x	
+b-anyURI	//#x	
+b-anyURI	http://?x	
+b-anyURI	//	cvc-datatype-valid.1.2.1
+b-anyURI	http://	cvc-datatype-valid.1.2.1
+b-anyURI	a[1]	cvc-datatype-valid.1.2.1
+b-anyURI	/[	cvc-datatype-valid.1.2.1
+b-anyURI	./[	cvc-datatype-valid.1.2.1
+b-anyURI	http://x/a[1]	cvc-datatype-valid.1.2.1
+b-anyURI	http://x/a]	cvc-datatype-valid.1.2.1
+b-anyURI	hex:C3A95B	cvc-datatype-valid.1.2.1
+b-anyURI	http://[abc]/	cvc-datatype-valid.1.2.1
+b-anyURI	http://[::1]x/	cvc-datatype-valid.1.2.1
+b-anyURI	http://[::1]:abc/	cvc-datatype-valid.1.2.1
+b-anyURI	s://[::1]@x/	cvc-datatype-valid.1.2.1
+b-anyURI	http://[::1]:80/	
+b-anyURI	http://[2001:db8::1]/	
+b-anyURI	http://[::ffff:1.2.3.4]/	
+b-anyURI	http://[1::2::3]/	cvc-datatype-valid.1.2.1
+b-anyURI	http://[::g]/	cvc-datatype-valid.1.2.1
+b-anyURI	http://[1.2.3.4]/	cvc-datatype-valid.1.2.1
+b-anyURI	http://[1:2:3:4:5:6:7:8:9]/	cvc-datatype-valid.1.2.1
+b-anyURI	http://[1:2:3:4:5:6:7:8]/	
+b-anyURI	http://u@[::1]/	
+b-anyURI	http://x@y@[::1]/	cvc-datatype-valid.1.2.1
+b-anyURI	urn:a[1]	
+b-anyURI	a:[	
+b-anyURI	data:,[	
+b-anyURI	http://x/?a[1]	
+b-anyURI	http://x/#a[1]	
+b-anyURI	{|}	
+b-anyURI	a b	
+b-anyURI	x%41y	
+b-anyURI	x%4y	cvc-datatype-valid.1.2.1
+ns40		
+ns40	a	
+ns40	 a 	
+ns40	hex:610962	
+ns40	hex:6C696E650A627265616B	
+ns40	hex:C3A9C3A9	
+ns40	<&>	
+ns40	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-maxLength-valid
+ns40	a:b	
+ns40	:a	
+ns40	1a	
+ns40	-a	
+ns40	a-b.c	
+ns40	_x	
+ns40	hex:C3A9	
+ns40	hex:C2B761	
+ns40	hex:61C2B7	
+ns40	hex:E281B0	
+ns40	a b	
+ns40	hex:CC8061	
+ns40	hex:F09F9880	
+ns40	abc	
+ns40	x1	
+ns40	ABC	
+ns40	xyz	
+ns40	ab	
+ns40	Yes	
+ns40	No	
+ns40	a  b	
+ns40	 Yes 	
+ns40	12345678901234567	
+ns40	0	
+ns40	007	
+ns40	123456789012345678	
+ns40	DE89370400440532013000	
+ns40	de89	
+ns40	bb11	
+ns40	91	
+ns40	a:	
+tok35		cvc-minLength-valid
+tok35	a	
+tok35	 a 	
+tok35	hex:610962	
+tok35	hex:6C696E650A627265616B	
+tok35	hex:C3A9C3A9	
+tok35	<&>	
+tok35	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-maxLength-valid
+tok35	a:b	
+tok35	:a	
+tok35	1a	
+tok35	-a	
+tok35	a-b.c	
+tok35	_x	
+tok35	hex:C3A9	
+tok35	hex:C2B761	
+tok35	hex:61C2B7	
+tok35	hex:E281B0	
+tok35	a b	
+tok35	hex:CC8061	
+tok35	hex:F09F9880	
+tok35	abc	
+tok35	x1	
+tok35	ABC	
+tok35	xyz	
+tok35	ab	
+tok35	Yes	
+tok35	No	
+tok35	a  b	
+tok35	 Yes 	
+tok35	12345678901234567	
+tok35	0	
+tok35	007	
+tok35	123456789012345678	
+tok35	DE89370400440532013000	
+tok35	de89	
+tok35	- :	
+tok35	02b090	
+tok35	b91:-a2	
+tok35	1a 02 	
+len3		cvc-length-valid
+len3	a	cvc-length-valid
+len3	 a 	
+len3	hex:610962	
+len3	hex:6C696E650A627265616B	cvc-length-valid
+len3	hex:C3A9C3A9	cvc-length-valid
+len3	<&>	
+len3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-length-valid
+len3	a:b	
+len3	:a	cvc-length-valid
+len3	1a	cvc-length-valid
+len3	-a	cvc-length-valid
+len3	a-b.c	cvc-length-valid
+len3	_x	cvc-length-valid
+len3	hex:C3A9	cvc-length-valid
+len3	hex:C2B761	cvc-length-valid
+len3	hex:61C2B7	cvc-length-valid
+len3	hex:E281B0	cvc-length-valid
+len3	a b	
+len3	hex:CC8061	cvc-length-valid
+len3	hex:F09F9880	cvc-length-valid
+len3	abc	
+len3	x1	cvc-length-valid
+len3	ABC	
+len3	xyz	
+len3	ab	cvc-length-valid
+len3	Yes	
+len3	No	cvc-length-valid
+len3	a  b	cvc-length-valid
+len3	 Yes 	cvc-length-valid
+len3	12345678901234567	cvc-length-valid
+len3	0	cvc-length-valid
+len3	007	
+len3	123456789012345678	cvc-length-valid
+len3	DE89370400440532013000	cvc-length-valid
+len3	de89	cvc-length-valid
+len3	901b9	cvc-length-valid
+len3	2:-:0bab	cvc-length-valid
+len3	  	cvc-length-valid
+len3	012:1222	cvc-length-valid
+len3	1	cvc-length-valid
+len3	hex:6162F09F9880	cvc-length-valid
+len3	hex:61F09F9880	
+len3	hex:F09F9880F09F9880	cvc-length-valid
+enumNs		cvc-enumeration-valid
+enumNs	a	cvc-enumeration-valid
+enumNs	 a 	cvc-enumeration-valid
+enumNs	hex:610962	cvc-enumeration-valid
+enumNs	hex:6C696E650A627265616B	cvc-enumeration-valid
+enumNs	hex:C3A9C3A9	cvc-enumeration-valid
+enumNs	<&>	cvc-enumeration-valid
+enumNs	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-enumeration-valid
+enumNs	a:b	cvc-enumeration-valid
+enumNs	:a	cvc-enumeration-valid
+enumNs	1a	cvc-enumeration-valid
+enumNs	-a	cvc-enumeration-valid
+enumNs	a-b.c	cvc-enumeration-valid
+enumNs	_x	cvc-enumeration-valid
+enumNs	hex:C3A9	cvc-enumeration-valid
+enumNs	hex:C2B761	cvc-enumeration-valid
+enumNs	hex:61C2B7	cvc-enumeration-valid
+enumNs	hex:E281B0	cvc-enumeration-valid
+enumNs	a b	cvc-enumeration-valid
+enumNs	hex:CC8061	cvc-enumeration-valid
+enumNs	hex:F09F9880	cvc-enumeration-valid
+enumNs	abc	cvc-enumeration-valid
+enumNs	x1	cvc-enumeration-valid
+enumNs	ABC	cvc-enumeration-valid
+enumNs	xyz	cvc-enumeration-valid
+enumNs	ab	cvc-enumeration-valid
+enumNs	Yes	
+enumNs	No	
+enumNs	a  b	
+enumNs	 Yes 	cvc-enumeration-valid
+enumNs	12345678901234567	cvc-enumeration-valid
+enumNs	0	cvc-enumeration-valid
+enumNs	007	cvc-enumeration-valid
+enumNs	123456789012345678	cvc-enumeration-valid
+enumNs	DE89370400440532013000	cvc-enumeration-valid
+enumNs	de89	cvc-enumeration-valid
+enumNs	- :	cvc-enumeration-valid
+enumNs	2	cvc-enumeration-valid
+enumNs	b9  2b	cvc-enumeration-valid
+enumNs	b:0b12	cvc-enumeration-valid
+enumTok		cvc-enumeration-valid
+enumTok	a	cvc-enumeration-valid
+enumTok	 a 	cvc-enumeration-valid
+enumTok	hex:610962	
+enumTok	hex:6C696E650A627265616B	cvc-enumeration-valid
+enumTok	hex:C3A9C3A9	cvc-enumeration-valid
+enumTok	<&>	cvc-enumeration-valid
+enumTok	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-enumeration-valid
+enumTok	a:b	cvc-enumeration-valid
+enumTok	:a	cvc-enumeration-valid
+enumTok	1a	cvc-enumeration-valid
+enumTok	-a	cvc-enumeration-valid
+enumTok	a-b.c	cvc-enumeration-valid
+enumTok	_x	cvc-enumeration-valid
+enumTok	hex:C3A9	cvc-enumeration-valid
+enumTok	hex:C2B761	cvc-enumeration-valid
+enumTok	hex:61C2B7	cvc-enumeration-valid
+enumTok	hex:E281B0	cvc-enumeration-valid
+enumTok	a b	
+enumTok	hex:CC8061	cvc-enumeration-valid
+enumTok	hex:F09F9880	cvc-enumeration-valid
+enumTok	abc	cvc-enumeration-valid
+enumTok	x1	cvc-enumeration-valid
+enumTok	ABC	cvc-enumeration-valid
+enumTok	xyz	cvc-enumeration-valid
+enumTok	ab	cvc-enumeration-valid
+enumTok	Yes	
+enumTok	No	cvc-enumeration-valid
+enumTok	a  b	
+enumTok	 Yes 	
+enumTok	12345678901234567	cvc-enumeration-valid
+enumTok	0	cvc-enumeration-valid
+enumTok	007	cvc-enumeration-valid
+enumTok	123456789012345678	cvc-enumeration-valid
+enumTok	DE89370400440532013000	cvc-enumeration-valid
+enumTok	de89	cvc-enumeration-valid
+enumTok	:b-1	cvc-enumeration-valid
+enumTok	aab9	cvc-enumeration-valid
+enumTok	09 	cvc-enumeration-valid
+pat		
+pat	a	cvc-pattern-valid
+pat	 a 	cvc-pattern-valid
+pat	hex:610962	cvc-pattern-valid
+pat	hex:6C696E650A627265616B	cvc-pattern-valid
+pat	hex:C3A9C3A9	cvc-pattern-valid
+pat	<&>	cvc-pattern-valid
+pat	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-pattern-valid
+pat	a:b	cvc-pattern-valid
+pat	:a	cvc-pattern-valid
+pat	1a	cvc-pattern-valid
+pat	-a	cvc-pattern-valid
+pat	a-b.c	cvc-pattern-valid
+pat	_x	cvc-pattern-valid
+pat	hex:C3A9	cvc-pattern-valid
+pat	hex:C2B761	cvc-pattern-valid
+pat	hex:61C2B7	cvc-pattern-valid
+pat	hex:E281B0	cvc-pattern-valid
+pat	a b	cvc-pattern-valid
+pat	hex:CC8061	cvc-pattern-valid
+pat	hex:F09F9880	cvc-pattern-valid
+pat	abc	cvc-pattern-valid
+pat	x1	cvc-pattern-valid
+pat	ABC	cvc-pattern-valid
+pat	xyz	cvc-pattern-valid
+pat	ab	cvc-pattern-valid
+pat	Yes	cvc-pattern-valid
+pat	No	cvc-pattern-valid
+pat	a  b	cvc-pattern-valid
+pat	 Yes 	cvc-pattern-valid
+pat	12345678901234567	
+pat	0	
+pat	007	
+pat	123456789012345678	cvc-pattern-valid
+pat	DE89370400440532013000	cvc-pattern-valid
+pat	de89	cvc-pattern-valid
+pat	-	cvc-pattern-valid
+pat	0 	cvc-pattern-valid
+pat	9	
+pat	:1:1-2	cvc-pattern-valid
+pat2		cvc-pattern-valid
+pat2	a	cvc-pattern-valid
+pat2	 a 	cvc-pattern-valid
+pat2	hex:610962	cvc-pattern-valid
+pat2	hex:6C696E650A627265616B	cvc-pattern-valid
+pat2	hex:C3A9C3A9	cvc-pattern-valid
+pat2	<&>	cvc-pattern-valid
+pat2	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-pattern-valid
+pat2	a:b	cvc-pattern-valid
+pat2	:a	cvc-pattern-valid
+pat2	1a	cvc-pattern-valid
+pat2	-a	cvc-pattern-valid
+pat2	a-b.c	cvc-pattern-valid
+pat2	_x	cvc-pattern-valid
+pat2	hex:C3A9	cvc-pattern-valid
+pat2	hex:C2B761	cvc-pattern-valid
+pat2	hex:61C2B7	cvc-pattern-valid
+pat2	hex:E281B0	cvc-pattern-valid
+pat2	a b	cvc-pattern-valid
+pat2	hex:CC8061	cvc-pattern-valid
+pat2	hex:F09F9880	cvc-pattern-valid
+pat2	abc	cvc-pattern-valid
+pat2	x1	cvc-pattern-valid
+pat2	ABC	cvc-pattern-valid
+pat2	xyz	cvc-pattern-valid
+pat2	ab	cvc-pattern-valid
+pat2	Yes	cvc-pattern-valid
+pat2	No	cvc-pattern-valid
+pat2	a  b	cvc-pattern-valid
+pat2	 Yes 	cvc-pattern-valid
+pat2	12345678901234567	
+pat2	0	
+pat2	007	cvc-pattern-valid
+pat2	123456789012345678	cvc-pattern-valid
+pat2	DE89370400440532013000	cvc-pattern-valid
+pat2	de89	cvc-pattern-valid
+pat2	aaa12	cvc-pattern-valid
+pat2	929bb2-	cvc-pattern-valid
+pat2	1	
+pat2	:-2	cvc-pattern-valid
+pat2	 :01	cvc-pattern-valid
+patEnum		cvc-pattern-valid
+patEnum	a	cvc-enumeration-valid
+patEnum	 a 	cvc-enumeration-valid
+patEnum	hex:610962	cvc-pattern-valid
+patEnum	hex:6C696E650A627265616B	cvc-pattern-valid
+patEnum	hex:C3A9C3A9	cvc-pattern-valid
+patEnum	<&>	cvc-pattern-valid
+patEnum	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-enumeration-valid
+patEnum	a:b	cvc-pattern-valid
+patEnum	:a	cvc-pattern-valid
+patEnum	1a	cvc-pattern-valid
+patEnum	-a	cvc-pattern-valid
+patEnum	a-b.c	cvc-pattern-valid
+patEnum	_x	cvc-pattern-valid
+patEnum	hex:C3A9	cvc-pattern-valid
+patEnum	hex:C2B761	cvc-pattern-valid
+patEnum	hex:61C2B7	cvc-pattern-valid
+patEnum	hex:E281B0	cvc-pattern-valid
+patEnum	a b	cvc-pattern-valid
+patEnum	hex:CC8061	cvc-pattern-valid
+patEnum	hex:F09F9880	cvc-pattern-valid
+patEnum	abc	
+patEnum	x1	cvc-pattern-valid
+patEnum	ABC	cvc-pattern-valid
+patEnum	xyz	cvc-enumeration-valid
+patEnum	ab	cvc-enumeration-valid
+patEnum	Yes	cvc-pattern-valid
+patEnum	No	cvc-pattern-valid
+patEnum	a  b	cvc-pattern-valid
+patEnum	 Yes 	cvc-pattern-valid
+patEnum	12345678901234567	cvc-pattern-valid
+patEnum	0	cvc-pattern-valid
+patEnum	007	cvc-pattern-valid
+patEnum	123456789012345678	cvc-pattern-valid
+patEnum	DE89370400440532013000	cvc-pattern-valid
+patEnum	de89	cvc-pattern-valid
+patEnum	02b	cvc-pattern-valid
+patEnum	b-b2	cvc-pattern-valid
+patEnum	91a	cvc-pattern-valid
+patEnum	 2102	cvc-pattern-valid
+patEnum	:	cvc-pattern-valid
+patLen		cvc-pattern-valid
+patLen	a	cvc-enumeration-valid
+patLen	 a 	cvc-enumeration-valid
+patLen	hex:610962	cvc-pattern-valid
+patLen	hex:6C696E650A627265616B	cvc-pattern-valid
+patLen	hex:C3A9C3A9	cvc-pattern-valid
+patLen	<&>	cvc-pattern-valid
+patLen	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-maxLength-valid
+patLen	a:b	cvc-pattern-valid
+patLen	:a	cvc-pattern-valid
+patLen	1a	cvc-pattern-valid
+patLen	-a	cvc-pattern-valid
+patLen	a-b.c	cvc-pattern-valid
+patLen	_x	cvc-pattern-valid
+patLen	hex:C3A9	cvc-pattern-valid
+patLen	hex:C2B761	cvc-pattern-valid
+patLen	hex:61C2B7	cvc-pattern-valid
+patLen	hex:E281B0	cvc-pattern-valid
+patLen	a b	cvc-pattern-valid
+patLen	hex:CC8061	cvc-pattern-valid
+patLen	hex:F09F9880	cvc-pattern-valid
+patLen	abc	cvc-maxLength-valid
+patLen	x1	cvc-pattern-valid
+patLen	ABC	cvc-pattern-valid
+patLen	xyz	cvc-maxLength-valid
+patLen	ab	cvc-enumeration-valid
+patLen	Yes	cvc-pattern-valid
+patLen	No	cvc-pattern-valid
+patLen	a  b	cvc-pattern-valid
+patLen	 Yes 	cvc-pattern-valid
+patLen	12345678901234567	cvc-pattern-valid
+patLen	0	cvc-pattern-valid
+patLen	007	cvc-pattern-valid
+patLen	123456789012345678	cvc-pattern-valid
+patLen	DE89370400440532013000	cvc-pattern-valid
+patLen	de89	cvc-pattern-valid
+patLen	a09	cvc-pattern-valid
+patLen	1	cvc-pattern-valid
+patLen	bbaa12--	cvc-pattern-valid
+patLen	b:	cvc-pattern-valid
+blank		cvc-pattern-valid
+blank	a	cvc-pattern-valid
+blank	 a 	cvc-pattern-valid
+blank	hex:610962	cvc-pattern-valid
+blank	hex:6C696E650A627265616B	cvc-pattern-valid
+blank	hex:C3A9C3A9	cvc-pattern-valid
+blank	<&>	cvc-pattern-valid
+blank	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-pattern-valid
+blank	a:b	cvc-pattern-valid
+blank	:a	cvc-pattern-valid
+blank	1a	cvc-pattern-valid
+blank	-a	cvc-pattern-valid
+blank	a-b.c	cvc-pattern-valid
+blank	_x	cvc-pattern-valid
+blank	hex:C3A9	cvc-pattern-valid
+blank	hex:C2B761	cvc-pattern-valid
+blank	hex:61C2B7	cvc-pattern-valid
+blank	hex:E281B0	cvc-pattern-valid
+blank	a b	cvc-pattern-valid
+blank	hex:CC8061	cvc-pattern-valid
+blank	hex:F09F9880	cvc-pattern-valid
+blank	abc	cvc-pattern-valid
+blank	x1	cvc-pattern-valid
+blank	ABC	cvc-pattern-valid
+blank	xyz	cvc-pattern-valid
+blank	ab	cvc-pattern-valid
+blank	Yes	cvc-pattern-valid
+blank	No	cvc-pattern-valid
+blank	a  b	cvc-pattern-valid
+blank	 Yes 	cvc-pattern-valid
+blank	12345678901234567	cvc-pattern-valid
+blank	0	cvc-pattern-valid
+blank	007	cvc-pattern-valid
+blank	123456789012345678	cvc-pattern-valid
+blank	DE89370400440532013000	cvc-pattern-valid
+blank	de89	cvc-pattern-valid
+blank	b:   	cvc-pattern-valid
+blank	21	cvc-pattern-valid
+blank	:	cvc-pattern-valid
+blank	 0 :	cvc-pattern-valid
+dec9_6	0	
+dec9_6	-0	
+dec9_6	+1.50	
+dec9_6	.5	
+dec9_6	5.	
+dec9_6	1e5	cvc-datatype-valid.1.2.1
+dec9_6	1,5	cvc-datatype-valid.1.2.1
+dec9_6		cvc-datatype-valid.1.2.1
+dec9_6	 12 	
+dec9_6	123456789.1234567	cvc-fractionDigits-valid
+dec9_6	00012.300	
+dec9_6	-999.99	
+dec9_6	50	
+dec9_6	50.00	
+dec9_6	50.01	
+dec9_6	1.5	
+dec9_6	1.49	
+dec9_6	0.0001	
+dec9_6	abc	cvc-datatype-valid.1.2.1
+dec9_6	12345	
+dec9_6	123.456	
+dec9_6	-1	
+dec9_6	1	
+dec9_6	+7	
+dec9_6	007	
+dec9_6	1.0	
+dec9_6	1.	
+dec9_6	2147483647	cvc-totalDigits-valid
+dec9_6	2147483648	cvc-totalDigits-valid
+dec9_6	-2147483649	cvc-totalDigits-valid
+dec9_6	9223372036854775807	cvc-totalDigits-valid
+dec9_6	9223372036854775808	cvc-totalDigits-valid
+dec9_6	18446744073709551615	cvc-totalDigits-valid
+dec9_6	18446744073709551616	cvc-totalDigits-valid
+dec9_6	127	
+dec9_6	128	
+dec9_6	-128	
+dec9_6	-129	
+dec9_6	255	
+dec9_6	256	
+dec9_6	32767	
+dec9_6	65536	
+dec9_6	-5	
+dec9_6	5	
+dec9_6	6	
+dec9_6	999	
+dec9_6	1000	
+dec4_2	0	
+dec4_2	-0	
+dec4_2	+1.50	
+dec4_2	.5	
+dec4_2	5.	
+dec4_2	1e5	cvc-datatype-valid.1.2.1
+dec4_2	1,5	cvc-datatype-valid.1.2.1
+dec4_2		cvc-datatype-valid.1.2.1
+dec4_2	 12 	
+dec4_2	123456789.1234567	cvc-fractionDigits-valid
+dec4_2	00012.300	
+dec4_2	-999.99	cvc-totalDigits-valid
+dec4_2	50	
+dec4_2	50.00	
+dec4_2	50.01	cvc-maxInclusive-valid
+dec4_2	1.5	
+dec4_2	1.49	
+dec4_2	0.0001	cvc-fractionDigits-valid
+dec4_2	abc	cvc-datatype-valid.1.2.1
+dec4_2	12345	cvc-totalDigits-valid
+dec4_2	123.456	cvc-fractionDigits-valid
+dec4_2	-1	
+dec4_2	1	
+dec4_2	+7	
+dec4_2	007	
+dec4_2	1.0	
+dec4_2	1.	
+dec4_2	2147483647	cvc-totalDigits-valid
+dec4_2	2147483648	cvc-totalDigits-valid
+dec4_2	-2147483649	cvc-totalDigits-valid
+dec4_2	9223372036854775807	cvc-totalDigits-valid
+dec4_2	9223372036854775808	cvc-totalDigits-valid
+dec4_2	18446744073709551615	cvc-totalDigits-valid
+dec4_2	18446744073709551616	cvc-totalDigits-valid
+dec4_2	127	cvc-maxInclusive-valid
+dec4_2	128	cvc-maxInclusive-valid
+dec4_2	-128	
+dec4_2	-129	
+dec4_2	255	cvc-maxInclusive-valid
+dec4_2	256	cvc-maxInclusive-valid
+dec4_2	32767	cvc-totalDigits-valid
+dec4_2	65536	cvc-totalDigits-valid
+dec4_2	-5	
+dec4_2	5	
+dec4_2	6	
+dec4_2	999	cvc-maxInclusive-valid
+dec4_2	1000	cvc-maxInclusive-valid
+posMax	0	cvc-minInclusive-valid
+posMax	-1	cvc-minInclusive-valid
+posMax	1	
+posMax	+7	
+posMax	007	
+posMax	1.0	cvc-datatype-valid.1.2.1
+posMax	1.	cvc-datatype-valid.1.2.1
+posMax	2147483647	cvc-maxInclusive-valid
+posMax	2147483648	cvc-maxInclusive-valid
+posMax	-2147483649	cvc-minInclusive-valid
+posMax	9223372036854775807	cvc-maxInclusive-valid
+posMax	9223372036854775808	cvc-maxInclusive-valid
+posMax	18446744073709551615	cvc-maxInclusive-valid
+posMax	18446744073709551616	cvc-maxInclusive-valid
+posMax	127	
+posMax	128	
+posMax	-128	cvc-minInclusive-valid
+posMax	-129	cvc-minInclusive-valid
+posMax	255	
+posMax	256	
+posMax	32767	cvc-maxInclusive-valid
+posMax	65536	cvc-maxInclusive-valid
+posMax	-5	cvc-minInclusive-valid
+posMax	5	
+posMax	6	
+posMax	999	
+posMax	1000	cvc-maxInclusive-valid
+intRange	0	
+intRange	-1	
+intRange	1	
+intRange	+7	cvc-maxInclusive-valid
+intRange	007	cvc-maxInclusive-valid
+intRange	1.0	cvc-datatype-valid.1.2.1
+intRange	1.	cvc-datatype-valid.1.2.1
+intRange	2147483647	cvc-maxInclusive-valid
+intRange	2147483648	cvc-maxInclusive-valid
+intRange	-2147483649	cvc-minInclusive-valid
+intRange	9223372036854775807	cvc-maxInclusive-valid
+intRange	9223372036854775808	cvc-maxInclusive-valid
+intRange	18446744073709551615	cvc-maxInclusive-valid
+intRange	18446744073709551616	cvc-maxInclusive-valid
+intRange	127	cvc-maxInclusive-valid
+intRange	128	cvc-maxInclusive-valid
+intRange	-128	cvc-minInclusive-valid
+intRange	-129	cvc-minInclusive-valid
+intRange	255	cvc-maxInclusive-valid
+intRange	256	cvc-maxInclusive-valid
+intRange	32767	cvc-maxInclusive-valid
+intRange	65536	cvc-maxInclusive-valid
+intRange	-5	
+intRange	5	
+intRange	6	cvc-maxInclusive-valid
+intRange	999	cvc-maxInclusive-valid
+intRange	1000	cvc-maxInclusive-valid
+decExcl	0	cvc-minExclusive-valid
+decExcl	-0	cvc-minExclusive-valid
+decExcl	+1.50	cvc-maxExclusive-valid
+decExcl	.5	
+decExcl	5.	cvc-maxExclusive-valid
+decExcl	1e5	cvc-datatype-valid.1.2.1
+decExcl	1,5	cvc-datatype-valid.1.2.1
+decExcl		cvc-datatype-valid.1.2.1
+decExcl	 12 	cvc-maxExclusive-valid
+decExcl	123456789.1234567	cvc-maxExclusive-valid
+decExcl	00012.300	cvc-maxExclusive-valid
+decExcl	-999.99	cvc-minExclusive-valid
+decExcl	50	cvc-maxExclusive-valid
+decExcl	50.00	cvc-maxExclusive-valid
+decExcl	50.01	cvc-maxExclusive-valid
+decExcl	1.5	cvc-maxExclusive-valid
+decExcl	1.49	
+decExcl	0.0001	
+decExcl	abc	cvc-datatype-valid.1.2.1
+decExcl	12345	cvc-maxExclusive-valid
+decExcl	123.456	cvc-maxExclusive-valid
+decExcl	-1	cvc-minExclusive-valid
+decExcl	1	
+decExcl	+7	cvc-maxExclusive-valid
+decExcl	007	cvc-maxExclusive-valid
+decExcl	1.0	
+decExcl	1.	
+decExcl	2147483647	cvc-maxExclusive-valid
+decExcl	2147483648	cvc-maxExclusive-valid
+decExcl	-2147483649	cvc-minExclusive-valid
+decExcl	9223372036854775807	cvc-maxExclusive-valid
+decExcl	9223372036854775808	cvc-maxExclusive-valid
+decExcl	18446744073709551615	cvc-maxExclusive-valid
+decExcl	18446744073709551616	cvc-maxExclusive-valid
+decExcl	127	cvc-maxExclusive-valid
+decExcl	128	cvc-maxExclusive-valid
+decExcl	-128	cvc-minExclusive-valid
+decExcl	-129	cvc-minExclusive-valid
+decExcl	255	cvc-maxExclusive-valid
+decExcl	256	cvc-maxExclusive-valid
+decExcl	32767	cvc-maxExclusive-valid
+decExcl	65536	cvc-maxExclusive-valid
+decExcl	-5	cvc-minExclusive-valid
+decExcl	5	cvc-maxExclusive-valid
+decExcl	6	cvc-maxExclusive-valid
+decExcl	999	cvc-maxExclusive-valid
+decExcl	1000	cvc-maxExclusive-valid
+floatPos	0	cvc-minExclusive-valid
+floatPos	-0	cvc-minExclusive-valid
+floatPos	1e5	
+floatPos	1.e5	
+floatPos	 1e5 	
+floatPos	+INF	cvc-datatype-valid.1.2.1
+floatPos	INF	
+floatPos	-INF	cvc-minExclusive-valid
+floatPos	NaN	cvc-minExclusive-valid
+floatPos	nan	cvc-datatype-valid.1.2.1
+floatPos	1E400	
+floatPos	1e-400	cvc-minExclusive-valid
+floatPos	.5e1	
+floatPos	1e	cvc-datatype-valid.1.2.1
+floatPos	e1	cvc-datatype-valid.1.2.1
+floatPos	1.5E+3	
+floatPos	-1e3	cvc-minExclusive-valid
+floatPos	-1001	cvc-minExclusive-valid
+floatPos	3.4028235e38	
+floatPos	3.4028236e38	
+floatPos	1e-46	cvc-minExclusive-valid
+floatPos	1.4e-45	
+floatPos	0x1	cvc-datatype-valid.1.2.1
+floatPos	100	
+floatPos	1e2	
+floatPos	abc	cvc-datatype-valid.1.2.1
+dblRange	0	
+dblRange	-0	
+dblRange	1e5	
+dblRange	1.e5	
+dblRange	 1e5 	
+dblRange	+INF	cvc-datatype-valid.1.2.1
+dblRange	INF	
+dblRange	-INF	cvc-minInclusive-valid
+dblRange	NaN	cvc-maxInclusive-valid
+dblRange	nan	cvc-datatype-valid.1.2.1
+dblRange	1E400	
+dblRange	1e-400	
+dblRange	.5e1	
+dblRange	1e	cvc-datatype-valid.1.2.1
+dblRange	e1	cvc-datatype-valid.1.2.1
+dblRange	1.5E+3	
+dblRange	-1e3	
+dblRange	-1001	cvc-minInclusive-valid
+dblRange	3.4028235e38	
+dblRange	3.4028236e38	
+dblRange	1e-46	
+dblRange	1.4e-45	
+dblRange	0x1	cvc-datatype-valid.1.2.1
+dblRange	100	
+dblRange	1e2	
+dblRange	abc	cvc-datatype-valid.1.2.1
+gymEnum	2013-10	
+gymEnum	2021-05	
+gymEnum	2013-13	cvc-datatype-valid.1.2.1
+gymEnum	2013-1	cvc-datatype-valid.1.2.1
+gymEnum	2013-10Z	cvc-enumeration-valid
+gymEnum	-2013-10	cvc-enumeration-valid
+gymEnum	2013	cvc-datatype-valid.1.2.1
+gymEnum	2013-10-01	cvc-datatype-valid.1.2.1
+dateRange	2026-10-21	
+dateRange	2024-02-29	
+dateRange	2026-02-29	cvc-datatype-valid.1.2.1
+dateRange	1900-02-29	cvc-datatype-valid.1.2.1
+dateRange	2000-02-29	
+dateRange	2026-13-01	cvc-datatype-valid.1.2.1
+dateRange	2026-00-10	cvc-datatype-valid.1.2.1
+dateRange	2026-01-00	cvc-datatype-valid.1.2.1
+dateRange	2026-04-31	cvc-datatype-valid.1.2.1
+dateRange	0000-01-01	cvc-datatype-valid.1.2.1
+dateRange	-0001-12-31	cvc-minInclusive-valid
+dateRange	2026-10-21Z	
+dateRange	2026-10-21+01:00	
+dateRange	2026-1-21	cvc-datatype-valid.1.2.1
+dateRange	26-10-21	cvc-datatype-valid.1.2.1
+dateRange	 2026-10-21 	
+dateRange	1999-12-31	cvc-minInclusive-valid
+dateRange	2100-01-01	cvc-maxExclusive-valid
+dateRange	2099-12-31	
+dateRange	2000-01-01Z	cvc-minInclusive-valid
+iban		cvc-pattern-valid
+iban	a	cvc-pattern-valid
+iban	 a 	cvc-pattern-valid
+iban	hex:610962	cvc-pattern-valid
+iban	hex:6C696E650A627265616B	cvc-pattern-valid
+iban	hex:C3A9C3A9	cvc-pattern-valid
+iban	<&>	cvc-pattern-valid
+iban	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-pattern-valid
+iban	a:b	cvc-pattern-valid
+iban	:a	cvc-pattern-valid
+iban	1a	cvc-pattern-valid
+iban	-a	cvc-pattern-valid
+iban	a-b.c	cvc-pattern-valid
+iban	_x	cvc-pattern-valid
+iban	hex:C3A9	cvc-pattern-valid
+iban	hex:C2B761	cvc-pattern-valid
+iban	hex:61C2B7	cvc-pattern-valid
+iban	hex:E281B0	cvc-pattern-valid
+iban	a b	cvc-pattern-valid
+iban	hex:CC8061	cvc-pattern-valid
+iban	hex:F09F9880	cvc-pattern-valid
+iban	abc	cvc-pattern-valid
+iban	x1	cvc-pattern-valid
+iban	ABC	cvc-pattern-valid
+iban	xyz	cvc-pattern-valid
+iban	ab	cvc-pattern-valid
+iban	Yes	cvc-pattern-valid
+iban	No	cvc-pattern-valid
+iban	a  b	cvc-pattern-valid
+iban	 Yes 	cvc-pattern-valid
+iban	12345678901234567	cvc-pattern-valid
+iban	0	cvc-pattern-valid
+iban	007	cvc-pattern-valid
+iban	123456789012345678	cvc-pattern-valid
+iban	DE89370400440532013000	
+iban	de89	cvc-pattern-valid
+iban	:0 19	cvc-pattern-valid
+iban	 a01b-9:	cvc-pattern-valid
+iban	:-:-	cvc-pattern-valid
+iban	2 1-a9	cvc-pattern-valid
+b64len		
+b64len	QUJD	
+b64len	QUJD RA==	cvc-maxLength-valid
+b64len	QUJ	cvc-datatype-valid.1.2.1
+b64len	QUJD===	cvc-datatype-valid.1.2.1
+b64len	QQ==	
+b64len	QR==	cvc-datatype-valid.1.2.1
+b64len	QUE=	
+b64len	QUF=	cvc-datatype-valid.1.2.1
+b64len	Q U J D	
+b64len	hex:51554A440A	
+b64len	!!!!	cvc-datatype-valid.1.2.1
+hexlen		cvc-length-valid
+hexlen	00	cvc-length-valid
+hexlen	0a0B	
+hexlen	ABC	cvc-datatype-valid.1.2.1
+hexlen	GG	cvc-datatype-valid.1.2.1
+hexlen	0F0F	
+hexlen	 0f 	cvc-length-valid
+uriMax		
+uriMax	http://example.org/a?b#c	cvc-maxLength-valid
+uriMax	http://a b	
+uriMax	::	cvc-datatype-valid.1.2.1
+uriMax	a:b	
+uriMax	1a:b	cvc-datatype-valid.1.2.1
+uriMax	urn:isbn:123	cvc-maxLength-valid
+uriMax	%41	
+uriMax	%4	cvc-datatype-valid.1.2.1
+uriMax	%zz	cvc-datatype-valid.1.2.1
+uriMax	#a#b	cvc-datatype-valid.1.2.1
+uriMax	/rel/path	
+uriMax	mailto:info@example.org	cvc-maxLength-valid
+uriMax	hex:C3A4	
+uriMax	http://x/yyyyyyyyyyyyyyyyyyyy	cvc-maxLength-valid
+uriMax	hex:F09F9880F09F9880F09F9880F09F9880F09F9880F09F9880	cvc-maxLength-valid
+uriMax	hex:F09F9880F09F9880F09F9880F09F9880F09F9880	
+collapseStr		
+collapseStr	a	
+collapseStr	 a 	
+collapseStr	hex:610962	
+collapseStr	hex:6C696E650A627265616B	cvc-maxLength-valid
+collapseStr	hex:C3A9C3A9	
+collapseStr	<&>	
+collapseStr	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-maxLength-valid
+collapseStr	a:b	
+collapseStr	:a	
+collapseStr	1a	
+collapseStr	-a	
+collapseStr	a-b.c	cvc-maxLength-valid
+collapseStr	_x	
+collapseStr	hex:C3A9	
+collapseStr	hex:C2B761	
+collapseStr	hex:61C2B7	
+collapseStr	hex:E281B0	
+collapseStr	a b	
+collapseStr	hex:CC8061	
+collapseStr	hex:F09F9880	
+collapseStr	abc	
+collapseStr	x1	
+collapseStr	ABC	
+collapseStr	xyz	
+collapseStr	ab	
+collapseStr	Yes	
+collapseStr	No	
+collapseStr	a  b	
+collapseStr	 Yes 	
+collapseStr	12345678901234567	cvc-maxLength-valid
+collapseStr	0	
+collapseStr	007	
+collapseStr	123456789012345678	cvc-maxLength-valid
+collapseStr	DE89370400440532013000	cvc-maxLength-valid
+collapseStr	de89	cvc-maxLength-valid
+collapseStr	   11	
+collapseStr	9 b0-a	cvc-maxLength-valid
+collapseStr	:2	
+replaceStr		cvc-enumeration-valid
+replaceStr	a	cvc-enumeration-valid
+replaceStr	 a 	
+replaceStr	hex:610962	cvc-enumeration-valid
+replaceStr	hex:6C696E650A627265616B	cvc-enumeration-valid
+replaceStr	hex:C3A9C3A9	cvc-enumeration-valid
+replaceStr	<&>	cvc-enumeration-valid
+replaceStr	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-enumeration-valid
+replaceStr	a:b	cvc-enumeration-valid
+replaceStr	:a	cvc-enumeration-valid
+replaceStr	1a	cvc-enumeration-valid
+replaceStr	-a	cvc-enumeration-valid
+replaceStr	a-b.c	cvc-enumeration-valid
+replaceStr	_x	cvc-enumeration-valid
+replaceStr	hex:C3A9	cvc-enumeration-valid
+replaceStr	hex:C2B761	cvc-enumeration-valid
+replaceStr	hex:61C2B7	cvc-enumeration-valid
+replaceStr	hex:E281B0	cvc-enumeration-valid
+replaceStr	a b	cvc-enumeration-valid
+replaceStr	hex:CC8061	cvc-enumeration-valid
+replaceStr	hex:F09F9880	cvc-enumeration-valid
+replaceStr	abc	cvc-enumeration-valid
+replaceStr	x1	cvc-enumeration-valid
+replaceStr	ABC	cvc-enumeration-valid
+replaceStr	xyz	cvc-enumeration-valid
+replaceStr	ab	cvc-enumeration-valid
+replaceStr	Yes	cvc-enumeration-valid
+replaceStr	No	cvc-enumeration-valid
+replaceStr	a  b	cvc-enumeration-valid
+replaceStr	 Yes 	cvc-enumeration-valid
+replaceStr	12345678901234567	cvc-enumeration-valid
+replaceStr	0	cvc-enumeration-valid
+replaceStr	007	cvc-enumeration-valid
+replaceStr	123456789012345678	cvc-enumeration-valid
+replaceStr	DE89370400440532013000	cvc-enumeration-valid
+replaceStr	de89	cvc-enumeration-valid
+replaceStr	-002--09	cvc-enumeration-valid
+replaceStr	:10ab	cvc-enumeration-valid
+replaceStr	2 :0111:	cvc-enumeration-valid
+replaceStr	 -bb:	cvc-enumeration-valid
+replaceStr	  190a	cvc-enumeration-valid
+enumDec	0	
+enumDec	-0	
+enumDec	+1.50	
+enumDec	.5	cvc-enumeration-valid
+enumDec	5.	cvc-enumeration-valid
+enumDec	1e5	cvc-datatype-valid.1.2.1
+enumDec	1,5	cvc-datatype-valid.1.2.1
+enumDec		cvc-datatype-valid.1.2.1
+enumDec	 12 	cvc-enumeration-valid
+enumDec	123456789.1234567	cvc-enumeration-valid
+enumDec	00012.300	cvc-enumeration-valid
+enumDec	-999.99	cvc-enumeration-valid
+enumDec	50	cvc-enumeration-valid
+enumDec	50.00	cvc-enumeration-valid
+enumDec	50.01	cvc-enumeration-valid
+enumDec	1.5	
+enumDec	1.49	cvc-enumeration-valid
+enumDec	0.0001	cvc-enumeration-valid
+enumDec	abc	cvc-datatype-valid.1.2.1
+enumDec	12345	cvc-enumeration-valid
+enumDec	123.456	cvc-enumeration-valid
+enumDec	-1	cvc-enumeration-valid
+enumDec	1	cvc-enumeration-valid
+enumDec	+7	cvc-enumeration-valid
+enumDec	007	cvc-enumeration-valid
+enumDec	1.0	cvc-enumeration-valid
+enumDec	1.	cvc-enumeration-valid
+enumDec	2147483647	cvc-enumeration-valid
+enumDec	2147483648	cvc-enumeration-valid
+enumDec	-2147483649	cvc-enumeration-valid
+enumDec	9223372036854775807	cvc-enumeration-valid
+enumDec	9223372036854775808	cvc-enumeration-valid
+enumDec	18446744073709551615	cvc-enumeration-valid
+enumDec	18446744073709551616	cvc-enumeration-valid
+enumDec	127	cvc-enumeration-valid
+enumDec	128	cvc-enumeration-valid
+enumDec	-128	cvc-enumeration-valid
+enumDec	-129	cvc-enumeration-valid
+enumDec	255	cvc-enumeration-valid
+enumDec	256	cvc-enumeration-valid
+enumDec	32767	cvc-enumeration-valid
+enumDec	65536	cvc-enumeration-valid
+enumDec	-5	cvc-enumeration-valid
+enumDec	5	cvc-enumeration-valid
+enumDec	6	cvc-enumeration-valid
+enumDec	999	cvc-enumeration-valid
+enumDec	1000	cvc-enumeration-valid
+patBool	true	
+patBool	false	
+patBool	1	cvc-pattern-valid
+patBool	0	cvc-pattern-valid
+patBool	TRUE	cvc-pattern-valid
+patBool	yes	cvc-pattern-valid
+patBool	 true 	
+patBool		cvc-pattern-valid
+enumDbl	0	cvc-enumeration-valid
+enumDbl	-0	cvc-enumeration-valid
+enumDbl	1e5	cvc-enumeration-valid
+enumDbl	1.e5	cvc-enumeration-valid
+enumDbl	 1e5 	cvc-enumeration-valid
+enumDbl	+INF	cvc-datatype-valid.1.2.1
+enumDbl	INF	cvc-enumeration-valid
+enumDbl	-INF	cvc-enumeration-valid
+enumDbl	NaN	
+enumDbl	nan	cvc-datatype-valid.1.2.1
+enumDbl	1E400	cvc-enumeration-valid
+enumDbl	1e-400	cvc-enumeration-valid
+enumDbl	.5e1	cvc-enumeration-valid
+enumDbl	1e	cvc-datatype-valid.1.2.1
+enumDbl	e1	cvc-datatype-valid.1.2.1
+enumDbl	1.5E+3	cvc-enumeration-valid
+enumDbl	-1e3	cvc-enumeration-valid
+enumDbl	-1001	cvc-enumeration-valid
+enumDbl	3.4028235e38	cvc-enumeration-valid
+enumDbl	3.4028236e38	cvc-enumeration-valid
+enumDbl	1e-46	cvc-enumeration-valid
+enumDbl	1.4e-45	cvc-enumeration-valid
+enumDbl	0x1	cvc-datatype-valid.1.2.1
+enumDbl	100	
+enumDbl	1e2	
+enumDbl	abc	cvc-datatype-valid.1.2.1
+enum123	0	cvc-enumeration-valid
+enum123	-0	cvc-enumeration-valid
+enum123	+1.50	cvc-enumeration-valid
+enum123	.5	cvc-enumeration-valid
+enum123	5.	cvc-enumeration-valid
+enum123	1e5	cvc-datatype-valid.1.2.1
+enum123	1,5	cvc-datatype-valid.1.2.1
+enum123		cvc-datatype-valid.1.2.1
+enum123	 12 	cvc-enumeration-valid
+enum123	123456789.1234567	cvc-enumeration-valid
+enum123	00012.300	cvc-enumeration-valid
+enum123	-999.99	cvc-enumeration-valid
+enum123	50	cvc-enumeration-valid
+enum123	50.00	cvc-enumeration-valid
+enum123	50.01	cvc-enumeration-valid
+enum123	1.5	cvc-enumeration-valid
+enum123	1.49	cvc-enumeration-valid
+enum123	0.0001	cvc-enumeration-valid
+enum123	abc	cvc-datatype-valid.1.2.1
+enum123	12345	cvc-enumeration-valid
+enum123	123.456	cvc-enumeration-valid
+enum123	-1	cvc-enumeration-valid
+enum123	1	
+enum123	+7	cvc-enumeration-valid
+enum123	007	cvc-enumeration-valid
+enum123	1.0	
+enum123	1.	
+enum123	2147483647	cvc-enumeration-valid
+enum123	2147483648	cvc-enumeration-valid
+enum123	-2147483649	cvc-enumeration-valid
+enum123	9223372036854775807	cvc-enumeration-valid
+enum123	9223372036854775808	cvc-enumeration-valid
+enum123	18446744073709551615	cvc-enumeration-valid
+enum123	18446744073709551616	cvc-enumeration-valid
+enum123	127	cvc-enumeration-valid
+enum123	128	cvc-enumeration-valid
+enum123	-128	cvc-enumeration-valid
+enum123	-129	cvc-enumeration-valid
+enum123	255	cvc-enumeration-valid
+enum123	256	cvc-enumeration-valid
+enum123	32767	cvc-enumeration-valid
+enum123	65536	cvc-enumeration-valid
+enum123	-5	cvc-enumeration-valid
+enum123	5	cvc-enumeration-valid
+enum123	6	cvc-enumeration-valid
+enum123	999	cvc-enumeration-valid
+enum123	1000	cvc-enumeration-valid
+enum123max2	0	cvc-enumeration-valid
+enum123max2	-0	cvc-enumeration-valid
+enum123max2	+1.50	cvc-enumeration-valid
+enum123max2	.5	cvc-enumeration-valid
+enum123max2	5.	cvc-enumeration-valid
+enum123max2	1e5	cvc-datatype-valid.1.2.1
+enum123max2	1,5	cvc-datatype-valid.1.2.1
+enum123max2		cvc-datatype-valid.1.2.1
+enum123max2	 12 	cvc-enumeration-valid
+enum123max2	123456789.1234567	cvc-enumeration-valid
+enum123max2	00012.300	cvc-enumeration-valid
+enum123max2	-999.99	cvc-enumeration-valid
+enum123max2	50	cvc-enumeration-valid
+enum123max2	50.00	cvc-enumeration-valid
+enum123max2	50.01	cvc-enumeration-valid
+enum123max2	1.5	cvc-enumeration-valid
+enum123max2	1.49	cvc-enumeration-valid
+enum123max2	0.0001	cvc-enumeration-valid
+enum123max2	abc	cvc-datatype-valid.1.2.1
+enum123max2	12345	cvc-enumeration-valid
+enum123max2	123.456	cvc-enumeration-valid
+enum123max2	-1	cvc-enumeration-valid
+enum123max2	1	
+enum123max2	+7	cvc-enumeration-valid
+enum123max2	007	cvc-enumeration-valid
+enum123max2	1.0	
+enum123max2	1.	
+enum123max2	2147483647	cvc-enumeration-valid
+enum123max2	2147483648	cvc-enumeration-valid
+enum123max2	-2147483649	cvc-enumeration-valid
+enum123max2	9223372036854775807	cvc-enumeration-valid
+enum123max2	9223372036854775808	cvc-enumeration-valid
+enum123max2	18446744073709551615	cvc-enumeration-valid
+enum123max2	18446744073709551616	cvc-enumeration-valid
+enum123max2	127	cvc-enumeration-valid
+enum123max2	128	cvc-enumeration-valid
+enum123max2	-128	cvc-enumeration-valid
+enum123max2	-129	cvc-enumeration-valid
+enum123max2	255	cvc-enumeration-valid
+enum123max2	256	cvc-enumeration-valid
+enum123max2	32767	cvc-enumeration-valid
+enum123max2	65536	cvc-enumeration-valid
+enum123max2	-5	cvc-enumeration-valid
+enum123max2	5	cvc-enumeration-valid
+enum123max2	6	cvc-enumeration-valid
+enum123max2	999	cvc-enumeration-valid
+enum123max2	1000	cvc-enumeration-valid
+enum123max2	2	
+enum123max2	3	cvc-maxInclusive-valid
+max5		
+max5	a	
+max5	 a 	
+max5	hex:610962	
+max5	hex:6C696E650A627265616B	cvc-maxLength-valid
+max5	hex:C3A9C3A9	
+max5	<&>	
+max5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-maxLength-valid
+max5	a:b	
+max5	:a	
+max5	1a	
+max5	-a	
+max5	a-b.c	
+max5	_x	
+max5	hex:C3A9	
+max5	hex:C2B761	
+max5	hex:61C2B7	
+max5	hex:E281B0	
+max5	a b	
+max5	hex:CC8061	
+max5	hex:F09F9880	
+max5	abc	
+max5	x1	
+max5	ABC	
+max5	xyz	
+max5	ab	
+max5	Yes	
+max5	No	
+max5	a  b	
+max5	 Yes 	
+max5	12345678901234567	cvc-maxLength-valid
+max5	0	
+max5	007	
+max5	123456789012345678	cvc-maxLength-valid
+max5	DE89370400440532013000	cvc-maxLength-valid
+max5	de89	
+max5	929: :a	cvc-maxLength-valid
+max5	b1b1b b-	cvc-maxLength-valid
+max5	999	
+max5	2-	
+max5	-0	
+max5len3		cvc-length-valid
+max5len3	a	cvc-length-valid
+max5len3	 a 	
+max5len3	hex:610962	
+max5len3	hex:6C696E650A627265616B	cvc-maxLength-valid
+max5len3	hex:C3A9C3A9	cvc-length-valid
+max5len3	<&>	
+max5len3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-maxLength-valid
+max5len3	a:b	
+max5len3	:a	cvc-length-valid
+max5len3	1a	cvc-length-valid
+max5len3	-a	cvc-length-valid
+max5len3	a-b.c	cvc-length-valid
+max5len3	_x	cvc-length-valid
+max5len3	hex:C3A9	cvc-length-valid
+max5len3	hex:C2B761	cvc-length-valid
+max5len3	hex:61C2B7	cvc-length-valid
+max5len3	hex:E281B0	cvc-length-valid
+max5len3	a b	
+max5len3	hex:CC8061	cvc-length-valid
+max5len3	hex:F09F9880	cvc-length-valid
+max5len3	abc	
+max5len3	x1	cvc-length-valid
+max5len3	ABC	
+max5len3	xyz	
+max5len3	ab	cvc-length-valid
+max5len3	Yes	
+max5len3	No	cvc-length-valid
+max5len3	a  b	cvc-length-valid
+max5len3	 Yes 	cvc-length-valid
+max5len3	12345678901234567	cvc-maxLength-valid
+max5len3	0	cvc-length-valid
+max5len3	007	
+max5len3	123456789012345678	cvc-maxLength-valid
+max5len3	DE89370400440532013000	cvc-maxLength-valid
+max5len3	de89	cvc-length-valid
+max5len3	9	cvc-length-valid
+max5len3	9b1109:a	cvc-maxLength-valid
+max5len3	:-a	
+max5len3	10 	
+max5len3	abcdef	cvc-maxLength-valid
+max5len3	abcd	cvc-length-valid
+frac1	0	
+frac1	-0	
+frac1	+1.50	
+frac1	.5	
+frac1	5.	
+frac1	1e5	cvc-datatype-valid.1.2.1
+frac1	1,5	cvc-datatype-valid.1.2.1
+frac1		cvc-datatype-valid.1.2.1
+frac1	 12 	
+frac1	123456789.1234567	cvc-fractionDigits-valid
+frac1	00012.300	
+frac1	-999.99	cvc-fractionDigits-valid
+frac1	50	
+frac1	50.00	
+frac1	50.01	cvc-fractionDigits-valid
+frac1	1.5	
+frac1	1.49	cvc-fractionDigits-valid
+frac1	0.0001	cvc-fractionDigits-valid
+frac1	abc	cvc-datatype-valid.1.2.1
+frac1	12345	
+frac1	123.456	cvc-fractionDigits-valid
+frac1	-1	
+frac1	1	
+frac1	+7	
+frac1	007	
+frac1	1.0	
+frac1	1.	
+frac1	2147483647	
+frac1	2147483648	
+frac1	-2147483649	
+frac1	9223372036854775807	
+frac1	9223372036854775808	
+frac1	18446744073709551615	
+frac1	18446744073709551616	
+frac1	127	
+frac1	128	
+frac1	-128	
+frac1	-129	
+frac1	255	
+frac1	256	
+frac1	32767	
+frac1	65536	
+frac1	-5	
+frac1	5	
+frac1	6	
+frac1	999	
+frac1	1000	
+frac1tot3	0	
+frac1tot3	-0	
+frac1tot3	+1.50	
+frac1tot3	.5	
+frac1tot3	5.	
+frac1tot3	1e5	cvc-datatype-valid.1.2.1
+frac1tot3	1,5	cvc-datatype-valid.1.2.1
+frac1tot3		cvc-datatype-valid.1.2.1
+frac1tot3	 12 	
+frac1tot3	123456789.1234567	cvc-fractionDigits-valid
+frac1tot3	00012.300	
+frac1tot3	-999.99	cvc-fractionDigits-valid
+frac1tot3	50	
+frac1tot3	50.00	
+frac1tot3	50.01	cvc-fractionDigits-valid
+frac1tot3	1.5	
+frac1tot3	1.49	cvc-fractionDigits-valid
+frac1tot3	0.0001	cvc-fractionDigits-valid
+frac1tot3	abc	cvc-datatype-valid.1.2.1
+frac1tot3	12345	cvc-totalDigits-valid
+frac1tot3	123.456	cvc-fractionDigits-valid
+frac1tot3	-1	
+frac1tot3	1	
+frac1tot3	+7	
+frac1tot3	007	
+frac1tot3	1.0	
+frac1tot3	1.	
+frac1tot3	2147483647	cvc-totalDigits-valid
+frac1tot3	2147483648	cvc-totalDigits-valid
+frac1tot3	-2147483649	cvc-totalDigits-valid
+frac1tot3	9223372036854775807	cvc-totalDigits-valid
+frac1tot3	9223372036854775808	cvc-totalDigits-valid
+frac1tot3	18446744073709551615	cvc-totalDigits-valid
+frac1tot3	18446744073709551616	cvc-totalDigits-valid
+frac1tot3	127	
+frac1tot3	128	
+frac1tot3	-128	
+frac1tot3	-129	
+frac1tot3	255	
+frac1tot3	256	
+frac1tot3	32767	cvc-totalDigits-valid
+frac1tot3	65536	cvc-totalDigits-valid
+frac1tot3	-5	
+frac1tot3	5	
+frac1tot3	6	
+frac1tot3	999	
+frac1tot3	1000	cvc-totalDigits-valid
+frac1tot3	1234.56	cvc-fractionDigits-valid
+frac1tot3	12.5	
+frac1tot3	123.4	cvc-totalDigits-valid
+frac1tot3	1.25	cvc-fractionDigits-valid
+timeMax	12:00:00	
+timeMax	24:00:00	cvc-maxInclusive-valid
+timeMax	23:59:59.999	cvc-maxInclusive-valid
+timeMax	23:59:60	cvc-datatype-valid.1.2.1
+timeMax	12:00	cvc-datatype-valid.1.2.1
+timeMax	12:00:00Z	cvc-maxInclusive-valid
+timeMax	12:00:00+05:30	cvc-maxInclusive-valid
+timeMax	7:00:00	cvc-datatype-valid.1.2.1
+timeMax	02:00:00Z	
+timeMax	02:00:01Z	
+timeMax	02:00:00.5Z	
+timeMax	01:59:59Z	
+timeMax	16:00:30	
+timeMax	16:00:31	cvc-maxInclusive-valid
+timeMax	02:00:30Z	cvc-maxInclusive-valid
+timeMax	02:00:31Z	cvc-maxInclusive-valid
+timeMinZ	12:00:00	cvc-minInclusive-valid
+timeMinZ	24:00:00	
+timeMinZ	23:59:59.999	
+timeMinZ	23:59:60	cvc-datatype-valid.1.2.1
+timeMinZ	12:00	cvc-datatype-valid.1.2.1
+timeMinZ	12:00:00Z	
+timeMinZ	12:00:00+05:30	
+timeMinZ	7:00:00	cvc-datatype-valid.1.2.1
+timeMinZ	16:00:30	
+timeMinZ	16:00:31	
+timeMinZ	16:00:00	cvc-minInclusive-valid
+timeMinZ	15:59:59	cvc-minInclusive-valid
+timeMinZ	02:00:00Z	
+timeMinZ	01:59:59Z	cvc-minInclusive-valid
+dateEnumNeg	2026-10-21	cvc-enumeration-valid
+dateEnumNeg	2024-02-29	cvc-enumeration-valid
+dateEnumNeg	2026-02-29	cvc-datatype-valid.1.2.1
+dateEnumNeg	1900-02-29	cvc-datatype-valid.1.2.1
+dateEnumNeg	2000-02-29	cvc-enumeration-valid
+dateEnumNeg	2026-13-01	cvc-datatype-valid.1.2.1
+dateEnumNeg	2026-00-10	cvc-datatype-valid.1.2.1
+dateEnumNeg	2026-01-00	cvc-datatype-valid.1.2.1
+dateEnumNeg	2026-04-31	cvc-datatype-valid.1.2.1
+dateEnumNeg	0000-01-01	cvc-datatype-valid.1.2.1
+dateEnumNeg	-0001-12-31	cvc-enumeration-valid
+dateEnumNeg	2026-10-21Z	cvc-enumeration-valid
+dateEnumNeg	2026-10-21+01:00	cvc-enumeration-valid
+dateEnumNeg	2026-1-21	cvc-datatype-valid.1.2.1
+dateEnumNeg	26-10-21	cvc-datatype-valid.1.2.1
+dateEnumNeg	 2026-10-21 	cvc-enumeration-valid
+dateEnumNeg	1999-12-31	cvc-enumeration-valid
+dateEnumNeg	2100-01-01	cvc-enumeration-valid
+dateEnumNeg	2099-12-31	cvc-enumeration-valid
+dateEnumNeg	2000-01-01Z	cvc-enumeration-valid
+dateEnumNeg	-0001-03-01	
+dateEnumNeg	-0001-02-29	cvc-datatype-valid.1.2.1
+dateEnumNeg	-0004-02-29	
+dateEnumNeg	-0400-02-29	cvc-enumeration-valid
+dateEnumNeg	-0005-02-29	cvc-datatype-valid.1.2.1
+dateEnumNeg	-0004-03-01	cvc-enumeration-valid
+b64enum		cvc-enumeration-valid
+b64enum	QUJD	
+b64enum	QUJD RA==	cvc-enumeration-valid
+b64enum	QUJ	cvc-datatype-valid.1.2.1
+b64enum	QUJD===	cvc-datatype-valid.1.2.1
+b64enum	QQ==	cvc-enumeration-valid
+b64enum	QR==	cvc-datatype-valid.1.2.1
+b64enum	QUE=	cvc-enumeration-valid
+b64enum	QUF=	cvc-datatype-valid.1.2.1
+b64enum	Q U J D	
+b64enum	hex:51554A440A	
+b64enum	!!!!	cvc-datatype-valid.1.2.1
+b64enum	QUJE	cvc-enumeration-valid
+b64enum	QU JD	
+floatMin1	0	cvc-minExclusive-valid
+floatMin1	-0	cvc-minExclusive-valid
+floatMin1	1e5	
+floatMin1	1.e5	
+floatMin1	 1e5 	
+floatMin1	+INF	cvc-datatype-valid.1.2.1
+floatMin1	INF	
+floatMin1	-INF	cvc-minExclusive-valid
+floatMin1	NaN	cvc-minExclusive-valid
+floatMin1	nan	cvc-datatype-valid.1.2.1
+floatMin1	1E400	
+floatMin1	1e-400	cvc-minExclusive-valid
+floatMin1	.5e1	
+floatMin1	1e	cvc-datatype-valid.1.2.1
+floatMin1	e1	cvc-datatype-valid.1.2.1
+floatMin1	1.5E+3	
+floatMin1	-1e3	cvc-minExclusive-valid
+floatMin1	-1001	cvc-minExclusive-valid
+floatMin1	3.4028235e38	
+floatMin1	3.4028236e38	
+floatMin1	1e-46	cvc-minExclusive-valid
+floatMin1	1.4e-45	cvc-minExclusive-valid
+floatMin1	0x1	cvc-datatype-valid.1.2.1
+floatMin1	100	
+floatMin1	1e2	
+floatMin1	abc	cvc-datatype-valid.1.2.1
+floatMin1	1	cvc-minExclusive-valid
+floatMin1	1.00000005960464477539062500000001	
+floatMin1	1.000000059604644775390625	cvc-minExclusive-valid
+floatMin1	1.0000000596046447753906249	cvc-minExclusive-valid
+floatMin1	1.000000059604644775390625e00000000000000000000	cvc-minExclusive-valid
+floatMin1	10.00000059604644775390625e-1	cvc-minExclusive-valid
+floatMin1	1.0000001	
+floatMin1	0.99999997	cvc-minExclusive-valid
+uriEnum		cvc-enumeration-valid
+uriEnum	http://example.org/a?b#c	cvc-enumeration-valid
+uriEnum	http://a b	cvc-enumeration-valid
+uriEnum	::	cvc-datatype-valid.1.2.1
+uriEnum	a:b	cvc-enumeration-valid
+uriEnum	1a:b	cvc-datatype-valid.1.2.1
+uriEnum	urn:isbn:123	cvc-enumeration-valid
+uriEnum	%41	cvc-enumeration-valid
+uriEnum	%4	cvc-datatype-valid.1.2.1
+uriEnum	%zz	cvc-datatype-valid.1.2.1
+uriEnum	#a#b	cvc-datatype-valid.1.2.1
+uriEnum	/rel/path	cvc-enumeration-valid
+uriEnum	mailto:info@example.org	cvc-enumeration-valid
+uriEnum	hex:C3A4	cvc-enumeration-valid
+uriEnum	http://x/yyyyyyyyyyyyyyyyyyyy	cvc-enumeration-valid
+uriEnum	a b	
+uriEnum	a  b	cvc-enumeration-valid
+uriEnum	hex:610962	cvc-enumeration-valid
+uriEnum	 a b 	
+uriEnum	c  d	
+uriEnum	 c  d 	
+uriEnum	c d	cvc-enumeration-valid
+uriPatEnum		cvc-enumeration-valid
+uriPatEnum	http://example.org/a?b#c	cvc-enumeration-valid
+uriPatEnum	http://a b	cvc-enumeration-valid
+uriPatEnum	::	cvc-datatype-valid.1.2.1
+uriPatEnum	a:b	cvc-enumeration-valid
+uriPatEnum	1a:b	cvc-datatype-valid.1.2.1
+uriPatEnum	urn:isbn:123	cvc-enumeration-valid
+uriPatEnum	%41	cvc-enumeration-valid
+uriPatEnum	%4	cvc-datatype-valid.1.2.1
+uriPatEnum	%zz	cvc-datatype-valid.1.2.1
+uriPatEnum	#a#b	cvc-datatype-valid.1.2.1
+uriPatEnum	/rel/path	cvc-enumeration-valid
+uriPatEnum	mailto:info@example.org	cvc-enumeration-valid
+uriPatEnum	hex:C3A4	cvc-enumeration-valid
+uriPatEnum	http://x/yyyyyyyyyyyyyyyyyyyy	cvc-enumeration-valid
+uriPatEnum	a b	
+uriPatEnum	a  b	
+uriPatEnum	 a   b 	
+uriLen4		cvc-length-valid
+uriLen4	http://example.org/a?b#c	cvc-length-valid
+uriLen4	http://a b	cvc-length-valid
+uriLen4	::	cvc-datatype-valid.1.2.1
+uriLen4	a:b	cvc-length-valid
+uriLen4	1a:b	cvc-datatype-valid.1.2.1
+uriLen4	urn:isbn:123	cvc-length-valid
+uriLen4	%41	cvc-length-valid
+uriLen4	%4	cvc-datatype-valid.1.2.1
+uriLen4	%zz	cvc-datatype-valid.1.2.1
+uriLen4	#a#b	cvc-datatype-valid.1.2.1
+uriLen4	/rel/path	cvc-length-valid
+uriLen4	mailto:info@example.org	cvc-length-valid
+uriLen4	hex:C3A4	cvc-length-valid
+uriLen4	http://x/yyyyyyyyyyyyyyyyyyyy	cvc-length-valid
+uriLen4	a  b	
+uriLen4	a b	cvc-length-valid
+uriLen4	 a b 	cvc-length-valid
+u-enum-any		
+u-enum-any	a	
+u-enum-any	 a 	
+u-enum-any	hex:610962	
+u-enum-any	hex:6C696E650A627265616B	
+u-enum-any	hex:C3A9C3A9	
+u-enum-any	<&>	
+u-enum-any	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
+u-enum-any	0	
+u-enum-any	-1	
+u-enum-any	1	
+u-enum-any	+7	
+u-enum-any	007	
+u-enum-any	1.0	
+u-enum-any	1.	
+u-enum-any	2147483647	
+u-enum-any	Yes	
+u-enum-any	No	
+u-enum-any	a  b	
+u-enum-any	a b	
+u-int-tok		cvc-datatype-valid.1.2.3
+u-int-tok	a	cvc-datatype-valid.1.2.3
+u-int-tok	 a 	cvc-datatype-valid.1.2.3
+u-int-tok	hex:610962	
+u-int-tok	hex:6C696E650A627265616B	cvc-datatype-valid.1.2.3
+u-int-tok	hex:C3A9C3A9	cvc-datatype-valid.1.2.3
+u-int-tok	<&>	cvc-datatype-valid.1.2.3
+u-int-tok	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-datatype-valid.1.2.3
+u-int-tok	0	
+u-int-tok	-1	
+u-int-tok	1	
+u-int-tok	+7	
+u-int-tok	007	
+u-int-tok	1.0	cvc-datatype-valid.1.2.3
+u-int-tok	1.	cvc-datatype-valid.1.2.3
+u-int-tok	2147483647	
+u-int-tok	Yes	
+u-int-tok	No	cvc-datatype-valid.1.2.3
+u-int-tok	a  b	
+u-int-tok	a b	
