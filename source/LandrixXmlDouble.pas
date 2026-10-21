@@ -836,7 +836,7 @@ begin
         Exit;
       AnyExpDigit := True;
       if ExpValue < ExpLimit then
-        ExpValue := ExpValue * 10 + (Ord(C) - Ord('0'));
+        ExpValue := ExpValue * 10 + (Int64(Ord(C)) - Ord('0'));
       Inc(I);
     end;
     if not AnyExpDigit then
