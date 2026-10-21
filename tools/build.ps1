@@ -102,7 +102,9 @@ function Invoke-Toolchain([string]$Name) {
     }
     '^d(6|7)$' {
       $d = if ($Matches[1] -eq '6') { $Delphi6 } else { $Delphi7 }
-      $winOut = $out -replace '/', '\'
+      # Absolute path: dcc32 of Delphi 6 and 7 ignores a relative -N path
+      # such as "-Nbuild\d6" and writes the .dcu files next to the sources.
+      $winOut = (Join-Path $Root $out) -replace '/', '\'
       $log = & "$d\Bin\dcc32.exe" -B -Q -W -H @dccChecks "-U$d\Lib;source;tests" '-Isource' "-N$winOut" "-E$winOut" ($Program -replace '/', '\') 2>&1
       $code = $LASTEXITCODE
       $exe = "$out/$ProgramName.exe"
