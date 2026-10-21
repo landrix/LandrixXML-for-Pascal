@@ -13,6 +13,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Saxon, the XSLT engine of the KoSIT validator, so that sum checks give
   the same results. First building block of the planned XSD and
   Schematron validation; the existing units do not depend on it.
+- `LandrixXmlDecimalMultiplyPow10`: exact multiplication by a power of ten.
+- `LandrixXmlDouble`: `xs:double` computed in software on the IEEE 754 bit
+  pattern (`TLandrixXmlDouble`): arithmetic, `mod`, comparison, rounding,
+  parsing with correct rounding, exact conversion to and from `xs:decimal`,
+  and the XPath string value with the digits Saxon writes. Results are the
+  same on every compiler and CPU and never raise floating-point exceptions.
+- `tools/gen-double-testdata.py`: generates the double test cases and
+  optionally checks them against Saxon.
 - New error code `xecArithmetic` (division by zero, exponent out of range).
 - `tools/gen-decimal-testdata.py`: generates the decimal test cases and
   optionally checks them against Saxon.

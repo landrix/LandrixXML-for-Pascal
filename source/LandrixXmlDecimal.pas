@@ -104,6 +104,8 @@ function LandrixXmlDecimalAbs(const A: TLandrixXmlDecimal): TLandrixXmlDecimal;
 function LandrixXmlDecimalAdd(const A, B: TLandrixXmlDecimal): TLandrixXmlDecimal;
 function LandrixXmlDecimalSubtract(const A, B: TLandrixXmlDecimal): TLandrixXmlDecimal;
 function LandrixXmlDecimalMultiply(const A, B: TLandrixXmlDecimal): TLandrixXmlDecimal;
+{ A * 10^N, exact. }
+function LandrixXmlDecimalMultiplyPow10(const A: TLandrixXmlDecimal; N: Integer): TLandrixXmlDecimal;
 
 { Decimal division as Saxon performs "div" on two xs:decimal values: the
   quotient is rounded half down (ties towards zero) to
@@ -890,6 +892,13 @@ end;
 function LandrixXmlDecimalSubtract(const A, B: TLandrixXmlDecimal): TLandrixXmlDecimal;
 begin
   Result := LandrixXmlDecimalAdd(A, LandrixXmlDecimalNegate(B));
+end;
+
+function LandrixXmlDecimalMultiplyPow10(const A: TLandrixXmlDecimal; N: Integer): TLandrixXmlDecimal;
+begin
+  if (N > LandrixXmlDecimalMaxExponent) or (N < -LandrixXmlDecimalMaxExponent) then
+    RaiseArithmetic('Decimal exponent out of range');
+  Result := MakeDecimal(A.Negative, A.Exponent + N, A.Limbs);
 end;
 
 function LandrixXmlDecimalMultiply(const A, B: TLandrixXmlDecimal): TLandrixXmlDecimal;
