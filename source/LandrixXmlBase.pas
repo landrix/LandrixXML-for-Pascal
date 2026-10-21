@@ -74,7 +74,8 @@ type
     xecLimit,            { resource limit exceeded (depth, size, ...) }
     xecWrite,            { the writer was asked to produce invalid XML }
     xecConversion,       { a value has no valid xs:* lexical form }
-    xecUnexpectedElement { an element where the caller expects text only }
+    xecUnexpectedElement, { an element where the caller expects text only }
+    xecArithmetic        { division by zero or an arithmetic result out of range }
   );
 
   { All errors raised by LandrixXml. Line and Column are 1-based (Column in

@@ -5,6 +5,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- `LandrixXmlDecimal`: exact decimal arithmetic for `xs:decimal` and
+  `xs:integer` with arbitrary precision (add, subtract, multiply, divide,
+  `idiv`, `mod`, comparison, rounding modes, Int64 conversion, the digit
+  counts of the `totalDigits`/`fractionDigits` facets). Division follows
+  Saxon, the XSLT engine of the KoSIT validator, so that sum checks give
+  the same results. First building block of the planned XSD and
+  Schematron validation; the existing units do not depend on it.
+- New error code `xecArithmetic` (division by zero, exponent out of range).
+- `tools/gen-decimal-testdata.py`: generates the decimal test cases and
+  optionally checks them against Saxon.
+
 ### Fixed
 - Delphi 13 macOS ARM64: no more W1072 warnings where `TStream.Read`
   returns a 64-bit `Longint`.

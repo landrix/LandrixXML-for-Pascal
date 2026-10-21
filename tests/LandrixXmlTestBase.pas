@@ -492,6 +492,7 @@ begin
   CheckEquals(10, Ord(xecWrite), 'xecWrite');
   CheckEquals(11, Ord(xecConversion), 'xecConversion');
   CheckEquals(12, Ord(xecUnexpectedElement), 'xecUnexpectedElement');
+  CheckEquals(13, Ord(xecArithmetic), 'xecArithmetic');
 end;
 
 procedure TestEscapeForMessage;

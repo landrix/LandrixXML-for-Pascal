@@ -42,6 +42,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlWriter` | streaming writer `TLandrixXmlWriter` |
 | `LandrixXmlDom` | `TLandrixXmlDocument`, `TLandrixXmlNode` |
 | `LandrixXmlConvert` | `xs:*` value conversion |
+| `LandrixXmlDecimal` | exact `xs:decimal`/`xs:integer` arithmetic with Saxon-compatible division (first of the optional validation units; the units above do not use it) |
 
 Add the `source` folder to the search path (Delphi: unit and include path;
 Free Pascal: `-Fusource -Fisource`).

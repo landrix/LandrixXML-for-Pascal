@@ -27,6 +27,7 @@ uses
   LandrixXmlTestWriter,
   LandrixXmlTestConvert,
   LandrixXmlTestDom,
+  LandrixXmlTestDecimal,
   LandrixXmlTestLocal;
 
 function FilterParam: string;
@@ -48,6 +49,7 @@ begin
   LandrixXmlTestWriter.Register;
   LandrixXmlTestConvert.Register;
   LandrixXmlTestDom.Register;
+  LandrixXmlTestDecimal.Register;
   LandrixXmlTestLocal.Register;
   ExitCode := RunAllTests(FilterParam);
 end.
