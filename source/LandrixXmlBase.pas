@@ -60,6 +60,8 @@ type
   {$ENDIF}
 {$ENDIF}
 
+  TLandrixXmlUtf8Array = array of TLandrixXmlUtf8;
+
   { Error categories. Append-only: never reorder or remove values. }
   TLandrixXmlErrorCode = (
     xecNone,             { no error / not set }

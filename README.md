@@ -47,6 +47,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlRegex` | XSD and XPath regular expressions, linear-time matching, optional validation unit |
 | `LandrixXmlUnicode` | Unicode 6.2.0 general categories, code point strings, optional validation unit |
 | `LandrixXmlXsdTypes` | XML Schema simple types and facets, optional validation unit |
+| `LandrixXmlXsdContent` | XML Schema content models (sequence, choice, occurrence bounds, wildcards), optional validation unit |
 
 Add the `source` folder to the search path (Delphi: unit and include path;
 Free Pascal: `-Fusource -Fisource`).

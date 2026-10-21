@@ -42,6 +42,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   restriction with facets, unions) with the same checks, order and
   `cvc-...` codes as the XML Schema validator of the Java runtime used by
   the KoSIT validator.
+- `LandrixXmlXsdContent`: content models of complex types (nested
+  sequences and choices with occurrence bounds, element and wildcard
+  particles), checked child by child with the error codes, expected lists,
+  positions and recovery of the XML Schema validator of the Java runtime
+  (including its three ways of checking occurrence bounds);
+  `tools/gen-xsdcontent-testdata.py` generates test cases with that
+  validator. `XsdOracle` now reports a runtime exception of the JDK's
+  validator as `jdk-exception` and goes on with the next document.
+- `TLandrixXmlUtf8Array` moved from `LandrixXmlRegex` to `LandrixXmlBase`.
 - `tools/XsdOracle.java` and `tools/gen-xsdtypes-testdata.py`: test oracle
   and test data generator for simple types; `tools/gen-xml10-name-tables.py`
   generates the XML 1.0 Fourth Edition name character classes Xerces uses

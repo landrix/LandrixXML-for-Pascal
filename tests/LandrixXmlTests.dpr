@@ -31,6 +31,7 @@ uses
   LandrixXmlTestDouble,
   LandrixXmlTestRegex,
   LandrixXmlTestXsdTypes,
+  LandrixXmlTestXsdContent,
   LandrixXmlTestLocal;
 
 function FilterParam: string;
@@ -56,6 +57,7 @@ begin
   LandrixXmlTestDouble.Register;
   LandrixXmlTestRegex.Register;
   LandrixXmlTestXsdTypes.Register;
+  LandrixXmlTestXsdContent.Register;
   LandrixXmlTestLocal.Register;
   ExitCode := RunAllTests(FilterParam);
 end.

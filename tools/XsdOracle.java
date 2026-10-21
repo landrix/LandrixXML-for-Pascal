@@ -12,8 +12,10 @@
  *   file TAB line TAB column TAB code TAB message
  *
  * where code is the leading "cvc-..." identifier of the message. Messages
- * are English and UTF-8 encoded. Exit code 0 even if documents are
- * invalid; 2 on usage or schema errors.
+ * are English and UTF-8 encoded. If the JDK's validator throws a runtime
+ * exception for a document (it does when an element exceeds a counted
+ * maxOccurs), the line reads file TAB 0 TAB 0 TAB jdk-exception TAB class.
+ * Exit code 0 even if documents are invalid; 2 on usage or schema errors.
  *
  *   javac --release 17 -d OUT tools/XsdOracle.java
  *   java -cp OUT XsdOracle schema.xsd instance1.xml [instance2.xml ...]
@@ -62,6 +64,10 @@ public class XsdOracle {
                 validator.validate(new StreamSource(new File(name)));
             } catch (SAXParseException e) {
                 // already reported through fatalError
+            } catch (RuntimeException e) {
+                // the JDK's validator fails on some inputs (a message key
+                // missing from its resources); report it and go on
+                System.out.println(name + "\t0\t0\tjdk-exception\t" + e.getClass().getName());
             }
         }
     }

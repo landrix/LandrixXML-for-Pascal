@@ -62,8 +62,6 @@ type
     xrmXPath  { fn:matches and friends: a match anywhere, ^ and $ anchors }
   );
 
-  TLandrixXmlUtf8Array = array of TLandrixXmlUtf8;
-
   { Internal compiled forms, public only because Delphi 6 has no nested
     types. }
   TLandrixXmlRegexOp = (xroSet, xroSplit, xroJump, xroSave, xroStart, xroEnd, xroMatch);
