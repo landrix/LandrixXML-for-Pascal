@@ -1,0 +1,138 @@
+ns p urn:p
+expr count(//a)
+expr sum(//a)
+expr //a[@x = 2]
+expr //a = 20.5
+expr //a[1] + 1
+expr string(//b)
+expr normalize-space(//b)
+expr upper-case(//p:d)
+expr lower-case('ÄÖÜ')
+expr substring('12345', 1.5, 2.6)
+expr substring('12345', 0, 3)
+expr 1 div 3
+expr 10 div 4
+expr 1.5 div 2000
+expr 7 idiv 2
+expr -7 mod 2
+expr xs:decimal('1.50') * 2
+expr round(2.5)
+expr round(-2.5)
+expr round-half-to-even(2.5)
+expr xs:double('1e2') + 0
+expr //n[1] * 1
+expr //n[2] * 1
+expr number(//n[2])
+expr xs:decimal(//c)
+expr xs:decimal(//c) = 1 or true()
+expr for $i in 1 to 3 return $i * 2
+expr some $a in //a satisfies $a > 15
+expr every $a in //a satisfies $a > 15
+expr if (//e) then 'yes' else 'no'
+expr tokenize('a,b,,c', ',')
+expr replace('abc', 'b', 'X')
+expr matches('2026-01-01', '^\d{4}-\d{2}-\d{2}$')
+expr string-join(('a', 'b'), '-')
+expr concat('a', 1, true())
+expr distinct-values((1, 1.0, '1', 2))
+expr string-to-codepoints('aß')
+expr codepoints-to-string((65, 66))
+expr translate('abcabc', 'ab', 'X')
+expr name(/*/*[5])
+expr local-name(/*/*[5])
+expr namespace-uri(/*/*[5])
+expr //a/@x
+expr (//a)[last()]
+expr //a[position() = 2]
+expr xs:date('2026-01-31') > xs:date('2026-01-01')
+expr 'abc' castable as xs:integer
+expr '12' castable as xs:integer
+expr 1 = '1'
+expr //a eq 10
+expr //c eq 'abc'
+expr exists(//zz)
+expr avg((1, 2, 4))
+expr min((3, 1.5, 2))
+expr max(('b', 'a'))
+expr sum(())
+expr string(1e20)
+expr string(0.1e0)
+expr string(100 div 3)
+expr abs(-3.5)
+expr floor(-1.5)
+expr ceiling(1.2)
+expr reverse((1,2,3))
+expr subsequence((1,2,3,4), 2, 2)
+expr index-of((1,2,1), 1)
+expr //a/string()
+expr //a/../c
+expr //c/preceding-sibling::*[1]
+expr //c/following-sibling::*[1]
+expr //e/ancestor::*
+expr //e/preceding::a
+expr xs:integer('1.0')
+expr boolean(('a','b'))
+expr //e/ancestor::*[1]
+expr //e/preceding::*[1]
+expr //e/preceding::*[last()]
+expr //e/preceding-sibling::*[2]
+expr (//e/preceding-sibling::*)[1]
+expr //a[1]/following-sibling::*[2]
+expr //a[@x][2]/@x
+expr /r/a/@x = '2'
+expr //*[self::a or self::c]
+expr //a[. > 15]/@x
+expr //*/node()[1]
+expr count(//node())
+expr count(//text())
+expr //a[1]/text()
+expr sum(//a/@x) * 2
+expr xs:decimal(//a[2]) div xs:decimal(//a[1])
+expr round(xs:decimal(//a[2]) * 100) div 100
+expr //a[1] - //a[2]
+expr string(//a[1] div 3)
+expr //b/string-length(normalize-space(.))
+expr substring-before('a-b-c', '-')
+expr substring-after('a-b-c', '-')
+expr contains('abc', '')
+expr starts-with('abc', 'ab')
+expr ends-with('abc', 'bc')
+expr string-length('Straße')
+expr 'a' < 'b'
+expr 'ä' > 'z'
+expr 3 > 2.5
+expr //a[1] = (10, 99)
+expr //a != 10
+expr not(//zz)
+expr //zz = 1
+expr //a[1] eq '10'
+expr //n[2] = 'x'
+expr if (//a[1] > 5) then //a[1] * 2 else 0
+expr for $a in //a, $b in $a/@x return concat($a, ':', $b)
+expr //a[@x = '2']/preceding-sibling::a
+expr local-name(//@x[1])
+expr name(//e)
+expr count(//a/ancestor-or-self::node())
+expr (1, 2) = (2, 3)
+expr - //a[1]
+expr +'1'
+expr 5 mod 0
+expr 5 div 0
+expr 5.0 div 0
+expr 5e0 div 0
+expr -5e0 div 0
+expr 0e0 div 0
+expr 1 to 0
+expr (1 to 3)[. > 1]
+expr //a[position() < 2]
+expr string(-0e0)
+expr string(1.5e-7)
+expr string(123456789012)
+expr string(xs:double('123456789012'))
+expr xs:decimal('-0.0')
+expr xs:integer('-0')
+expr xs:boolean('1')
+expr xs:boolean(' true ')
+expr xs:string(1.0)
+expr string(1.10)
+expr 1.10 = 1.1

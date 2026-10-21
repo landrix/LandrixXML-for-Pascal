@@ -1,0 +1,299 @@
+# count(//a)
+xs:integer 2
+# sum(//a)
+xs:double 30.5
+# //a[@x = 2]
+node /Q{}r[1]/Q{}a[2]
+# //a = 20.5
+xs:boolean true
+# //a[1] + 1
+xs:double 11
+# string(//b)
+xs:string   hello   world 
+# normalize-space(//b)
+xs:string hello world
+# upper-case(//p:d)
+xs:string STRASSE
+# lower-case('ÄÖÜ')
+xs:string äöü
+# substring('12345', 1.5, 2.6)
+xs:string 234
+# substring('12345', 0, 3)
+xs:string 12
+# 1 div 3
+xs:decimal 0.333333333333333333
+# 10 div 4
+xs:decimal 2.5
+# 1.5 div 2000
+xs:decimal 0.00075
+# 7 idiv 2
+xs:integer 3
+# -7 mod 2
+xs:integer -1
+# xs:decimal('1.50') * 2
+xs:decimal 3
+# round(2.5)
+xs:decimal 3
+# round(-2.5)
+xs:decimal -2
+# round-half-to-even(2.5)
+xs:decimal 2
+# xs:double('1e2') + 0
+xs:double 100
+# //n[1] * 1
+xs:double 100
+# //n[2] * 1
+error FORG0001
+# number(//n[2])
+xs:double NaN
+# xs:decimal(//c)
+error FORG0001
+# xs:decimal(//c) = 1 or true()
+xs:boolean true
+# for $i in 1 to 3 return $i * 2
+xs:integer 2
+xs:integer 4
+xs:integer 6
+# some $a in //a satisfies $a > 15
+xs:boolean true
+# every $a in //a satisfies $a > 15
+xs:boolean false
+# if (//e) then 'yes' else 'no'
+xs:string yes
+# tokenize('a,b,,c', ',')
+xs:string a
+xs:string b
+xs:string 
+xs:string c
+# replace('abc', 'b', 'X')
+xs:string aXc
+# matches('2026-01-01', '^\d{4}-\d{2}-\d{2}$')
+xs:boolean true
+# string-join(('a', 'b'), '-')
+xs:string a-b
+# concat('a', 1, true())
+xs:string a1true
+# distinct-values((1, 1.0, '1', 2))
+xs:integer 1
+xs:string 1
+xs:integer 2
+# string-to-codepoints('aß')
+xs:integer 97
+xs:integer 223
+# codepoints-to-string((65, 66))
+xs:string AB
+# translate('abcabc', 'ab', 'X')
+xs:string XcXc
+# name(/*/*[5])
+xs:string p:d
+# local-name(/*/*[5])
+xs:string d
+# namespace-uri(/*/*[5])
+xs:anyURI urn:p
+# //a/@x
+node /Q{}r[1]/Q{}a[1]/@Q{}x
+node /Q{}r[1]/Q{}a[2]/@Q{}x
+# (//a)[last()]
+node /Q{}r[1]/Q{}a[2]
+# //a[position() = 2]
+node /Q{}r[1]/Q{}a[2]
+# xs:date('2026-01-31') > xs:date('2026-01-01')
+xs:boolean true
+# 'abc' castable as xs:integer
+xs:boolean false
+# '12' castable as xs:integer
+xs:boolean true
+# 1 = '1'
+error XPTY0004
+# //a eq 10
+error XPTY0004
+# //c eq 'abc'
+xs:boolean true
+# exists(//zz)
+xs:boolean false
+# avg((1, 2, 4))
+xs:decimal 2.333333333333333333
+# min((3, 1.5, 2))
+xs:decimal 1.5
+# max(('b', 'a'))
+xs:string b
+# sum(())
+xs:integer 0
+# string(1e20)
+xs:string 1.0E20
+# string(0.1e0)
+xs:string 0.1
+# string(100 div 3)
+xs:string 33.333333333333333333
+# abs(-3.5)
+xs:decimal 3.5
+# floor(-1.5)
+xs:decimal -2
+# ceiling(1.2)
+xs:decimal 2
+# reverse((1,2,3))
+xs:integer 3
+xs:integer 2
+xs:integer 1
+# subsequence((1,2,3,4), 2, 2)
+xs:integer 2
+xs:integer 3
+# index-of((1,2,1), 1)
+xs:integer 1
+xs:integer 3
+# //a/string()
+xs:string 10
+xs:string 20.5
+# //a/../c
+node /Q{}r[1]/Q{}c[1]
+# //c/preceding-sibling::*[1]
+node /Q{}r[1]/Q{}b[1]
+# //c/following-sibling::*[1]
+node /Q{}r[1]/Q{urn:p}d[1]
+# //e/ancestor::*
+node /Q{}r[1]
+# //e/preceding::a
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[2]
+# xs:integer('1.0')
+error FORG0001
+# boolean(('a','b'))
+error FORG0006
+# //e/ancestor::*[1]
+node /Q{}r[1]
+# //e/preceding::*[1]
+node /Q{}r[1]/Q{urn:p}d[1]
+# //e/preceding::*[last()]
+node /Q{}r[1]/Q{}a[1]
+# //e/preceding-sibling::*[2]
+node /Q{}r[1]/Q{}c[1]
+# (//e/preceding-sibling::*)[1]
+node /Q{}r[1]/Q{}a[1]
+# //a[1]/following-sibling::*[2]
+node /Q{}r[1]/Q{}b[1]
+# //a[@x][2]/@x
+node /Q{}r[1]/Q{}a[2]/@Q{}x
+# /r/a/@x = '2'
+xs:boolean true
+# //*[self::a or self::c]
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[2]
+node /Q{}r[1]/Q{}c[1]
+# //a[. > 15]/@x
+node /Q{}r[1]/Q{}a[2]/@Q{}x
+# //*/node()[1]
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/text()[1]
+node /Q{}r[1]/Q{}a[2]/text()[1]
+node /Q{}r[1]/Q{}b[1]/text()[1]
+node /Q{}r[1]/Q{}c[1]/text()[1]
+node /Q{}r[1]/Q{urn:p}d[1]/text()[1]
+node /Q{}r[1]/Q{}n[1]/text()[1]
+node /Q{}r[1]/Q{}n[2]/text()[1]
+# count(//node())
+xs:integer 16
+# count(//text())
+xs:integer 7
+# //a[1]/text()
+node /Q{}r[1]/Q{}a[1]/text()[1]
+# sum(//a/@x) * 2
+xs:double 6
+# xs:decimal(//a[2]) div xs:decimal(//a[1])
+xs:decimal 2.05
+# round(xs:decimal(//a[2]) * 100) div 100
+xs:decimal 20.5
+# //a[1] - //a[2]
+xs:double -10.5
+# string(//a[1] div 3)
+xs:string 3.3333333333333335
+# //b/string-length(normalize-space(.))
+xs:integer 11
+# substring-before('a-b-c', '-')
+xs:string a
+# substring-after('a-b-c', '-')
+xs:string b-c
+# contains('abc', '')
+xs:boolean true
+# starts-with('abc', 'ab')
+xs:boolean true
+# ends-with('abc', 'bc')
+xs:boolean true
+# string-length('Straße')
+xs:integer 6
+# 'a' < 'b'
+xs:boolean true
+# 'ä' > 'z'
+xs:boolean true
+# 3 > 2.5
+xs:boolean true
+# //a[1] = (10, 99)
+xs:boolean true
+# //a != 10
+xs:boolean true
+# not(//zz)
+xs:boolean true
+# //zz = 1
+xs:boolean false
+# //a[1] eq '10'
+xs:boolean true
+# //n[2] = 'x'
+xs:boolean true
+# if (//a[1] > 5) then //a[1] * 2 else 0
+xs:double 20
+# for $a in //a, $b in $a/@x return concat($a, ':', $b)
+xs:string 10:1
+xs:string 20.5:2
+# //a[@x = '2']/preceding-sibling::a
+node /Q{}r[1]/Q{}a[1]
+# local-name(//@x[1])
+error XPTY0004
+# name(//e)
+xs:string e
+# count(//a/ancestor-or-self::node())
+xs:integer 4
+# (1, 2) = (2, 3)
+xs:boolean true
+# - //a[1]
+xs:double -10
+# +'1'
+error XPTY0004
+# 5 mod 0
+error FOAR0001
+# 5 div 0
+error FOAR0001
+# 5.0 div 0
+error FOAR0001
+# 5e0 div 0
+xs:double INF
+# -5e0 div 0
+xs:double -INF
+# 0e0 div 0
+xs:double NaN
+# 1 to 0
+# (1 to 3)[. > 1]
+xs:integer 2
+xs:integer 3
+# //a[position() < 2]
+node /Q{}r[1]/Q{}a[1]
+# string(-0e0)
+xs:string -0
+# string(1.5e-7)
+xs:string 1.5E-7
+# string(123456789012)
+xs:string 123456789012
+# string(xs:double('123456789012'))
+xs:string 1.23456789012E11
+# xs:decimal('-0.0')
+xs:decimal 0
+# xs:integer('-0')
+xs:integer 0
+# xs:boolean('1')
+xs:boolean true
+# xs:boolean(' true ')
+xs:boolean true
+# xs:string(1.0)
+xs:string 1
+# string(1.10)
+xs:string 1.1
+# 1.10 = 1.1
+xs:boolean true

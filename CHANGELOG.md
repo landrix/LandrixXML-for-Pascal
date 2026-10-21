@@ -77,6 +77,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a static context (namespaces, variables, user functions); unsupported
   constructs are static errors. `ELandrixXmlXPathError` carries the W3C
   error code; new error code `xecXPath`.
+- `LandrixXmlXPathEval`: evaluates the compiled expressions on the tree as
+  Saxon HE does without a schema (untypedAtomic rules, Saxon's decimal
+  division, software doubles, code point strings, Java's case mapping in
+  `fn:upper-case`), tolerant of errors where Saxon is (`and`, `or`, lazy
+  variables), with global, frame and local variables and typed user
+  functions. `tools/XPathOracle.java` and `tools/gen-xpath-testdata.py`
+  check it against Saxon; `tools/gen-xpath-case-tables.py` generates the
+  case mappings from Saxon.
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
   `LandrixXmlXsdValueText` and `LandrixXmlXsdValueKey`. Messages quote
   values whole, show values in Xerces' canonical form (decimals, float and
