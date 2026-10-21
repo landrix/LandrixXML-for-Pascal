@@ -291,6 +291,13 @@ type
     function Line: Integer;
     function Column: Integer;
     function Offset: Int64;
+    { Position right after the current token: after the closing '>' of a
+      tag (also for both tokens of <x/>), after '-->', ']]>' or '?>', after
+      the last character of text. This is where an XML Schema validator
+      such as Xerces reports the errors it finds in a tag. Query Line and
+      Column first: the position cache only runs forward cheaply. }
+    function TokenEndLine: Integer;
+    function TokenEndColumn: Integer;
 
     property Input: TLandrixXmlInput read FInput;
     property MaxDepth: Integer read FMaxDepth write SetMaxDepth;
@@ -604,6 +611,20 @@ var
   Line: Integer;
 begin
   LineColumnAt(Integer(FTokenStart - FBase), Line, Result);
+end;
+
+function TLandrixXmlReader.TokenEndLine: Integer;
+var
+  Column: Integer;
+begin
+  LineColumnAt(Integer(FCur - FBase), Result, Column);
+end;
+
+function TLandrixXmlReader.TokenEndColumn: Integer;
+var
+  Line: Integer;
+begin
+  LineColumnAt(Integer(FCur - FBase), Line, Result);
 end;
 
 function TLandrixXmlReader.Offset: Int64;

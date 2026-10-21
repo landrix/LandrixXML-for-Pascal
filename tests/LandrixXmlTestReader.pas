@@ -602,6 +602,41 @@ begin
   end;
 end;
 
+{ The positions after a token are the ones Xerces reports (column of the
+  character after the tag, 1-based). }
+procedure TestTokenEndPositions;
+var
+  Reader: TLandrixXmlReader;
+  Xml: AnsiString;
+begin
+  Reader := TLandrixXmlReader.Create;
+  try
+    Xml := '<r a="1">' + #13#10 + 'xy<b/>' + #10 + '<c' + #10 + '  d="2">t</c></r>';
+    Reader.LoadFromBuffer(PAnsiChar(Xml)^, Length(Xml));
+    Check(Reader.Read, 'r');
+    CheckEquals(1, Reader.TokenEndLine, 'after r line');
+    CheckEquals(10, Reader.TokenEndColumn, 'after r column');
+    CheckEquals(1, Reader.Line, 'start of r after the end query');
+    Check(Reader.Read, 'text');
+    CheckEquals(2, Reader.TokenEndLine, 'after text line');
+    CheckEquals(3, Reader.TokenEndColumn, 'after text column');
+    Check(Reader.Read, 'b');
+    CheckEquals(7, Reader.TokenEndColumn, 'after <b/>');
+    Check(Reader.Read, 'end of b');
+    CheckEquals(7, Reader.TokenEndColumn, 'end token of <b/> ends there too');
+    Check(Reader.Read and Reader.Read, 'LF, c');
+    CheckEquals(3, Reader.Line, 'c line');
+    CheckEquals(4, Reader.TokenEndLine, 'after the multi-line start tag');
+    CheckEquals(9, Reader.TokenEndColumn, 'after the multi-line start tag column');
+    Check(Reader.Read and Reader.Read, 'text, end c');
+    CheckEquals(14, Reader.TokenEndColumn, 'after </c>');
+    Check(Reader.Read, 'end r');
+    CheckEquals(18, Reader.TokenEndColumn, 'after </r>');
+  finally
+    Reader.Free;
+  end;
+end;
+
 procedure TestPositionsConverted;
 var
   Reader: TLandrixXmlReader;
@@ -871,6 +906,7 @@ begin
   RegisterTest('Reader.ElementPath', TestElementPath);
   RegisterTest('Reader.Handler', TestHandler);
   RegisterTest('Reader.Positions', TestPositions);
+  RegisterTest('Reader.TokenEndPositions', TestTokenEndPositions);
   RegisterTest('Reader.PositionsConverted', TestPositionsConverted);
   RegisterTest('Reader.PositionsUtf16', TestPositionsUtf16);
   RegisterTest('Reader.ScratchRelocation', TestScratchRelocation);

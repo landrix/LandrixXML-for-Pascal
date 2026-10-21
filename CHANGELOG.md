@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `TLandrixXmlReader.TokenEndLine` and `TokenEndColumn`: the position right
+  after the current token, where XML Schema validators report errors.
 - `LandrixXmlDecimal`: exact decimal arithmetic for `xs:decimal` and
   `xs:integer` with arbitrary precision (add, subtract, multiply, divide,
   `idiv`, `mod`, comparison, rounding modes, Int64 conversion, the digit
