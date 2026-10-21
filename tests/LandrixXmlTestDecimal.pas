@@ -207,7 +207,7 @@ begin
   V := D('2000');
   CheckEquals(3, V.Exponent, '2000 exponent');
   CheckEquals(-3, LandrixXmlDecimalScale(V), '2000 scale');
-  CheckEquals(1, Length(V.Limbs), '2000 limbs');
+  CheckEquals(1, Integer(Length(V.Limbs)), '2000 limbs');
   CheckEquals(2, V.Limbs[0], '2000 coefficient');
   CheckEqualsStr('2000', F(V), '2000 text');
   V := D('1.50');

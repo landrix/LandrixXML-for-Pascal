@@ -160,7 +160,7 @@ procedure NatTrim(var A: TLandrixXmlDecimalLimbs);
 var
   N: Integer;
 begin
-  N := Length(A);
+  N := Integer(Length(A));
   while (N > 0) and (A[N - 1] = 0) do
     Dec(N);
   if N <> Length(A) then
@@ -195,7 +195,7 @@ begin
       Result := 1;
     Exit;
   end;
-  for I := Length(A) - 1 downto 0 do
+  for I := Integer(Length(A)) - 1 downto 0 do
     if A[I] <> B[I] then
     begin
       if A[I] < B[I] then
@@ -211,9 +211,9 @@ function NatAdd(const A, B: TLandrixXmlDecimalLimbs): TLandrixXmlDecimalLimbs;
 var
   I, N, Carry, T: Integer;
 begin
-  N := Length(A);
+  N := Integer(Length(A));
   if Length(B) > N then
-    N := Length(B);
+    N := Integer(Length(B));
   Result := nil;
   SetLength(Result, N + 1);
   Carry := 0;
@@ -247,7 +247,7 @@ begin
   Result := nil;
   SetLength(Result, Length(A));
   Borrow := 0;
-  for I := 0 to Length(A) - 1 do
+  for I := 0 to Integer(Length(A)) - 1 do
   begin
     T := A[I] - Borrow;
     if I < Length(B) then
@@ -278,7 +278,7 @@ begin
   end;
   SetLength(Result, Length(A) + 1);
   Carry := 0;
-  for I := 0 to Length(A) - 1 do
+  for I := 0 to Integer(Length(A)) - 1 do
   begin
     T := A[I] * M + Carry;
     Result[I] := T mod LimbBase;
@@ -298,19 +298,19 @@ begin
     Exit;
   end;
   SetLength(Result, Length(A) + Length(B));
-  for I := 0 to Length(Result) - 1 do
+  for I := 0 to Integer(Length(Result)) - 1 do
     Result[I] := 0;
-  for I := 0 to Length(A) - 1 do
+  for I := 0 to Integer(Length(A)) - 1 do
   begin
     Carry := 0;
-    for J := 0 to Length(B) - 1 do
+    for J := 0 to Integer(Length(B)) - 1 do
     begin
       { at most 9999 + 9999 * 9999 + 9999 < 2^31 }
       T := Result[I + J] + A[I] * B[J] + Carry;
       Result[I + J] := T mod LimbBase;
       Carry := T div LimbBase;
     end;
-    J := I + Length(B);
+    J := I + Integer(Length(B));
     while Carry <> 0 do
     begin
       T := Result[J] + Carry;
@@ -335,7 +335,7 @@ begin
   SetLength(Result, Length(A) + N);
   for I := 0 to N - 1 do
     Result[I] := 0;
-  for I := 0 to Length(A) - 1 do
+  for I := 0 to Integer(Length(A)) - 1 do
     Result[I + N] := A[I];
 end;
 
@@ -361,7 +361,7 @@ begin
   Result := nil;
   SetLength(Result, Length(A));
   Remainder := 0;
-  for I := Length(A) - 1 downto 0 do
+  for I := Integer(Length(A)) - 1 downto 0 do
   begin
     T := Remainder * LimbBase + A[I];
     Result[I] := T div D;
@@ -393,7 +393,7 @@ begin
     Exit;
   end;
   SetLength(Quotient, Length(A));
-  for I := Length(A) - 1 downto 0 do
+  for I := Integer(Length(A)) - 1 downto 0 do
   begin
     { Rest := Rest * 10000 + A[I] }
     if Length(Rest) = 0 then
@@ -435,7 +435,7 @@ begin
     Result := 0;
     Exit;
   end;
-  Result := (Length(A) - 1) * LimbDigits;
+  Result := (Integer(Length(A)) - 1) * LimbDigits;
   Top := A[Length(A) - 1];
   while Top > 0 do
   begin
@@ -475,7 +475,7 @@ begin
   N := K div LimbDigits;
   Shifted := nil;
   SetLength(Shifted, Length(A) - N);
-  for I := 0 to Length(Shifted) - 1 do
+  for I := 0 to Integer(Length(Shifted)) - 1 do
     Shifted[I] := A[I + N];
   if K mod LimbDigits <> 0 then
     Result := NatDivSmall(Shifted, Pow10Small[K mod LimbDigits], R)
@@ -500,7 +500,7 @@ begin
   end;
   SetLength(Result, NatDigitCount(A));
   P := Length(Result);
-  for I := 0 to Length(A) - 1 do
+  for I := 0 to Integer(Length(A)) - 1 do
   begin
     L := A[I];
     for J := 1 to LimbDigits do
@@ -765,7 +765,7 @@ begin
     Int64 multiplication of Delphi 6 and 7 reports a false overflow for
     negative products of magnitude 2^62 and more. }
   Magnitude := 0;
-  for I := Length(Full) - 1 downto 1 do
+  for I := Integer(Length(Full)) - 1 downto 1 do
     Magnitude := Magnitude * LimbBase + Full[I];
   Value := Magnitude * LimbBase;
   if A.Negative then
