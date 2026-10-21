@@ -44,6 +44,8 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlConvert` | `xs:*` value conversion |
 | `LandrixXmlDecimal` | exact `xs:decimal`/`xs:integer` arithmetic with Saxon-compatible division (first of the optional validation units; the units above do not use it) |
 | `LandrixXmlDouble` | `xs:double` in software (IEEE 754 bit pattern, Saxon-compatible string value), optional validation unit |
+| `LandrixXmlRegex` | XSD and XPath regular expressions, linear-time matching, optional validation unit |
+| `LandrixXmlUnicode` | Unicode 6.2.0 general categories, code point strings, optional validation unit |
 
 Add the `source` folder to the search path (Delphi: unit and include path;
 Free Pascal: `-Fusource -Fisource`).

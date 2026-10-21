@@ -493,6 +493,8 @@ begin
   CheckEquals(11, Ord(xecConversion), 'xecConversion');
   CheckEquals(12, Ord(xecUnexpectedElement), 'xecUnexpectedElement');
   CheckEquals(13, Ord(xecArithmetic), 'xecArithmetic');
+  CheckEquals(14, Ord(xecRegex), 'xecRegex');
+  CheckEquals(15, Ord(xecUnsupported), 'xecUnsupported');
 end;
 
 procedure TestEscapeForMessage;

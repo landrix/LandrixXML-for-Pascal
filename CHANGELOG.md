@@ -21,6 +21,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   same on every compiler and CPU and never raise floating-point exceptions.
 - `tools/gen-double-testdata.py`: generates the double test cases and
   optionally checks them against Saxon.
+- `LandrixXmlRegex`: regular expressions in the XML Schema and XPath
+  dialects (`Matches`, `Replace`, `Tokenize`), matched by a Pike VM in
+  time linear in the input per match, so untrusted input cannot cause
+  catastrophic backtracking. Hyphens in character classes follow XML
+  Schema 1.0 in XSD mode (as Xerces) and 1.1 in XPath mode (as Saxon).
+  Programs are limited to about 100000 instructions and a nesting depth of 1000
+  (`xecLimit`, raised before anything oversized is built).
+  Unsupported constructs (flags, back-references, reluctant quantifiers,
+  block escapes) raise the new error code `xecUnsupported`, invalid
+  patterns the new code `xecRegex`.
+- `LandrixXmlUnicode`: Unicode 6.2.0 general categories (the version
+  Saxon uses for regular expressions) and code point conversion;
+  `tools/gen-unicode-tables.py` generates the table.
+- `tools/gen-regex-testdata.py`: regular expression test cases with
+  results from Saxon.
 - New error code `xecArithmetic` (division by zero, exponent out of range).
 - `tools/gen-decimal-testdata.py`: generates the decimal test cases and
   optionally checks them against Saxon.
