@@ -428,7 +428,8 @@ begin
     CheckEqualsUtf8(U('/r/a[2]'), V.Errors[0].Path, 'path of the second a');
     CheckEqualsUtf8(U('/r/a[4]'), V.Errors[2].Path, 'path of the fourth a');
     Check(V.Errors[0].SchemaLine > 0, 'schema line');
-    CheckEqualsStr(FileName, V.Errors[0].SchemaFile, 'schema file');
+    { the loader keeps the expanded file name }
+    CheckEqualsStr(ExpandFileName(FileName), V.Errors[0].SchemaFile, 'schema file');
     Check(not V.Truncated, 'not truncated');
     V.MaxErrors := 1;
     Reader.LoadFromUtf8(Xml);
