@@ -465,12 +465,114 @@ begin
   end;
 end;
 
+{ EvaluatePattern: an error in a predicate of the pattern's steps drops
+  the item; errors further inside are not caught there. }
+procedure TestPatterns;
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr, Bound: TLandrixXmlXPathExpression;
+  Context: TLandrixXmlXPathStaticContext;
+  Raised: string;
+
+  function Count(const S: string): Integer;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), nil);
+    Result := Evaluator.EvaluatePattern(Expr, 0).Count;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Expr := nil;
+  Bound := nil;
+  try
+    Context.DeclareVariable(U('v'));
+    Tree.LoadFromUtf8(U('<r><a><v>1</v></a><a><v>1</v><v>2</v></a><a><v>x</v></a></r>'));
+    CheckEquals(1, Count('//a[normalize-space(v) = ''1'']'), 'the a with two v does not match');
+    CheckEquals(3, Count('//a[xs:integer(v[1]) > 0]/v'), 'the steps after a dropped item');
+    CheckEquals(3, Count('//a[normalize-space(v[1]) = ''1''] | //a[v = ''x'']'), 'both branches');
+    CheckEquals(1, Count('//a[normalize-space(v) = ''1''] | //a[xs:integer(v[1]) > 0]'), 'each fails on one a');
+    { as Saxon: a node the first branch failed on does not match the second }
+    CheckEquals(2, Count('//a[xs:integer(v[1]) > 0] | //a[normalize-space(v) = ''x'']'), 'failed in the first branch');
+    CheckEquals(0, Count('//r[count(a[xs:integer(v[1]) > 0]) = 2]'), 'an error in a nested predicate drops r');
+    { a position counts the failed item: as Saxon, nothing matches }
+    CheckEquals(0, Count('//a[xs:integer(v[1]) > 0][last()]'), 'last() after an error');
+    CheckEquals(1, Count('//a[xs:integer(v[1]) = position()]'), 'a position in the failing predicate itself');
+    CheckEquals(2, Count('//a[xs:integer(v[1]) > 0][v[last()]]'), 'last() of a nested focus');
+    CheckEquals(2, Count('//a[xs:integer(v[1]) > 0][if (v) then true() else false()]'), 'a boolean if');
+    CheckEquals(0, Count('//(a[xs:integer(v[1]) > 0])[last()]'), 'a filter on a failed path');
+    CheckEquals(2, Count('//a[xs:integer(v[1]) > 0][xs:boolean(''true'')]'), 'a boolean constructor');
+    CheckEquals(2, Count('//a[xs:integer(v[1]) > 0][(v)[last()]]'), 'a filter of nodes');
+    CheckEquals(2, Count('//a[xs:integer(v[1]) > 0][substring(v[1], 1)]'), 'a string function');
+    CheckEquals(1, Count('//a[xs:integer(v[1]) > 0][string-length(v[1])]'), 'a number: items before the error');
+    CheckEquals(1, Count('//a[xs:integer(v[1]) > 0][1]'), 'the first item comes before the error');
+    CheckEquals(1, Count('//a[xs:integer(v[1]) > 0][2]'), 'the second item comes before the error');
+    CheckEquals(0, Count('//a[xs:integer(v[1]) > 0][3]'), 'the third item is the failed one');
+    CheckEquals(1, Count('//a[xs:integer(v[1]) > 0][1][last()]'), 'last() after a [1] before the error');
+    CheckEquals(2, Count('//a[normalize-space(v) != ''z''][reverse(v)]'), 'reverse() of nodes');
+    CheckEquals(2, Count('//a[xs:integer(v[1]) > 0][.]'), 'the context node');
+    CheckEquals(1, Count('//a[xs:integer(v[1]) > 0][xs:integer(1)][last()]'), 'xs:integer(1) as [1]');
+    CheckEquals(1, Count('//(a[xs:integer(v[1]) > 0][1])[last()]'), 'a filter after a resolved [1]');
+    CheckEquals(1, Count('//((a[xs:integer(v[1]) > 0])[1])[last()]'), 'a nested filter after a resolved [1]');
+    CheckEquals(1, Count('//(a[xs:integer(v[1]) > 0])[1]'), 'a filter: the first item comes before the error');
+    { what is not supported is not "no match" }
+    Raised := '';
+    try
+      Count('//a[matches(v[1], ''[a-z]'', ''i'')]');
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode;
+    end;
+    CheckEqualsStr('FOER0000', Raised, 'an unsupported regex flag');
+    Count('//r[count(a[xs:integer(v[1]) > 0]) = 2]');
+    Raised := '';
+    try
+      Evaluator.EvaluateSequence(Expr, 0);
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode;
+    end;
+    CheckEqualsStr('FORG0001', Raised, 'the same path as an expression');
+    { a variable read in a pattern keeps its value as an expression }
+    Evaluator.SetGlobalCount(1);
+    Bound := TLandrixXmlXPathExpression.Create(U('//a[xs:integer(v[1]) > 0]'), nil);
+    Evaluator.BindLazy(0, Bound, 0);
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('$v'), Context);
+    Raised := '';
+    try
+      Evaluator.EvaluatePattern(Expr, 0);
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode;
+    end;
+    CheckEqualsStr('FORG0001', Raised, 'the variable in a pattern');
+    { a nested filter whose error is caught keeps the failure seen before }
+    Tree.LoadFromUtf8(U('<r><a k="bad"/><a k="1"/><a k="2"/></r>'));
+    Evaluator.ClearCache;
+    CheckEquals(0, Count('//(a[if (@k = ''bad'') then xs:integer(@k) > 0 else ' +
+      '(((xs:integer(concat(@k, ''x'')))[1] = 0) or true())])[1]'), 'the failure before a caught error');
+  finally
+    Expr.Free;
+    Bound.Free;
+    Context.Free;
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
   RegisterTest('XPathEval.Variables', TestVariables);
   RegisterTest('XPathEval.NoAliasing', TestNoAliasing);
   RegisterTest('XPathEval.KeptValues', TestKeptValues);
+  RegisterTest('XPathEval.Patterns', TestPatterns);
 end;
 
 end.

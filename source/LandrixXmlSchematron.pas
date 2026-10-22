@@ -20,7 +20,8 @@
   rule context is evaluated as //context per union branch (rooted ones
   as written, document-node() as /), which selects the nodes the XSLT
   match pattern matches; current() in a rule context is rejected when
-  the rules are loaded.
+  the rules are loaded. As in XSLT, a dynamic error in a predicate of the
+  context only means that the node concerned does not match the rule.
 
   A dynamic error in an expression (an invalid cast, a type error) stops
   Saxon and with it the KoSIT validator: no result at all. Here it gives
@@ -1068,7 +1069,7 @@ begin
       begin
         Rule := TLandrixXmlSchematronRule(Pattern.Rules[R]);
         try
-          Nodes := E.EvaluateSequence(Rule.Context, 0);
+          Nodes := E.EvaluatePattern(Rule.Context, 0);
         except
           on X: ELandrixXmlXPathError do
           begin

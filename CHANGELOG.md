@@ -111,6 +111,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of 16 s (UBL) and 76 s (CII). `ClearCache` drops the kept values;
   `TLandrixXmlXPathExpression.Serial` tells expressions apart.
   `tests/LandrixXmlSchematronPerf.dpr` measures and profiles a rule set.
+- `TLandrixXmlXPathEvaluator.EvaluatePattern`: a path evaluated as an XSLT
+  match pattern, where a dynamic error in a predicate of a step only means
+  that the item does not match (XSLT 3.0, 5.5.4). Schematron rule contexts
+  use it, so a node whose context predicate fails (e.g. `normalize-space()`
+  on two elements) goes on to the next rule of the pattern instead of
+  giving a dynamic error, as in the KoSIT validator. Found with the Peppol
+  BIS 3.0.21 rules.
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
   `LandrixXmlXsdValueText` and `LandrixXmlXsdValueKey`. Messages quote
   values whole, show values in Xerces' canonical form (decimals, float and

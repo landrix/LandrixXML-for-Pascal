@@ -325,6 +325,41 @@ begin
   end;
 end;
 
+{ An error in a predicate of a rule context: the node does not match that
+  rule (as in XSLT) and goes on to the next rule of the pattern. }
+procedure TestContextErrors;
+var
+  Rules: TLandrixXmlSchematronRules;
+  V: TLandrixXmlSchematronValidator;
+  Tree: TLandrixXmlXPathTree;
+  S: string;
+  I: Integer;
+begin
+  Rules := SmallRules(
+    '<pattern id="C">' +
+    '<rule context="p:a[xs:integer(@k) > 0]" id="" line="1">' +
+    '<assert id="C1" flag="fatal" role="" test="false()" line="2"><text>number</text></assert></rule>' +
+    '<rule context="p:a" id="" line="3">' +
+    '<assert id="C2" flag="fatal" role="" test="false()" line="4"><text>other</text></assert></rule>' +
+    '</pattern>');
+  V := TLandrixXmlSchematronValidator.Create(Rules);
+  Tree := TLandrixXmlXPathTree.Create;
+  try
+    Tree.LoadFromUtf8(U('<p:r xmlns:p="urn:p"><p:a k="x"/><p:a k="3"/><p:a/></p:r>'));
+    V.ValidateTree(Tree);
+    S := '';
+    for I := 0 to V.ResultCount - 1 do
+      S := S + LandrixXmlUtf8ToString(V.Results[I].Id + ' ' + V.Results[I].Location) + ' / ';
+    CheckEqualsStr('C2 /Q{urn:p}r[1]/Q{urn:p}a[1] / C1 /Q{urn:p}r[1]/Q{urn:p}a[2] / ' +
+      'C2 /Q{urn:p}r[1]/Q{urn:p}a[3] / ', S, 'the cast fails on the first a');
+    Check(not V.Incomplete, 'no dynamic error');
+  finally
+    Tree.Free;
+    V.Free;
+    Rules.Free;
+  end;
+end;
+
 { Variable names with prefixes and differing only in case, current() in a
   global and in a rule variable read from somewhere else, a document-node()
   context. }
@@ -721,6 +756,7 @@ begin
   RegisterTest('Schematron.XRechnungCii', TestXRechnungCii);
   RegisterTest('Schematron.Document', TestDocument);
   RegisterTest('Schematron.SmallRules', TestSmallRules);
+  RegisterTest('Schematron.ContextErrors', TestContextErrors);
   RegisterTest('Schematron.VariablesAndContexts', TestVariablesAndContexts);
   RegisterTest('Schematron.LoadErrors', TestLoadErrors);
   RegisterTest('Schematron.CompilerSources', TestCompilerSources);

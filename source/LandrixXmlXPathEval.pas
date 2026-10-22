@@ -50,7 +50,23 @@
   count(//x): it is computed once per evaluator, as the rule sets ask for
   the same totals on every line of an invoice. Binding a global variable
   or SetGlobalCount drops the kept values; ClearCache too, which is needed
-  only when the tree is loaded again while the evaluator lives. }
+  only when the tree is loaded again while the evaluator lives.
+
+  EvaluatePattern evaluates a path as the nodes an XSLT match pattern
+  matches: a dynamic error in a predicate of one of its steps means that
+  the item does not match (XSLT 3.0, 5.5.4), so the other items are kept.
+  Later predicates that may use the position count as in Saxon (see
+  ApplyPredicates): a[p][1] is still the first item when it comes before
+  the failing one, a[p][last()] matches nothing. Saxon may stop early for
+  position(): a[p][position() < 3] can still match before the failure
+  there, here it does not. In a union a node one branch failed on does
+  not match a later branch (Saxon tries them in order); only a failure on
+  the branch's last step counts for that, not one on a step above it.
+  Errors inside such a predicate (in a nested path) are not caught below
+  it. Not caught at all: a circular variable (XTDE0640) and what is not
+  supported (FOER0000, XPST0017), which must stay visible. The path is
+  evaluated as given: a Schematron context must already be written as
+  the nodes it selects (//a for the pattern a). }
 
 unit LandrixXmlXPathEval;
 
@@ -187,6 +203,20 @@ type
     FBypass: Integer;
     { EnterExpression calls not yet left }
     FNesting: Integer;
+    { EvaluatePattern: the predicates of the steps being evaluated drop the
+      items they fail on; FFinal while the last step of a branch is
+      evaluated, whose failed items FFailed lists (a later branch of a
+      union must not match them) }
+    FPattern: Boolean;
+    FFinal: Boolean;
+    FFailed: array of Integer;
+    FFailedCount: Integer;
+    { the first node from which a pattern's positions are still unknown
+      after the predicates evaluated so far (MaxInt if none) }
+    FMinFailed: Integer;
+    procedure CutAfterFailure(var S: TLandrixXmlXPathSequence; FailAt: Integer; All, Final: Boolean);
+    procedure AddFailed(Node: Integer);
+    function WithoutFailed(const S: TLandrixXmlXPathSequence; First, Last: Integer): TLandrixXmlXPathSequence;
     function FindCache(Expr: TLandrixXmlXPathExpression): TObject;
     function CachedEval(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
@@ -205,7 +235,7 @@ type
     function EvalPath(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function ApplyPredicates(const Predicates: array of Integer;
-      const Input: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+      const Input: TLandrixXmlXPathSequence; InputFailedAt: Integer): TLandrixXmlXPathSequence;
     function EvalQuantified(Index, Binding: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; Kind: TLandrixXmlXPathAstKind;
       var Output: TLandrixXmlXPathSequence): Boolean;
@@ -228,6 +258,9 @@ type
     { the string values of the items joined with spaces (xsl:value-of) }
     function EvaluateString(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlUtf8;
     function EvaluateSequence(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlXPathSequence;
+    { EvaluateSequence as an XSLT match pattern (see the unit comment); Expr
+      is the path of the matched nodes (//a for the pattern a) }
+    function EvaluatePattern(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlXPathSequence;
     { Variables: slots below GlobalCount are global; the others belong to
       the current frame. Setting GlobalCount or FrameSize unbinds the slots
       concerned. }
@@ -1015,6 +1048,7 @@ var
   SavedBase, Node, SavedCurrent: Integer;
   Value: TLandrixXmlXPathSequence;
   Empty: TLandrixXmlXPathSequence;
+  SavedPattern, SavedFinal: Boolean;
 begin
   if Slot >= FExpr.FirstLocalSlot then
   begin
@@ -1034,6 +1068,10 @@ begin
           a global, the rule's node for a rule variable, none for -1) }
         SavedCurrent := FCurrentNode;
         FCurrentNode := Node;
+        { a variable read in a pattern still has its value as an expression }
+        SavedPattern := FPattern;
+        SavedFinal := FFinal;
+        FPattern := False;
         EnterExpression(P^.Expression, SavedExpr, SavedBase);
         try
           try
@@ -1044,6 +1082,8 @@ begin
           finally
             LeaveExpression(SavedExpr, SavedBase);
             FCurrentNode := SavedCurrent;
+            FPattern := SavedPattern;
+            FFinal := SavedFinal;
           end;
         except
           on E: ELandrixXmlXPathError do
@@ -1194,6 +1234,47 @@ begin
   end;
 end;
 
+function TLandrixXmlXPathEvaluator.EvaluatePattern(Expr: TLandrixXmlXPathExpression;
+  ContextNode: Integer): TLandrixXmlXPathSequence;
+begin
+  FPattern := True;
+  FFinal := True;
+  FFailedCount := 0;
+  FMinFailed := MaxInt;
+  try
+    Result := EvaluateSequence(Expr, ContextNode);
+  finally
+    FPattern := False;
+    FFinal := False;
+    FFailedCount := 0;
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.AddFailed(Node: Integer);
+begin
+  if FFailedCount = Length(FFailed) then
+    SetLength(FFailed, 2 * FFailedCount + 16);
+  FFailed[FFailedCount] := Node;
+  Inc(FFailedCount);
+end;
+
+{ S without the nodes FFailed[First .. Last - 1] }
+function TLandrixXmlXPathEvaluator.WithoutFailed(const S: TLandrixXmlXPathSequence;
+  First, Last: Integer): TLandrixXmlXPathSequence;
+var
+  Failed: array of Boolean;
+  I: Integer;
+begin
+  Failed := nil;
+  SetLength(Failed, FTree.Count);
+  for I := First to Last - 1 do
+    Failed[FFailed[I]] := True;
+  Result := LandrixXmlXPathEmpty;
+  for I := 0 to S.Count - 1 do
+    if not Failed[S.Items[I].Node] then
+      LandrixXmlXPathAppend(Result, S.Items[I]);
+end;
+
 function TLandrixXmlXPathEvaluator.EvaluateShared(Expr: TLandrixXmlXPathExpression;
   ContextNode: Integer): TLandrixXmlXPathSequence;
 var
@@ -1306,33 +1387,224 @@ begin
   S.Count := J;
 end;
 
-function TLandrixXmlXPathEvaluator.ApplyPredicates(const Predicates: array of Integer;
-  const Input: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+{ An error in a pattern's predicate that means "no match": a dynamic
+  error of the rules. Not what this implementation does not support
+  (FOER0000, XPST0017, xecUnsupported and the like) and not a circular
+  variable (XTDE0640): these are raised. }
+function PatternMismatch(E: ELandrixXmlError): Boolean;
 var
-  P, I, Pos, Size: Integer;
-  Current, Next, V: TLandrixXmlXPathSequence;
-  Keep: Boolean;
+  Code: string;
+begin
+  if E is ELandrixXmlXPathError then
+  begin
+    Code := ELandrixXmlXPathError(E).XPathCode;
+    Result := (Code <> 'XTDE0640') and (Code <> 'FOER0000') and (Code <> 'XPST0017');
+  end
+  else
+    Result := E.Code in [xecArithmetic, xecConversion, xecRegex];
+end;
+
+{ True if the value of Index may be a number (a predicate then compares
+  it with the position); only for the predicates of a pattern. }
+function MayBeNumeric(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Boolean;
+const
+  Numeric = [xfnCount, xfnSum, xfnAvg, xfnMin, xfnMax, xfnStringLength, xfnNumber, xfnAbs, xfnRound,
+    xfnRoundHalfToEven, xfnFloor, xfnCeiling, xfnPosition, xfnLast, xfnIndexOf, xfnStringToCodepoints,
+    xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat];
+  { the items of the first argument (distinct-values and data atomize
+    them: untyped values, numbers only if the argument has numbers) }
+  PassOn = [xfnReverse, xfnDistinctValues, xfnSubsequence, xfnData, xfnExactlyOne, xfnZeroOrOne,
+    xfnOneOrMore];
+var
+  J: Integer;
+begin
+  case Nodes[Index].Kind of
+    { "." too: a pattern's predicates are evaluated on nodes }
+    xakGeneralCompare, xakValueCompare, xakAnd, xakOr, xakString, xakCastable, xakUnion, xakSome, xakEvery,
+    xakStep, xakEmpty, xakRoot, xakContextItem:
+      Result := False;
+    xakPath:
+      Result := Nodes[Nodes[Index].Children[Integer(High(Nodes[Index].Children))]].Kind <> xakStep;
+    xakIf:
+      Result := MayBeNumeric(Nodes, Nodes[Index].Children[1]) or MayBeNumeric(Nodes, Nodes[Index].Children[2]);
+    xakLet:
+      Result := MayBeNumeric(Nodes, Nodes[Index].Children[1]);
+    { a filter keeps items of its input }
+    xakFilter:
+      Result := MayBeNumeric(Nodes, Nodes[Index].Children[0]);
+    xakSequence:
+      begin
+        Result := False;
+        for J := 0 to Integer(High(Nodes[Index].Children)) do
+          if MayBeNumeric(Nodes, Nodes[Index].Children[J]) then
+            Result := True;
+      end;
+    xakCast:
+      Result := Nodes[Index].AtomicType in [xatAnyAtomic, xatDecimal, xatInteger, xatDouble, xatFloat];
+    xakFunction:
+      if Nodes[Index].Op < 0 then
+        Result := True
+      else if TLandrixXmlXPathFunctionId(Nodes[Index].Op) in PassOn then
+        Result := (Length(Nodes[Index].Children) = 0) or MayBeNumeric(Nodes, Nodes[Index].Children[0])
+      else
+        Result := TLandrixXmlXPathFunctionId(Nodes[Index].Op) in Numeric;
+  else
+    { numbers, arithmetic, ranges, for, variables and user functions (of
+      unknown type): possibly numeric, as Saxon treats them }
+    Result := True;
+  end;
+end;
+
+{ True if Index calls position() or last() of its own focus: not inside
+  a predicate or a later step of a path, where the focus is another. }
+function UsesOwnPosition(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Boolean;
+var
+  J: Integer;
+begin
+  Result := (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) and
+    (TLandrixXmlXPathFunctionId(Nodes[Index].Op) in [xfnPosition, xfnLast]);
+  if Result then
+    Exit;
+  if Nodes[Index].Kind = xakPath then
+  begin
+    if not Nodes[Index].RootStart then
+      Result := UsesOwnPosition(Nodes, Nodes[Index].Children[0]);
+    Exit;
+  end;
+  J := 0;
+  while not Result and (J < Length(Nodes[Index].Children)) do
+  begin
+    Result := UsesOwnPosition(Nodes, Nodes[Index].Children[J]);
+    Inc(J);
+  end;
+end;
+
+{ a predicate's value: a number is a position }
+function PredicateTrue(const V: TLandrixXmlXPathSequence; Pos: Integer): Boolean;
+begin
+  if (V.Count = 1) and IsNumeric(V.Items[0].Kind) then
+    Result := NumericEqualsInteger(V.Items[0], Pos)
+  else
+    Result := SequenceBoolean(V);
+end;
+
+{ The position a predicate asks for as an integer literal ([2]); 0 if
+  it is none. }
+function LiteralPosition(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Int64;
+begin
+  { xs:integer(1) too }
+  if (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) and
+    (TLandrixXmlXPathFunctionId(Nodes[Index].Op) = xfnXsInteger) and (Length(Nodes[Index].Children) = 1) then
+    Index := Nodes[Index].Children[0];
+  if (Nodes[Index].Kind <> xakInteger) or not LandrixXmlDecimalTryToInt64(Nodes[Index].Decimal, Result) then
+    Result := 0;
+end;
+
+{ Removes the items of a pattern from the node FailAt on (patterns use
+  forward axes, so node order is axis order), or all of them; on the
+  last step of a branch they count as failed. }
+procedure TLandrixXmlXPathEvaluator.CutAfterFailure(var S: TLandrixXmlXPathSequence; FailAt: Integer;
+  All, Final: Boolean);
+var
+  I, J: Integer;
+begin
+  J := 0;
+  for I := 0 to S.Count - 1 do
+    if not All and (S.Items[I].Node < FailAt) then
+    begin
+      S.Items[J] := S.Items[I];
+      Inc(J);
+    end
+    else if Final then
+      AddFailed(S.Items[I].Node);
+  S.Count := J;
+end;
+
+{ In a pattern, a predicate failing on an item makes the positions of
+  the items after it unknown (FailAt, the first such node; InputFailedAt
+  for the input of a filter, MaxInt if none). A later predicate that may
+  use the position then sees, as Saxon, which counts a candidate's
+  position over the items before it: [k] the k-th item if it comes
+  before FailAt (the positions are known again after it) and no item
+  otherwise; a predicate calling position() or last() no item; another
+  number only the items before FailAt. }
+function TLandrixXmlXPathEvaluator.ApplyPredicates(const Predicates: array of Integer;
+  const Input: TLandrixXmlXPathSequence; InputFailedAt: Integer): TLandrixXmlXPathSequence;
+var
+  P, I, Pos, Size, FailAt, Before: Integer;
+  K: Int64;
+  Current, Next: TLandrixXmlXPathSequence;
+  Keep, Pattern, Final, Own: Boolean;
   Ctx: TLandrixXmlXPathSequence;
 begin
   Current := Input;
-  for P := 0 to Integer(High(Predicates)) do
-  begin
-    Next := LandrixXmlXPathEmpty;
-    Size := Current.Count;
-    for I := 0 to Size - 1 do
+  { a pattern's own predicates: what they contain is evaluated as usual }
+  Pattern := FPattern;
+  Final := FFinal;
+  FPattern := False;
+  FailAt := InputFailedAt;
+  try
+    for P := 0 to Integer(High(Predicates)) do
     begin
-      { the input is in axis order (nearest first on reverse axes) }
-      Pos := I + 1;
-      Ctx := SingleSeq(Current.Items[I]);
-      V := Eval(Predicates[P], Current.Items[I].Node, Pos, Size, Ctx);
-      if (V.Count = 1) and IsNumeric(V.Items[0].Kind) then
-        Keep := NumericEqualsInteger(V.Items[0], Pos)
-      else
-        Keep := SequenceBoolean(V);
-      if Keep then
-        LandrixXmlXPathAppend(Next, Current.Items[I]);
+      Own := Pattern and (FailAt < MaxInt) and UsesOwnPosition(FNodes, Predicates[P]);
+      if Pattern and (FailAt < MaxInt) and (Own or MayBeNumeric(FNodes, Predicates[P])) then
+      begin
+        { a new sequence: Current may be Input, the storage of a variable }
+        Next := LandrixXmlXPathEmpty;
+        AppendAll(Next, Current);
+        Current := Next;
+        K := LiteralPosition(FNodes, Predicates[P]);
+        Before := 0;
+        for I := 0 to Current.Count - 1 do
+          if Current.Items[I].Node < FailAt then
+            Inc(Before);
+        if Own or (K > Before) then
+          CutAfterFailure(Current, FailAt, True, Final)
+        else if K > 0 then
+          FailAt := MaxInt
+        else
+          CutAfterFailure(Current, FailAt, False, Final);
+      end;
+      Next := LandrixXmlXPathEmpty;
+      Size := Current.Count;
+      for I := 0 to Size - 1 do
+      begin
+        { the input is in axis order (nearest first on reverse axes) }
+        Pos := I + 1;
+        Ctx := SingleSeq(Current.Items[I]);
+        if not Pattern then
+          Keep := PredicateTrue(Eval(Predicates[P], Current.Items[I].Node, Pos, Size, Ctx), Pos)
+        else
+        begin
+          { an error: the item does not match the pattern }
+          Keep := False;
+          try
+            if PredicateTrue(Eval(Predicates[P], Current.Items[I].Node, Pos, Size, Ctx), Pos) then
+              Keep := True;
+          except
+            on E: ELandrixXmlError do
+              if PatternMismatch(E) then
+              begin
+                if Current.Items[I].Node < FailAt then
+                  FailAt := Current.Items[I].Node;
+                if Final then
+                  AddFailed(Current.Items[I].Node);
+              end
+              else
+                raise;
+          end;
+        end;
+        if Keep then
+          LandrixXmlXPathAppend(Next, Current.Items[I]);
+      end;
+      Current := Next;
     end;
-    Current := Next;
+    { what is still unknown after the last predicate, for a filter around }
+    if Pattern and (FailAt < FMinFailed) then
+      FMinFailed := FailAt;
+  finally
+    FPattern := Pattern;
+    FFinal := Final;
   end;
   Result := Current;
 end;
@@ -1494,7 +1766,7 @@ begin
       end;
   end;
   if Length(N^.Predicates) > 0 then
-    Out1 := ApplyPredicates(N^.Predicates, Out1);
+    Out1 := ApplyPredicates(N^.Predicates, Out1, MaxInt);
   if Reverse then
     SortNodes(Out1);
   Result := Out1;
@@ -1506,10 +1778,16 @@ var
   N: ^TLandrixXmlXPathAstNode;
   K, I, Step, First: Integer;
   Current, Next, Part, Ctx: TLandrixXmlXPathSequence;
-  AllNodes, AllAtomic: Boolean;
+  AllNodes, AllAtomic, Final: Boolean;
   Axis: TLandrixXmlXPathAxis;
 begin
   N := @FNodes[Index];
+  { in a pattern, only the last step's items are candidates; not restored
+    on an exception, which ends EvaluatePattern (code that catches one
+    runs with FPattern off and does not use FFinal) }
+  Final := FFinal;
+  if FPattern then
+    FFinal := False;
   if N^.RootStart then
   begin
     if Context < 0 then
@@ -1537,6 +1815,8 @@ begin
       Step := N^.Children[K];
       Axis := xaxDescendant;
     end;
+    if FPattern then
+      FFinal := Final and (K = Integer(High(N^.Children)));
     Next := LandrixXmlXPathEmpty;
     AllNodes := True;
     AllAtomic := True;
@@ -1565,6 +1845,8 @@ begin
     Current := Next;
     Inc(K);
   end;
+  if FPattern then
+    FFinal := Final;
   Result := Current;
 end;
 
@@ -1619,8 +1901,12 @@ var
   Left, Right: Boolean;
   LeftError: ELandrixXmlXPathError;
   ErrCode, ErrMsg: string;
+  Mark, Split: Integer;
 begin
-  if (FCache <> nil) and (Context >= 0) and (Index <> FBypass) and TExpressionCache(FCache).Flags[Index] then
+  { a pattern's steps (not their predicates) are not kept: their value is
+    not that of the expression }
+  if (FCache <> nil) and (Context >= 0) and (Index <> FBypass) and not FPattern and
+    TExpressionCache(FCache).Flags[Index] then
   begin
     Result := CachedEval(Index, Context, Position, Size, ContextItem);
     Exit;
@@ -1677,8 +1963,17 @@ begin
       Result := EvalPath(Index, Context, Position, Size, ContextItem);
     xakFilter:
       begin
-        A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
-        Result := ApplyPredicates(FNodes[Index].Predicates, A);
+        { what the input leaves unknown goes to the predicates, which
+          resolve it or pass it on }
+        Mark := FMinFailed;
+        FMinFailed := MaxInt;
+        try
+          A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
+        finally
+          Split := FMinFailed;
+          FMinFailed := Mark;
+        end;
+        Result := ApplyPredicates(FNodes[Index].Predicates, A, Split);
       end;
     xakFor, xakSome, xakEvery:
       begin
@@ -1788,7 +2083,9 @@ begin
       end;
     xakUnion:
       begin
+        Mark := FFailedCount;
         A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
+        Split := FFailedCount;
         B := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem);
         for I := 0 to A.Count - 1 do
           if A.Items[I].Kind <> xikNode then
@@ -1796,6 +2093,10 @@ begin
         for I := 0 to B.Count - 1 do
           if B.Items[I].Kind <> xikNode then
             Fail('XPTY0004', 'the operands of "|" must be nodes');
+        { a pattern: a node the left side failed on does not match, as
+          Saxon tries the branches in order }
+        if FPattern and (Split > Mark) then
+          B := WithoutFailed(B, Mark, Split);
         { a new sequence: A may be the storage of a variable }
         Result := LandrixXmlXPathEmpty;
         AppendAll(Result, A);
@@ -1844,6 +2145,7 @@ function TLandrixXmlXPathEvaluator.CallUser(Def: TLandrixXmlXPathFunctionDef;
 var
   SavedFrame: TLandrixXmlXPathSlots;
   SavedCurrent, I: Integer;
+  SavedPattern: Boolean;
   SavedExpr: TLandrixXmlXPathExpression;
   SavedBase: Integer;
   Empty: TLandrixXmlXPathSequence;
@@ -1853,8 +2155,10 @@ begin
   Inc(FDepth);
   SavedFrame := FFrame;
   SavedCurrent := FCurrentNode;
-  { no current() inside a function, as in XSLT }
+  SavedPattern := FPattern;
+  { no current() inside a function, as in XSLT; its body is no pattern }
   FCurrentNode := -1;
+  FPattern := False;
   FFrame := nil;
   try
     SetLength(FFrame, Def.FrameSize);
@@ -1884,6 +2188,7 @@ begin
   finally
     FFrame := SavedFrame;
     FCurrentNode := SavedCurrent;
+    FPattern := SavedPattern;
     Dec(FDepth);
   end;
 end;
