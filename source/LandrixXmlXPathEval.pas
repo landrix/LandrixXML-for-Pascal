@@ -42,7 +42,15 @@
   as LandrixXmlXsdTypes reads them (time zones up to 14:00, any number of
   fraction digits), where Saxon accepts more and keeps nanoseconds.
   fn:round and fn:round-half-to-even round large integers exactly
-  (Saxon goes through xs:double there). }
+  (Saxon goes through xs:double there).
+
+  An evaluator keeps the value of every subexpression that depends
+  neither on the focus (context item, position, size) nor on current()
+  nor on a variable other than a global one, such as an absolute path or
+  count(//x): it is computed once per evaluator, as the rule sets ask for
+  the same totals on every line of an invoice. Binding a global variable
+  or SetGlobalCount drops the kept values; ClearCache too, which is needed
+  only when the tree is loaded again while the evaluator lives. }
 
 unit LandrixXmlXPathEval;
 
@@ -170,6 +178,21 @@ type
     FExpr: TLandrixXmlXPathExpression;
     FNodes: TLandrixXmlXPathAstNodes;
     FLocalBase: Integer;
+    { kept values of context-free subexpressions: one entry per expression
+      (owned by FCaches, found by FCacheTable), FCache that of FExpr }
+    FCaches: TObjectList;
+    FCacheTable: array of TObject;
+    FCache: TObject;
+    { the node being computed for its entry, so that Eval does not look again }
+    FBypass: Integer;
+    { EnterExpression calls not yet left }
+    FNesting: Integer;
+    function FindCache(Expr: TLandrixXmlXPathExpression): TObject;
+    function CachedEval(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    procedure DropCachedValues;
+    { EvaluateSequence without the copy, for read-only use }
+    function EvaluateShared(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlXPathSequence;
     procedure EnterExpression(Expr: TLandrixXmlXPathExpression; out SavedExpr: TLandrixXmlXPathExpression;
       out SavedBase: Integer);
     procedure LeaveExpression(SavedExpr: TLandrixXmlXPathExpression; SavedBase: Integer);
@@ -178,7 +201,7 @@ type
     procedure WriteLocal(Slot: Integer; const Value: TLandrixXmlXPathSequence);
     function Eval(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
-    function EvalStep(Index: Integer; Node: Integer): TLandrixXmlXPathSequence;
+    function EvalStep(Index: Integer; Node: Integer; Axis: TLandrixXmlXPathAxis): TLandrixXmlXPathSequence;
     function EvalPath(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function ApplyPredicates(const Predicates: array of Integer;
@@ -215,6 +238,9 @@ type
     { evaluated on first use with ContextNode as context item }
     procedure BindLazy(Slot: Integer; Expr: TLandrixXmlXPathExpression; ContextNode: Integer);
     procedure UnbindFrame;
+    { forgets the kept values of context-free subexpressions (see the unit
+      comment); needed when the tree changes while the evaluator lives }
+    procedure ClearCache;
     { user functions (TLandrixXmlXPathFunctionDef) by their index in the
       static context; not owned }
     property Functions: TList read FFunctions write FFunctions;
@@ -237,6 +263,23 @@ implementation
 
 type
   PSlot = ^TLandrixXmlXPathSlot;
+
+  { The kept values of one expression: Flags marks the outermost
+    context-free subexpressions worth keeping. }
+  TExpressionCache = class
+  public
+    Expression: TLandrixXmlXPathExpression;
+    Serial: Int64;
+    Flags: array of Boolean;
+    Have: array of Boolean;
+    Values: array of TLandrixXmlXPathSequence;
+    { a child step whose predicates do not depend on the position: after
+      descendant-or-self::node() ("//") it is evaluated as descendant }
+    Fuse: array of Boolean;
+  end;
+
+  TDependency = (xdFocus, xdOther);
+  TDependencies = set of TDependency;
 
 procedure Fail(const Code, Msg: string);
 begin
@@ -572,12 +615,277 @@ begin
   FMaxDepth := 500;
   FCurrentNode := -1;
   FRegexes := TObjectList.Create(True);
+  FCaches := TObjectList.Create(True);
+  FBypass := -1;
 end;
 
 destructor TLandrixXmlXPathEvaluator.Destroy;
 begin
+  FCaches.Free;
   FRegexes.Free;
   inherited Destroy;
+end;
+
+{ --- kept values of context-free subexpressions ------------------------- }
+
+const
+  { more expressions than that in one evaluator: start again }
+  MaxCachedExpressions = 4096;
+
+const
+  ContextFunctions = [xfnString, xfnStringLength, xfnNormalizeSpace, xfnNumber, xfnName, xfnLocalName,
+    xfnNamespaceUri, xfnRoot];
+
+{ What the value of node Index depends on besides the tree and the global
+  variables; Free receives the nodes that depend on neither. }
+function Dependencies(const Nodes: TLandrixXmlXPathAstNodes; Index, GlobalCount, FirstLocalSlot: Integer;
+  var Free: array of Boolean): TDependencies;
+var
+  I, First: Integer;
+  Id: TLandrixXmlXPathFunctionId;
+  Deps: TDependencies;
+
+  { predicates and later steps have a focus of their own }
+  procedure Inner(Child: Integer);
+  begin
+    Deps := Deps + Dependencies(Nodes, Child, GlobalCount, FirstLocalSlot, Free) * [xdOther];
+  end;
+
+begin
+  Deps := [];
+  case Nodes[Index].Kind of
+    xakContextItem, xakRoot:
+      Deps := [xdFocus];
+    xakStep:
+      begin
+        Deps := [xdFocus];
+        for I := 0 to Integer(High(Nodes[Index].Predicates)) do
+          Inner(Nodes[Index].Predicates[I]);
+      end;
+    xakPath:
+      begin
+        First := 0;
+        if not Nodes[Index].RootStart then
+        begin
+          Deps := Dependencies(Nodes, Nodes[Index].Children[0], GlobalCount, FirstLocalSlot, Free);
+          First := 1;
+        end
+        else
+          { "/" needs a node as context; the tree has one root }
+          Deps := [];
+        for I := First to Integer(High(Nodes[Index].Children)) do
+          Inner(Nodes[Index].Children[I]);
+      end;
+    xakFilter:
+      begin
+        Deps := Dependencies(Nodes, Nodes[Index].Children[0], GlobalCount, FirstLocalSlot, Free);
+        for I := 0 to Integer(High(Nodes[Index].Predicates)) do
+          Inner(Nodes[Index].Predicates[I]);
+      end;
+    xakVariable:
+      { global: a slot of the static context below GlobalCount; the slots
+        from FirstLocalSlot on are those of for, some and every }
+      if (Nodes[Index].Slot >= GlobalCount) or (Nodes[Index].Slot >= FirstLocalSlot) then
+        Deps := [xdOther];
+  else
+    for I := 0 to Integer(High(Nodes[Index].Children)) do
+      Deps := Deps + Dependencies(Nodes, Nodes[Index].Children[I], GlobalCount, FirstLocalSlot, Free);
+    for I := 0 to Integer(High(Nodes[Index].Predicates)) do
+      Inner(Nodes[Index].Predicates[I]);
+    if (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) then
+    begin
+      Id := TLandrixXmlXPathFunctionId(Nodes[Index].Op);
+      if (Id = xfnPosition) or (Id = xfnLast) or ((Id in ContextFunctions) and (Length(Nodes[Index].Children) = 0)) then
+        Include(Deps, xdFocus)
+      else if Id = xfnCurrent then
+        Include(Deps, xdOther);
+    end;
+  end;
+  Free[Index] := Deps = [];
+  Result := Deps;
+end;
+
+{ True if the predicate Index may depend on the position: it may be a
+  number, or it calls position() or last(). }
+function MayBePositional(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Boolean;
+const
+  NotNumeric = [xfnNot, xfnTrue, xfnFalse, xfnBoolean, xfnExists, xfnEmpty, xfnContains, xfnStartsWith,
+    xfnEndsWith, xfnMatches, xfnString, xfnNormalizeSpace, xfnConcat, xfnUpperCase, xfnLowerCase, xfnName,
+    xfnLocalName];
+
+  function UsesPosition(I: Integer): Boolean;
+  var
+    J: Integer;
+  begin
+    Result := (Nodes[I].Kind = xakFunction) and (Nodes[I].Op >= 0) and
+      (TLandrixXmlXPathFunctionId(Nodes[I].Op) in [xfnPosition, xfnLast]);
+    J := 0;
+    while not Result and (J < Length(Nodes[I].Children)) do
+    begin
+      Result := UsesPosition(Nodes[I].Children[J]);
+      Inc(J);
+    end;
+    J := 0;
+    while not Result and (J < Length(Nodes[I].Predicates)) do
+    begin
+      Result := UsesPosition(Nodes[I].Predicates[J]);
+      Inc(J);
+    end;
+  end;
+
+begin
+  case Nodes[Index].Kind of
+    xakGeneralCompare, xakValueCompare, xakAnd, xakOr, xakString, xakCastable, xakUnion, xakSome, xakEvery,
+    xakStep:
+      Result := False;
+    xakPath:
+      Result := Nodes[Nodes[Index].Children[Integer(High(Nodes[Index].Children))]].Kind <> xakStep;
+    xakFunction:
+      Result := (Nodes[Index].Op < 0) or not (TLandrixXmlXPathFunctionId(Nodes[Index].Op) in NotNumeric);
+  else
+    Result := True;
+  end;
+  if not Result then
+    Result := UsesPosition(Index);
+end;
+
+{ Marks the outermost free nodes that are worth keeping. }
+procedure MarkOutermost(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer; ParentFree: Boolean;
+  const Free: array of Boolean; var Flags: array of Boolean);
+var
+  I: Integer;
+begin
+  Flags[Index] := Free[Index] and not ParentFree and not (Nodes[Index].Kind in [xakEmpty, xakString, xakInteger,
+    xakDecimal, xakDouble, xakVariable]);
+  for I := 0 to Integer(High(Nodes[Index].Children)) do
+    MarkOutermost(Nodes, Nodes[Index].Children[I], Free[Index], Free, Flags);
+  for I := 0 to Integer(High(Nodes[Index].Predicates)) do
+    MarkOutermost(Nodes, Nodes[Index].Predicates[I], Free[Index], Free, Flags);
+end;
+
+function TLandrixXmlXPathEvaluator.FindCache(Expr: TLandrixXmlXPathExpression): TObject;
+var
+  H, Mask, I, J, Count: Integer;
+  C: TExpressionCache;
+  Free: array of Boolean;
+begin
+  Result := nil;
+  if (Expr = nil) or (Expr.NodeCount = 0) then
+    Exit;
+  if Length(FCacheTable) = 0 then
+    SetLength(FCacheTable, 64);
+  Mask := Integer(Length(FCacheTable)) - 1;
+  H := Integer(Expr.Serial and Mask);
+  while FCacheTable[H] <> nil do
+  begin
+    C := TExpressionCache(FCacheTable[H]);
+    if (C.Expression = Expr) and (C.Serial = Expr.Serial) then
+    begin
+      Result := C;
+      Exit;
+    end;
+    H := (H + 1) and Mask;
+  end;
+  if FCaches.Count >= MaxCachedExpressions then
+  begin
+    { inside an evaluation an entry may be in use: no new one }
+    if FNesting > 1 then
+      Exit;
+    FCaches.Clear;
+    FCacheTable := nil;
+    SetLength(FCacheTable, 64);
+    Mask := 63;
+    H := Integer(Expr.Serial and Mask);
+  end;
+  C := TExpressionCache.Create;
+  FCaches.Add(C);
+  C.Expression := Expr;
+  C.Serial := Expr.Serial;
+  Count := Expr.NodeCount;
+  Free := nil;
+  SetLength(Free, Count);
+  SetLength(C.Flags, Count);
+  SetLength(C.Have, Count);
+  SetLength(C.Values, Count);
+  for I := 0 to Count - 1 do
+  begin
+    Free[I] := False;
+    C.Flags[I] := False;
+    C.Have[I] := False;
+  end;
+  Dependencies(Expr.NodeArray, Expr.Root, FGlobalCount, Expr.FirstLocalSlot, Free);
+  MarkOutermost(Expr.NodeArray, Expr.Root, False, Free, C.Flags);
+  SetLength(C.Fuse, Count);
+  for I := 0 to Count - 1 do
+  begin
+    C.Fuse[I] := (Expr.NodeArray[I].Kind = xakStep) and (Expr.NodeArray[I].Axis = xaxChild);
+    J := 0;
+    while C.Fuse[I] and (J < Length(Expr.NodeArray[I].Predicates)) do
+    begin
+      C.Fuse[I] := not MayBePositional(Expr.NodeArray, Expr.NodeArray[I].Predicates[J]);
+      Inc(J);
+    end;
+  end;
+  FCacheTable[H] := C;
+  Result := C;
+  { at most half full; the entries of a freed expression stay (an
+    expression at the same address has another serial) }
+  if 2 * FCaches.Count > Length(FCacheTable) then
+  begin
+    Count := 2 * Integer(Length(FCacheTable));
+    FCacheTable := nil;
+    SetLength(FCacheTable, Count);
+    Mask := Count - 1;
+    for I := 0 to Integer(FCaches.Count) - 1 do
+    begin
+      H := Integer(TExpressionCache(FCaches[I]).Serial and Mask);
+      while FCacheTable[H] <> nil do
+        H := (H + 1) and Mask;
+      FCacheTable[H] := FCaches[I];
+    end;
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.DropCachedValues;
+var
+  I, J: Integer;
+  C: TExpressionCache;
+begin
+  for I := 0 to Integer(FCaches.Count) - 1 do
+  begin
+    C := TExpressionCache(FCaches[I]);
+    for J := 0 to Integer(Length(C.Have)) - 1 do
+      if C.Have[J] then
+      begin
+        C.Have[J] := False;
+        C.Values[J] := LandrixXmlXPathEmpty;
+      end;
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.ClearCache;
+begin
+  DropCachedValues;
+end;
+
+function TLandrixXmlXPathEvaluator.CachedEval(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  C: TExpressionCache;
+begin
+  C := TExpressionCache(FCache);
+  if C.Have[Index] then
+  begin
+    Result := C.Values[Index];
+    Exit;
+  end;
+  FBypass := Index;
+  Result := Eval(Index, Context, Position, Size, ContextItem);
+  { no spare capacity: whoever appends to the value gets a copy }
+  if Length(Result.Items) > Result.Count then
+    SetLength(Result.Items, Result.Count);
+  C.Values[Index] := Result;
+  C.Have[Index] := True;
 end;
 
 procedure ClearSlot(var Slot: TLandrixXmlXPathSlot);
@@ -595,7 +903,11 @@ procedure TLandrixXmlXPathEvaluator.SetGlobalCount(Count: Integer);
 var
   I: Integer;
 begin
+  { what is context-free depends on which slots are global }
   FGlobalCount := Count;
+  FCaches.Clear;
+  FCacheTable := nil;
+  FCache := FindCache(FExpr);
   SetLength(FGlobals, Count);
   for I := 0 to Count - 1 do
     ClearSlot(FGlobals[I]);
@@ -638,6 +950,8 @@ begin
   ClearSlot(P^);
   P^.State := xssValue;
   P^.Value := Value;
+  if Slot < FGlobalCount then
+    DropCachedValues;
 end;
 
 procedure TLandrixXmlXPathEvaluator.BindString(Slot: Integer; const Value: TLandrixXmlUtf8);
@@ -654,6 +968,8 @@ begin
   P^.State := xssLazy;
   P^.Expression := Expr;
   P^.ContextNode := ContextNode;
+  if Slot < FGlobalCount then
+    DropCachedValues;
 end;
 
 procedure TLandrixXmlXPathEvaluator.EnterExpression(Expr: TLandrixXmlXPathExpression;
@@ -665,6 +981,8 @@ begin
   SavedBase := FLocalBase;
   FExpr := Expr;
   FNodes := Expr.NodeArray;
+  Inc(FNesting);
+  FCache := FindCache(Expr);
   FLocalBase := FLocalTop;
   Need := Expr.SlotCount - Expr.FirstLocalSlot;
   if Need > 0 then
@@ -680,12 +998,14 @@ end;
 procedure TLandrixXmlXPathEvaluator.LeaveExpression(SavedExpr: TLandrixXmlXPathExpression; SavedBase: Integer);
 begin
   FLocalTop := FLocalBase;
+  Dec(FNesting);
   FExpr := SavedExpr;
   FLocalBase := SavedBase;
   if FExpr <> nil then
     FNodes := FExpr.NodeArray
   else
     FNodes := nil;
+  FCache := FindCache(FExpr);
 end;
 
 function TLandrixXmlXPathEvaluator.ReadVariable(Slot: Integer): TLandrixXmlXPathSequence;
@@ -860,6 +1180,23 @@ end;
 function TLandrixXmlXPathEvaluator.EvaluateSequence(Expr: TLandrixXmlXPathExpression;
   ContextNode: Integer): TLandrixXmlXPathSequence;
 var
+  I: Integer;
+begin
+  Result := EvaluateShared(Expr, ContextNode);
+  { the caller's own copy, with the digits of numbers and dates: the
+    items may be kept values or a variable's }
+  Result.Items := Copy(Result.Items, 0, Result.Count);
+  for I := 0 to Result.Count - 1 do
+  begin
+    Result.Items[I].Decimal.Limbs := Copy(Result.Items[I].Decimal.Limbs, 0, Length(Result.Items[I].Decimal.Limbs));
+    Result.Items[I].DateTime.Second.Limbs := Copy(Result.Items[I].DateTime.Second.Limbs, 0,
+      Length(Result.Items[I].DateTime.Second.Limbs));
+  end;
+end;
+
+function TLandrixXmlXPathEvaluator.EvaluateShared(Expr: TLandrixXmlXPathExpression;
+  ContextNode: Integer): TLandrixXmlXPathSequence;
+var
   SavedExpr: TLandrixXmlXPathExpression;
   SavedBase: Integer;
   Empty: TLandrixXmlXPathSequence;
@@ -905,7 +1242,7 @@ end;
 
 function TLandrixXmlXPathEvaluator.EvaluateBoolean(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): Boolean;
 begin
-  Result := SequenceBoolean(EvaluateSequence(Expr, ContextNode));
+  Result := SequenceBoolean(EvaluateShared(Expr, ContextNode));
 end;
 
 function TLandrixXmlXPathEvaluator.EvaluateString(Expr: TLandrixXmlXPathExpression;
@@ -914,7 +1251,7 @@ var
   S: TLandrixXmlXPathSequence;
   I: Integer;
 begin
-  S := EvaluateSequence(Expr, ContextNode);
+  S := EvaluateShared(Expr, ContextNode);
   Result := '';
   for I := 0 to S.Count - 1 do
   begin
@@ -1000,7 +1337,10 @@ begin
   Result := Current;
 end;
 
-function TLandrixXmlXPathEvaluator.EvalStep(Index: Integer; Node: Integer): TLandrixXmlXPathSequence;
+{ The step Index from Node; Axis is the step's own axis, or descendant
+  for a child step that follows "//" (see TExpressionCache.Fuse). }
+function TLandrixXmlXPathEvaluator.EvalStep(Index: Integer; Node: Integer;
+  Axis: TLandrixXmlXPathAxis): TLandrixXmlXPathSequence;
 var
   N: ^TLandrixXmlXPathAstNode;
   Expanded, I, E: Integer;
@@ -1063,11 +1403,11 @@ begin
   Out1 := LandrixXmlXPathEmpty;
   InitItem(Item, xikNode);
   Reverse := False;
-  AttributeAxis := N^.Axis = xaxAttribute;
+  AttributeAxis := Axis = xaxAttribute;
   Expanded := -1;
   if N^.NodeTest = xntName then
     Expanded := FTree.FindExpandedName(N^.NamespaceUri, N^.LocalName);
-  case N^.Axis of
+  case Axis of
     xaxChild:
       begin
         I := FTree.FirstChild(Node);
@@ -1098,7 +1438,7 @@ begin
     xaxAncestor, xaxAncestorOrSelf:
       begin
         Reverse := True;
-        if N^.Axis = xaxAncestorOrSelf then
+        if Axis = xaxAncestorOrSelf then
           Add(Node);
         I := FTree.Parent[Node];
         while I >= 0 do
@@ -1167,6 +1507,7 @@ var
   K, I, Step, First: Integer;
   Current, Next, Part, Ctx: TLandrixXmlXPathSequence;
   AllNodes, AllAtomic: Boolean;
+  Axis: TLandrixXmlXPathAxis;
 begin
   N := @FNodes[Index];
   if N^.RootStart then
@@ -1181,10 +1522,21 @@ begin
     Current := Eval(N^.Children[0], Context, Position, Size, ContextItem);
     First := 1;
   end;
-  for K := First to Integer(High(N^.Children)) do
+  K := First;
+  while K <= Integer(High(N^.Children)) do
   begin
     Step := N^.Children[K];
     N := @FNodes[Index];
+    Axis := FNodes[Step].Axis;
+    { "//" and a child step: the descendants, as one step }
+    if (FCache <> nil) and (FNodes[Step].Kind = xakStep) and (Axis = xaxDescendantOrSelf) and
+      (FNodes[Step].NodeTest = xntAnyNode) and (Length(FNodes[Step].Predicates) = 0) and
+      (K < Integer(High(N^.Children))) and TExpressionCache(FCache).Fuse[N^.Children[K + 1]] then
+    begin
+      Inc(K);
+      Step := N^.Children[K];
+      Axis := xaxDescendant;
+    end;
     Next := LandrixXmlXPathEmpty;
     AllNodes := True;
     AllAtomic := True;
@@ -1193,7 +1545,7 @@ begin
       if Current.Items[I].Kind <> xikNode then
         Fail('XPTY0019', 'the left side of "/" contains an atomic value');
       if FNodes[Step].Kind = xakStep then
-        Part := EvalStep(Step, Current.Items[I].Node)
+        Part := EvalStep(Step, Current.Items[I].Node, Axis)
       else
       begin
         Ctx := SingleSeq(Current.Items[I]);
@@ -1211,6 +1563,7 @@ begin
     else if not AllAtomic then
       Fail('XPTY0018', 'the result of a path contains nodes and atomic values');
     Current := Next;
+    Inc(K);
   end;
   Result := Current;
 end;
@@ -1267,6 +1620,12 @@ var
   LeftError: ELandrixXmlXPathError;
   ErrCode, ErrMsg: string;
 begin
+  if (FCache <> nil) and (Context >= 0) and (Index <> FBypass) and TExpressionCache(FCache).Flags[Index] then
+  begin
+    Result := CachedEval(Index, Context, Position, Size, ContextItem);
+    Exit;
+  end;
+  FBypass := -1;
   N := @FNodes[Index];
   case N^.Kind of
     xakSequence:
@@ -1312,7 +1671,7 @@ begin
       begin
         if Context < 0 then
           Fail('XPTY0020', 'the context item for an axis step is not a node');
-        Result := EvalStep(Index, Context);
+        Result := EvalStep(Index, Context, N^.Axis);
       end;
     xakPath:
       Result := EvalPath(Index, Context, Position, Size, ContextItem);

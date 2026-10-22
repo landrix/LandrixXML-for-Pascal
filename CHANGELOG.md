@@ -94,6 +94,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   KoSIT XSLT; `tools/gen-schematron-rules.py` and
   `tools/gen-schematron-testdata.py` build the EN16931 1.3.16 and
   XRechnung 3.0.2 test rule sets and their expected results.
+- `TLandrixXmlXPathEvaluator` keeps the value of subexpressions that depend
+  neither on the focus nor on `current()` nor on non-global variables
+  (absolute paths, `count(//x)`), and evaluates `//x` without building the
+  sequence of all nodes when the predicates do not depend on the position.
+  The EN16931 rules on an invoice with 1000 lines run in about 3 s instead
+  of 16 s (UBL) and 76 s (CII). `ClearCache` drops the kept values;
+  `TLandrixXmlXPathExpression.Serial` tells expressions apart.
+  `tests/LandrixXmlSchematronPerf.dpr` measures and profiles a rule set.
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
   `LandrixXmlXsdValueText` and `LandrixXmlXsdValueKey`. Messages quote
   values whole, show values in Xerces' canonical form (decimals, float and

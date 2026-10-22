@@ -186,6 +186,7 @@ type
     FRoot: Integer;
     FSlotCount: Integer;
     FFirstLocalSlot: Integer;
+    FSerial: Int64;
     function GetNode(Index: Integer): TLandrixXmlXPathAstNode;
     function GetNodeCount: Integer;
   public
@@ -204,6 +205,11 @@ type
     { the first slot of for, some and every (the static context's
       variable count when compiled) }
     property FirstLocalSlot: Integer read FFirstLocalSlot;
+    { a number counted up (under a lock) for every expression created, so
+      that no two expressions of a process share it: it tells an
+      expression from a later one at the same address (the evaluator
+      keeps values per expression) }
+    property Serial: Int64 read FSerial;
   end;
 
   { The name and number of arguments of a built-in function, for messages
@@ -215,6 +221,10 @@ function LandrixXmlXPathAtomicTypeName(T: TLandrixXmlXPathAtomicType): string;
 function LandrixXmlXPathAtomicTypeByName(const LocalName: TLandrixXmlUtf8): TLandrixXmlXPathAtomicType;
 
 implementation
+
+var
+  ExpressionCounter: Int64 = 0;
+  CounterLock: TMultiReadExclusiveWriteSynchronizer;
 
 type
   TFunctionInfo = record
@@ -1680,6 +1690,13 @@ var
 begin
   inherited Create;
   FText := Text;
+  CounterLock.BeginWrite;
+  try
+    Inc(ExpressionCounter);
+    FSerial := ExpressionCounter;
+  finally
+    CounterLock.EndWrite;
+  end;
   P := TParser.Create(Text, Context);
   try
     FRoot := P.Parse;
@@ -1700,5 +1717,11 @@ function TLandrixXmlXPathExpression.GetNodeCount: Integer;
 begin
   Result := Integer(Length(FNodes));
 end;
+
+initialization
+  CounterLock := TMultiReadExclusiveWriteSynchronizer.Create;
+
+finalization
+  CounterLock.Free;
 
 end.

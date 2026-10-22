@@ -1,0 +1,60 @@
+expr //a[1]
+expr //a[last()]
+expr //a[position() = 2]
+expr //a[position() > 1]
+expr //a[@k > 1]
+expr //a[@k > 1][1]
+expr //a[1][@k > 1]
+expr (//a)[3]
+expr (//a)[last()]
+expr /r//a[2]
+expr //b/a[2]
+expr //a/a
+expr //a//a
+expr //a//a[1]
+expr //a[a]
+expr //a[not(a)][1]
+expr //a[count(a) = 1]
+expr //*[2]
+expr //*[@k][2]
+expr //node()[1]
+expr //text()
+expr //comment()
+expr //processing-instruction()
+expr //@k
+expr //@k[1]
+expr //a/@k
+expr count(//a[1])
+expr count(//a[last()]) + count(//a[1])
+expr //a[. = '']
+expr //a[string(@k) = '4'][last()]
+expr //a[@k = 4 or position() = 1]
+expr //a[@k = (1, 6)]
+expr //a[if (@k = 1) then 1 else 2]
+expr //a[(@k * 1) idiv 3]
+expr //a[number(@k) > 4]
+expr //a[boolean(@k)][2]
+expr //a[exists(@k)][last()]
+expr //a[name() = 'a'][2]
+expr //a[local-name() = 'a' and @k mod 2 = 0]
+expr //a[some $x in @k satisfies $x = 3]
+expr //a[every $x in a satisfies $x/@k > 5]
+expr //a[@k = //b/a/@k]
+expr //a[@k = ../@k + 1]
+expr //a[ancestor::b][1]
+expr //a[preceding-sibling::a]
+expr //a[following-sibling::*][1]
+expr //b//a[1]
+expr r//a[1]
+expr //r//a[1]
+expr /descendant::a[1]
+expr /descendant-or-self::node()/a[1]
+expr //a[1]/@k
+expr sum(//a/@k)
+expr string-join(for $a in //a[1] return string($a/@k), ',')
+expr //a[1] | //a[last()]
+expr //(a)[1]
+expr //a[(1)]
+expr //a[1.0]
+expr //a[0]
+expr //a[@k][@k > 0][1]

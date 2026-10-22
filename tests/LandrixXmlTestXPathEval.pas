@@ -367,11 +367,110 @@ begin
   end;
 end;
 
+{ The values kept for context-free subexpressions, and "//" evaluated as
+  descendant: positional predicates keep their meaning, the focus,
+  current() and rebound globals are not kept. }
+procedure TestKeptValues;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  N, B, A: Integer;
+  Expr, One, Two: TLandrixXmlXPathExpression;
+  S: TLandrixXmlXPathSequence;
+
+  function Run(const S: string; Node: Integer): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), Context);
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, Node));
+  end;
+
+  function Again(Node: Integer): string;
+  begin
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, Node));
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Expr := nil;
+  One := nil;
+  S := LandrixXmlXPathEmpty;
+  Two := nil;
+  try
+    Tree.LoadFromUtf8(U('<r><a k="1"><a k="2"/></a><b><a k="3"/><a k="4"/></b></r>'));
+    N := Context.DeclareVariable(U('n'));
+    One := TLandrixXmlXPathExpression.Create(U('1'), nil);
+    Two := TLandrixXmlXPathExpression.Create(U('2'), nil);
+    Evaluator.SetGlobalCount(1);
+    CheckEqualsStr('1 2 3', Run('//a[1]/@k', 0), '//a[1] is the first a of each parent');
+    CheckEqualsStr('1 2 4', Run('//a[last()]/@k', 0), '//a[last()]');
+    CheckEqualsStr('4', Run('//a[position() = 2]/@k', 0), '//a[position() = 2]');
+    CheckEqualsStr('2 3 4', Run('//a[@k > 1]/@k', 0), 'a predicate without position');
+    CheckEqualsStr('3', Run('(//a)[3]/@k', 0), '(//a)[3]');
+    CheckEqualsStr('2 4', Run('/r//a[2]/@k | //b/a[2]/@k | //a/a/@k', 0), 'a relative //');
+    { a global used as a position, kept until it is bound again }
+    Evaluator.BindValue(N, LandrixXmlXPathStringItem(U('2')));
+    CheckEqualsStr('1 2 3 4', Run('//a[$n]/@k', 0), 'a string predicate is true');
+    Evaluator.BindLazy(N, Two, 0);
+    CheckEqualsStr('4', Again(0), 'the number 2, after binding the global again');
+    Evaluator.BindLazy(N, One, 0);
+    CheckEqualsStr('1 2 3', Again(0), 'the number 1');
+    { the focus and current() are never kept }
+    B := Tree.NextSibling[Tree.FirstChild(Tree.DocumentElement)];
+    A := Tree.FirstChild(B);
+    CheckEqualsStr('1', Run('count(a)', Tree.DocumentElement), 'count(a) on r');
+    CheckEqualsStr('2', Again(B), 'count(a) on b');
+    CheckEqualsStr('r', Run('name()', Tree.DocumentElement), 'name() on r');
+    CheckEqualsStr('b', Again(B), 'name() on b');
+    Evaluator.CurrentNode := A;
+    CheckEqualsStr('3', Run('string(current()/@k)', 0), 'current() on the first a of b');
+    Evaluator.CurrentNode := Tree.NextSibling[A];
+    CheckEqualsStr('4', Again(0), 'current() on the second');
+    { the variables of for, some and every are never global, even when
+      their slots are below GlobalCount (no static context) }
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('for $i in a return string($i/@k)'), nil);
+    CheckEqualsStr('3 4', LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, B)), 'for over two a');
+    { a caller changing a result does not change what is kept }
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('concat(''a'', ''b'')'), nil);
+    S := Evaluator.EvaluateSequence(Expr, 0);
+    S.Items[0].Text := U('changed');
+    CheckEqualsStr('ab', Again(0), 'the kept value after the caller changed its copy');
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('(1 + 1, xs:time(''10:00:30''))'), nil);
+    S := Evaluator.EvaluateSequence(Expr, 0);
+    S.Items[0].Decimal.Limbs[0] := 9;
+    S.Items[1].DateTime.Second.Limbs[0] := 9;
+    CheckEqualsStr('2 10:00:30', Again(0), 'kept numbers and dates after the caller changed its digits');
+    { a kept value belongs to the tree as it was }
+    CheckEqualsStr('4', Run('count(//a)', 0), 'four a');
+    Tree.LoadFromUtf8(U('<r><a/></r>'));
+    Evaluator.ClearCache;
+    CheckEqualsStr('1', Again(0), 'one a after loading again and ClearCache');
+  finally
+    Expr.Free;
+    Two.Free;
+    One.Free;
+    Evaluator.Free;
+    Context.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
   RegisterTest('XPathEval.Variables', TestVariables);
   RegisterTest('XPathEval.NoAliasing', TestNoAliasing);
+  RegisterTest('XPathEval.KeptValues', TestKeptValues);
 end;
 
 end.
