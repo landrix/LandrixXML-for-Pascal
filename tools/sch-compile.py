@@ -21,11 +21,16 @@ xsl:param, xsl:variable (select, text content or one xsl:sequence child) and
 one result, either xsl:sequence or xsl:choose with xsl:when/xsl:otherwise around
 xsl:sequence. Variables inside a choose branch become function variables (they
 are evaluated lazily, so this does not change the result); their names must be
-unique within the function.
+unique within the function. This tool does not check that a lifted variable is
+used only inside its branch (it has no XPath parser); the Pascal compiler does.
 
 Anything else (abstract patterns, sch:extends, sch:diagnostics, sch:properties,
-other XSLT elements, document() calls) is rejected with file and line, never
-dropped. sch:include is replaced by the included element where it stands
+the attributes diagnostics, properties and subject of checks, documents of
+patterns, "as" of lets, other XSLT elements, elements without a namespace,
+one prefix bound to two namespaces) is rejected with file and line, never
+dropped; elements of other namespaces (documentation) are ignored.
+source/LandrixXmlSchematronCompiler.pas does the same in Pascal; the tests
+compare both on tests/data/schematron/sources. sch:include is replaced by the included element where it stands
 (recursively; cycles are rejected). The expressions are copied as written
 (white space outside string literals collapsed); the XPath parser checks them
 when the rule file is loaded.
@@ -80,14 +85,30 @@ WS = " " + chr(9) + chr(10) + chr(13)
 
 def collapse(s):
     """Collapse white space runs to one space and trim, except inside XPath
-    string literals ('..' or "..", the quote doubled inside), whose content
+    comments and string literals ('..' or "..", the quote doubled inside), whose content
     is kept exactly."""
     s = s or ""
     out = []
     i, n = 0, len(s)
     while i < n:
         ch = s[i]
-        if ch in "'\"":
+        if s.startswith("(:", i):
+            # a comment, nested ones too, as it is (quotes inside are no strings)
+            depth, j = 0, i
+            while j < n:
+                if s.startswith("(:", j):
+                    depth += 1
+                    j += 2
+                elif s.startswith(":)", j):
+                    depth -= 1
+                    j += 2
+                    if depth == 0:
+                        break
+                else:
+                    j += 1
+            out.append(s[i:j])
+            i = j
+        elif ch in "'\"":
             j = i + 1
             while j < n:
                 if s[j] == ch:
@@ -198,6 +219,9 @@ class Compiler:
             elif local in ("title", "p", "phase", "active"):
                 pass
             elif local == "ns":
+                for prefix, uri in self.ns:
+                    if prefix == el.get("prefix") and uri != el.get("uri"):
+                        self.fail("the prefix %s is bound to two namespaces" % prefix, el, doc)
                 self.ns.append((el.get("prefix"), el.get("uri")))
             elif local == "let":
                 self.add_global(el, doc)
@@ -224,12 +248,16 @@ class Compiler:
             self.fail("global variable $%s is defined twice" % name, el, doc)
         if el.get("value") is None:
             self.fail("a let without value is not supported", el, doc)
+        if el.get("as") is not None:
+            self.fail("a let with \"as\" is not supported", el, doc)
         self.global_names.add(name)
         self.globals.append((name, collapse(el.get("value")), self.where(el, doc)))
 
     def pattern(self, el, doc):
         if el.get("abstract") == "true" or el.get("is-a"):
             self.fail("abstract patterns are not supported (compile the preprocessed file)", el, doc)
+        if el.get("documents") is not None:
+            self.fail("patterns on other documents are not supported", el, doc)
         rules = []
 
         def member(c, doc):
@@ -247,6 +275,10 @@ class Compiler:
                 pass
             elif ns == SCH:
                 self.fail("unexpected sch:%s in a pattern" % local, c, doc)
+            elif ns == XSL:
+                self.fail("xsl:%s in a pattern is not supported" % local, c, doc)
+            elif ns == "":
+                self.fail("element %s without namespace" % local, c, doc)
         for c in el:
             member(c, doc)
         self.patterns.append((el.get("id") or "", rules))
@@ -254,6 +286,8 @@ class Compiler:
     def rule(self, el, doc):
         if el.get("abstract") == "true":
             self.fail("abstract rules are not supported", el, doc)
+        if el.get("subject") is not None:
+            self.fail("the subject of a rule is not supported", el, doc)
         if el.get("context") is None:
             self.fail("a rule without context", el, doc)
         lets, checks = [], []
@@ -263,6 +297,8 @@ class Compiler:
             if (ns, local) == (SCH, "let"):
                 if c.get("value") is None:
                     self.fail("a let without value is not supported", c, doc)
+                if c.get("as") is not None:
+                    self.fail("a let with \"as\" is not supported", c, doc)
                 if c.get("name") in names:
                     self.fail("rule variable $%s is defined twice" % c.get("name"), c, doc)
                 names.add(c.get("name"))
@@ -273,14 +309,22 @@ class Compiler:
                 self.fail("sch:extends is not supported", c, doc)
             elif ns == SCH:
                 self.fail("unexpected sch:%s in a rule" % local, c, doc)
+            elif ns == XSL:
+                self.fail("xsl:%s in a rule is not supported" % local, c, doc)
+            elif ns == "":
+                self.fail("element %s without namespace" % local, c, doc)
         return {"context": collapse(el.get("context")), "id": el.get("id") or "", "line": self.where(el, doc),
                 "lets": lets, "checks": checks}
 
     def check(self, el, kind, doc):
         if el.get("test") is None:
             self.fail("sch:%s without test" % kind, el, doc)
-        if el.get("diagnostics"):
+        if el.get("diagnostics") is not None:
             self.fail("diagnostics are not supported", el, doc)
+        if el.get("properties") is not None:
+            self.fail("properties are not supported", el, doc)
+        if el.get("subject") is not None:
+            self.fail("the subject of a check is not supported", el, doc)
         parts = []
 
         def content(e):
@@ -308,6 +352,10 @@ class Compiler:
         params, variables = [], []
         result = None
         names = set()
+        def check_no_text(owner):
+            """No text where XSLT would put it into the result."""
+            if (owner.text or "").strip(WS) or any((c.tail or "").strip(WS) for c in owner):
+                self.fail("text in %s is not supported" % owner.tag.split("}")[-1], owner, doc)
 
         def variable(v):
             vname = v.get("name")
@@ -315,13 +363,15 @@ class Compiler:
                 self.fail("variable $%s is defined twice in %s" % (vname, name), v, doc)
             names.add(vname)
             if v.get("select") is not None:
-                if len(v):
+                if len(v) or (v.text or "").strip(WS):
                     self.fail("xsl:variable with select and content", v, doc)
                 value = collapse(v.get("select"))
             elif len(v) == 1 and tag(v[0]) == (XSL, "sequence") and v[0].get("select") is not None:
                 # without as the content would build a document node
                 if not v.get("as"):
                     self.fail("xsl:variable with an xsl:sequence child needs as", v, doc)
+                if len(v[0]) or (v[0].text or "").strip(WS):
+                    self.fail("xsl:sequence needs select and no content", v[0], doc)
                 if (v.text or "").strip(WS) or (v[0].tail or "").strip(WS):
                     self.fail("xsl:variable with text around xsl:sequence", v, doc)
                 value = collapse(v[0].get("select"))
@@ -348,7 +398,7 @@ class Compiler:
                 elif (ns, local) == (XSL, "sequence"):
                     if res is not None:
                         self.fail("more than one result instruction", c, doc)
-                    if c.get("select") is None or len(c):
+                    if c.get("select") is None or len(c) or (c.text or "").strip(WS):
                         self.fail("xsl:sequence needs select and no content", c, doc)
                     res = "(" + collapse(c.get("select")) + ")"
                 elif (ns, local) == (XSL, "choose"):
@@ -366,6 +416,9 @@ class Compiler:
             others = [w for w in c if tag(w) == (XSL, "otherwise")]
             if len(whens) + len(others) != len(c) or len(others) > 1 or not whens:
                 self.fail("unsupported xsl:choose", c, doc)
+            check_no_text(c)
+            for b in whens + others:
+                check_no_text(b)
             expr = body(list(others[0]), "xsl:otherwise") if others else "()"
             for w in reversed(whens):
                 expr = "(if (%s) then %s else %s)" % (collapse(w.get("test")), body(list(w), "xsl:when"), expr)
@@ -377,7 +430,7 @@ class Compiler:
             if tag(c) == (XSL, "param"):
                 if rest:
                     self.fail("xsl:param after other instructions", c, doc)
-                if c.get("select") is not None or len(c):
+                if c.get("select") is not None or len(c) or (c.text or "").strip(WS):
                     self.fail("default values of parameters are not supported", c, doc)
                 if c.get("name") in names:
                     self.fail("parameter $%s is defined twice" % c.get("name"), c, doc)
@@ -385,6 +438,7 @@ class Compiler:
                 params.append((c.get("name"), c.get("as") or ""))
             else:
                 rest.append(c)
+        check_no_text(el)
         result = body(rest, "function " + name)
         for f in self.functions:
             if f["name"] == name and len(f["params"]) == len(params):

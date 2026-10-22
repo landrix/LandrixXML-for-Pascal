@@ -37,14 +37,30 @@ WS = " " + chr(9) + chr(10) + chr(13)
 
 def collapse(s):
     """Collapse white space runs to one space and trim, except inside XPath
-    string literals ('..' or "..", the quote doubled inside), whose content
+    comments and string literals ('..' or "..", the quote doubled inside), whose content
     is kept exactly."""
     s = s or ""
     out = []
     i, n = 0, len(s)
     while i < n:
         ch = s[i]
-        if ch in "'\"":
+        if s.startswith("(:", i):
+            # a comment, nested ones too, as it is (quotes inside are no strings)
+            depth, j = 0, i
+            while j < n:
+                if s.startswith("(:", j):
+                    depth += 1
+                    j += 2
+                elif s.startswith(":)", j):
+                    depth -= 1
+                    j += 2
+                    if depth == 0:
+                        break
+                else:
+                    j += 1
+            out.append(s[i:j])
+            i = j
+        elif ch in "'\"":
             j = i + 1
             while j < n:
                 if s[j] == ch:

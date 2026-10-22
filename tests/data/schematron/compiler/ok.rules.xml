@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rules xmlns="urn:landrix:schematron-rules" format="1" source="ok.sch" sha256="3638ec2288a2c249cf69833526663c7d105209198b2705a3b37dc8be1c3cce71" title="Small test rules">
+  <ns prefix="p" uri="urn:p"/>
+  <ns prefix="f" uri="urn:f"/>
+  <let name="total" value="sum(//p:a/@n)" line="ok.sch:10"/>
+  <let name="half" value="$total div 2" line="ok.sch:28"/>
+  <function name="f:size" as="xs:string" line="ok.sch:11">
+    <param name="n" as=""/>
+    <variable name="limit" as="" value="xs:untypedAtomic('10')"/>
+    <variable name="limit-twice" as="" value="for $limit in ($limit, $limit) return $limit"/>
+    <variable name="big" as="xs:string" value="'big'"/>
+    <result value="(if ($n &gt; $limit) then ($big) else ('small'))"/>
+  </function>
+  <pattern id="A">
+    <rule context="p:a" id="" line="pattern.sch:3">
+      <let name="v" value="xs:integer(@n)"/>
+      <assert id="A1" flag="fatal" role="" test="f:size($v) = 'small'" line="pattern.sch:5"><text>a with   n = '</text><value-of select="$v"/><text>' is </text><value-of select="f:size($v)"/></assert>
+    </rule>
+  </pattern>
+  <pattern id="B">
+    <rule context="p:r" id="" line="ok.sch:29">
+      <report id="R1" flag="information" role="info" test="$total = 24" line="ok.sch:30"><text>total </text><value-of select="$total"/><text>,
+        half </text><text>of </text><value-of select="$half"/><text> in </text><name path=""/></report>
+    </rule>
+  </pattern>
+</rules>

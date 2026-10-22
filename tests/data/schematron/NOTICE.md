@@ -26,6 +26,17 @@ One test is replaced: the EN16931 CII source defines CII-SR-282 twice
 `not(ram:BuyerTaxRepresentativeTradeParty)`); the KoSIT validator runs the
 second one, so the rule file has it (with the first as `original`).
 
+## Sources (`sources/`)
+
+The Schematron files the rule files are compiled from, byte for byte as
+in the packages above (same SHA-256): `en16931/` from the EN16931 1.3.16
+packages (EUPL-1.2), `xrechnung/` (with `common.sch`, which both XRechnung
+files include) from the XRechnung 3.0.2 Schematron 2.6.0 package
+(Apache-2.0). The tests compile them with `LandrixXmlSchematronCompiler`
+and compare the result with the rule files.
+
+The files in `compiler/` are written for this project's tests.
+
 ## Documents (`ubl/`, `cii/`)
 
 The files without `mut-` prefix are example invoices of the EN16931 packages

@@ -36,6 +36,7 @@ uses
   LandrixXmlTestXPathTree,
   LandrixXmlTestXPath,
   LandrixXmlTestXPathEval,
+  LandrixXmlTestSha256,
   LandrixXmlTestSchematron,
   LandrixXmlTestLocal;
 
@@ -67,6 +68,7 @@ begin
   LandrixXmlTestXPathTree.Register;
   LandrixXmlTestXPath.Register;
   LandrixXmlTestXPathEval.Register;
+  LandrixXmlTestSha256.Register;
   LandrixXmlTestSchematron.Register;
   LandrixXmlTestLocal.Register;
   ExitCode := RunAllTests(FilterParam);

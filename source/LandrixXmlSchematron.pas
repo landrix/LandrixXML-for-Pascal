@@ -124,6 +124,11 @@ type
       compile, with the source line of the rule set. }
     procedure LoadFromFile(const FileName: string);
     procedure LoadFromUtf8(const S: TLandrixXmlUtf8);
+    { a rule file already parsed (the document is only read) }
+    procedure LoadFromDocument(Document: TLandrixXmlDocument);
+    { an ISO Schematron file, compiled with TLandrixXmlSchematronCompiler
+      (no overrides); raises its errors too }
+    procedure LoadFromSchematronFile(const FileName: string);
     property Title: TLandrixXmlUtf8 read FTitle;
     { the file the rules were compiled from and its SHA-256 }
     property Source: TLandrixXmlUtf8 read FSource;
@@ -208,6 +213,9 @@ type
   end;
 
 implementation
+
+uses
+  LandrixXmlSchematronCompiler;
 
 type
   { A global variable or a function variable: slot and expression. }
@@ -508,6 +516,31 @@ begin
     Load(Doc);
   finally
     Doc.Free;
+  end;
+end;
+
+procedure TLandrixXmlSchematronRules.LoadFromDocument(Document: TLandrixXmlDocument);
+begin
+  Clear;
+  Load(Document);
+end;
+
+procedure TLandrixXmlSchematronRules.LoadFromSchematronFile(const FileName: string);
+var
+  Compiler: TLandrixXmlSchematronCompiler;
+  Doc: TLandrixXmlDocument;
+begin
+  Clear;
+  Compiler := TLandrixXmlSchematronCompiler.Create;
+  try
+    Doc := Compiler.CompileFile(FileName);
+    try
+      Load(Doc);
+    finally
+      Doc.Free;
+    end;
+  finally
+    Compiler.Free;
   end;
 end;
 

@@ -94,6 +94,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   KoSIT XSLT; `tools/gen-schematron-rules.py` and
   `tools/gen-schematron-testdata.py` build the EN16931 1.3.16 and
   XRechnung 3.0.2 test rule sets and their expected results.
+- `LandrixXmlSchematronCompiler`: compiles ISO Schematron files (the subset
+  the EN16931, XRechnung and Peppol rules use) into the rule file format
+  in Pascal, without Python; `TLandrixXmlSchematronRules.LoadFromSchematronFile`
+  loads a `.sch` directly, `LoadFromDocument` a rule file already parsed.
+  `AddOverride` replaces a test where a validator runs another one than
+  the source has, checking the source's test. The output equals that of
+  `tools/sch-compile.py` on the committed sources (`tests/data/schematron/sources`).
+- `LandrixXmlSha256`: SHA-256 (`LandrixXmlSha256Hex`), the source fingerprint
+  of compiled rules.
 - `TLandrixXmlXPathEvaluator` keeps the value of subexpressions that depend
   neither on the focus nor on `current()` nor on non-global variables
   (absolute paths, `count(//x)`), and evaluates `//x` without building the

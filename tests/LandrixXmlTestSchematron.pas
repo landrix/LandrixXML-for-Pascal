@@ -30,6 +30,7 @@ uses
   LandrixXmlXPathTree,
   LandrixXmlXPath,
   LandrixXmlSchematron,
+  LandrixXmlSchematronCompiler,
   LandrixXmlTestFramework;
 
 function U(const S: string): TLandrixXmlUtf8;
@@ -490,6 +491,228 @@ begin
   end;
 end;
 
+{ --- the compiler ------------------------------------------------------- }
+
+{ An element as text: name, attributes sorted, children; white space text
+  only inside text elements (the rest is indentation). }
+function Dump(Node: TLandrixXmlNode): string;
+var
+  Attrs: TStringList;
+  C: TLandrixXmlNode;
+  I: Integer;
+begin
+  Result := '<' + LandrixXmlUtf8ToString(Node.LocalNameUtf8);
+  Attrs := TStringList.Create;
+  try
+    for I := 0 to Node.AttributeCount - 1 do
+      if Node.AttributeNamespaceUriUtf8(I) <> 'http://www.w3.org/2000/xmlns/' then
+        Attrs.Add(LandrixXmlUtf8ToString(Node.AttributeLocalNameUtf8(I) + '=' + Node.AttributeValueUtf8(I)));
+    Attrs.Sort;
+    for I := 0 to Attrs.Count - 1 do
+      Result := Result + ' ' + Attrs[I];
+  finally
+    Attrs.Free;
+  end;
+  Result := Result + '>';
+  C := Node.FirstChild;
+  while C <> nil do
+  begin
+    if C.NodeType = LandrixXmlDom.xntElement then
+      Result := Result + Dump(C)
+    else if (C.NodeType in [LandrixXmlDom.xntText, LandrixXmlDom.xntCData]) and (Node.LocalNameUtf8 = 'text') then
+      Result := Result + LandrixXmlUtf8ToString(C.ValueUtf8);
+    C := C.NextSibling;
+  end;
+  Result := Result + '</>';
+end;
+
+function RuleFile(const FileName: string): TLandrixXmlDocument;
+begin
+  Result := TLandrixXmlDocument.Create;
+  try
+    Result.LoadFromFile(FileName);
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
+{ The checks with an original test of a rule file, as overrides. }
+procedure AddOverrides(Compiler: TLandrixXmlSchematronCompiler; Node: TLandrixXmlNode);
+var
+  C: TLandrixXmlNode;
+begin
+  if Node.HasAttribute(U(''), U('original')) then
+    Compiler.AddOverride(Node.AttributeValueUtf8(U(''), U('id')), Node.AttributeValueUtf8(U(''), U('test')),
+      Node.AttributeValueUtf8(U(''), U('original')));
+  C := Node.FirstChildElement;
+  while C <> nil do
+  begin
+    AddOverrides(Compiler, C);
+    C := C.NextSiblingElement;
+  end;
+end;
+
+{ The compiled source equals the committed rule file (compiled by
+  tools/sch-compile.py), with the url and the overrides it has. }
+procedure CheckCompiled(const Source, Rules: string);
+var
+  Compiler: TLandrixXmlSchematronCompiler;
+  Mine, Reference: TLandrixXmlDocument;
+begin
+  Compiler := TLandrixXmlSchematronCompiler.Create;
+  Mine := nil;
+  Reference := RuleFile(Rules);
+  try
+    Compiler.Url := Reference.Root.AttributeValueUtf8(U(''), U('url'));
+    AddOverrides(Compiler, Reference.Root);
+    Mine := Compiler.CompileFile(Source);
+    CheckEqualsStr(Dump(Reference.Root), Dump(Mine.Root), ExtractFileName(Source));
+  finally
+    Mine.Free;
+    Reference.Free;
+    Compiler.Free;
+  end;
+end;
+
+function SourcePath(const A, B: string): string;
+begin
+  Result := DataPath('sources' + PathDelim + A + PathDelim + B);
+end;
+
+procedure TestCompilerSources;
+begin
+  CheckCompiled(SourcePath('en16931', 'EN16931-UBL-validation-preprocessed.sch'),
+    DataPath('rules' + PathDelim + 'en16931-ubl.xml'));
+  CheckCompiled(SourcePath('en16931', 'EN16931-CII-validation-preprocessed.sch'),
+    DataPath('rules' + PathDelim + 'en16931-cii.xml'));
+  CheckCompiled(SourcePath('xrechnung', 'ubl' + PathDelim + 'XRechnung-UBL-validation.sch'),
+    DataPath('rules' + PathDelim + 'xrechnung-ubl.xml'));
+  CheckCompiled(SourcePath('xrechnung', 'cii' + PathDelim + 'XRechnung-CII-validation.sch'),
+    DataPath('rules' + PathDelim + 'xrechnung-cii.xml'));
+  CheckCompiled(DataPath('compiler' + PathDelim + 'ok.sch'), DataPath('compiler' + PathDelim + 'ok.rules.xml'));
+end;
+
+{ A small schema with an include, a function, a text variable, emph and
+  name in messages, loaded straight from the .sch and run. }
+procedure TestCompilerRun;
+var
+  Rules: TLandrixXmlSchematronRules;
+  V: TLandrixXmlSchematronValidator;
+  S: string;
+  I: Integer;
+begin
+  Rules := TLandrixXmlSchematronRules.Create;
+  V := TLandrixXmlSchematronValidator.Create(Rules);
+  try
+    Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + 'ok.sch'));
+    CheckEqualsStr('Small test rules', LandrixXmlUtf8ToString(Rules.Title), 'title');
+    CheckEqualsStr('ok.sch', LandrixXmlUtf8ToString(Rules.Source), 'source');
+    Check(not V.ValidateFile(DataPath('compiler' + PathDelim + 'doc.xml')), 'not valid');
+    S := '';
+    for I := 0 to V.ResultCount - 1 do
+      S := S + LandrixXmlUtf8ToString(V.Results[I].Id + ' ' + V.Results[I].Location + ' ' +
+        V.Results[I].Message) + ' / ';
+    CheckEqualsStr('A1 /Q{urn:p}r[1]/Q{urn:p}a[3] a with n = ''11'' is big / ' +
+      'R1 /Q{urn:p}r[1] total 24, half of 12 in p:r / ', S, 'results');
+  finally
+    V.Free;
+    Rules.Free;
+  end;
+end;
+
+procedure CheckCompileError(const Name: string; Code: TLandrixXmlErrorCode; const Where: string);
+var
+  Rules: TLandrixXmlSchematronRules;
+begin
+  Rules := TLandrixXmlSchematronRules.Create;
+  try
+    try
+      Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + Name));
+      FailNotRaised(Name);
+    except
+      on E: ELandrixXmlError do
+      begin
+        CheckEquals(Ord(Code), Ord(E.Code), Name + ': ' + E.Message);
+        Check(Pos(Where, E.Message) > 0, Name + ' names ' + Where + ': ' + E.Message);
+      end;
+    end;
+    CheckEquals(0, Rules.PatternCount, Name + ': nothing loaded');
+  finally
+    Rules.Free;
+  end;
+end;
+
+procedure TestCompilerErrors;
+begin
+  CheckCompileError('cycle.sch', xecSchema, 'cycle-pattern.sch:3');
+  CheckCompileError('xslt1.sch', xecUnsupported, 'xslt1.sch:2');
+  CheckCompileError('abstract.sch', xecUnsupported, 'abstract.sch:3');
+  CheckCompileError('properties.sch', xecUnsupported, 'properties.sch:3');
+  CheckCompileError('xsl-in-rule.sch', xecUnsupported, 'xsl-in-rule.sch:3');
+  CheckCompileError('two-ns.sch', xecSchema, 'two-ns.sch:4');
+  CheckCompileError('phase.sch', xecUnsupported, 'phase.sch:3');
+  CheckCompileError('function-text.sch', xecUnsupported, 'function-text.sch:4');
+  CheckCompileError('function-scope.sch', xecUnsupported, 'function-scope.sch:7');
+  CheckCompileError('function-as.sch', xecUnsupported, 'function-as.sch:5');
+  CheckCompileError('function-scope-comment.sch', xecUnsupported, 'function-scope-comment.sch:6');
+  CheckCompileError('function-sequence.sch', xecUnsupported, 'function-sequence.sch:6');
+end;
+
+{ White space outside strings and comments collapses; quotes in comments
+  open no string. }
+procedure TestCollapse;
+
+  procedure Expect(const Input, Output: string);
+  begin
+    CheckEqualsStr(Output, LandrixXmlUtf8ToString(LandrixXmlSchematronCollapse(U(Input))), Input);
+  end;
+
+begin
+  Expect('  a   =' + #10#9 + ' b  ', 'a = b');
+  Expect('''a  b''  =  "c   d"', '''a  b'' = "c   d"');
+  Expect('''it''''s  so''   x', '''it''''s  so'' x');
+  Expect('string-length((: '' :) ''a  b'')   = 4', 'string-length((: '' :) ''a  b'') = 4');
+  Expect('a (: x (: '' :)  y :)   ''p  q''', 'a (: x (: '' :)  y :) ''p  q''');
+  Expect('(:  ' + #9, '(:');
+end;
+
+procedure TestCompilerOverride;
+var
+  Compiler: TLandrixXmlSchematronCompiler;
+  Doc: TLandrixXmlDocument;
+  Source: string;
+begin
+  Source := DataPath('compiler' + PathDelim + 'ok.sch');
+  Compiler := TLandrixXmlSchematronCompiler.Create;
+  Doc := nil;
+  try
+    Compiler.AddOverride(U('A1'), U('true()'), U('f:size($v) = ''big'''));
+    try
+      Compiler.CompileFile(Source).Free;
+      FailNotRaised('a stale override');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecSchema), Ord(E.Code), 'stale override: ' + E.Message);
+    end;
+    Compiler.ClearOverrides;
+    Compiler.AddOverride(U('A1'), U('true()'), U('f:size($v)   = ''small'''));
+    try
+      Compiler.AddOverride(U('A1'), U('false()'), U('x'));
+      FailNotRaised('the same id twice');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'twice: ' + E.Message);
+    end;
+    Doc := Compiler.CompileFile(Source);
+    Check(Pos('original=f:size($v) = ''small'' role= test=true()', Dump(Doc.Root)) > 0,
+      'the override and the original: ' + Dump(Doc.Root));
+  finally
+    Doc.Free;
+    Compiler.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('Schematron.EN16931Ubl', TestEn16931Ubl);
@@ -500,6 +723,11 @@ begin
   RegisterTest('Schematron.SmallRules', TestSmallRules);
   RegisterTest('Schematron.VariablesAndContexts', TestVariablesAndContexts);
   RegisterTest('Schematron.LoadErrors', TestLoadErrors);
+  RegisterTest('Schematron.CompilerSources', TestCompilerSources);
+  RegisterTest('Schematron.CompilerRun', TestCompilerRun);
+  RegisterTest('Schematron.CompilerErrors', TestCompilerErrors);
+  RegisterTest('Schematron.CompilerOverride', TestCompilerOverride);
+  RegisterTest('Schematron.Collapse', TestCollapse);
 end;
 
 end.
