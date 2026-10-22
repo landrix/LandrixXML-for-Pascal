@@ -54,6 +54,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlXPathTree` | read-only document tree for XPath (from reader or DOM), optional validation unit |
 | `LandrixXmlXPath` | XPath 2.0 parser (the subset the e-invoice rule sets use), optional validation unit |
 | `LandrixXmlXPathEval` | evaluates XPath 2.0 expressions on the tree as Saxon HE does, optional validation unit |
+| `LandrixXmlSchematron` | Schematron validation (EN16931, XRechnung rule files), optional validation unit |
 
 Add the `source` folder to the search path (Delphi: unit and include path;
 Free Pascal: `-Fusource -Fisource`).

@@ -85,6 +85,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   functions. `tools/XPathOracle.java` and `tools/gen-xpath-testdata.py`
   check it against Saxon; `tools/gen-xpath-case-tables.py` generates the
   case mappings from Saxon.
+- `LandrixXmlSchematron`: Schematron validation with rule files compiled
+  from ISO Schematron (`tools/sch-compile.py`), run as the KoSIT validator's
+  SchXslt XSLT does (first rule per pattern in document order, lets,
+  global variables, XSLT functions), with results (id, flag, location,
+  message, line, DOM node), dynamic errors as results and an option to
+  stop like Saxon. `tools/sch-crosscheck.py` compares a rule file with the
+  KoSIT XSLT; `tools/gen-schematron-rules.py` and
+  `tools/gen-schematron-testdata.py` build the EN16931 1.3.16 and
+  XRechnung 3.0.2 test rule sets and their expected results.
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
   `LandrixXmlXsdValueText` and `LandrixXmlXsdValueKey`. Messages quote
   values whole, show values in Xerces' canonical form (decimals, float and

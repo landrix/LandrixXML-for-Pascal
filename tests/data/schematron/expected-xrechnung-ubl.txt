@@ -1,0 +1,891 @@
+## BIS3_Invoice_negativ.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+failed-assert BR-DE-19 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PaymentMeans[1] | [BR-DE-19] "Payment account identifier" (BT-84) soll eine korrekte IBAN enthalten, wenn in "Payment means type code" (BT-81) mit dem Code 58 SEPA als Zahlungsmittel gefordert wird.
+## guide-example1.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[20] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+## issue116.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert BR-DE-1 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-1] Eine Rechnung (INVOICE) muss Angaben zu "PAYMENT INSTRUCTIONS" (BG-16) enthalten.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+failed-assert BR-DE-3 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-3] Das Element "Seller city" (BT-37) muss übermittelt werden.
+failed-assert BR-DE-4 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-4] Das Element "Seller post code" (BT-38) muss übermittelt werden.
+failed-assert BR-DE-8 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-8] Das Element "Buyer city" (BT-52) muss übermittelt werden.
+failed-assert BR-DE-9 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-9] Das Element "Buyer post code" (BT-53) muss übermittelt werden.
+## mut-BIS3_Invoice_negativ.m00.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+failed-assert BR-DE-19 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PaymentMeans[1] | [BR-DE-19] "Payment account identifier" (BT-84) soll eine korrekte IBAN enthalten, wenn in "Payment means type code" (BT-81) mit dem Code 58 SEPA als Zahlungsmittel gefordert wird.
+## mut-BIS3_Invoice_negativ.m06.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+failed-assert BR-DE-19 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PaymentMeans[1] | [BR-DE-19] "Payment account identifier" (BT-84) soll eine korrekte IBAN enthalten, wenn in "Payment means type code" (BT-81) mit dem Code 58 SEPA als Zahlungsmittel gefordert wird.
+## mut-BIS3_Invoice_positive.m04.xml
+saxon-error FORG0001
+## mut-guide-example1.m02.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[19] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-16 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-16] Wenn in einer Rechnung die Steuercodes S, Z, E, AE, K, G, L oder M verwendet werden, muss mindestens eines der Elemente "Seller VAT identifier" (BT-31), "Seller tax registration identifier" (BT-32) oder "SELLER TAX REPRESENTATIVE PARTY" (BG-11) übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+## mut-guide-example2.m00.xml
+fired //*[not(*) and not(normalize-space())]
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AdditionalDocumentReference/cac:Attachment/cac:ExternalReference | /cn:CreditNote/cac:AdditionalDocumentReference/cac:Attachment/cac:ExternalReference
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+failed-assert PEPPOL-EN16931-R008 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[5]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}OrderLineReference[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}LineID[1] | [PEPPOL-EN16931-R008]-Document MUST not contain empty elements.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[1] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert PEPPOL-EN16931-R046 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[3]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Price[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AllowanceCharge[1] | [PEPPOL-EN16931-R046]-Item net price MUST equal (Gross price - Allowance amount) when gross price is provided.
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+## mut-guide-example2.m06.xml
+fired //*[not(*) and not(normalize-space())]
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AdditionalDocumentReference/cac:Attachment/cac:ExternalReference | /cn:CreditNote/cac:AdditionalDocumentReference/cac:Attachment/cac:ExternalReference
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+failed-assert PEPPOL-EN16931-R008 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[5]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}OrderLineReference[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}LineID[1] | [PEPPOL-EN16931-R008]-Document MUST not contain empty elements.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[1] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert PEPPOL-EN16931-R046 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[3]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Price[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AllowanceCharge[1] | [PEPPOL-EN16931-R046]-Item net price MUST equal (Gross price - Allowance amount) when gross price is provided.
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+## mut-guide-example3.m04.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[1] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[2] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-5 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-5] Das Element "Seller contact point" (BT-41) muss übermittelt werden.
+failed-assert BR-DE-6 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-6] Das Element "Seller contact telephone number" (BT-42) muss übermittelt werden.
+failed-assert BR-DE-27 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-27] In BT-42 sollen mindestens drei Ziffern enthalten sein.
+## mut-issue116.m02.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert BR-DE-1 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-1] Eine Rechnung (INVOICE) muss Angaben zu "PAYMENT INSTRUCTIONS" (BG-16) enthalten.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+failed-assert BR-DE-3 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-3] Das Element "Seller city" (BT-37) muss übermittelt werden.
+failed-assert BR-DE-4 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-4] Das Element "Seller post code" (BT-38) muss übermittelt werden.
+failed-assert BR-DE-8 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-8] Das Element "Buyer city" (BT-52) muss übermittelt werden.
+failed-assert BR-DE-9 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-9] Das Element "Buyer post code" (BT-53) muss übermittelt werden.
+## mut-sample-discount-price.m00.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cbc:TaxCurrencyCode
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R054 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R054]-Only one tax total without tax subtotals MUST be provided when tax currency code is provided.
+failed-assert PEPPOL-EN16931-R005 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxCurrencyCode[1] | [PEPPOL-EN16931-R005]-VAT accounting currency code MUST be different from invoice currency code when provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+## mut-sample-discount-price.m06.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cbc:TaxCurrencyCode
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R054 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R054]-Only one tax total without tax subtotals MUST be provided when tax currency code is provided.
+failed-assert PEPPOL-EN16931-R005 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxCurrencyCode[1] | [PEPPOL-EN16931-R005]-VAT accounting currency code MUST be different from invoice currency code when provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-17 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-17] Mit dem Element "Invoice type code" (BT-3) sollen ausschließlich folgende Codes aus der Codeliste UNTDID 1001 übermittelt werden: 326 (Partial invoice), 380 (Commercial invoice), 384 (Corrected invoice), 389 (Self-billed invoice) und 381 (Credit note),875 (Partial construction invoice), 876 (Partial final construction invoice), 877 (Final construction invoice).
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+## mut-ubl-tc434-creditnote1.m04.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2}CreditNote[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-5 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2}CreditNote[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-5] Das Element "Seller contact point" (BT-41) muss übermittelt werden.
+failed-assert BR-DE-6 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2}CreditNote[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-6] Das Element "Seller contact telephone number" (BT-42) muss übermittelt werden.
+failed-assert BR-DE-27 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2}CreditNote[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-27] In BT-42 sollen mindestens drei Ziffern enthalten sein.
+## mut-ubl-tc434-example1.m02.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[20] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+## mut-ubl-tc434-example10.m00.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cbc:TaxCurrencyCode
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[20] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+## mut-ubl-tc434-example10.m06.xml
+saxon-error FORG0001
+## mut-ubl-tc434-example2.m04.xml
+fired //*[not(*) and not(normalize-space())]
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AdditionalDocumentReference/cac:Attachment/cac:ExternalReference | /cn:CreditNote/cac:AdditionalDocumentReference/cac:Attachment/cac:ExternalReference
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+failed-assert PEPPOL-EN16931-R008 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[5]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}OrderLineReference[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}LineID[1] | [PEPPOL-EN16931-R008]-Document MUST not contain empty elements.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R043 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AllowanceCharge[1] | [PEPPOL-EN16931-R043]-Allowance/charge ChargeIndicator value MUST equal 'true' or 'false'
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[1] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert PEPPOL-EN16931-R046 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[3]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Price[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AllowanceCharge[1] | [PEPPOL-EN16931-R046]-Item net price MUST equal (Gross price - Allowance amount) when gross price is provided.
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+## mut-ubl-tc434-example3.m02.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[1] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[2] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-5 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-5] Das Element "Seller contact point" (BT-41) muss übermittelt werden.
+failed-assert BR-DE-6 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-6] Das Element "Seller contact telephone number" (BT-42) muss übermittelt werden.
+failed-assert BR-DE-27 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-27] In BT-42 sollen mindestens drei Ziffern enthalten sein.
+## mut-ubl-tc434-example4.m00.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+## mut-ubl-tc434-example4.m06.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+## mut-ubl-tc434-example5.m04.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cbc:TaxCurrencyCode
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:PaymentMeans[some $code in tokenize('49 59', '\s') satisfies normalize-space(cbc:PaymentMeansCode) = $code]
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+failed-assert PEPPOL-EN16931-R101 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[1] | [PEPPOL-EN16931-R101]-Element Document reference can only be used for Invoice line object
+failed-assert PEPPOL-EN16931-R101 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[2] | [PEPPOL-EN16931-R101]-Element Document reference can only be used for Invoice line object
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-30 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-30] Wenn "DIRECT DEBIT" BG-19 vorhanden ist, dann muss "Bank assigned creditor identifier" BT-90 übermittelt werden.
+## mut-ubl-tc434-example6.m02.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-1 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-1] Eine Rechnung (INVOICE) muss Angaben zu "PAYMENT INSTRUCTIONS" (BG-16) enthalten.
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+failed-assert BR-DE-3 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-3] Das Element "Seller city" (BT-37) muss übermittelt werden.
+failed-assert BR-DE-4 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-4] Das Element "Seller post code" (BT-38) muss übermittelt werden.
+failed-assert BR-DE-8 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-8] Das Element "Buyer city" (BT-52) muss übermittelt werden.
+failed-assert BR-DE-9 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}PostalAddress[1] | [BR-DE-9] Das Element "Buyer post code" (BT-53) muss übermittelt werden.
+## mut-ubl-tc434-example7.m00.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-14 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}TaxTotal[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}TaxSubtotal[1] | [BR-DE-14] Das Element "VAT category rate" (BT-119) muss übermittelt werden.
+## mut-ubl-tc434-example7.m06.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-14 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}TaxTotal[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}TaxSubtotal[1] | [BR-DE-14] Das Element "VAT category rate" (BT-119) muss übermittelt werden.
+## mut-ubl-tc434-example8.m04.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-5 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-5] Das Element "Seller contact point" (BT-41) muss übermittelt werden.
+failed-assert BR-DE-6 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-6] Das Element "Seller contact telephone number" (BT-42) muss übermittelt werden.
+failed-assert BR-DE-27 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-27] In BT-42 sollen mindestens drei Ziffern enthalten sein.
+## mut-ubl-tc434-example9.m02.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R001 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R001]-Business process MUST be provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R130 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Price[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}BaseQuantity[1] | [PEPPOL-EN16931-R130]-Unit code of price base quantity MUST be same as invoiced quantity.
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-5 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-5] Das Element "Seller contact point" (BT-41) muss übermittelt werden.
+## sample-discount-price.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cbc:TaxCurrencyCode
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert PEPPOL-EN16931-R054 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [PEPPOL-EN16931-R054]-Only one tax total without tax subtotals MUST be provided when tax currency code is provided.
+failed-assert PEPPOL-EN16931-R005 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}TaxCurrencyCode[1] | [PEPPOL-EN16931-R005]-VAT accounting currency code MUST be different from invoice currency code when provided.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-TMP-32 information /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-TMP-32] Eine Rechnung sollte zur Angabe des Liefer-/Leistungsdatums entweder BT-72 "Actual delivery date", BG-14 "Invoicing period" oder in jeder Rechnungsposition BG-26 "Invoice line period" enthalten.
+failed-assert BR-DE-2 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1] | [BR-DE-2] Die Gruppe "SELLER CONTACT" (BG-6) muss übermittelt werden.
+## ubl-tc434-creditnote1.xml
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2}CreditNote[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.
+failed-assert BR-DE-5 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2}CreditNote[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-5] Das Element "Seller contact point" (BT-41) muss übermittelt werden.
+failed-assert BR-DE-6 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2}CreditNote[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-6] Das Element "Seller contact telephone number" (BT-42) muss übermittelt werden.
+failed-assert BR-DE-27 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2}CreditNote[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Contact[1] | [BR-DE-27] In BT-42 sollen mindestens drei Ziffern enthalten sein.
+## ubl-tc434-example2.xml
+fired //*[not(*) and not(normalize-space())]
+fired ubl-creditnote:CreditNote | ubl-invoice:Invoice
+fired cac:AccountingSupplierParty/cac:Party
+fired cac:AccountingCustomerParty/cac:Party
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:StartDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:StartDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:StartDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:StartDate
+fired ubl-invoice:Invoice[cac:InvoicePeriod/cbc:EndDate]/cac:InvoiceLine/cac:InvoicePeriod/cbc:EndDate | ubl-creditnote:CreditNote[cac:InvoicePeriod/cbc:EndDate]/cac:CreditNoteLine/cac:InvoicePeriod/cbc:EndDate
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired ubl-invoice:Invoice/cac:AllowanceCharge | ubl-invoice:Invoice/cac:InvoiceLine/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:AllowanceCharge | ubl-creditnote:CreditNote/cac:CreditNoteLine/cac:AllowanceCharge
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:Price/cac:AllowanceCharge
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired cac:InvoiceLine | cac:CreditNoteLine
+fired cac:Price/cbc:BaseQuantity[@unitCode]
+fired /ubl:Invoice | /cn:CreditNote
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:AdditionalDocumentReference/cac:Attachment/cac:ExternalReference | /cn:CreditNote/cac:AdditionalDocumentReference/cac:Attachment/cac:ExternalReference
+fired /ubl:Invoice/cac:AccountingSupplierParty | /cn:CreditNote/cac:AccountingSupplierParty
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress
+fired /ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact | /cn:CreditNote/cac:AccountingSupplierParty/cac:Party/cac:Contact
+fired /ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress | /cn:CreditNote/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired /ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address | /cn:CreditNote/cac:Delivery/cac:DeliveryLocation/cac:Address
+fired /ubl:Invoice/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')] | /cn:CreditNote/cac:PaymentMeans[normalize-space(cbc:PaymentMeansCode) = ('30','58')]
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired /ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal | /cn:CreditNote/cac:TaxTotal/cac:TaxSubtotal
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+fired cbc:IssueDate | cbc:DueDate | cbc:StartDate | cbc:EndDate | cbc:ActualDeliveryDate | cbc:IssueDate | cbc:TaxPointDate | cbc:PaymentDueDate
+failed-assert PEPPOL-EN16931-R008 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[5]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}OrderLineReference[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}LineID[1] | [PEPPOL-EN16931-R008]-Document MUST not contain empty elements.
+failed-assert PEPPOL-EN16931-R020 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingSupplierParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R020]-Seller electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R010 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AccountingCustomerParty[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Party[1] | [PEPPOL-EN16931-R010]-Buyer electronic address MUST be provided
+failed-assert PEPPOL-EN16931-R043 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AllowanceCharge[1] | [PEPPOL-EN16931-R043]-Allowance/charge ChargeIndicator value MUST equal 'true' or 'false'
+failed-assert PEPPOL-EN16931-R120 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[1] | [PEPPOL-EN16931-R120]-Invoice line net amount MUST equal (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
+failed-assert PEPPOL-EN16931-R046 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}InvoiceLine[3]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}Price[1]/Q{urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2}AllowanceCharge[1] | [PEPPOL-EN16931-R046]-Item net price MUST equal (Gross price - Allowance amount) when gross price is provided.
+failed-assert BR-DE-15 fatal /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden.
+failed-assert BR-DE-21 warning /Q{urn:oasis:names:specification:ubl:schema:xsd:Invoice-2}Invoice[1] | [BR-DE-21] Das Element "Specification identifier" (BT-24) soll syntaktisch der Kennung des Standards XRechnung entsprechen.

@@ -751,7 +751,7 @@ begin
           Fail('XPTY0004', Name + ': the search value must be a single item');
         for I := 0 to A.Count - 1 do
           if SameValue(A.Items[I], B.Items[0], False) then
-            LandrixXmlXPathAppend(Result, IntegerItemOf(I + 1));
+            LandrixXmlXPathAppend(Result, IntegerItemOf(Int64(I) + 1));
       end;
     xfnData:
       Result := Atomize(Arg(0));

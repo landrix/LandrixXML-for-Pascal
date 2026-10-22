@@ -36,6 +36,7 @@ uses
   LandrixXmlTestXPathTree,
   LandrixXmlTestXPath,
   LandrixXmlTestXPathEval,
+  LandrixXmlTestSchematron,
   LandrixXmlTestLocal;
 
 function FilterParam: string;
@@ -66,6 +67,7 @@ begin
   LandrixXmlTestXPathTree.Register;
   LandrixXmlTestXPath.Register;
   LandrixXmlTestXPathEval.Register;
+  LandrixXmlTestSchematron.Register;
   LandrixXmlTestLocal.Register;
   ExitCode := RunAllTests(FilterParam);
 end.

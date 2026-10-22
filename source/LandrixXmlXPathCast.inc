@@ -250,6 +250,7 @@ begin
 end;
 
 function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType): TLandrixXmlXPathItem; forward;
+function DoubleToIntegerAsSaxon(const D: TLandrixXmlDouble): TLandrixXmlDecimal; forward;
 
 { Compares two atomic values of comparable types (after the conversions of
   general or value comparisons). }
@@ -382,7 +383,7 @@ begin
           Fail('FOAR0002', 'idiv of NaN or infinity');
         if LandrixXmlDoubleIsNaN(Q) or LandrixXmlDoubleIsInfinite(Q) then
           Fail('FOCA0002', 'the quotient of idiv is too large');
-        Result := IntegerItem(LandrixXmlDoubleToInteger(Q));
+        Result := IntegerItem(DoubleToIntegerAsSaxon(Q));
       end;
     end;
     Exit;

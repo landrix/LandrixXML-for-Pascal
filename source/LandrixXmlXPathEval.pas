@@ -692,7 +692,7 @@ function TLandrixXmlXPathEvaluator.ReadVariable(Slot: Integer): TLandrixXmlXPath
 var
   P: PSlot;
   SavedExpr: TLandrixXmlXPathExpression;
-  SavedBase, Node: Integer;
+  SavedBase, Node, SavedCurrent: Integer;
   Value: TLandrixXmlXPathSequence;
   Empty: TLandrixXmlXPathSequence;
 begin
@@ -710,6 +710,10 @@ begin
         P^.State := xssEvaluating;
         Node := P^.ContextNode;
         Empty := LandrixXmlXPathEmpty;
+        { current() is the variable's own context item (the document for
+          a global, the rule's node for a rule variable, none for -1) }
+        SavedCurrent := FCurrentNode;
+        FCurrentNode := Node;
         EnterExpression(P^.Expression, SavedExpr, SavedBase);
         try
           try
@@ -719,6 +723,7 @@ begin
               Value := Eval(FExpr.Root, -1, 0, 0, Empty);
           finally
             LeaveExpression(SavedExpr, SavedBase);
+            FCurrentNode := SavedCurrent;
           end;
         except
           on E: ELandrixXmlXPathError do
@@ -1489,6 +1494,8 @@ begin
   Inc(FDepth);
   SavedFrame := FFrame;
   SavedCurrent := FCurrentNode;
+  { no current() inside a function, as in XSLT }
+  FCurrentNode := -1;
   FFrame := nil;
   try
     SetLength(FFrame, Def.FrameSize);
