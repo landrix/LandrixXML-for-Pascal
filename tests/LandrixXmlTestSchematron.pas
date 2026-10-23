@@ -640,16 +640,19 @@ begin
   Rules := TLandrixXmlSchematronRules.Create;
   V := TLandrixXmlSchematronValidator.Create(Rules);
   try
+    { documentation (other namespaces, sch:p) is not looked into }
+    Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + 'documentation.sch'));
+    CheckEquals(1, Rules.PatternCount, 'documentation.sch: one pattern');
     Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + 'ok.sch'));
     CheckEqualsStr('Small test rules', LandrixXmlUtf8ToString(Rules.Title), 'title');
     CheckEqualsStr('ok.sch', LandrixXmlUtf8ToString(Rules.Source), 'source');
     Check(not V.ValidateFile(DataPath('compiler' + PathDelim + 'doc.xml')), 'not valid');
     S := '';
     for I := 0 to V.ResultCount - 1 do
-      S := S + LandrixXmlUtf8ToString(V.Results[I].Id + ' ' + V.Results[I].Location + ' ' +
-        V.Results[I].Message) + ' / ';
-    CheckEqualsStr('A1 /Q{urn:p}r[1]/Q{urn:p}a[3] a with n = ''11'' is big / ' +
-      'R1 /Q{urn:p}r[1] total 24, half of 12 in p:r / ', S, 'results');
+      S := S + LandrixXmlUtf8ToString(V.Results[I].Id + ' ' + V.Results[I].Flag + ' ' + V.Results[I].Role + ' ' +
+        V.Results[I].Location + ' ' + V.Results[I].Message) + ' / ';
+    CheckEqualsStr('A1 fatal  /Q{urn:p}r[1]/Q{urn:p}a[3] a with n = ''11'' is big / ' +
+      'R1 information info /Q{urn:p}r[1] total 24, half of 12 in p:r / ', S, 'results');
   finally
     V.Free;
     Rules.Free;
@@ -692,6 +695,12 @@ begin
   CheckCompileError('function-as.sch', xecUnsupported, 'function-as.sch:5');
   CheckCompileError('function-scope-comment.sch', xecUnsupported, 'function-scope-comment.sch:6');
   CheckCompileError('function-sequence.sch', xecUnsupported, 'function-sequence.sch:6');
+  CheckCompileError('attr-severity.sch', xecUnsupported, 'attr-severity.sch:4');
+  CheckCompileError('attr-edition.sch', xecUnsupported, 'attr-edition.sch:2');
+  CheckCompileError('attr-xsl.sch', xecUnsupported, 'attr-xsl.sch:4');
+  CheckCompileError('group.sch', xecUnsupported, 'group.sch:4');
+  CheckCompileError('xml-space.sch', xecUnsupported, 'xml-space.sch:2');
+  CheckCompileError('xml-base.sch', xecUnsupported, 'xml-base.sch:3');
 end;
 
 { White space outside strings and comments collapses; quotes in comments

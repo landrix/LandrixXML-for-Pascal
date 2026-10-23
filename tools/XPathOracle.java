@@ -49,6 +49,9 @@ public class XPathOracle {
         DocumentBuilder db = proc.newDocumentBuilder();
         XdmNode doc = db.build(new File(args[0]));
         XPathCompiler xc = proc.newXPathCompiler();
+        // the Saxon profile: XPath 3.1, as Saxon 12 runs the expressions of XSLT 2.0
+        // stylesheets (the KoSIT validator); set explicitly, not left to the default
+        xc.setLanguageVersion("3.1");
         List<String> lines = Files.readAllLines(new File(args[1]).toPath(), StandardCharsets.UTF_8);
         for (String line : lines) {
             if (line.startsWith("ns ")) {

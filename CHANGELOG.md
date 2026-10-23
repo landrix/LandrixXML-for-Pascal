@@ -118,6 +118,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   on two elements) goes on to the next rule of the pattern instead of
   giving a dynamic error, as in the KoSIT validator. Found with the Peppol
   BIS 3.0.21 rules.
+- The Schematron compiler (and `tools/sch-compile.py`) rejects every
+  attribute of a Schematron or XSLT element it does not implement, such
+  as `severity`, `visit-each` and `schematronEdition` of Schematron 2025,
+  the Schematron 2025 elements `group`, `library` and `rules`, `sch:param`,
+  and `xml:space="preserve"` and `xml:base` (which would change white
+  space in XSLT functions or include paths), with file and line, instead
+  of ignoring them. Documentation (other namespaces, `sch:p`,
+  `sch:title`) is not checked.
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
   `LandrixXmlXsdValueText` and `LandrixXmlXsdValueKey`. Messages quote
   values whole, show values in Xerces' canonical form (decimals, float and

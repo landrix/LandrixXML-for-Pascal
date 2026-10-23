@@ -25,10 +25,13 @@ unique within the function. This tool does not check that a lifted variable is
 used only inside its branch (it has no XPath parser); the Pascal compiler does.
 
 Anything else (abstract patterns, sch:extends, sch:diagnostics, sch:properties,
-the attributes diagnostics, properties and subject of checks, documents of
+sch:param, the Schematron 2025 elements group, library and rules, the
+attributes diagnostics, properties and subject of checks, documents of
 patterns, "as" of lets, other XSLT elements, elements without a namespace,
-one prefix bound to two namespaces) is rejected with file and line, never
-dropped; elements of other namespaces (documentation) are ignored.
+one prefix bound to two namespaces, every attribute of a Schematron or XSLT
+element not in ALLOWED, xml:space="preserve", xml:base) is rejected
+with file and line, never dropped; elements of other namespaces
+(documentation) are ignored.
 source/LandrixXmlSchematronCompiler.pas does the same in Pascal; the tests
 compare both on tests/data/schematron/sources. sch:include is replaced by the included element where it stands
 (recursively; cycles are rejected). The expressions are copied as written
@@ -65,11 +68,45 @@ from xml.sax.saxutils import quoteattr, escape
 
 SCH = "http://purl.oclc.org/dsdl/schematron"
 XSL = "http://www.w3.org/1999/XSL/Transform"
+XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
+XML_BASE = "{http://www.w3.org/XML/1998/namespace}base"
 OUT_NS = "urn:landrix:schematron-rules"
 
 
 class CompileError(Exception):
     pass
+
+
+# The attributes (without namespace) a Schematron or XSLT element may have
+# here; elements not listed are not checked (rejected or ignored as a whole).
+# Some are allowed only to reject them with a better message where the
+# element is compiled; icon, see and fpi are documentation. As
+# AllowedAttributes in LandrixXmlSchematronCompiler.
+DOC_ATTRS = {"icon", "see", "fpi"}
+ALLOWED = {
+    (SCH, "schema"): {"queryBinding", "schemaVersion", "defaultPhase", "id"} | DOC_ATTRS,
+    (SCH, "ns"): {"prefix", "uri"},
+    (SCH, "let"): {"name", "value", "as"},
+    (SCH, "pattern"): {"id", "abstract", "is-a", "documents"} | DOC_ATTRS,
+    (SCH, "rule"): {"context", "id", "flag", "role", "abstract", "subject"} | DOC_ATTRS,
+    (SCH, "assert"): {"test", "id", "flag", "role", "diagnostics", "properties", "subject"} | DOC_ATTRS,
+    (SCH, "report"): {"test", "id", "flag", "role", "diagnostics", "properties", "subject"} | DOC_ATTRS,
+    (SCH, "name"): {"path"},
+    (SCH, "value-of"): {"select"},
+    (SCH, "emph"): set(),
+    (SCH, "dir"): {"value"},
+    (SCH, "span"): {"class"},
+    (SCH, "phase"): {"id"} | DOC_ATTRS,
+    (SCH, "active"): {"pattern"},
+    (SCH, "include"): {"href"},
+    (XSL, "function"): {"name", "as"},
+    (XSL, "param"): {"name", "as", "select"},
+    (XSL, "variable"): {"name", "as", "select"},
+    (XSL, "sequence"): {"select"},
+    (XSL, "choose"): set(),
+    (XSL, "when"): {"test"},
+    (XSL, "otherwise"): set(),
+}
 
 
 def tag(el):
@@ -179,7 +216,32 @@ class Compiler:
         root, lines = LineParser.parse(path)
         doc = (root, path, lines)
         self.docs.append(doc)
+        self.check_attributes(root, doc)
         return doc
+
+    def check_attributes(self, el, doc):
+        """Every attribute without namespace that a Schematron or XSLT element
+        may not have is rejected (attributes of other namespaces are allowed).
+        Documentation (sch:title, sch:p, other namespaces) is not looked into.
+        xml:space="preserve" (white space text content in XSLT, also through
+        sch:include) and xml:base (other include paths) are not supported."""
+        if not isinstance(el.tag, str):
+            return
+        ns, local = tag(el)
+        if ns not in (SCH, XSL) or (ns, local) in ((SCH, "title"), (SCH, "p")):
+            return
+        if el.get(XML_SPACE) == "preserve":
+            self.fail('xml:space="preserve" is not supported', el, doc)
+        if el.get(XML_BASE) is not None:
+            self.fail("xml:base is not supported", el, doc)
+        allowed = ALLOWED.get((ns, local))
+        if allowed is not None:
+            for a in el.attrib:
+                if not a.startswith("{") and a not in allowed:
+                    self.fail("the attribute %s of %s:%s is not supported"
+                              % (a, "sch" if ns == SCH else "xsl", local), el, doc)
+        for c in el:
+            self.check_attributes(c, doc)
 
     def include(self, el, doc):
         """The root of the document an sch:include names, loaded; a cycle is an error."""
@@ -227,8 +289,10 @@ class Compiler:
                 self.add_global(el, doc)
             elif local == "pattern":
                 self.pattern(el, doc)
-            elif local in ("diagnostics", "properties", "extends"):
+            elif local in ("diagnostics", "properties", "extends", "param"):
                 self.fail("sch:%s is not supported" % local, el, doc)
+            elif local in ("group", "library", "rules"):
+                self.fail("sch:%s (Schematron 2025) is not supported" % local, el, doc)
             else:
                 self.fail("unexpected sch:%s" % local, el, doc)
         elif ns == XSL:
@@ -286,10 +350,10 @@ class Compiler:
     def rule(self, el, doc):
         if el.get("abstract") == "true":
             self.fail("abstract rules are not supported", el, doc)
-        if el.get("subject") is not None:
-            self.fail("the subject of a rule is not supported", el, doc)
         if el.get("context") is None:
             self.fail("a rule without context", el, doc)
+        if el.get("subject") is not None:
+            self.fail("the subject of a rule is not supported", el, doc)
         lets, checks = [], []
         names = set()
         for c in el:

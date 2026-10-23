@@ -27,10 +27,15 @@
   are ignored.
 
   Rejected with file and line, never dropped: abstract patterns and rules,
-  sch:extends, sch:diagnostics, sch:properties, the attributes
-  diagnostics, properties and subject of checks, documents of patterns,
-  "as" of lets, other phases, other XSLT elements, elements without a
-  namespace. The expressions are copied with white space outside string
+  sch:extends, sch:diagnostics, sch:properties, sch:param, the elements of
+  Schematron 2025 (group, library, rules), the attributes diagnostics,
+  properties and subject of checks, documents of patterns, "as" of lets,
+  other phases, other XSLT elements, elements without a namespace, and
+  every attribute (without namespace) of a Schematron or XSLT element
+  that is not in the list of AllowedAttributes, such as severity,
+  visit-each and schematronEdition, and xml:space="preserve" and
+  xml:base. queryBinding xslt3 compiles the same
+  subset; what goes beyond it is rejected when the rules are loaded. The expressions are copied with white space outside string
   literals collapsed; the XPath parser checks them when the rules are
   loaded. AddOverride replaces the test of one check (for a rule set
   whose source and the XSLT a validator runs differ); the rule file then
@@ -72,6 +77,7 @@ type
     procedure Fail(Node: TLandrixXmlNode; const Msg: string);
     procedure Unsupported(Node: TLandrixXmlNode; const Msg: string);
     function LoadDocument(const FileName: string): TLandrixXmlDocument;
+    procedure CheckAttributes(Node: TLandrixXmlNode);
     function Include(Node: TLandrixXmlNode): TLandrixXmlNode;
     procedure Walk(Node: TLandrixXmlNode);
     procedure AddNamespace(Node: TLandrixXmlNode);
@@ -115,6 +121,7 @@ uses
 const
   SchNs = 'http://purl.oclc.org/dsdl/schematron';
   XslNs = 'http://www.w3.org/1999/XSL/Transform';
+  XmlNs = 'http://www.w3.org/XML/1998/namespace';
   RulesNs = 'urn:landrix:schematron-rules';
 
 type
@@ -380,6 +387,67 @@ begin
     end;
 end;
 
+{ The attributes (without namespace) a Schematron or XSLT element may
+  have here, between spaces; '' if it is not checked (an element that is
+  rejected or ignored as a whole). Some are allowed only to reject them
+  with a better message where the element is compiled (abstract,
+  subject, ...); icon, see and fpi are documentation. }
+function AllowedAttributes(Node: TLandrixXmlNode): string;
+const
+  Doc = 'icon see fpi ';
+var
+  L: string;
+begin
+  Result := '';
+  L := LandrixXmlUtf8ToString(Node.LocalNameUtf8);
+  if Node.NamespaceUriUtf8 = SchNs then
+  begin
+    if L = 'schema' then
+      Result := ' queryBinding schemaVersion defaultPhase id ' + Doc
+    else if L = 'ns' then
+      Result := ' prefix uri '
+    else if L = 'let' then
+      Result := ' name value as '
+    else if L = 'pattern' then
+      Result := ' id abstract is-a documents ' + Doc
+    else if L = 'rule' then
+      Result := ' context id flag role abstract subject ' + Doc
+    else if (L = 'assert') or (L = 'report') then
+      Result := ' test id flag role diagnostics properties subject ' + Doc
+    else if L = 'name' then
+      Result := ' path '
+    else if L = 'value-of' then
+      Result := ' select '
+    else if L = 'emph' then
+      Result := ' '
+    else if L = 'dir' then
+      Result := ' value '
+    else if L = 'span' then
+      Result := ' class '
+    else if L = 'phase' then
+      Result := ' id ' + Doc
+    else if L = 'active' then
+      Result := ' pattern '
+    else if L = 'include' then
+      Result := ' href ';
+  end
+  else if Node.NamespaceUriUtf8 = XslNs then
+  begin
+    if L = 'function' then
+      Result := ' name as '
+    else if L = 'param' then
+      Result := ' name as select '
+    else if L = 'variable' then
+      Result := ' name as select '
+    else if L = 'sequence' then
+      Result := ' select '
+    else if (L = 'choose') or (L = 'otherwise') then
+      Result := ' '
+    else if L = 'when' then
+      Result := ' test ';
+  end;
+end;
+
 function IsSch(Node: TLandrixXmlNode; const LocalName: string): Boolean;
 begin
   Result := (Node <> nil) and (Node.NodeType = LandrixXmlDom.xntElement) and (Node.NamespaceUriUtf8 = SchNs) and
@@ -545,6 +613,49 @@ begin
   Result.KeepProcessingInstructions := False;
   Result.WhitespaceMode := xwmPreserve;
   Result.LoadFromFile(FileName);
+  CheckAttributes(Result.Root);
+end;
+
+{ Every attribute without namespace that Node and the Schematron and XSLT
+  elements below it may not have is rejected (attributes of other
+  namespaces are allowed, as Schematron allows them). Documentation
+  (sch:title, sch:p, elements of other namespaces) is not looked into.
+  xml:space="preserve" (white space text content in XSLT, also through
+  sch:include) and xml:base (other include paths) are not supported. }
+procedure TLandrixXmlSchematronCompiler.CheckAttributes(Node: TLandrixXmlNode);
+var
+  Allowed, Name, Element: string;
+  I: Integer;
+  C: TLandrixXmlNode;
+begin
+  if ((Node.NamespaceUriUtf8 <> SchNs) and (Node.NamespaceUriUtf8 <> XslNs)) or IsSch(Node, 'title') or
+    IsSch(Node, 'p') then
+    Exit;
+  if Node.AttributeValueUtf8(U(XmlNs), U('space')) = 'preserve' then
+    Unsupported(Node, 'xml:space="preserve" is not supported');
+  if Node.HasAttribute(U(XmlNs), U('base')) then
+    Unsupported(Node, 'xml:base is not supported');
+  Allowed := AllowedAttributes(Node);
+  if Allowed <> '' then
+    for I := 0 to Node.AttributeCount - 1 do
+      if Node.AttributeNamespaceUriUtf8(I) = '' then
+      begin
+        Name := S8(Node.AttributeLocalNameUtf8(I));
+        if Pos(' ' + Name + ' ', Allowed) = 0 then
+        begin
+          if Node.NamespaceUriUtf8 = SchNs then
+            Element := 'sch:' + S8(Node.LocalNameUtf8)
+          else
+            Element := 'xsl:' + S8(Node.LocalNameUtf8);
+          Unsupported(Node, 'the attribute ' + Name + ' of ' + Element + ' is not supported');
+        end;
+      end;
+  C := Node.FirstChildElement;
+  while C <> nil do
+  begin
+    CheckAttributes(C);
+    C := C.NextSiblingElement;
+  end;
 end;
 
 { The root element of the file an sch:include names. }
@@ -606,8 +717,10 @@ begin
       AddGlobal(Node)
     else if L = 'pattern' then
       AddPattern(Node)
-    else if (L = 'diagnostics') or (L = 'properties') or (L = 'extends') then
+    else if (L = 'diagnostics') or (L = 'properties') or (L = 'extends') or (L = 'param') then
       Unsupported(Node, 'sch:' + L + ' is not supported')
+    else if (L = 'group') or (L = 'library') or (L = 'rules') then
+      Unsupported(Node, 'sch:' + L + ' (Schematron 2025) is not supported')
     else
       Fail(Node, 'unexpected sch:' + L);
   end
