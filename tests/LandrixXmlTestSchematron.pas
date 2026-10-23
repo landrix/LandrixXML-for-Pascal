@@ -254,6 +254,20 @@ const
   Head = '<rules xmlns="urn:landrix:schematron-rules" format="1" source="t.sch" sha256="0" title="t">' +
     '<ns prefix="p" uri="urn:p"/>';
 
+{ the position of Sub in S from From on, 0 if not there }
+function PosFrom(const Sub, S: TLandrixXmlUtf8; From: Integer): Integer;
+var
+  I: Integer;
+begin
+  for I := From to Length(S) - Length(Sub) + 1 do
+    if Copy(S, I, Length(Sub)) = Sub then
+    begin
+      Result := I;
+      Exit;
+    end;
+  Result := 0;
+end;
+
 function SmallRules(const Body: string): TLandrixXmlSchematronRules;
 begin
   Result := TLandrixXmlSchematronRules.Create;
@@ -319,6 +333,76 @@ begin
     Check(V.ValidateTree(Tree), 'only a warning and a report: valid');
     CheckEquals(2, V.ResultCount, 'warning and report');
   finally
+    Tree.Free;
+    V.Free;
+    Rules.Free;
+  end;
+end;
+
+{ SVRL as SchXslt writes it: every pattern, fired and suppressed rules,
+  the results in between, a dynamic error as a comment. }
+procedure TestSvrl;
+var
+  Rules: TLandrixXmlSchematronRules;
+  V: TLandrixXmlSchematronValidator;
+  Tree: TLandrixXmlXPathTree;
+  Stream: TMemoryStream;
+  S: TLandrixXmlUtf8;
+  I, At: Integer;
+const
+  Expected: array[0..13] of string = (
+    '<svrl:schematron-output xmlns:svrl="http://purl.oclc.org/dsdl/svrl" title="t">',
+    '<svrl:ns-prefix-in-attribute-values prefix="p" uri="urn:p"/>',
+    '<svrl:active-pattern name="E" id="E" documents="urn:test"/>',
+    '<svrl:active-pattern name="A" id="A" documents="urn:test"/>',
+    '<svrl:fired-rule context="p:a[@k]"/>',
+    '<svrl:failed-assert location="/Q{urn:p}r[1]/Q{urn:p}a[1]" flag="fatal" id="A1" role="r" test="@k = ''1''">',
+    '<svrl:text>k is x</svrl:text>',
+    '<!--WARNING: Rule for context "p:a" shadowed by preceding rule-->',
+    '<svrl:suppressed-rule context="p:a"/>',
+    '<svrl:successful-report location="/Q{urn:p}r[1]/Q{urn:p}a[2]" id="A2" test="true()">',
+    '<svrl:active-pattern name="B" id="B" documents="urn:test"/>',
+    '<!-- dynamic error FORG0001 /Q{urn:p}r[1]/Q{urn:p}a[1]: FORG0001: cannot convert ''x'' to xs:integer -->',
+    '<svrl:failed-assert location="/Q{urn:p}r[1]/Q{urn:p}a[2]" flag="fatal" id="B1" test="xs:integer(@k) &gt; 0">',
+    '</svrl:schematron-output>');
+begin
+  Rules := SmallRules(
+    '<pattern id="E"/>' +
+    '<pattern id="A">' +
+    '<rule context="p:a[@k]" id="" line="1">' +
+    '<assert id="A1" flag="fatal" role="r" test="@k = ''1''" line="2"><text>k is </text><value-of select="@k"/></assert>' +
+    '</rule>' +
+    '<rule context="p:a" id="" line="3">' +
+    '<report id="A2" flag="" role="" test="true()" line="4"><text>any a</text></report></rule>' +
+    '</pattern>' +
+    '<pattern id="B"><rule context="p:a" id="" line="5">' +
+    '<assert id="B1" flag="fatal" role="" test="xs:integer(@k) &gt; 0" line="6"><text>number</text></assert>' +
+    '</rule></pattern>');
+  V := TLandrixXmlSchematronValidator.Create(Rules);
+  Tree := TLandrixXmlXPathTree.Create;
+  Stream := TMemoryStream.Create;
+  try
+    Tree.LoadFromUtf8(U('<p:r xmlns:p="urn:p"><p:a k="x"/><p:a/></p:r>'));
+    V.DocumentUri := U('urn:test');
+    V.ValidateTree(Tree);
+    V.SaveSvrlToStream(Stream);
+    S := '';
+    SetLength(S, Integer(Stream.Size));
+    if Length(S) > 0 then
+      Move(Stream.Memory^, S[1], Length(S));
+    { the parts in this order }
+    At := 1;
+    for I := 0 to High(Expected) do
+    begin
+      At := PosFrom(U(Expected[I]), S, At);
+      Check(At > 0, 'SVRL part ' + IntToStr(I) + ': ' + Expected[I] + ' in ' + LandrixXmlUtf8ToString(S));
+      if At = 0 then
+        Break;
+    end;
+    CheckEquals(0, PosFrom(U('any a</svrl:text>' + #10 + '   </svrl:successful-report>' + #10 +
+      '   <svrl:fired'), S, 1), 'no second fired rule in A for a[2]');
+  finally
+    Stream.Free;
     Tree.Free;
     V.Free;
     Rules.Free;
@@ -651,6 +735,9 @@ begin
     CheckEqualsStr('Small test rules', LandrixXmlUtf8ToString(Rules.Title), 'title');
     CheckEqualsStr('ok.sch', LandrixXmlUtf8ToString(Rules.Source), 'source');
     Check(not V.ValidateFile(DataPath('compiler' + PathDelim + 'doc.xml')), 'not valid');
+    S := LandrixXmlUtf8ToString(V.DocumentUri);
+    Check((Copy(S, 1, 6) = 'file:/') and (Copy(S, Length(S) - 16, 17) = '/compiler/doc.xml') and
+      (Pos(' ', S) = 0), 'the file URI: ' + S);
     S := '';
     for I := 0 to V.ResultCount - 1 do
       S := S + LandrixXmlUtf8ToString(V.Results[I].Id + ' ' + V.Results[I].Flag + ' ' + V.Results[I].Role + ' ' +
@@ -817,6 +904,7 @@ begin
   RegisterTest('Schematron.SmallRules', TestSmallRules);
   RegisterTest('Schematron.ContextErrors', TestContextErrors);
   RegisterTest('Schematron.CompilerDocuments', TestCompilerDocuments);
+  RegisterTest('Schematron.Svrl', TestSvrl);
   RegisterTest('Schematron.VariablesAndContexts', TestVariablesAndContexts);
   RegisterTest('Schematron.LoadErrors', TestLoadErrors);
   RegisterTest('Schematron.CompilerSources', TestCompilerSources);

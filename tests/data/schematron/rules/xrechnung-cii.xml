@@ -112,6 +112,8 @@
     <variable name="calculatedCheckDigit" as="" value="(10 - $sum mod 10) mod 10"/>
     <result value="(if (not(matches($number, '^\d+$'))) then (false()) else ($calculatedCheckDigit = number($checkDigit)))"/>
   </function>
+  <pattern id="variable-pattern">
+  </pattern>
   <pattern id="peppol-cii-pattern-1">
     <rule context="rsm:ExchangedDocumentContext" id="" line="XRechnung-CII-validation.sch:172">
       <assert id="PEPPOL-EN16931-R001" flag="fatal" role="" test="ram:BusinessProcessSpecifiedDocumentContextParameter/ram:ID" line="XRechnung-CII-validation.sch:173"><text>[PEPPOL-EN16931-R001]-Business process MUST be provided.</text></assert>

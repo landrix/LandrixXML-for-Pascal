@@ -259,7 +259,9 @@ def from_rules(path):
                                    "parts": message_parts(c, False)})
             ctx = collapse(r.get("context"))
             rules.append(((ctx, ctx), lets, checks))
-        out.append(rules)
+        # a pattern without rules has no template in the XSLT
+        if rules:
+            out.append(rules)
     return out, globals_, ns, functions
 
 

@@ -564,7 +564,7 @@ class Compiler:
             elif ns == "":
                 self.fail("element %s without namespace" % local, c, doc)
         return {"context": collapse(el.get("context")), "id": el.get("id") or "", "line": self.where(el, doc),
-                "lets": lets, "checks": checks}
+                "flag": el.get("flag") or "", "role": el.get("role") or "", "lets": lets, "checks": checks}
 
     def check(self, el, kind, doc):
         if el.get("test") is None:
@@ -762,11 +762,11 @@ class Compiler:
             lines.append("    <result value=%s/>" % a(f["result"]))
             lines.append("  </function>")
         for pid, rules in self.patterns:
-            if not rules:
-                continue
+            # a pattern without rules too: SVRL reports it as active
             lines.append("  <pattern id=%s>" % a(pid))
             for r in rules:
-                lines.append("    <rule context=%s id=%s line=%s>" % (a(r["context"]), a(r["id"]), a(r["line"])))
+                extra = "".join(" %s=%s" % (k, a(r[k])) for k in ("flag", "role") if r[k])
+                lines.append("    <rule context=%s id=%s%s line=%s>" % (a(r["context"]), a(r["id"]), extra, a(r["line"])))
                 for n, v in r["lets"]:
                     lines.append("      <let name=%s value=%s/>" % (a(n), a(v)))
                 for c in r["checks"]:

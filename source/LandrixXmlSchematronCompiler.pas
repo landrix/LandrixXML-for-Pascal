@@ -168,7 +168,8 @@ type
 
   TRule = class
   public
-    Context, Id, Line: TLandrixXmlUtf8;
+    { Flag and Role only for SVRL (svrl:fired-rule) }
+    Context, Id, Flag, Role, Line: TLandrixXmlUtf8;
     LetNames, LetValues: TLandrixXmlUtf8Array;
     Checks: TObjectList;
     constructor Create;
@@ -1241,6 +1242,8 @@ begin
   try
     R.Context := LandrixXmlSchematronCollapse(Attr(Node, 'context'));
     R.Id := Attr(Node, 'id');
+    R.Flag := Attr(Node, 'flag');
+    R.Role := Attr(Node, 'role');
     R.Line := U(Where(Node));
     C := Node.FirstChildElement;
     while C <> nil do
@@ -1831,8 +1834,7 @@ begin
     for I := 0 to Integer(FPatterns.Count) - 1 do
     begin
       P := TPattern(FPatterns[I]);
-      if P.Rules.Count = 0 then
-        Continue;
+      { a pattern without rules too: SVRL reports it as active }
       E := Root.AddElement(RulesNs, '', 'pattern');
       E.SetAttributeUtf8('id', P.Id);
       for J := 0 to Integer(P.Rules.Count) - 1 do
@@ -1841,6 +1843,10 @@ begin
         X := E.AddElement(RulesNs, '', 'rule');
         X.SetAttributeUtf8('context', R.Context);
         X.SetAttributeUtf8('id', R.Id);
+        if R.Flag <> '' then
+          X.SetAttributeUtf8('flag', R.Flag);
+        if R.Role <> '' then
+          X.SetAttributeUtf8('role', R.Role);
         X.SetAttributeUtf8('line', R.Line);
         for K := 0 to Integer(Length(R.LetNames)) - 1 do
         begin

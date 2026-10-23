@@ -123,6 +123,8 @@
     <variable name="calculatedCheckDigit" as="" value="(10 - $sum mod 10) mod 10"/>
     <result value="(if (not(matches($number, '^\d+$'))) then (false()) else ($calculatedCheckDigit = number($checkDigit)))"/>
   </function>
+  <pattern id="variable-pattern">
+  </pattern>
   <pattern id="peppol-ubl-pattern-1">
     <rule context="//*[not(*) and not(normalize-space())]" id="" line="XRechnung-UBL-validation.sch:189">
       <assert id="PEPPOL-EN16931-R008" flag="fatal" role="" test="self::cbc:ID[parent::cac:OrderReference]" line="XRechnung-UBL-validation.sch:190"><text>[PEPPOL-EN16931-R008]-Document MUST not contain empty elements.</text></assert>

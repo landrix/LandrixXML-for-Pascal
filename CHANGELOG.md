@@ -135,6 +135,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   in one space, and `/` and `root()` give the root of the node's own tree.
   The Factur-X 1.09.2 rules (all five profiles) give the same results as
   Saxon with the shipped XSLT on the test invoices.
+- SVRL output: `TLandrixXmlSchematronValidator.SaveSvrlToStream` and
+  `SaveSvrlToFile` write the last validation in the layout of SchXslt (as
+  the KoSIT validator reports EN16931 and XRechnung): per pattern the
+  active pattern, the fired rules with their failed asserts and successful
+  reports, and the rules a preceding rule of the pattern suppressed;
+  `DocumentUri` names the document (`ValidateFile` sets it). On the test
+  invoices the SVRL equals SchXslt's apart from its metadata. Rule files now
+  also list patterns without rules, which SVRL reports as active.
 - `tools/gen-schematron-testdata.py` collapses only XML white space in
   messages (a no-break space is text, as in the library).
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
