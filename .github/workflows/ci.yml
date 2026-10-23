@@ -13,7 +13,7 @@ jobs:
       - name: Install Free Pascal
         run: |
           sudo apt-get update
-          sudo apt-get install -y fp-compiler fp-units-base
+          sudo apt-get install -y fp-compiler fp-units-base fp-units-fcl
           fpc -iV
 
       - name: Check forbidden language features
