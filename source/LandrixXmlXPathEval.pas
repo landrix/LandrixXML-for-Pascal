@@ -461,6 +461,50 @@ begin
   Result.DoubleValue := D;
 end;
 
+{ An xs:integer (Kind xikInteger) or xs:decimal. }
+function DecimalKindItem(Kind: TLandrixXmlXPathItemKind; const D: TLandrixXmlDecimal): TLandrixXmlXPathItem;
+begin
+  if Kind = xikInteger then
+    Result := IntegerItem(D)
+  else
+    Result := DecimalItem(D);
+end;
+
+{ An xs:date, xs:dateTime or xs:time with its lexical form. }
+function DateItem(Kind: TLandrixXmlXPathItemKind; const D: TLandrixXmlXsdDateTime;
+  const Text: TLandrixXmlUtf8): TLandrixXmlXPathItem;
+begin
+  InitItem(Result, Kind);
+  Result.DateTime := D;
+  Result.Text := Text;
+end;
+
+{ The values of items. Only InitItem, the constructors above, these
+  functions and EvaluateSequence's copy use the value fields of an item,
+  so that their layout can change. }
+
+function ItemBoolean(const Item: TLandrixXmlXPathItem): Boolean;
+begin
+  Result := Item.BooleanValue;
+end;
+
+{ the value of an xs:integer or xs:decimal }
+function ItemDecimal(const Item: TLandrixXmlXPathItem): TLandrixXmlDecimal;
+begin
+  Result := Item.Decimal;
+end;
+
+function ItemDouble(const Item: TLandrixXmlXPathItem): TLandrixXmlDouble;
+begin
+  Result := Item.DoubleValue;
+end;
+
+{ the value of an xs:date, xs:dateTime or xs:time }
+function ItemDateTime(const Item: TLandrixXmlXPathItem): TLandrixXmlXsdDateTime;
+begin
+  Result := Item.DateTime;
+end;
+
 function IsNumeric(Kind: TLandrixXmlXPathItemKind): Boolean;
 begin
   Result := Kind in [xikInteger, xikDecimal, xikDouble];

@@ -53,7 +53,7 @@ begin
           xikInteger: Ok := Item.Kind = xikInteger;
           xikDouble:
             if Item.Kind in [xikInteger, xikDecimal] then
-              Item := DoubleItem(LandrixXmlDoubleFromDecimal(Item.Decimal))
+              Item := DoubleItem(LandrixXmlDoubleFromDecimal(ItemDecimal(Item)))
             else
               Ok := Item.Kind = xikDouble;
           xikDate: Ok := Item.Kind = xikDate;
@@ -205,7 +205,7 @@ var
       V := CastTo(V, xikInteger, Xp20);
     if V.Kind <> xikInteger then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' must be an integer');
-    if not LandrixXmlDecimalTryToInt64(V.Decimal, I64) or (I64 > High(Integer)) or (I64 < Low(Integer)) then
+    if not LandrixXmlDecimalTryToInt64(ItemDecimal(V), I64) or (I64 > High(Integer)) or (I64 < Low(Integer)) then
       Fail('FOAR0002', Name + ': integer out of range');
     Result := Integer(I64);
   end;
@@ -257,8 +257,8 @@ var
       Q.Kind := xikString;
     if IsNumeric(P.Kind) and IsNumeric(Q.Kind) then
     begin
-      if (P.Kind = xikDouble) and (Q.Kind = xikDouble) and LandrixXmlDoubleIsNaN(P.DoubleValue) and
-        LandrixXmlDoubleIsNaN(Q.DoubleValue) then
+      if (P.Kind = xikDouble) and (Q.Kind = xikDouble) and LandrixXmlDoubleIsNaN(ItemDouble(P)) and
+        LandrixXmlDoubleIsNaN(ItemDouble(Q)) then
       begin
         Result := NaNEqual;
         Exit;
@@ -268,7 +268,7 @@ var
     else if IsStringLike(P.Kind) and IsStringLike(Q.Kind) then
       Result := P.Text = Q.Text
     else if (P.Kind = xikBoolean) and (Q.Kind = xikBoolean) then
-      Result := P.BooleanValue = Q.BooleanValue
+      Result := ItemBoolean(P) = ItemBoolean(Q)
     else if (P.Kind in [xikDate, xikDateTime, xikTime]) and (P.Kind = Q.Kind) then
     begin
       try
@@ -367,7 +367,7 @@ begin
           if A.Items[I].Kind = xikDouble then
           begin
             HasDouble := True;
-            if LandrixXmlDoubleIsNaN(A.Items[I].DoubleValue) then
+            if LandrixXmlDoubleIsNaN(ItemDouble(A.Items[I])) then
             begin
               Result := SingleSeq(A.Items[I]);
               Exit;
@@ -619,9 +619,9 @@ begin
             Item := CastTo(Item, xikInteger, Xp20);
           if Item.Kind <> xikInteger then
             Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not an integer');
-          if not LandrixXmlDecimalTryToInt64(Item.Decimal, V64) or (V64 < 1) or (V64 > $10FFFF) or
+          if not LandrixXmlDecimalTryToInt64(ItemDecimal(Item), V64) or (V64 < 1) or (V64 > $10FFFF) or
             not LandrixXmlIsXmlChar(Cardinal(V64)) then
-            Fail('FOCH0001', Name + ': ' + LandrixXmlUtf8ToString(LandrixXmlFormatDecimal(Item.Decimal)) +
+            Fail('FOCH0001', Name + ': ' + LandrixXmlUtf8ToString(LandrixXmlFormatDecimal(ItemDecimal(Item))) +
               ' is not an XML character');
           CPs[I] := Integer(V64);
         end;
@@ -664,25 +664,25 @@ begin
           K := -100000;
         if Item.Kind = xikDouble then
           case Id of
-            xfnAbs: Item.DoubleValue := LandrixXmlDoubleAbs(Item.DoubleValue);
-            xfnRound: Item.DoubleValue := LandrixXmlDoubleRound(Item.DoubleValue, K, xdrHalfCeiling);
-            xfnRoundHalfToEven: Item.DoubleValue := LandrixXmlDoubleRound(Item.DoubleValue, K, xdrHalfEven);
-            xfnFloor: Item.DoubleValue := LandrixXmlDoubleRound(Item.DoubleValue, 0, xdrFloor);
+            xfnAbs: Item := DoubleItem(LandrixXmlDoubleAbs(ItemDouble(Item)));
+            xfnRound: Item := DoubleItem(LandrixXmlDoubleRound(ItemDouble(Item), K, xdrHalfCeiling));
+            xfnRoundHalfToEven: Item := DoubleItem(LandrixXmlDoubleRound(ItemDouble(Item), K, xdrHalfEven));
+            xfnFloor: Item := DoubleItem(LandrixXmlDoubleRound(ItemDouble(Item), 0, xdrFloor));
           else
-            Item.DoubleValue := LandrixXmlDoubleRound(Item.DoubleValue, 0, xdrCeiling);
+            Item := DoubleItem(LandrixXmlDoubleRound(ItemDouble(Item), 0, xdrCeiling));
           end
         else
           case Id of
-            xfnAbs: Item.Decimal := LandrixXmlDecimalAbs(Item.Decimal);
+            xfnAbs: Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalAbs(ItemDecimal(Item)));
             xfnRound:
               if (Item.Kind = xikDecimal) or (K < 0) then
-                Item.Decimal := LandrixXmlDecimalRound(Item.Decimal, K, xdrHalfCeiling);
+                Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), K, xdrHalfCeiling));
             xfnRoundHalfToEven:
               if (Item.Kind = xikDecimal) or (K < 0) then
-                Item.Decimal := LandrixXmlDecimalRound(Item.Decimal, K, xdrHalfEven);
-            xfnFloor: Item.Decimal := LandrixXmlDecimalRound(Item.Decimal, 0, xdrFloor);
+                Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), K, xdrHalfEven));
+            xfnFloor: Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), 0, xdrFloor));
           else
-            Item.Decimal := LandrixXmlDecimalRound(Item.Decimal, 0, xdrCeiling);
+            Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), 0, xdrCeiling));
           end;
         Result := SingleSeq(Item);
       end;

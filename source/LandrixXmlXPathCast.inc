@@ -12,14 +12,14 @@ function AtomicString(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
 begin
   case Item.Kind of
     xikBoolean:
-      if Item.BooleanValue then
+      if ItemBoolean(Item) then
         Result := 'true'
       else
         Result := 'false';
     xikInteger, xikDecimal:
-      Result := LandrixXmlFormatDecimal(Item.Decimal);
+      Result := LandrixXmlFormatDecimal(ItemDecimal(Item));
     xikDouble:
-      Result := LandrixXmlDoubleFormat(Item.DoubleValue);
+      Result := LandrixXmlDoubleFormat(ItemDouble(Item));
   else
     Result := Item.Text;
   end;
@@ -40,13 +40,14 @@ begin
     Fail('FORG0006', 'the effective boolean value of a sequence of several atomic values');
   case S.Items[0].Kind of
     xikBoolean:
-      Result := S.Items[0].BooleanValue;
+      Result := ItemBoolean(S.Items[0]);
     xikString, xikUntypedAtomic, xikAnyUri:
       Result := S.Items[0].Text <> '';
     xikInteger, xikDecimal:
-      Result := not LandrixXmlDecimalIsZero(S.Items[0].Decimal);
+      Result := not LandrixXmlDecimalIsZero(ItemDecimal(S.Items[0]));
     xikDouble:
-      Result := not LandrixXmlDoubleIsZero(S.Items[0].DoubleValue) and not LandrixXmlDoubleIsNaN(S.Items[0].DoubleValue);
+      Result := not LandrixXmlDoubleIsZero(ItemDouble(S.Items[0])) and
+        not LandrixXmlDoubleIsNaN(ItemDouble(S.Items[0]));
   else
     Fail('FORG0006', 'no effective boolean value for ' + KindName(S.Items[0].Kind));
   end;
@@ -55,17 +56,17 @@ end;
 function ToDouble(const Item: TLandrixXmlXPathItem): TLandrixXmlDouble;
 begin
   if Item.Kind = xikDouble then
-    Result := Item.DoubleValue
+    Result := ItemDouble(Item)
   else
-    Result := LandrixXmlDoubleFromDecimal(Item.Decimal);
+    Result := LandrixXmlDoubleFromDecimal(ItemDecimal(Item));
 end;
 
 function NumericEqualsInteger(const Item: TLandrixXmlXPathItem; Value: Integer): Boolean;
 begin
   if Item.Kind = xikDouble then
-    Result := LandrixXmlDoubleCompare(Item.DoubleValue, LandrixXmlDoubleFromInt64(Value)) = 0
+    Result := LandrixXmlDoubleCompare(ItemDouble(Item), LandrixXmlDoubleFromInt64(Value)) = 0
   else
-    Result := LandrixXmlDecimalCompare(Item.Decimal, LandrixXmlDecimalFromInt64(Value)) = 0;
+    Result := LandrixXmlDecimalCompare(ItemDecimal(Item), LandrixXmlDecimalFromInt64(Value)) = 0;
 end;
 
 { untypedAtomic or a string as xs:double, as Saxon parses it; XPath 2.0
@@ -176,6 +177,7 @@ var
   V: TLandrixXmlXsdValue;
   E: TLandrixXmlXsdError;
   Name: TLandrixXmlUtf8;
+  D: TLandrixXmlXsdDateTime;
 begin
   case Kind of
     xikDate: Name := 'date';
@@ -187,10 +189,9 @@ begin
   if not T.Validate(S, V, E) then
     Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:' +
       LandrixXmlUtf8ToString(Name));
-  InitItem(Result, Kind);
-  Result.DateTime := V.DateTime;
-  NormalizeMidnight(Result.DateTime, Kind);
-  Result.Text := DateText(Result.DateTime, Kind);
+  D := V.DateTime;
+  NormalizeMidnight(D, Kind);
+  Result := DateItem(Kind, D, DateText(D, Kind));
 end;
 
 function CompareDates(const A, B: TLandrixXmlXPathItem): Integer;
@@ -201,8 +202,8 @@ begin
   VB.MemberType := nil;
   VA.Primitive := DateKindPrimitive(A.Kind);
   VB.Primitive := DateKindPrimitive(B.Kind);
-  VA.DateTime := A.DateTime;
-  VB.DateTime := B.DateTime;
+  VA.DateTime := ItemDateTime(A);
+  VB.DateTime := ItemDateTime(B);
   Result := LandrixXmlXsdCompareValues(VA, VB);
   if Result = LandrixXmlXsdIncomparable then
     Fail('FOER0000', 'comparing ' + KindName(A.Kind) + ' values with and without time zone is not supported');
@@ -236,7 +237,7 @@ begin
       Result := 2;
   end
   else
-    Result := LandrixXmlDecimalCompare(A.Decimal, B.Decimal);
+    Result := LandrixXmlDecimalCompare(ItemDecimal(A), ItemDecimal(B));
 end;
 
 function CompareStrings(const A, B: TLandrixXmlUtf8): Integer;
@@ -265,7 +266,7 @@ begin
   else if IsStringLike(A.Kind) and IsStringLike(B.Kind) then
     Order := CompareStrings(A.Text, B.Text)
   else if (A.Kind = xikBoolean) and (B.Kind = xikBoolean) then
-    Order := Ord(A.BooleanValue) - Ord(B.BooleanValue)
+    Order := Ord(ItemBoolean(A)) - Ord(ItemBoolean(B))
   else if (A.Kind in [xikDate, xikDateTime, xikTime]) and (A.Kind = B.Kind) then
     Order := CompareDates(A, B)
   else
@@ -356,7 +357,7 @@ begin
   if Item.Kind = xikInteger then
     Result := 0
   else
-    Result := LandrixXmlDecimalScale(Item.Decimal);
+    Result := LandrixXmlDecimalScale(ItemDecimal(Item));
 end;
 
 function Arithmetic(const A0, B0: TLandrixXmlXPathItem; Op: TLandrixXmlXPathArithmetic;
@@ -392,35 +393,36 @@ begin
     end;
     Exit;
   end;
-  if (Op in [xpaDivide, xpaIntegerDivide, xpaModulo]) and LandrixXmlDecimalIsZero(B.Decimal) then
+  if (Op in [xpaDivide, xpaIntegerDivide, xpaModulo]) and LandrixXmlDecimalIsZero(ItemDecimal(B)) then
     Fail('FOAR0001', 'division by zero');
   if (A.Kind = xikInteger) and (B.Kind = xikInteger) then
   begin
     case Op of
-      xpaAdd: Result := IntegerItem(LandrixXmlDecimalAdd(A.Decimal, B.Decimal));
-      xpaSubtract: Result := IntegerItem(LandrixXmlDecimalSubtract(A.Decimal, B.Decimal));
-      xpaMultiply: Result := IntegerItem(LandrixXmlDecimalMultiply(A.Decimal, B.Decimal));
+      xpaAdd: Result := IntegerItem(LandrixXmlDecimalAdd(ItemDecimal(A), ItemDecimal(B)));
+      xpaSubtract: Result := IntegerItem(LandrixXmlDecimalSubtract(ItemDecimal(A), ItemDecimal(B)));
+      xpaMultiply: Result := IntegerItem(LandrixXmlDecimalMultiply(ItemDecimal(A), ItemDecimal(B)));
       xpaDivide:
         begin
-          Result := DecimalItem(LandrixXmlDecimalDivideIntegers(A.Decimal, B.Decimal, IsInt));
+          Result := DecimalItem(LandrixXmlDecimalDivideIntegers(ItemDecimal(A), ItemDecimal(B), IsInt));
           if IsInt then
-            Result.Kind := xikInteger;
+            Result := IntegerItem(ItemDecimal(Result));
         end;
-      xpaIntegerDivide: Result := IntegerItem(LandrixXmlDecimalIntegerQuotient(A.Decimal, B.Decimal));
+      xpaIntegerDivide: Result := IntegerItem(LandrixXmlDecimalIntegerQuotient(ItemDecimal(A), ItemDecimal(B)));
     else
-      Result := IntegerItem(LandrixXmlDecimalModulo(A.Decimal, B.Decimal));
+      Result := IntegerItem(LandrixXmlDecimalModulo(ItemDecimal(A), ItemDecimal(B)));
     end;
     Exit;
   end;
   case Op of
-    xpaAdd: Result := DecimalItem(LandrixXmlDecimalAdd(A.Decimal, B.Decimal));
-    xpaSubtract: Result := DecimalItem(LandrixXmlDecimalSubtract(A.Decimal, B.Decimal));
-    xpaMultiply: Result := DecimalItem(LandrixXmlDecimalMultiply(A.Decimal, B.Decimal));
+    xpaAdd: Result := DecimalItem(LandrixXmlDecimalAdd(ItemDecimal(A), ItemDecimal(B)));
+    xpaSubtract: Result := DecimalItem(LandrixXmlDecimalSubtract(ItemDecimal(A), ItemDecimal(B)));
+    xpaMultiply: Result := DecimalItem(LandrixXmlDecimalMultiply(ItemDecimal(A), ItemDecimal(B)));
     xpaDivide:
-      Result := DecimalItem(LandrixXmlDecimalDivideScaled(A.Decimal, B.Decimal, DecimalScaleOf(A), DecimalScaleOf(B)));
-    xpaIntegerDivide: Result := IntegerItem(LandrixXmlDecimalIntegerQuotient(A.Decimal, B.Decimal));
+      Result := DecimalItem(LandrixXmlDecimalDivideScaled(ItemDecimal(A), ItemDecimal(B), DecimalScaleOf(A),
+        DecimalScaleOf(B)));
+    xpaIntegerDivide: Result := IntegerItem(LandrixXmlDecimalIntegerQuotient(ItemDecimal(A), ItemDecimal(B)));
   else
-    Result := DecimalItem(LandrixXmlDecimalModulo(A.Decimal, B.Decimal));
+    Result := DecimalItem(LandrixXmlDecimalModulo(ItemDecimal(A), ItemDecimal(B)));
   end;
 end;
 
@@ -430,9 +432,9 @@ begin
   if not Negate then
     Exit;
   if Result.Kind = xikDouble then
-    Result.DoubleValue := LandrixXmlDoubleNegate(Result.DoubleValue)
+    Result := DoubleItem(LandrixXmlDoubleNegate(ItemDouble(Result)))
   else
-    Result.Decimal := LandrixXmlDecimalNegate(Result.Decimal);
+    Result := DecimalKindItem(Result.Kind, LandrixXmlDecimalNegate(ItemDecimal(Result)));
 end;
 
 function RangeOf(const A, B: TLandrixXmlXPathSequence; Xp20: Boolean): TLandrixXmlXPathSequence;
@@ -454,12 +456,12 @@ begin
     Y := CastTo(Y, xikInteger, Xp20);
   if (X.Kind <> xikInteger) or (Y.Kind <> xikInteger) then
     Fail('XPTY0004', 'the operands of "to" must be integers');
-  if LandrixXmlDecimalCompare(X.Decimal, Y.Decimal) > 0 then
+  if LandrixXmlDecimalCompare(ItemDecimal(X), ItemDecimal(Y)) > 0 then
     Exit;
-  if LandrixXmlDecimalCompare(LandrixXmlDecimalSubtract(Y.Decimal, X.Decimal),
+  if LandrixXmlDecimalCompare(LandrixXmlDecimalSubtract(ItemDecimal(Y), ItemDecimal(X)),
     LandrixXmlDecimalFromInt64(10000000)) >= 0 then
     Fail('FOAR0002', 'a range of more than 10000000 integers is not supported');
-  if not LandrixXmlDecimalTryToInt64(X.Decimal, Lo) or not LandrixXmlDecimalTryToInt64(Y.Decimal, Hi) then
+  if not LandrixXmlDecimalTryToInt64(ItemDecimal(X), Lo) or not LandrixXmlDecimalTryToInt64(ItemDecimal(Y), Hi) then
     Fail('FOAR0002', 'range bounds out of range');
   { at most 10000000 items, checked above }
   Count := Integer(Hi - Lo);
@@ -590,10 +592,10 @@ begin
         xikBoolean:
           Result := Item;
         xikInteger, xikDecimal:
-          Result := BooleanItem(not LandrixXmlDecimalIsZero(Item.Decimal));
+          Result := BooleanItem(not LandrixXmlDecimalIsZero(ItemDecimal(Item)));
         xikDouble:
-          Result := BooleanItem(not LandrixXmlDoubleIsZero(Item.DoubleValue) and
-            not LandrixXmlDoubleIsNaN(Item.DoubleValue));
+          Result := BooleanItem(not LandrixXmlDoubleIsZero(ItemDouble(Item)) and
+            not LandrixXmlDoubleIsNaN(ItemDouble(Item)));
       else
         if StringSource then
           Result := BooleanFromText(Item.Text)
@@ -603,15 +605,15 @@ begin
     xikDecimal:
       case Item.Kind of
         xikInteger, xikDecimal:
-          Result := DecimalItem(Item.Decimal);
+          Result := DecimalItem(ItemDecimal(Item));
         xikDouble:
           begin
-            if LandrixXmlDoubleIsNaN(Item.DoubleValue) or LandrixXmlDoubleIsInfinite(Item.DoubleValue) then
+            if LandrixXmlDoubleIsNaN(ItemDouble(Item)) or LandrixXmlDoubleIsInfinite(ItemDouble(Item)) then
               Fail('FOCA0002', 'cannot convert NaN or infinity to xs:decimal');
-            Result := DecimalItem(LandrixXmlDoubleToDecimal(Item.DoubleValue));
+            Result := DecimalItem(LandrixXmlDoubleToDecimal(ItemDouble(Item)));
           end;
         xikBoolean:
-          Result := DecimalItem(LandrixXmlDecimalFromInt64(Ord(Item.BooleanValue)));
+          Result := DecimalItem(LandrixXmlDecimalFromInt64(Ord(ItemBoolean(Item))));
       else
         if StringSource then
         begin
@@ -627,15 +629,15 @@ begin
         xikInteger:
           Result := Item;
         xikDecimal:
-          Result := IntegerItem(LandrixXmlDecimalRound(Item.Decimal, 0, xdrDown));
+          Result := IntegerItem(LandrixXmlDecimalRound(ItemDecimal(Item), 0, xdrDown));
         xikDouble:
           begin
-            if LandrixXmlDoubleIsNaN(Item.DoubleValue) or LandrixXmlDoubleIsInfinite(Item.DoubleValue) then
+            if LandrixXmlDoubleIsNaN(ItemDouble(Item)) or LandrixXmlDoubleIsInfinite(ItemDouble(Item)) then
               Fail('FOCA0002', 'cannot convert NaN or infinity to xs:integer');
-            Result := IntegerItem(DoubleToInteger(Item.DoubleValue, Xp20));
+            Result := IntegerItem(DoubleToInteger(ItemDouble(Item), Xp20));
           end;
         xikBoolean:
-          Result := IntegerItemOf(Ord(Item.BooleanValue));
+          Result := IntegerItemOf(Ord(ItemBoolean(Item)));
       else
         if StringSource then
         begin
@@ -651,9 +653,9 @@ begin
         xikDouble:
           Result := Item;
         xikInteger, xikDecimal:
-          Result := DoubleItem(LandrixXmlDoubleFromDecimal(Item.Decimal));
+          Result := DoubleItem(LandrixXmlDoubleFromDecimal(ItemDecimal(Item)));
         xikBoolean:
-          Result := DoubleItem(LandrixXmlDoubleFromInt64(Ord(Item.BooleanValue)));
+          Result := DoubleItem(LandrixXmlDoubleFromInt64(Ord(ItemBoolean(Item))));
       else
         if StringSource then
         begin
