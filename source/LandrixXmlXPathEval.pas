@@ -259,6 +259,8 @@ type
     function Eval(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function EvalStep(Index: Integer; Node: Integer; Axis: TLandrixXmlXPathAxis): TLandrixXmlXPathSequence;
+    function EvalIntersectExcept(Index: Integer; Context, Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function EvalPath(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function ApplyPredicates(const Predicates: array of Integer;
@@ -836,7 +838,7 @@ const
 begin
   case Nodes[Index].Kind of
     xakGeneralCompare, xakValueCompare, xakAnd, xakOr, xakString, xakCastable, xakUnion, xakSome, xakEvery,
-    xakStep:
+    xakStep, xakIntersectExcept, xakNodeCompare:
       Result := False;
     xakPath:
       Result := Nodes[Nodes[Index].Children[Integer(High(Nodes[Index].Children))]].Kind <> xakStep;
@@ -1558,7 +1560,7 @@ begin
   case Nodes[Index].Kind of
     { "." too: a pattern's predicates are evaluated on nodes }
     xakGeneralCompare, xakValueCompare, xakAnd, xakOr, xakString, xakCastable, xakUnion, xakSome, xakEvery,
-    xakStep, xakEmpty, xakRoot, xakContextItem:
+    xakStep, xakEmpty, xakRoot, xakContextItem, xakIntersectExcept, xakNodeCompare:
       Result := False;
     xakPath:
       Result := Nodes[Nodes[Index].Children[Integer(High(Nodes[Index].Children))]].Kind <> xakStep;
@@ -1891,6 +1893,18 @@ begin
           Out1.Items[Out1.Count - 1 - I] := Item;
         end;
       end;
+    xaxFollowing:
+      begin
+        { nodes after Node in document order, without its descendants and
+          without attributes (an attribute's parent's children follow it) }
+        if T.Kind[Node] = xnkAttribute then
+          I := Node + 1
+        else
+          I := T.SubtreeEnd[Node] + 1;
+        for E := I to T.Count - 1 do
+          if T.Kind[E] <> xnkAttribute then
+            Add(E);
+      end;
     xaxPreceding:
       begin
         Reverse := True;
@@ -1912,6 +1926,48 @@ begin
   if Reverse then
     SortNodes(Out1);
   Result := Out1;
+end;
+
+{ "intersect" (Op 0) and "except" (Op 1): the nodes of the left operand
+  that are, or are not, in the right one, in document order. }
+function TLandrixXmlXPathEvaluator.EvalIntersectExcept(Index: Integer; Context, Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  A, B, Other: TLandrixXmlXPathSequence;
+  I, J, K: Integer;
+begin
+  { in a pattern a node an operand failed on would need its own rule (see
+    EvaluatePattern); XSLT 2.0 patterns have no intersect and except }
+  if FPattern then
+    Fail('FOER0000', 'intersect and except in a pattern are not supported');
+  A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+  B := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem);
+  for I := 0 to A.Count - 1 do
+    if A.Items[I].Kind <> xikNode then
+      Fail('XPTY0004', 'the operands of "intersect" and "except" must be nodes');
+  for I := 0 to B.Count - 1 do
+    if B.Items[I].Kind <> xikNode then
+      Fail('XPTY0004', 'the operands of "intersect" and "except" must be nodes');
+  { new sequences: A and B may be the storage of variables }
+  Result := LandrixXmlXPathEmpty;
+  AppendAll(Result, A);
+  SortNodes(Result);
+  Other := LandrixXmlXPathEmpty;
+  AppendAll(Other, B);
+  SortNodes(Other);
+  J := 0;
+  K := 0;
+  for I := 0 to Result.Count - 1 do
+  begin
+    while (J < Other.Count) and (Other.Items[J].Node < Result.Items[I].Node) do
+      Inc(J);
+    if ((J < Other.Count) and (Other.Items[J].Node = Result.Items[I].Node)) = (FNodes[Index].Op = 0) then
+    begin
+      Result.Items[K] := Result.Items[I];
+      Inc(K);
+    end;
+  end;
+  Result.Count := K;
 end;
 
 function TLandrixXmlXPathEvaluator.EvalPath(Index: Integer; Context, Position, Size: Integer;
@@ -2097,8 +2153,11 @@ begin
       end;
     xakStep:
       begin
-        if Context < 0 then
+        { an atomic context item, or none at all }
+        if (Context < 0) and (ContextItem.Count > 0) then
           Fail('XPTY0020', 'the context item for an axis step is not a node');
+        if Context < 0 then
+          Fail('XPDY0002', 'the context item for an axis step is absent');
         Result := EvalStep(Index, Context, N^.Axis);
       end;
     xakPath:
@@ -2244,6 +2303,27 @@ begin
         AppendAll(Result, A);
         AppendAll(Result, B);
         SortNodes(Result);
+      end;
+    xakIntersectExcept:
+      Result := EvalIntersectExcept(Index, Context, Position, Size, ContextItem);
+    xakNodeCompare:
+      begin
+        A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
+        B := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem);
+        if (A.Count = 0) or (B.Count = 0) then
+          Result := LandrixXmlXPathEmpty
+        else
+        begin
+          if (A.Count > 1) or (B.Count > 1) or (A.Items[0].Kind <> xikNode) or (B.Items[0].Kind <> xikNode) then
+            Fail('XPTY0004', 'a node comparison needs single nodes');
+          { node numbers are in document order, also across documents }
+          case TLandrixXmlXPathCompare(FNodes[Index].Op) of
+            xpcLt: Result := BooleanSeq(A.Items[0].Node < B.Items[0].Node);
+            xpcGt: Result := BooleanSeq(A.Items[0].Node > B.Items[0].Node);
+          else
+            Result := BooleanSeq(A.Items[0].Node = B.Items[0].Node);
+          end;
+        end;
       end;
     xakCast, xakCastable:
       begin

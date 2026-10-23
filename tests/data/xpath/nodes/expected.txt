@@ -1,0 +1,95 @@
+# //a[1]/following::*
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+node /Q{}r[1]/Q{}d[1]
+# //a[@k = 2]/following::a
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# //b/@x/following::node()
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+node /Q{}r[1]/comment()[1]
+node /Q{}r[1]/processing-instruction("pi")[1]
+node /Q{}r[1]/Q{}d[1]
+# /r/following::node()
+# //d/following::*
+# count(//node()/following::node())
+xs:integer 10
+# //a[@k = 6]/following::text()
+# //a[@k = 1]/following::a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+# //a[@k = 1]/following::a[last()]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# //a[@k = 3]/(following::a | preceding::a)
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# //a[@k = 1] is //a[1]
+error XPTY0004
+# //a[@k = 1] is //a[@k = 2]
+xs:boolean false
+# //a[@k = 1] << //a[@k = 2]
+xs:boolean true
+# //a[@k = 2] << //a[@k = 1]
+xs:boolean false
+# //a[@k = 2] >> //a[@k = 1]
+xs:boolean true
+# //b/@x << //b/a[1]
+xs:boolean true
+# //b << //b/@x
+xs:boolean true
+# empty(//z is //a[1])
+xs:boolean true
+# empty(//a[1] << ())
+xs:boolean true
+# //a is //a[1]
+error XPTY0004
+# 1 is //a[1]
+error XPTY0004
+# //a intersect //b//a
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# //a except //b//a
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]/Q{}a[1]
+# //b//a intersect //a[@k > 3]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# (//a except //a[@k = 1]) except //b/*
+node /Q{}r[1]/Q{}a[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]/Q{}a[1]
+# //a[@k = 1]//a intersect //a[@k = 5]/descendant-or-self::a
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]/Q{}a[1]
+# count(//node() except //a)
+xs:integer 7
+# //a intersect 1
+error XPTY0004
+# (//a | //c) intersect //b/*
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# //a intersect //a union //c
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# //c union //a intersect //b/a
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# //* except //* except //a

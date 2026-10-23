@@ -710,6 +710,23 @@ var
       end;
   end;
 
+  { intersect or except outside the predicates: XSLT 2.0 patterns have
+    only "|", and the branches of a rule context are made relative to the
+    document by "//" (ContextExpression), which these operators would
+    change the meaning of }
+  function UsesSetOperator(Expr: TLandrixXmlXPathExpression; Index: Integer): Boolean;
+  var
+    J: Integer;
+  begin
+    Result := Expr.Nodes[Index].Kind = xakIntersectExcept;
+    J := 0;
+    while not Result and (J < Length(Expr.Nodes[Index].Children)) do
+    begin
+      Result := UsesSetOperator(Expr, Expr.Nodes[Index].Children[J]);
+      Inc(J);
+    end;
+  end;
+
   procedure DeclareFunctions(Target: TLandrixXmlXPathStaticContext; CheckDuplicates: Boolean);
   var
     X, Y: TLandrixXmlNode;
@@ -957,6 +974,9 @@ begin
               if UsesCurrent(Rule.Context) then
                 raise ELandrixXmlError.CreateCode(xecUnsupported, 'Schematron rules: ' + Rule.SourceLine +
                   ': current() in a rule context is not supported');
+              if UsesSetOperator(Rule.Context, Rule.Context.Root) then
+                raise ELandrixXmlError.CreateCode(xecUnsupported, 'Schematron rules: ' + Rule.SourceLine +
+                  ': intersect and except in a rule context are not supported');
               C := R.FirstChildElement;
               while C <> nil do
               begin

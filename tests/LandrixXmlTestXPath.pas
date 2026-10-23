@@ -28,7 +28,7 @@ uses
 const
   AxisText: array[TLandrixXmlXPathAxis] of string = ('child', 'descendant', 'attribute', 'self',
     'descendant-or-self', 'following-sibling', 'parent', 'ancestor', 'preceding-sibling', 'preceding',
-    'ancestor-or-self');
+    'ancestor-or-self', 'following');
   CompareText: array[TLandrixXmlXPathCompare] of string = ('eq', 'ne', 'lt', 'le', 'gt', 'ge');
   ArithText: array[TLandrixXmlXPathArithmetic] of string = ('+', '-', '*', 'div', 'idiv', 'mod');
 
@@ -94,6 +94,18 @@ begin
     xakRange: Result := '(to' + Kids + ')';
     xakArithmetic: Result := '(' + ArithText[TLandrixXmlXPathArithmetic(N.Op)] + Kids + ')';
     xakUnion: Result := '(|' + Kids + ')';
+    xakIntersectExcept:
+      if N.Op = 0 then
+        Result := '(intersect' + Kids + ')'
+      else
+        Result := '(except' + Kids + ')';
+    xakNodeCompare:
+      case TLandrixXmlXPathCompare(N.Op) of
+        xpcLt: Result := '(<<' + Kids + ')';
+        xpcGt: Result := '(>>' + Kids + ')';
+      else
+        Result := '(is' + Kids + ')';
+      end;
     xakNegate: Result := '(neg' + Kids + ')';
     xakUnaryPlus: Result := '(plus' + Kids + ')';
     xakCast, xakCastable:
@@ -270,10 +282,7 @@ begin
   CheckError('a +', 'XPST0003');
   CheckError('(a', 'XPST0003');
   CheckError('a instance of xs:integer', 'XPST0003');
-  CheckError('a intersect b', 'XPST0003');
-  CheckError('a is b', 'XPST0003');
-  CheckError('a << b', 'XPST0003');
-  CheckError('following::a', 'XPST0003');
+  CheckError('namespace::a', 'XPST0003');
   CheckError('namespace::a', 'XPST0003');
   CheckError('element(a)', 'XPST0003');
   CheckError('''abc', 'XPST0003');

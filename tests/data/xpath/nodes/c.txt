@@ -1,0 +1,32 @@
+expr //a[1]/following::*
+expr //a[@k = 2]/following::a
+expr //b/@x/following::node()
+expr /r/following::node()
+expr //d/following::*
+expr count(//node()/following::node())
+expr //a[@k = 6]/following::text()
+expr //a[@k = 1]/following::a[1]
+expr //a[@k = 1]/following::a[last()]
+expr //a[@k = 3]/(following::a | preceding::a)
+expr //a[@k = 1] is //a[1]
+expr //a[@k = 1] is //a[@k = 2]
+expr //a[@k = 1] << //a[@k = 2]
+expr //a[@k = 2] << //a[@k = 1]
+expr //a[@k = 2] >> //a[@k = 1]
+expr //b/@x << //b/a[1]
+expr //b << //b/@x
+expr empty(//z is //a[1])
+expr empty(//a[1] << ())
+expr //a is //a[1]
+expr 1 is //a[1]
+expr //a intersect //b//a
+expr //a except //b//a
+expr //b//a intersect //a[@k > 3]
+expr (//a except //a[@k = 1]) except //b/*
+expr //a[@k = 1]//a intersect //a[@k = 5]/descendant-or-self::a
+expr count(//node() except //a)
+expr //a intersect 1
+expr (//a | //c) intersect //b/*
+expr //a intersect //a union //c
+expr //c union //a intersect //b/a
+expr //* except //* except //a

@@ -143,6 +143,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `DocumentUri` names the document (`ValidateFile` sets it). On the test
   invoices the SVRL equals SchXslt's apart from its metadata. Rule files now
   also list patterns without rules, which SVRL reports as active.
+- XPath: node comparisons (`is`, `<<`, `>>`), `intersect` and `except`, and
+  the `following` axis. A path step without a context item raises
+  XPDY0002 (was XPTY0020, which is for an atomic context item).
 - `TLandrixXmlXPathStaticContext.Profile` (`TLandrixXmlXPathProfile`):
   `xppXPath20`, the default, follows XPath 2.0 and XML Schema 1.0;
   `xppSaxon` behaves as Saxon HE 12 in the KoSIT validator, as the

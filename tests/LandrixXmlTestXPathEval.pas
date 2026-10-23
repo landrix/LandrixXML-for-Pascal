@@ -530,6 +530,16 @@ begin
         Raised := E.XPathCode;
     end;
     CheckEqualsStr('FOER0000', Raised, 'an unsupported regex flag');
+    Raised := '';
+    try
+      Count('//a except //a[xs:integer(v[1]) > 0]');
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode;
+    end;
+    CheckEqualsStr('FOER0000', Raised, 'except in a pattern');
+    { inside a predicate the operators are ordinary expressions }
+    CheckEquals(1, Count('//a[v intersect v[2]]'), 'intersect in a predicate');
     Count('//r[count(a[xs:integer(v[1]) > 0]) = 2]');
     Raised := '';
     try

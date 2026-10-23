@@ -563,6 +563,10 @@ begin
     xecUnsupported, 'current() in a context');
   CheckLoadError('<pattern id="A"><rule context="document-node(element(p:r))" id="" line="1"/></pattern>',
     xecUnsupported, 'document-node() with an argument');
+  CheckLoadError('<pattern id="A"><rule context="p:a intersect p:a" id="" line="1"/></pattern>',
+    xecUnsupported, 'intersect in a context');
+  CheckLoadError('<pattern id="A"><rule context="p:a | (p:b except p:c)" id="" line="1"/></pattern>',
+    xecUnsupported, 'except in a branch of a context');
   CheckLoadError('<ns prefix="q" uri="urn:p"/><let name="p:g" value="1" line="1"/>' +
     '<function name="p:f" as="" line="2"><param name="q:g" as=""/><result value="$q:g"/></function>',
     xecSchema, 'a parameter hides a global through another prefix');

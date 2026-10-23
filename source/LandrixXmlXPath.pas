@@ -69,6 +69,8 @@ type
     xakRange,         { to }
     xakArithmetic,    { Op = TLandrixXmlXPathArithmetic }
     xakUnion,
+    xakIntersectExcept, { Op = 0 intersect, 1 except }
+    xakNodeCompare,   { Op = xpcEq for is, xpcLt for <<, xpcGt for >> }
     xakNegate,        { unary minus; unary plus is xakUnaryPlus }
     xakUnaryPlus,
     xakCast,          { Children = operand; AtomicType, AllowEmpty }
@@ -92,7 +94,7 @@ type
 
   TLandrixXmlXPathAxis = (xaxChild, xaxDescendant, xaxAttribute, xaxSelf, xaxDescendantOrSelf,
     xaxFollowingSibling, xaxParent, xaxAncestor, xaxPrecedingSibling, xaxPreceding,
-    xaxAncestorOrSelf);
+    xaxAncestorOrSelf, xaxFollowing);
 
   { node tests: any node; a kind; names (uri + local, uri:*, *:local, *) }
   TLandrixXmlXPathNodeTest = (xntAnyNode, xntText, xntComment, xntProcessingInstruction,
@@ -1082,7 +1084,6 @@ var
 begin
   Result := ParseRange;
   Kind := xakGeneralCompare;
-  Op := xpcEq;
   if FToken.Kind = tkSymbol then
   begin
     if FToken.Text = '=' then
@@ -1097,8 +1098,16 @@ begin
       Op := xpcGt
     else if FToken.Text = '>=' then
       Op := xpcGe
-    else if (FToken.Text = '<<') or (FToken.Text = '>>') then
-      Error('node order comparisons are not supported', FToken.Position)
+    else if FToken.Text = '<<' then
+    begin
+      Kind := xakNodeCompare;
+      Op := xpcLt;
+    end
+    else if FToken.Text = '>>' then
+    begin
+      Kind := xakNodeCompare;
+      Op := xpcGt;
+    end
     else
       Exit;
   end
@@ -1118,7 +1127,10 @@ begin
     else if FToken.Text = 'ge' then
       Op := xpcGe
     else if FToken.Text = 'is' then
-      Error('"is" is not supported', FToken.Position)
+    begin
+      Kind := xakNodeCompare;
+      Op := xpcEq;
+    end
     else
       Exit;
   end
@@ -1216,12 +1228,27 @@ begin
 end;
 
 function TParser.ParseIntersectExcept: Integer;
+var
+  N: Integer;
+
+  function Operand: Integer;
+  begin
+    Result := ParseCastable;
+    if IsName('instance') or IsName('treat') then
+      Error('"' + LandrixXmlUtf8ToString(FToken.Text) + '" is not supported', FToken.Position);
+  end;
+
 begin
-  Result := ParseCastable;
-  if IsName('intersect') or IsName('except') then
-    Error('"' + LandrixXmlUtf8ToString(FToken.Text) + '" is not supported', FToken.Position);
-  if IsName('instance') or IsName('treat') then
-    Error('"' + LandrixXmlUtf8ToString(FToken.Text) + '" is not supported', FToken.Position);
+  Result := Operand;
+  while IsName('intersect') or IsName('except') do
+  begin
+    N := NewNode(xakIntersectExcept, FToken.Position);
+    FNodes[N].Op := Ord(IsName('except'));
+    Next;
+    AddChild(N, Result);
+    AddChild(N, Operand);
+    Result := N;
+  end;
 end;
 
 function TParser.ParseCastable: Integer;
@@ -1389,7 +1416,7 @@ end;
 const
   AxisNames: array[TLandrixXmlXPathAxis] of string = ('child', 'descendant', 'attribute', 'self',
     'descendant-or-self', 'following-sibling', 'parent', 'ancestor', 'preceding-sibling', 'preceding',
-    'ancestor-or-self');
+    'ancestor-or-self', 'following');
 
 function TParser.ParseStep: Integer;
 var
@@ -1430,7 +1457,7 @@ begin
       end;
     if not Found then
     begin
-      if (FToken.Text = 'following') or (FToken.Text = 'namespace') then
+      if FToken.Text = 'namespace' then
         Error('the axis "' + LandrixXmlUtf8ToString(FToken.Text) + '" is not supported', FToken.Position);
       Error('unknown axis "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
     end;
