@@ -18,7 +18,7 @@
   instructions and groups and class subtractions to a nesting depth of
   1000 (ELandrixXmlError with xecLimit).
 
-  Supported: alternation, groups (XPath also non-capturing (?:...)),
+  Supported: alternation, groups (xrmXPath also non-capturing (?:...)),
   the quantifiers ? * + and counted repetitions (n; n or more; n to m),
   '.', character class expressions with ranges, negation and subtraction,
   the escapes \n \r \t, \\ and the other single-character escapes,
@@ -31,10 +31,10 @@
   ignored): flags, reluctant quantifiers, back-references, block escapes
   (\p with IsBasicLatin and the like). Invalid patterns raise xecRegex.
 
-  A hyphen in a character class follows XML Schema 1.0 in XSD mode, as
-  Xerces: a literal hyphen only at the start or end of the class (or
-  before a subtraction). In XPath mode it follows XML Schema 1.1 and
-  XPath 3.1, as Saxon: a hyphen after a range or a class escape, or
+  A hyphen in a character class follows XML Schema 1.0 in the modes XSD
+  (as Xerces) and XPath 2.0: a literal hyphen only at the start or end of
+  the class (or before a subtraction). In the mode xrmXPath it follows
+  XML Schema 1.1 and XPath 3.1, as Saxon: a hyphen after a range or a class escape, or
   before ']' or '-[', is a literal, but two unescaped hyphens in a row
   are only allowed before '['. In both modes a range cannot start or end
   with an unescaped hyphen.
@@ -58,8 +58,12 @@ uses
 
 type
   TLandrixXmlRegexMode = (
-    xrmXsd,   { XML Schema pattern facet: the whole string must match }
-    xrmXPath  { fn:matches and friends: a match anywhere, ^ and $ anchors }
+    xrmXsd,    { XML Schema pattern facet: the whole string must match }
+    xrmXPath,  { fn:matches and friends as Saxon (XPath 3.1): a match
+                 anywhere, ^ and $ anchors, (?:...) groups, the
+                 character classes of XML Schema 1.1 }
+    xrmXPath20 { XPath 2.0: as xrmXPath, but no (?:...) groups and the
+                 character classes of XML Schema 1.0 }
   );
 
   { Internal compiled forms, public only because Delphi 6 has no nested
@@ -842,7 +846,7 @@ begin
     Result := Atom;
     Exit;
   end;
-  if (FMode = xrmXPath) and (Peek = Ord('?')) then
+  if (FMode <> xrmXsd) and (Peek = Ord('?')) then
     Unsupported('reluctant quantifier');
   if ParseQuantity(Dummy1, Dummy2) then
     Error('quantifier follows a quantifier');
@@ -908,12 +912,12 @@ begin
     Ord('?'), Ord('*'), Ord('+'), Ord('{'), Ord('}'), Ord(']'), Ord(')'), Ord('|'):
       Error('unexpected "' + Char(C) + '"');
   else
-    if (FMode = xrmXPath) and (C = Ord('^')) then
+    if (FMode <> xrmXsd) and (C = Ord('^')) then
     begin
       Inc(FPos);
       Result := Instr(xroStart, 0, 0);
     end
-    else if (FMode = xrmXPath) and (C = Ord('$')) then
+    else if (FMode <> xrmXsd) and (C = Ord('$')) then
     begin
       Inc(FPos);
       Result := Instr(xroEnd, 0, 0);
@@ -948,7 +952,7 @@ begin
     Ord('}'), Ord('-'), Ord('['), Ord(']'), Ord('^'):
       CodePoint := C;
     Ord('$'):
-      if FMode = xrmXPath then
+      if FMode <> xrmXsd then
         CodePoint := C
       else
         Error('unknown escape "\$"');
@@ -988,7 +992,7 @@ begin
     Ord('P'):
       Result := ParseCategory(True);
     Ord('1')..Ord('9'):
-      if FMode = xrmXPath then
+      if FMode <> xrmXsd then
         Unsupported('back-reference')
       else
         Error('unknown escape');
@@ -1123,7 +1127,10 @@ begin
     begin
       { XML Schema 1.0: a hyphen inside the class must be escaped; 1.1
         and XPath take it literally where it cannot start a range }
-      if (FMode = xrmXsd) and (C = Ord('-')) and not First and (PeekAt(1) <> Ord(']')) then
+      { the end of the positive group is also before a subtraction "-[",
+        as XML Schema 1.0 (F.1) says; xrmXsd keeps Xerces' reading }
+      if (FMode <> xrmXPath) and (C = Ord('-')) and not First and (PeekAt(1) <> Ord(']')) and
+        not ((FMode = xrmXPath20) and (PeekAt(1) = Ord('-')) and (PeekAt(2) = Ord('['))) then
         Error('"-" must be escaped or stand at the start or end of a character class');
       Inc(FPos);
       Lo := C;
@@ -1135,9 +1142,9 @@ begin
     if (FMode = xrmXPath) and PlainHyphen and (Peek = Ord('-')) and (PeekAt(1) <> Ord('[')) then
       Error('"-" cannot follow an unescaped "-"');
     { a following '-' starts a range unless ']' or '[' follows, or in
-      XPath mode "-[" (then it is a literal before a subtraction) }
+      the XPath modes "-[" (then it is a literal before a subtraction) }
     if (Lo >= 0) and (Peek = Ord('-')) and (PeekAt(1) <> Ord(']')) and (PeekAt(1) <> Ord('[')) and
-      not ((FMode = xrmXPath) and (PeekAt(1) = Ord('-')) and (PeekAt(2) = Ord('['))) then
+      not ((FMode <> xrmXsd) and (PeekAt(1) = Ord('-')) and (PeekAt(2) = Ord('['))) then
     begin
       if PlainHyphen then
         Error('a range cannot start with an unescaped "-"');
@@ -1183,7 +1190,7 @@ var
   State: TVmState;
 begin
   InitVm(Self, State, False);
-  Result := RunVm(Self, State, LandrixXmlUtf8ToCodePoints(S), 0, FMode = xrmXPath, Captures);
+  Result := RunVm(Self, State, LandrixXmlUtf8ToCodePoints(S), 0, FMode <> xrmXsd, Captures);
 end;
 
 function TLandrixXmlRegex.Replace(const S, Replacement: TLandrixXmlUtf8): TLandrixXmlUtf8;

@@ -1318,6 +1318,7 @@ fn-matches/K2-MatchesFunc-12 wrong-code
 fn-matches/K2-MatchesFunc-13 pass
 fn-matches/K2-MatchesFunc-14 pass
 fn-matches/K2-MatchesFunc-15 pass
+fn-matches/K2-MatchesFunc-16a pass
 fn-matches/K2-MatchesFunc-7 pass
 fn-matches/K2-MatchesFunc-8 wrong-code
 fn-matches/K2-MatchesFunc-9 wrong-code

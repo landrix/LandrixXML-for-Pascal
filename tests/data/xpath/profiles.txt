@@ -13,3 +13,5 @@ xs:anyURI(':/')	error FORG0001	xs:anyURI :/	XML Schema 1.0 anyURI: a colon ends 
 xs:anyURI('http://example.com/a%2')	error FORG0001	xs:anyURI http://example.com/a%2	an escape cut short
 xs:integer(xs:double('9.223372036854775808E18'))	xs:integer 9223372036854775808	xs:integer 9223372036854775807	Saxon converts through Java's long, which saturates at 2^63 - 1
 xs:double('9.223372036854775808E18') idiv 1	xs:integer 9223372036854775808	xs:integer 9223372036854775807	the same in idiv
+matches('input', '[0-9-.]*/')	error FORX0002	xs:boolean false	XPath 2.0 regexes use the XML Schema 1.0 character classes: a hyphen after a range must be escaped
+matches('a', '(?:a)')	error FORX0002	xs:boolean true	non-capturing groups are XPath 3.0

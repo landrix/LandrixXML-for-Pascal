@@ -252,6 +252,38 @@ begin
   Check(XPathMatches('b', 'ab'), 'XPath searches');
 end;
 
+function XPath20Matches(const Pattern, S: string): Boolean;
+var
+  R: TLandrixXmlRegex;
+begin
+  R := TLandrixXmlRegex.Create(U(Pattern), xrmXPath20);
+  try
+    Result := R.Matches(U(S));
+  finally
+    R.Free;
+  end;
+end;
+
+{ XPath 2.0: the syntax of XPath (anchors, searching, \$) with the
+  character classes of XML Schema 1.0 and no (?:...) groups. }
+procedure TestXPath20Dialect;
+begin
+  Check(XPath20Matches('b', 'ab'), 'XPath 2.0 searches');
+  Check(not XPath20Matches('^b', 'ab'), '^ anchors in XPath 2.0');
+  Check(XPath20Matches('a\$', 'a$'), '\$ in XPath 2.0');
+  Check(XPath20Matches('[a-]', '-'), 'a hyphen at the end of a class');
+  Check(XPath20Matches('[-a]', '-'), 'a hyphen at the start of a class');
+  Check(XPath20Matches('[a-z-[aeiou]]', 'b'), 'a subtraction');
+  Check(XPath20Matches('[a-z--[x]]', '-'), 'a hyphen at the end of the positive group, before a subtraction');
+  Check(XPath20Matches('[a--[x]]', '-'), 'a hyphen after a character, before a subtraction');
+  Check(not XPath20Matches('[a-z--[x]]', 'x'), 'the subtraction still applies');
+  CheckError('[0-9-.]', xrmXPath20, xecRegex, 'a hyphen after a range (XML Schema 1.0)');
+  Check(XPathMatches('[0-9-.]', '-'), 'the same in the Saxon dialect');
+  CheckError('(?:a)', xrmXPath20, xecRegex, '(?: in XPath 2.0');
+  CheckError('(a)\1', xrmXPath20, xecUnsupported, 'a back-reference in XPath 2.0');
+  CheckError('a*?', xrmXPath20, xecUnsupported, 'a reluctant quantifier in XPath 2.0');
+end;
+
 procedure TestUnsupported;
 var
   R: TLandrixXmlRegex;
@@ -455,6 +487,7 @@ procedure Register;
 begin
   RegisterTest('Regex.GeneratedData', TestGeneratedData);
   RegisterTest('Regex.XsdDialect', TestXsdDialect);
+  RegisterTest('Regex.XPath20Dialect', TestXPath20Dialect);
   RegisterTest('Regex.Unsupported', TestUnsupported);
   RegisterTest('Regex.Properties', TestProperties);
   RegisterTest('Regex.LinearTime', TestLinearTime);

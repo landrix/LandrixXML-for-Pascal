@@ -211,7 +211,7 @@ type
     FCurrentNode: Integer;
     FDepth: Integer;
     FMaxDepth: Integer;
-    { compiled patterns: flags + #0 + pattern (UTF-8) and the regex }
+    { compiled patterns: the dialect ("2" or "3"), flags, #0, the pattern (UTF-8) and the regex }
     FRegexKeys: TLandrixXmlUtf8Array;
     FRegexes: TObjectList;
     { the expression being evaluated and the base of its local slots }
@@ -1325,8 +1325,19 @@ function TLandrixXmlXPathEvaluator.Regex(const Pattern, Flags: TLandrixXmlUtf8):
 var
   Key: TLandrixXmlUtf8;
   I: Integer;
+  Mode: TLandrixXmlRegexMode;
 begin
-  Key := Flags + #0 + Pattern;
+  { the dialect of the profile: XML Schema 1.0 character classes in XPath 2.0 }
+  if Xp20 then
+  begin
+    Mode := xrmXPath20;
+    Key := '2' + Flags + #0 + Pattern;
+  end
+  else
+  begin
+    Mode := xrmXPath;
+    Key := '3' + Flags + #0 + Pattern;
+  end;
   for I := Integer(FRegexes.Count) - 1 downto 0 do
     if FRegexKeys[I] = Key then
     begin
@@ -1334,7 +1345,7 @@ begin
       Exit;
     end;
   try
-    Result := TLandrixXmlRegex.Create(Pattern, xrmXPath, Flags);
+    Result := TLandrixXmlRegex.Create(Pattern, Mode, Flags);
   except
     on E: ELandrixXmlError do
     begin
