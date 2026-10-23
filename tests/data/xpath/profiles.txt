@@ -1,0 +1,15 @@
+# The tested differences between the profiles xppXPath20 and xppSaxon: expression,
+# result in XPath 2.0, result in Saxon (checked with Saxon HE 12.9 through
+# tools/XPathOracle.java), reason; separated by tabs. Context item: the document node
+# of <r/>. Every row must differ between the profiles.
+round(1, 2)	error XPST0017	xs:integer 1	round with two arguments is XPath 3.0
+string-join('a')	error XPST0017	xs:string a	string-join with one argument is XPath 3.0
+string-join(1 to 3, '-')	error XPTY0004	xs:string 1-2-3	XPath 2.0 string-join takes xs:string*; XPath 3.1 any atomic values
+xs:double('+INF')	error FORG0001	xs:double INF	+INF is an XML Schema 1.1 lexical form
+xs:untypedAtomic('+INF') = xs:double('INF')	error FORG0001	xs:boolean true	the same in a general comparison
+'+INF' castable as xs:double	xs:boolean false	xs:boolean true	the same in castable
+xs:anyURI('%gg')	error FORG0001	xs:anyURI %gg	XML Schema 1.0 anyURI: % starts an escape of two hex digits; Saxon does not check
+xs:anyURI(':/')	error FORG0001	xs:anyURI :/	XML Schema 1.0 anyURI: a colon ends a scheme, which must not be empty
+xs:anyURI('http://example.com/a%2')	error FORG0001	xs:anyURI http://example.com/a%2	an escape cut short
+xs:integer(xs:double('9.223372036854775808E18'))	xs:integer 9223372036854775808	xs:integer 9223372036854775807	Saxon converts through Java's long, which saturates at 2^63 - 1
+xs:double('9.223372036854775808E18') idiv 1	xs:integer 9223372036854775808	xs:integer 9223372036854775807	the same in idiv

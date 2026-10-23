@@ -1670,6 +1670,7 @@ begin
   begin
     Check := TScopeCheck(FScopeChecks[I]);
     Context := TLandrixXmlXPathStaticContext.Create;
+    Context.Profile := xppSaxon;
     try
       for J := 0 to Integer(Length(FNsPrefixes)) - 1 do
         Context.AddNamespace(FNsPrefixes[J], FNsUris[J]);

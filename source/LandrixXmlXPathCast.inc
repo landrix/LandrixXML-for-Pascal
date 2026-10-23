@@ -68,10 +68,11 @@ begin
     Result := LandrixXmlDecimalCompare(Item.Decimal, LandrixXmlDecimalFromInt64(Value)) = 0;
 end;
 
-{ untypedAtomic or a string as xs:double, as Saxon parses it. }
-function ParseDouble(const S: TLandrixXmlUtf8): TLandrixXmlDouble;
+{ untypedAtomic or a string as xs:double, as Saxon parses it; XPath 2.0
+  uses the lexical forms of XML Schema 1.0, which has no "+INF". }
+function ParseDouble(const S: TLandrixXmlUtf8; Xp20: Boolean): TLandrixXmlDouble;
 begin
-  if not LandrixXmlDoubleTryParse(Trimmed(S), Result) then
+  if not LandrixXmlDoubleTryParse(Trimmed(S), Result) or (Xp20 and (Trimmed(S) = '+INF')) then
     Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:double');
 end;
 
@@ -249,8 +250,9 @@ begin
     Result := 1;
 end;
 
-function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType): TLandrixXmlXPathItem; forward;
-function DoubleToIntegerAsSaxon(const D: TLandrixXmlDouble): TLandrixXmlDecimal; forward;
+function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType;
+  Xp20: Boolean): TLandrixXmlXPathItem; forward;
+function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXmlDecimal; forward;
 
 { Compares two atomic values of comparable types (after the conversions of
   general or value comparisons). }
@@ -281,7 +283,7 @@ begin
 end;
 
 { The conversions of a general comparison for one pair. }
-function ComparePair(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare): Boolean;
+function ComparePair(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean): Boolean;
 var
   X, Y: TLandrixXmlXPathItem;
 begin
@@ -290,13 +292,13 @@ begin
   if X.Kind = xikUntypedAtomic then
   begin
     if IsNumeric(Y.Kind) then
-      X := DoubleItem(ParseDouble(X.Text))
+      X := DoubleItem(ParseDouble(X.Text, Xp20))
     else if not IsStringLike(Y.Kind) then
       case Y.Kind of
-        xikBoolean: X := CastTo(X, xatBoolean);
-        xikDate: X := CastTo(X, xatDate);
-        xikDateTime: X := CastTo(X, xatDateTime);
-        xikTime: X := CastTo(X, xatTime);
+        xikBoolean: X := CastTo(X, xatBoolean, Xp20);
+        xikDate: X := CastTo(X, xatDate, Xp20);
+        xikDateTime: X := CastTo(X, xatDateTime, Xp20);
+        xikTime: X := CastTo(X, xatTime, Xp20);
       else
         { compared as they are: a type error }
       end;
@@ -304,13 +306,13 @@ begin
   if Y.Kind = xikUntypedAtomic then
   begin
     if IsNumeric(X.Kind) then
-      Y := DoubleItem(ParseDouble(Y.Text))
+      Y := DoubleItem(ParseDouble(Y.Text, Xp20))
     else if not IsStringLike(X.Kind) then
       case X.Kind of
-        xikBoolean: Y := CastTo(Y, xatBoolean);
-        xikDate: Y := CastTo(Y, xatDate);
-        xikDateTime: Y := CastTo(Y, xatDateTime);
-        xikTime: Y := CastTo(Y, xatTime);
+        xikBoolean: Y := CastTo(Y, xatBoolean, Xp20);
+        xikDate: Y := CastTo(Y, xatDate, Xp20);
+        xikDateTime: Y := CastTo(Y, xatDateTime, Xp20);
+        xikTime: Y := CastTo(Y, xatTime, Xp20);
       else
         { compared as they are: a type error }
       end;
@@ -318,13 +320,14 @@ begin
   Result := CompareAtomic(X, Y, Op);
 end;
 
-function GeneralCompare(const A, B: TLandrixXmlXPathSequence; Op: TLandrixXmlXPathCompare): Boolean;
+function GeneralCompare(const A, B: TLandrixXmlXPathSequence; Op: TLandrixXmlXPathCompare;
+  Xp20: Boolean): Boolean;
 var
   I, J: Integer;
 begin
   for I := 0 to A.Count - 1 do
     for J := 0 to B.Count - 1 do
-      if ComparePair(A.Items[I], B.Items[J], Op) then
+      if ComparePair(A.Items[I], B.Items[J], Op, Xp20) then
       begin
         Result := True;
         Exit;
@@ -333,10 +336,10 @@ begin
 end;
 
 { Arithmetic operands: untypedAtomic becomes xs:double. }
-function NumericOperand(const Item: TLandrixXmlXPathItem): TLandrixXmlXPathItem;
+function NumericOperand(const Item: TLandrixXmlXPathItem; Xp20: Boolean): TLandrixXmlXPathItem;
 begin
   if Item.Kind = xikUntypedAtomic then
-    Result := DoubleItem(ParseDouble(Item.Text))
+    Result := DoubleItem(ParseDouble(Item.Text, Xp20))
   else if IsNumeric(Item.Kind) then
     Result := Item
   else
@@ -356,14 +359,15 @@ begin
     Result := LandrixXmlDecimalScale(Item.Decimal);
 end;
 
-function Arithmetic(const A0, B0: TLandrixXmlXPathItem; Op: TLandrixXmlXPathArithmetic): TLandrixXmlXPathItem;
+function Arithmetic(const A0, B0: TLandrixXmlXPathItem; Op: TLandrixXmlXPathArithmetic;
+  Xp20: Boolean): TLandrixXmlXPathItem;
 var
   A, B: TLandrixXmlXPathItem;
   DA, DB, Q: TLandrixXmlDouble;
   IsInt: Boolean;
 begin
-  A := NumericOperand(A0);
-  B := NumericOperand(B0);
+  A := NumericOperand(A0, Xp20);
+  B := NumericOperand(B0, Xp20);
   if (A.Kind = xikDouble) or (B.Kind = xikDouble) then
   begin
     DA := ToDouble(A);
@@ -383,7 +387,7 @@ begin
           Fail('FOAR0002', 'idiv of NaN or infinity');
         if LandrixXmlDoubleIsNaN(Q) or LandrixXmlDoubleIsInfinite(Q) then
           Fail('FOCA0002', 'the quotient of idiv is too large');
-        Result := IntegerItem(DoubleToIntegerAsSaxon(Q));
+        Result := IntegerItem(DoubleToInteger(Q, Xp20));
       end;
     end;
     Exit;
@@ -420,9 +424,9 @@ begin
   end;
 end;
 
-function UnaryOp(const Item: TLandrixXmlXPathItem; Negate: Boolean): TLandrixXmlXPathItem;
+function UnaryOp(const Item: TLandrixXmlXPathItem; Negate, Xp20: Boolean): TLandrixXmlXPathItem;
 begin
-  Result := NumericOperand(Item);
+  Result := NumericOperand(Item, Xp20);
   if not Negate then
     Exit;
   if Result.Kind = xikDouble then
@@ -431,7 +435,7 @@ begin
     Result.Decimal := LandrixXmlDecimalNegate(Result.Decimal);
 end;
 
-function RangeOf(const A, B: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+function RangeOf(const A, B: TLandrixXmlXPathSequence; Xp20: Boolean): TLandrixXmlXPathSequence;
 var
   X, Y: TLandrixXmlXPathItem;
   Lo, Hi: Int64;
@@ -445,9 +449,9 @@ begin
   X := A.Items[0];
   Y := B.Items[0];
   if X.Kind = xikUntypedAtomic then
-    X := CastTo(X, xatInteger);
+    X := CastTo(X, xatInteger, Xp20);
   if Y.Kind = xikUntypedAtomic then
-    Y := CastTo(Y, xatInteger);
+    Y := CastTo(Y, xatInteger, Xp20);
   if (X.Kind <> xikInteger) or (Y.Kind <> xikInteger) then
     Fail('XPTY0004', 'the operands of "to" must be integers');
   if LandrixXmlDecimalCompare(X.Decimal, Y.Decimal) > 0 then
@@ -482,6 +486,55 @@ begin
     Result := LandrixXmlDoubleToInteger(D);
 end;
 
+{ A double as xs:integer: XPath 2.0 truncates the exact value. }
+function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXmlDecimal;
+begin
+  if Xp20 then
+    Result := LandrixXmlDecimalRound(LandrixXmlDoubleToDecimal(D), 0, xdrDown)
+  else
+    Result := DoubleToIntegerAsSaxon(D);
+end;
+
+{ An xs:anyURI as XML Schema 1.0 allows it: every "%" starts an escape of
+  two hexadecimal digits, and a ":" before the first "/", "?" or "#" ends
+  a scheme (a letter, then letters, digits, "+", "-" and "."). }
+function AnyUriValid(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, Colon: Integer;
+begin
+  Result := False;
+  Colon := 0;
+  for I := 1 to Length(S) do
+    if S[I] in ['/', '?', '#'] then
+      Break
+    else if S[I] = ':' then
+    begin
+      Colon := I;
+      Break;
+    end;
+  if Colon > 0 then
+  begin
+    if (Colon = 1) or not (S[1] in ['A'..'Z', 'a'..'z']) then
+      Exit;
+    for I := 2 to Colon - 1 do
+      if not (S[I] in ['A'..'Z', 'a'..'z', '0'..'9', '+', '-', '.']) then
+        Exit;
+  end;
+  I := 1;
+  while I <= Length(S) do
+  begin
+    if S[I] = '%' then
+    begin
+      if (I + 2 > Length(S)) or not (S[I + 1] in ['0'..'9', 'A'..'F', 'a'..'f']) or
+        not (S[I + 2] in ['0'..'9', 'A'..'F', 'a'..'f']) then
+        Exit;
+      Inc(I, 2);
+    end;
+    Inc(I);
+  end;
+  Result := True;
+end;
+
 function BooleanFromText(const S: TLandrixXmlUtf8): TLandrixXmlXPathItem;
 var
   T: TLandrixXmlUtf8;
@@ -498,7 +551,8 @@ begin
   end;
 end;
 
-function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType): TLandrixXmlXPathItem;
+function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType;
+  Xp20: Boolean): TLandrixXmlXPathItem;
 var
   D: TLandrixXmlDecimal;
   F: TLandrixXmlDouble;
@@ -523,7 +577,12 @@ begin
         Result := StringItem(xikUntypedAtomic, AtomicString(Item));
     xatAnyUri:
       if StringSource or (Item.Kind = xikAnyUri) then
-        Result := StringItem(xikAnyUri, NormalizeSpace(Item.Text))
+      begin
+        Result := StringItem(xikAnyUri, NormalizeSpace(Item.Text));
+        { an xs:anyURI stays as it is (a cast to its own type) }
+        if Xp20 and StringSource and not AnyUriValid(Result.Text) then
+          Fail('FORG0001', 'invalid xs:anyURI ''' + LandrixXmlEscapeForMessage(Item.Text, 60) + '''');
+      end
       else
         NotAllowed;
     xatBoolean:
@@ -573,7 +632,7 @@ begin
           begin
             if LandrixXmlDoubleIsNaN(Item.DoubleValue) or LandrixXmlDoubleIsInfinite(Item.DoubleValue) then
               Fail('FOCA0002', 'cannot convert NaN or infinity to xs:integer');
-            Result := IntegerItem(DoubleToIntegerAsSaxon(Item.DoubleValue));
+            Result := IntegerItem(DoubleToInteger(Item.DoubleValue, Xp20));
           end;
         xikBoolean:
           Result := IntegerItemOf(Ord(Item.BooleanValue));
@@ -598,7 +657,7 @@ begin
       else
         if StringSource then
         begin
-          F := ParseDouble(Item.Text);
+          F := ParseDouble(Item.Text, Xp20);
           Result := DoubleItem(F);
         end
         else
@@ -629,10 +688,10 @@ begin
   end;
 end;
 
-function Castable(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType): Boolean;
+function Castable(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType; Xp20: Boolean): Boolean;
 begin
   try
-    CastTo(Item, T);
+    CastTo(Item, T, Xp20);
     Result := True;
   except
     on E: ELandrixXmlXPathError do

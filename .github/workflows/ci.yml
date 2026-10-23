@@ -65,3 +65,4 @@ jobs:
           mkdir -p build/fpc322-linux
           fpc -B -Fusource -Fisource -FUbuild/fpc322-linux -FEbuild/fpc322-linux tests/LandrixXmlQt3.dpr
           python3 tools/run-qt3.py --exe build/fpc322-linux/LandrixXmlQt3
+          python3 tools/run-qt3.py --exe build/fpc322-linux/LandrixXmlQt3 --profile saxon

@@ -14,6 +14,12 @@
   fn:upper-case and fn:lower-case map as Saxon does (U+00DF becomes SS;
   the table is generated from Saxon).
 
+  Two profiles (TLandrixXmlXPathStaticContext.Profile, kept by every
+  compiled expression): xppXPath20 follows XPath 2.0 and XML Schema 1.0
+  where Saxon applies XPath 3.1 rules; xppSaxon behaves as Saxon HE 12
+  does in the KoSIT validator (LandrixXmlSchematron uses it). The tested
+  differences are listed in tests/data/xpath/profiles.txt.
+
   Like Saxon the evaluator does not evaluate what it does not need: "and"
   and "or" decide on either operand (an error in one operand does not
   matter if the other decides), variables are evaluated when first used,
@@ -265,9 +271,14 @@ type
     function CallUser(Def: TLandrixXmlXPathFunctionDef; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function Regex(const Pattern, Flags: TLandrixXmlUtf8): TLandrixXmlRegex;
     function StringOf(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+    { the expression being evaluated was compiled for XPath 2.0 (not the
+      Saxon profile) }
+    function Xp20: Boolean;
     function Atomize(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    { AsXPath20: the profile of the definition the type belongs to (the
+      function, the variable), not that of the caller }
     function ConvertTo(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType;
-      const FunctionName: string): TLandrixXmlXPathSequence;
+      const FunctionName: string; AsXPath20: Boolean): TLandrixXmlXPathSequence;
   public
     { The tree is not owned. }
     constructor Create(Tree: TLandrixXmlXPathTree);
@@ -1216,7 +1227,8 @@ begin
         if P^.DeclaredType.Declared then
         begin
           try
-            Value := ConvertTo(Value, P^.DeclaredType, 'variable');
+            Value := ConvertTo(Value, P^.DeclaredType, 'variable', (P^.Expression = nil) or
+              (P^.Expression.Profile = xppXPath20));
           except
             on E: ELandrixXmlXPathError do
             begin
@@ -1251,6 +1263,11 @@ end;
 procedure TLandrixXmlXPathEvaluator.WriteLocal(Slot: Integer; const Value: TLandrixXmlXPathSequence);
 begin
   FLocals[FLocalBase + Slot - FExpr.FirstLocalSlot] := Value;
+end;
+
+function TLandrixXmlXPathEvaluator.Xp20: Boolean;
+begin
+  Result := (FExpr = nil) or (FExpr.Profile = xppXPath20);
 end;
 
 function TLandrixXmlXPathEvaluator.StringOf(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
@@ -2160,7 +2177,7 @@ begin
       begin
         A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
         B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        Result := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op)));
+        Result := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op), Xp20));
       end;
     xakValueCompare:
       begin
@@ -2179,7 +2196,7 @@ begin
       begin
         A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
         B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        Result := RangeOf(A, B);
+        Result := RangeOf(A, B, Xp20);
       end;
     xakArithmetic:
       begin
@@ -2191,7 +2208,7 @@ begin
         begin
           if (A.Count > 1) or (B.Count > 1) then
             Fail('XPTY0004', 'arithmetic needs single items');
-          Result := SingleSeq(Arithmetic(A.Items[0], B.Items[0], TLandrixXmlXPathArithmetic(FNodes[Index].Op)));
+          Result := SingleSeq(Arithmetic(A.Items[0], B.Items[0], TLandrixXmlXPathArithmetic(FNodes[Index].Op), Xp20));
         end;
       end;
     xakNegate, xakUnaryPlus:
@@ -2203,7 +2220,7 @@ begin
         begin
           if A.Count > 1 then
             Fail('XPTY0004', 'a unary minus needs a single item');
-          Result := SingleSeq(UnaryOp(A.Items[0], FNodes[Index].Kind = xakNegate));
+          Result := SingleSeq(UnaryOp(A.Items[0], FNodes[Index].Kind = xakNegate, Xp20));
         end;
       end;
     xakUnion:
@@ -2239,7 +2256,7 @@ begin
           else if A.Count > 1 then
             Result := BooleanSeq(False)
           else
-            Result := BooleanSeq(Castable(A.Items[0], N^.AtomicType));
+            Result := BooleanSeq(Castable(A.Items[0], N^.AtomicType, Xp20));
         end
         else if A.Count = 0 then
         begin
@@ -2251,7 +2268,7 @@ begin
         begin
           if A.Count > 1 then
             Fail('XPTY0004', 'a sequence of several items cannot be cast');
-          Result := SingleSeq(CastTo(A.Items[0], N^.AtomicType));
+          Result := SingleSeq(CastTo(A.Items[0], N^.AtomicType, Xp20));
         end;
       end;
     xakFunction:
@@ -2292,7 +2309,8 @@ begin
     for I := 0 to Integer(High(Args)) do
     begin
       FFrame[Def.ParamSlots[I]].State := xssValue;
-      FFrame[Def.ParamSlots[I]].Value := ConvertTo(Args[I], Def.ParamTypes[I], Def.Name);
+      FFrame[Def.ParamSlots[I]].Value := ConvertTo(Args[I], Def.ParamTypes[I], Def.Name,
+        Def.Body.Profile = xppXPath20);
     end;
     for I := 0 to Integer(Length(Def.LocalSlots)) - 1 do
     begin
@@ -2309,7 +2327,7 @@ begin
     finally
       LeaveExpression(SavedExpr, SavedBase);
     end;
-    Result := ConvertTo(Result, Def.ResultType, Def.Name);
+    Result := ConvertTo(Result, Def.ResultType, Def.Name, Def.Body.Profile = xppXPath20);
   finally
     FFrame := SavedFrame;
     FCurrentNode := SavedCurrent;

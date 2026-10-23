@@ -30,11 +30,12 @@ harness-error (crash, timeout, setup).
 
 Usage:
   python tools/run-qt3.py [--exe PATH] [--filter PREFIX] [--jobs N]
-                          [--update-baseline] [--verbose] [--self-test]
+                          [--profile xpath20|saxon] [--update-baseline]
+                          [--verbose] [--self-test]
 Build the helper first, e.g.
   ./tools/build.ps1 fpc322-win64 -Program tests/LandrixXmlQt3.dpr -NoRun
 Exit code: 0 if no baseline case got worse and no harness error occurred.
-Results per case: build/qt3/results.txt. --self-test checks the assertion
+Results per case: build/qt3/results-PROFILE.txt. --self-test checks the assertion
 checks on made-up results.
 """
 
@@ -58,9 +59,12 @@ URL = "https://codeload.github.com/w3c/qt3tests/tar.gz/" + COMMIT
 CATALOG_SHA256 = "d65d6fb5e77776a537db32ca59554cbf00388a38f2c532866691de9e668e88ea"
 SUITE_DIR = os.path.join(ROOT, "tests", "data", "qt3-suite")
 SUITE = os.path.join(SUITE_DIR, "qt3tests-" + COMMIT)
-BASELINE = os.path.join(ROOT, "tests", "data", "qt3-baseline.txt")
+BASELINES = {"xpath20": os.path.join(ROOT, "tests", "data", "qt3-baseline.txt"),
+             "saxon": os.path.join(ROOT, "tests", "data", "qt3-baseline-saxon.txt")}
+BASELINE = BASELINES["xpath20"]
 WORK = os.path.join(ROOT, "build", "qt3")
 HARNESS_VERSION = "1"
+PROFILE = "xpath20"
 NS = "{http://www.w3.org/2010/09/qt-fots-catalog}"
 
 # Cases whose outcome depends on the platform: neither in the baseline nor
@@ -265,10 +269,12 @@ def unesc(s):
     return ESC_RE.sub(lambda m: chr(int(m.group(1), 16)), s)
 
 
-def job_text(cases):
+def job_text(cases, profile):
     lines = []
     for c in cases:
         lines.append("case " + esc(c.name, True))
+        if profile == "saxon":
+            lines.append("profile saxon")
         env = c.env
         if env:
             if env.source:
@@ -324,19 +330,19 @@ def parse_output(text):
     return out
 
 
-def run_set(exe, cases, timeout_per_case):
+def run_set(exe, cases, timeout_per_case, profile):
     """Run the cases of one test set; resume after a crash or timeout."""
     os.makedirs(os.path.join(WORK, "jobs"), exist_ok=True)
     name = cases[0].test_set
-    job = os.path.join(WORK, "jobs", name + ".job")
+    job = os.path.join(WORK, "jobs", "%s.%s.job" % (name, profile))
     with open(job, "w", encoding="utf-8", newline="\n") as f:
-        f.write(job_text(cases))
+        f.write(job_text(cases, profile))
     results = {}
     first = 0
     attempt = 0
     while first < len(cases):
         attempt += 1
-        out = os.path.join(WORK, "jobs", "%s.%d.out" % (name, attempt))
+        out = os.path.join(WORK, "jobs", "%s.%s.%d.out" % (name, profile, attempt))
         # never read the output of an earlier run
         if os.path.exists(out):
             os.remove(out)
@@ -736,8 +742,8 @@ def read_baseline():
 def write_baseline(cases):
     with open(BASELINE, "w", encoding="utf-8", newline="\n") as f:
         f.write("# QT3 baseline: the XPath 2.0 cases that pass (or give another error code)\n")
-        f.write("# suite commit %s, harness %s; written by tools/run-qt3.py --update-baseline\n"
-                % (COMMIT, HARNESS_VERSION))
+        f.write("# profile %s, suite commit %s, harness %s; written by tools/run-qt3.py --update-baseline\n"
+                % (PROFILE, COMMIT, HARNESS_VERSION))
         for c in sorted(cases, key=lambda c: c.key):
             if c.outcome in ("pass", "wrong-code") and c.key not in PLATFORM_DEPENDENT:
                 f.write("%s %s\n" % (c.key, c.outcome))
@@ -859,12 +865,17 @@ def main():
     ap.add_argument("--filter", default="")
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
     ap.add_argument("--timeout", type=float, default=5.0, help="seconds per case")
+    ap.add_argument("--profile", choices=sorted(BASELINES), default="xpath20",
+                    help="the language profile; the Saxon profile has its own baseline")
     ap.add_argument("--update-baseline", action="store_true")
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--self-test", action="store_true", help="only check the assertion checks")
     args = ap.parse_args()
     if args.self_test:
         return self_test()
+    global BASELINE, PROFILE
+    PROFILE = args.profile
+    BASELINE = BASELINES[PROFILE]
     if not os.path.exists(os.path.join(SUITE, "catalog.xml")):
         download()
     check_catalog()
@@ -880,7 +891,7 @@ def main():
         else:
             by_set.setdefault(c.test_set, []).append(c)
     with concurrent.futures.ThreadPoolExecutor(args.jobs) as pool:
-        futures = {pool.submit(run_set, exe, cs, args.timeout): cs for cs in by_set.values()}
+        futures = {pool.submit(run_set, exe, cs, args.timeout, PROFILE): cs for cs in by_set.values()}
         for fut in concurrent.futures.as_completed(futures):
             cs = futures[fut]
             results = fut.result()
@@ -891,13 +902,13 @@ def main():
                     c.outcome, c.detail = "harness-error", "checker: %s: %s" % (type(e).__name__, e)
 
     os.makedirs(WORK, exist_ok=True)
-    with open(os.path.join(WORK, "results.txt"), "w", encoding="utf-8", newline="\n") as f:
+    with open(os.path.join(WORK, "results-%s.txt" % PROFILE), "w", encoding="utf-8", newline="\n") as f:
         for c in sorted(cases, key=lambda c: c.key):
             f.write("%s\t%s\t%s\n" % (c.key, c.outcome, c.detail.replace("\n", " ").replace("\t", " ")))
 
     applicable = [c for c in cases if c.outcome != "excluded"]
     totals = collections.Counter(c.outcome for c in applicable)
-    print("QT3 %s: %d cases, %d excluded, %d applicable" % (COMMIT[:7], len(cases), len(cases) - len(applicable),
+    print("QT3 %s, profile %s: %d cases, %d excluded, %d applicable" % (COMMIT[:7], PROFILE, len(cases), len(cases) - len(applicable),
                                                          len(applicable)))
     for o in ("pass", "wrong-code", "fail", "assertion-error", "assertion-unsupported", "harness-error"):
         print("  %-22s %6d" % (o, totals[o]))
@@ -929,7 +940,7 @@ def main():
     status = 0
     harness = [c for c in applicable if c.outcome == "harness-error"]
     if harness:
-        print("%d harness errors (see build/qt3/results.txt)" % len(harness))
+        print("%d harness errors (see build/qt3/results-%s.txt)" % (len(harness), PROFILE))
         status = 1
     if args.update_baseline:
         write_baseline(cases)

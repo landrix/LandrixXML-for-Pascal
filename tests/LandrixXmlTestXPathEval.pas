@@ -116,6 +116,8 @@ begin
   Expected := Lines(DataFolder(Name) + 'expected.txt');
   Tree := TLandrixXmlXPathTree.Create;
   Context := TLandrixXmlXPathStaticContext.Create;
+  { the expected results come from Saxon }
+  Context.Profile := xppSaxon;
   Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
   Mismatches := 0;
   Count := 0;
@@ -637,9 +639,203 @@ begin
   end;
 end;
 
+{ The fields of a line separated by tabs. }
+function Fields(const S: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
+var
+  I, Start: Integer;
+begin
+  Result := nil;
+  Start := 1;
+  for I := 1 to Length(S) + 1 do
+    if (I > Length(S)) or (S[I] = #9) then
+    begin
+      SetLength(Result, Length(Result) + 1);
+      Result[High(Result)] := Copy(S, Start, I - Start);
+      Start := I + 1;
+    end;
+end;
+
+{ The result of Text in a profile: "TYPE VALUE" per item (" | " between
+  items) or "error CODE". }
+function ProfileResult(const Text: TLandrixXmlUtf8; Profile: TLandrixXmlXPathProfile;
+  Evaluator: TLandrixXmlXPathEvaluator): TLandrixXmlUtf8;
+var
+  Context: TLandrixXmlXPathStaticContext;
+  Expr: TLandrixXmlXPathExpression;
+  R: TLandrixXmlXPathResult;
+  K: Integer;
+begin
+  Result := '';
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Expr := nil;
+  try
+    Context.Profile := Profile;
+    try
+      Expr := TLandrixXmlXPathExpression.Create(Text, Context);
+      R := Evaluator.Evaluate(Expr, 0);
+      try
+        for K := 0 to R.Count - 1 do
+        begin
+          if K > 0 then
+            Result := Result + ' | ';
+          Result := Result + U(R.TypeName(K)) + ' ' + R.StringValueUtf8(K);
+        end;
+      finally
+        R.Free;
+      end;
+    except
+      on X: ELandrixXmlXPathError do
+        Result := U('error ' + X.XPathCode);
+    end;
+  finally
+    Expr.Free;
+    Context.Free;
+  end;
+end;
+
+{ tests/data/xpath/profiles.txt: each row in both profiles; a row that
+  does not differ is an error of the table. }
+procedure TestProfiles;
+var
+  Rows, F: TLandrixXmlUtf8Array;
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  I, Count: Integer;
+  Where: string;
+begin
+  F := nil;
+  Rows := Lines(IncludeTrailingPathDelimiter(RepositoryRoot) + 'tests' + PathDelim + 'data' + PathDelim + 'xpath' +
+    PathDelim + 'profiles.txt');
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  Count := 0;
+  try
+    Tree.LoadFromUtf8('<r/>');
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    for I := 0 to Integer(Length(Rows)) - 1 do
+      if (Rows[I] <> '') and (Rows[I][1] <> '#') then
+      begin
+        F := Fields(Rows[I]);
+        Where := LandrixXmlUtf8ToString(F[0]);
+        Check(Length(F) = 4, Where + ': four fields');
+        if Length(F) <> 4 then
+          Continue;
+        Inc(Count);
+        Check(F[1] <> F[2], Where + ': the profiles differ');
+        CheckEqualsUtf8(F[1], ProfileResult(F[0], xppXPath20, Evaluator), Where + ' (XPath 2.0)');
+        CheckEqualsUtf8(F[2], ProfileResult(F[0], xppSaxon, Evaluator), Where + ' (Saxon)');
+      end;
+    Check(Count >= 10, 'rows present');
+  finally
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
+{ The declared types of a user function convert in the function's
+  profile, not in the caller's: f:inf() returns xs:untypedAtomic('+INF')
+  as an xs:double, f:id($x as xs:double) returns $x; an xs:anyURI made in
+  the Saxon profile stays as it is when cast to xs:anyURI in XPath 2.0
+  (f:uri() returns xs:anyURI('%gg')). }
+procedure TestMixedProfiles;
+
+  procedure Run(FnProfile, CallerProfile: TLandrixXmlXPathProfile; const Call, Want: string);
+  var
+    Tree: TLandrixXmlXPathTree;
+    Context, FnContext: TLandrixXmlXPathStaticContext;
+    Evaluator: TLandrixXmlXPathEvaluator;
+    Body, IdBody, UriBody, Expr: TLandrixXmlXPathExpression;
+    Def, IdDef, UriDef: TLandrixXmlXPathFunctionDef;
+    Functions: TList;
+    Got: string;
+    P: Integer;
+  begin
+    Tree := TLandrixXmlXPathTree.Create;
+    Context := TLandrixXmlXPathStaticContext.Create;
+    FnContext := TLandrixXmlXPathStaticContext.Create;
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    Functions := TList.Create;
+    Def := TLandrixXmlXPathFunctionDef.Create;
+    IdDef := TLandrixXmlXPathFunctionDef.Create;
+    UriDef := TLandrixXmlXPathFunctionDef.Create;
+    Body := nil;
+    IdBody := nil;
+    UriBody := nil;
+    Expr := nil;
+    try
+      Tree.LoadFromUtf8(U('<r/>'));
+      FnContext.Profile := FnProfile;
+      Context.Profile := CallerProfile;
+      P := FnContext.DeclareVariable(U('x'));
+      Context.AddNamespace(U('f'), U('urn:f'));
+      Context.DeclareFunction(U('urn:f'), U('inf'), 0);
+      Context.DeclareFunction(U('urn:f'), U('id'), 1);
+      Context.DeclareFunction(U('urn:f'), U('uri'), 0);
+      Body := TLandrixXmlXPathExpression.Create(U('xs:untypedAtomic(''+INF'')'), FnContext);
+      IdBody := TLandrixXmlXPathExpression.Create(U('$x'), FnContext);
+      UriBody := TLandrixXmlXPathExpression.Create(U('xs:anyURI(''%gg'')'), FnContext);
+      UriDef.Body := UriBody;
+      UriDef.FrameSize := FnContext.VariableCount;
+      UriDef.Name := 'f:uri';
+      Def.Body := Body;
+      Def.ResultType.Declared := True;
+      Def.ResultType.Kind := xtkAtomic;
+      Def.ResultType.AtomicType := xatDouble;
+      Def.ResultType.Occurrence := xocOne;
+      Def.FrameSize := FnContext.VariableCount;
+      Def.Name := 'f:inf';
+      SetLength(IdDef.ParamSlots, 1);
+      SetLength(IdDef.ParamTypes, 1);
+      IdDef.ParamSlots[0] := P;
+      IdDef.ParamTypes[0] := Def.ResultType;
+      IdDef.Body := IdBody;
+      IdDef.FrameSize := FnContext.VariableCount;
+      IdDef.Name := 'f:id';
+      Functions.Add(Def);
+      Functions.Add(IdDef);
+      Functions.Add(UriDef);
+      Evaluator.Functions := Functions;
+      Evaluator.SetFrameSize(Context.VariableCount);
+      try
+        Expr := TLandrixXmlXPathExpression.Create(U(Call), Context);
+        Got := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0));
+      except
+        on X: ELandrixXmlXPathError do
+          Got := 'error ' + X.XPathCode;
+      end;
+      CheckEqualsStr(Want, Got, Call + ', function ' + IntToStr(Ord(FnProfile)) + ', caller ' +
+        IntToStr(Ord(CallerProfile)));
+    finally
+      Expr.Free;
+      UriBody.Free;
+      IdBody.Free;
+      Body.Free;
+      UriDef.Free;
+      IdDef.Free;
+      Def.Free;
+      Functions.Free;
+      Evaluator.Free;
+      FnContext.Free;
+      Context.Free;
+      Tree.Free;
+    end;
+  end;
+
+begin
+  Run(xppSaxon, xppXPath20, 'string(f:inf())', 'INF');
+  Run(xppXPath20, xppSaxon, 'string(f:inf())', 'error FORG0001');
+  Run(xppSaxon, xppXPath20, 'string(f:id(xs:untypedAtomic(''+INF'')))', 'INF');
+  Run(xppXPath20, xppSaxon, 'string(f:id(xs:untypedAtomic(''+INF'')))', 'error FORG0001');
+  Run(xppSaxon, xppXPath20, 'string(xs:anyURI(f:uri()))', '%gg');
+  Run(xppSaxon, xppXPath20, 'string(f:uri() castable as xs:anyURI)', 'true');
+  Run(xppXPath20, xppSaxon, 'string(f:uri())', 'error FORG0001');
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
+  RegisterTest('XPathEval.MixedProfiles', TestMixedProfiles);
+  RegisterTest('XPathEval.Profiles', TestProfiles);
   RegisterTest('XPathEval.Variables', TestVariables);
   RegisterTest('XPathEval.NoAliasing', TestNoAliasing);
   RegisterTest('XPathEval.KeptValues', TestKeptValues);

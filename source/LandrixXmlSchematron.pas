@@ -761,6 +761,7 @@ begin
     try
       { the globals first: their slots are the same in every context }
       FContext := TLandrixXmlXPathStaticContext.Create;
+      FContext.Profile := xppSaxon;
       DeclareNamespaces(FContext);
       N := Root.FirstChildElement;
       while N <> nil do
@@ -856,6 +857,7 @@ begin
         begin
           Where := LandrixXmlUtf8ToString(AttrOf(N, 'line'));
           Ctx := TLandrixXmlXPathStaticContext.Create;
+          Ctx.Profile := xppSaxon;
           FFunctionContexts.Add(Ctx);
           DeclareCommon(Ctx);
           Def := TLandrixXmlXPathFunctionDef.Create;

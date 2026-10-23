@@ -143,11 +143,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `DocumentUri` names the document (`ValidateFile` sets it). On the test
   invoices the SVRL equals SchXslt's apart from its metadata. Rule files now
   also list patterns without rules, which SVRL reports as active.
+- `TLandrixXmlXPathStaticContext.Profile` (`TLandrixXmlXPathProfile`):
+  `xppXPath20`, the default, follows XPath 2.0 and XML Schema 1.0;
+  `xppSaxon` behaves as Saxon HE 12 in the KoSIT validator, as the
+  evaluator did so far (XPath 3.1 rules: `round` and `string-join` with
+  other arities, `string-join` on any atomic values, `+INF`, no check of
+  `xs:anyURI`, Java's conversion of large doubles to integers). Every
+  compiled expression keeps its profile (`Profile`); the Schematron units
+  use `xppSaxon`. `tools/run-qt3.py --profile saxon` has its own baseline.
 - `tools/run-qt3.py` and `tests/LandrixXmlQt3.dpr`: the W3C XPath/XQuery
   test suite QT3 (XPath 2.0 cases, pinned revision) against the
   evaluator. Assertions are checked from the typed results outside the
   engine; the passing cases are a baseline (`tests/data/qt3-baseline.txt`)
-  that the CI checks. First run: 6,004 of 15,144 applicable cases pass.
+  that the CI checks. First run: 6,004 of 15,144 applicable cases pass (6,016 in the XPath 2.0
+  profile).
 - README: Schematron validation with the four outcomes (valid, invalid,
   incomplete, not well-formed) and sharing rules between threads; the
   example is part of `examples/LandrixXmlExamples.dpr`.

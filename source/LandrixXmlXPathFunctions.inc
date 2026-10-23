@@ -5,12 +5,13 @@
   or https://opensource.org/licenses/MIT for the full license text.
 
   Part of LandrixXmlXPathEval: the built-in functions, with the argument
-  rules of XPath 3.1 as Saxon 12 applies them (concat and string-join take
-  any atomic values), and the conversion of user function arguments.
+  rules of XPath 2.0, or of XPath 3.1 as Saxon 12 applies them in the
+  Saxon profile (string-join takes any atomic values), and the conversion
+  of user function arguments.
   Included at the end of the implementation section. }
 
 function TLandrixXmlXPathEvaluator.ConvertTo(const S: TLandrixXmlXPathSequence;
-  const T: TLandrixXmlXPathSequenceType; const FunctionName: string): TLandrixXmlXPathSequence;
+  const T: TLandrixXmlXPathSequenceType; const FunctionName: string; AsXPath20: Boolean): TLandrixXmlXPathSequence;
 var
   I: Integer;
   Item: TLandrixXmlXPathItem;
@@ -34,7 +35,7 @@ begin
     begin
       Item := A.Items[I];
       if (Item.Kind = xikUntypedAtomic) and (T.AtomicType <> xatAnyAtomic) and (T.AtomicType <> xatUntypedAtomic) then
-        Item := CastTo(Item, T.AtomicType)
+        Item := CastTo(Item, T.AtomicType, AsXPath20)
       else
       begin
         { promotions: integer and decimal to double, anyURI to string }
@@ -189,7 +190,7 @@ var
   begin
     if not OptAtom(K, V) then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' is empty');
-    V := NumericOperand(V);
+    V := NumericOperand(V, Xp20);
     Result := ToDouble(V);
   end;
 
@@ -201,7 +202,7 @@ var
     if not OptAtom(K, V) then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' is empty');
     if V.Kind = xikUntypedAtomic then
-      V := CastTo(V, xatInteger);
+      V := CastTo(V, xatInteger, Xp20);
     if V.Kind <> xikInteger then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' must be an integer');
     if not LandrixXmlDecimalTryToInt64(V.Decimal, I64) or (I64 > High(Integer)) or (I64 < Low(Integer)) then
@@ -240,7 +241,7 @@ var
   begin
     if not IsNumeric(V.Kind) and (V.Kind <> xikUntypedAtomic) then
       Fail('XPTY0004', Name + ': ' + KindName(V.Kind) + ' is not a number');
-    Result := NumericOperand(V);
+    Result := NumericOperand(V, Xp20);
   end;
 
   { equality as fn:distinct-values and fn:index-of see it }
@@ -339,16 +340,16 @@ begin
         end;
         if not IsNumeric(A.Items[0].Kind) and (A.Items[0].Kind <> xikUntypedAtomic) then
           Fail('FORG0006', Name + ': ' + KindName(A.Items[0].Kind) + ' is not a number');
-        Acc := NumericOperand(A.Items[0]);
+        Acc := NumericOperand(A.Items[0], Xp20);
         for I := 1 to A.Count - 1 do
         begin
           Item := A.Items[I];
           if not IsNumeric(Item.Kind) and (Item.Kind <> xikUntypedAtomic) then
             Fail('FORG0006', Name + ': ' + KindName(Item.Kind) + ' is not a number');
-          Acc := Arithmetic(Acc, Item, xpaAdd);
+          Acc := Arithmetic(Acc, Item, xpaAdd, Xp20);
         end;
         if Id = xfnAvg then
-          Acc := Arithmetic(Acc, IntegerItemOf(A.Count), xpaDivide);
+          Acc := Arithmetic(Acc, IntegerItemOf(A.Count), xpaDivide, Xp20);
         Result := SingleSeq(Acc);
       end;
     xfnMin, xfnMax:
@@ -362,7 +363,7 @@ begin
         for I := 0 to A.Count - 1 do
         begin
           if A.Items[I].Kind = xikUntypedAtomic then
-            A.Items[I] := DoubleItem(ParseDouble(A.Items[I].Text));
+            A.Items[I] := DoubleItem(ParseDouble(A.Items[I].Text, Xp20));
           if A.Items[I].Kind = xikDouble then
           begin
             HasDouble := True;
@@ -450,6 +451,12 @@ begin
     xfnStringJoin:
       begin
         A := Atomize(Arg(0));
+        { XPath 2.0: xs:string* (untypedAtomic and anyURI become strings);
+          Saxon joins any atomic values }
+        if Xp20 then
+          for I := 0 to A.Count - 1 do
+            if not (A.Items[I].Kind in [xikString, xikUntypedAtomic, xikAnyUri]) then
+              Fail('XPTY0004', Name + ': ' + KindName(A.Items[I].Kind) + ' is not an xs:string');
         T := '';
         if ArgCount > 1 then
           T := ReqStrArg(1);
@@ -609,7 +616,7 @@ begin
         begin
           Item := A.Items[I];
           if Item.Kind = xikUntypedAtomic then
-            Item := CastTo(Item, xatInteger);
+            Item := CastTo(Item, xatInteger, Xp20);
           if Item.Kind <> xikInteger then
             Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not an integer');
           if not LandrixXmlDecimalTryToInt64(Item.Decimal, V64) or (V64 < 1) or (V64 > $10FFFF) or
@@ -633,7 +640,7 @@ begin
         else
         begin
           try
-            Result := SingleSeq(CastTo(A.Items[0], xatDouble));
+            Result := SingleSeq(CastTo(A.Items[0], xatDouble, Xp20));
           except
             on E: ELandrixXmlXPathError do
             begin
@@ -794,16 +801,16 @@ begin
         if not OptAtom(0, Item) then
           Exit;
         case Id of
-          xfnXsString: Result := SingleSeq(CastTo(Item, xatString));
-          xfnXsBoolean: Result := SingleSeq(CastTo(Item, xatBoolean));
-          xfnXsDecimal: Result := SingleSeq(CastTo(Item, xatDecimal));
-          xfnXsInteger: Result := SingleSeq(CastTo(Item, xatInteger));
-          xfnXsDouble: Result := SingleSeq(CastTo(Item, xatDouble));
-          xfnXsDate: Result := SingleSeq(CastTo(Item, xatDate));
-          xfnXsDateTime: Result := SingleSeq(CastTo(Item, xatDateTime));
-          xfnXsTime: Result := SingleSeq(CastTo(Item, xatTime));
-          xfnXsAnyUri: Result := SingleSeq(CastTo(Item, xatAnyUri));
-          xfnXsUntypedAtomic: Result := SingleSeq(CastTo(Item, xatUntypedAtomic));
+          xfnXsString: Result := SingleSeq(CastTo(Item, xatString, Xp20));
+          xfnXsBoolean: Result := SingleSeq(CastTo(Item, xatBoolean, Xp20));
+          xfnXsDecimal: Result := SingleSeq(CastTo(Item, xatDecimal, Xp20));
+          xfnXsInteger: Result := SingleSeq(CastTo(Item, xatInteger, Xp20));
+          xfnXsDouble: Result := SingleSeq(CastTo(Item, xatDouble, Xp20));
+          xfnXsDate: Result := SingleSeq(CastTo(Item, xatDate, Xp20));
+          xfnXsDateTime: Result := SingleSeq(CastTo(Item, xatDateTime, Xp20));
+          xfnXsTime: Result := SingleSeq(CastTo(Item, xatTime, Xp20));
+          xfnXsAnyUri: Result := SingleSeq(CastTo(Item, xatAnyUri, Xp20));
+          xfnXsUntypedAtomic: Result := SingleSeq(CastTo(Item, xatUntypedAtomic, Xp20));
         else
           Fail('FOER0000', 'xs:float is not supported');
         end;

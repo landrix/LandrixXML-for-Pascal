@@ -1,5 +1,5 @@
 # QT3 baseline: the XPath 2.0 cases that pass (or give another error code)
-# suite commit 201a6e466940cdfc727f4babfedcde5332b9f578, harness 1; written by tools/run-qt3.py --update-baseline
+# profile xpath20, suite commit 201a6e466940cdfc727f4babfedcde5332b9f578, harness 1; written by tools/run-qt3.py --update-baseline
 app-FunctxFn/functx-fn-abs-1 pass
 app-FunctxFn/functx-fn-abs-2 pass
 app-FunctxFn/functx-fn-avg-1 pass
@@ -2001,6 +2001,7 @@ fn-round-half-to-even/fn-round-half-to-evenintg1args-1 pass
 fn-round-half-to-even/fn-round-half-to-evenintg1args-2 pass
 fn-round-half-to-even/fn-round-half-to-evenintg1args-3 pass
 fn-round/K-RoundFunc-1 pass
+fn-round/K-RoundFunc-2 pass
 fn-round/K-RoundFunc-3 pass
 fn-round/K-RoundFunc-4 pass
 fn-round/K-RoundFunc-5 pass
@@ -2151,6 +2152,7 @@ fn-starts-with/fn-starts-with2args-5 pass
 fn-static-base-uri/K-StaticBaseURIFunc-1 pass
 fn-static-base-uri/K-StaticBaseURIFunc-2 pass
 fn-static-base-uri/fn-static-base-1 pass
+fn-string-join/K-StringJoinFunc-1 pass
 fn-string-join/K-StringJoinFunc-2 pass
 fn-string-join/K-StringJoinFunc-3 pass
 fn-string-join/K-StringJoinFunc-4 pass
@@ -2171,6 +2173,7 @@ fn-string-join/fn-string-join-19 pass
 fn-string-join/fn-string-join-2 pass
 fn-string-join/fn-string-join-20 pass
 fn-string-join/fn-string-join-21 pass
+fn-string-join/fn-string-join-27 pass
 fn-string-join/fn-string-join-3 pass
 fn-string-join/fn-string-join-4 pass
 fn-string-join/fn-string-join-5 pass
@@ -5821,6 +5824,7 @@ prod-CastExpr/K2-SeqExprCast-206 wrong-code
 prod-CastExpr/K2-SeqExprCast-207 pass
 prod-CastExpr/K2-SeqExprCast-208 pass
 prod-CastExpr/K2-SeqExprCast-209 pass
+prod-CastExpr/K2-SeqExprCast-210 pass
 prod-CastExpr/K2-SeqExprCast-211 pass
 prod-CastExpr/K2-SeqExprCast-212 pass
 prod-CastExpr/K2-SeqExprCast-215 pass
@@ -5838,6 +5842,7 @@ prod-CastExpr/K2-SeqExprCast-227 pass
 prod-CastExpr/K2-SeqExprCast-228 wrong-code
 prod-CastExpr/K2-SeqExprCast-229 pass
 prod-CastExpr/K2-SeqExprCast-230 wrong-code
+prod-CastExpr/K2-SeqExprCast-231 pass
 prod-CastExpr/K2-SeqExprCast-232 wrong-code
 prod-CastExpr/K2-SeqExprCast-233 pass
 prod-CastExpr/K2-SeqExprCast-234 pass
@@ -5944,6 +5949,9 @@ prod-CastExpr/K2-SeqExprCast-331 wrong-code
 prod-CastExpr/K2-SeqExprCast-332 pass
 prod-CastExpr/K2-SeqExprCast-420 pass
 prod-CastExpr/K2-SeqExprCast-421 pass
+prod-CastExpr/K2-SeqExprCast-422 pass
+prod-CastExpr/K2-SeqExprCast-423 pass
+prod-CastExpr/K2-SeqExprCast-424 pass
 prod-CastExpr/K2-SeqExprCast-427 pass
 prod-CastExpr/K2-SeqExprCast-428 wrong-code
 prod-CastExpr/K2-SeqExprCast-429 pass
@@ -6018,6 +6026,7 @@ prod-CastExpr/K2-SeqExprCast-500 wrong-code
 prod-CastExpr/K2-SeqExprCast-501 wrong-code
 prod-CastExpr/K2-SeqExprCast-502 wrong-code
 prod-CastExpr/K2-SeqExprCast-503 wrong-code
+prod-CastExpr/K2-SeqExprCast-505 pass
 prod-CastExpr/K2-SeqExprCast-506 wrong-code
 prod-CastExpr/K2-SeqExprCast-507 wrong-code
 prod-CastExpr/K2-SeqExprCast-508 pass
@@ -6307,6 +6316,8 @@ prod-CastableExpr/K-SeqExprCastable-8 pass
 prod-CastableExpr/K-SeqExprCastable-9 pass
 prod-CastableExpr/K2-SeqExprCastable-3 pass
 prod-CastableExpr/K2-SeqExprCastable-4 pass
+prod-CastableExpr/K2-SeqExprCastable-6 pass
+prod-CastableExpr/K2-SeqExprCastable-7 pass
 prod-CastableExpr/K2-SeqExprCastable-8 pass
 prod-CastableExpr/cbcl-castable-date-001 pass
 prod-CastableExpr/cbcl-castable-date-002 pass
@@ -7716,6 +7727,7 @@ xs-base64Binary/base64-905 wrong-code
 xs-base64Binary/base64-906 wrong-code
 xs-base64Binary/base64-907 wrong-code
 xs-base64Binary/base64-908 wrong-code
+xs-double/xs-double-004 pass
 xs-double/xs-double-005 pass
 xs-float/cbcl-float-001 pass
 xs-float/xs-float-004 wrong-code

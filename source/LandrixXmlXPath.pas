@@ -151,10 +151,20 @@ type
     Arity: Integer;
   end;
 
+  { The language an expression is compiled and evaluated for.
+    xppXPath20: XPath 2.0 as specified (the function signatures, casting
+    and argument rules of XPath 2.0 and XML Schema 1.0).
+    xppSaxon: Saxon HE 12 as the KoSIT validator runs XPath 2.0 rule sets
+    (it applies XPath 3.1 rules: round and string-join with other
+    arities, string-join on any atomic values, XML Schema 1.1 lexical
+    forms, Java's conversion of large doubles to integers). }
+  TLandrixXmlXPathProfile = (xppXPath20, xppSaxon);
+
   { Namespaces, variables and user functions an expression may use. Not
     thread-safe while declarations are added; compiling only reads it. }
   TLandrixXmlXPathStaticContext = class
   private
+    FProfile: TLandrixXmlXPathProfile;
     FPrefixes: TLandrixXmlUtf8Array;
     FUris: TLandrixXmlUtf8Array;
     FVariables: TLandrixXmlUtf8Array;
@@ -176,6 +186,9 @@ type
     function FindFunction(const NamespaceUri, LocalName: TLandrixXmlUtf8; Arity: Integer): Integer;
     property VariableCount: Integer read GetVariableCount;
     property FunctionCount: Integer read GetFunctionCount;
+    { xppXPath20 unless set; every expression keeps the profile it was
+      compiled with }
+    property Profile: TLandrixXmlXPathProfile read FProfile write FProfile;
   end;
 
   { A compiled expression; immutable, usable from several threads. }
@@ -187,11 +200,13 @@ type
     FSlotCount: Integer;
     FFirstLocalSlot: Integer;
     FSerial: Int64;
+    FProfile: TLandrixXmlXPathProfile;
     function GetNode(Index: Integer): TLandrixXmlXPathAstNode;
     function GetNodeCount: Integer;
   public
     { Compiles Text. Context may be nil (no namespaces besides xml, xs and
-      fn, no variables, no user functions). Raises ELandrixXmlXPathError. }
+      fn, no variables, no user functions, profile xppXPath20). Raises
+      ELandrixXmlXPathError. }
     constructor Create(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXPathStaticContext);
     property Text: TLandrixXmlUtf8 read FText;
     property Root: Integer read FRoot;
@@ -210,6 +225,8 @@ type
       expression from a later one at the same address (the evaluator
       keeps values per expression) }
     property Serial: Int64 read FSerial;
+    { the static context's profile when compiled }
+    property Profile: TLandrixXmlXPathProfile read FProfile;
   end;
 
   { The name and number of arguments of a built-in function, for messages
@@ -1637,6 +1654,21 @@ var
   Id: TLandrixXmlXPathFunctionId;
   Found: Boolean;
   Args, User: Integer;
+
+  { round and string-join have other arities only from XPath 3.0 on }
+  function ArityIn20(F: TLandrixXmlXPathFunctionId; Count: Integer): Boolean;
+  begin
+    if FContext.Profile <> xppXPath20 then
+      Result := True
+    else
+      case F of
+        xfnRound: Result := Count = 1;
+        xfnStringJoin: Result := Count = 2;
+      else
+        Result := True;
+      end;
+  end;
+
 begin
   { AName may be the current token's text, which Next replaces; the
     local variable keeps its own reference }
@@ -1672,7 +1704,8 @@ begin
       (not Functions[Id].Xs and (Uri = LandrixXmlXPathFunctionNamespace))) then
     begin
       Found := True;
-      if (Args < Functions[Id].MinArgs) or ((Functions[Id].MaxArgs >= 0) and (Args > Functions[Id].MaxArgs)) then
+      if (Args < Functions[Id].MinArgs) or ((Functions[Id].MaxArgs >= 0) and (Args > Functions[Id].MaxArgs)) or
+        not ArityIn20(Id, Args) then
         ErrorCode('XPST0017', 'wrong number of arguments for ' + LandrixXmlXPathFunctionName(Id) + '()', Position);
       FNodes[Result].Op := Ord(Id);
       if Functions[Id].Xs then
@@ -1704,6 +1737,7 @@ begin
     FNodes := Copy(P.FNodes, 0, P.FCount);
     FSlotCount := P.FSlotCount;
     FFirstLocalSlot := P.FContext.VariableCount;
+    FProfile := P.FContext.Profile;
   finally
     P.Free;
   end;

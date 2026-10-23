@@ -15,6 +15,7 @@
     var NAME FILE      $NAME is the document node of FILE
     doc URI FILE       document(URI) returns FILE
     ns PREFIX URI
+    profile saxon      the Saxon profile (else XPath 2.0)
     param NAME EXPR    $NAME is the value of EXPR
     expr EXPR          the expression under test
     check EXPR         evaluated with $result bound to its value
@@ -185,6 +186,7 @@ type
     Expr: TLandrixXmlUtf8;
     Checks: TLandrixXmlUtf8Array;
     Values: TLandrixXmlUtf8Array;
+    Saxon: Boolean;
   end;
 
   { The trees and the evaluator of a case. }
@@ -347,6 +349,8 @@ begin
           on ELandrixXmlError do
             ;
         end;
+      if C.Saxon then
+        R.Context.Profile := xppSaxon;
       for I := 0 to Integer(Length(C.NsPrefixes)) - 1 do
         R.Context.AddNamespace(C.NsPrefixes[I], C.NsUris[I]);
       for I := 0 to Integer(Length(C.VarNames)) - 1 do
@@ -467,6 +471,8 @@ begin
         Add(C.ParamNames, Unesc(Name));
         Add(C.ParamExprs, Unesc(Rest));
       end
+      else if Head = 'profile' then
+        C.Saxon := Rest = 'saxon'
       else if Head = 'expr' then
         C.Expr := Unesc(Rest)
       else if Head = 'check' then
