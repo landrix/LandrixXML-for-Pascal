@@ -240,6 +240,6 @@ First release.
   copies must be rejected cleanly, and `tools/check-local.py` cross-checks
   the classification with expat.
 
-[Unreleased]: https://github.com/LandrixSoftware/LandrixXML-for-Pascal/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/LandrixSoftware/LandrixXML-for-Pascal/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/LandrixSoftware/LandrixXML-for-Pascal/releases/tag/v0.1.0
+[Unreleased]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/landrix/LandrixXML-for-Pascal/releases/tag/v0.1.0
