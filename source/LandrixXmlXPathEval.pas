@@ -102,9 +102,6 @@ uses
   LandrixXmlXPath;
 
 type
-  TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
-    xikDecimal, xikDouble, xikDate, xikDateTime, xikTime);
-
   { An item: a node of the tree (Node) or an atomic value. Internal, public
     because the evaluator's records need it. }
   TLandrixXmlXPathItem = record
@@ -129,7 +126,7 @@ type
   TLandrixXmlXPathTypeKind = (xtkAnyItem, xtkNode, xtkAtomic);
   TLandrixXmlXPathSequenceType = record
     Kind: TLandrixXmlXPathTypeKind;
-    AtomicType: TLandrixXmlXPathAtomicType;
+    AtomicType: TLandrixXmlXPathItemKind;
     Occurrence: TLandrixXmlXPathOccurrence;
     { False: no "as", anything goes }
     Declared: Boolean;
@@ -476,20 +473,7 @@ end;
 
 function KindName(Kind: TLandrixXmlXPathItemKind): string;
 begin
-  case Kind of
-    xikNode: Result := 'node()';
-    xikUntypedAtomic: Result := 'xs:untypedAtomic';
-    xikString: Result := 'xs:string';
-    xikAnyUri: Result := 'xs:anyURI';
-    xikBoolean: Result := 'xs:boolean';
-    xikInteger: Result := 'xs:integer';
-    xikDecimal: Result := 'xs:decimal';
-    xikDouble: Result := 'xs:double';
-    xikDate: Result := 'xs:date';
-    xikDateTime: Result := 'xs:dateTime';
-  else
-    Result := 'xs:time';
-  end;
+  Result := LandrixXmlXPathAtomicTypeName(Kind);
 end;
 
 { --- string helpers (code points) ----------------------------------------- }
@@ -1590,7 +1574,7 @@ begin
             Result := True;
       end;
     xakCast:
-      Result := Nodes[Index].AtomicType in [xatAnyAtomic, xatDecimal, xatInteger, xatDouble, xatFloat];
+      Result := Nodes[Index].AtomicType in [xikAnyAtomic, xikDecimal, xikInteger, xikDouble, xikFloat];
     xakFunction:
       if Nodes[Index].Op < 0 then
         Result := True

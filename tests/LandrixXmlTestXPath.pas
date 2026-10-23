@@ -326,7 +326,7 @@ begin
   end;
   E := TLandrixXmlXPathExpression.Create(U('xs:date(a)'), nil);
   try
-    CheckEquals(Ord(xatDate), Ord(E.Nodes[E.Root].AtomicType), 'constructor function with its type');
+    CheckEquals(Ord(xikDate), Ord(E.Nodes[E.Root].AtomicType), 'constructor function with its type');
   finally
     E.Free;
   end;

@@ -256,7 +256,7 @@ begin
     Def.ParamSlots[0] := P;
     Def.ParamTypes[0].Declared := True;
     Def.ParamTypes[0].Kind := xtkAtomic;
-    Def.ParamTypes[0].AtomicType := xatDecimal;
+    Def.ParamTypes[0].AtomicType := xikDecimal;
     Def.ParamTypes[0].Occurrence := xocOne;
     Def.Body := Body;
     Def.FrameSize := FnContext.VariableCount;
@@ -790,7 +790,7 @@ procedure TestMixedProfiles;
       Def.Body := Body;
       Def.ResultType.Declared := True;
       Def.ResultType.Kind := xtkAtomic;
-      Def.ResultType.AtomicType := xatDouble;
+      Def.ResultType.AtomicType := xikDouble;
       Def.ResultType.Occurrence := xocOne;
       Def.FrameSize := FnContext.VariableCount;
       Def.Name := 'f:inf';

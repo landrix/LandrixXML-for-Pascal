@@ -250,7 +250,7 @@ begin
     Result := 1;
 end;
 
-function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType;
+function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem; forward;
 function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXmlDecimal; forward;
 
@@ -295,10 +295,10 @@ begin
       X := DoubleItem(ParseDouble(X.Text, Xp20))
     else if not IsStringLike(Y.Kind) then
       case Y.Kind of
-        xikBoolean: X := CastTo(X, xatBoolean, Xp20);
-        xikDate: X := CastTo(X, xatDate, Xp20);
-        xikDateTime: X := CastTo(X, xatDateTime, Xp20);
-        xikTime: X := CastTo(X, xatTime, Xp20);
+        xikBoolean: X := CastTo(X, xikBoolean, Xp20);
+        xikDate: X := CastTo(X, xikDate, Xp20);
+        xikDateTime: X := CastTo(X, xikDateTime, Xp20);
+        xikTime: X := CastTo(X, xikTime, Xp20);
       else
         { compared as they are: a type error }
       end;
@@ -309,10 +309,10 @@ begin
       Y := DoubleItem(ParseDouble(Y.Text, Xp20))
     else if not IsStringLike(X.Kind) then
       case X.Kind of
-        xikBoolean: Y := CastTo(Y, xatBoolean, Xp20);
-        xikDate: Y := CastTo(Y, xatDate, Xp20);
-        xikDateTime: Y := CastTo(Y, xatDateTime, Xp20);
-        xikTime: Y := CastTo(Y, xatTime, Xp20);
+        xikBoolean: Y := CastTo(Y, xikBoolean, Xp20);
+        xikDate: Y := CastTo(Y, xikDate, Xp20);
+        xikDateTime: Y := CastTo(Y, xikDateTime, Xp20);
+        xikTime: Y := CastTo(Y, xikTime, Xp20);
       else
         { compared as they are: a type error }
       end;
@@ -449,9 +449,9 @@ begin
   X := A.Items[0];
   Y := B.Items[0];
   if X.Kind = xikUntypedAtomic then
-    X := CastTo(X, xatInteger, Xp20);
+    X := CastTo(X, xikInteger, Xp20);
   if Y.Kind = xikUntypedAtomic then
-    Y := CastTo(Y, xatInteger, Xp20);
+    Y := CastTo(Y, xikInteger, Xp20);
   if (X.Kind <> xikInteger) or (Y.Kind <> xikInteger) then
     Fail('XPTY0004', 'the operands of "to" must be integers');
   if LandrixXmlDecimalCompare(X.Decimal, Y.Decimal) > 0 then
@@ -551,7 +551,7 @@ begin
   end;
 end;
 
-function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType;
+function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem;
 var
   D: TLandrixXmlDecimal;
@@ -568,14 +568,14 @@ begin
   StringSource := Item.Kind in [xikString, xikUntypedAtomic];
   InitItem(Result, xikString);
   case T of
-    xatString:
+    xikString:
       Result := StringItem(xikString, AtomicString(Item));
-    xatUntypedAtomic, xatAnyAtomic:
-      if T = xatAnyAtomic then
+    xikUntypedAtomic, xikAnyAtomic:
+      if T = xikAnyAtomic then
         Result := Item
       else
         Result := StringItem(xikUntypedAtomic, AtomicString(Item));
-    xatAnyUri:
+    xikAnyUri:
       if StringSource or (Item.Kind = xikAnyUri) then
       begin
         Result := StringItem(xikAnyUri, NormalizeSpace(Item.Text));
@@ -585,7 +585,7 @@ begin
       end
       else
         NotAllowed;
-    xatBoolean:
+    xikBoolean:
       case Item.Kind of
         xikBoolean:
           Result := Item;
@@ -600,7 +600,7 @@ begin
         else
           NotAllowed;
       end;
-    xatDecimal:
+    xikDecimal:
       case Item.Kind of
         xikInteger, xikDecimal:
           Result := DecimalItem(Item.Decimal);
@@ -622,7 +622,7 @@ begin
         else
           NotAllowed;
       end;
-    xatInteger:
+    xikInteger:
       case Item.Kind of
         xikInteger:
           Result := Item;
@@ -646,7 +646,7 @@ begin
         else
           NotAllowed;
       end;
-    xatDouble:
+    xikDouble:
       case Item.Kind of
         xikDouble:
           Result := Item;
@@ -663,19 +663,19 @@ begin
         else
           NotAllowed;
       end;
-    xatDate, xatDateTime, xatTime:
+    xikDate, xikDateTime, xikTime:
       begin
         if StringSource then
         begin
           case T of
-            xatDate: Result := ParseDateKind(Item.Text, xikDate);
-            xatDateTime: Result := ParseDateKind(Item.Text, xikDateTime);
+            xikDate: Result := ParseDateKind(Item.Text, xikDate);
+            xikDateTime: Result := ParseDateKind(Item.Text, xikDateTime);
           else
             Result := ParseDateKind(Item.Text, xikTime);
           end;
         end
-        else if (Item.Kind = xikDate) and (T = xatDate) or (Item.Kind = xikDateTime) and (T = xatDateTime) or
-          (Item.Kind = xikTime) and (T = xatTime) then
+        else if (Item.Kind = xikDate) and (T = xikDate) or (Item.Kind = xikDateTime) and (T = xikDateTime) or
+          (Item.Kind = xikTime) and (T = xikTime) then
           Result := Item
         else if Item.Kind in [xikDate, xikDateTime, xikTime] then
           Fail('FOER0000', 'casts between ' + KindName(Item.Kind) + ' and ' + LandrixXmlXPathAtomicTypeName(T) +
@@ -688,7 +688,7 @@ begin
   end;
 end;
 
-function Castable(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathAtomicType; Xp20: Boolean): Boolean;
+function Castable(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind; Xp20: Boolean): Boolean;
 begin
   try
     CastTo(Item, T, Xp20);

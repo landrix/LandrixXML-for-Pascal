@@ -101,9 +101,13 @@ type
     xntDocumentNode, xntAnyElement, xntAnyAttribute, xntName, xntNamespaceWildcard, xntLocalWildcard,
     xntAnyName);
 
-  { the atomic types of casts, constructor functions and parameters }
-  TLandrixXmlXPathAtomicType = (xatNone, xatAnyAtomic, xatUntypedAtomic, xatString, xatBoolean,
-    xatDecimal, xatInteger, xatDouble, xatFloat, xatDate, xatDateTime, xatTime, xatAnyUri);
+  { The type labels: the kind of an item (a node or an atomic value) and
+    the atomic type of a cast, a constructor function or a parameter. The
+    list grows with the supported types; new labels are appended. Items
+    have the kinds xikNode to xikTime; xikFloat (no xs:float values yet),
+    xikAnyAtomic (abstract) and xikNone (no type) only label types. }
+  TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
+    xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone);
 
   TLandrixXmlXPathAstNode = record
     Kind: TLandrixXmlXPathAstKind;
@@ -122,7 +126,7 @@ type
     Text: TLandrixXmlUtf8;
     Decimal: TLandrixXmlDecimal;
     DoubleValue: TLandrixXmlDouble;
-    AtomicType: TLandrixXmlXPathAtomicType;
+    AtomicType: TLandrixXmlXPathItemKind;
     AllowEmpty: Boolean;
     { 1-based byte index into the expression text (messages print it
       0-based as "offset") }
@@ -234,10 +238,11 @@ type
   { The name and number of arguments of a built-in function, for messages
     and the evaluator. }
 function LandrixXmlXPathFunctionName(Id: TLandrixXmlXPathFunctionId): string;
-function LandrixXmlXPathAtomicTypeName(T: TLandrixXmlXPathAtomicType): string;
-{ The atomic type with this local name in the xs namespace; xatNone if it
+{ "xs:" and the local name of an atomic type; "node()" for xikNode. }
+function LandrixXmlXPathAtomicTypeName(T: TLandrixXmlXPathItemKind): string;
+{ The atomic type with this local name in the xs namespace; xikNone if it
   is not supported. }
-function LandrixXmlXPathAtomicTypeByName(const LocalName: TLandrixXmlUtf8): TLandrixXmlXPathAtomicType;
+function LandrixXmlXPathAtomicTypeByName(const LocalName: TLandrixXmlUtf8): TLandrixXmlXPathItemKind;
 
 implementation
 
@@ -320,8 +325,9 @@ const
     (Name: 'untypedAtomic'; MinArgs: 1; MaxArgs: 1; Xs: True)
   );
 
-  AtomicNames: array[TLandrixXmlXPathAtomicType] of string = ('', 'anyAtomicType', 'untypedAtomic',
-    'string', 'boolean', 'decimal', 'integer', 'double', 'float', 'date', 'dateTime', 'time', 'anyURI');
+  { local names in the xs namespace; empty for the labels without one }
+  AtomicNames: array[TLandrixXmlXPathItemKind] of string = ('', 'untypedAtomic', 'string', 'anyURI',
+    'boolean', 'integer', 'decimal', 'double', 'date', 'dateTime', 'time', 'float', 'anyAtomicType', '');
 
 function LandrixXmlXPathFunctionName(Id: TLandrixXmlXPathFunctionId): string;
 begin
@@ -331,22 +337,25 @@ begin
     Result := Functions[Id].Name;
 end;
 
-function LandrixXmlXPathAtomicTypeName(T: TLandrixXmlXPathAtomicType): string;
+function LandrixXmlXPathAtomicTypeName(T: TLandrixXmlXPathItemKind): string;
 begin
-  Result := 'xs:' + AtomicNames[T];
+  if T = xikNode then
+    Result := 'node()'
+  else
+    Result := 'xs:' + AtomicNames[T];
 end;
 
-function LandrixXmlXPathAtomicTypeByName(const LocalName: TLandrixXmlUtf8): TLandrixXmlXPathAtomicType;
+function LandrixXmlXPathAtomicTypeByName(const LocalName: TLandrixXmlUtf8): TLandrixXmlXPathItemKind;
 var
-  T: TLandrixXmlXPathAtomicType;
+  T: TLandrixXmlXPathItemKind;
 begin
-  for T := Succ(xatNone) to High(TLandrixXmlXPathAtomicType) do
-    if LandrixXmlStringToUtf8(AtomicNames[T]) = LocalName then
+  for T := Low(TLandrixXmlXPathItemKind) to High(TLandrixXmlXPathItemKind) do
+    if (AtomicNames[T] <> '') and (LandrixXmlStringToUtf8(AtomicNames[T]) = LocalName) then
     begin
       Result := T;
       Exit;
     end;
-  Result := xatNone;
+  Result := xikNone;
 end;
 
 { --- ELandrixXmlXPathError --------------------------------------------- }
@@ -895,7 +904,7 @@ begin
   FNodes[Result].Text := '';
   FNodes[Result].Decimal := LandrixXmlDecimalZero;
   FNodes[Result].DoubleValue := LandrixXmlDoubleZero(False);
-  FNodes[Result].AtomicType := xatNone;
+  FNodes[Result].AtomicType := xikNone;
   FNodes[Result].AllowEmpty := False;
   FNodes[Result].Position := Position;
   Inc(FCount);
@@ -1297,9 +1306,9 @@ begin
   if Uri <> LandrixXmlXPathSchemaNamespace then
     ErrorCode('XPST0051', 'unknown atomic type "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
   FNodes[Node].AtomicType := LandrixXmlXPathAtomicTypeByName(Local);
-  if (FNodes[Node].AtomicType = xatAnyAtomic) or (Local = 'NOTATION') then
+  if (FNodes[Node].AtomicType = xikAnyAtomic) or (Local = 'NOTATION') then
     ErrorCode('XPST0080', 'cannot cast to "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
-  if FNodes[Node].AtomicType = xatNone then
+  if FNodes[Node].AtomicType = xikNone then
     ErrorCode('XPST0051', 'the type "' + LandrixXmlUtf8ToString(FToken.Text) + '" is not supported here',
       FToken.Position);
   Next;

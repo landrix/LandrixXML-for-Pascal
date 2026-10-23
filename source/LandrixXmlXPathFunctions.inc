@@ -34,32 +34,32 @@ begin
     for I := 0 to A.Count - 1 do
     begin
       Item := A.Items[I];
-      if (Item.Kind = xikUntypedAtomic) and (T.AtomicType <> xatAnyAtomic) and (T.AtomicType <> xatUntypedAtomic) then
+      if (Item.Kind = xikUntypedAtomic) and (T.AtomicType <> xikAnyAtomic) and (T.AtomicType <> xikUntypedAtomic) then
         Item := CastTo(Item, T.AtomicType, AsXPath20)
       else
       begin
         { promotions: integer and decimal to double, anyURI to string }
         Ok := True;
         case T.AtomicType of
-          xatAnyAtomic: ;
-          xatString:
+          xikAnyAtomic: ;
+          xikString:
             if Item.Kind = xikAnyUri then
               Item := StringItem(xikString, Item.Text)
             else
               Ok := Item.Kind = xikString;
-          xatUntypedAtomic: Ok := Item.Kind = xikUntypedAtomic;
-          xatBoolean: Ok := Item.Kind = xikBoolean;
-          xatDecimal: Ok := Item.Kind in [xikInteger, xikDecimal];
-          xatInteger: Ok := Item.Kind = xikInteger;
-          xatDouble:
+          xikUntypedAtomic: Ok := Item.Kind = xikUntypedAtomic;
+          xikBoolean: Ok := Item.Kind = xikBoolean;
+          xikDecimal: Ok := Item.Kind in [xikInteger, xikDecimal];
+          xikInteger: Ok := Item.Kind = xikInteger;
+          xikDouble:
             if Item.Kind in [xikInteger, xikDecimal] then
               Item := DoubleItem(LandrixXmlDoubleFromDecimal(Item.Decimal))
             else
               Ok := Item.Kind = xikDouble;
-          xatDate: Ok := Item.Kind = xikDate;
-          xatDateTime: Ok := Item.Kind = xikDateTime;
-          xatTime: Ok := Item.Kind = xikTime;
-          xatAnyUri: Ok := Item.Kind = xikAnyUri;
+          xikDate: Ok := Item.Kind = xikDate;
+          xikDateTime: Ok := Item.Kind = xikDateTime;
+          xikTime: Ok := Item.Kind = xikTime;
+          xikAnyUri: Ok := Item.Kind = xikAnyUri;
         else
           Ok := False;
         end;
@@ -202,7 +202,7 @@ var
     if not OptAtom(K, V) then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' is empty');
     if V.Kind = xikUntypedAtomic then
-      V := CastTo(V, xatInteger, Xp20);
+      V := CastTo(V, xikInteger, Xp20);
     if V.Kind <> xikInteger then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' must be an integer');
     if not LandrixXmlDecimalTryToInt64(V.Decimal, I64) or (I64 > High(Integer)) or (I64 < Low(Integer)) then
@@ -616,7 +616,7 @@ begin
         begin
           Item := A.Items[I];
           if Item.Kind = xikUntypedAtomic then
-            Item := CastTo(Item, xatInteger, Xp20);
+            Item := CastTo(Item, xikInteger, Xp20);
           if Item.Kind <> xikInteger then
             Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not an integer');
           if not LandrixXmlDecimalTryToInt64(Item.Decimal, V64) or (V64 < 1) or (V64 > $10FFFF) or
@@ -640,7 +640,7 @@ begin
         else
         begin
           try
-            Result := SingleSeq(CastTo(A.Items[0], xatDouble, Xp20));
+            Result := SingleSeq(CastTo(A.Items[0], xikDouble, Xp20));
           except
             on E: ELandrixXmlXPathError do
             begin
@@ -801,16 +801,16 @@ begin
         if not OptAtom(0, Item) then
           Exit;
         case Id of
-          xfnXsString: Result := SingleSeq(CastTo(Item, xatString, Xp20));
-          xfnXsBoolean: Result := SingleSeq(CastTo(Item, xatBoolean, Xp20));
-          xfnXsDecimal: Result := SingleSeq(CastTo(Item, xatDecimal, Xp20));
-          xfnXsInteger: Result := SingleSeq(CastTo(Item, xatInteger, Xp20));
-          xfnXsDouble: Result := SingleSeq(CastTo(Item, xatDouble, Xp20));
-          xfnXsDate: Result := SingleSeq(CastTo(Item, xatDate, Xp20));
-          xfnXsDateTime: Result := SingleSeq(CastTo(Item, xatDateTime, Xp20));
-          xfnXsTime: Result := SingleSeq(CastTo(Item, xatTime, Xp20));
-          xfnXsAnyUri: Result := SingleSeq(CastTo(Item, xatAnyUri, Xp20));
-          xfnXsUntypedAtomic: Result := SingleSeq(CastTo(Item, xatUntypedAtomic, Xp20));
+          xfnXsString: Result := SingleSeq(CastTo(Item, xikString, Xp20));
+          xfnXsBoolean: Result := SingleSeq(CastTo(Item, xikBoolean, Xp20));
+          xfnXsDecimal: Result := SingleSeq(CastTo(Item, xikDecimal, Xp20));
+          xfnXsInteger: Result := SingleSeq(CastTo(Item, xikInteger, Xp20));
+          xfnXsDouble: Result := SingleSeq(CastTo(Item, xikDouble, Xp20));
+          xfnXsDate: Result := SingleSeq(CastTo(Item, xikDate, Xp20));
+          xfnXsDateTime: Result := SingleSeq(CastTo(Item, xikDateTime, Xp20));
+          xfnXsTime: Result := SingleSeq(CastTo(Item, xikTime, Xp20));
+          xfnXsAnyUri: Result := SingleSeq(CastTo(Item, xikAnyUri, Xp20));
+          xfnXsUntypedAtomic: Result := SingleSeq(CastTo(Item, xikUntypedAtomic, Xp20));
         else
           Fail('FOER0000', 'xs:float is not supported');
         end;

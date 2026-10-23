@@ -148,6 +148,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   XML Schema 1.0 (`[0-9-.]` is an error) and without `(?:...)` groups.
   The XPath evaluator uses it in the profile `xppXPath20`; `xrmXPath`
   stays the dialect of Saxon.
+- XPath: `TLandrixXmlXPathItemKind` is the one type label of items and
+  of the types of casts and parameters; it moved to `LandrixXmlXPath` and
+  grows with the supported types (new labels are appended).
+  `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
 - XPath: node comparisons (`is`, `<<`, `>>`), `intersect` and `except`, and
   the `following` axis. A path step without a context item raises
   XPDY0002 (was XPTY0020, which is for an atomic context item).

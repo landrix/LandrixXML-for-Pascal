@@ -299,7 +299,7 @@ var
 begin
   Result.Declared := S <> '';
   Result.Kind := xtkAnyItem;
-  Result.AtomicType := xatNone;
+  Result.AtomicType := xikNone;
   Result.Occurrence := xocOne;
   if not Result.Declared then
   begin
@@ -326,7 +326,7 @@ begin
   begin
     Result.Kind := xtkAtomic;
     Result.AtomicType := LandrixXmlXPathAtomicTypeByName(Copy(T, 4, MaxInt));
-    if Result.AtomicType = xatNone then
+    if Result.AtomicType = xikNone then
       SchemaError(Where + ': the type "' + LandrixXmlUtf8ToString(S) + '" is not supported');
   end
   else
