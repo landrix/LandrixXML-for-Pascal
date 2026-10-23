@@ -143,6 +143,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `DocumentUri` names the document (`ValidateFile` sets it). On the test
   invoices the SVRL equals SchXslt's apart from its metadata. Rule files now
   also list patterns without rules, which SVRL reports as active.
+- README: Schematron validation with the four outcomes (valid, invalid,
+  incomplete, not well-formed) and sharing rules between threads; the
+  example is part of `examples/LandrixXmlExamples.dpr`.
 - `tools/gen-schematron-testdata.py` collapses only XML white space in
   messages (a no-break space is text, as in the library).
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
@@ -159,6 +162,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   optionally checks them against Saxon.
 
 ### Fixed
+- `TLandrixXmlXPathTree.StringValueUtf8` no longer makes the tree's text
+  strings unique (a write), so validators in several threads can share
+  rules with embedded documents (`document()`).
+- The CI installs the FCL units of Free Pascal (`Contnrs`).
 - Delphi 13 macOS ARM64: no more W1072 warnings where `TStream.Read`
   returns a 64-bit `Longint`.
 - Free Pascal on macOS AArch64: no more note about `Move` not being inlined

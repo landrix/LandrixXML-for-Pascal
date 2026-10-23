@@ -17,6 +17,12 @@ program LandrixXmlTests;
 {$ENDIF}
 
 uses
+  {$IFDEF FPC}
+  {$IFDEF UNIX}
+  { threads for Schematron.Threads }
+  cthreads,
+  {$ENDIF}
+  {$ENDIF}
   SysUtils,
   LandrixXmlTestFramework,
   LandrixXmlTestSelf,

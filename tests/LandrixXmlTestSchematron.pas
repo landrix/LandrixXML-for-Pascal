@@ -10,7 +10,8 @@
   (tools/gen-schematron-testdata.py): the fired rules in order and every
   failed assert with id, flag, location and message; a document Saxon
   stops on must give a dynamic error. Plus small rule files for matching,
-  results and load errors. }
+  results and load errors, and validators in several threads sharing one
+  rule set. }
 
 unit LandrixXmlTestSchematron;
 
@@ -894,6 +895,159 @@ begin
   end;
 end;
 
+{ The SVRL of the last validation. }
+function SvrlOf(V: TLandrixXmlSchematronValidator): TLandrixXmlUtf8;
+var
+  Stream: TMemoryStream;
+begin
+  Result := '';
+  Stream := TMemoryStream.Create;
+  try
+    V.SaveSvrlToStream(Stream);
+    SetLength(Result, Integer(Stream.Size));
+    if Length(Result) > 0 then
+      Move(Stream.Memory^, Result[1], Length(Result));
+  finally
+    Stream.Free;
+  end;
+end;
+
+type
+  { Validates every file with its own validator on shared rules, starting
+    at file Start; keeps the SVRL per file. }
+  TValidatorThread = class(TThread)
+  public
+    Rules: TLandrixXmlSchematronRules;
+    Files: TStrings;
+    Start: Integer;
+    Svrl: TLandrixXmlUtf8Array;
+    Error: string;
+    constructor Create(ARules: TLandrixXmlSchematronRules; AFiles: TStrings; AStart: Integer);
+  protected
+    procedure Execute; override;
+  end;
+
+constructor TValidatorThread.Create(ARules: TLandrixXmlSchematronRules; AFiles: TStrings; AStart: Integer);
+begin
+  { before inherited Create: the thread may start running in it }
+  Rules := ARules;
+  Files := AFiles;
+  Start := AStart;
+  SetLength(Svrl, Files.Count);
+  inherited Create(False);
+end;
+
+procedure TValidatorThread.Execute;
+var
+  V: TLandrixXmlSchematronValidator;
+  Lap, I, F: Integer;
+begin
+  try
+    V := TLandrixXmlSchematronValidator.Create(Rules);
+    try
+      for Lap := 1 to 3 do
+        for I := 0 to Files.Count - 1 do
+        begin
+          F := (Start + I) mod Files.Count;
+          V.ValidateFile(Files[F]);
+          Svrl[F] := SvrlOf(V);
+        end;
+    finally
+      V.Free;
+    end;
+  except
+    on E: Exception do
+      Error := E.ClassName + ': ' + E.Message;
+  end;
+end;
+
+{ Four threads with a validator each on one rule set: the same SVRL as
+  one validator alone. threads.sch reads string values of elements with
+  several text nodes in an embedded document (shared by the threads). }
+procedure TestThreads;
+const
+  ThreadCount = 4;
+var
+  Rules: TLandrixXmlSchematronRules;
+  Files: TStringList;
+  V: TLandrixXmlSchematronValidator;
+  Threads: array[0..ThreadCount - 1] of TValidatorThread;
+  Expected: TLandrixXmlUtf8Array;
+  Pass, I, T: Integer;
+  Search: TSearchRec;
+begin
+  Expected := nil;
+  Rules := TLandrixXmlSchematronRules.Create;
+  Files := TStringList.Create;
+  for T := 0 to ThreadCount - 1 do
+    Threads[T] := nil;
+  try
+    for Pass := 1 to 2 do
+    begin
+      Files.Clear;
+      if Pass = 1 then
+      begin
+        Rules.LoadFromFile(DataPath('rules' + PathDelim + 'xrechnung-ubl.xml'));
+        if FindFirst(DataPath('ubl' + PathDelim + '*.xml'), faAnyFile, Search) = 0 then
+        try
+          repeat
+            if Files.Count < 8 then
+              Files.Add(DataPath('ubl' + PathDelim + Search.Name));
+          until FindNext(Search) <> 0;
+        finally
+          FindClose(Search);
+        end;
+        Files.Sort;
+      end
+      else
+      begin
+        Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + 'threads.sch'));
+        for I := 1 to 8 do
+          Files.Add(DataPath('compiler' + PathDelim + 'threads-doc.xml'));
+      end;
+      Check(Files.Count = 8, 'files, pass ' + IntToStr(Pass));
+      SetLength(Expected, Files.Count);
+      V := TLandrixXmlSchematronValidator.Create(Rules);
+      try
+        for I := 0 to Files.Count - 1 do
+        begin
+          V.ValidateFile(Files[I]);
+          Expected[I] := SvrlOf(V);
+        end;
+        if Pass = 2 then
+        begin
+          { the a elements with k="2" (every second of 200) }
+          Check(V.ResultCount = 100, 'threads.sch: ' + IntToStr(V.ResultCount) + ' results');
+          CheckEqualsUtf8('value DEFG', V.Results[0].Message, 'threads.sch: message');
+        end;
+      finally
+        V.Free;
+      end;
+      for T := 0 to ThreadCount - 1 do
+        Threads[T] := TValidatorThread.Create(Rules, Files, 2 * T);
+      for T := 0 to ThreadCount - 1 do
+      begin
+        Threads[T].WaitFor;
+        CheckEqualsStr('', Threads[T].Error, 'no exception, thread ' + IntToStr(T) + ', pass ' + IntToStr(Pass));
+        for I := 0 to Files.Count - 1 do
+          Check(Threads[T].Svrl[I] = Expected[I], 'same SVRL, thread ' + IntToStr(T) + ', file ' + IntToStr(I) +
+            ', pass ' + IntToStr(Pass));
+        Threads[T].Free;
+        Threads[T] := nil;
+      end;
+    end;
+  finally
+    for T := 0 to ThreadCount - 1 do
+      if Threads[T] <> nil then
+      begin
+        Threads[T].WaitFor;
+        Threads[T].Free;
+      end;
+    Files.Free;
+    Rules.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('Schematron.EN16931Ubl', TestEn16931Ubl);
@@ -912,6 +1066,7 @@ begin
   RegisterTest('Schematron.CompilerErrors', TestCompilerErrors);
   RegisterTest('Schematron.CompilerOverride', TestCompilerOverride);
   RegisterTest('Schematron.Collapse', TestCollapse);
+  RegisterTest('Schematron.Threads', TestThreads);
 end;
 
 end.

@@ -54,7 +54,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlXPathTree` | read-only document tree for XPath (from reader or DOM), optional validation unit |
 | `LandrixXmlXPath` | XPath 2.0 parser (the subset the e-invoice rule sets use), optional validation unit |
 | `LandrixXmlXPathEval` | evaluates XPath 2.0 expressions on the tree as Saxon HE does, optional validation unit |
-| `LandrixXmlSchematron` | Schematron validation (EN16931, XRechnung rule files), optional validation unit |
+| `LandrixXmlSchematron` | Schematron validation (EN16931, XRechnung, Peppol BIS, Factur-X), SVRL output, optional validation unit |
 | `LandrixXmlSchematronCompiler` | compiles ISO Schematron (`.sch`) into rule files, optional validation unit |
 | `LandrixXmlSha256` | SHA-256, used for the source fingerprint of compiled rules |
 
@@ -121,6 +121,8 @@ try
       xttEndElement:
         if Reader.LocalNameUtf8 = 'LegalMonetaryTotal' then
           InTotal := False;
+      else
+        { text, comments, ...: nothing to do }
     end;
 finally
   Reader.Free;
@@ -183,6 +185,47 @@ end;
 
 `AddElement('prefix:name')` resolves the prefix through the declarations in
 scope; `AddElement(Uri, Prefix, LocalName)` declares it where needed.
+
+### Validating with Schematron
+
+```pascal
+Rules := TLandrixXmlSchematronRules.Create;
+try
+  Rules.LoadFromSchematronFile('EN16931-UBL-validation.sch');
+  Validator := TLandrixXmlSchematronValidator.Create(Rules);
+  try
+    Valid := Validator.ValidateFile('invoice.xml');
+    for I := 0 to Validator.ResultCount - 1 do
+      WriteLn(Validator.Results[I].Id, ' ', Validator.Results[I].Flag, ' ',
+        Validator.Results[I].Location, ': ', Validator.Results[I].Message);
+    Validator.SaveSvrlToFile('invoice.svrl');   { optional }
+  finally
+    Validator.Free;
+  end;
+finally
+  Rules.Free;
+end;
+```
+
+ISO Schematron with the `xslt2` query binding is compiled when it is
+loaded (`LoadFromSchematronFile`); `tools/sch-compile.py` or
+`TLandrixXmlSchematronCompiler` can also compile it once into a rule file
+for `LoadFromFile`. A validation ends in one of four ways:
+
+| Outcome | How it shows |
+|---|---|
+| valid | `ValidateFile` returns `True`. `Results` may still hold failed asserts and reports flagged `warning` or `information`. |
+| invalid | `False`, `Incomplete = False`: at least one failed assert or successful report with another flag (`fatal`, `error`, none). |
+| incomplete | `False`, `Incomplete = True`: an expression raised a dynamic error (an invalid cast, a type error), shown as a result of kind `xsrDynamicError` with `ErrorCode`. The other rules were still checked. Saxon, and so the KoSIT validator, stops with no result here; `AbortOnDynamicError := True` stops at the first error too. |
+| not checked | the document is not well-formed: `ValidateFile` raises `ELandrixXmlError` as the DOM does, and there are no results. |
+
+A Schematron file that does not compile raises `ELandrixXmlError`:
+`xecSchema` for invalid Schematron, `xecUnsupported` for a construct the
+compiler does not implement (it is never ignored), an XPath error for an
+expression, each with file and line; the reader's errors for malformed
+XML; a file that cannot be opened raises the RTL's stream error. A loaded
+`TLandrixXmlSchematronRules` is read-only and can be shared by validators
+in several threads; each validator belongs to one thread.
 
 ### Errors
 

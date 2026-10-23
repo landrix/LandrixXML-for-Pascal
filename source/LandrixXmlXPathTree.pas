@@ -7,7 +7,9 @@
   A read-only tree of a document for XPath: the nodes of the XPath data
   model in flat arrays, numbered in document order. It is built once,
   from the pull reader or from a loaded DOM, and does not change; a DOM
-  changed afterwards needs a new tree.
+  changed afterwards needs a new tree. Every accessor but LocationPathUtf8
+  only reads, so threads may share a tree they do not ask for location
+  paths (LocationPathUtf8 computes sibling positions when first needed).
 
   Node 0 is the document node. An element is followed by its attributes,
   then its children, as XPath orders them; SubtreeEnd is the last node
@@ -684,7 +686,9 @@ begin
   for I := Index + 1 to FEnds[Index] do
     if (FKinds[I] = xnkText) and (FValues[I] <> '') then
     begin
-      Move(FValues[I][1], Result[Len + 1], Length(FValues[I]));
+      { PAnsiChar, not FValues[I][1]: that would make the string unique, a
+        write to a tree other threads may read }
+      Move(PAnsiChar(FValues[I])^, Result[Len + 1], Length(FValues[I]));
       Inc(Len, Length(FValues[I]));
     end;
 end;

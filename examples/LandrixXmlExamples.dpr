@@ -22,7 +22,8 @@ uses
   LandrixXmlReader,
   LandrixXmlWriter,
   LandrixXmlDom,
-  LandrixXmlConvert;
+  LandrixXmlConvert,
+  LandrixXmlSchematron;
 
 const
   NsInvoice = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';
@@ -105,6 +106,8 @@ begin
         xttEndElement:
           if Reader.LocalNameUtf8 = 'LegalMonetaryTotal' then
             InTotal := False;
+        else
+          { text, comments, ...: nothing to do }
       end;
   finally
     Reader.Free;
@@ -171,6 +174,70 @@ begin
   end;
 end;
 
+{ --- Schematron validation ---------------------------------------------- }
+
+const
+  InvoiceSchematron =
+    '<schema xmlns="http://purl.oclc.org/dsdl/schematron" queryBinding="xslt2">' +
+    '<ns prefix="inv" uri="' + NsInvoice + '"/><ns prefix="cbc" uri="' + NsCbc + '"/>' +
+    '<pattern id="dates"><rule context="/inv:Invoice">' +
+    '<assert id="R-1" flag="fatal" test="cbc:DueDate">The due date is missing.</assert>' +
+    '<report id="R-2" flag="warning" test="cbc:IssueDate &gt; ''2026-06-30''">' +
+    'Issued on <value-of select="cbc:IssueDate"/>.</report>' +
+    '</rule></pattern></schema>';
+
+procedure SaveText(const FileName: string; const Text: TLandrixXmlUtf8);
+var
+  Stream: TFileStream;
+begin
+  Stream := TFileStream.Create(FileName, fmCreate);
+  try
+    Stream.WriteBuffer(Text[1], Length(Text));
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure ValidateInvoice(const Xml: TLandrixXmlUtf8);
+const
+  SchFile = 'landrixxml-example-invoice.sch';
+var
+  Rules: TLandrixXmlSchematronRules;
+  Validator: TLandrixXmlSchematronValidator;
+  Doc: TLandrixXmlDocument;
+  Valid: Boolean;
+begin
+  { never overwrite a file of the same name }
+  if FileExists(SchFile) then
+  begin
+    Expect(False, SchFile + ' exists already');
+    Exit;
+  end;
+  SaveText(SchFile, LandrixXmlStringToUtf8(InvoiceSchematron));
+  Rules := TLandrixXmlSchematronRules.Create;
+  Validator := nil;
+  Doc := TLandrixXmlDocument.Create;
+  try
+    Rules.LoadFromSchematronFile(SchFile);   { e.g. 'invoice.sch' }
+    Validator := TLandrixXmlSchematronValidator.Create(Rules);
+    Doc.LoadFromUtf8(Xml);              { or Validator.ValidateFile('invoice.xml') }
+    Valid := Validator.ValidateDocument(Doc);
+    { not valid, not incomplete: the fatal R-1 failed; R-2 is only a warning }
+    Expect(not Valid and not Validator.Incomplete, 'invalid invoice');
+    Expect(Validator.ResultCount = 2, 'two results');
+    Expect((Validator.Results[0].Kind = xsrFailedAssert) and (Validator.Results[0].Id = 'R-1') and
+      (Validator.Results[0].Flag = 'fatal') and (Validator.Results[0].Location = '/Q{' + NsInvoice + '}Invoice[1]'),
+      'failed assert');
+    Expect((Validator.Results[1].Kind = xsrSuccessfulReport) and
+      (Validator.Results[1].Message = 'Issued on 2026-10-15.'), 'report');
+  finally
+    Doc.Free;
+    Validator.Free;
+    Rules.Free;
+    DeleteFile(SchFile);
+  end;
+end;
+
 { --- errors ------------------------------------------------------------- }
 
 procedure HandleErrors;
@@ -206,6 +273,7 @@ begin
   ReadLongTexts;
   Xml := BuildDocument;
   Expect(Pos('<Qty>12.500</Qty>', LandrixXmlUtf8ToString(Xml)) > 0, 'built document');
+  ValidateInvoice(WriteInvoice);
   HandleErrors;
   if Failures = 0 then
     WriteLn('all examples ok');

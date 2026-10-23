@@ -20,6 +20,9 @@ ALLOW_MARKER = "check-forbidden: allow"
 EXTENSIONS = (".pas", ".inc", ".dpr", ".lpr")
 
 ALLOWED_UNITS = {"sysutils", "classes", "contnrs"}
+# Free Pascal's thread manager on Unix: only a program can install it, so
+# it is allowed in programs (a test runner with threads), never in units.
+PROGRAM_UNITS = {"cthreads"}
 OWN_UNIT_PREFIX = "landrixxml"
 
 FORBIDDEN_IDENTIFIERS = [
@@ -163,6 +166,8 @@ def check_uses(path, code, violations):
             low = name.lower()
             if "." in name:
                 violations.append(Violation(path, line, "qualified unit name: %s" % name))
+            elif low in PROGRAM_UNITS and path.lower().endswith((".dpr", ".lpr")):
+                continue
             elif low not in ALLOWED_UNITS and not low.startswith(OWN_UNIT_PREFIX):
                 violations.append(Violation(path, line, "unit not allowed: %s" % name))
 
