@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rules xmlns="urn:landrix:schematron-rules" format="2" source="doc-alias.sch" sha256="e0c87cb85624b1b71415949ca28ecb6ddca0381852438214ec7800aec2750263" title="">
+  <ns prefix="f" uri="http://www.w3.org/2005/xpath-functions"/>
+  <ns prefix="p" uri="urn:p"/>
+  <document href="parts/alias-codes.xml" sha256="50f5992e51cea6eccdfe2a73ea96f6060fb4bff15c5d384ae0cfb2396c014716">&lt;?xml-stylesheet href="encoding.xsl"?&gt;
+&lt;!-- &lt;!DOCTYPE codes&gt; is only a comment --&gt;
+&lt;codes&gt;&lt;c&gt;A&lt;/c&gt;&lt;n&gt;&lt;![CDATA[&lt;!DOCTYPE x&gt;]]&gt; ä&lt;/n&gt;&lt;/codes&gt;
+</document>
+  <pattern id="A">
+    <rule context="p:a" id="" line="doc-alias.sch:5">
+      <assert id="A1" flag="" role="" test="f:document('parts/alias-codes.xml')/codes/c = @code" line="doc-alias.sch:6"><text>code</text></assert>
+    </rule>
+  </pattern>
+</rules>

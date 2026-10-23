@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- codes for the tests -->
+<codes>
+  <cl id="1"><enumeration value="A"/><enumeration value="B"/></cl>
+  <cl id="2"><enumeration value="C"/></cl>
+</codes>

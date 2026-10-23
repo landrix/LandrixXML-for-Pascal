@@ -35,7 +35,14 @@
   that is not in the list of AllowedAttributes, such as severity,
   visit-each and schematronEdition, and xml:space="preserve" and
   xml:base. queryBinding xslt3 compiles the same
-  subset; what goes beyond it is rejected when the rules are loaded. The expressions are copied with white space outside string
+  subset; what goes beyond it is rejected when the rules are loaded.
+
+  document('file') (the XSLT function, as Factur-X reads its code lists):
+  the file, relative to the Schematron file the expression stands in, is
+  embedded in the rule file (format 2) as text with its SHA-256; the
+  rules load it as a tree for document(). Only a string literal as the
+  only argument; one literal must name one file in the whole schema and
+  one file one literal; the file must be well-formed UTF-8. The expressions are copied with white space outside string
   literals collapsed; the XPath parser checks them when the rules are
   loaded. AddOverride replaces the test of one check (for a rule set
   whose source and the XSLT a validator runs differ); the rule file then
@@ -72,7 +79,18 @@ type
     FPatterns: TObjectList;
     { the function expressions with the names visible where they stand }
     FScopeChecks: TObjectList;
+    { document(): the literal, the file, its text and SHA-256 }
+    FDocHrefs: TLandrixXmlUtf8Array;
+    FDocPaths: TStringList;
+    FDocTexts: TLandrixXmlUtf8Array;
+    FDocShas: TLandrixXmlUtf8Array;
+    { the calls of a function named document: resolved by ResolveDocumentCalls
+      when the namespaces are known }
+    FDocCalls: TObjectList;
     procedure Reset;
+    procedure ScanDocumentCalls(Node: TLandrixXmlNode; const Expr: TLandrixXmlUtf8);
+    procedure ResolveDocumentCalls;
+    procedure AddDocumentFile(Node: TLandrixXmlNode; const Href: TLandrixXmlUtf8);
     function Where(Node: TLandrixXmlNode): string;
     procedure Fail(Node: TLandrixXmlNode; const Msg: string);
     procedure Unsupported(Node: TLandrixXmlNode; const Msg: string);
@@ -115,6 +133,7 @@ function LandrixXmlSchematronCollapse(const S: TLandrixXmlUtf8): TLandrixXmlUtf8
 implementation
 
 uses
+  LandrixXmlXPathTree,
   LandrixXmlXPath,
   LandrixXmlSha256;
 
@@ -141,6 +160,8 @@ type
     Kind, Id, Flag, Role, Test, Line, Original: TLandrixXmlUtf8;
     HasOriginal: Boolean;
     Parts: TObjectList;
+    { the sch:assert or sch:report }
+    Node: TLandrixXmlNode;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -182,6 +203,14 @@ type
     VisibleCount: Integer;
     constructor Create;
     destructor Destroy; override;
+  end;
+
+  TDocumentCall = class
+  public
+    Node: TLandrixXmlNode;
+    Prefix: TLandrixXmlUtf8;
+    Literal: TLandrixXmlUtf8;
+    IsLiteral: Boolean;
   end;
 
   TScopeCheck = class
@@ -448,6 +477,20 @@ begin
   end;
 end;
 
+{ True if the attribute Name of Node holds an XPath expression. }
+function IsExpressionAttribute(Node: TLandrixXmlNode; const Name: string): Boolean;
+var
+  L: string;
+begin
+  L := LandrixXmlUtf8ToString(Node.LocalNameUtf8);
+  if Node.NamespaceUriUtf8 = SchNs then
+    Result := ((L = 'let') and (Name = 'value')) or ((L = 'rule') and (Name = 'context')) or
+      (((L = 'assert') or (L = 'report')) and (Name = 'test')) or ((L = 'value-of') and (Name = 'select')) or
+      ((L = 'name') and (Name = 'path'))
+  else
+    Result := (Name = 'select') or ((L = 'when') and (Name = 'test'));
+end;
+
 function IsSch(Node: TLandrixXmlNode; const LocalName: string): Boolean;
 begin
   Result := (Node <> nil) and (Node.NodeType = LandrixXmlDom.xntElement) and (Node.NamespaceUriUtf8 = SchNs) and
@@ -532,11 +575,15 @@ begin
   FFunctions := TObjectList.Create(True);
   FPatterns := TObjectList.Create(True);
   FScopeChecks := TObjectList.Create(True);
+  FDocPaths := TStringList.Create;
+  FDocCalls := TObjectList.Create(True);
 end;
 
 destructor TLandrixXmlSchematronCompiler.Destroy;
 begin
   Reset;
+  FDocCalls.Free;
+  FDocPaths.Free;
   FScopeChecks.Free;
   FPatterns.Free;
   FFunctions.Free;
@@ -570,6 +617,11 @@ end;
 
 procedure TLandrixXmlSchematronCompiler.Reset;
 begin
+  FDocHrefs := nil;
+  FDocPaths.Clear;
+  FDocTexts := nil;
+  FDocShas := nil;
+  FDocCalls.Clear;
   FScopeChecks.Clear;
   FPatterns.Clear;
   FFunctions.Clear;
@@ -649,12 +701,355 @@ begin
             Element := 'xsl:' + S8(Node.LocalNameUtf8);
           Unsupported(Node, 'the attribute ' + Name + ' of ' + Element + ' is not supported');
         end;
+        if IsExpressionAttribute(Node, Name) then
+          ScanDocumentCalls(Node, Node.AttributeValueUtf8(I));
       end;
   C := Node.FirstChildElement;
   while C <> nil do
   begin
     CheckAttributes(C);
     C := C.NextSiblingElement;
+  end;
+end;
+
+{ The calls of a function named document (no prefix or any prefix) in
+  Expr, outside string literals and comments; with or without one string
+  literal as argument. ResolveDocumentCalls decides which are fn:document. }
+procedure TLandrixXmlSchematronCompiler.ScanDocumentCalls(Node: TLandrixXmlNode; const Expr: TLandrixXmlUtf8);
+var
+  I, J, Count: Integer;
+  Quote: AnsiChar;
+  Name, Prefix, Literal: TLandrixXmlUtf8;
+  Variable, IsLiteral: Boolean;
+  Call: TDocumentCall;
+
+  function NameChar(C: AnsiChar): Boolean;
+  begin
+    Result := (C in ['A'..'Z', 'a'..'z', '0'..'9', '_', '-', '.', ':']) or (Ord(C) >= $80);
+  end;
+
+  { the end of the comment that starts at K, nested ones too }
+  function CommentEnd(K: Integer): Integer;
+  var
+    Depth: Integer;
+  begin
+    Depth := 0;
+    while K <= Count do
+    begin
+      if (Expr[K] = '(') and (K < Count) and (Expr[K + 1] = ':') then
+      begin
+        Inc(Depth);
+        Inc(K, 2);
+      end
+      else if (Expr[K] = ':') and (K < Count) and (Expr[K + 1] = ')') then
+      begin
+        Dec(Depth);
+        Inc(K, 2);
+        if Depth = 0 then
+          Break;
+      end
+      else
+        Inc(K);
+    end;
+    Result := K;
+  end;
+
+  { white space and comments }
+  procedure Skip;
+  begin
+    while J <= Count do
+      if AnsiChar(Expr[J]) in [' ', #9, #10, #13] then
+        Inc(J)
+      else if (Expr[J] = '(') and (J < Count) and (Expr[J + 1] = ':') then
+        J := CommentEnd(J)
+      else
+        Break;
+  end;
+
+  { the end of the string literal at K (after its closing quote) }
+  function LiteralEnd(K: Integer): Integer;
+  var
+    Q: AnsiChar;
+  begin
+    Q := AnsiChar(Expr[K]);
+    Inc(K);
+    while K <= Count do
+    begin
+      if AnsiChar(Expr[K]) = Q then
+      begin
+        if (K < Count) and (AnsiChar(Expr[K + 1]) = Q) then
+          Inc(K)
+        else
+          Break;
+      end;
+      Inc(K);
+    end;
+    Result := K + 1;
+  end;
+
+begin
+  Count := Length(Expr);
+  I := 1;
+  while I <= Count do
+  begin
+    if (Expr[I] = '''') or (Expr[I] = '"') then
+      I := LiteralEnd(I)
+    else if (Expr[I] = '(') and (I < Count) and (Expr[I + 1] = ':') then
+      I := CommentEnd(I)
+    else if NameChar(AnsiChar(Expr[I])) and not (AnsiChar(Expr[I]) in ['0'..'9', '-', '.', ':']) then
+    begin
+      Variable := (I > 1) and (Expr[I - 1] = '$');
+      J := I;
+      while (J <= Count) and NameChar(AnsiChar(Expr[J])) do
+        Inc(J);
+      Name := Copy(Expr, I, J - I);
+      I := J;
+      Prefix := '';
+      if (Length(Name) > 9) and (Copy(Name, Length(Name) - 8, 9) = ':document') then
+      begin
+        Prefix := Copy(Name, 1, Length(Name) - 9);
+        Name := 'document';
+      end;
+      if not Variable and (Name = 'document') and (Pos(':', S8(Prefix)) = 0) then
+      begin
+        Skip;
+        if (J <= Count) and (Expr[J] = '(') then
+        begin
+          Inc(J);
+          Skip;
+          IsLiteral := False;
+          Literal := '';
+          if (J <= Count) and ((Expr[J] = '''') or (Expr[J] = '"')) then
+          begin
+            Quote := AnsiChar(Expr[J]);
+            I := LiteralEnd(J);
+            { the content, a doubled quote as one }
+            J := J + 1;
+            while J < I - 1 do
+            begin
+              Literal := Literal + Copy(Expr, J, 1);
+              if (AnsiChar(Expr[J]) = Quote) and (J + 1 < I - 1) then
+                Inc(J);
+              Inc(J);
+            end;
+            J := I;
+            Skip;
+            IsLiteral := (J <= Count) and (Expr[J] = ')');
+          end;
+          Call := TDocumentCall.Create;
+          FDocCalls.Add(Call);
+          Call.Node := Node;
+          Call.Prefix := Prefix;
+          Call.Literal := Literal;
+          Call.IsLiteral := IsLiteral;
+          I := J;
+        end;
+      end;
+    end
+    else
+      Inc(I);
+  end;
+end;
+
+{ The calls of fn:document (no prefix, fn, or a prefix of that namespace):
+  each needs one string literal; its file is embedded. A prefix of
+  another namespace names another function. }
+procedure TLandrixXmlSchematronCompiler.ResolveDocumentCalls;
+const
+  FnNs = 'http://www.w3.org/2005/xpath-functions';
+var
+  I, K: Integer;
+  Call: TDocumentCall;
+  Uri: TLandrixXmlUtf8;
+  Bound: Boolean;
+begin
+  for I := 0 to Integer(FDocCalls.Count) - 1 do
+  begin
+    Call := TDocumentCall(FDocCalls[I]);
+    Uri := '';
+    Bound := Call.Prefix = '';
+    if Bound then
+      Uri := FnNs;
+    for K := 0 to Integer(Length(FNsPrefixes)) - 1 do
+      if FNsPrefixes[K] = Call.Prefix then
+      begin
+        Uri := FNsUris[K];
+        Bound := True;
+      end;
+    if not Bound and (Call.Prefix = 'fn') then
+      Uri := FnNs;
+    if Uri <> FnNs then
+      Continue;
+    if not Call.IsLiteral then
+      Unsupported(Call.Node, 'document() is only supported with a string literal');
+    AddDocumentFile(Call.Node, Call.Literal);
+  end;
+end;
+
+{ The encoding of the XML declaration at the start of S, lower case; ''
+  without a declaration or encoding. }
+function DeclaredEncoding(const S: TLandrixXmlUtf8): string;
+var
+  I, J, Last: Integer;
+  Q: AnsiChar;
+begin
+  Result := '';
+  if (Copy(S, 1, 5) <> '<?xml') or (Length(S) < 6) or not (AnsiChar(S[6]) in [' ', #9, #10, #13]) then
+    Exit;
+  Last := 0;
+  for I := 6 to Length(S) - 1 do
+    if (S[I] = '?') and (S[I + 1] = '>') then
+    begin
+      Last := I;
+      Break;
+    end;
+  I := 6;
+  while (I + 7 < Last) and (Copy(S, I, 8) <> 'encoding') do
+    Inc(I);
+  if I + 7 >= Last then
+    Exit;
+  I := I + 8;
+  while (I < Last) and (AnsiChar(S[I]) in [' ', #9, #10, #13, '=']) do
+    Inc(I);
+  if (I >= Last) or not (AnsiChar(S[I]) in ['''', '"']) then
+    Exit;
+  Q := AnsiChar(S[I]);
+  J := I + 1;
+  while (J < Last) and (AnsiChar(S[J]) <> Q) do
+  begin
+    if AnsiChar(S[J]) in ['A'..'Z'] then
+      Result := Result + Chr(Ord(S[J]) + 32)
+    else
+      Result := Result + Chr(Ord(S[J]));
+    Inc(J);
+  end;
+end;
+
+{ True if the prolog of the document S (before the root element, after
+  the declaration, processing instructions, comments and white space) has
+  a document type declaration. }
+function HasDoctype(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, N: Integer;
+
+  function At(const T: TLandrixXmlUtf8): Boolean;
+  begin
+    At := Copy(S, I, Length(T)) = T;
+  end;
+
+  { I after the next T (or after the end) }
+  procedure SkipPast(const T: TLandrixXmlUtf8);
+  begin
+    while (I <= N) and not At(T) do
+      Inc(I);
+    I := I + Length(T);
+  end;
+
+begin
+  Result := False;
+  N := Length(S);
+  I := 1;
+  while I <= N do
+    if AnsiChar(S[I]) in [' ', #9, #10, #13] then
+      Inc(I)
+    else if At('<?') then
+      SkipPast('?>')
+    else if At('<!--') then
+      SkipPast('-->')
+    else
+    begin
+      Result := At('<!DOCTYPE');
+      Exit;
+    end;
+end;
+
+{ CR LF and CR become LF, as an XML parser reads line ends. }
+function WithLineFeeds(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I, N: Integer;
+begin
+  Result := S;
+  N := 0;
+  I := 1;
+  while I <= Length(S) do
+  begin
+    Inc(N);
+    if S[I] = #13 then
+    begin
+      Result[N] := #10;
+      if (I < Length(S)) and (S[I + 1] = #10) then
+        Inc(I);
+    end
+    else
+      Result[N] := S[I];
+    Inc(I);
+  end;
+  SetLength(Result, N);
+end;
+
+{ The file document(Href) names, relative to the file Node stands in. }
+procedure TLandrixXmlSchematronCompiler.AddDocumentFile(Node: TLandrixXmlNode; const Href: TLandrixXmlUtf8);
+var
+  H, Base, Path: string;
+  I, N: Integer;
+  Bytes: TLandrixXmlUtf8;
+  Decl: string;
+  Check: TLandrixXmlXPathTree;
+begin
+  H := S8(Href);
+  if (H = '') or (Pos('#', H) > 0) or (Pos(':/', H) > 2) then
+    Unsupported(Node, 'document(''' + H + ''') needs a plain relative file name');
+  Base := '';
+  for I := 0 to Integer(FDocuments.Count) - 1 do
+    if Node.Document = FDocuments[I] then
+      Base := ExtractFilePath(FDocumentFiles[I]);
+  H := StringReplace(H, '/', PathDelim, [rfReplaceAll]);
+  if (H[1] = PathDelim) or ((Length(H) >= 2) and (H[2] = ':')) then
+    Path := ExpandFileName(H)
+  else
+    Path := ExpandFileName(Base + H);
+  for I := 0 to Integer(Length(FDocHrefs)) - 1 do
+  begin
+    if (FDocHrefs[I] = Href) and SameFileName(FDocPaths[I], Path) then
+      Exit;
+    if FDocHrefs[I] = Href then
+      Unsupported(Node, 'document(''' + S8(Href) + ''') names two files');
+    if SameFileName(FDocPaths[I], Path) then
+      Unsupported(Node, 'two names for the document ' + Path);
+  end;
+  if not FileExists(Path) then
+    Fail(Node, 'the document ' + Path + ' does not exist');
+  Bytes := FileBytes(Path);
+  N := Integer(Length(FDocHrefs));
+  SetLength(FDocHrefs, N + 1);
+  SetLength(FDocTexts, N + 1);
+  SetLength(FDocShas, N + 1);
+  FDocHrefs[N] := Href;
+  FDocPaths.Add(Path);
+  if Bytes = '' then
+    FDocShas[N] := U(LandrixXmlSha256Hex(Pointer(nil)^, 0))
+  else
+    FDocShas[N] := U(LandrixXmlSha256Hex(Bytes[1], Length(Bytes)));
+  { UTF-8 only; the line ends as an XML parser reads them }
+  if Copy(Bytes, 1, 3) = #$EF#$BB#$BF then
+    Delete(Bytes, 1, 3);
+  Decl := DeclaredEncoding(Bytes);
+  if (Decl <> '') and (Decl <> 'utf-8') then
+    Unsupported(Node, 'the document ' + Path + ' is not UTF-8');
+  FDocTexts[N] := WithLineFeeds(Bytes);
+  { no DTD: the reader of the rules does not read entity declarations }
+  if HasDoctype(FDocTexts[N]) then
+    Unsupported(Node, 'the document ' + Path + ' has a DOCTYPE, which is not supported');
+  Check := TLandrixXmlXPathTree.Create;
+  try
+    try
+      Check.LoadFromUtf8(FDocTexts[N]);
+    except
+      on E: ELandrixXmlError do
+        Fail(Node, 'the document ' + Path + ': ' + E.Message);
+    end;
+  finally
+    Check.Free;
   end;
 end;
 
@@ -952,6 +1347,7 @@ begin
     Check.Flag := Attr(Node, 'flag');
     Check.Role := Attr(Node, 'role');
     Check.Test := LandrixXmlSchematronCollapse(Attr(Node, 'test'));
+    Check.Node := Node;
     Check.Line := U(Where(Node));
     Content(Node);
   except
@@ -1343,6 +1739,12 @@ begin
     Hit.Original := Hit.Test;
     Hit.HasOriginal := True;
     Hit.Test := LandrixXmlSchematronCollapse(FOverrideTests[I]);
+    { the document() calls of the replaced test are gone (those of the
+      check's node come from its test), those of the new one count }
+    for K := Integer(FDocCalls.Count) - 1 downto 0 do
+      if TDocumentCall(FDocCalls[K]).Node = Hit.Node then
+        FDocCalls.Delete(K);
+    ScanDocumentCalls(Hit.Node, Hit.Test);
   end;
 end;
 
@@ -1362,7 +1764,11 @@ begin
   Doc := TLandrixXmlDocument.Create;
   try
     Root := Doc.AddElement(RulesNs, '', 'rules');
-    Root.SetAttributeUtf8('format', '1');
+    { format 2: with embedded documents }
+    if Length(FDocHrefs) > 0 then
+      Root.SetAttributeUtf8('format', '2')
+    else
+      Root.SetAttributeUtf8('format', '1');
     Root.SetAttributeUtf8('source', U(ExtractFileName(FileName)));
     Root.SetAttributeUtf8('sha256', U(Sha256));
     Title := '';
@@ -1384,6 +1790,13 @@ begin
       E := Root.AddElement(RulesNs, '', 'ns');
       E.SetAttributeUtf8('prefix', FNsPrefixes[I]);
       E.SetAttributeUtf8('uri', FNsUris[I]);
+    end;
+    for I := 0 to Integer(Length(FDocHrefs)) - 1 do
+    begin
+      E := Root.AddElement(RulesNs, '', 'document');
+      E.SetAttributeUtf8('href', FDocHrefs[I]);
+      E.SetAttributeUtf8('sha256', FDocShas[I]);
+      E.AddTextUtf8(FDocTexts[I]);
     end;
     for I := 0 to Integer(FGlobals.Count) - 1 do
     begin
@@ -1494,6 +1907,7 @@ begin
     CheckScopes;
     CheckPhases(Main);
     ApplyOverrides;
+    ResolveDocumentCalls;
     Result := Write(Main, Sha, Path);
   finally
     Reset;

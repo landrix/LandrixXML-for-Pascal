@@ -1,0 +1,2 @@
+<!DOCTYPE codes [<!ENTITY c "A">]>
+<codes><c>&c;</c></codes>

@@ -1,0 +1,3 @@
+<?xml-stylesheet href="encoding.xsl"?>
+<!-- <!DOCTYPE codes> is only a comment -->
+<codes><c>A</c><n><![CDATA[<!DOCTYPE x>]]> ä</n></codes>

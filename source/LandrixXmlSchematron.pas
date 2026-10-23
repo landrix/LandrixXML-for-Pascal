@@ -111,6 +111,9 @@ type
     FOwnedFunctions: TObjectList;
     FPatterns: TObjectList;
     FExpressions: TObjectList;
+    { embedded documents (document()): the URIs and their trees }
+    FDocumentUris: TLandrixXmlUtf8Array;
+    FDocuments: TObjectList;
     procedure Clear;
     procedure Load(Document: TLandrixXmlDocument);
     function Compile(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXPathStaticContext;
@@ -448,11 +451,13 @@ begin
   FOwnedFunctions := TObjectList.Create(True);
   FPatterns := TObjectList.Create(True);
   FExpressions := TObjectList.Create(True);
+  FDocuments := TObjectList.Create(True);
 end;
 
 destructor TLandrixXmlSchematronRules.Destroy;
 begin
   Clear;
+  FDocuments.Free;
   FFunctionContexts.Free;
   FGlobals.Free;
   FFunctions.Free;
@@ -464,6 +469,8 @@ end;
 
 procedure TLandrixXmlSchematronRules.Clear;
 begin
+  FDocumentUris := nil;
+  FDocuments.Clear;
   FPatterns.Clear;
   FFunctions.Clear;
   FOwnedFunctions.Clear;
@@ -479,8 +486,14 @@ begin
   FSha256 := '';
 end;
 
+{ Every document() must read an embedded document, named by a string
+  literal. }
 function TLandrixXmlSchematronRules.Compile(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXPathStaticContext;
   const Where: string): TLandrixXmlXPathExpression;
+var
+  I, K: Integer;
+  Found: Boolean;
+  Arg: TLandrixXmlUtf8;
 begin
   try
     Result := TLandrixXmlXPathExpression.Create(Text, Context);
@@ -490,6 +503,20 @@ begin
         MaxInt));
   end;
   FExpressions.Add(Result);
+  for I := 0 to Result.NodeCount - 1 do
+    if (Result.Nodes[I].Kind = xakFunction) and (Result.Nodes[I].Op = Ord(xfnDocument)) then
+    begin
+      if Result.Nodes[Result.Nodes[I].Children[0]].Kind <> xakString then
+        raise ELandrixXmlError.CreateCode(xecUnsupported, 'Schematron rules: ' + Where +
+          ': document() is only supported with a string literal');
+      Arg := Result.Nodes[Result.Nodes[I].Children[0]].Text;
+      Found := False;
+      for K := 0 to Integer(Length(FDocumentUris)) - 1 do
+        if FDocumentUris[K] = Arg then
+          Found := True;
+      if not Found then
+        SchemaError(Where + ': the document ' + LandrixXmlUtf8ToString(Arg) + ' is not embedded');
+    end;
 end;
 
 procedure TLandrixXmlSchematronRules.LoadFromFile(const FileName: string);
@@ -545,9 +572,25 @@ begin
   end;
 end;
 
+{ the text content of an element }
+function TextOf(Node: TLandrixXmlNode): TLandrixXmlUtf8;
+var
+  C: TLandrixXmlNode;
+begin
+  Result := '';
+  C := Node.FirstChild;
+  while C <> nil do
+  begin
+    if C.NodeType in [LandrixXmlDom.xntText, LandrixXmlDom.xntCData] then
+      Result := Result + C.ValueUtf8;
+    C := C.NextSibling;
+  end;
+end;
+
 procedure TLandrixXmlSchematronRules.Load(Document: TLandrixXmlDocument);
 var
   Root, N, F, R, C, P: TLandrixXmlNode;
+  Doc: TLandrixXmlXPathTree;
   Name: TLandrixXmlUtf8;
   I, K, Slot: Integer;
   Ctx: TLandrixXmlXPathStaticContext;
@@ -663,7 +706,8 @@ begin
   Root := Document.Root;
   if not IsRules(Root, 'rules') then
     SchemaError('not a rule file (root element rules in ' + LandrixXmlSchematronRulesNamespace + ' expected)');
-  if AttrOf(Root, 'format') <> '1' then
+  { 2: with embedded documents }
+  if (AttrOf(Root, 'format') <> '1') and (AttrOf(Root, 'format') <> '2') then
     SchemaError('unsupported rule file format "' + LandrixXmlUtf8ToString(AttrOf(Root, 'format')) + '"');
   FTitle := AttrOf(Root, 'title');
   FSource := AttrOf(Root, 'source');
@@ -693,6 +737,25 @@ begin
         N := N.NextSiblingElement;
       end;
       FGlobalCount := NameCount;
+      { the documents document() reads, each as a tree of its own }
+      N := Root.FirstChildElement;
+      while N <> nil do
+      begin
+        if IsRules(N, 'document') then
+        begin
+          Name := AttrOf(N, 'href');
+          for I := 0 to Integer(Length(FDocumentUris)) - 1 do
+            if FDocumentUris[I] = Name then
+              SchemaError('the document ' + LandrixXmlUtf8ToString(Name) + ' is embedded twice');
+          Doc := TLandrixXmlXPathTree.Create;
+          FDocuments.Add(Doc);
+          Doc.LoadFromUtf8(TextOf(N));
+          I := Integer(Length(FDocumentUris));
+          SetLength(FDocumentUris, I + 1);
+          FDocumentUris[I] := Name;
+        end;
+        N := N.NextSiblingElement;
+      end;
       { the rule variables after the globals, one slot per expanded name; a
         rule variable must not hide a global or another variable of its rule }
       N := Root.FirstChildElement;
@@ -894,7 +957,7 @@ begin
             R := R.NextSiblingElement;
           end;
         end
-        else if not (IsRules(N, 'ns')) then
+        else if not (IsRules(N, 'ns') or IsRules(N, 'document')) then
           SchemaError('unexpected element ' + LandrixXmlUtf8ToString(N.NameUtf8));
         N := N.NextSiblingElement;
       end;
@@ -1054,6 +1117,8 @@ begin
     E.Functions := FRules.FFunctions;
     E.SetGlobalCount(FRules.FGlobalCount);
     E.SetFrameSize(FRules.FContext.VariableCount);
+    for I := 0 to Integer(Length(FRules.FDocumentUris)) - 1 do
+      E.AddDocument(FRules.FDocumentUris[I], TLandrixXmlXPathTree(FRules.FDocuments[I]));
     for I := 0 to Integer(FRules.FGlobals.Count) - 1 do
       E.BindLazy(TVariable(FRules.FGlobals[I]).Slot, TVariable(FRules.FGlobals[I]).Expression, 0);
     SetLength(First, Tree.Count);
@@ -1079,8 +1144,9 @@ begin
         end;
         if Aborted then
           Break;
+        { only nodes of the document match (not of embedded documents) }
         for K := 0 to Nodes.Count - 1 do
-          if Nodes.Items[K].Kind = xikNode then
+          if (Nodes.Items[K].Kind = xikNode) and (Nodes.Items[K].Node < Tree.Count) then
             First[Nodes.Items[K].Node] := R;
       end;
       Nodes := LandrixXmlXPathEmpty;

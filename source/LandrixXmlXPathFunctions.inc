@@ -124,6 +124,7 @@ var
   Re: TLandrixXmlRegex;
   Found, HasDouble: Boolean;
   Name: string;
+  OwnTree: TLandrixXmlXPathTree;
 
   function Arg(K: Integer): TLandrixXmlXPathSequence;
   begin
@@ -683,12 +684,15 @@ begin
         I := NodeArg;
         S := '';
         if I >= 0 then
+        begin
+          OwnTree := TreeOf(I, K);
           case Id of
-            xfnName: S := FTree.NameUtf8(I);
-            xfnLocalName: S := FTree.LocalNameUtf8(I);
+            xfnName: S := OwnTree.NameUtf8(I - K);
+            xfnLocalName: S := OwnTree.LocalNameUtf8(I - K);
           else
-            S := FTree.NamespaceUriUtf8(I);
+            S := OwnTree.NamespaceUriUtf8(I - K);
           end;
+        end;
         if Id = xfnNamespaceUri then
           Result := SingleSeq(StringItem(xikAnyUri, S))
         else
@@ -698,7 +702,7 @@ begin
       begin
         I := NodeArg;
         if I >= 0 then
-          Result := LandrixXmlXPathNodeItem(0);
+          Result := LandrixXmlXPathNodeItem(RootOf(I));
       end;
     xfnPosition, xfnLast:
       begin
@@ -771,6 +775,18 @@ begin
         if FCurrentNode < 0 then
           Fail('XPDY0002', Name + ': no current node');
         Result := LandrixXmlXPathNodeItem(FCurrentNode);
+      end;
+    xfnDocument:
+      { the XSLT function with one argument: a URI AddDocument knows }
+      if OptAtom(0, Item) then
+      begin
+        S := StringOf(Item);
+        I := 0;
+        while (I < Integer(Length(FDocUris))) and (FDocUris[I] <> S) do
+          Inc(I);
+        if I >= Integer(Length(FDocUris)) then
+          Fail('FODC0002', Name + ': the document ' + LandrixXmlUtf8ToString(S) + ' is not available');
+        Result := LandrixXmlXPathNodeItem(FDocBases[I]);
       end;
     xfnXsString, xfnXsBoolean, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsDate,
     xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic:

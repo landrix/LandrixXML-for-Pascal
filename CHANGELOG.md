@@ -126,6 +126,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   space in XSLT functions or include paths), with file and line, instead
   of ignoring them. Documentation (other namespaces, `sch:p`,
   `sch:title`) is not checked.
+- `document()` for Schematron rules that read code lists (Factur-X): the
+  compiler embeds every file a `document('...')` names (a string literal,
+  relative to the Schematron file) with its SHA-256 in the rule file
+  (format 2); the rules load it once as a tree of its own, so validation
+  reads no files. `TLandrixXmlXPathEvaluator.AddDocument` gives
+  `document()` such a tree in general: the nodes of all trees are numbered
+  in one space, and `/` and `root()` give the root of the node's own tree.
+  The Factur-X 1.09.2 rules (all five profiles) give the same results as
+  Saxon with the shipped XSLT on the test invoices.
+- `tools/gen-schematron-testdata.py` collapses only XML white space in
+  messages (a no-break space is text, as in the library).
 - `TLandrixXmlXsdSimpleType.AnonymousName` and the public `DisplayName`;
   `LandrixXmlXsdValueText` and `LandrixXmlXsdValueKey`. Messages quote
   values whole, show values in Xerces' canonical form (decimals, float and

@@ -52,6 +52,14 @@
   or SetGlobalCount drops the kept values; ClearCache too, which is needed
   only when the tree is loaded again while the evaluator lives.
 
+  Further documents: AddDocument gives document(Uri) a tree (the XSLT
+  function, with the URI as the only argument, as Schematron rules use it
+  for code lists). The nodes of all trees are numbered in one space: the
+  evaluator's tree first, then each added tree from its base on; "/" and
+  root() give the root of the node's own tree. Kept values of rooted
+  paths hold for the evaluator's tree; from a node of an added tree they
+  are computed again.
+
   EvaluatePattern evaluates a path as the nodes an XSLT match pattern
   matches: a dynamic error in a predicate of one of its steps means that
   the item does not match (XSLT 3.0, 5.5.4), so the other items are kept.
@@ -153,18 +161,24 @@ type
     Name: string;
   end;
 
+  TLandrixXmlXPathTreeArray = array of TLandrixXmlXPathTree;
+
   { The result of Evaluate. }
   TLandrixXmlXPathResult = class
   private
     FItems: TLandrixXmlXPathSequence;
     FTree: TLandrixXmlXPathTree;
+    { the trees AddDocument gave the evaluator and their bases }
+    FDocTrees: TLandrixXmlXPathTreeArray;
+    FDocBases: TLandrixXmlXPathIntArray;
     function GetCount: Integer;
     function GetKind(Index: Integer): TLandrixXmlXPathItemKind;
     function GetNode(Index: Integer): Integer;
   public
     property Count: Integer read GetCount;
     property Kind[Index: Integer]: TLandrixXmlXPathItemKind read GetKind;
-    { the node of a node item (an index into the tree), -1 for atomic values }
+    { the node of a node item (an index into the tree; from Tree.Count on a
+      node of a document added with AddDocument), -1 for atomic values }
     property Node[Index: Integer]: Integer read GetNode;
     { the string value of the item (fn:string) }
     function StringValueUtf8(Index: Integer): TLandrixXmlUtf8;
@@ -177,6 +191,10 @@ type
   TLandrixXmlXPathEvaluator = class
   private
     FTree: TLandrixXmlXPathTree;
+    { AddDocument: the URIs, trees and the first node number of each }
+    FDocUris: TLandrixXmlUtf8Array;
+    FDocTrees: TLandrixXmlXPathTreeArray;
+    FDocBases: TLandrixXmlXPathIntArray;
     FGlobalCount: Integer;
     FGlobals: TLandrixXmlXPathSlots;
     FFrame: TLandrixXmlXPathSlots;
@@ -226,6 +244,9 @@ type
     procedure EnterExpression(Expr: TLandrixXmlXPathExpression; out SavedExpr: TLandrixXmlXPathExpression;
       out SavedBase: Integer);
     procedure LeaveExpression(SavedExpr: TLandrixXmlXPathExpression; SavedBase: Integer);
+    procedure ComputeBases;
+    function TreeOf(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
+    function RootOf(Node: Integer): Integer;
     function SlotRef(Slot: Integer): Pointer;
     function ReadVariable(Slot: Integer): TLandrixXmlXPathSequence;
     procedure WriteLocal(Slot: Integer; const Value: TLandrixXmlXPathSequence);
@@ -274,6 +295,9 @@ type
     { forgets the kept values of context-free subexpressions (see the unit
       comment); needed when the tree changes while the evaluator lives }
     procedure ClearCache;
+    { the tree document(Uri) returns (the URI as written in the expression);
+      not owned, it must live as long as the evaluator and its results }
+    procedure AddDocument(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree);
     { user functions (TLandrixXmlXPathFunctionDef) by their index in the
       static context; not owned }
     property Functions: TList read FFunctions write FFunctions;
@@ -309,9 +333,13 @@ type
     { a child step whose predicates do not depend on the position: after
       descendant-or-self::node() ("//") it is evaluated as descendant }
     Fuse: array of Boolean;
+    { the value is that of the evaluator's own tree (a rooted path): from a
+      node of another tree it is computed without being kept }
+    RootOnly: array of Boolean;
   end;
 
-  TDependency = (xdFocus, xdOther);
+  { xdRoot: the root of the context node's tree ("/a") }
+  TDependency = (xdFocus, xdOther, xdRoot);
   TDependencies = set of TDependency;
 
 procedure Fail(const Code, Msg: string);
@@ -626,10 +654,36 @@ end;
 
 {$I LandrixXmlXPathCast.inc}
 
+{ The tree of Node in the numbering of TLandrixXmlXPathEvaluator.AddDocument
+  and the number its nodes start from. }
+function NodeTree(Main: TLandrixXmlXPathTree; const Trees: TLandrixXmlXPathTreeArray;
+  const Bases: TLandrixXmlXPathIntArray; Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
+var
+  K: Integer;
+begin
+  Base := 0;
+  Result := Main;
+  if Node < Main.Count then
+    Exit;
+  for K := Integer(High(Trees)) downto 0 do
+    if Node >= Bases[K] then
+    begin
+      Base := Bases[K];
+      Result := Trees[K];
+      Exit;
+    end;
+end;
+
 function TLandrixXmlXPathResult.StringValueUtf8(Index: Integer): TLandrixXmlUtf8;
+var
+  T: TLandrixXmlXPathTree;
+  Base: Integer;
 begin
   if FItems.Items[Index].Kind = xikNode then
-    Result := FTree.StringValueUtf8(FItems.Items[Index].Node)
+  begin
+    T := NodeTree(FTree, FDocTrees, FDocBases, FItems.Items[Index].Node, Base);
+    Result := T.StringValueUtf8(FItems.Items[Index].Node - Base);
+  end
   else
     Result := AtomicString(FItems.Items[Index]);
 end;
@@ -670,18 +724,19 @@ const
     xfnNamespaceUri, xfnRoot];
 
 { What the value of node Index depends on besides the tree and the global
-  variables; Free receives the nodes that depend on neither. }
+  variables; Free receives the nodes that depend on nothing else but the
+  root of the context's tree, Rooted those that depend on that root. }
 function Dependencies(const Nodes: TLandrixXmlXPathAstNodes; Index, GlobalCount, FirstLocalSlot: Integer;
-  var Free: array of Boolean): TDependencies;
+  var Free, Rooted: array of Boolean): TDependencies;
 var
   I, First: Integer;
   Id: TLandrixXmlXPathFunctionId;
   Deps: TDependencies;
 
-  { predicates and later steps have a focus of their own }
+  { predicates and later steps have a focus (and a root) of their own }
   procedure Inner(Child: Integer);
   begin
-    Deps := Deps + Dependencies(Nodes, Child, GlobalCount, FirstLocalSlot, Free) * [xdOther];
+    Deps := Deps + Dependencies(Nodes, Child, GlobalCount, FirstLocalSlot, Free, Rooted) * [xdOther];
   end;
 
 begin
@@ -700,18 +755,18 @@ begin
         First := 0;
         if not Nodes[Index].RootStart then
         begin
-          Deps := Dependencies(Nodes, Nodes[Index].Children[0], GlobalCount, FirstLocalSlot, Free);
+          Deps := Dependencies(Nodes, Nodes[Index].Children[0], GlobalCount, FirstLocalSlot, Free, Rooted);
           First := 1;
         end
         else
-          { "/" needs a node as context; the tree has one root }
-          Deps := [];
+          { "/" needs a node as context: the root of its tree }
+          Deps := [xdRoot];
         for I := First to Integer(High(Nodes[Index].Children)) do
           Inner(Nodes[Index].Children[I]);
       end;
     xakFilter:
       begin
-        Deps := Dependencies(Nodes, Nodes[Index].Children[0], GlobalCount, FirstLocalSlot, Free);
+        Deps := Dependencies(Nodes, Nodes[Index].Children[0], GlobalCount, FirstLocalSlot, Free, Rooted);
         for I := 0 to Integer(High(Nodes[Index].Predicates)) do
           Inner(Nodes[Index].Predicates[I]);
       end;
@@ -722,7 +777,7 @@ begin
         Deps := [xdOther];
   else
     for I := 0 to Integer(High(Nodes[Index].Children)) do
-      Deps := Deps + Dependencies(Nodes, Nodes[Index].Children[I], GlobalCount, FirstLocalSlot, Free);
+      Deps := Deps + Dependencies(Nodes, Nodes[Index].Children[I], GlobalCount, FirstLocalSlot, Free, Rooted);
     for I := 0 to Integer(High(Nodes[Index].Predicates)) do
       Inner(Nodes[Index].Predicates[I]);
     if (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) then
@@ -734,7 +789,8 @@ begin
         Include(Deps, xdOther);
     end;
   end;
-  Free[Index] := Deps = [];
+  Free[Index] := Deps - [xdRoot] = [];
+  Rooted[Index] := xdRoot in Deps;
   Result := Deps;
 end;
 
@@ -803,6 +859,7 @@ var
   Free: array of Boolean;
 begin
   Result := nil;
+  Free := nil;
   if (Expr = nil) or (Expr.NodeCount = 0) then
     Exit;
   if Length(FCacheTable) = 0 then
@@ -835,9 +892,9 @@ begin
   C.Expression := Expr;
   C.Serial := Expr.Serial;
   Count := Expr.NodeCount;
-  Free := nil;
   SetLength(Free, Count);
   SetLength(C.Flags, Count);
+  SetLength(C.RootOnly, Count);
   SetLength(C.Have, Count);
   SetLength(C.Values, Count);
   for I := 0 to Count - 1 do
@@ -845,8 +902,9 @@ begin
     Free[I] := False;
     C.Flags[I] := False;
     C.Have[I] := False;
+    C.RootOnly[I] := False;
   end;
-  Dependencies(Expr.NodeArray, Expr.Root, FGlobalCount, Expr.FirstLocalSlot, Free);
+  Dependencies(Expr.NodeArray, Expr.Root, FGlobalCount, Expr.FirstLocalSlot, Free, C.RootOnly);
   MarkOutermost(Expr.NodeArray, Expr.Root, False, Free, C.Flags);
   SetLength(C.Fuse, Count);
   for I := 0 to Count - 1 do
@@ -899,6 +957,50 @@ end;
 procedure TLandrixXmlXPathEvaluator.ClearCache;
 begin
   DropCachedValues;
+  { the evaluator's tree may have another size now }
+  ComputeBases;
+end;
+
+procedure TLandrixXmlXPathEvaluator.AddDocument(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree);
+var
+  N: Integer;
+begin
+  if (Tree = nil) or (Tree = FTree) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'AddDocument: another tree is needed');
+  N := Integer(Length(FDocTrees));
+  SetLength(FDocUris, N + 1);
+  SetLength(FDocTrees, N + 1);
+  FDocUris[N] := Uri;
+  FDocTrees[N] := Tree;
+  ComputeBases;
+end;
+
+{ The node numbers: the evaluator's tree, then the added trees in turn. }
+procedure TLandrixXmlXPathEvaluator.ComputeBases;
+var
+  K: Integer;
+  Next: Int64;
+begin
+  SetLength(FDocBases, Length(FDocTrees));
+  Next := FTree.Count;
+  for K := 0 to Integer(High(FDocTrees)) do
+  begin
+    if Next + FDocTrees[K].Count > MaxInt then
+      raise ELandrixXmlError.CreateCode(xecLimit, 'AddDocument: too many nodes');
+    FDocBases[K] := Integer(Next);
+    Next := Next + FDocTrees[K].Count;
+  end;
+end;
+
+function TLandrixXmlXPathEvaluator.TreeOf(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
+begin
+  Result := NodeTree(FTree, FDocTrees, FDocBases, Node, Base);
+end;
+
+{ the document node of Node's tree }
+function TLandrixXmlXPathEvaluator.RootOf(Node: Integer): Integer;
+begin
+  TreeOf(Node, Result);
 end;
 
 function TLandrixXmlXPathEvaluator.CachedEval(Index: Integer; Context: Integer; Position, Size: Integer;
@@ -907,12 +1009,19 @@ var
   C: TExpressionCache;
 begin
   C := TExpressionCache(FCache);
+  FBypass := Index;
+  { the kept value of a rooted path is that of the evaluator's tree }
+  if C.RootOnly[Index] and (Context >= FTree.Count) then
+  begin
+    Result := Eval(Index, Context, Position, Size, ContextItem);
+    Exit;
+  end;
   if C.Have[Index] then
   begin
+    FBypass := -1;
     Result := C.Values[Index];
     Exit;
   end;
-  FBypass := Index;
   Result := Eval(Index, Context, Position, Size, ContextItem);
   { no spare capacity: whoever appends to the value gets a copy }
   if Length(Result.Items) > Result.Count then
@@ -1145,9 +1254,15 @@ begin
 end;
 
 function TLandrixXmlXPathEvaluator.StringOf(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+var
+  T: TLandrixXmlXPathTree;
+  Base: Integer;
 begin
   if Item.Kind = xikNode then
-    Result := FTree.StringValueUtf8(Item.Node)
+  begin
+    T := TreeOf(Item.Node, Base);
+    Result := T.StringValueUtf8(Item.Node - Base);
+  end
   else
     Result := AtomicString(Item);
 end;
@@ -1156,8 +1271,9 @@ end;
   comments and processing instructions). }
 function TLandrixXmlXPathEvaluator.Atomize(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
 var
-  I: Integer;
+  I, Base: Integer;
   HasNode: Boolean;
+  T: TLandrixXmlXPathTree;
 begin
   HasNode := False;
   for I := 0 to S.Count - 1 do
@@ -1176,10 +1292,11 @@ begin
   for I := 0 to S.Count - 1 do
     if S.Items[I].Kind = xikNode then
     begin
-      if FTree.Kind[S.Items[I].Node] in [xnkComment, xnkProcessingInstruction] then
-        LandrixXmlXPathAppend(Result, StringItem(xikString, FTree.StringValueUtf8(S.Items[I].Node)))
+      T := TreeOf(S.Items[I].Node, Base);
+      if T.Kind[S.Items[I].Node - Base] in [xnkComment, xnkProcessingInstruction] then
+        LandrixXmlXPathAppend(Result, StringItem(xikString, T.StringValueUtf8(S.Items[I].Node - Base)))
       else
-        LandrixXmlXPathAppend(Result, StringItem(xikUntypedAtomic, FTree.StringValueUtf8(S.Items[I].Node)));
+        LandrixXmlXPathAppend(Result, StringItem(xikUntypedAtomic, T.StringValueUtf8(S.Items[I].Node - Base)));
     end
     else
       LandrixXmlXPathAppend(Result, S.Items[I]);
@@ -1268,10 +1385,11 @@ begin
   Failed := nil;
   SetLength(Failed, FTree.Count);
   for I := First to Last - 1 do
-    Failed[FFailed[I]] := True;
+    if FFailed[I] < FTree.Count then
+      Failed[FFailed[I]] := True;
   Result := LandrixXmlXPathEmpty;
   for I := 0 to S.Count - 1 do
-    if not Failed[S.Items[I].Node] then
+    if (S.Items[I].Node >= FTree.Count) or not Failed[S.Items[I].Node] then
       LandrixXmlXPathAppend(Result, S.Items[I]);
 end;
 
@@ -1314,6 +1432,8 @@ begin
   Result := TLandrixXmlXPathResult.Create;
   try
     Result.FTree := FTree;
+    Result.FDocTrees := FDocTrees;
+    Result.FDocBases := FDocBases;
     Result.FItems := EvaluateSequence(Expr, ContextNode);
   except
     Result.Free;
@@ -1620,18 +1740,21 @@ var
   Reverse: Boolean;
   Item: TLandrixXmlXPathItem;
   AttributeAxis: Boolean;
+  { the node's tree, its numbers from Base on; the step runs in it }
+  T: TLandrixXmlXPathTree;
+  Base: Integer;
 
   function Test(I: Integer): Boolean;
   var
     K: TLandrixXmlXPathNodeKind;
   begin
-    K := FTree.Kind[I];
+    K := T.Kind[I];
     case N^.NodeTest of
       xntAnyNode: Result := True;
       xntText: Result := K = xnkText;
       xntComment: Result := K = xnkComment;
       xntProcessingInstruction:
-        Result := (K = xnkProcessingInstruction) and ((N^.LocalName = '') or (FTree.LocalNameUtf8(I) = N^.LocalName));
+        Result := (K = xnkProcessingInstruction) and ((N^.LocalName = '') or (T.LocalNameUtf8(I) = N^.LocalName));
       xntDocumentNode: Result := K = xnkDocument;
       xntAnyElement: Result := K = xnkElement;
       xntAnyAttribute: Result := K = xnkAttribute;
@@ -1643,9 +1766,9 @@ var
         Result := K = xnkElement;
       if Result then
         case N^.NodeTest of
-          xntName: Result := (Expanded >= 0) and (FTree.ExpandedName[I] = Expanded);
-          xntNamespaceWildcard: Result := FTree.NamespaceUriUtf8(I) = N^.NamespaceUri;
-          xntLocalWildcard: Result := FTree.LocalNameUtf8(I) = N^.LocalName;
+          xntName: Result := (Expanded >= 0) and (T.ExpandedName[I] = Expanded);
+          xntNamespaceWildcard: Result := T.NamespaceUriUtf8(I) = N^.NamespaceUri;
+          xntLocalWildcard: Result := T.LocalNameUtf8(I) = N^.LocalName;
         else
           { * }
         end;
@@ -1656,7 +1779,7 @@ var
   begin
     if Test(I) then
     begin
-      Item.Node := I;
+      Item.Node := I + Base;
       LandrixXmlXPathAppend(Out1, Item);
     end;
   end;
@@ -1665,12 +1788,14 @@ var
   var
     J: Integer;
   begin
-    for J := From + 1 to FTree.SubtreeEnd[From] do
-      if FTree.Kind[J] <> xnkAttribute then
+    for J := From + 1 to T.SubtreeEnd[From] do
+      if T.Kind[J] <> xnkAttribute then
         Add(J);
   end;
 
 begin
+  T := TreeOf(Node, Base);
+  Node := Node - Base;
   N := @FNodes[Index];
   Out1 := LandrixXmlXPathEmpty;
   InitItem(Item, xikNode);
@@ -1678,68 +1803,68 @@ begin
   AttributeAxis := Axis = xaxAttribute;
   Expanded := -1;
   if N^.NodeTest = xntName then
-    Expanded := FTree.FindExpandedName(N^.NamespaceUri, N^.LocalName);
+    Expanded := T.FindExpandedName(N^.NamespaceUri, N^.LocalName);
   case Axis of
     xaxChild:
       begin
-        I := FTree.FirstChild(Node);
+        I := T.FirstChild(Node);
         while I >= 0 do
         begin
           Add(I);
-          I := FTree.NextSibling[I];
+          I := T.NextSibling[I];
         end;
       end;
     xaxDescendant:
-      if FTree.Kind[Node] <> xnkAttribute then
+      if T.Kind[Node] <> xnkAttribute then
         AddDescendants(Node);
     xaxDescendantOrSelf:
       begin
         Add(Node);
-        if FTree.Kind[Node] <> xnkAttribute then
+        if T.Kind[Node] <> xnkAttribute then
           AddDescendants(Node);
       end;
     xaxAttribute:
-      if FTree.Kind[Node] = xnkElement then
-        for I := Node + 1 to Node + FTree.AttributeCount[Node] do
+      if T.Kind[Node] = xnkElement then
+        for I := Node + 1 to Node + T.AttributeCount[Node] do
           Add(I);
     xaxSelf:
       Add(Node);
     xaxParent:
-      if FTree.Parent[Node] >= 0 then
-        Add(FTree.Parent[Node]);
+      if T.Parent[Node] >= 0 then
+        Add(T.Parent[Node]);
     xaxAncestor, xaxAncestorOrSelf:
       begin
         Reverse := True;
         if Axis = xaxAncestorOrSelf then
           Add(Node);
-        I := FTree.Parent[Node];
+        I := T.Parent[Node];
         while I >= 0 do
         begin
           Add(I);
-          I := FTree.Parent[I];
+          I := T.Parent[I];
         end;
       end;
     xaxFollowingSibling:
-      if FTree.Kind[Node] <> xnkAttribute then
+      if T.Kind[Node] <> xnkAttribute then
       begin
-        I := FTree.NextSibling[Node];
+        I := T.NextSibling[Node];
         while I >= 0 do
         begin
           Add(I);
-          I := FTree.NextSibling[I];
+          I := T.NextSibling[I];
         end;
       end;
     xaxPrecedingSibling:
-      if (FTree.Kind[Node] <> xnkAttribute) and (FTree.Parent[Node] >= 0) then
+      if (T.Kind[Node] <> xnkAttribute) and (T.Parent[Node] >= 0) then
       begin
         Reverse := True;
         { nearest first }
-        I := FTree.FirstChild(FTree.Parent[Node]);
+        I := T.FirstChild(T.Parent[Node]);
         E := Out1.Count;
         while (I >= 0) and (I <> Node) do
         begin
           Add(I);
-          I := FTree.NextSibling[I];
+          I := T.NextSibling[I];
         end;
         { reverse what was added }
         for I := 0 to (Out1.Count - E) div 2 - 1 do
@@ -1754,12 +1879,12 @@ begin
         Reverse := True;
         { nodes before Node in document order, without its ancestors and without attributes }
         I := Node;
-        if FTree.Kind[I] = xnkAttribute then
-          I := FTree.Parent[I];
+        if T.Kind[I] = xnkAttribute then
+          I := T.Parent[I];
         E := I - 1;
         while E > 0 do
         begin
-          if (FTree.Kind[E] <> xnkAttribute) and (FTree.SubtreeEnd[E] < I) then
+          if (T.Kind[E] <> xnkAttribute) and (T.SubtreeEnd[E] < I) then
             Add(E);
           Dec(E);
         end;
@@ -1792,7 +1917,7 @@ begin
   begin
     if Context < 0 then
       Fail('XPDY0002', 'the context item for "/" is absent or not a node');
-    Current := LandrixXmlXPathNodeItem(0);
+    Current := LandrixXmlXPathNodeItem(RootOf(Context));
     First := 0;
   end
   else
@@ -1951,7 +2076,7 @@ begin
       begin
         if Context < 0 then
           Fail('XPDY0002', 'the context item for "/" is absent or not a node');
-        Result := LandrixXmlXPathNodeItem(0);
+        Result := LandrixXmlXPathNodeItem(RootOf(Context));
       end;
     xakStep:
       begin

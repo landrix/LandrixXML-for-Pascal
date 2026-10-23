@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rules xmlns="urn:landrix:schematron-rules" format="2" source="codes.sch" sha256="7dfc75911eb8698d6ef3f782297712087ebc3ba8d70edc1bab70fd69d04f1d2d" title="Code list test">
+  <ns prefix="p" uri="urn:p"/>
+  <document href="codes.xml" sha256="8f65198d6176c76a9a659f9649c0815671cea50f2da1ff2609813b2da8b7f2f2">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!-- codes for the tests --&gt;
+&lt;codes&gt;
+  &lt;cl id="1"&gt;&lt;enumeration value="A"/&gt;&lt;enumeration value="B"/&gt;&lt;/cl&gt;
+  &lt;cl id="2"&gt;&lt;enumeration value="C"/&gt;&lt;/cl&gt;
+&lt;/codes&gt;
+</document>
+  <pattern id="C">
+    <rule context="p:a" id="" line="codes-pattern.sch:3">
+      <let name="v" value="@code"/>
+      <assert id="C1" flag="fatal" role="" test="string-length($v)=0 or document('codes.xml')/codes/cl[@id=1]/enumeration[@value=$v]" line="codes-pattern.sch:5"><text>code </text><value-of select="$v"/><text> is not allowed</text></assert>
+      <report id="C2" flag="information" role="" test="count(document((: the list :) 'codes.xml')//enumeration) = 3 and not(document (: an element :) = 'x')" line="codes-pattern.sch:6"><text>three codes</text></report>
+    </rule>
+  </pattern>
+</rules>

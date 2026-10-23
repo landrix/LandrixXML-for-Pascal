@@ -138,7 +138,7 @@ type
     xfnStringToCodepoints, xfnCodepointsToString, xfnNumber, xfnAbs, xfnRound, xfnRoundHalfToEven,
     xfnFloor, xfnCeiling, xfnName, xfnLocalName, xfnNamespaceUri, xfnRoot, xfnPosition, xfnLast,
     xfnReverse, xfnDistinctValues, xfnSubsequence, xfnIndexOf, xfnData, xfnExactlyOne,
-    xfnZeroOrOne, xfnOneOrMore, xfnCurrent,
+    xfnZeroOrOne, xfnOneOrMore, xfnCurrent, xfnDocument,
     xfnXsString, xfnXsBoolean, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsDate,
     xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic
   );
@@ -287,6 +287,7 @@ const
     (Name: 'zero-or-one'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'one-or-more'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'current'; MinArgs: 0; MaxArgs: 0; Xs: False),
+    (Name: 'document'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'string'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'boolean'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'decimal'; MinArgs: 1; MaxArgs: 1; Xs: True),

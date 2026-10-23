@@ -39,7 +39,8 @@ SETS = [
 
 
 def norm(s):
-    return " ".join((s or "").split())
+    """White space runs (XML white space only: NBSP is text) to one space, trimmed."""
+    return " ".join(x for x in re.split("[ \t\n\r]+", s or "") if x)
 
 
 def run(java, saxon, xsl, doc):

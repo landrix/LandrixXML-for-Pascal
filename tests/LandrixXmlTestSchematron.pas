@@ -554,7 +554,8 @@ begin
   begin
     if C.NodeType = LandrixXmlDom.xntElement then
       Result := Result + Dump(C)
-    else if (C.NodeType in [LandrixXmlDom.xntText, LandrixXmlDom.xntCData]) and (Node.LocalNameUtf8 = 'text') then
+    else if (C.NodeType in [LandrixXmlDom.xntText, LandrixXmlDom.xntCData]) and
+      ((Node.LocalNameUtf8 = 'text') or (Node.LocalNameUtf8 = 'document')) then
       Result := Result + LandrixXmlUtf8ToString(C.ValueUtf8);
     C := C.NextSibling;
   end;
@@ -626,6 +627,9 @@ begin
   CheckCompiled(SourcePath('xrechnung', 'cii' + PathDelim + 'XRechnung-CII-validation.sch'),
     DataPath('rules' + PathDelim + 'xrechnung-cii.xml'));
   CheckCompiled(DataPath('compiler' + PathDelim + 'ok.sch'), DataPath('compiler' + PathDelim + 'ok.rules.xml'));
+  CheckCompiled(DataPath('compiler' + PathDelim + 'codes.sch'), DataPath('compiler' + PathDelim + 'codes.rules.xml'));
+  CheckCompiled(DataPath('compiler' + PathDelim + 'doc-alias.sch'),
+    DataPath('compiler' + PathDelim + 'doc-alias.rules.xml'));
 end;
 
 { A small schema with an include, a function, a text variable, emph and
@@ -681,6 +685,42 @@ begin
   end;
 end;
 
+{ document(): a code list next to the pattern that reads it, embedded in
+  the rule file; the same results from the compiled .sch and from the rule
+  file tools/sch-compile.py wrote. }
+procedure TestCompilerDocuments;
+var
+  Rules: TLandrixXmlSchematronRules;
+  V: TLandrixXmlSchematronValidator;
+  Pass: Integer;
+  S: string;
+  I: Integer;
+begin
+  Rules := TLandrixXmlSchematronRules.Create;
+  V := TLandrixXmlSchematronValidator.Create(Rules);
+  try
+    for Pass := 1 to 2 do
+    begin
+      if Pass = 1 then
+        Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + 'codes.sch'))
+      else
+        Rules.LoadFromFile(DataPath('compiler' + PathDelim + 'codes.rules.xml'));
+      Check(not V.ValidateFile(DataPath('compiler' + PathDelim + 'codes-doc.xml')), 'not valid');
+      S := '';
+      for I := 0 to V.ResultCount - 1 do
+        S := S + LandrixXmlUtf8ToString(V.Results[I].Id + ' ' + V.Results[I].Location + ' ' +
+          V.Results[I].Message) + ' / ';
+      CheckEqualsStr('C2 /Q{urn:p}r[1]/Q{urn:p}a[1] three codes / ' +
+        'C1 /Q{urn:p}r[1]/Q{urn:p}a[2] code X is not allowed / C2 /Q{urn:p}r[1]/Q{urn:p}a[2] three codes / ' +
+        'C2 /Q{urn:p}r[1]/Q{urn:p}a[3] three codes / ', S, 'results, pass ' + IntToStr(Pass));
+      Check(not V.Incomplete, 'no dynamic error, pass ' + IntToStr(Pass));
+    end;
+  finally
+    V.Free;
+    Rules.Free;
+  end;
+end;
+
 procedure TestCompilerErrors;
 begin
   CheckCompileError('cycle.sch', xecSchema, 'cycle-pattern.sch:3');
@@ -701,6 +741,9 @@ begin
   CheckCompileError('group.sch', xecUnsupported, 'group.sch:4');
   CheckCompileError('xml-space.sch', xecUnsupported, 'xml-space.sch:2');
   CheckCompileError('xml-base.sch', xecUnsupported, 'xml-base.sch:3');
+  CheckCompileError('doc-variable.sch', xecUnsupported, 'doc-variable.sch:4');
+  CheckCompileError('doc-missing.sch', xecSchema, 'doc-missing.sch:4');
+  CheckCompileError('doc-dtd.sch', xecUnsupported, 'doc-dtd.sch:4');
 end;
 
 { White space outside strings and comments collapses; quotes in comments
@@ -751,6 +794,13 @@ begin
     Doc := Compiler.CompileFile(Source);
     Check(Pos('original=f:size($v) = ''small'' role= test=true()', Dump(Doc.Root)) > 0,
       'the override and the original: ' + Dump(Doc.Root));
+    { the document() of the replaced test does not count, that of the new one does }
+    Doc.Free;
+    Doc := nil;
+    Compiler.ClearOverrides;
+    Compiler.AddOverride(U('D1'), U('document(''parts/codes.xml'')/codes'), U('document($f)/codes'));
+    Doc := Compiler.CompileFile(DataPath('compiler' + PathDelim + 'doc-override.sch'));
+    Check(Pos('<document href=parts/codes.xml', Dump(Doc.Root)) > 0, 'the document of the override');
   finally
     Doc.Free;
     Compiler.Free;
@@ -766,6 +816,7 @@ begin
   RegisterTest('Schematron.Document', TestDocument);
   RegisterTest('Schematron.SmallRules', TestSmallRules);
   RegisterTest('Schematron.ContextErrors', TestContextErrors);
+  RegisterTest('Schematron.CompilerDocuments', TestCompilerDocuments);
   RegisterTest('Schematron.VariablesAndContexts', TestVariablesAndContexts);
   RegisterTest('Schematron.LoadErrors', TestLoadErrors);
   RegisterTest('Schematron.CompilerSources', TestCompilerSources);

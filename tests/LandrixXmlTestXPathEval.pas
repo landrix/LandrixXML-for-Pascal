@@ -566,6 +566,77 @@ begin
   end;
 end;
 
+{ AddDocument and document(): one numbering over two trees, the names,
+  roots and kept values of each tree. }
+procedure TestDocuments;
+var
+  Tree, Codes: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  R: TLandrixXmlXPathResult;
+  Raised: string;
+
+  function Run(const S: string; Node: Integer): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), nil);
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, Node));
+  end;
+
+  function Again(Node: Integer): string;
+  begin
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, Node));
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Codes := TLandrixXmlXPathTree.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Expr := nil;
+  R := nil;
+  try
+    Tree.LoadFromUtf8(U('<r><a k="1"/><a k="2"/></r>'));
+    { other names first: the expanded-name ids of the two trees differ }
+    Codes.LoadFromUtf8(U('<codes><c v="1"/><c v="3"/><a k="x"/></codes>'));
+    Evaluator.AddDocument(U('codes.xml'), Codes);
+    CheckEqualsStr('2', Run('count(document(''codes.xml'')/codes/c)', 0), 'the code list');
+    CheckEqualsStr('x', Run('string(document(''codes.xml'')//a/@k)', 0), 'a name of both trees');
+    CheckEqualsStr('1', Run('//a[@k = document(''codes.xml'')/codes/c/@v]/@k', 0), 'a comparison across trees');
+    CheckEqualsStr('codes', Run('name(document(''codes.xml'')/codes/c[1]/root()/*)', 0), 'root() of a code');
+    CheckEqualsStr('2', Run('count(document(''codes.xml'')/codes/c[/codes])', 0), '"/" on a code');
+    CheckEqualsStr('0', Run('count(//a[/codes])', 0), '"/" in the document');
+    CheckEqualsStr('r codes', Run('for $n in (document(''codes.xml'')/codes | /r) return name($n)', 0),
+      'document order: the document first');
+    { a rooted path is kept for the document's root only }
+    CheckEqualsStr('1', Run('count(/r)', 0), '/r from the document');
+    CheckEqualsStr('0', Again(Tree.Count), '/r from the root of the code list');
+    CheckEqualsStr('1', Again(1), '/r from the document again');
+    CheckEqualsStr('3', Run('string(document(''codes.xml'')/codes/c[2]/@v)', 0), 'the string of a code');
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('document(''codes.xml'')/codes/c[2]/@v'), nil);
+    R := Evaluator.Evaluate(Expr, 0);
+    CheckEquals(1, R.Count, 'one attribute');
+    CheckEqualsStr('3', LandrixXmlUtf8ToString(R.StringValueUtf8(0)), 'its string in the result');
+    Check(R.Node[0] >= Tree.Count, 'a node number after the document''s');
+    Raised := '';
+    try
+      Run('document(''other.xml'')', 0);
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode;
+    end;
+    CheckEqualsStr('FODC0002', Raised, 'an unknown document');
+  finally
+    R.Free;
+    Expr.Free;
+    Evaluator.Free;
+    Codes.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
@@ -573,6 +644,7 @@ begin
   RegisterTest('XPathEval.NoAliasing', TestNoAliasing);
   RegisterTest('XPathEval.KeptValues', TestKeptValues);
   RegisterTest('XPathEval.Patterns', TestPatterns);
+  RegisterTest('XPathEval.Documents', TestDocuments);
 end;
 
 end.

@@ -77,6 +77,59 @@ class CompileError(Exception):
     pass
 
 
+def declared_encoding(raw):
+    """The encoding of the XML declaration at the start, lower case; ''
+    without a declaration or encoding. As DeclaredEncoding in Pascal."""
+    d = raw.decode("latin-1")
+    if not d.startswith("<?xml") or len(d) < 6 or d[5] not in WS:
+        return ""
+    k = d.find("?>")
+    if k < 0:
+        return ""
+    d = d[:k + 1]
+    k = d.find("encoding")
+    if k < 0:
+        return ""
+    k += 8
+    while k < len(d) and d[k] in WS + "=":
+        k += 1
+    if k >= len(d) or d[k] not in "'\"":
+        return ""
+    e = d.find(d[k], k + 1)
+    return d[k + 1:e if e >= 0 else len(d)].lower()
+
+
+def has_doctype(text):
+    """True if the prolog (before the root element, after the declaration,
+    processing instructions, comments and white space) has a document type
+    declaration. As HasDoctype in Pascal."""
+    i, n = 0, len(text)
+    while i < n:
+        if text[i] in WS:
+            i += 1
+        elif text.startswith("<?", i):
+            k = text.find("?>", i)
+            i = n if k < 0 else k + 2
+        elif text.startswith("<!--", i):
+            k = text.find("-->", i)
+            i = n if k < 0 else k + 3
+        else:
+            return text.startswith("<!DOCTYPE", i)
+    return False
+
+
+def name_char(c):
+    return c.isalnum() or c in "_-.:" or ord(c) >= 0x80
+
+
+def is_expression_attribute(ns, local, name):
+    """True if the attribute name of the element holds an XPath expression."""
+    if ns == SCH:
+        return ((local, name) in (("let", "value"), ("rule", "context"), ("assert", "test"),
+                                  ("report", "test"), ("value-of", "select"), ("name", "path")))
+    return name == "select" or (local, name) == ("when", "test")
+
+
 # The attributes (without namespace) a Schematron or XSLT element may have
 # here; elements not listed are not checked (rejected or ignored as a whole).
 # Some are allowed only to reject them with a better message where the
@@ -202,6 +255,8 @@ class Compiler:
         self.functions = []
         self.patterns = []
         self.global_names = set()
+        self.documents = []      # document(): (literal, path, text, sha256)
+        self.document_calls = []  # (el, doc, prefix, literal, is literal)
 
     def where(self, el, doc):
         root, path, lines = doc
@@ -240,8 +295,139 @@ class Compiler:
                 if not a.startswith("{") and a not in allowed:
                     self.fail("the attribute %s of %s:%s is not supported"
                               % (a, "sch" if ns == SCH else "xsl", local), el, doc)
+        for a, v in el.attrib.items():
+            if is_expression_attribute(ns, local, a):
+                self.scan_document_calls(el, doc, v)
         for c in el:
             self.check_attributes(c, doc)
+
+    def scan_document_calls(self, el, doc, expr):
+        """The calls of a function named document (no prefix or any prefix) in
+        expr, outside string literals and comments; with or without one string
+        literal. resolve_document_calls decides which are fn:document."""
+        n = len(expr)
+
+        def comment_end(k):
+            depth = 0
+            while k < n:
+                if expr.startswith("(:", k):
+                    depth += 1
+                    k += 2
+                elif expr.startswith(":)", k):
+                    depth -= 1
+                    k += 2
+                    if depth == 0:
+                        break
+                else:
+                    k += 1
+            return k
+
+        def skip(k):
+            while k < n:
+                if expr[k] in WS:
+                    k += 1
+                elif expr.startswith("(:", k):
+                    k = comment_end(k)
+                else:
+                    break
+            return k
+
+        def literal_end(k):
+            q = expr[k]
+            k += 1
+            while k < n:
+                if expr[k] == q:
+                    if k + 1 < n and expr[k + 1] == q:
+                        k += 1
+                    else:
+                        break
+                k += 1
+            return k + 1
+
+        i = 0
+        while i < n:
+            ch = expr[i]
+            if ch in "'\"":
+                i = literal_end(i)
+            elif expr.startswith("(:", i):
+                i = comment_end(i)
+            elif name_char(ch) and ch not in "0123456789-.:":
+                variable = i > 0 and expr[i - 1] == "$"
+                j = i
+                while j < n and name_char(expr[j]):
+                    j += 1
+                name = expr[i:j]
+                i = j
+                prefix = ""
+                if len(name) > 9 and name.endswith(":document"):
+                    prefix, name = name[:-9], "document"
+                if not variable and name == "document" and ":" not in prefix:
+                    j = skip(j)
+                    if j < n and expr[j] == "(":
+                        j = skip(j + 1)
+                        is_literal, literal = False, ""
+                        if j < n and expr[j] in "'\"":
+                            q = expr[j]
+                            e = literal_end(j)
+                            literal = expr[j + 1:e - 1].replace(q + q, q)
+                            j = skip(e)
+                            is_literal = j < n and expr[j] == ")"
+                        self.document_calls.append((el, doc, prefix, literal, is_literal))
+                        i = j
+            else:
+                i += 1
+
+    def resolve_document_calls(self):
+        """The calls of fn:document (no prefix, fn, or a prefix of that
+        namespace): each needs one string literal; its file is embedded."""
+        fn_ns = "http://www.w3.org/2005/xpath-functions"
+        bound = dict(self.ns)
+        for el, doc, prefix, literal, is_literal in self.document_calls:
+            if prefix == "":
+                uri = fn_ns
+            elif prefix in bound:
+                uri = bound[prefix]
+            else:
+                uri = fn_ns if prefix == "fn" else ""
+            if uri != fn_ns:
+                continue
+            if not is_literal:
+                self.fail("document() is only supported with a string literal", el, doc)
+            self.add_document(el, doc, literal)
+
+    def add_document(self, el, doc, href):
+        """The file document(href) names, relative to the file el stands in."""
+        if not href or "#" in href or ":/" in href[1:]:
+            self.fail("document('%s') needs a plain relative file name" % href, el, doc)
+        path = os.path.normcase(os.path.abspath(os.path.join(os.path.dirname(doc[1]), href)))
+        for h, p, _, _ in self.documents:
+            if h == href and p == path:
+                return
+            if h == href:
+                self.fail("document('%s') names two files" % href, el, doc)
+            if p == path:
+                self.fail("two names for the document " + path, el, doc)
+        if not os.path.isfile(path):
+            self.fail("the document %s does not exist" % path, el, doc)
+        raw = open(path, "rb").read()
+        sha = hashlib.sha256(raw).hexdigest()
+        if raw.startswith(b"\xef\xbb\xbf"):
+            raw = raw[3:]
+        enc = declared_encoding(raw)
+        if enc and enc != "utf-8":
+            self.fail("the document %s is not UTF-8" % path, el, doc)
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            self.fail("the document %s is not UTF-8" % path, el, doc)
+        text = text.replace(chr(13) + chr(10), chr(10)).replace(chr(13), chr(10))
+        if has_doctype(text):
+            self.fail("the document %s has a DOCTYPE, which is not supported" % path, el, doc)
+        try:
+            ET.fromstring(text.encode("utf-8"))
+        except ET.ParseError as x:
+            self.fail("the document %s: %s" % (path, x), el, doc)
+        self.documents.append((href, path, text, sha))
 
     def include(self, el, doc):
         """The root of the document an sch:include names, loaded; a cycle is an error."""
@@ -409,7 +595,8 @@ class Compiler:
                     parts.append(("text", c.tail))
         content(el)
         return {"kind": kind, "id": el.get("id") or "", "flag": el.get("flag") or "", "role": el.get("role") or "",
-                "test": collapse(el.get("test")), "line": self.where(el, doc), "parts": parts}
+                "test": collapse(el.get("test")), "line": self.where(el, doc), "parts": parts,
+                "el": el, "doc": doc}
 
     def function(self, el, doc):
         name = el.get("name")
@@ -539,6 +726,10 @@ class Compiler:
                 raise CompileError("--override %s: %d checks have this id" % (ident, len(found)))
             found[0]["original"] = found[0]["test"]
             found[0]["test"] = collapse(test)
+            # the document() calls of the replaced test are gone, those of the new one count
+            el = found[0]["el"]
+            self.document_calls = [c for c in self.document_calls if c[0] is not el]
+            self.scan_document_calls(el, found[0]["doc"], found[0]["test"])
 
     def write(self, out, url, title):
         raw = open(self.path, "rb").read()
@@ -549,14 +740,17 @@ class Compiler:
             title = collapse("".join(t.itertext())) if t is not None else ""
         a = lambda v: quoteattr(v)
         lines = ['<?xml version="1.0" encoding="UTF-8"?>',
-                 '<rules xmlns="%s" format="1" source=%s sha256="%s" title=%s%s>' % (
-                     OUT_NS, a(os.path.basename(self.path)), sha, a(title), (" url=" + a(url)) if url else "")]
+                 '<rules xmlns="%s" format="%s" source=%s sha256="%s" title=%s%s>' % (
+                     OUT_NS, "2" if self.documents else "1", a(os.path.basename(self.path)), sha, a(title),
+                     (" url=" + a(url)) if url else "")]
         seen = set()
         for p, u in self.ns:
             if p in seen:
                 continue
             seen.add(p)
             lines.append("  <ns prefix=%s uri=%s/>" % (a(p), a(u)))
+        for h, _, text, dsha in self.documents:
+            lines.append("  <document href=%s sha256=\"%s\">%s</document>" % (a(h), dsha, escape(text)))
         for n, v, w in self.globals:
             lines.append("  <let name=%s value=%s line=%s/>" % (a(n), a(v), a(w)))
         for f in self.functions:
@@ -612,6 +806,7 @@ def main():
     try:
         c.compile()
         c.override(args.override)
+        c.resolve_document_calls()
     except CompileError as e:
         sys.exit("sch-compile: " + str(e))
     c.write(args.out, args.url, args.title)
