@@ -102,17 +102,26 @@ uses
   LandrixXmlXPath;
 
 type
+  { The value an item refers to (the digits of an xs:decimal or of an
+    xs:integer beyond Int64, a date). It never changes once made, so
+    items, copies of sequences and threads share it. }
+  ILandrixXmlXPathValue = interface
+    function Instance: TObject;
+  end;
+
   { An item: a node of the tree (Node) or an atomic value. Internal, public
-    because the evaluator's records need it. }
+    because the evaluator's records need it; read the values through the
+    evaluator, the layout changes with the supported types. }
   TLandrixXmlXPathItem = record
     Kind: TLandrixXmlXPathItemKind;
     Node: Integer;
+    { xs:double: the bit pattern; xs:boolean: 0 or 1; xs:integer: the
+      value if it fits (Payload nil) }
+    Bits: Int64;
     { strings, untypedAtomic, anyURI, and the lexical form of dates }
     Text: TLandrixXmlUtf8;
-    Decimal: TLandrixXmlDecimal;
-    DoubleValue: TLandrixXmlDouble;
-    BooleanValue: Boolean;
-    DateTime: TLandrixXmlXsdDateTime;
+    { xs:decimal, a large xs:integer, dates }
+    Payload: ILandrixXmlXPathValue;
   end;
   TLandrixXmlXPathItems = array of TLandrixXmlXPathItem;
 
@@ -352,6 +361,22 @@ type
   TDependency = (xdFocus, xdOther, xdRoot);
   TDependencies = set of TDependency;
 
+  { the payloads of items (ILandrixXmlXPathValue), never changed after
+    construction }
+  TDecimalValue = class(TInterfacedObject, ILandrixXmlXPathValue)
+  public
+    Value: TLandrixXmlDecimal;
+    constructor Create(const AValue: TLandrixXmlDecimal);
+    function Instance: TObject;
+  end;
+
+  TDateTimeValue = class(TInterfacedObject, ILandrixXmlXPathValue)
+  public
+    Value: TLandrixXmlXsdDateTime;
+    constructor Create(const AValue: TLandrixXmlXsdDateTime);
+    function Instance: TObject;
+  end;
+
 procedure Fail(const Code, Msg: string);
 begin
   raise ELandrixXmlXPathError.CreateXPath(Code, Msg);
@@ -381,22 +406,35 @@ begin
     LandrixXmlXPathAppend(S, T.Items[I]);
 end;
 
+constructor TDecimalValue.Create(const AValue: TLandrixXmlDecimal);
+begin
+  inherited Create;
+  Value := AValue;
+end;
+
+function TDecimalValue.Instance: TObject;
+begin
+  Result := Self;
+end;
+
+constructor TDateTimeValue.Create(const AValue: TLandrixXmlXsdDateTime);
+begin
+  inherited Create;
+  Value := AValue;
+end;
+
+function TDateTimeValue.Instance: TObject;
+begin
+  Result := Self;
+end;
+
 procedure InitItem(out Item: TLandrixXmlXPathItem; Kind: TLandrixXmlXPathItemKind);
 begin
   Item.Kind := Kind;
   Item.Node := -1;
+  Item.Bits := 0;
   Item.Text := '';
-  Item.Decimal := LandrixXmlDecimalZero;
-  Item.DoubleValue := LandrixXmlDoubleZero(False);
-  Item.BooleanValue := False;
-  Item.DateTime.Year := 0;
-  Item.DateTime.Month := 0;
-  Item.DateTime.Day := 0;
-  Item.DateTime.Hour := 0;
-  Item.DateTime.Minute := 0;
-  Item.DateTime.Second := LandrixXmlDecimalZero;
-  Item.DateTime.HasTimeZone := False;
-  Item.DateTime.TimeZone := 0;
+  Item.Payload := nil;
 end;
 
 function SingleSeq(const Item: TLandrixXmlXPathItem): TLandrixXmlXPathSequence;
@@ -430,7 +468,7 @@ end;
 function BooleanItem(B: Boolean): TLandrixXmlXPathItem;
 begin
   InitItem(Result, xikBoolean);
-  Result.BooleanValue := B;
+  Result.Bits := Ord(B);
 end;
 
 function BooleanSeq(B: Boolean): TLandrixXmlXPathSequence;
@@ -441,24 +479,29 @@ end;
 function IntegerItem(const D: TLandrixXmlDecimal): TLandrixXmlXPathItem;
 begin
   InitItem(Result, xikInteger);
-  Result.Decimal := D;
+  if not LandrixXmlDecimalTryToInt64(D, Result.Bits) then
+  begin
+    Result.Bits := 0;
+    Result.Payload := TDecimalValue.Create(D);
+  end;
 end;
 
 function IntegerItemOf(Value: Int64): TLandrixXmlXPathItem;
 begin
-  Result := IntegerItem(LandrixXmlDecimalFromInt64(Value));
+  InitItem(Result, xikInteger);
+  Result.Bits := Value;
 end;
 
 function DecimalItem(const D: TLandrixXmlDecimal): TLandrixXmlXPathItem;
 begin
   InitItem(Result, xikDecimal);
-  Result.Decimal := D;
+  Result.Payload := TDecimalValue.Create(D);
 end;
 
 function DoubleItem(const D: TLandrixXmlDouble): TLandrixXmlXPathItem;
 begin
   InitItem(Result, xikDouble);
-  Result.DoubleValue := D;
+  Result.Bits := D.Bits;
 end;
 
 { An xs:integer (Kind xikInteger) or xs:decimal. }
@@ -475,34 +518,36 @@ function DateItem(Kind: TLandrixXmlXPathItemKind; const D: TLandrixXmlXsdDateTim
   const Text: TLandrixXmlUtf8): TLandrixXmlXPathItem;
 begin
   InitItem(Result, Kind);
-  Result.DateTime := D;
+  Result.Payload := TDateTimeValue.Create(D);
   Result.Text := Text;
 end;
 
-{ The values of items. Only InitItem, the constructors above, these
-  functions and EvaluateSequence's copy use the value fields of an item,
-  so that their layout can change. }
+{ The values of items. Only InitItem, the constructors above and these
+  functions use the value fields of an item. }
 
 function ItemBoolean(const Item: TLandrixXmlXPathItem): Boolean;
 begin
-  Result := Item.BooleanValue;
+  Result := Item.Bits <> 0;
 end;
 
 { the value of an xs:integer or xs:decimal }
 function ItemDecimal(const Item: TLandrixXmlXPathItem): TLandrixXmlDecimal;
 begin
-  Result := Item.Decimal;
+  if Item.Payload = nil then
+    Result := LandrixXmlDecimalFromInt64(Item.Bits)
+  else
+    Result := TDecimalValue(Item.Payload.Instance).Value;
 end;
 
 function ItemDouble(const Item: TLandrixXmlXPathItem): TLandrixXmlDouble;
 begin
-  Result := Item.DoubleValue;
+  Result.Bits := Item.Bits;
 end;
 
 { the value of an xs:date, xs:dateTime or xs:time }
 function ItemDateTime(const Item: TLandrixXmlXPathItem): TLandrixXmlXsdDateTime;
 begin
-  Result := Item.DateTime;
+  Result := TDateTimeValue(Item.Payload.Instance).Value;
 end;
 
 function IsNumeric(Kind: TLandrixXmlXPathItemKind): Boolean;
@@ -1394,19 +1439,11 @@ end;
 
 function TLandrixXmlXPathEvaluator.EvaluateSequence(Expr: TLandrixXmlXPathExpression;
   ContextNode: Integer): TLandrixXmlXPathSequence;
-var
-  I: Integer;
 begin
   Result := EvaluateShared(Expr, ContextNode);
-  { the caller's own copy, with the digits of numbers and dates: the
-    items may be kept values or a variable's }
+  { the caller's own copy of the items (they may be kept values or a
+    variable's); payloads never change and are shared }
   Result.Items := Copy(Result.Items, 0, Result.Count);
-  for I := 0 to Result.Count - 1 do
-  begin
-    Result.Items[I].Decimal.Limbs := Copy(Result.Items[I].Decimal.Limbs, 0, Length(Result.Items[I].Decimal.Limbs));
-    Result.Items[I].DateTime.Second.Limbs := Copy(Result.Items[I].DateTime.Second.Limbs, 0,
-      Length(Result.Items[I].DateTime.Second.Limbs));
-  end;
 end;
 
 function TLandrixXmlXPathEvaluator.EvaluatePattern(Expr: TLandrixXmlXPathExpression;

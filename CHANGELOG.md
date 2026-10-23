@@ -152,6 +152,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: a compact item record (`TLandrixXmlXPathItem`: kind, node, an
+  Int64 for doubles, booleans and integers, text, and a shared immutable
+  `ILandrixXmlXPathValue` for decimals, large integers and dates) instead
+  of one field per value type. Validation with the EN16931 rules is about
+  a third faster; `EvaluateSequence` no longer copies digits.
 - XPath: node comparisons (`is`, `<<`, `>>`), `intersect` and `except`, and
   the `following` axis. A path step without a context item raises
   XPDY0002 (was XPTY0020, which is for an atomic context item).

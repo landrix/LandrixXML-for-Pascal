@@ -449,9 +449,9 @@ begin
     Expr := nil;
     Expr := TLandrixXmlXPathExpression.Create(U('(1 + 1, xs:time(''10:00:30''))'), nil);
     S := Evaluator.EvaluateSequence(Expr, 0);
-    S.Items[0].Decimal.Limbs[0] := 9;
-    S.Items[1].DateTime.Second.Limbs[0] := 9;
-    CheckEqualsStr('2 10:00:30', Again(0), 'kept numbers and dates after the caller changed its digits');
+    S.Items[0].Bits := 9;
+    S.Items[1].Text := U('11:00:00');
+    CheckEqualsStr('2 10:00:30', Again(0), 'kept numbers and dates after the caller changed its items');
     { a kept value belongs to the tree as it was }
     CheckEqualsStr('4', Run('count(//a)', 0), 'four a');
     Tree.LoadFromUtf8(U('<r><a/></r>'));
