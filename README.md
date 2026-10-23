@@ -309,6 +309,16 @@ and the parsers also take a pointer and a length (`...Buf`).
   the documented DTD and encoding decisions. Every accepted test document
   is also written back through the writer and through the DOM and must
   read back unchanged.
+- The [W3C XPath/XQuery test suite QT3](https://github.com/w3c/qt3tests)
+  measures how much of XPath 2.0 the evaluator covers (`tools/run-qt3.py`,
+  pinned suite revision): of 15,144 applicable XPath 2.0 cases 6,004 pass
+  (40 %) and 1,716 more raise an error where one is expected, but with
+  another code. Most failures are types and functions not implemented
+  yet (durations, the derived integer types, `xs:float`, binary types),
+  `instance of` and `treat as`. The passing cases are a baseline: the CI
+  fails if one of them stops passing. Today the evaluator follows Saxon,
+  which runs XPath 2.0 rule sets as XPath 3.1, where QT3 expects strict
+  2.0 behaviour (e.g. `round` with two arguments is an error in 2.0).
 - About 135 test cases with more than 9000 checks, including generated
   conversion cases with Python's `decimal` module as an independent oracle.
 - Real-world XRechnung, ZUGFeRD and GAEB files (kept locally, not in the

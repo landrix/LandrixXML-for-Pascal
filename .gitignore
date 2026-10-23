@@ -98,3 +98,6 @@ __pycache__/
 
 # W3C XML conformance test suite (downloaded by tools/run-xmlconf.py)
 tests/data/xmlconf-suite/
+
+# W3C XPath/XQuery test suite QT3 (downloaded by tools/run-qt3.py)
+tests/data/qt3-suite/

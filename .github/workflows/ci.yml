@@ -59,3 +59,9 @@ jobs:
           mkdir -p build/fpc322-linux
           fpc -B -Fusource -Fisource -FUbuild/fpc322-linux -FEbuild/fpc322-linux tests/LandrixXmlConformance.dpr
           python3 tools/run-xmlconf.py --exe build/fpc322-linux/LandrixXmlConformance
+
+      - name: W3C XPath test suite QT3 (XPath 2.0 cases, against the baseline)
+        run: |
+          mkdir -p build/fpc322-linux
+          fpc -B -Fusource -Fisource -FUbuild/fpc322-linux -FEbuild/fpc322-linux tests/LandrixXmlQt3.dpr
+          python3 tools/run-qt3.py --exe build/fpc322-linux/LandrixXmlQt3

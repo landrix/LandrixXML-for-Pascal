@@ -143,6 +143,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `DocumentUri` names the document (`ValidateFile` sets it). On the test
   invoices the SVRL equals SchXslt's apart from its metadata. Rule files now
   also list patterns without rules, which SVRL reports as active.
+- `tools/run-qt3.py` and `tests/LandrixXmlQt3.dpr`: the W3C XPath/XQuery
+  test suite QT3 (XPath 2.0 cases, pinned revision) against the
+  evaluator. Assertions are checked from the typed results outside the
+  engine; the passing cases are a baseline (`tests/data/qt3-baseline.txt`)
+  that the CI checks. First run: 6,004 of 15,144 applicable cases pass.
 - README: Schematron validation with the four outcomes (valid, invalid,
   incomplete, not well-formed) and sharing rules between threads; the
   example is part of `examples/LandrixXmlExamples.dpr`.
