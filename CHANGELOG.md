@@ -201,6 +201,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `xs:anyURI`, Java's conversion of large doubles to integers). Every
   compiled expression keeps its profile (`Profile`); the Schematron units
   use `xppSaxon`. `tools/run-qt3.py --profile saxon` has its own baseline.
+- `tools/run-kosit-suite.py` and `tests/LandrixXmlKosit.dpr`: the KoSIT
+  XRechnung test suite (release 2026-08-31, downloaded with the matching
+  validator configuration) through the XML schema validator and the
+  EN16931/XRechnung rule files, compared with the KoSIT validator (schema
+  verdict, error codes and positions) and with Saxon running the
+  configuration's XSLT (fired rules, asserts, reports, messages,
+  locations); reference in `tests/data/schematron/expected-kosit-suite.txt`,
+  checked by the CI. All 86 invoices give the same results (all are
+  schema-valid, so schema errors are not exercised).
 - `tools/run-qt3.py` and `tests/LandrixXmlQt3.dpr`: the W3C XPath/XQuery
   test suite QT3 (XPath 2.0 cases, pinned revision) against the
   evaluator. Assertions are checked from the typed results outside the

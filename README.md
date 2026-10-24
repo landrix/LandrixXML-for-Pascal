@@ -323,6 +323,16 @@ and the parsers also take a pointer and a length (`...Buf`).
   `xppSaxon` behaves as Saxon in the KoSIT validator and is what the
   Schematron validator uses. Both profiles have a QT3 baseline; the
   differences are tested in `tests/data/xpath/profiles.txt`.
+- The [KoSIT XRechnung test suite](https://github.com/itplr-kosit/xrechnung-testsuite)
+  (`tools/run-kosit-suite.py`, pinned release 2026-08-31 with the
+  matching KoSIT validator configuration): all 86 invoices are validated
+  with the UBL or CII XML schema and the EN16931 and XRechnung rule sets
+  of the scenario the KoSIT validator chooses. The schema verdict with
+  error codes and positions is the KoSIT validator's, and fired rules,
+  failed asserts, reports, messages and locations match Saxon with the
+  validator's XSLT line by line, for all 86 invoices. All of them are
+  schema-valid, so schema errors are not exercised here. The full KoSIT
+  report (assessment, custom levels) is not part of this library.
 - About 135 test cases with more than 9000 checks, including generated
   conversion cases with Python's `decimal` module as an independent oracle.
 - Real-world XRechnung, ZUGFeRD and GAEB files (kept locally, not in the

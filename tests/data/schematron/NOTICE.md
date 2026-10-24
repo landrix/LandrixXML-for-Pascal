@@ -44,6 +44,23 @@ above (EUPL-1.2). The `mut-` files are copies of them changed at random
 (values, removed and duplicated elements, attributes) to provoke failed
 asserts and dynamic errors.
 
+## KoSIT test suite reference (`expected-kosit-suite.txt`)
+
+Generated with `tools/run-kosit-suite.py --generate` from the instances
+of the [XRechnung test suite](https://github.com/itplr-kosit/xrechnung-testsuite)
+release 2026-08-31 (`xrechnung-3.0.2-testsuite-2026-08-31.zip`, SHA-256
+1e81ef7563e0fa04c0e0b0631318a7e0843a3c0beb57d83ef95ac0c4a095e3d7,
+Apache-2.0, KoSIT) with the
+[validator configuration](https://github.com/itplr-kosit/validator-configuration-xrechnung)
+2026-08-31 (`xrechnung-3.0.2-validator-configuration-2026-08-31.zip`,
+SHA-256 2530cd107c414511c5d0462ec10f886910395abfca820db82e83d70bf01221a8,
+Apache-2.0, KoSIT; the UBL and CII schemas and the EN16931 artefacts it
+bundles keep their own licences, see above): per instance the scenario and the XML schema result of the
+KoSIT validator 1.6.3, and the SVRL results of the configuration's XSLT
+run with Saxon HE 12.9. The file contains rule texts and locations, and
+values the messages quote from the instances. Neither package is
+committed; the script downloads both.
+
 ## Expected results (`expected-*.txt`)
 
 Generated with `tools/gen-schematron-testdata.py`: the XSLT of the KoSIT
