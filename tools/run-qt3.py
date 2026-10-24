@@ -442,12 +442,17 @@ def temporal_key(t, v):
             return None
         year, month, day, hh, mi, ss, frac, zone = m.groups()
         year, month, day = int(year), int(month), int(day)
-        if year < 0:
-            # XSD 1.0 has no year 0: -0001 is 1 BCE, astronomical year 0
-            year += 1
         if t == "xs:date":
             hh = mi = ss = "00"
-    seconds = days_from_civil(year, month, day) * 86400 + int(hh) * 3600 + int(mi) * 60 + int(ss)
+    if year > 0:
+        days = days_from_civil(year, month, day)
+    else:
+        # XSD 1.0 as Xerces and the engine count: no year 0, the year -N as
+        # long as the year N, the years before 1 backwards from 0001-01-01
+        n = -year
+        first = days_from_civil(1, 1, 1)
+        days = 2 * first - days_from_civil(n + 1, 1, 1) + days_from_civil(n, month, day) - days_from_civil(n, 1, 1)
+    seconds = days * 86400 + int(hh) * 3600 + int(mi) * 60 + int(ss)
     if zone and zone != "Z":
         sign = -1 if zone[0] == "+" else 1
         seconds += sign * (int(zone[1:3]) * 3600 + int(zone[4:6]) * 60)
@@ -500,11 +505,9 @@ def atomic_equal(x, y, deep=False):
         kx, ky = temporal_key(tx, vx), temporal_key(ty, vy)
         if kx is None or ky is None:
             return vx == vy
-        if kx[0] != ky[0]:
-            # with and without time zone: needs the implicit time zone,
-            # which the engine does not have
-            return None
-        return kx == ky
+        # a value without time zone is in the implicit time zone, which is
+        # UTC in the helper (the engine's default)
+        return kx[1:] == ky[1:]
     if tx == ty:
         return vx == vy
     return False
@@ -736,7 +739,7 @@ def check(el, r, idx):
         else:
             ok = permutation_equal(items, v)
         if ok is None:
-            return "assertion-unsupported", tag + ": nodes or dates with and without time zone"
+            return "assertion-unsupported", tag + ": nodes"
         return ("pass", "") if ok else ("fail", "expected %s, got %s" % (show(v), show(items)))
     return "assertion-unsupported", tag
 
@@ -888,7 +891,7 @@ def self_test():
         ("<assert-eq>x</assert-eq>", {"R": items(("xs:dateTime", "-0044-03-15T12:00:00Z")),
                                       "V1": items(("xs:dateTime", "-0044-03-15T13:00:00+01:00"))}, "pass"),
         ("<assert-eq>x</assert-eq>", {"R": items(("xs:dateTime", "2000-01-01T00:00:00")),
-                                      "V1": items(("xs:dateTime", "2000-01-01T00:00:00Z"))}, "assertion-unsupported"),
+                                      "V1": items(("xs:dateTime", "2000-01-01T00:00:00Z"))}, "pass"),
         ("<assert-eq>x</assert-eq>", {"R": items(("xs:dateTime", "-0001-12-31T23:00:00Z")),
                                       "V1": items(("xs:dateTime", "0001-01-01T00:00:00+01:00"))}, "pass"),
         ("<assert-permutation>x</assert-permutation>", {"R": items(*([i1] * 1000)), "V1": items(*([i1] * 1000))},

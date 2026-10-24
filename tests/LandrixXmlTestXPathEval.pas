@@ -22,6 +22,8 @@ uses
   SysUtils,
   Classes,
   LandrixXmlBase,
+  LandrixXmlDecimal,
+  LandrixXmlXsdTypes,
   LandrixXmlXPathTree,
   LandrixXmlXPath,
   LandrixXmlXPathEval,
@@ -225,9 +227,9 @@ begin
   end;
 end;
 
-{ tests/data/xpath-oracle/durations: generated cases with the results of
-  an independent oracle (tools/gen-duration-testdata.py) for both
-  profiles. }
+{ tests/data/xpath-oracle/durations and dates: generated cases with the
+  results of independent oracles (tools/gen-duration-testdata.py,
+  tools/gen-date-testdata.py) for both profiles. }
 procedure TestOracleCases;
 var
   Folder: string;
@@ -236,6 +238,10 @@ begin
     'xpath-oracle' + PathDelim + 'durations' + PathDelim;
   RunCases(Folder, 'durations', 'expected.txt', 'oracle', xppXPath20);
   RunCases(Folder, 'durations (Saxon)', 'expected-saxon.txt', 'oracle', xppSaxon);
+  Folder := IncludeTrailingPathDelimiter(RepositoryRoot) + 'tests' + PathDelim + 'data' + PathDelim +
+    'xpath-oracle' + PathDelim + 'dates' + PathDelim;
+  RunCases(Folder, 'dates', 'expected.txt', 'oracle', xppXPath20);
+  RunCases(Folder, 'dates (Saxon)', 'expected-saxon.txt', 'oracle', xppSaxon);
 end;
 
 { Variables bound by value and lazily, globals and frames, user functions
@@ -841,6 +847,162 @@ begin
   end;
 end;
 
+{ The implicit time zone and the current dateTime: defaults, changes
+  after a first evaluation (kept values and lazy variables are dropped),
+  a set and a cleared clock; years before 1 in XPath 2.0. }
+procedure TestDateContext;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Lazy, Expr: TLandrixXmlXPathExpression;
+  Slot: Integer;
+  D: TLandrixXmlXsdDateTime;
+  Raised: Boolean;
+
+  function Eval(const Text: string): string;
+  var
+    E: TLandrixXmlXPathExpression;
+  begin
+    E := TLandrixXmlXPathExpression.Create(U(Text), Context);
+    try
+      Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(E, 0));
+    finally
+      E.Free;
+    end;
+  end;
+
+  { the XPath error code of Text, '' if there is none }
+  function ErrorOf(const Text: string): string;
+  begin
+    Result := '';
+    try
+      Eval(Text);
+    except
+      on E: ELandrixXmlXPathError do
+        Result := E.XPathCode;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Context.Profile := xppXPath20;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Lazy := nil;
+  Expr := nil;
+  try
+    Tree.LoadFromUtf8(U('<r/>'));
+    Slot := Context.DeclareVariable(U('zone'));
+    Lazy := TLandrixXmlXPathExpression.Create(U('implicit-timezone()'), Context);
+    Evaluator.SetGlobalCount(1);
+    Evaluator.SetFrameSize(Context.VariableCount);
+    Evaluator.BindLazy(Slot, Lazy, 0);
+    CheckEquals(0, Evaluator.ImplicitTimeZone, 'default UTC');
+    CheckEqualsStr('PT0S', Eval('implicit-timezone()'), 'implicit-timezone()');
+    CheckEqualsStr('PT0S', Eval('$zone'), 'a lazy variable');
+    CheckEqualsStr('true', Eval('xs:dateTime(''2024-01-01T10:00:00'') eq xs:dateTime(''2024-01-01T10:00:00Z'')'),
+      'no time zone is UTC');
+    Evaluator.ImplicitTimeZone := 60;
+    CheckEqualsStr('PT1H', Eval('implicit-timezone()'), 'the kept value is dropped');
+    CheckEqualsStr('PT1H', Eval('$zone'), 'the lazy variable is evaluated again');
+    CheckEqualsStr('true', Eval('xs:dateTime(''2024-01-01T10:00:00'') eq xs:dateTime(''2024-01-01T09:00:00Z'')'),
+      'compared in +01:00');
+    CheckEqualsStr('PT1H', Eval('xs:dateTime(''2024-01-01T10:00:00'') - xs:dateTime(''2024-01-01T08:00:00Z'')'),
+      'subtracted in +01:00');
+    CheckEqualsStr('2024-01-01T10:00:00+01:00', Eval('adjust-dateTime-to-timezone(xs:dateTime(''2024-01-01T10:00:00''))'),
+      'adjusted to the implicit time zone');
+    Raised := False;
+    try
+      Evaluator.ImplicitTimeZone := 841;
+    except
+      on ELandrixXmlError do
+        Raised := True;
+    end;
+    Check(Raised, 'more than 14 hours');
+    D.Year := 2024;
+    D.Month := 2;
+    D.Day := 30;
+    D.Hour := 0;
+    D.Minute := 0;
+    D.Second := LandrixXmlDecimalZero;
+    D.HasTimeZone := False;
+    D.TimeZone := 0;
+    Raised := False;
+    try
+      Evaluator.CurrentDateTime := D;
+    except
+      on ELandrixXmlError do
+        Raised := True;
+    end;
+    Check(Raised, 'February 30 is no clock');
+    CheckEquals(60, Evaluator.ImplicitTimeZone, 'unchanged after the error');
+    { a set clock, with its time zone adjusted to the implicit one }
+    D.Year := 2024;
+    D.Month := 12;
+    D.Day := 31;
+    D.Hour := 23;
+    D.Minute := 30;
+    D.Second := LandrixXmlParseDecimal(U('15.5'));
+    D.HasTimeZone := True;
+    D.TimeZone := 0;
+    Evaluator.CurrentDateTime := D;
+    CheckEqualsStr('2025-01-01T00:30:15.5+01:00', Eval('current-dateTime()'), 'the set clock');
+    CheckEqualsStr('2025-01-01+01:00', Eval('current-date()'), 'its date');
+    CheckEqualsStr('00:30:15.5+01:00', Eval('current-time()'), 'its time');
+    CheckEqualsStr('true', Eval('current-dateTime() eq current-dateTime()'), 'stable');
+    D := Evaluator.CurrentDateTime;
+    CheckEquals(2025, D.Year, 'read back in the implicit time zone');
+    Evaluator.ImplicitTimeZone := -300;
+    CheckEqualsStr('2024-12-31T18:30:15.5-05:00', Eval('current-dateTime()'), 'the same instant in -05:00');
+    D.HasTimeZone := False;
+    D.Year := 2030;
+    Evaluator.CurrentDateTime := D;
+    CheckEqualsStr('2030-01-01T00:30:15.5-05:00', Eval('current-dateTime()'), 'a clock without time zone gets it');
+    Evaluator.ClearCurrentDateTime;
+    Check(StrToInt(Eval('year-from-date(current-date())')) >= 2026, 'the system clock after clearing');
+    CheckEqualsStr('-PT5H', Eval('timezone-from-dateTime(current-dateTime())'), 'with the implicit time zone');
+    { XML Schema 1.0 years: no year 0 }
+    CheckEqualsStr('-0001-12-31', Eval('xs:date(''0001-01-01'') - xs:dayTimeDuration(''P1D'')'), 'before year 1');
+    CheckEqualsStr('0001-01-01', Eval('xs:date(''-0001-12-31'') + xs:dayTimeDuration(''P1D'')'), 'after year -1');
+    CheckEqualsStr('0001-01-01', Eval('xs:date(''-0001-01-01'') + xs:yearMonthDuration(''P1Y'')'), 'a year after -1');
+    CheckEqualsStr('-0001-03-01', Eval('xs:date(''-0001-02-28'') + xs:dayTimeDuration(''P1D'')'),
+      '-0001 is no leap year (the rule on the signed year, as the parser)');
+    CheckEqualsStr('-0004-02-29', Eval('xs:date(''-0004-02-28'') + xs:dayTimeDuration(''P1D'')'), '-0004 is one');
+    CheckEqualsStr('-0004-02-29', Eval('xs:date(''-0004-02-29'') + xs:yearMonthDuration(''P0M'')'), 'and stays');
+    CheckEqualsStr('P1D', Eval('xs:date(''-0004-03-01'') - xs:date(''-0004-02-29'')'), 'a day apart');
+    CheckEqualsStr('P365D', Eval('xs:date(''0001-01-01'') - xs:date(''-0001-01-01'')'), 'the year -1 has 365 days');
+    CheckEqualsStr('-0002-12-31', Eval('xs:date(''-0001-01-01'') - xs:dayTimeDuration(''P1D'')'), 'the year before -1');
+    CheckEqualsStr('true', Eval('xs:dateTime(''-0004-02-28T24:00:00'') eq ' +
+      'xs:dateTime(''-0004-02-28T23:59:59'') + xs:dayTimeDuration(''PT1S'')'), '24:00:00 agrees with the arithmetic');
+    CheckEqualsStr('0001-01-01T00:00:00', Eval('xs:dateTime(''-0001-12-31T24:00:00'')'), 'no year 0 after 24:00:00');
+    CheckEqualsStr('15:30:07', Eval('xs:time(''00:00:00'') + xs:dayTimeDuration(''PT1S'') * 9223372036854775807'),
+      'a huge duration on a time');
+    CheckEqualsStr('FODT0001', ErrorOf('xs:date(''1970-01-01'') - xs:dayTimeDuration(''PT1S'') * 9223372036854775807'),
+      'far before the first year');
+    CheckEqualsStr('FODT0001', ErrorOf('xs:date(''-2147483648-06-01'')'), 'the year -2^31');
+    CheckEqualsStr('FODT0001', ErrorOf('xs:dateTime(''2147483647-12-31T24:00:00'')'), 'the last year ends');
+    CheckEqualsStr('FORG0001', ErrorOf('xs:date(''02147483648-01-01'')'), 'a leading zero');
+    CheckEqualsStr('FODT0001', ErrorOf('xs:date(''-99999999996-02-29'')'), 'a large leap year');
+    CheckEqualsStr('-0044', Eval('substring(string(xs:date(''-0044-03-15'')), 1, 5)'), 'negative years keep their text');
+    Expr := TLandrixXmlXPathExpression.Create(U('xs:date(''2147483647-12-31'') + xs:dayTimeDuration(''P1D'')'), Context);
+    Raised := False;
+    try
+      Evaluator.EvaluateString(Expr, 0);
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode = 'FODT0001';
+    end;
+    Check(Raised, 'year overflow FODT0001');
+  finally
+    Expr.Free;
+    Lazy.Free;
+    Evaluator.Free;
+    Context.Free;
+    Tree.Free;
+  end;
+end;
+
 { The limits of durations where Saxon's own results are wrong (its
   canonical form overflows), in both profiles. }
 procedure TestDurationLimits;
@@ -871,7 +1033,7 @@ begin
         'xs:dayTimeDuration P4294967294D');
       Expect('xs:yearMonthDuration(''P2147483647M'') + xs:yearMonthDuration(''P1M'')', 'error FODT0002');
       Expect('xs:yearMonthDuration(''-P2147483647M'') - xs:yearMonthDuration(''P1M'')', 'error FODT0002');
-      Expect('xs:date(''2000-01-01'') + xs:dayTimeDuration(''P1D'')', 'error FOER0000');
+      Expect('xs:date(''2000-01-01'') + xs:dayTimeDuration(''P1D'')', 'xs:date 2000-01-02');
     end;
   finally
     Evaluator.Free;
@@ -1022,6 +1184,7 @@ begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
   RegisterTest('XPathEval.OracleCases', TestOracleCases);
   RegisterTest('XPathEval.DurationLimits', TestDurationLimits);
+  RegisterTest('XPathEval.DateContext', TestDateContext);
   RegisterTest('XPathEval.MixedProfiles', TestMixedProfiles);
   RegisterTest('XPathEval.Profiles', TestProfiles);
   RegisterTest('XPathEval.Variables', TestVariables);

@@ -77,16 +77,6 @@ begin
     Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:double');
 end;
 
-function DateKindPrimitive(Kind: TLandrixXmlXPathItemKind): TLandrixXmlXsdPrimitive;
-begin
-  case Kind of
-    xikDate: Result := xspDate;
-    xikDateTime: Result := xspDateTime;
-  else
-    Result := xspTime;
-  end;
-end;
-
 function Pad(Value, Digits: Integer): TLandrixXmlUtf8;
 begin
   Result := LandrixXmlStringToUtf8(IntToStr(Value));
@@ -166,12 +156,55 @@ begin
     if D.Month > 12 then
     begin
       D.Month := 1;
-      Inc(D.Year);
+      { no year 0 }
+      if D.Year = -1 then
+        D.Year := 1
+      else if D.Year = High(Integer) then
+        Fail('FODT0001', 'the year of the date is out of range')
+      else
+        Inc(D.Year);
     end;
   end;
 end;
 
-function ParseDateKind(const S: TLandrixXmlUtf8; Kind: TLandrixXmlXPathItemKind): TLandrixXmlXPathItem;
+{ True if S starts with a year beyond 2^31 - 1, an implementation limit
+  (FODT0001), and (XPath 2.0, Xp20) the rest is valid for T (xs:date or
+  xs:dateTime): the year is replaced by one with the same leap year rule
+  to check it. Saxon reports the year whatever follows. }
+function TooLargeYear(T: TLandrixXmlXsdSimpleType; const S: TLandrixXmlUtf8; Xp20: Boolean): Boolean;
+var
+  Text, Digits: TLandrixXmlUtf8;
+  I, Start: Integer;
+  V: TLandrixXmlXsdValue;
+  E: TLandrixXmlXsdError;
+  Y: Integer;
+begin
+  Result := False;
+  Text := Trimmed(S);
+  Start := 1;
+  if (Text <> '') and (Text[1] = '-') then
+    Start := 2;
+  I := Start;
+  while (I <= Length(Text)) and (Text[I] in ['0'..'9']) do
+    Inc(I);
+  Digits := Copy(Text, Start, I - Start);
+  { a year of more than four digits has no leading zero }
+  if (Length(Digits) > 4) and (Digits[1] = '0') then
+    Exit;
+  if (Length(Digits) < 10) or (Length(Digits) = 10) and (Digits <= '2147483647') then
+    Exit;
+  if not Xp20 then
+  begin
+    Result := True;
+    Exit;
+  end;
+  { the year modulo 400 keeps February 29 valid or invalid (the rule
+    applies to the signed year, so the sign does not matter) }
+  Y := StrToInt(LandrixXmlUtf8ToString(Copy(Digits, Length(Digits) - 3, 4))) mod 400 + 2000;
+  Result := T.Validate(LandrixXmlStringToUtf8(IntToStr(Y)) + Copy(Text, I, MaxInt), V, E);
+end;
+
+function ParseDateKind(const S: TLandrixXmlUtf8; Kind: TLandrixXmlXPathItemKind; Xp20: Boolean): TLandrixXmlXPathItem;
 var
   T: TLandrixXmlXsdSimpleType;
   V: TLandrixXmlXsdValue;
@@ -186,27 +219,17 @@ begin
     Name := 'time';
   end;
   T := LandrixXmlXsdBuiltinType(Name);
+  if not T.Validate(S, V, E) and (Kind <> xikTime) and TooLargeYear(T, S, Xp20) then
+    Fail('FODT0001', 'the year of ''' + LandrixXmlEscapeForMessage(S, 60) + ''' is out of range');
   if not T.Validate(S, V, E) then
     Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:' +
       LandrixXmlUtf8ToString(Name));
   D := V.DateTime;
+  { -2^31 is no year of the arithmetic (it has no positive counterpart) }
+  if D.Year = Low(Integer) then
+    Fail('FODT0001', 'the year of ''' + LandrixXmlEscapeForMessage(S, 60) + ''' is out of range');
   NormalizeMidnight(D, Kind);
   Result := DateItem(Kind, D, DateText(D, Kind));
-end;
-
-function CompareDates(const A, B: TLandrixXmlXPathItem): Integer;
-var
-  VA, VB: TLandrixXmlXsdValue;
-begin
-  VA.MemberType := nil;
-  VB.MemberType := nil;
-  VA.Primitive := DateKindPrimitive(A.Kind);
-  VB.Primitive := DateKindPrimitive(B.Kind);
-  VA.DateTime := ItemDateTime(A);
-  VB.DateTime := ItemDateTime(B);
-  Result := LandrixXmlXsdCompareValues(VA, VB);
-  if Result = LandrixXmlXsdIncomparable then
-    Fail('FOER0000', 'comparing ' + KindName(A.Kind) + ' values with and without time zone is not supported');
 end;
 
 { The result of a comparison from an ordering (-1, 0, 1; 2 = unordered). }
@@ -542,13 +565,15 @@ begin
   end;
 end;
 
+{$I LandrixXmlXPathDate.inc}
+
 function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem; forward;
 function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXmlDecimal; forward;
 
 { Compares two atomic values of comparable types (after the conversions of
-  general or value comparisons). }
-function CompareAtomic(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare): Boolean;
+  general or value comparisons); Tz is the implicit time zone. }
+function CompareAtomic(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Tz: Integer): Boolean;
 var
   Order: Integer;
 begin
@@ -559,7 +584,7 @@ begin
   else if (A.Kind = xikBoolean) and (B.Kind = xikBoolean) then
     Order := Ord(ItemBoolean(A)) - Ord(ItemBoolean(B))
   else if (A.Kind in [xikDate, xikDateTime, xikTime]) and (A.Kind = B.Kind) then
-    Order := CompareDates(A, B)
+    Order := CompareDates(A, B, Tz)
   else if (A.Kind in DurationKinds) and (B.Kind in DurationKinds) then
     Order := CompareDurations(A, B, Op)
   else
@@ -571,13 +596,14 @@ begin
 end;
 
 { "eq", "lt", ...: untypedAtomic is compared as a string. }
-function ValueCompare(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare): Boolean;
+function ValueCompare(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Tz: Integer): Boolean;
 begin
-  Result := CompareAtomic(A, B, Op);
+  Result := CompareAtomic(A, B, Op, Tz);
 end;
 
 { The conversions of a general comparison for one pair. }
-function ComparePair(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean): Boolean;
+function ComparePair(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
+  Tz: Integer): Boolean;
 var
   X, Y: TLandrixXmlXPathItem;
 begin
@@ -613,17 +639,17 @@ begin
         { compared as they are: a type error }
       end;
   end;
-  Result := CompareAtomic(X, Y, Op);
+  Result := CompareAtomic(X, Y, Op, Tz);
 end;
 
 function GeneralCompare(const A, B: TLandrixXmlXPathSequence; Op: TLandrixXmlXPathCompare;
-  Xp20: Boolean): Boolean;
+  Xp20: Boolean; Tz: Integer): Boolean;
 var
   I, J: Integer;
 begin
   for I := 0 to A.Count - 1 do
     for J := 0 to B.Count - 1 do
-      if ComparePair(A.Items[I], B.Items[J], Op, Xp20) then
+      if ComparePair(A.Items[I], B.Items[J], Op, Xp20, Tz) then
       begin
         Result := True;
         Exit;
@@ -644,8 +670,6 @@ begin
   end
   else
   begin
-    if Item.Kind in [xikDate, xikDateTime, xikTime] then
-      Fail('FOER0000', 'arithmetic on ' + KindName(Item.Kind) + ' is not supported');
     Fail('XPTY0004', 'arithmetic on ' + KindName(Item.Kind));
     Result := Item;
   end;
@@ -756,13 +780,16 @@ var
 
   procedure NotAllowed;
   begin
-    if DateOperator then
-      Fail('FOER0000', 'arithmetic on ' + KindName(A.Kind) + ' and ' + KindName(B.Kind) + ' is not supported');
     Fail('XPTY0004', 'no arithmetic operator for ' + KindName(A.Kind) + ' and ' + KindName(B.Kind));
   end;
 
 begin
   InitItem(Result, xikDayTimeDuration);
+  if DateOperator then
+  begin
+    Result := DateArithmetic(A, B, Op);
+    Exit;
+  end;
   if (A.Kind in DurationKinds) and (B.Kind in DurationKinds) then
   begin
     if (A.Kind <> B.Kind) or (A.Kind = xikDuration) then
@@ -817,7 +844,7 @@ begin
 end;
 
 function Arithmetic(const A0, B0: TLandrixXmlXPathItem; Op: TLandrixXmlXPathArithmetic;
-  Xp20: Boolean): TLandrixXmlXPathItem;
+  Xp20: Boolean; Tz: Integer): TLandrixXmlXPathItem;
 var
   A, B: TLandrixXmlXPathItem;
   DA, DB, Q: TLandrixXmlDouble;
@@ -826,6 +853,11 @@ begin
   if (A0.Kind in DurationKinds) or (B0.Kind in DurationKinds) then
   begin
     Result := DurationArithmetic(A0, B0, Op, Xp20);
+    Exit;
+  end;
+  if (A0.Kind in [xikDate, xikDateTime, xikTime]) and (B0.Kind = A0.Kind) and (Op = xpaSubtract) then
+  begin
+    Result := DateDifference(A0, B0, Tz);
     Exit;
   end;
   A := NumericOperand(A0, Xp20);
@@ -1262,18 +1294,17 @@ begin
         if StringSource then
         begin
           case T of
-            xikDate: Result := ParseDateKind(Item.Text, xikDate);
-            xikDateTime: Result := ParseDateKind(Item.Text, xikDateTime);
+            xikDate: Result := ParseDateKind(Item.Text, xikDate, Xp20);
+            xikDateTime: Result := ParseDateKind(Item.Text, xikDateTime, Xp20);
           else
-            Result := ParseDateKind(Item.Text, xikTime);
+            Result := ParseDateKind(Item.Text, xikTime, Xp20);
           end;
         end
         else if (Item.Kind = xikDate) and (T = xikDate) or (Item.Kind = xikDateTime) and (T = xikDateTime) or
           (Item.Kind = xikTime) and (T = xikTime) then
           Result := Item
         else if Item.Kind in [xikDate, xikDateTime, xikTime] then
-          Fail('FOER0000', 'casts between ' + KindName(Item.Kind) + ' and ' + LandrixXmlXPathAtomicTypeName(T) +
-            ' are not supported')
+          Result := CastDateKind(Item, T)
         else
           NotAllowed;
       end;

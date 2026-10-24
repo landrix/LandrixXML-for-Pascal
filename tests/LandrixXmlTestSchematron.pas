@@ -27,6 +27,8 @@ uses
   SysUtils,
   Classes,
   LandrixXmlBase,
+  LandrixXmlDecimal,
+  LandrixXmlXsdTypes,
   LandrixXmlDom,
   LandrixXmlXPathTree,
   LandrixXmlXPath,
@@ -333,6 +335,47 @@ begin
     V.AbortOnDynamicError := False;
     Check(V.ValidateTree(Tree), 'only a warning and a report: valid');
     CheckEquals(2, V.ResultCount, 'warning and report');
+  finally
+    Tree.Free;
+    V.Free;
+    Rules.Free;
+  end;
+end;
+
+{ The implicit time zone and the clock reach the rules' evaluation. }
+procedure TestDateContext;
+var
+  Rules: TLandrixXmlSchematronRules;
+  V: TLandrixXmlSchematronValidator;
+  Tree: TLandrixXmlXPathTree;
+  D: TLandrixXmlXsdDateTime;
+begin
+  Rules := SmallRules(
+    '<let name="z" value="implicit-timezone()" line="1"/>' +
+    '<pattern id="A"><rule context="/p:r" id="" line="2">' +
+    '<report id="R" flag="information" role="" test="true()" line="3"><value-of select="$z"/><text> </text>' +
+    '<value-of select="current-date()"/></report></rule></pattern>');
+  V := TLandrixXmlSchematronValidator.Create(Rules);
+  Tree := TLandrixXmlXPathTree.Create;
+  try
+    Tree.LoadFromUtf8(U('<p:r xmlns:p="urn:p"/>'));
+    D.Year := 2024;
+    D.Month := 6;
+    D.Day := 30;
+    D.Hour := 23;
+    D.Minute := 0;
+    D.Second := LandrixXmlDecimalZero;
+    D.HasTimeZone := True;
+    D.TimeZone := 0;
+    V.CurrentDateTime := D;
+    V.ValidateTree(Tree);
+    CheckEqualsStr('PT0S 2024-06-30Z', LandrixXmlUtf8ToString(V.Results[0].Message), 'defaults and the set clock');
+    V.ImplicitTimeZone := 120;
+    V.ValidateTree(Tree);
+    CheckEqualsStr('PT2H 2024-07-01+02:00', LandrixXmlUtf8ToString(V.Results[0].Message), 'in +02:00');
+    V.ClearCurrentDateTime;
+    V.ValidateTree(Tree);
+    Check(Copy(LandrixXmlUtf8ToString(V.Results[0].Message), 1, 5) = 'PT2H ', 'the system clock');
   finally
     Tree.Free;
     V.Free;
@@ -1062,6 +1105,7 @@ begin
   RegisterTest('Schematron.XRechnungCii', TestXRechnungCii);
   RegisterTest('Schematron.Document', TestDocument);
   RegisterTest('Schematron.SmallRules', TestSmallRules);
+  RegisterTest('Schematron.DateContext', TestDateContext);
   RegisterTest('Schematron.ContextErrors', TestContextErrors);
   RegisterTest('Schematron.CompilerDocuments', TestCompilerDocuments);
   RegisterTest('Schematron.Svrl', TestSvrl);

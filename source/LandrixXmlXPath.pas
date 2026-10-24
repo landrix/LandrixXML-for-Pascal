@@ -199,7 +199,13 @@ type
     xfnXsIDREF, xfnXsENTITY,
     xfnXsDuration, xfnXsYearMonthDuration, xfnXsDayTimeDuration,
     xfnYearsFromDuration, xfnMonthsFromDuration, xfnDaysFromDuration, xfnHoursFromDuration,
-    xfnMinutesFromDuration, xfnSecondsFromDuration
+    xfnMinutesFromDuration, xfnSecondsFromDuration,
+    xfnYearFromDateTime, xfnMonthFromDateTime, xfnDayFromDateTime, xfnHoursFromDateTime,
+    xfnMinutesFromDateTime, xfnSecondsFromDateTime, xfnTimezoneFromDateTime,
+    xfnYearFromDate, xfnMonthFromDate, xfnDayFromDate, xfnTimezoneFromDate,
+    xfnHoursFromTime, xfnMinutesFromTime, xfnSecondsFromTime, xfnTimezoneFromTime,
+    xfnAdjustDateTimeToTimezone, xfnAdjustDateToTimezone, xfnAdjustTimeToTimezone,
+    xfnDateTime, xfnCurrentDateTime, xfnCurrentDate, xfnCurrentTime, xfnImplicitTimezone
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -417,7 +423,30 @@ const
     (Name: 'days-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'hours-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'minutes-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
-    (Name: 'seconds-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False)
+    (Name: 'seconds-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'year-from-dateTime'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'month-from-dateTime'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'day-from-dateTime'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'hours-from-dateTime'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'minutes-from-dateTime'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'seconds-from-dateTime'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'timezone-from-dateTime'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'year-from-date'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'month-from-date'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'day-from-date'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'timezone-from-date'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'hours-from-time'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'minutes-from-time'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'seconds-from-time'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'timezone-from-time'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'adjust-dateTime-to-timezone'; MinArgs: 1; MaxArgs: 2; Xs: False),
+    (Name: 'adjust-date-to-timezone'; MinArgs: 1; MaxArgs: 2; Xs: False),
+    (Name: 'adjust-time-to-timezone'; MinArgs: 1; MaxArgs: 2; Xs: False),
+    (Name: 'dateTime'; MinArgs: 2; MaxArgs: 2; Xs: False),
+    (Name: 'current-dateTime'; MinArgs: 0; MaxArgs: 0; Xs: False),
+    (Name: 'current-date'; MinArgs: 0; MaxArgs: 0; Xs: False),
+    (Name: 'current-time'; MinArgs: 0; MaxArgs: 0; Xs: False),
+    (Name: 'implicit-timezone'; MinArgs: 0; MaxArgs: 0; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }

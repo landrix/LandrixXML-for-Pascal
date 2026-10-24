@@ -138,6 +138,28 @@ begin
   Result := IntegerItemOf(V);
 end;
 
+{ year-from-dateTime() ... seconds-from-time(): a component of the value
+  as it is written (no time zone applied). Saxon rounds the seconds to
+  microseconds (ties up). }
+function DateComponent(const V: TLandrixXmlXPathItem; Id: TLandrixXmlXPathFunctionId; Xp20: Boolean): TLandrixXmlXPathItem;
+var
+  D: TLandrixXmlXsdDateTime;
+begin
+  D := ItemDateTime(V);
+  case Id of
+    xfnYearFromDateTime, xfnYearFromDate: Result := IntegerItemOf(D.Year);
+    xfnMonthFromDateTime, xfnMonthFromDate: Result := IntegerItemOf(D.Month);
+    xfnDayFromDateTime, xfnDayFromDate: Result := IntegerItemOf(D.Day);
+    xfnHoursFromDateTime, xfnHoursFromTime: Result := IntegerItemOf(D.Hour);
+    xfnMinutesFromDateTime, xfnMinutesFromTime: Result := IntegerItemOf(D.Minute);
+  else
+    if Xp20 then
+      Result := DecimalItem(D.Second)
+    else
+      Result := DecimalItem(LandrixXmlDecimalRound(D.Second, 6, xdrHalfCeiling));
+  end;
+end;
+
 { A double argument rounded as fn:round does, for positions. }
 function RoundedDouble(const D: TLandrixXmlDouble): TLandrixXmlDouble;
 begin
@@ -178,6 +200,7 @@ var
   Re: TLandrixXmlRegex;
   Found, HasDouble: Boolean;
   Name: string;
+  T2: TLandrixXmlXPathItemKind;
   OwnTree: TLandrixXmlXPathTree;
 
   function Arg(K: Integer): TLandrixXmlXPathSequence;
@@ -323,14 +346,7 @@ var
     else if (P.Kind = xikBoolean) and (Q.Kind = xikBoolean) then
       Result := ItemBoolean(P) = ItemBoolean(Q)
     else if (P.Kind in [xikDate, xikDateTime, xikTime]) and (P.Kind = Q.Kind) then
-    begin
-      try
-        Result := CompareDates(P, Q) = 0;
-      except
-        on ELandrixXmlXPathError do
-          Result := False;
-      end;
-    end
+      Result := CompareDates(P, Q, FImplicitTimeZone) = 0
     else if (P.Kind in DurationKinds) and (Q.Kind in DurationKinds) then
       Result := CompareDurations(P, Q, xpcEq) = 0
     else
@@ -407,7 +423,7 @@ begin
             else if A.Items[I].Kind <> Acc.Kind then
               Fail('FORG0006', Name + ': ' + KindName(A.Items[I].Kind) + ' and ' + KindName(Acc.Kind) +
                 ' cannot be added');
-            Acc := Arithmetic(Acc, A.Items[I], xpaAdd, Xp20);
+            Acc := Arithmetic(Acc, A.Items[I], xpaAdd, Xp20, FImplicitTimeZone);
           end;
         end
         else
@@ -420,7 +436,7 @@ begin
             Item := A.Items[I];
             if not IsNumeric(Item.Kind) and (Item.Kind <> xikUntypedAtomic) then
               Fail('FORG0006', Name + ': ' + KindName(Item.Kind) + ' is not a number');
-            Acc := Arithmetic(Acc, Item, xpaAdd, Xp20);
+            Acc := Arithmetic(Acc, Item, xpaAdd, Xp20, FImplicitTimeZone);
           end;
         end;
         { a single number is the sum as it is (no addition, so no promotion
@@ -431,7 +447,7 @@ begin
         if (Id = xfnAvg) and (Acc.Kind in DurationKinds) then
           Acc := ScaleDuration(Acc, IntegerItemOf(A.Count), True, True)
         else if Id = xfnAvg then
-          Acc := Arithmetic(Acc, IntegerItemOf(A.Count), xpaDivide, Xp20);
+          Acc := Arithmetic(Acc, IntegerItemOf(A.Count), xpaDivide, Xp20, FImplicitTimeZone);
         Result := SingleSeq(Acc);
       end;
     xfnMin, xfnMax:
@@ -475,7 +491,8 @@ begin
           Item := A.Items[I];
           Acc := A.Items[K];
           try
-            if (Id = xfnMin) and CompareAtomic(Item, Acc, xpcLt) or (Id = xfnMax) and CompareAtomic(Item, Acc, xpcGt) then
+            if (Id = xfnMin) and CompareAtomic(Item, Acc, xpcLt, FImplicitTimeZone) or
+              (Id = xfnMax) and CompareAtomic(Item, Acc, xpcGt, FImplicitTimeZone) then
               K := I;
           except
             on E: ELandrixXmlXPathError do
@@ -916,6 +933,81 @@ begin
           Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not a duration');
         Result := SingleSeq(DurationComponent(Item, Id));
       end;
+    xfnYearFromDateTime .. xfnTimezoneFromTime:
+      if OptAtom(0, Item) then
+      begin
+        case Id of
+          xfnYearFromDateTime .. xfnTimezoneFromDateTime: T2 := xikDateTime;
+          xfnYearFromDate .. xfnTimezoneFromDate: T2 := xikDate;
+        else
+          T2 := xikTime;
+        end;
+        if Item.Kind = xikUntypedAtomic then
+          Item := CastTo(Item, T2, Xp20);
+        if Item.Kind <> T2 then
+          Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not ' + KindName(T2));
+        if Id in [xfnTimezoneFromDateTime, xfnTimezoneFromDate, xfnTimezoneFromTime] then
+        begin
+          if ItemDateTime(Item).HasTimeZone then
+            Result := SingleSeq(DurationItem(xikDayTimeDuration, LandrixXmlDecimalZero,
+              LandrixXmlDecimalFromInt64(Int64(ItemDateTime(Item).TimeZone) * 60)));
+        end
+        else
+          Result := SingleSeq(DateComponent(Item, Id, Xp20));
+      end;
+    xfnAdjustDateTimeToTimezone, xfnAdjustDateToTimezone, xfnAdjustTimeToTimezone:
+      if OptAtom(0, Item) then
+      begin
+        case Id of
+          xfnAdjustDateTimeToTimezone: T2 := xikDateTime;
+          xfnAdjustDateToTimezone: T2 := xikDate;
+        else
+          T2 := xikTime;
+        end;
+        if Item.Kind = xikUntypedAtomic then
+          Item := CastTo(Item, T2, Xp20);
+        if Item.Kind <> T2 then
+          Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not ' + KindName(T2));
+        if ArgCount = 1 then
+          Result := SingleSeq(AdjustToTimeZone(Item, True, FImplicitTimeZone))
+        else if not OptAtom(1, Acc) then
+          Result := SingleSeq(AdjustToTimeZone(Item, False, 0))
+        else
+        begin
+          if Acc.Kind = xikUntypedAtomic then
+            Acc := CastTo(Acc, xikDayTimeDuration, Xp20);
+          if Acc.Kind <> xikDayTimeDuration then
+            Fail('XPTY0004', Name + ': the time zone must be an xs:dayTimeDuration');
+          { whole minutes from -PT14H to PT14H }
+          if not LandrixXmlDecimalTryToInt64(ItemSeconds(Acc), V64) or (V64 mod 60 <> 0) or (V64 > 50400) or
+            (V64 < -50400) or not LandrixXmlDecimalIsInteger(ItemSeconds(Acc)) then
+            Fail('FODT0003', Name + ': invalid time zone ' + LandrixXmlUtf8ToString(Acc.Text));
+          Result := SingleSeq(AdjustToTimeZone(Item, True, Integer(V64 div 60)));
+        end;
+      end;
+    xfnDateTime:
+      begin
+        Found := OptAtom(0, Item);
+        if OptAtom(1, Acc) and Found then
+        begin
+          if Item.Kind = xikUntypedAtomic then
+            Item := CastTo(Item, xikDate, Xp20);
+          if Acc.Kind = xikUntypedAtomic then
+            Acc := CastTo(Acc, xikTime, Xp20);
+          if (Item.Kind <> xikDate) or (Acc.Kind <> xikTime) then
+            Fail('XPTY0004', Name + ': an xs:date and an xs:time are expected');
+          Result := SingleSeq(CombineDateTime(Item, Acc));
+        end;
+      end;
+    xfnCurrentDateTime:
+      Result := SingleSeq(ClockItem(xikDateTime));
+    xfnCurrentDate:
+      Result := SingleSeq(ClockItem(xikDate));
+    xfnCurrentTime:
+      Result := SingleSeq(ClockItem(xikTime));
+    xfnImplicitTimezone:
+      Result := SingleSeq(DurationItem(xikDayTimeDuration, LandrixXmlDecimalZero,
+        LandrixXmlDecimalFromInt64(Int64(FImplicitTimeZone) * 60)));
     xfnXsString, xfnXsBoolean, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsDate,
     xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic, xfnXsNonPositiveInteger .. xfnXsPositiveInteger,
     xfnXsNormalizedString .. xfnXsENTITY, xfnXsDuration .. xfnXsDayTimeDuration:

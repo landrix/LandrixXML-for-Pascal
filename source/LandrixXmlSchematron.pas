@@ -55,6 +55,7 @@ uses
   LandrixXmlBase,
   LandrixXmlDom,
   LandrixXmlXPathTree,
+  LandrixXmlXsdTypes,
   LandrixXmlXPath,
   LandrixXmlXPathEval;
 
@@ -208,6 +209,9 @@ type
     FFiredRules: TStringList;
     FRecordFiredRules: Boolean;
     FDocumentUri: TLandrixXmlUtf8;
+    FImplicitTimeZone: Integer;
+    FCurrentDateTime: TLandrixXmlXsdDateTime;
+    FHasCurrentDateTime: Boolean;
     { the rules that matched, for SVRL: fired (else suppressed by an
       earlier rule of the pattern), pattern, rule and node }
     FEventCount: Integer;
@@ -220,6 +224,8 @@ type
     FCurrentEvent: Integer;
     procedure AddEvent(Fired: Boolean; Pattern, Rule, Node: Integer);
     procedure ClearResults;
+    procedure SetImplicitTimeZone(Value: Integer);
+    procedure SetCurrentDateTime(const Value: TLandrixXmlXsdDateTime);
     function GetResultCount: Integer;
     function GetResult(Index: Integer): TLandrixXmlSchematronResult;
     procedure AddResult(Tree: TLandrixXmlXPathTree; Kind: TLandrixXmlSchematronResultKind;
@@ -253,6 +259,15 @@ type
     { the URI svrl:active-pattern/@documents names; ValidateFile sets it to
       the file's URI, the other Validate methods keep it }
     property DocumentUri: TLandrixXmlUtf8 read FDocumentUri write FDocumentUri;
+    { the implicit time zone of the XPath evaluation (minutes east of UTC,
+      -840 to 840, default 0): see TLandrixXmlXPathEvaluator }
+    property ImplicitTimeZone: Integer read FImplicitTimeZone write SetImplicitTimeZone;
+    { what current-dateTime() returns; if it is not set (or cleared), each
+      validation reads the clock at the first use (see
+      TLandrixXmlXPathEvaluator.CurrentDateTime; an invalid value raises
+      ELandrixXmlError when validating) }
+    property CurrentDateTime: TLandrixXmlXsdDateTime read FCurrentDateTime write SetCurrentDateTime;
+    procedure ClearCurrentDateTime;
   end;
 
 implementation
@@ -1038,6 +1053,24 @@ end;
 
 { --- TLandrixXmlSchematronValidator ------------------------------------------ }
 
+procedure TLandrixXmlSchematronValidator.SetImplicitTimeZone(Value: Integer);
+begin
+  if (Value < -840) or (Value > 840) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'ImplicitTimeZone must be between -840 and 840 minutes');
+  FImplicitTimeZone := Value;
+end;
+
+procedure TLandrixXmlSchematronValidator.SetCurrentDateTime(const Value: TLandrixXmlXsdDateTime);
+begin
+  FCurrentDateTime := Value;
+  FHasCurrentDateTime := True;
+end;
+
+procedure TLandrixXmlSchematronValidator.ClearCurrentDateTime;
+begin
+  FHasCurrentDateTime := False;
+end;
+
 constructor TLandrixXmlSchematronValidator.Create(Rules: TLandrixXmlSchematronRules);
 begin
   inherited Create;
@@ -1176,6 +1209,9 @@ begin
     raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'No Schematron rules are loaded');
   E := TLandrixXmlXPathEvaluator.Create(Tree);
   try
+    E.ImplicitTimeZone := FImplicitTimeZone;
+    if FHasCurrentDateTime then
+      E.CurrentDateTime := FCurrentDateTime;
     E.Functions := FRules.FFunctions;
     E.SetGlobalCount(FRules.FGlobalCount);
     E.SetFrameSize(FRules.FContext.VariableCount);

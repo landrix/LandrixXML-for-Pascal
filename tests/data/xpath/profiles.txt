@@ -23,3 +23,5 @@ xs:dayTimeDuration('P16DT7H263M45S') div -3	xs:dayTimeDuration -P5DT11H47M55S	xs
 xs:yearMonthDuration('P178956970Y8M')	error FODT0002	error FORG0001	more months than the implementation holds: FODT0002 in F&O 2.0; Saxon reports FORG0001
 xs:yearMonthDuration('P1M') div 2.00000000000000001	xs:yearMonthDuration P0M	xs:yearMonthDuration P1M	the exact quotient rounds down; Saxon divides as xs:double, where the divisor is 2
 xs:yearMonthDuration('P3M') * xs:double('0.16666666666666666')	xs:yearMonthDuration P0M	xs:yearMonthDuration P1M	the shortest digits times 3 are below 0.5; Saxon multiplies months as xs:double, which gives 0.5
+xs:date('99999999999-02-30')	error FORG0001	error FODT0001	an invalid date (February 30) with a year beyond the limit: Saxon reports the year first
+seconds-from-time(xs:time('10:00:00.0000005'))	xs:decimal 0.0000005	xs:decimal 0.000001	Saxon rounds the seconds component to microseconds

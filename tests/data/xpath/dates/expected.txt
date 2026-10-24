@@ -1,0 +1,240 @@
+# xs:date(/r/d)
+xs:date 2024-03-15
+# xs:dateTime(/r/dt)
+xs:dateTime 2024-03-15T10:30:00
+# xs:time(/r/t)
+xs:time 10:30:00
+# xs:dateTime(/r/dtz)
+xs:dateTime 2024-03-15T10:30:00+01:00
+# xs:date(/r/d) - xs:date('2024-01-01')
+xs:dayTimeDuration P74D
+# xs:date('2024-03-01') - xs:date(/r/leap)
+xs:dayTimeDuration P1D
+# xs:date('2023-03-01') - xs:date('2023-02-28')
+xs:dayTimeDuration P1D
+# xs:dateTime(/r/dt) - xs:dateTime('2024-02-29T00:00:00')
+xs:dayTimeDuration P15DT10H30M
+# xs:dateTime(/r/dtz) - xs:dateTime(/r/dt)
+xs:dayTimeDuration -PT1H
+# xs:dateTime(/r/dtz) - xs:dateTime('2024-02-29T11:30:00Z')
+xs:dayTimeDuration P14DT22H
+# xs:time(/r/t) - xs:time('08:00:00')
+xs:dayTimeDuration PT2H30M
+# xs:time('01:00:00+02:00') - xs:time('23:00:00Z')
+xs:dayTimeDuration -P1D
+# xs:date('2024-01-01+14:00') - xs:date('2024-01-01-14:00')
+xs:dayTimeDuration -P1DT4H
+# xs:dateTime('2024-01-01T00:00:00.5') - xs:dateTime('2023-12-31T23:59:59.25')
+xs:dayTimeDuration PT1.25S
+# xs:date(/r/d) + xs:yearMonthDuration('P1M')
+xs:date 2024-04-15
+# xs:date('2024-01-31') + xs:yearMonthDuration('P1M')
+xs:date 2024-02-29
+# xs:date('2023-01-31') + xs:yearMonthDuration('P1M')
+xs:date 2023-02-28
+# xs:date(/r/leap) + xs:yearMonthDuration('P1Y')
+xs:date 2025-02-28
+# xs:date(/r/leap) - xs:yearMonthDuration('P4Y')
+xs:date 2020-02-29
+# xs:date('2024-03-31') - xs:yearMonthDuration('P1M')
+xs:date 2024-02-29
+# xs:yearMonthDuration('P13M') + xs:date('2024-01-15')
+xs:date 2025-02-15
+# xs:dateTime(/r/dt) + xs:yearMonthDuration('-P25M')
+xs:dateTime 2022-02-15T10:30:00
+# xs:dateTime(/r/dtz) + xs:dayTimeDuration('PT12H')
+xs:dateTime 2024-03-15T22:30:00+01:00
+# xs:dateTime(/r/dt) + xs:dayTimeDuration('-P60DT0.5S')
+xs:dateTime 2024-01-15T10:29:59.5
+# xs:dayTimeDuration('P1D') + xs:dateTime(/r/dt)
+xs:dateTime 2024-03-16T10:30:00
+# xs:date(/r/d) + xs:dayTimeDuration('PT23H59M59S')
+xs:date 2024-03-15
+# xs:date(/r/d) - xs:dayTimeDuration('PT1S')
+xs:date 2024-03-14
+# xs:date(/r/d) + xs:dayTimeDuration('P366D')
+xs:date 2025-03-16
+# xs:time(/r/t) + xs:dayTimeDuration('PT20H')
+xs:time 06:30:00
+# xs:time(/r/t) - xs:dayTimeDuration('P3DT10H')
+xs:time 00:30:00
+# xs:dayTimeDuration('PT1H') + xs:time('23:30:00+05:00')
+xs:time 00:30:00+05:00
+# xs:time(/r/t) + xs:yearMonthDuration('P1M')
+error XPTY0004
+# xs:yearMonthDuration('P1M') - xs:date(/r/d)
+error XPTY0004
+# xs:date(/r/d) + 1
+error XPTY0004
+# xs:date(/r/d) - xs:dateTime(/r/dt)
+error XPTY0004
+# xs:date(/r/d) + xs:date(/r/d)
+error XPTY0004
+# xs:dateTime('2024-12-31T24:00:00')
+xs:dateTime 2025-01-01T00:00:00
+# xs:dateTime(/r/dt) eq xs:dateTime('2024-03-15T10:30:00Z')
+xs:boolean true
+# xs:dateTime(/r/dtz) eq xs:dateTime('2024-03-15T09:30:00Z')
+xs:boolean true
+# xs:dateTime(/r/dtz) lt xs:dateTime(/r/dt)
+xs:boolean true
+# xs:date('2024-03-15+14:00') lt xs:date(/r/d)
+xs:boolean true
+# xs:date('2024-03-15-14:00') gt xs:date(/r/d)
+xs:boolean true
+# xs:time('12:00:00+01:00') eq xs:time('11:00:00')
+xs:boolean true
+# xs:time('00:30:00+01:00') lt xs:time('23:59:59Z')
+xs:boolean true
+# /r/d = xs:date('2024-03-15Z')
+xs:boolean true
+# /r/dt < xs:dateTime('2024-03-15T10:30:01Z')
+xs:boolean true
+# xs:date(/r/d) eq xs:dateTime(/r/dt)
+error XPTY0004
+# distinct-values((xs:dateTime(/r/dt), xs:dateTime('2024-03-15T11:30:00+01:00'), xs:dateTime('2024-03-15T10:30:00Z')))
+xs:dateTime 2024-03-15T10:30:00
+# index-of((xs:time('10:00:00'), xs:time('11:00:00+01:00')), xs:time('10:00:00Z'))
+xs:integer 1
+xs:integer 2
+# max((xs:date(/r/d), xs:date('2024-03-16+14:00'), xs:date('2024-03-14')))
+xs:date 2024-03-16+14:00
+# min((xs:dateTime(/r/dt), xs:dateTime(/r/dtz)))
+xs:dateTime 2024-03-15T10:30:00+01:00
+# xs:date(xs:dateTime(/r/dtz))
+xs:date 2024-03-15+01:00
+# xs:time(xs:dateTime(/r/dtz))
+xs:time 10:30:00+01:00
+# xs:dateTime(xs:date(/r/d))
+xs:dateTime 2024-03-15T00:00:00
+# xs:dateTime(xs:date('2024-03-15-05:00'))
+xs:dateTime 2024-03-15T00:00:00-05:00
+# xs:date(xs:time(/r/t))
+error XPTY0004
+# xs:dateTime(xs:time(/r/t))
+error XPTY0004
+# xs:time(xs:date(/r/d))
+error XPTY0004
+# xs:date(xs:untypedAtomic(/r/d))
+xs:date 2024-03-15
+# xs:string(xs:dateTime(/r/dtz))
+xs:string 2024-03-15T10:30:00+01:00
+# year-from-dateTime(xs:dateTime(/r/dtz))
+xs:integer 2024
+# month-from-dateTime(xs:dateTime(/r/dtz))
+xs:integer 3
+# day-from-dateTime(xs:dateTime(/r/dtz))
+xs:integer 15
+# hours-from-dateTime(xs:dateTime(/r/dtz))
+xs:integer 10
+# minutes-from-dateTime(xs:dateTime(/r/dtz))
+xs:integer 30
+# seconds-from-dateTime(xs:dateTime('2024-03-15T10:30:12.75'))
+xs:decimal 12.75
+# timezone-from-dateTime(xs:dateTime(/r/dtz))
+xs:dayTimeDuration PT1H
+# timezone-from-dateTime(xs:dateTime(/r/dt))
+# year-from-date(xs:date('-0044-03-15'))
+xs:integer -44
+# month-from-date(xs:date(/r/d))
+xs:integer 3
+# day-from-date(xs:date(/r/d))
+xs:integer 15
+# timezone-from-date(xs:date('2024-03-15-05:30'))
+xs:dayTimeDuration -PT5H30M
+# hours-from-time(xs:time(/r/t))
+xs:integer 10
+# minutes-from-time(xs:time(/r/t))
+xs:integer 30
+# seconds-from-time(xs:time('10:00:00.000'))
+xs:decimal 0
+# timezone-from-time(xs:time('10:00:00Z'))
+xs:dayTimeDuration PT0S
+# hours-from-time(xs:time('24:00:00'))
+xs:integer 0
+# year-from-dateTime(())
+# year-from-dateTime(/r/dt)
+xs:integer 2024
+# year-from-dateTime(xs:date(/r/d))
+error XPTY0004
+# year-from-date('2024-01-01')
+error XPTY0004
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dtz))
+xs:dateTime 2024-03-15T09:30:00Z
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dt))
+xs:dateTime 2024-03-15T10:30:00Z
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dtz), xs:dayTimeDuration('-PT10H'))
+xs:dateTime 2024-03-14T23:30:00-10:00
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dt), xs:dayTimeDuration('PT5H30M'))
+xs:dateTime 2024-03-15T10:30:00+05:30
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dtz), ())
+xs:dateTime 2024-03-15T10:30:00
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dtz), xs:dayTimeDuration('PT15H'))
+error FODT0003
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dtz), xs:dayTimeDuration('PT14H'))
+xs:dateTime 2024-03-15T23:30:00+14:00
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dtz), xs:dayTimeDuration('PT1H0.5S'))
+error FODT0003
+# adjust-dateTime-to-timezone(xs:dateTime(/r/dtz), xs:yearMonthDuration('P0M'))
+error XPTY0004
+# adjust-dateTime-to-timezone((), xs:dayTimeDuration('PT1H'))
+# adjust-date-to-timezone(xs:date('2024-03-15+01:00'), xs:dayTimeDuration('-PT10H'))
+xs:date 2024-03-14-10:00
+# adjust-date-to-timezone(xs:date('2024-03-15-10:00'), xs:dayTimeDuration('PT10H'))
+xs:date 2024-03-15+10:00
+# adjust-date-to-timezone(xs:date(/r/d))
+xs:date 2024-03-15Z
+# adjust-date-to-timezone(xs:date('2024-03-15+01:00'), ())
+xs:date 2024-03-15
+# adjust-time-to-timezone(xs:time('10:00:00-05:00'), xs:dayTimeDuration('PT10H'))
+xs:time 01:00:00+10:00
+# adjust-time-to-timezone(xs:time('20:00:00-05:00'), xs:dayTimeDuration('PT10H'))
+xs:time 11:00:00+10:00
+# adjust-time-to-timezone(xs:time(/r/t))
+xs:time 10:30:00Z
+# adjust-time-to-timezone(xs:time('10:00:00Z'), ())
+xs:time 10:00:00
+# dateTime(xs:date(/r/d), xs:time(/r/t))
+xs:dateTime 2024-03-15T10:30:00
+# dateTime(xs:date('2024-03-15+01:00'), xs:time(/r/t))
+xs:dateTime 2024-03-15T10:30:00+01:00
+# dateTime(xs:date(/r/d), xs:time('10:00:00-05:00'))
+xs:dateTime 2024-03-15T10:00:00-05:00
+# dateTime(xs:date('2024-03-15+01:00'), xs:time('10:00:00+01:00'))
+xs:dateTime 2024-03-15T10:00:00+01:00
+# dateTime(xs:date('2024-03-15+01:00'), xs:time('10:00:00Z'))
+error FORG0008
+# dateTime((), xs:time(/r/t))
+# dateTime(xs:date(/r/d), ())
+# dateTime(/r/d, /r/t)
+xs:dateTime 2024-03-15T10:30:00
+# dateTime(xs:date(/r/d), xs:time('24:00:00'))
+xs:dateTime 2024-03-15T00:00:00
+# implicit-timezone()
+xs:dayTimeDuration PT0S
+# current-date() eq current-date()
+xs:boolean true
+# current-dateTime() eq current-dateTime()
+xs:boolean true
+# timezone-from-dateTime(current-dateTime()) eq implicit-timezone()
+xs:boolean true
+# timezone-from-time(current-time())
+xs:dayTimeDuration PT0S
+# current-date() instance of xs:date
+xs:boolean true
+# xs:date(current-dateTime()) eq current-date()
+xs:boolean true
+# xs:date('2147483647-12-31')
+xs:date 2147483647-12-31
+# xs:date('2147483648-12-31')
+error FODT0001
+# xs:date('-25252734927766554-12-31')
+error FODT0001
+# xs:dateTime('99999999999-01-01T00:00:00')
+error FODT0001
+# xs:date('99999999999-02-30')
+error FODT0001
+# xs:date('2024-02-30')
+error FORG0001
+# xs:date('2023-02-29')
+error FORG0001

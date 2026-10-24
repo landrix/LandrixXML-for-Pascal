@@ -152,6 +152,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: date and time arithmetic (F&O 2.0 10.4 to 10.8): `xs:date`,
+  `xs:dateTime` and `xs:time` minus each other, plus and minus durations,
+  comparisons of values with and without time zone, casts between the
+  three types, the 15 component functions (`year-from-dateTime` ...,
+  `timezone-from-time`), `adjust-dateTime-to-timezone`,
+  `adjust-date-to-timezone`, `adjust-time-to-timezone`, `fn:dateTime`,
+  `current-dateTime`, `current-date`, `current-time` and
+  `implicit-timezone`. Years beyond 2^31 - 1 give FODT0001. Years are
+  counted as the date parser (and Xerces) reads XML Schema 1.0: no year
+  0, the leap year rule on the signed year (-0004 is a leap year, -0001
+  is not), the years before 1 backwards from 0001-01-01.
+- `TLandrixXmlXPathEvaluator.ImplicitTimeZone` and
+  `TLandrixXmlSchematronValidator.ImplicitTimeZone` (minutes east of UTC,
+  default 0 = UTC) and `CurrentDateTime` / `ClearCurrentDateTime` on both:
+  the dynamic context of the date functions. Without a set value the
+  clock (`Now`) is read at the first use and kept for the evaluator's
+  lifetime (one Schematron validation).
+- `tools/gen-date-testdata.py`: 760 generated date and time cases with an
+  independent oracle (Python's calendar and `decimal`) for both
+  profiles; its Saxon variant matches Saxon on every case. The Saxon
+  profile rounds `seconds-from-dateTime`/`-time` to microseconds and
+  reports FODT0001 for a too large year before checking the rest, as
+  Saxon does. QT3: 1,234 more cases pass (11,155 in the XPath 2.0 profile,
+  11,142 in the Saxon profile); no QT3 case of the date, time and
+  duration test sets fails.
 - XPath: `xs:duration`, `xs:yearMonthDuration` and `xs:dayTimeDuration`
   with constructor functions, casts, the canonical lexical form,
   comparisons (`eq` and `ne` on any durations, the order on the two

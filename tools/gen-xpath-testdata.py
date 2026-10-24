@@ -4,7 +4,9 @@
 Every folder in tests/data/xpath holds a document (d.xml) and cases (c.txt:
 lines "ns PREFIX URI" and "expr EXPRESSION", evaluated with the document node
 as context item). This script evaluates them with Saxon HE (tools/XPathOracle.java,
-with the Saxon classes of the KoSIT validator jar) and writes expected.txt:
+with the Saxon classes of the KoSIT validator jar, in the time zone UTC, so
+that Saxon's implicit time zone is the evaluator's default) and writes
+expected.txt:
 
   # EXPRESSION
   TYPE VALUE      per atomic item
@@ -37,7 +39,8 @@ def main():
         folder = os.path.join(DATA, case)
         if not os.path.isfile(os.path.join(folder, "c.txt")):
             continue
-        out = subprocess.run([args.java, "-cp", cp, "XPathOracle", os.path.join(folder, "d.xml"),
+        # the implicit time zone UTC, the evaluator's default
+        out = subprocess.run([args.java, "-Duser.timezone=UTC", "-cp", cp, "XPathOracle", os.path.join(folder, "d.xml"),
                               os.path.join(folder, "c.txt")], capture_output=True)
         if out.returncode != 0:
             sys.exit("oracle failed for %s:\n%s" % (case, out.stderr.decode("utf-8", "replace")[-2000:]))

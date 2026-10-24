@@ -1,0 +1,1520 @@
+# month-from-date(xs:date('9326-08-31'))
+xs:integer 8
+# hours-from-time(xs:time('10:01:01'))
+xs:integer 10
+# seconds-from-time(xs:time('10:01:01'))
+xs:decimal 1
+# minutes-from-dateTime(xs:dateTime('9998-08-18T11:14:48'))
+xs:integer 14
+# seconds-from-dateTime(xs:dateTime('9998-08-18T11:14:48'))
+xs:decimal 48
+# adjust-time-to-timezone(xs:time('23:45:59.453233942'), xs:dayTimeDuration('PT6H3M'))
+xs:time 23:45:59.453233942+06:03
+# xs:time('13:42:23Z') + xs:dayTimeDuration('P340DT22H50M16S')
+xs:time 12:32:39Z
+# xs:dayTimeDuration('P340DT22H50M16S') + xs:time('13:42:23Z')
+xs:time 12:32:39Z
+# xs:time('13:42:23Z') - xs:dayTimeDuration('P340DT22H50M16S')
+xs:time 14:52:07Z
+# xs:dateTime('9951-01-31T20:10:32') lt xs:dateTime('0023-11-18T12:50:51.138780515+12:30')
+xs:boolean false
+# xs:dateTime('9951-01-31T20:10:32') eq xs:dateTime('0023-11-18T12:50:51.138780515+12:30')
+xs:boolean false
+# xs:dateTime('9951-01-31T20:10:32') ge xs:dateTime('0023-11-18T12:50:51.138780515+12:30')
+xs:boolean true
+# string(xs:date('1914-09-30+07:15'))
+xs:string 1914-09-30+07:15
+# xs:dateTime('1907-09-19T02:51:51.914048504') + xs:dayTimeDuration('PT36M27.117562515S')
+xs:dateTime 1907-09-19T03:28:19.031611019
+# xs:dayTimeDuration('PT36M27.117562515S') + xs:dateTime('1907-09-19T02:51:51.914048504')
+xs:dateTime 1907-09-19T03:28:19.031611019
+# xs:dateTime('1907-09-19T02:51:51.914048504') - xs:dayTimeDuration('PT36M27.117562515S')
+xs:dateTime 1907-09-19T02:15:24.796485989
+# xs:date('1974-05-17') + xs:yearMonthDuration('P55Y6M')
+xs:date 2029-11-17
+# xs:date('1974-05-17') - xs:yearMonthDuration('P55Y6M')
+xs:date 1918-11-17
+# minutes-from-dateTime(xs:dateTime('1966-10-14T07:01:09.036+09:00'))
+xs:integer 1
+# seconds-from-dateTime(xs:dateTime('1966-10-14T07:01:09.036+09:00'))
+xs:decimal 9.036
+# timezone-from-dateTime(xs:dateTime('1966-10-14T07:01:09.036+09:00'))
+xs:dayTimeDuration PT9H
+# xs:date('8464-07-31') + xs:yearMonthDuration('-P11M')
+xs:date 8463-08-31
+# xs:date('8464-07-31') - xs:yearMonthDuration('-P11M')
+xs:date 8465-06-30
+# xs:dateTime('0011-03-01T18:52:57') - xs:yearMonthDuration('-P1977Y9M')
+xs:dateTime 1988-12-01T18:52:57
+# xs:date('2046-08-31Z') + xs:yearMonthDuration('-P1972Y10M')
+xs:date 0073-10-31Z
+# xs:date('2046-08-31Z') - xs:yearMonthDuration('-P1972Y10M')
+xs:date 4019-06-30Z
+# xs:time('17:22:31.824581297') + xs:dayTimeDuration('-P65DT18H33M14S')
+xs:time 22:49:17.824581297
+# xs:dayTimeDuration('-P65DT18H33M14S') + xs:time('17:22:31.824581297')
+xs:time 22:49:17.824581297
+# xs:time('17:22:31.824581297') - xs:dayTimeDuration('-P65DT18H33M14S')
+xs:time 11:55:45.824581297
+# xs:dateTime('0017-06-30T07:55:49.767842048') + xs:dayTimeDuration('PT1H25M29S')
+xs:dateTime 0017-06-30T09:21:18.767842048
+# xs:dayTimeDuration('PT1H25M29S') + xs:dateTime('0017-06-30T07:55:49.767842048')
+xs:dateTime 0017-06-30T09:21:18.767842048
+# xs:dateTime('0017-06-30T07:55:49.767842048') - xs:dayTimeDuration('PT1H25M29S')
+xs:dateTime 0017-06-30T06:30:20.767842048
+# string(xs:date('9987-02-19'))
+xs:string 9987-02-19
+# xs:dateTime('1766-02-14T01:12:50') + xs:dayTimeDuration('-P350DT5H32M45S')
+xs:dateTime 1765-02-28T19:40:05
+# xs:dayTimeDuration('-P350DT5H32M45S') + xs:dateTime('1766-02-14T01:12:50')
+xs:dateTime 1765-02-28T19:40:05
+# xs:dateTime('1766-02-14T01:12:50') - xs:dayTimeDuration('-P350DT5H32M45S')
+xs:dateTime 1767-01-30T06:45:35
+# xs:date(xs:dateTime('9966-06-04T20:20:01Z'))
+xs:date 9966-06-04Z
+# xs:time(xs:dateTime('9966-06-04T20:20:01Z'))
+xs:time 20:20:01Z
+# xs:dateTime(xs:date(xs:dateTime('9966-06-04T20:20:01Z')))
+xs:dateTime 9966-06-04T00:00:00Z
+# string(xs:dateTime('6411-06-30T03:16:50+12:30'))
+xs:string 6411-06-30T03:16:50+12:30
+# string(xs:time('11:05:05.7+08:15'))
+xs:string 11:05:05.7+08:15
+# xs:date('1978-06-30+05:45') + xs:dayTimeDuration('P190DT8H57M28.287831334S')
+xs:date 1979-01-06+05:45
+# xs:dayTimeDuration('P190DT8H57M28.287831334S') + xs:date('1978-06-30+05:45')
+xs:date 1979-01-06+05:45
+# xs:date('1978-06-30+05:45') - xs:dayTimeDuration('P190DT8H57M28.287831334S')
+xs:date 1977-12-21+05:45
+# xs:date('0041-06-30-11:30') - xs:date('0010-05-31')
+xs:dayTimeDuration P11353DT11H30M
+# minutes-from-dateTime(xs:dateTime('2091-05-14T01:45:16+10:00'))
+xs:integer 45
+# seconds-from-dateTime(xs:dateTime('2091-05-14T01:45:16+10:00'))
+xs:decimal 16
+# timezone-from-dateTime(xs:dateTime('2091-05-14T01:45:16+10:00'))
+xs:dayTimeDuration PT10H
+# xs:dateTime('8870-07-31T05:16:01.812Z') - xs:yearMonthDuration('P3388Y6M')
+xs:dateTime 5482-01-31T05:16:01.812Z
+# string(xs:time('05:39:14'))
+xs:string 05:39:14
+# adjust-time-to-timezone(xs:time('21:30:45-02:30'), ())
+xs:time 21:30:45
+# xs:date('2065-05-31+08:00') - xs:dayTimeDuration('-P1638454DT9H43M6.167266665S')
+xs:date 6551-05-08+08:00
+# xs:date('9953-11-30-12:45') - xs:dayTimeDuration('P850097DT15H6M21S')
+xs:date 7626-06-04-12:45
+# year-from-date(xs:date('9974-07-31-08:00'))
+xs:integer 9974
+# timezone-from-date(xs:date('9974-07-31-08:00'))
+xs:dayTimeDuration -PT8H
+# xs:time('18:01:40Z') lt xs:time('21:28:34-03:00')
+xs:boolean true
+# xs:time('18:01:40Z') eq xs:time('21:28:34-03:00')
+xs:boolean false
+# xs:time('18:01:40Z') ge xs:time('21:28:34-03:00')
+xs:boolean false
+# xs:date('0025-02-26') + xs:dayTimeDuration('-PT13H36M25.727205519S')
+xs:date 0025-02-25
+# xs:dayTimeDuration('-PT13H36M25.727205519S') + xs:date('0025-02-26')
+xs:date 0025-02-25
+# xs:date('0025-02-26') - xs:dayTimeDuration('-PT13H36M25.727205519S')
+xs:date 0025-02-26
+# xs:time('10:50:31.12143523+06:00') lt xs:time('23:45:44.2+07:00')
+xs:boolean true
+# xs:time('10:50:31.12143523+06:00') eq xs:time('23:45:44.2+07:00')
+xs:boolean false
+# xs:time('10:50:31.12143523+06:00') ge xs:time('23:45:44.2+07:00')
+xs:boolean false
+# string(xs:date('9993-10-31'))
+xs:string 9993-10-31
+# xs:time('20:49:50.276') + xs:dayTimeDuration('-P319DT8H12M13S')
+xs:time 12:37:37.276
+# xs:dayTimeDuration('-P319DT8H12M13S') + xs:time('20:49:50.276')
+xs:time 12:37:37.276
+# xs:time('20:49:50.276') - xs:dayTimeDuration('-P319DT8H12M13S')
+xs:time 05:02:03.276
+# xs:dateTime('7939-05-17T23:37:04.363-12:00') + xs:yearMonthDuration('-P1Y8M')
+xs:dateTime 7937-09-17T23:37:04.363-12:00
+# xs:dateTime('7939-05-17T23:37:04.363-12:00') - xs:yearMonthDuration('-P1Y8M')
+xs:dateTime 7941-01-17T23:37:04.363-12:00
+# xs:time('16:13:56') + xs:dayTimeDuration('-P397DT7H24M13S')
+xs:time 08:49:43
+# xs:dayTimeDuration('-P397DT7H24M13S') + xs:time('16:13:56')
+xs:time 08:49:43
+# xs:time('16:13:56') - xs:dayTimeDuration('-P397DT7H24M13S')
+xs:time 23:38:09
+# adjust-time-to-timezone(xs:time('05:30:55.9'), xs:dayTimeDuration('PT0S'))
+xs:time 05:30:55.9Z
+# xs:time('06:04:55+01:00') - xs:time('22:28:19.6')
+xs:dayTimeDuration -PT17H23M24.6S
+# xs:time('05:02:51') + xs:dayTimeDuration('-P1DT1H37M44S')
+xs:time 03:25:07
+# xs:dayTimeDuration('-P1DT1H37M44S') + xs:time('05:02:51')
+xs:time 03:25:07
+# xs:time('05:02:51') - xs:dayTimeDuration('-P1DT1H37M44S')
+xs:time 06:40:35
+# hours-from-time(xs:time('05:14:52+01:45'))
+xs:integer 5
+# seconds-from-time(xs:time('05:14:52+01:45'))
+xs:decimal 52
+# timezone-from-time(xs:time('05:14:52+01:45'))
+xs:dayTimeDuration PT1H45M
+# adjust-dateTime-to-timezone(xs:dateTime('4226-04-03T00:51:54+01:00'), xs:dayTimeDuration('PT0S'))
+xs:dateTime 4226-04-02T23:51:54Z
+# xs:time('18:24:08.1Z') + xs:dayTimeDuration('-P47DT6H21M32S')
+xs:time 12:02:36.1Z
+# xs:dayTimeDuration('-P47DT6H21M32S') + xs:time('18:24:08.1Z')
+xs:time 12:02:36.1Z
+# xs:time('18:24:08.1Z') - xs:dayTimeDuration('-P47DT6H21M32S')
+xs:time 00:45:40.1Z
+# adjust-dateTime-to-timezone(xs:dateTime('1925-08-21T23:17:42Z'), xs:dayTimeDuration('PT0S'))
+xs:dateTime 1925-08-21T23:17:42Z
+# xs:date('0038-07-20+08:00') + xs:dayTimeDuration('-P207DT11H42.103688194S')
+xs:date 0037-12-24+08:00
+# xs:dayTimeDuration('-P207DT11H42.103688194S') + xs:date('0038-07-20+08:00')
+xs:date 0037-12-24+08:00
+# xs:date('0038-07-20+08:00') - xs:dayTimeDuration('-P207DT11H42.103688194S')
+xs:date 0039-02-12+08:00
+# xs:date('7015-09-30+03:00') - xs:date('6475-12-31')
+xs:dayTimeDuration P197137DT21H
+# xs:time('21:19:27-05:45') lt xs:time('16:35:44.558430233Z')
+xs:boolean false
+# xs:time('21:19:27-05:45') eq xs:time('16:35:44.558430233Z')
+xs:boolean false
+# xs:time('21:19:27-05:45') ge xs:time('16:35:44.558430233Z')
+xs:boolean true
+# string(xs:time('04:36:02+13:45'))
+xs:string 04:36:02+13:45
+# xs:dateTime('0023-12-24T16:07:20Z') + xs:dayTimeDuration('PT10H10M49S')
+xs:dateTime 0023-12-25T02:18:09Z
+# xs:dayTimeDuration('PT10H10M49S') + xs:dateTime('0023-12-24T16:07:20Z')
+xs:dateTime 0023-12-25T02:18:09Z
+# xs:dateTime('0023-12-24T16:07:20Z') - xs:dayTimeDuration('PT10H10M49S')
+xs:dateTime 0023-12-24T05:56:31Z
+# month-from-date(xs:date('9953-10-31Z'))
+xs:integer 10
+# timezone-from-date(xs:date('9953-10-31Z'))
+xs:dayTimeDuration PT0S
+# xs:dateTime('1987-01-31T21:14:08.973675809-11:00') - xs:yearMonthDuration('-P3082Y11M')
+xs:dateTime 5069-12-31T21:14:08.973675809-11:00
+# string(xs:time('20:53:32'))
+xs:string 20:53:32
+# adjust-dateTime-to-timezone(xs:dateTime('9988-04-30T21:23:58.202749804'), ())
+xs:dateTime 9988-04-30T21:23:58.202749804
+# xs:time('01:22:00.194') + xs:dayTimeDuration('P245DT2H18M57S')
+xs:time 03:40:57.194
+# xs:dayTimeDuration('P245DT2H18M57S') + xs:time('01:22:00.194')
+xs:time 03:40:57.194
+# xs:time('01:22:00.194') - xs:dayTimeDuration('P245DT2H18M57S')
+xs:time 23:03:03.194
+# xs:dateTime('9983-10-31T14:19:32') - xs:dateTime('4141-06-30T09:59:57')
+xs:dayTimeDuration P2133869DT4H19M35S
+# adjust-dateTime-to-timezone(xs:dateTime('9973-06-30T03:30:09.6'), xs:dayTimeDuration('-PT3H'))
+xs:dateTime 9973-06-30T03:30:09.6-03:00
+# year-from-dateTime(xs:dateTime('9997-12-31T10:49:13.732+12:00'))
+xs:integer 9997
+# seconds-from-dateTime(xs:dateTime('9997-12-31T10:49:13.732+12:00'))
+xs:decimal 13.732
+# timezone-from-dateTime(xs:dateTime('9997-12-31T10:49:13.732+12:00'))
+xs:dayTimeDuration PT12H
+# xs:date('2122-02-09') + xs:yearMonthDuration('-P2Y1M')
+xs:date 2120-01-09
+# xs:date('2122-02-09') - xs:yearMonthDuration('-P2Y1M')
+xs:date 2124-03-09
+# adjust-time-to-timezone(xs:time('23:35:53.687Z'), ())
+xs:time 23:35:53.687
+# xs:date('9992-05-31-11:00') lt xs:date('0048-08-21Z')
+xs:boolean false
+# xs:date('9992-05-31-11:00') eq xs:date('0048-08-21Z')
+xs:boolean false
+# xs:date('9992-05-31-11:00') ge xs:date('0048-08-21Z')
+xs:boolean true
+# adjust-time-to-timezone(xs:time('07:32:17.3'), ())
+xs:time 07:32:17.3
+# xs:time('08:31:31-03:00') lt xs:time('16:20:44.145027463')
+xs:boolean true
+# xs:time('08:31:31-03:00') eq xs:time('16:20:44.145027463')
+xs:boolean false
+# xs:time('08:31:31-03:00') ge xs:time('16:20:44.145027463')
+xs:boolean false
+# xs:dateTime('2022-03-31T07:05:53.754757224') - xs:dayTimeDuration('-P1600641DT1H43M28S')
+xs:dateTime 6404-08-26T08:49:21.754757224
+# xs:dateTime('2098-02-24T08:43:17.9+09:00') + xs:yearMonthDuration('-P564Y')
+xs:dateTime 1534-02-24T08:43:17.9+09:00
+# xs:dateTime('2098-02-24T08:43:17.9+09:00') - xs:yearMonthDuration('-P564Y')
+xs:dateTime 2662-02-24T08:43:17.9+09:00
+# string(xs:date('1858-06-03'))
+xs:string 1858-06-03
+# adjust-date-to-timezone(xs:date('1935-02-28'), xs:dayTimeDuration('-PT10H54M'))
+xs:date 1935-02-28-10:54
+# adjust-time-to-timezone(xs:time('01:38:07.188062364-07:00'), xs:dayTimeDuration('PT3H'))
+xs:time 11:38:07.188062364+03:00
+# xs:time('23:23:41-01:45') + xs:dayTimeDuration('-P239DT7H55M17.62200071S')
+xs:time 15:28:23.37799929-01:45
+# xs:dayTimeDuration('-P239DT7H55M17.62200071S') + xs:time('23:23:41-01:45')
+xs:time 15:28:23.37799929-01:45
+# xs:time('23:23:41-01:45') - xs:dayTimeDuration('-P239DT7H55M17.62200071S')
+xs:time 07:18:58.62200071-01:45
+# xs:date('0022-03-31Z') + xs:yearMonthDuration('P4M')
+xs:date 0022-07-31Z
+# xs:date('0022-03-31Z') - xs:yearMonthDuration('P4M')
+xs:date 0021-11-30Z
+# xs:dateTime('9951-10-31T08:59:26.6') - xs:dayTimeDuration('P2269079DT2H15M33.045167557S')
+xs:dateTime 3739-04-21T06:43:53.554832443
+# xs:time('15:52:59') + xs:dayTimeDuration('-P277DT20H19M41S')
+xs:time 19:33:18
+# xs:dayTimeDuration('-P277DT20H19M41S') + xs:time('15:52:59')
+xs:time 19:33:18
+# xs:time('15:52:59') - xs:dayTimeDuration('-P277DT20H19M41S')
+xs:time 12:12:40
+# xs:time('12:22:48.5') - xs:time('10:48:37')
+xs:dayTimeDuration PT1H34M11.5S
+# hours-from-dateTime(xs:dateTime('2863-04-30T21:15:47.482'))
+xs:integer 21
+# seconds-from-dateTime(xs:dateTime('2863-04-30T21:15:47.482'))
+xs:decimal 47.482
+# xs:dateTime('0037-03-05T12:26:51') - xs:dateTime('0025-03-05T08:01:25.83')
+xs:dayTimeDuration P4383DT4H25M25.17S
+# xs:time('10:42:04+04:15') - xs:time('16:46:44+09:30')
+xs:dayTimeDuration -PT49M40S
+# xs:time('12:05:06.688737028') lt xs:time('12:05:06.688737028')
+xs:boolean false
+# xs:time('12:05:06.688737028') eq xs:time('12:05:06.688737028')
+xs:boolean true
+# xs:time('12:05:06.688737028') ge xs:time('12:05:06.688737028')
+xs:boolean true
+# hours-from-dateTime(xs:dateTime('1971-10-31T17:40:32.822'))
+xs:integer 17
+# seconds-from-dateTime(xs:dateTime('1971-10-31T17:40:32.822'))
+xs:decimal 32.822
+# adjust-date-to-timezone(xs:date('0024-10-09'), xs:dayTimeDuration('-PT6H'))
+xs:date 0024-10-09-06:00
+# xs:dateTime('2044-03-31T07:12:51+04:15') lt xs:dateTime('9985-07-23T02:40:09')
+xs:boolean true
+# xs:dateTime('2044-03-31T07:12:51+04:15') eq xs:dateTime('9985-07-23T02:40:09')
+xs:boolean false
+# xs:dateTime('2044-03-31T07:12:51+04:15') ge xs:dateTime('9985-07-23T02:40:09')
+xs:boolean false
+# adjust-date-to-timezone(xs:date('1997-10-20'), xs:dayTimeDuration('PT8H35M'))
+xs:date 1997-10-20+08:35
+# xs:dateTime('1957-06-30T02:32:13.7-04:15') + xs:dayTimeDuration('P817415DT10H36M35.889654553S')
+xs:dateTime 4195-07-02T13:08:49.589654553-04:15
+# xs:dayTimeDuration('P817415DT10H36M35.889654553S') + xs:dateTime('1957-06-30T02:32:13.7-04:15')
+xs:dateTime 4195-07-02T13:08:49.589654553-04:15
+# day-from-date(xs:date('9957-11-19'))
+xs:integer 19
+# xs:time('18:24:34.628') - xs:time('08:31:42')
+xs:dayTimeDuration PT9H52M52.628S
+# string(xs:time('07:06:43+09:00'))
+xs:string 07:06:43+09:00
+# string(xs:date('9962-09-12'))
+xs:string 9962-09-12
+# adjust-date-to-timezone(xs:date('2897-10-17+03:15'), xs:dayTimeDuration('-PT2H'))
+xs:date 2897-10-16-02:00
+# xs:date(xs:dateTime('9951-05-31T04:38:35.913714478-12:00'))
+xs:date 9951-05-31-12:00
+# xs:time(xs:dateTime('9951-05-31T04:38:35.913714478-12:00'))
+xs:time 04:38:35.913714478-12:00
+# xs:dateTime(xs:date(xs:dateTime('9951-05-31T04:38:35.913714478-12:00')))
+xs:dateTime 9951-05-31T00:00:00-12:00
+# xs:date(xs:dateTime('6407-01-19T03:57:21.5'))
+xs:date 6407-01-19
+# xs:time(xs:dateTime('6407-01-19T03:57:21.5'))
+xs:time 03:57:21.5
+# xs:dateTime(xs:date(xs:dateTime('6407-01-19T03:57:21.5')))
+xs:dateTime 6407-01-19T00:00:00
+# xs:time('05:58:23.3') + xs:dayTimeDuration('PT11H32M56S')
+xs:time 17:31:19.3
+# xs:dayTimeDuration('PT11H32M56S') + xs:time('05:58:23.3')
+xs:time 17:31:19.3
+# xs:time('05:58:23.3') - xs:dayTimeDuration('PT11H32M56S')
+xs:time 18:25:27.3
+# adjust-dateTime-to-timezone(xs:dateTime('9976-11-30T12:35:36.9'), xs:dayTimeDuration('PT0S'))
+xs:dateTime 9976-11-30T12:35:36.9Z
+# xs:dateTime('2085-04-30T23:30:47') + xs:dayTimeDuration('P940805DT21H57M0.474834773S')
+xs:dateTime 4661-03-03T21:27:47.474834773
+# xs:dayTimeDuration('P940805DT21H57M0.474834773S') + xs:dateTime('2085-04-30T23:30:47')
+xs:dateTime 4661-03-03T21:27:47.474834773
+# xs:time('05:57:14') + xs:dayTimeDuration('-P207DT1H43M29.48975787S')
+xs:time 04:13:44.51024213
+# xs:dayTimeDuration('-P207DT1H43M29.48975787S') + xs:time('05:57:14')
+xs:time 04:13:44.51024213
+# xs:time('05:57:14') - xs:dayTimeDuration('-P207DT1H43M29.48975787S')
+xs:time 07:40:43.48975787
+# xs:time('08:57:02.009854546') - xs:time('16:23:25.1')
+xs:dayTimeDuration -PT7H26M23.090145454S
+# day-from-date(xs:date('9989-06-30+05:30'))
+xs:integer 30
+# timezone-from-date(xs:date('9989-06-30+05:30'))
+xs:dayTimeDuration PT5H30M
+# string(xs:time('19:36:32.918181438+06:15'))
+xs:string 19:36:32.918181438+06:15
+# string(xs:time('19:34:16.4'))
+xs:string 19:34:16.4
+# xs:dateTime('1959-12-31T22:40:24') - xs:dayTimeDuration('-P2398809DT1H3M35S')
+xs:dateTime 8527-09-18T23:43:59
+# day-from-date(xs:date('5317-04-23Z'))
+xs:integer 23
+# timezone-from-date(xs:date('5317-04-23Z'))
+xs:dayTimeDuration PT0S
+# xs:dateTime('1906-09-30T09:18:26.949') lt xs:dateTime('2055-11-08T22:25:13.636Z')
+xs:boolean true
+# xs:dateTime('1906-09-30T09:18:26.949') eq xs:dateTime('2055-11-08T22:25:13.636Z')
+xs:boolean false
+# xs:dateTime('1906-09-30T09:18:26.949') ge xs:dateTime('2055-11-08T22:25:13.636Z')
+xs:boolean false
+# string(xs:time('21:09:23Z'))
+xs:string 21:09:23Z
+# xs:dateTime('0038-09-30T13:00:48.1') lt xs:dateTime('0038-09-30T13:00:48.1+01:00')
+xs:boolean false
+# xs:dateTime('0038-09-30T13:00:48.1') eq xs:dateTime('0038-09-30T13:00:48.1+01:00')
+xs:boolean false
+# xs:dateTime('0038-09-30T13:00:48.1') ge xs:dateTime('0038-09-30T13:00:48.1+01:00')
+xs:boolean true
+# xs:time('04:18:56') + xs:dayTimeDuration('P328DT12H11M45.037447314S')
+xs:time 16:30:41.037447314
+# xs:dayTimeDuration('P328DT12H11M45.037447314S') + xs:time('04:18:56')
+xs:time 16:30:41.037447314
+# xs:time('04:18:56') - xs:dayTimeDuration('P328DT12H11M45.037447314S')
+xs:time 16:07:10.962552686
+# xs:dateTime('2056-08-31T09:37:33.269916888') lt xs:dateTime('9994-01-31T13:07:36')
+xs:boolean true
+# xs:dateTime('2056-08-31T09:37:33.269916888') eq xs:dateTime('9994-01-31T13:07:36')
+xs:boolean false
+# xs:dateTime('2056-08-31T09:37:33.269916888') ge xs:dateTime('9994-01-31T13:07:36')
+xs:boolean false
+# xs:date('3578-01-31') + xs:yearMonthDuration('-P1040Y3M')
+xs:date 2537-10-31
+# xs:date('3578-01-31') - xs:yearMonthDuration('-P1040Y3M')
+xs:date 4618-04-30
+# xs:date('1922-11-06') lt xs:date('1922-11-06+01:00')
+xs:boolean false
+# xs:date('1922-11-06') eq xs:date('1922-11-06+01:00')
+xs:boolean false
+# xs:date('1922-11-06') ge xs:date('1922-11-06+01:00')
+xs:boolean true
+# xs:dateTime('8638-12-09T10:22:29.9-02:00') + xs:dayTimeDuration('PT8H54M6S')
+xs:dateTime 8638-12-09T19:16:35.9-02:00
+# xs:dayTimeDuration('PT8H54M6S') + xs:dateTime('8638-12-09T10:22:29.9-02:00')
+xs:dateTime 8638-12-09T19:16:35.9-02:00
+# xs:dateTime('8638-12-09T10:22:29.9-02:00') - xs:dayTimeDuration('PT8H54M6S')
+xs:dateTime 8638-12-09T01:28:23.9-02:00
+# minutes-from-time(xs:time('10:48:26.7Z'))
+xs:integer 48
+# seconds-from-time(xs:time('10:48:26.7Z'))
+xs:decimal 26.7
+# timezone-from-time(xs:time('10:48:26.7Z'))
+xs:dayTimeDuration PT0S
+# xs:time('17:45:10') - xs:time('05:17:19.079-08:45')
+xs:dayTimeDuration PT3H42M50.921S
+# xs:date(xs:dateTime('0010-02-22T15:34:02Z'))
+xs:date 0010-02-22Z
+# xs:time(xs:dateTime('0010-02-22T15:34:02Z'))
+xs:time 15:34:02Z
+# xs:dateTime(xs:date(xs:dateTime('0010-02-22T15:34:02Z')))
+xs:dateTime 0010-02-22T00:00:00Z
+# xs:time('05:24:17') + xs:dayTimeDuration('P254DT57M11.386268075S')
+xs:time 06:21:28.386268075
+# xs:dayTimeDuration('P254DT57M11.386268075S') + xs:time('05:24:17')
+xs:time 06:21:28.386268075
+# xs:time('05:24:17') - xs:dayTimeDuration('P254DT57M11.386268075S')
+xs:time 04:27:05.613731925
+# month-from-date(xs:date('2078-02-05Z'))
+xs:integer 2
+# timezone-from-date(xs:date('2078-02-05Z'))
+xs:dayTimeDuration PT0S
+# xs:time('08:13:48') + xs:dayTimeDuration('-P127DT1H36M20.386900786S')
+xs:time 06:37:27.613099214
+# xs:dayTimeDuration('-P127DT1H36M20.386900786S') + xs:time('08:13:48')
+xs:time 06:37:27.613099214
+# xs:time('08:13:48') - xs:dayTimeDuration('-P127DT1H36M20.386900786S')
+xs:time 09:50:08.386900786
+# xs:date('1922-10-11+02:15') - xs:yearMonthDuration('-P3594Y8M')
+xs:date 5517-06-11+02:15
+# adjust-dateTime-to-timezone(xs:dateTime('9162-09-30T19:20:05.516383984'), xs:dayTimeDuration('-PT12H'))
+xs:dateTime 9162-09-30T19:20:05.516383984-12:00
+# xs:date('0015-05-31Z') + xs:yearMonthDuration('P545Y9M')
+xs:date 0561-02-28Z
+# xs:time('21:11:09.5Z') lt xs:time('02:47:02+02:00')
+xs:boolean false
+# xs:time('21:11:09.5Z') eq xs:time('02:47:02+02:00')
+xs:boolean false
+# xs:time('21:11:09.5Z') ge xs:time('02:47:02+02:00')
+xs:boolean true
+# xs:time('12:00:35.741+03:00') - xs:time('22:41:19.914101252Z')
+xs:dayTimeDuration -PT13H40M44.173101252S
+# string(xs:date('0029-10-11'))
+xs:string 0029-10-11
+# adjust-time-to-timezone(xs:time('04:10:08.2+11:15'), xs:dayTimeDuration('PT4H55M'))
+xs:time 21:50:08.2+04:55
+# xs:date(xs:dateTime('2030-09-30T18:53:18'))
+xs:date 2030-09-30
+# xs:time(xs:dateTime('2030-09-30T18:53:18'))
+xs:time 18:53:18
+# xs:dateTime(xs:date(xs:dateTime('2030-09-30T18:53:18')))
+xs:dateTime 2030-09-30T00:00:00
+# xs:date('1997-10-31') + xs:dayTimeDuration('P83DT8H31M52.195407158S')
+xs:date 1998-01-22
+# xs:dayTimeDuration('P83DT8H31M52.195407158S') + xs:date('1997-10-31')
+xs:date 1998-01-22
+# xs:date('1997-10-31') - xs:dayTimeDuration('P83DT8H31M52.195407158S')
+xs:date 1997-08-08
+# xs:time('11:49:53') + xs:dayTimeDuration('-P50DT10H20M9.91244581S')
+xs:time 01:29:43.08755419
+# xs:dayTimeDuration('-P50DT10H20M9.91244581S') + xs:time('11:49:53')
+xs:time 01:29:43.08755419
+# xs:time('11:49:53') - xs:dayTimeDuration('-P50DT10H20M9.91244581S')
+xs:time 22:10:02.91244581
+# string(xs:dateTime('9997-05-31T14:21:06.1762998-02:00'))
+xs:string 9997-05-31T14:21:06.1762998-02:00
+# hours-from-time(xs:time('06:56:41.898'))
+xs:integer 6
+# seconds-from-time(xs:time('06:56:41.898'))
+xs:decimal 41.898
+# day-from-dateTime(xs:dateTime('0036-07-31T15:45:19.758-03:45'))
+xs:integer 31
+# seconds-from-dateTime(xs:dateTime('0036-07-31T15:45:19.758-03:45'))
+xs:decimal 19.758
+# timezone-from-dateTime(xs:dateTime('0036-07-31T15:45:19.758-03:45'))
+xs:dayTimeDuration -PT3H45M
+# xs:date(xs:dateTime('9961-03-15T17:07:20.339675766+02:45'))
+xs:date 9961-03-15+02:45
+# xs:time(xs:dateTime('9961-03-15T17:07:20.339675766+02:45'))
+xs:time 17:07:20.339675766+02:45
+# xs:dateTime(xs:date(xs:dateTime('9961-03-15T17:07:20.339675766+02:45')))
+xs:dateTime 9961-03-15T00:00:00+02:45
+# xs:time('17:58:10') lt xs:time('11:23:38.9+14:00')
+xs:boolean false
+# xs:time('17:58:10') eq xs:time('11:23:38.9+14:00')
+xs:boolean false
+# xs:time('17:58:10') ge xs:time('11:23:38.9+14:00')
+xs:boolean true
+# xs:date('9975-11-25') + xs:dayTimeDuration('PT14H22.004247003S')
+xs:date 9975-11-25
+# xs:dayTimeDuration('PT14H22.004247003S') + xs:date('9975-11-25')
+xs:date 9975-11-25
+# xs:date('9975-11-25') - xs:dayTimeDuration('PT14H22.004247003S')
+xs:date 9975-11-24
+# xs:date('1939-06-30Z') lt xs:date('2700-08-19')
+xs:boolean true
+# xs:date('1939-06-30Z') eq xs:date('2700-08-19')
+xs:boolean false
+# xs:date('1939-06-30Z') ge xs:date('2700-08-19')
+xs:boolean false
+# xs:dateTime('9994-10-16T20:05:34') lt xs:dateTime('2259-07-16T16:29:46')
+xs:boolean false
+# xs:dateTime('9994-10-16T20:05:34') eq xs:dateTime('2259-07-16T16:29:46')
+xs:boolean false
+# xs:dateTime('9994-10-16T20:05:34') ge xs:dateTime('2259-07-16T16:29:46')
+xs:boolean true
+# string(xs:time('03:55:21.107+10:30'))
+xs:string 03:55:21.107+10:30
+# xs:time('11:35:12') lt xs:time('01:27:26.2Z')
+xs:boolean false
+# xs:time('11:35:12') eq xs:time('01:27:26.2Z')
+xs:boolean false
+# xs:time('11:35:12') ge xs:time('01:27:26.2Z')
+xs:boolean true
+# month-from-dateTime(xs:dateTime('9953-03-31T18:03:07.3'))
+xs:integer 3
+# seconds-from-dateTime(xs:dateTime('9953-03-31T18:03:07.3'))
+xs:decimal 7.3
+# xs:date('5988-08-21+04:30') - xs:dayTimeDuration('P2179698DT2H36M31S')
+xs:date 0020-10-28+04:30
+# xs:time('03:04:37Z') + xs:dayTimeDuration('P74DT16H50M24.702443497S')
+xs:time 19:55:01.702443497Z
+# xs:dayTimeDuration('P74DT16H50M24.702443497S') + xs:time('03:04:37Z')
+xs:time 19:55:01.702443497Z
+# xs:time('03:04:37Z') - xs:dayTimeDuration('P74DT16H50M24.702443497S')
+xs:time 10:14:12.297556503Z
+# xs:date('0016-08-20-12:45') + xs:yearMonthDuration('P2610Y')
+xs:date 2626-08-20-12:45
+# adjust-dateTime-to-timezone(xs:dateTime('9999-08-18T08:32:47+08:00'), xs:dayTimeDuration('PT0S'))
+xs:dateTime 9999-08-18T00:32:47Z
+# string(xs:dateTime('9998-11-30T15:48:19'))
+xs:string 9998-11-30T15:48:19
+# string(xs:date('0020-03-04+10:45'))
+xs:string 0020-03-04+10:45
+# xs:time('14:18:41+10:30') + xs:dayTimeDuration('P76DT35M53.665461472S')
+xs:time 14:54:34.665461472+10:30
+# xs:dayTimeDuration('P76DT35M53.665461472S') + xs:time('14:18:41+10:30')
+xs:time 14:54:34.665461472+10:30
+# xs:time('14:18:41+10:30') - xs:dayTimeDuration('P76DT35M53.665461472S')
+xs:time 13:42:47.334538528+10:30
+# xs:time('06:10:39') + xs:dayTimeDuration('-P236DT23H38M36S')
+xs:time 06:32:03
+# xs:dayTimeDuration('-P236DT23H38M36S') + xs:time('06:10:39')
+xs:time 06:32:03
+# xs:time('06:10:39') - xs:dayTimeDuration('-P236DT23H38M36S')
+xs:time 05:49:15
+# xs:date('9994-05-20Z') + xs:yearMonthDuration('-P3929Y')
+xs:date 6065-05-20Z
+# xs:time('20:52:54.424-02:00') - xs:time('10:52:14-08:45')
+xs:dayTimeDuration PT3H15M40.424S
+# xs:dateTime('1757-08-31T22:18:51-10:00') + xs:yearMonthDuration('P11Y9M')
+xs:dateTime 1769-05-31T22:18:51-10:00
+# xs:dateTime('1757-08-31T22:18:51-10:00') - xs:yearMonthDuration('P11Y9M')
+xs:dateTime 1745-11-30T22:18:51-10:00
+# xs:time('06:33:06.3+02:45') + xs:dayTimeDuration('P278DT10H41M58S')
+xs:time 17:15:04.3+02:45
+# xs:dayTimeDuration('P278DT10H41M58S') + xs:time('06:33:06.3+02:45')
+xs:time 17:15:04.3+02:45
+# xs:time('06:33:06.3+02:45') - xs:dayTimeDuration('P278DT10H41M58S')
+xs:time 19:51:08.3+02:45
+# xs:time('13:08:18-02:00') + xs:dayTimeDuration('-PT21H46M49S')
+xs:time 15:21:29-02:00
+# xs:dayTimeDuration('-PT21H46M49S') + xs:time('13:08:18-02:00')
+xs:time 15:21:29-02:00
+# xs:time('13:08:18-02:00') - xs:dayTimeDuration('-PT21H46M49S')
+xs:time 10:55:07-02:00
+# xs:date('0010-11-29Z') + xs:dayTimeDuration('-PT5H3M38S')
+xs:date 0010-11-28Z
+# xs:dayTimeDuration('-PT5H3M38S') + xs:date('0010-11-29Z')
+xs:date 0010-11-28Z
+# xs:date('0010-11-29Z') - xs:dayTimeDuration('-PT5H3M38S')
+xs:date 0010-11-29Z
+# xs:dateTime('9999-08-26T16:01:51.063') lt xs:dateTime('7444-06-25T02:04:37Z')
+xs:boolean false
+# xs:dateTime('9999-08-26T16:01:51.063') eq xs:dateTime('7444-06-25T02:04:37Z')
+xs:boolean false
+# xs:dateTime('9999-08-26T16:01:51.063') ge xs:dateTime('7444-06-25T02:04:37Z')
+xs:boolean true
+# adjust-date-to-timezone(xs:date('0040-03-31'), xs:dayTimeDuration('-PT5H'))
+xs:date 0040-03-31-05:00
+# xs:time('04:15:05') - xs:time('05:02:13.41Z')
+xs:dayTimeDuration -PT47M8.41S
+# xs:date('0042-02-03+12:00') - xs:yearMonthDuration('-P2335Y11M')
+xs:date 2378-01-03+12:00
+# string(xs:dateTime('1928-05-31T09:16:17.4'))
+xs:string 1928-05-31T09:16:17.4
+# xs:date('0021-02-08-09:30') + xs:yearMonthDuration('-P2M')
+xs:date 0020-12-08-09:30
+# xs:date('0021-02-08-09:30') - xs:yearMonthDuration('-P2M')
+xs:date 0021-04-08-09:30
+# adjust-time-to-timezone(xs:time('00:55:20-11:15'), ())
+xs:time 00:55:20
+# xs:time('08:05:48+01:00') - xs:time('10:25:56+10:45')
+xs:dayTimeDuration PT7H24M52S
+# adjust-dateTime-to-timezone(xs:dateTime('8235-03-31T17:24:17.63550195'), xs:dayTimeDuration('PT8H'))
+xs:dateTime 8235-03-31T17:24:17.63550195+08:00
+# xs:time('15:10:42Z') + xs:dayTimeDuration('P30DT20H53M32S')
+xs:time 12:04:14Z
+# xs:dayTimeDuration('P30DT20H53M32S') + xs:time('15:10:42Z')
+xs:time 12:04:14Z
+# xs:time('15:10:42Z') - xs:dayTimeDuration('P30DT20H53M32S')
+xs:time 18:17:10Z
+# day-from-date(xs:date('3574-11-13Z'))
+xs:integer 13
+# timezone-from-date(xs:date('3574-11-13Z'))
+xs:dayTimeDuration PT0S
+# xs:date('9972-10-31Z') + xs:dayTimeDuration('PT15H16M22.818855375S')
+xs:date 9972-10-31Z
+# xs:dayTimeDuration('PT15H16M22.818855375S') + xs:date('9972-10-31Z')
+xs:date 9972-10-31Z
+# xs:date('9972-10-31Z') - xs:dayTimeDuration('PT15H16M22.818855375S')
+xs:date 9972-10-30Z
+# xs:date('3838-06-22') - xs:date('9995-12-31Z')
+xs:dayTimeDuration -P2248990D
+# xs:dateTime('0035-01-31T07:54:22') + xs:yearMonthDuration('-P2M')
+xs:dateTime 0034-11-30T07:54:22
+# xs:dateTime('0035-01-31T07:54:22') - xs:yearMonthDuration('-P2M')
+xs:dateTime 0035-03-31T07:54:22
+# month-from-dateTime(xs:dateTime('9955-01-31T00:29:52.665806495'))
+xs:integer 1
+# seconds-from-dateTime(xs:dateTime('9955-01-31T00:29:52.665806495'))
+xs:decimal 52.665806495
+# xs:dateTime('9952-07-31T08:28:36-12:00') - xs:dateTime('1941-05-31T09:22:55.407Z')
+xs:dayTimeDuration P2926019DT11H5M40.593S
+# adjust-date-to-timezone(xs:date('2038-05-01+13:15'), xs:dayTimeDuration('PT0S'))
+xs:date 2038-04-30Z
+# xs:dateTime('9957-01-06T03:29:46.703064293') + xs:yearMonthDuration('-P3606Y5M')
+xs:dateTime 6350-08-06T03:29:46.703064293
+# string(xs:time('12:59:18.084-07:00'))
+xs:string 12:59:18.084-07:00
+# xs:date(xs:dateTime('9997-10-09T04:54:21'))
+xs:date 9997-10-09
+# xs:time(xs:dateTime('9997-10-09T04:54:21'))
+xs:time 04:54:21
+# xs:dateTime(xs:date(xs:dateTime('9997-10-09T04:54:21')))
+xs:dateTime 9997-10-09T00:00:00
+# xs:time('22:14:39.8') lt xs:time('17:04:23')
+xs:boolean false
+# xs:time('22:14:39.8') eq xs:time('17:04:23')
+xs:boolean false
+# xs:time('22:14:39.8') ge xs:time('17:04:23')
+xs:boolean true
+# string(xs:dateTime('9967-10-31T15:57:05.9'))
+xs:string 9967-10-31T15:57:05.9
+# year-from-date(xs:date('1902-05-31Z'))
+xs:integer 1902
+# timezone-from-date(xs:date('1902-05-31Z'))
+xs:dayTimeDuration PT0S
+# string(xs:time('20:45:40.057'))
+xs:string 20:45:40.057
+# xs:dateTime('0049-12-31T22:48:37+12:00') - xs:dayTimeDuration('-P384546DT10H34M11S')
+xs:dateTime 1102-11-09T09:22:48+12:00
+# string(xs:time('04:59:33.9'))
+xs:string 04:59:33.9
+# xs:time('04:20:29+05:30') - xs:time('23:02:10.4')
+xs:dayTimeDuration -P1DT11M41.4S
+# xs:dateTime('9956-03-15T07:02:05') + xs:yearMonthDuration('P7M')
+xs:dateTime 9956-10-15T07:02:05
+# xs:dateTime('9956-03-15T07:02:05') - xs:yearMonthDuration('P7M')
+xs:dateTime 9955-08-15T07:02:05
+# xs:date('4133-01-31+03:00') - xs:date('2054-06-17Z')
+xs:dayTimeDuration P759201DT21H
+# xs:date('7383-12-31-06:00') + xs:dayTimeDuration('P173DT13H47M19S')
+xs:date 7384-06-21-06:00
+# xs:dayTimeDuration('P173DT13H47M19S') + xs:date('7383-12-31-06:00')
+xs:date 7384-06-21-06:00
+# xs:date('7383-12-31-06:00') - xs:dayTimeDuration('P173DT13H47M19S')
+xs:date 7383-07-10-06:00
+# xs:date('9956-11-30') lt xs:date('9956-11-30')
+xs:boolean false
+# xs:date('9956-11-30') eq xs:date('9956-11-30')
+xs:boolean true
+# xs:date('9956-11-30') ge xs:date('9956-11-30')
+xs:boolean true
+# string(xs:date('9958-11-30Z'))
+xs:string 9958-11-30Z
+# adjust-date-to-timezone(xs:date('9965-06-09'), ())
+xs:date 9965-06-09
+# xs:dateTime('9992-09-22T05:13:23.5Z') - xs:dateTime('0509-06-01T22:12:41.3Z')
+xs:dayTimeDuration P3463707DT7H42.2S
+# minutes-from-time(xs:time('10:36:43.6Z'))
+xs:integer 36
+# seconds-from-time(xs:time('10:36:43.6Z'))
+xs:decimal 43.6
+# timezone-from-time(xs:time('10:36:43.6Z'))
+xs:dayTimeDuration PT0S
+# xs:dateTime('9989-06-30T22:01:38') lt xs:dateTime('9989-06-30T22:01:38+01:00')
+xs:boolean false
+# xs:dateTime('9989-06-30T22:01:38') eq xs:dateTime('9989-06-30T22:01:38+01:00')
+xs:boolean false
+# xs:dateTime('9989-06-30T22:01:38') ge xs:dateTime('9989-06-30T22:01:38+01:00')
+xs:boolean true
+# string(xs:dateTime('4815-02-13T23:37:53+01:00'))
+xs:string 4815-02-13T23:37:53+01:00
+# adjust-date-to-timezone(xs:date('9960-04-30'), xs:dayTimeDuration('PT12H'))
+xs:date 9960-04-30+12:00
+# adjust-dateTime-to-timezone(xs:dateTime('0022-04-09T09:32:18.533882448'), xs:dayTimeDuration('-PT6H'))
+xs:dateTime 0022-04-09T09:32:18.533882448-06:00
+# adjust-date-to-timezone(xs:date('9978-12-31-12:30'), ())
+xs:date 9978-12-31
+# xs:time('22:15:05.035084242-04:00') + xs:dayTimeDuration('-P218DT6H43M42S')
+xs:time 15:31:23.035084242-04:00
+# xs:dayTimeDuration('-P218DT6H43M42S') + xs:time('22:15:05.035084242-04:00')
+xs:time 15:31:23.035084242-04:00
+# xs:time('22:15:05.035084242-04:00') - xs:dayTimeDuration('-P218DT6H43M42S')
+xs:time 04:58:47.035084242-04:00
+# string(xs:dateTime('4740-08-13T12:18:58.051-07:00'))
+xs:string 4740-08-13T12:18:58.051-07:00
+# minutes-from-time(xs:time('20:11:33'))
+xs:integer 11
+# seconds-from-time(xs:time('20:11:33'))
+xs:decimal 33
+# xs:date('4189-05-25Z') + xs:dayTimeDuration('-PT1H57M47S')
+xs:date 4189-05-24Z
+# xs:dayTimeDuration('-PT1H57M47S') + xs:date('4189-05-25Z')
+xs:date 4189-05-24Z
+# xs:date('4189-05-25Z') - xs:dayTimeDuration('-PT1H57M47S')
+xs:date 4189-05-25Z
+# xs:time('10:06:10.9') - xs:time('21:01:33+12:00')
+xs:dayTimeDuration PT1H4M37.9S
+# xs:date('9975-04-06Z') lt xs:date('0016-10-09-04:45')
+xs:boolean false
+# xs:date('9975-04-06Z') eq xs:date('0016-10-09-04:45')
+xs:boolean false
+# xs:date('9975-04-06Z') ge xs:date('0016-10-09-04:45')
+xs:boolean true
+# xs:time('05:47:14.2') lt xs:time('04:46:27.308+13:00')
+xs:boolean false
+# xs:time('05:47:14.2') eq xs:time('04:46:27.308+13:00')
+xs:boolean false
+# xs:time('05:47:14.2') ge xs:time('04:46:27.308+13:00')
+xs:boolean true
+# xs:dateTime('9966-10-31T04:24:04-06:00') lt xs:dateTime('5039-12-31T13:52:27.772-03:00')
+xs:boolean false
+# xs:dateTime('9966-10-31T04:24:04-06:00') eq xs:dateTime('5039-12-31T13:52:27.772-03:00')
+xs:boolean false
+# xs:dateTime('9966-10-31T04:24:04-06:00') ge xs:dateTime('5039-12-31T13:52:27.772-03:00')
+xs:boolean true
+# day-from-date(xs:date('7087-12-31'))
+xs:integer 31
+# string(xs:date('9980-03-22-03:00'))
+xs:string 9980-03-22-03:00
+# xs:date('2061-01-17') + xs:yearMonthDuration('-P7M')
+xs:date 2060-06-17
+# xs:date('2061-01-17') - xs:yearMonthDuration('-P7M')
+xs:date 2061-08-17
+# year-from-date(xs:date('2068-02-23'))
+xs:integer 2068
+# xs:dateTime('8865-08-08T02:43:15-07:45') - xs:dateTime('0005-02-28T05:42:30.46551581+05:00')
+xs:dayTimeDuration P3236210DT9H45M44.53448419S
+# xs:time('11:14:43.575-02:45') - xs:time('18:23:09.7-08:00')
+xs:dayTimeDuration -PT12H23M26.125S
+# xs:time('20:14:32.219+07:00') + xs:dayTimeDuration('PT7H25M39S')
+xs:time 03:40:11.219+07:00
+# xs:dayTimeDuration('PT7H25M39S') + xs:time('20:14:32.219+07:00')
+xs:time 03:40:11.219+07:00
+# xs:time('20:14:32.219+07:00') - xs:dayTimeDuration('PT7H25M39S')
+xs:time 12:48:53.219+07:00
+# string(xs:dateTime('9970-04-21T05:32:47'))
+xs:string 9970-04-21T05:32:47
+# xs:date(xs:dateTime('9951-07-31T16:00:40.046371146'))
+xs:date 9951-07-31
+# xs:time(xs:dateTime('9951-07-31T16:00:40.046371146'))
+xs:time 16:00:40.046371146
+# xs:dateTime(xs:date(xs:dateTime('9951-07-31T16:00:40.046371146')))
+xs:dateTime 9951-07-31T00:00:00
+# string(xs:date('9961-03-31-11:00'))
+xs:string 9961-03-31-11:00
+# string(xs:dateTime('1909-08-31T05:15:33Z'))
+xs:string 1909-08-31T05:15:33Z
+# xs:time('01:39:05.8+06:00') + xs:dayTimeDuration('P108DT22H56M12.767498676S')
+xs:time 00:35:18.567498676+06:00
+# xs:dayTimeDuration('P108DT22H56M12.767498676S') + xs:time('01:39:05.8+06:00')
+xs:time 00:35:18.567498676+06:00
+# xs:time('01:39:05.8+06:00') - xs:dayTimeDuration('P108DT22H56M12.767498676S')
+xs:time 02:42:53.032501324+06:00
+# xs:date(xs:dateTime('9962-08-27T12:23:18Z'))
+xs:date 9962-08-27Z
+# xs:time(xs:dateTime('9962-08-27T12:23:18Z'))
+xs:time 12:23:18Z
+# xs:dateTime(xs:date(xs:dateTime('9962-08-27T12:23:18Z')))
+xs:dateTime 9962-08-27T00:00:00Z
+# xs:time('09:47:47') + xs:dayTimeDuration('-P141DT7H48M25.766131784S')
+xs:time 01:59:21.233868216
+# xs:dayTimeDuration('-P141DT7H48M25.766131784S') + xs:time('09:47:47')
+xs:time 01:59:21.233868216
+# xs:time('09:47:47') - xs:dayTimeDuration('-P141DT7H48M25.766131784S')
+xs:time 17:36:12.766131784
+# xs:time('11:17:02.395-11:00') lt xs:time('15:45:59')
+xs:boolean false
+# xs:time('11:17:02.395-11:00') eq xs:time('15:45:59')
+xs:boolean false
+# xs:time('11:17:02.395-11:00') ge xs:time('15:45:59')
+xs:boolean true
+# xs:time('19:44:12.2') - xs:time('22:53:04+11:00')
+xs:dayTimeDuration PT7H51M8.2S
+# adjust-time-to-timezone(xs:time('14:22:56.7'), ())
+xs:time 14:22:56.7
+# adjust-dateTime-to-timezone(xs:dateTime('9955-01-26T04:45:51.752'), xs:dayTimeDuration('PT0S'))
+xs:dateTime 9955-01-26T04:45:51.752Z
+# day-from-date(xs:date('1485-09-08'))
+xs:integer 8
+# xs:date(xs:dateTime('0040-03-31T19:05:27.223Z'))
+xs:date 0040-03-31Z
+# xs:time(xs:dateTime('0040-03-31T19:05:27.223Z'))
+xs:time 19:05:27.223Z
+# xs:dateTime(xs:date(xs:dateTime('0040-03-31T19:05:27.223Z')))
+xs:dateTime 0040-03-31T00:00:00Z
+# xs:dateTime('6036-04-30T11:33:22.709Z') + xs:yearMonthDuration('-P844Y9M')
+xs:dateTime 5191-07-30T11:33:22.709Z
+# xs:dateTime('6036-04-30T11:33:22.709Z') - xs:yearMonthDuration('-P844Y9M')
+xs:dateTime 6881-01-30T11:33:22.709Z
+# xs:time('01:42:17') - xs:time('15:51:32.4')
+xs:dayTimeDuration -PT14H9M15.4S
+# xs:time('18:46:34.8') lt xs:time('07:00:32')
+xs:boolean false
+# xs:time('18:46:34.8') eq xs:time('07:00:32')
+xs:boolean false
+# xs:time('18:46:34.8') ge xs:time('07:00:32')
+xs:boolean true
+# xs:time('23:08:16Z') + xs:dayTimeDuration('-P48DT6H21M36S')
+xs:time 16:46:40Z
+# xs:dayTimeDuration('-P48DT6H21M36S') + xs:time('23:08:16Z')
+xs:time 16:46:40Z
+# xs:time('23:08:16Z') - xs:dayTimeDuration('-P48DT6H21M36S')
+xs:time 05:29:52Z
+# xs:dateTime('0025-11-04T22:06:04.213') lt xs:dateTime('0022-05-31T14:44:36.766525524+02:00')
+xs:boolean false
+# xs:dateTime('0025-11-04T22:06:04.213') eq xs:dateTime('0022-05-31T14:44:36.766525524+02:00')
+xs:boolean false
+# xs:dateTime('0025-11-04T22:06:04.213') ge xs:dateTime('0022-05-31T14:44:36.766525524+02:00')
+xs:boolean true
+# hours-from-dateTime(xs:dateTime('0002-12-31T06:46:52.6+07:45'))
+xs:integer 6
+# seconds-from-dateTime(xs:dateTime('0002-12-31T06:46:52.6+07:45'))
+xs:decimal 52.6
+# timezone-from-dateTime(xs:dateTime('0002-12-31T06:46:52.6+07:45'))
+xs:dayTimeDuration PT7H45M
+# xs:time('15:57:48.1') lt xs:time('13:23:09.858798129')
+xs:boolean false
+# xs:time('15:57:48.1') eq xs:time('13:23:09.858798129')
+xs:boolean false
+# xs:time('15:57:48.1') ge xs:time('13:23:09.858798129')
+xs:boolean true
+# string(xs:date('9998-11-30+08:00'))
+xs:string 9998-11-30+08:00
+# xs:dateTime('1955-11-30T08:43:26.305524829') + xs:dayTimeDuration('P2182803DT2H8M14S')
+xs:dateTime 7932-03-23T10:51:40.305524829
+# xs:dayTimeDuration('P2182803DT2H8M14S') + xs:dateTime('1955-11-30T08:43:26.305524829')
+xs:dateTime 7932-03-23T10:51:40.305524829
+# xs:date('1981-05-23') - xs:date('9979-04-30Z')
+xs:dayTimeDuration -P2921186D
+# xs:time('03:57:33+01:00') + xs:dayTimeDuration('PT13H3M33.328825568S')
+xs:time 17:01:06.328825568+01:00
+# xs:dayTimeDuration('PT13H3M33.328825568S') + xs:time('03:57:33+01:00')
+xs:time 17:01:06.328825568+01:00
+# xs:time('03:57:33+01:00') - xs:dayTimeDuration('PT13H3M33.328825568S')
+xs:time 14:53:59.671174432+01:00
+# xs:date('1972-05-31') - xs:yearMonthDuration('-P2729Y7M')
+xs:date 4701-12-31
+# year-from-dateTime(xs:dateTime('5554-05-01T13:34:52.788+13:30'))
+xs:integer 5554
+# seconds-from-dateTime(xs:dateTime('5554-05-01T13:34:52.788+13:30'))
+xs:decimal 52.788
+# timezone-from-dateTime(xs:dateTime('5554-05-01T13:34:52.788+13:30'))
+xs:dayTimeDuration PT13H30M
+# string(xs:date('9409-08-28+02:00'))
+xs:string 9409-08-28+02:00
+# year-from-date(xs:date('0031-07-21'))
+xs:integer 31
+# xs:date(xs:dateTime('3247-10-31T21:06:38'))
+xs:date 3247-10-31
+# xs:time(xs:dateTime('3247-10-31T21:06:38'))
+xs:time 21:06:38
+# xs:dateTime(xs:date(xs:dateTime('3247-10-31T21:06:38')))
+xs:dateTime 3247-10-31T00:00:00
+# string(xs:date('3419-08-31+07:45'))
+xs:string 3419-08-31+07:45
+# xs:date('1900-11-21') + xs:dayTimeDuration('PT18H26M21S')
+xs:date 1900-11-21
+# xs:dayTimeDuration('PT18H26M21S') + xs:date('1900-11-21')
+xs:date 1900-11-21
+# xs:date('1900-11-21') - xs:dayTimeDuration('PT18H26M21S')
+xs:date 1900-11-20
+# xs:time('21:42:24-04:45') - xs:time('11:45:42-04:15')
+xs:dayTimeDuration PT10H26M42S
+# xs:time('21:52:25.969540789') + xs:dayTimeDuration('-P23DT8H10M17S')
+xs:time 13:42:08.969540789
+# xs:dayTimeDuration('-P23DT8H10M17S') + xs:time('21:52:25.969540789')
+xs:time 13:42:08.969540789
+# xs:time('21:52:25.969540789') - xs:dayTimeDuration('-P23DT8H10M17S')
+xs:time 06:02:42.969540789
+# hours-from-dateTime(xs:dateTime('0028-11-30T06:52:26'))
+xs:integer 6
+# seconds-from-dateTime(xs:dateTime('0028-11-30T06:52:26'))
+xs:decimal 26
+# xs:date(xs:dateTime('8228-03-14T06:04:29'))
+xs:date 8228-03-14
+# xs:time(xs:dateTime('8228-03-14T06:04:29'))
+xs:time 06:04:29
+# xs:dateTime(xs:date(xs:dateTime('8228-03-14T06:04:29')))
+xs:dateTime 8228-03-14T00:00:00
+# adjust-time-to-timezone(xs:time('05:48:39'), xs:dayTimeDuration('-PT11H'))
+xs:time 05:48:39-11:00
+# xs:time('20:53:10') lt xs:time('08:52:05-05:00')
+xs:boolean false
+# xs:time('20:53:10') eq xs:time('08:52:05-05:00')
+xs:boolean false
+# xs:time('20:53:10') ge xs:time('08:52:05-05:00')
+xs:boolean true
+# xs:dateTime('0020-09-30T16:06:28') + xs:yearMonthDuration('P151Y8M')
+xs:dateTime 0172-05-30T16:06:28
+# xs:time('15:55:54.214273523+11:00') lt xs:time('11:04:13-01:00')
+xs:boolean true
+# xs:time('15:55:54.214273523+11:00') eq xs:time('11:04:13-01:00')
+xs:boolean false
+# xs:time('15:55:54.214273523+11:00') ge xs:time('11:04:13-01:00')
+xs:boolean false
+# month-from-dateTime(xs:dateTime('9988-06-02T21:16:52'))
+xs:integer 6
+# seconds-from-dateTime(xs:dateTime('9988-06-02T21:16:52'))
+xs:decimal 52
+# adjust-dateTime-to-timezone(xs:dateTime('1901-04-30T06:19:42.5'), ())
+xs:dateTime 1901-04-30T06:19:42.5
+# year-from-date(xs:date('9994-08-15'))
+xs:integer 9994
+# string(xs:time('18:22:44.5Z'))
+xs:string 18:22:44.5Z
+# xs:date('1873-11-30+08:00') lt xs:date('0017-04-24')
+xs:boolean false
+# xs:date('1873-11-30+08:00') eq xs:date('0017-04-24')
+xs:boolean false
+# xs:date('1873-11-30+08:00') ge xs:date('0017-04-24')
+xs:boolean true
+# string(xs:date('1961-08-31'))
+xs:string 1961-08-31
+# xs:time('13:29:41+03:00') + xs:dayTimeDuration('-PT21H52M26.543278171S')
+xs:time 15:37:14.456721829+03:00
+# xs:dayTimeDuration('-PT21H52M26.543278171S') + xs:time('13:29:41+03:00')
+xs:time 15:37:14.456721829+03:00
+# xs:time('13:29:41+03:00') - xs:dayTimeDuration('-PT21H52M26.543278171S')
+xs:time 11:22:07.543278171+03:00
+# xs:time('16:49:05+02:45') + xs:dayTimeDuration('PT13H18M31.351897634S')
+xs:time 06:07:36.351897634+02:45
+# xs:dayTimeDuration('PT13H18M31.351897634S') + xs:time('16:49:05+02:45')
+xs:time 06:07:36.351897634+02:45
+# xs:time('16:49:05+02:45') - xs:dayTimeDuration('PT13H18M31.351897634S')
+xs:time 03:30:33.648102366+02:45
+# xs:dateTime('9089-11-03T19:38:30.8') - xs:dateTime('0003-11-30T21:16:23.4-01:00')
+xs:dayTimeDuration P3318566DT21H22M7.4S
+# xs:dateTime('9994-03-26T22:30:40.4-01:00') - xs:yearMonthDuration('P1627Y')
+xs:dateTime 8367-03-26T22:30:40.4-01:00
+# xs:date(xs:dateTime('9959-03-29T10:49:43+05:00'))
+xs:date 9959-03-29+05:00
+# xs:time(xs:dateTime('9959-03-29T10:49:43+05:00'))
+xs:time 10:49:43+05:00
+# xs:dateTime(xs:date(xs:dateTime('9959-03-29T10:49:43+05:00')))
+xs:dateTime 9959-03-29T00:00:00+05:00
+# string(xs:date('0027-04-20+01:00'))
+xs:string 0027-04-20+01:00
+# string(xs:date('1964-06-05'))
+xs:string 1964-06-05
+# adjust-time-to-timezone(xs:time('06:45:21.659+09:00'), ())
+xs:time 06:45:21.659
+# xs:date('0021-04-30Z') + xs:dayTimeDuration('P288DT18H27M33S')
+xs:date 0022-02-12Z
+# xs:dayTimeDuration('P288DT18H27M33S') + xs:date('0021-04-30Z')
+xs:date 0022-02-12Z
+# xs:date('0021-04-30Z') - xs:dayTimeDuration('P288DT18H27M33S')
+xs:date 0020-07-15Z
+# minutes-from-time(xs:time('09:34:23.2'))
+xs:integer 34
+# seconds-from-time(xs:time('09:34:23.2'))
+xs:decimal 23.2
+# xs:dateTime('2019-06-05T15:55:57') lt xs:dateTime('9967-08-31T13:27:14Z')
+xs:boolean true
+# xs:dateTime('2019-06-05T15:55:57') eq xs:dateTime('9967-08-31T13:27:14Z')
+xs:boolean false
+# xs:dateTime('2019-06-05T15:55:57') ge xs:dateTime('9967-08-31T13:27:14Z')
+xs:boolean false
+# xs:date('9994-06-05Z') + xs:dayTimeDuration('-P2300598DT7H43M15S')
+xs:date 3695-08-07Z
+# xs:dayTimeDuration('-P2300598DT7H43M15S') + xs:date('9994-06-05Z')
+xs:date 3695-08-07Z
+# xs:time('23:35:09+05:00') + xs:dayTimeDuration('P78DT18H41M7S')
+xs:time 18:16:16+05:00
+# xs:dayTimeDuration('P78DT18H41M7S') + xs:time('23:35:09+05:00')
+xs:time 18:16:16+05:00
+# xs:time('23:35:09+05:00') - xs:dayTimeDuration('P78DT18H41M7S')
+xs:time 04:54:02+05:00
+# xs:dateTime('9954-11-30T23:49:59.451+07:15') - xs:dateTime('7492-06-09T08:42:06')
+xs:dayTimeDuration P899400DT7H52M53.451S
+# xs:date('9960-08-20+13:00') + xs:yearMonthDuration('-P2Y5M')
+xs:date 9958-03-20+13:00
+# xs:date('9960-08-20+13:00') - xs:yearMonthDuration('-P2Y5M')
+xs:date 9963-01-20+13:00
+# xs:time('18:36:35') lt xs:time('18:36:35')
+xs:boolean false
+# xs:time('18:36:35') eq xs:time('18:36:35')
+xs:boolean true
+# xs:time('18:36:35') ge xs:time('18:36:35')
+xs:boolean true
+# xs:date('0036-08-31Z') + xs:yearMonthDuration('P1576Y6M')
+xs:date 1613-02-28Z
+# string(xs:date('0016-03-31'))
+xs:string 0016-03-31
+# xs:dateTime('9993-08-13T01:52:54.33') + xs:yearMonthDuration('-P8M')
+xs:dateTime 9992-12-13T01:52:54.33
+# xs:dateTime('9993-08-13T01:52:54.33') - xs:yearMonthDuration('-P8M')
+xs:dateTime 9994-04-13T01:52:54.33
+# xs:time('20:17:57.71') + xs:dayTimeDuration('P344DT11H57M41S')
+xs:time 08:15:38.71
+# xs:dayTimeDuration('P344DT11H57M41S') + xs:time('20:17:57.71')
+xs:time 08:15:38.71
+# xs:time('20:17:57.71') - xs:dayTimeDuration('P344DT11H57M41S')
+xs:time 08:20:16.71
+# adjust-dateTime-to-timezone(xs:dateTime('1902-04-07T09:04:10.6+13:00'), xs:dayTimeDuration('PT0S'))
+xs:dateTime 1902-04-06T20:04:10.6Z
+# xs:date(xs:dateTime('0006-04-01T14:39:18Z'))
+xs:date 0006-04-01Z
+# xs:time(xs:dateTime('0006-04-01T14:39:18Z'))
+xs:time 14:39:18Z
+# xs:dateTime(xs:date(xs:dateTime('0006-04-01T14:39:18Z')))
+xs:dateTime 0006-04-01T00:00:00Z
+# xs:dateTime('1936-11-01T20:02:18.227') + xs:dayTimeDuration('P116DT5H22M21.184383258S')
+xs:dateTime 1937-02-26T01:24:39.411383258
+# xs:dayTimeDuration('P116DT5H22M21.184383258S') + xs:dateTime('1936-11-01T20:02:18.227')
+xs:dateTime 1937-02-26T01:24:39.411383258
+# xs:dateTime('1936-11-01T20:02:18.227') - xs:dayTimeDuration('P116DT5H22M21.184383258S')
+xs:dateTime 1936-07-08T14:39:57.042616742
+# string(xs:dateTime('0040-12-10T17:56:33.05660548-07:00'))
+xs:string 0040-12-10T17:56:33.05660548-07:00
+# xs:date('0008-03-31') + xs:yearMonthDuration('-P10M')
+xs:date 0007-05-31
+# xs:date('0008-03-31') - xs:yearMonthDuration('-P10M')
+xs:date 0009-01-31
+# string(xs:date('0016-08-31'))
+xs:string 0016-08-31
+# string(xs:date('9974-06-20Z'))
+xs:string 9974-06-20Z
+# xs:date('2050-09-30-01:00') - xs:date('9954-03-19+04:00')
+xs:dayTimeDuration -P2886680DT19H
+# xs:date('9979-11-30') - xs:yearMonthDuration('P3045Y1M')
+xs:date 6934-10-30
+# string(xs:dateTime('1927-06-30T18:02:45Z'))
+xs:string 1927-06-30T18:02:45Z
+# hours-from-time(xs:time('07:21:12.1'))
+xs:integer 7
+# seconds-from-time(xs:time('07:21:12.1'))
+xs:decimal 12.1
+# xs:time('19:48:25.646609091') lt xs:time('19:48:25.646609091')
+xs:boolean false
+# xs:time('19:48:25.646609091') eq xs:time('19:48:25.646609091')
+xs:boolean true
+# xs:time('19:48:25.646609091') ge xs:time('19:48:25.646609091')
+xs:boolean true
+# xs:dateTime('0050-05-18T16:48:53.750667359Z') + xs:yearMonthDuration('P3921Y6M')
+xs:dateTime 3971-11-18T16:48:53.750667359Z
+# xs:date('9956-02-29') lt xs:date('9956-02-29Z')
+xs:boolean false
+# xs:date('9956-02-29') eq xs:date('9956-02-29Z')
+xs:boolean true
+# xs:date('9956-02-29') ge xs:date('9956-02-29Z')
+xs:boolean true
+# xs:time('07:43:39.744') - xs:time('17:48:22.6-07:00')
+xs:dayTimeDuration -PT17H4M42.856S
+# adjust-date-to-timezone(xs:date('0009-02-28'), ())
+xs:date 0009-02-28
+# adjust-time-to-timezone(xs:time('04:51:50'), xs:dayTimeDuration('PT0S'))
+xs:time 04:51:50Z
+# adjust-dateTime-to-timezone(xs:dateTime('1994-07-31T11:42:59.61330091-03:45'), ())
+xs:dateTime 1994-07-31T11:42:59.61330091
+# adjust-date-to-timezone(xs:date('1968-07-18+09:00'), xs:dayTimeDuration('PT6H38M'))
+xs:date 1968-07-17+06:38
+# string(xs:date('9962-02-28'))
+xs:string 9962-02-28
+# adjust-date-to-timezone(xs:date('3158-11-16+01:00'), xs:dayTimeDuration('-PT14H'))
+xs:date 3158-11-15-14:00
+# xs:time('00:48:02.135-04:00') + xs:dayTimeDuration('P349DT20H38M30S')
+xs:time 21:26:32.135-04:00
+# xs:dayTimeDuration('P349DT20H38M30S') + xs:time('00:48:02.135-04:00')
+xs:time 21:26:32.135-04:00
+# xs:time('00:48:02.135-04:00') - xs:dayTimeDuration('P349DT20H38M30S')
+xs:time 04:09:32.135-04:00
+# string(xs:date('0032-03-18+07:15'))
+xs:string 0032-03-18+07:15
+# xs:date('0026-10-31') + xs:yearMonthDuration('-P1Y5M')
+xs:date 0025-05-31
+# xs:date('0026-10-31') - xs:yearMonthDuration('-P1Y5M')
+xs:date 0028-03-31
+# xs:date('9988-02-01') - xs:dayTimeDuration('P947553DT9H37M49.952607225S')
+xs:date 7393-10-08
+# xs:dateTime('2008-01-31T04:11:00.186Z') lt xs:dateTime('1962-07-31T01:10:53.001551461')
+xs:boolean false
+# xs:dateTime('2008-01-31T04:11:00.186Z') eq xs:dateTime('1962-07-31T01:10:53.001551461')
+xs:boolean false
+# xs:dateTime('2008-01-31T04:11:00.186Z') ge xs:dateTime('1962-07-31T01:10:53.001551461')
+xs:boolean true
+# string(xs:date('9985-10-12'))
+xs:string 9985-10-12
+# adjust-time-to-timezone(xs:time('07:36:46'), xs:dayTimeDuration('PT13H43M'))
+xs:time 07:36:46+13:43
+# xs:time('14:32:51.338833875') - xs:time('19:29:50-08:00')
+xs:dayTimeDuration -PT12H56M58.661166125S
+# xs:date('9977-06-21-04:00') lt xs:date('9977-06-21')
+xs:boolean false
+# xs:date('9977-06-21-04:00') eq xs:date('9977-06-21')
+xs:boolean false
+# xs:date('9977-06-21-04:00') ge xs:date('9977-06-21')
+xs:boolean true
+# xs:date('1965-08-31') + xs:yearMonthDuration('-P1Y')
+xs:date 1964-08-31
+# xs:date('1965-08-31') - xs:yearMonthDuration('-P1Y')
+xs:date 1966-08-31
+# day-from-date(xs:date('0043-10-31-06:00'))
+xs:integer 31
+# timezone-from-date(xs:date('0043-10-31-06:00'))
+xs:dayTimeDuration -PT6H
+# adjust-dateTime-to-timezone(xs:dateTime('0626-11-21T07:22:45+02:00'), xs:dayTimeDuration('-PT14H'))
+xs:dateTime 0626-11-20T15:22:45-14:00
+# xs:date('1917-07-20-10:00') + xs:dayTimeDuration('P1887428DT20H10M40S')
+xs:date 7085-02-24-10:00
+# xs:dayTimeDuration('P1887428DT20H10M40S') + xs:date('1917-07-20-10:00')
+xs:date 7085-02-24-10:00
+# xs:date('7649-03-25+10:00') lt xs:date('7649-03-25')
+xs:boolean true
+# xs:date('7649-03-25+10:00') eq xs:date('7649-03-25')
+xs:boolean false
+# xs:date('7649-03-25+10:00') ge xs:date('7649-03-25')
+xs:boolean false
+# xs:time('16:47:26.982568099') + xs:dayTimeDuration('-P238DT22H20S')
+xs:time 18:47:06.982568099
+# xs:dayTimeDuration('-P238DT22H20S') + xs:time('16:47:26.982568099')
+xs:time 18:47:06.982568099
+# xs:time('16:47:26.982568099') - xs:dayTimeDuration('-P238DT22H20S')
+xs:time 14:47:46.982568099
+# xs:time('14:39:32') lt xs:time('05:31:22')
+xs:boolean false
+# xs:time('14:39:32') eq xs:time('05:31:22')
+xs:boolean false
+# xs:time('14:39:32') ge xs:time('05:31:22')
+xs:boolean true
+# xs:date('0023-10-17') lt xs:date('9971-01-31-05:00')
+xs:boolean true
+# xs:date('0023-10-17') eq xs:date('9971-01-31-05:00')
+xs:boolean false
+# xs:date('0023-10-17') ge xs:date('9971-01-31-05:00')
+xs:boolean false
+# string(xs:date('9692-04-30-12:15'))
+xs:string 9692-04-30-12:15
+# xs:date('1913-10-30+12:00') lt xs:date('1962-01-04Z')
+xs:boolean true
+# xs:date('1913-10-30+12:00') eq xs:date('1962-01-04Z')
+xs:boolean false
+# xs:date('1913-10-30+12:00') ge xs:date('1962-01-04Z')
+xs:boolean false
+# xs:date('0018-10-31+03:00') lt xs:date('0018-10-31Z')
+xs:boolean true
+# xs:date('0018-10-31+03:00') eq xs:date('0018-10-31Z')
+xs:boolean false
+# xs:date('0018-10-31+03:00') ge xs:date('0018-10-31Z')
+xs:boolean false
+# string(xs:dateTime('0028-01-31T11:50:25.2'))
+xs:string 0028-01-31T11:50:25.2
+# hours-from-dateTime(xs:dateTime('2053-10-31T03:19:39-08:30'))
+xs:integer 3
+# seconds-from-dateTime(xs:dateTime('2053-10-31T03:19:39-08:30'))
+xs:decimal 39
+# timezone-from-dateTime(xs:dateTime('2053-10-31T03:19:39-08:30'))
+xs:dayTimeDuration -PT8H30M
+# string(xs:time('07:02:50.323801392+13:30'))
+xs:string 07:02:50.323801392+13:30
+# xs:dateTime('0036-10-02T13:14:52.996Z') lt xs:dateTime('4254-05-31T22:55:54+08:45')
+xs:boolean true
+# xs:dateTime('0036-10-02T13:14:52.996Z') eq xs:dateTime('4254-05-31T22:55:54+08:45')
+xs:boolean false
+# xs:dateTime('0036-10-02T13:14:52.996Z') ge xs:dateTime('4254-05-31T22:55:54+08:45')
+xs:boolean false
+# string(xs:time('18:41:09+07:00'))
+xs:string 18:41:09+07:00
+# xs:time('01:01:24+11:00') lt xs:time('01:01:24')
+xs:boolean true
+# xs:time('01:01:24+11:00') eq xs:time('01:01:24')
+xs:boolean false
+# xs:time('01:01:24+11:00') ge xs:time('01:01:24')
+xs:boolean false
+# string(xs:date('9953-02-28'))
+xs:string 9953-02-28
+# xs:date(xs:dateTime('0063-07-31T00:22:18.248868608-02:00'))
+xs:date 0063-07-31-02:00
+# xs:time(xs:dateTime('0063-07-31T00:22:18.248868608-02:00'))
+xs:time 00:22:18.248868608-02:00
+# xs:dateTime(xs:date(xs:dateTime('0063-07-31T00:22:18.248868608-02:00')))
+xs:dateTime 0063-07-31T00:00:00-02:00
+# string(xs:date('2004-12-31'))
+xs:string 2004-12-31
+# xs:dateTime('9998-03-23T04:03:16.5') - xs:dateTime('1981-08-31T11:08:50.9')
+xs:dayTimeDuration P2927987DT16H54M25.6S
+# minutes-from-time(xs:time('21:18:48.228223875-11:45'))
+xs:integer 18
+# seconds-from-time(xs:time('21:18:48.228223875-11:45'))
+xs:decimal 48.228223875
+# timezone-from-time(xs:time('21:18:48.228223875-11:45'))
+xs:dayTimeDuration -PT11H45M
+# minutes-from-time(xs:time('09:14:15'))
+xs:integer 14
+# seconds-from-time(xs:time('09:14:15'))
+xs:decimal 15
+# string(xs:time('21:47:24'))
+xs:string 21:47:24
+# adjust-time-to-timezone(xs:time('02:47:05.4+13:30'), xs:dayTimeDuration('PT0S'))
+xs:time 13:17:05.4Z
+# string(xs:time('19:34:03+11:45'))
+xs:string 19:34:03+11:45
+# xs:dateTime('0787-08-15T08:22:05.355') + xs:yearMonthDuration('P6M')
+xs:dateTime 0788-02-15T08:22:05.355
+# xs:dateTime('0787-08-15T08:22:05.355') - xs:yearMonthDuration('P6M')
+xs:dateTime 0787-02-15T08:22:05.355
+# xs:time('19:06:34.730309322Z') + xs:dayTimeDuration('P90DT12H45.47390388S')
+xs:time 07:07:20.204213202Z
+# xs:dayTimeDuration('P90DT12H45.47390388S') + xs:time('19:06:34.730309322Z')
+xs:time 07:07:20.204213202Z
+# xs:time('19:06:34.730309322Z') - xs:dayTimeDuration('P90DT12H45.47390388S')
+xs:time 07:05:49.256405442Z
+# xs:time('09:37:58.1Z') + xs:dayTimeDuration('P1DT2H5M32S')
+xs:time 11:43:30.1Z
+# xs:dayTimeDuration('P1DT2H5M32S') + xs:time('09:37:58.1Z')
+xs:time 11:43:30.1Z
+# xs:time('09:37:58.1Z') - xs:dayTimeDuration('P1DT2H5M32S')
+xs:time 07:32:26.1Z
+# xs:time('12:34:04.431861972Z') + xs:dayTimeDuration('-P196DT22H38M30S')
+xs:time 13:55:34.431861972Z
+# xs:dayTimeDuration('-P196DT22H38M30S') + xs:time('12:34:04.431861972Z')
+xs:time 13:55:34.431861972Z
+# xs:time('12:34:04.431861972Z') - xs:dayTimeDuration('-P196DT22H38M30S')
+xs:time 11:12:34.431861972Z
+# xs:date('9979-02-28Z') - xs:date('2184-08-31')
+xs:dayTimeDuration P2846880D
+# xs:time('08:17:19-11:15') + xs:dayTimeDuration('P372DT11H44M38.483110064S')
+xs:time 20:01:57.483110064-11:15
+# xs:dayTimeDuration('P372DT11H44M38.483110064S') + xs:time('08:17:19-11:15')
+xs:time 20:01:57.483110064-11:15
+# xs:time('08:17:19-11:15') - xs:dayTimeDuration('P372DT11H44M38.483110064S')
+xs:time 20:32:40.516889936-11:15
+# adjust-date-to-timezone(xs:date('9970-10-08+10:00'), xs:dayTimeDuration('PT4H'))
+xs:date 9970-10-07+04:00
+# xs:date('2054-07-31') + xs:dayTimeDuration('-PT4H18M48S')
+xs:date 2054-07-30
+# xs:dayTimeDuration('-PT4H18M48S') + xs:date('2054-07-31')
+xs:date 2054-07-30
+# xs:date('2054-07-31') - xs:dayTimeDuration('-PT4H18M48S')
+xs:date 2054-07-31
+# xs:dateTime('9980-12-22T12:02:25.6') lt xs:dateTime('1201-12-31T06:25:27.026')
+xs:boolean false
+# xs:dateTime('9980-12-22T12:02:25.6') eq xs:dateTime('1201-12-31T06:25:27.026')
+xs:boolean false
+# xs:dateTime('9980-12-22T12:02:25.6') ge xs:dateTime('1201-12-31T06:25:27.026')
+xs:boolean true
+# string(xs:date('2089-12-31'))
+xs:string 2089-12-31
+# day-from-date(xs:date('0042-01-31+11:15'))
+xs:integer 31
+# timezone-from-date(xs:date('0042-01-31+11:15'))
+xs:dayTimeDuration PT11H15M
+# xs:time('11:12:11.3') + xs:dayTimeDuration('PT11H11M14S')
+xs:time 22:23:25.3
+# xs:dayTimeDuration('PT11H11M14S') + xs:time('11:12:11.3')
+xs:time 22:23:25.3
+# xs:time('11:12:11.3') - xs:dayTimeDuration('PT11H11M14S')
+xs:time 00:00:57.3
+# xs:dateTime('9984-04-24T17:49:26') - xs:yearMonthDuration('P2075Y4M')
+xs:dateTime 7908-12-24T17:49:26
+# xs:date(xs:dateTime('2042-03-14T03:36:46'))
+xs:date 2042-03-14
+# xs:time(xs:dateTime('2042-03-14T03:36:46'))
+xs:time 03:36:46
+# xs:dateTime(xs:date(xs:dateTime('2042-03-14T03:36:46')))
+xs:dateTime 2042-03-14T00:00:00
+# xs:dateTime('0034-11-23T08:04:20.262851395+13:00') lt xs:dateTime('9953-06-05T09:47:27')
+xs:boolean true
+# xs:dateTime('0034-11-23T08:04:20.262851395+13:00') eq xs:dateTime('9953-06-05T09:47:27')
+xs:boolean false
+# xs:dateTime('0034-11-23T08:04:20.262851395+13:00') ge xs:dateTime('9953-06-05T09:47:27')
+xs:boolean false
+# xs:date('9993-11-30Z') + xs:dayTimeDuration('-P333DT9H57M54S')
+xs:date 9992-12-31Z
+# xs:dayTimeDuration('-P333DT9H57M54S') + xs:date('9993-11-30Z')
+xs:date 9992-12-31Z
+# xs:date('9993-11-30Z') - xs:dayTimeDuration('-P333DT9H57M54S')
+xs:date 9994-10-29Z
+# xs:time('16:00:42.098-14:00') - xs:time('05:28:06.553502703-06:00')
+xs:dayTimeDuration PT18H32M35.544497297S
+# xs:date('2068-02-29') + xs:yearMonthDuration('P2Y5M')
+xs:date 2070-07-29
+# xs:date('2068-02-29') - xs:yearMonthDuration('P2Y5M')
+xs:date 2065-09-29
+# xs:date('9950-12-31-10:30') lt xs:date('2014-01-31')
+xs:boolean false
+# xs:date('9950-12-31-10:30') eq xs:date('2014-01-31')
+xs:boolean false
+# xs:date('9950-12-31-10:30') ge xs:date('2014-01-31')
+xs:boolean true
+# xs:date('3925-10-17-01:00') lt xs:date('1943-07-27')
+xs:boolean false
+# xs:date('3925-10-17-01:00') eq xs:date('1943-07-27')
+xs:boolean false
+# xs:date('3925-10-17-01:00') ge xs:date('1943-07-27')
+xs:boolean true
+# xs:date('1910-12-31+08:00') lt xs:date('7817-08-31')
+xs:boolean true
+# xs:date('1910-12-31+08:00') eq xs:date('7817-08-31')
+xs:boolean false
+# xs:date('1910-12-31+08:00') ge xs:date('7817-08-31')
+xs:boolean false
+# adjust-time-to-timezone(xs:time('00:04:01.824Z'), xs:dayTimeDuration('PT0S'))
+xs:time 00:04:01.824Z
+# string(xs:dateTime('9952-09-30T01:40:18'))
+xs:string 9952-09-30T01:40:18
+# adjust-time-to-timezone(xs:time('13:46:53'), xs:dayTimeDuration('PT4H'))
+xs:time 13:46:53+04:00
+# xs:date('9977-08-08') + xs:dayTimeDuration('P311DT13H15M49S')
+xs:date 9978-06-15
+# xs:dayTimeDuration('P311DT13H15M49S') + xs:date('9977-08-08')
+xs:date 9978-06-15
+# xs:date('9977-08-08') - xs:dayTimeDuration('P311DT13H15M49S')
+xs:date 9976-09-30
+# xs:time('15:24:39.4-12:00') + xs:dayTimeDuration('-P39DT21H42M9.917386051S')
+xs:time 17:42:29.482613949-12:00
+# xs:dayTimeDuration('-P39DT21H42M9.917386051S') + xs:time('15:24:39.4-12:00')
+xs:time 17:42:29.482613949-12:00
+# xs:time('15:24:39.4-12:00') - xs:dayTimeDuration('-P39DT21H42M9.917386051S')
+xs:time 13:06:49.317386051-12:00
+# string(xs:date('9950-05-06Z'))
+xs:string 9950-05-06Z
+# xs:date('2059-03-11Z') - xs:date('0041-07-31-05:00')
+xs:dayTimeDuration P736916DT19H
+# adjust-dateTime-to-timezone(xs:dateTime('9974-02-28T22:07:11.276029506Z'), xs:dayTimeDuration('PT0S'))
+xs:dateTime 9974-02-28T22:07:11.276029506Z
+# xs:time('17:34:08+13:15') + xs:dayTimeDuration('PT1H53M50S')
+xs:time 19:27:58+13:15
+# xs:dayTimeDuration('PT1H53M50S') + xs:time('17:34:08+13:15')
+xs:time 19:27:58+13:15
+# xs:time('17:34:08+13:15') - xs:dayTimeDuration('PT1H53M50S')
+xs:time 15:40:18+13:15
+# xs:date('0016-02-06+06:45') + xs:yearMonthDuration('P295Y8M')
+xs:date 0311-10-06+06:45
+# minutes-from-time(xs:time('13:11:57+03:30'))
+xs:integer 11
+# seconds-from-time(xs:time('13:11:57+03:30'))
+xs:decimal 57
+# timezone-from-time(xs:time('13:11:57+03:30'))
+xs:dayTimeDuration PT3H30M
+# xs:date(xs:dateTime('9974-08-31T23:41:27+09:00'))
+xs:date 9974-08-31+09:00
+# xs:time(xs:dateTime('9974-08-31T23:41:27+09:00'))
+xs:time 23:41:27+09:00
+# xs:dateTime(xs:date(xs:dateTime('9974-08-31T23:41:27+09:00')))
+xs:dateTime 9974-08-31T00:00:00+09:00
+# xs:dateTime('1912-08-31T17:39:11.231-12:00') - xs:dateTime('6737-04-30T02:45:25.00625744')
+xs:dayTimeDuration -P1762170DT21H6M13.77525744S
+# adjust-time-to-timezone(xs:time('06:22:44+00:30'), xs:dayTimeDuration('PT0S'))
+xs:time 05:52:44Z
+# xs:time('06:50:28-11:00') - xs:time('19:36:12.822Z')
+xs:dayTimeDuration -PT1H45M44.822S
+# xs:date(xs:dateTime('1883-08-31T11:35:06'))
+xs:date 1883-08-31
+# xs:time(xs:dateTime('1883-08-31T11:35:06'))
+xs:time 11:35:06
+# xs:dateTime(xs:date(xs:dateTime('1883-08-31T11:35:06')))
+xs:dateTime 1883-08-31T00:00:00
+# xs:time('18:07:53+00:30') + xs:dayTimeDuration('P130DT18H42M25S')
+xs:time 12:50:18+00:30
+# xs:dayTimeDuration('P130DT18H42M25S') + xs:time('18:07:53+00:30')
+xs:time 12:50:18+00:30
+# xs:time('18:07:53+00:30') - xs:dayTimeDuration('P130DT18H42M25S')
+xs:time 23:25:28+00:30
+# string(xs:time('06:37:12.141803114'))
+xs:string 06:37:12.141803114
+# day-from-dateTime(xs:dateTime('0019-03-03T16:05:10'))
+xs:integer 3
+# seconds-from-dateTime(xs:dateTime('0019-03-03T16:05:10'))
+xs:decimal 10
+# xs:dateTime('0015-12-25T23:46:10') + xs:dayTimeDuration('PT22H45M15S')
+xs:dateTime 0015-12-26T22:31:25
+# xs:dayTimeDuration('PT22H45M15S') + xs:dateTime('0015-12-25T23:46:10')
+xs:dateTime 0015-12-26T22:31:25
+# xs:dateTime('0015-12-25T23:46:10') - xs:dayTimeDuration('PT22H45M15S')
+xs:dateTime 0015-12-25T01:00:55
+# adjust-date-to-timezone(xs:date('9978-11-30+07:00'), xs:dayTimeDuration('-PT11H'))
+xs:date 9978-11-29-11:00
+# xs:date('4807-05-02Z') + xs:yearMonthDuration('P1863Y5M')
+xs:date 6670-10-02Z
+# xs:date('4807-05-02Z') - xs:yearMonthDuration('P1863Y5M')
+xs:date 2943-12-02Z
+# string(xs:dateTime('9967-05-25T07:26:30.166+12:00'))
+xs:string 9967-05-25T07:26:30.166+12:00
+# xs:dateTime('3632-12-31T12:12:56') - xs:dateTime('7485-05-28T10:19:56+07:00')
+xs:dayTimeDuration -P1407061DT15H7M
+# xs:date(xs:dateTime('4350-12-24T08:59:44.972-06:15'))
+xs:date 4350-12-24-06:15
+# xs:time(xs:dateTime('4350-12-24T08:59:44.972-06:15'))
+xs:time 08:59:44.972-06:15
+# xs:dateTime(xs:date(xs:dateTime('4350-12-24T08:59:44.972-06:15')))
+xs:dateTime 4350-12-24T00:00:00-06:15
+# xs:time('06:54:12') + xs:dayTimeDuration('-P321DT13H36M3S')
+xs:time 17:18:09
+# xs:dayTimeDuration('-P321DT13H36M3S') + xs:time('06:54:12')
+xs:time 17:18:09
+# xs:time('06:54:12') - xs:dayTimeDuration('-P321DT13H36M3S')
+xs:time 20:30:15
+# string(xs:time('01:12:04.6'))
+xs:string 01:12:04.6
+# adjust-dateTime-to-timezone(xs:dateTime('0039-05-31T07:14:47Z'), xs:dayTimeDuration('-PT3H'))
+xs:dateTime 0039-05-31T04:14:47-03:00
+# xs:date('0006-09-12') - xs:date('1925-11-30Z')
+xs:dayTimeDuration -P700979D
+# xs:date(xs:dateTime('9979-01-19T09:39:11.690528821'))
+xs:date 9979-01-19
+# xs:time(xs:dateTime('9979-01-19T09:39:11.690528821'))
+xs:time 09:39:11.690528821
+# xs:dateTime(xs:date(xs:dateTime('9979-01-19T09:39:11.690528821')))
+xs:dateTime 9979-01-19T00:00:00
+# xs:dateTime('0019-11-04T21:31:35.3') + xs:dayTimeDuration('P2160153DT14H13M46.065639197S')
+xs:dateTime 5934-02-22T11:45:21.365639197
+# xs:dayTimeDuration('P2160153DT14H13M46.065639197S') + xs:dateTime('0019-11-04T21:31:35.3')
+xs:dateTime 5934-02-22T11:45:21.365639197
+# xs:date('9990-04-20') - xs:date('0044-01-31')
+xs:dayTimeDuration P3632781D
+# string(xs:dateTime('4356-03-31T16:07:19.198305421'))
+xs:string 4356-03-31T16:07:19.198305421
+# xs:date('0036-03-26') + xs:dayTimeDuration('P212DT2H24M36.586922645S')
+xs:date 0036-10-24
+# xs:dayTimeDuration('P212DT2H24M36.586922645S') + xs:date('0036-03-26')
+xs:date 0036-10-24
+# xs:date('0036-03-26') - xs:dayTimeDuration('P212DT2H24M36.586922645S')
+xs:date 0035-08-26
+# hours-from-dateTime(xs:dateTime('9753-08-18T11:36:54.924345827+09:30'))
+xs:integer 11
+# seconds-from-dateTime(xs:dateTime('9753-08-18T11:36:54.924345827+09:30'))
+xs:decimal 54.924345827
+# timezone-from-dateTime(xs:dateTime('9753-08-18T11:36:54.924345827+09:30'))
+xs:dayTimeDuration PT9H30M
+# xs:dateTime('5646-02-26T10:13:44+06:30') + xs:yearMonthDuration('P7M')
+xs:dateTime 5646-09-26T10:13:44+06:30
+# xs:dateTime('5646-02-26T10:13:44+06:30') - xs:yearMonthDuration('P7M')
+xs:dateTime 5645-07-26T10:13:44+06:30
+# xs:time('21:56:23.749653258Z') - xs:time('06:01:47.170919269')
+xs:dayTimeDuration PT15H54M36.578733989S
+# string(xs:time('08:03:59.276'))
+xs:string 08:03:59.276
+# day-from-date(xs:date('1140-03-31'))
+xs:integer 31
+# xs:date(xs:dateTime('9993-09-22T06:17:22-08:00'))
+xs:date 9993-09-22-08:00
+# xs:time(xs:dateTime('9993-09-22T06:17:22-08:00'))
+xs:time 06:17:22-08:00
+# xs:dateTime(xs:date(xs:dateTime('9993-09-22T06:17:22-08:00')))
+xs:dateTime 9993-09-22T00:00:00-08:00
+# xs:dateTime('9937-12-18T20:13:04.6') + xs:yearMonthDuration('-P3139Y1M')
+xs:dateTime 6798-11-18T20:13:04.6
+# xs:time('15:10:36') lt xs:time('15:10:36')
+xs:boolean false
+# xs:time('15:10:36') eq xs:time('15:10:36')
+xs:boolean true
+# xs:time('15:10:36') ge xs:time('15:10:36')
+xs:boolean true
+# xs:dateTime('9974-09-30T21:36:24.7Z') lt xs:dateTime('8823-12-31T12:45:42-13:00')
+xs:boolean false
+# xs:dateTime('9974-09-30T21:36:24.7Z') eq xs:dateTime('8823-12-31T12:45:42-13:00')
+xs:boolean false
+# xs:dateTime('9974-09-30T21:36:24.7Z') ge xs:dateTime('8823-12-31T12:45:42-13:00')
+xs:boolean true
+# hours-from-time(xs:time('23:25:12.559255123Z'))
+xs:integer 23
+# seconds-from-time(xs:time('23:25:12.559255123Z'))
+xs:decimal 12.559255123
+# timezone-from-time(xs:time('23:25:12.559255123Z'))
+xs:dayTimeDuration PT0S
+# string(xs:dateTime('0015-10-17T22:18:32.4'))
+xs:string 0015-10-17T22:18:32.4
+# year-from-date(xs:date('4440-01-21'))
+xs:integer 4440
+# string(xs:date('2016-04-21+06:00'))
+xs:string 2016-04-21+06:00
+# string(xs:dateTime('0021-11-30T14:49:05'))
+xs:string 0021-11-30T14:49:05
+# xs:time('16:27:50') + xs:dayTimeDuration('P1DT1H29M3.370765967S')
+xs:time 17:56:53.370765967
+# xs:dayTimeDuration('P1DT1H29M3.370765967S') + xs:time('16:27:50')
+xs:time 17:56:53.370765967
+# xs:time('16:27:50') - xs:dayTimeDuration('P1DT1H29M3.370765967S')
+xs:time 14:58:46.629234033
+# xs:time('00:10:55.054+05:00') + xs:dayTimeDuration('P130DT18H47M48S')
+xs:time 18:58:43.054+05:00
+# xs:dayTimeDuration('P130DT18H47M48S') + xs:time('00:10:55.054+05:00')
+xs:time 18:58:43.054+05:00
+# xs:time('00:10:55.054+05:00') - xs:dayTimeDuration('P130DT18H47M48S')
+xs:time 05:23:07.054+05:00
+# xs:dateTime('1902-04-01T16:41:43.889440413-07:00') + xs:dayTimeDuration('P513697DT19H59M59S')
+xs:dateTime 3308-09-14T12:41:42.889440413-07:00
+# xs:dayTimeDuration('P513697DT19H59M59S') + xs:dateTime('1902-04-01T16:41:43.889440413-07:00')
+xs:dateTime 3308-09-14T12:41:42.889440413-07:00
+# xs:dateTime('1902-04-01T16:41:43.889440413-07:00') - xs:dayTimeDuration('P513697DT19H59M59S')
+xs:dateTime 0495-10-15T20:41:44.889440413-07:00
+# string(xs:date('3565-02-23Z'))
+xs:string 3565-02-23Z
+# xs:date('1944-07-31+12:15') - xs:yearMonthDuration('-P4095Y2M')
+xs:date 6039-09-30+12:15
+# xs:date(xs:dateTime('0008-09-30T05:47:18.91774403+11:00'))
+xs:date 0008-09-30+11:00
+# xs:time(xs:dateTime('0008-09-30T05:47:18.91774403+11:00'))
+xs:time 05:47:18.91774403+11:00
+# xs:dateTime(xs:date(xs:dateTime('0008-09-30T05:47:18.91774403+11:00')))
+xs:dateTime 0008-09-30T00:00:00+11:00
+# string(xs:time('20:24:21.9'))
+xs:string 20:24:21.9

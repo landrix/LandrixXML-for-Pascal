@@ -206,6 +206,11 @@ type
     FCurrentNode: Integer;
     FDepth: Integer;
     FMaxDepth: Integer;
+    { the implicit time zone and the current dateTime (FHasClock: read
+      or set) }
+    FImplicitTimeZone: Integer;
+    FClock: TLandrixXmlXsdDateTime;
+    FHasClock: Boolean;
     { compiled patterns: the dialect ("2" or "3"), flags, #0, the pattern (UTF-8) and the regex }
     FRegexKeys: TLandrixXmlUtf8Array;
     FRegexes: TObjectList;
@@ -233,6 +238,11 @@ type
     { the first node from which a pattern's positions are still unknown
       after the predicates evaluated so far (MaxInt if none) }
     FMinFailed: Integer;
+    procedure SetImplicitTimeZone(Value: Integer);
+    procedure SetCurrentDateTime(const Value: TLandrixXmlXsdDateTime);
+    function GetCurrentDateTime: TLandrixXmlXsdDateTime;
+    procedure ResetDynamicContext;
+    function ClockItem(Kind: TLandrixXmlXPathItemKind): TLandrixXmlXPathItem;
     procedure CutAfterFailure(var S: TLandrixXmlXPathSequence; FailAt: Integer; All, Final: Boolean);
     procedure AddFailed(Node: Integer);
     function WithoutFailed(const S: TLandrixXmlXPathSequence; First, Last: Integer): TLandrixXmlXPathSequence;
@@ -316,6 +326,21 @@ type
     property Tree: TLandrixXmlXPathTree read FTree;
     { the maximum nesting of user function calls (default 500) }
     property MaxDepth: Integer read FMaxDepth write FMaxDepth;
+    { The implicit time zone in minutes east of UTC (-840 to 840; default
+      0, UTC): values without a time zone are compared with and
+      subtracted from others in it, and current-dateTime() has it. }
+    property ImplicitTimeZone: Integer read FImplicitTimeZone write SetImplicitTimeZone;
+    { What current-dateTime(), current-date() and current-time() return
+      (with the implicit time zone: a value with a time zone is adjusted
+      to it, one without gets it); a value that is not a valid date and
+      time (hour 0 to 23) raises ELandrixXmlError. If it is not set, SysUtils.Now is read
+      at the first use and kept for the evaluator's lifetime; Now is the
+      local clock, so that value is the right instant only if
+      ImplicitTimeZone is the local offset. Reading the property before
+      the first use reads the clock. }
+    property CurrentDateTime: TLandrixXmlXsdDateTime read GetCurrentDateTime write SetCurrentDateTime;
+    { forgets a CurrentDateTime set before: the clock is read again }
+    procedure ClearCurrentDateTime;
   end;
 
 { The empty sequence and single items. }
@@ -839,6 +864,8 @@ begin
   inherited Create;
   FTree := Tree;
   FMaxDepth := 500;
+  FImplicitTimeZone := 0;
+  FHasClock := False;
   FCurrentNode := -1;
   FRegexes := TObjectList.Create(True);
   FCaches := TObjectList.Create(True);
@@ -1100,6 +1127,89 @@ begin
   DropCachedValues;
   { the evaluator's tree may have another size now }
   ComputeBases;
+end;
+
+{ The kept values and the evaluated variables depend on the dynamic
+  context: forget them (variables bound lazily are evaluated again). }
+procedure TLandrixXmlXPathEvaluator.ResetDynamicContext;
+var
+  I: Integer;
+begin
+  DropCachedValues;
+  for I := 0 to Integer(Length(FGlobals)) - 1 do
+    if (FGlobals[I].Expression <> nil) and (FGlobals[I].State in [xssValue, xssError]) then
+    begin
+      FGlobals[I].State := xssLazy;
+      FGlobals[I].Value := LandrixXmlXPathEmpty;
+    end;
+  for I := 0 to Integer(Length(FFrame)) - 1 do
+    if (FFrame[I].Expression <> nil) and (FFrame[I].State in [xssValue, xssError]) then
+    begin
+      FFrame[I].State := xssLazy;
+      FFrame[I].Value := LandrixXmlXPathEmpty;
+    end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.SetImplicitTimeZone(Value: Integer);
+begin
+  if (Value < -840) or (Value > 840) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'ImplicitTimeZone must be between -840 and 840 minutes');
+  if Value = FImplicitTimeZone then
+    Exit;
+  FImplicitTimeZone := Value;
+  ResetDynamicContext;
+end;
+
+procedure TLandrixXmlXPathEvaluator.SetCurrentDateTime(const Value: TLandrixXmlXsdDateTime);
+begin
+  if (Value.Year = 0) or (Value.Year = Low(Integer)) or (Value.Month < 1) or (Value.Month > 12) or
+    (Value.Day < 1) or (Value.Day > DaysInMonth(Value.Year, Value.Month)) or (Value.Hour < 0) or
+    (Value.Hour > 23) or (Value.Minute < 0) or (Value.Minute > 59) or (LandrixXmlDecimalSign(Value.Second) < 0) or
+    (LandrixXmlDecimalCompare(Value.Second, LandrixXmlDecimalFromInt64(60)) >= 0) or
+    Value.HasTimeZone and ((Value.TimeZone < -840) or (Value.TimeZone > 840)) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'CurrentDateTime: not a valid date and time');
+  FClock := Value;
+  FHasClock := True;
+  ResetDynamicContext;
+end;
+
+procedure TLandrixXmlXPathEvaluator.ClearCurrentDateTime;
+begin
+  FHasClock := False;
+  ResetDynamicContext;
+end;
+
+function TLandrixXmlXPathEvaluator.GetCurrentDateTime: TLandrixXmlXsdDateTime;
+begin
+  Result := ItemDateTime(ClockItem(xikDateTime));
+end;
+
+{ current-dateTime() and the others: the set value or the clock, in the
+  implicit time zone }
+function TLandrixXmlXPathEvaluator.ClockItem(Kind: TLandrixXmlXPathItemKind): TLandrixXmlXPathItem;
+var
+  T: TDateTime;
+  Y, Mo, D, H, Mi, S, Ms: Word;
+begin
+  if not FHasClock then
+  begin
+    T := Now;
+    DecodeDate(T, Y, Mo, D);
+    DecodeTime(T, H, Mi, S, Ms);
+    FClock.Year := Y;
+    FClock.Month := Mo;
+    FClock.Day := D;
+    FClock.Hour := H;
+    FClock.Minute := Mi;
+    FClock.Second := LandrixXmlDecimalAdd(LandrixXmlDecimalFromInt64(S),
+      LandrixXmlDecimalMultiplyPow10(LandrixXmlDecimalFromInt64(Ms), -3));
+    FClock.HasTimeZone := False;
+    FClock.TimeZone := 0;
+    FHasClock := True;
+  end;
+  Result := AdjustToTimeZone(DateItem(xikDateTime, FClock, DateText(FClock, xikDateTime)), True, FImplicitTimeZone);
+  if Kind <> xikDateTime then
+    Result := CastDateKind(Result, Kind);
 end;
 
 procedure TLandrixXmlXPathEvaluator.AddDocument(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree);
@@ -2508,7 +2618,7 @@ begin
       begin
         A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
         B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        Result := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op), Xp20));
+        Result := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op), Xp20, FImplicitTimeZone));
       end;
     xakValueCompare:
       begin
@@ -2520,7 +2630,8 @@ begin
         begin
           if (A.Count > 1) or (B.Count > 1) then
             Fail('XPTY0004', 'a value comparison needs single items');
-          Result := BooleanSeq(ValueCompare(A.Items[0], B.Items[0], TLandrixXmlXPathCompare(FNodes[Index].Op)));
+          Result := BooleanSeq(ValueCompare(A.Items[0], B.Items[0], TLandrixXmlXPathCompare(FNodes[Index].Op),
+            FImplicitTimeZone));
         end;
       end;
     xakRange:
@@ -2539,7 +2650,8 @@ begin
         begin
           if (A.Count > 1) or (B.Count > 1) then
             Fail('XPTY0004', 'arithmetic needs single items');
-          Result := SingleSeq(Arithmetic(A.Items[0], B.Items[0], TLandrixXmlXPathArithmetic(FNodes[Index].Op), Xp20));
+          Result := SingleSeq(Arithmetic(A.Items[0], B.Items[0], TLandrixXmlXPathArithmetic(FNodes[Index].Op), Xp20,
+            FImplicitTimeZone));
         end;
       end;
     xakNegate, xakUnaryPlus:
