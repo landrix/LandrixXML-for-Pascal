@@ -107,13 +107,15 @@ type
     the atomic type of a cast, a constructor function or a parameter. The
     list grows with the supported types; new labels are appended. Items
     have the kinds xikNode to xikTime and the types derived from
-    xs:integer (xikNonPositiveInteger to xikPositiveInteger); xikFloat (no
-    xs:float values yet), xikAnyAtomic (abstract) and xikNone (no type)
-    only label types. }
+    xs:integer (xikNonPositiveInteger to xikPositiveInteger) and from
+    xs:string (xikNormalizedString to xikENTITY); xikFloat (no xs:float
+    values yet), xikAnyAtomic (abstract) and xikNone (no type) only label
+    types. }
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
     xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone,
     xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt, xikShort, xikByte, xikNonNegativeInteger,
-    xikUnsignedLong, xikUnsignedInt, xikUnsignedShort, xikUnsignedByte, xikPositiveInteger);
+    xikUnsignedLong, xikUnsignedInt, xikUnsignedShort, xikUnsignedByte, xikPositiveInteger,
+    xikNormalizedString, xikToken, xikLanguage, xikNMTOKEN, xikName, xikNCName, xikID, xikIDREF, xikENTITY);
 
 
   { Sequence types: the declared type of a variable, parameter or function
@@ -190,7 +192,9 @@ type
     xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic,
     xfnXsNonPositiveInteger, xfnXsNegativeInteger, xfnXsLong, xfnXsInt, xfnXsShort, xfnXsByte,
     xfnXsNonNegativeInteger, xfnXsUnsignedLong, xfnXsUnsignedInt, xfnXsUnsignedShort, xfnXsUnsignedByte,
-    xfnXsPositiveInteger
+    xfnXsPositiveInteger,
+    xfnXsNormalizedString, xfnXsToken, xfnXsLanguage, xfnXsNMTOKEN, xfnXsName, xfnXsNCName, xfnXsID,
+    xfnXsIDREF, xfnXsENTITY
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -390,14 +394,24 @@ const
     (Name: 'unsignedInt'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'unsignedShort'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'unsignedByte'; MinArgs: 1; MaxArgs: 1; Xs: True),
-    (Name: 'positiveInteger'; MinArgs: 1; MaxArgs: 1; Xs: True)
+    (Name: 'positiveInteger'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'normalizedString'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'token'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'language'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'NMTOKEN'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'Name'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'NCName'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'ID'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'IDREF'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'ENTITY'; MinArgs: 1; MaxArgs: 1; Xs: True)
   );
 
   { local names in the xs namespace; empty for the labels without one }
   AtomicNames: array[TLandrixXmlXPathItemKind] of string = ('', 'untypedAtomic', 'string', 'anyURI',
     'boolean', 'integer', 'decimal', 'double', 'date', 'dateTime', 'time', 'float', 'anyAtomicType', '',
     'nonPositiveInteger', 'negativeInteger', 'long', 'int', 'short', 'byte', 'nonNegativeInteger',
-    'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte', 'positiveInteger');
+    'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte', 'positiveInteger',
+    'normalizedString', 'token', 'language', 'NMTOKEN', 'Name', 'NCName', 'ID', 'IDREF', 'ENTITY');
 
 function LandrixXmlXPathFunctionName(Id: TLandrixXmlXPathFunctionId): string;
 begin
@@ -661,11 +675,26 @@ begin
   Result := Copy(S, A, B - A + 1);
 end;
 
+{ True if the ASCII character C occurs in S (compared as bytes: no
+  conversion, which could map other characters to C). }
+function ContainsByte(const S: TLandrixXmlUtf8; C: AnsiChar): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to Integer(Length(S)) do
+    if S[I] = C then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
 { True if S is an NCName (the target of processing-instruction('...')),
   with the name characters of XML 1.0 fifth edition as the reader. }
 function IsNCName(const S: TLandrixXmlUtf8): Boolean;
 begin
-  Result := (S <> '') and (Pos(':', LandrixXmlUtf8ToString(S)) = 0) and
+  Result := (S <> '') and (not ContainsByte(S, ':')) and
     (LandrixXmlCheckName(PAnsiChar(S), Integer(Length(S))) = -1);
 end;
 
@@ -1555,7 +1584,7 @@ begin
   end
   else
   begin
-    if Pos('*', LandrixXmlUtf8ToString(Name)) > 0 then
+    if ContainsByte(Name, '*') then
       Error('an atomic type name was expected', Position);
     ResolveName(Name, Position, False, Uri, Local);
     if Uri <> LandrixXmlXPathSchemaNamespace then
@@ -1610,7 +1639,7 @@ begin
     xktProcessingInstruction:
       if (FToken.Kind = tkName) or (FToken.Kind = tkString) then
       begin
-        if (FToken.Kind = tkName) and ((Pos(':', LandrixXmlUtf8ToString(FToken.Text)) > 0) or (FToken.Text = '*')) then
+        if (FToken.Kind = tkName) and ((ContainsByte(FToken.Text, ':')) or (FToken.Text = '*')) then
           Error('the target of processing-instruction() must be a name without prefix', FToken.Position);
         if (FToken.Kind = tkString) and not IsNCName(Trimmed(FToken.Text)) then
           ErrorCode('XPTY0004', 'the target of processing-instruction() is not a name', FToken.Position);
@@ -1650,7 +1679,7 @@ begin
     Error('a name or "*" was expected', FToken.Position);
   if FToken.Text <> '*' then
   begin
-    if Pos('*', LandrixXmlUtf8ToString(FToken.Text)) > 0 then
+    if ContainsByte(FToken.Text, '*') then
       Error('a name or "*" was expected', FToken.Position);
     ResolveName(FToken.Text, FToken.Position, False, T.NamespaceUri, T.LocalName);
   end;
@@ -1658,7 +1687,7 @@ begin
   if not IsSymbol(',') then
     Exit;
   Next;
-  if (FToken.Kind <> tkName) or (Pos('*', LandrixXmlUtf8ToString(FToken.Text)) > 0) then
+  if (FToken.Kind <> tkName) or (ContainsByte(FToken.Text, '*')) then
     Error('a type name was expected', FToken.Position);
   ResolveName(FToken.Text, FToken.Position, False, Uri, Local);
   if (Uri <> LandrixXmlXPathSchemaNamespace) or not KnownTypeName(Local) then
@@ -1894,7 +1923,7 @@ begin
     begin
       if (FToken.Kind = tkName) or (FToken.Kind = tkString) then
       begin
-        if (FToken.Kind = tkName) and ((Pos(':', LandrixXmlUtf8ToString(FToken.Text)) > 0) or (FToken.Text = '*')) then
+        if (FToken.Kind = tkName) and ((ContainsByte(FToken.Text, ':')) or (FToken.Text = '*')) then
           Error('the target of processing-instruction() must be a name without prefix', FToken.Position);
         if (FToken.Kind = tkString) and not IsNCName(Trimmed(FToken.Text)) then
           ErrorCode('XPTY0004', 'the target of processing-instruction() is not a name', FToken.Position);

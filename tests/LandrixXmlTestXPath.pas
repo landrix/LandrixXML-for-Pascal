@@ -447,6 +447,10 @@ begin
   T := LandrixXmlXPathParseSequenceType(U('processing-instruction(''') + Utf8Bytes([$CD, $BF]) + U(''')'),
     Context);
   CheckEqualsUtf8(Utf8Bytes([$CD, $BF]), T.LocalName, 'a target with U+037F');
+  { U+FF1A, a name character that a code page conversion could turn into a colon }
+  T := LandrixXmlXPathParseSequenceType(U('processing-instruction(''') + Utf8Bytes([$EF, $BC, $9A]) + U(''')'),
+    Context);
+  CheckEqualsUtf8(Utf8Bytes([$EF, $BC, $9A]), T.LocalName, 'a target with U+FF1A');
   CheckTypeError('*', 'XPST0003');
   CheckTypeError('xs:*', 'XPST0003');
   CheckTypeError('*:string', 'XPST0003');

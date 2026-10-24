@@ -1,0 +1,126 @@
+# xs:token(1)
+xs:token 1
+# xs:NCName(1)
+error FORG0001
+# xs:NCName('a1')
+xs:NCName a1
+# xs:token(xs:anyURI('a  b'))
+xs:token a b
+# xs:NCName(true())
+xs:NCName true
+# xs:normalizedString('a&#9;b&#10;c')
+xs:normalizedString a&#9;b&#10;c
+# xs:normalizedString(concat('a', codepoints-to-string(9), 'b'))
+xs:normalizedString a b
+# xs:token(concat(' a ', codepoints-to-string(10), ' b '))
+xs:token a b
+# xs:language(' en-US ')
+xs:language en-US
+# xs:language('toolonglanguage')
+error FORG0001
+# xs:Name('a:b')
+xs:Name a:b
+# xs:NCName('a:b')
+error FORG0001
+# xs:NMTOKEN('1abc')
+xs:NMTOKEN 1abc
+# xs:Name('1abc')
+error FORG0001
+# xs:ID(' id1 ')
+xs:ID id1
+# xs:IDREF('x')
+xs:IDREF x
+# xs:ENTITY('e')
+xs:ENTITY e
+# xs:NCName(codepoints-to-string(895))
+xs:NCName Ϳ
+# xs:NMTOKEN(codepoints-to-string(183))
+xs:NMTOKEN ·
+# xs:token(/r/a)
+xs:token x y
+# xs:token('') instance of xs:string
+xs:boolean true
+# xs:ID('a') instance of xs:NCName
+xs:boolean true
+# xs:ID('a') instance of xs:token
+xs:boolean true
+# xs:token('a') = 'a'
+xs:boolean true
+# xs:token('a') eq xs:NCName('a')
+xs:boolean true
+# string-length(xs:token(' a b '))
+xs:integer 3
+# xs:token('a') cast as xs:NCName
+xs:NCName a
+# xs:NCName('a') cast as xs:integer
+error FORG0001
+# xs:token('5') cast as xs:integer
+xs:integer 5
+# upper-case(xs:token('a'))
+xs:string A
+# concat(xs:token('a'), xs:ID('b'))
+xs:string ab
+# data(xs:Name('n'))
+xs:Name n
+# xs:token('a') castable as xs:language
+xs:boolean true
+# max((xs:token('a'), 'b'))
+xs:string b
+# max((xs:token('b'), xs:anyURI('a')))
+xs:token b
+# string-join((xs:token('a'), xs:NCName('b')), '-')
+xs:string a-b
+# xs:untypedAtomic(xs:token('a'))
+xs:untypedAtomic a
+# xs:anyURI(xs:token('a'))
+xs:anyURI a
+# xs:language('de') instance of xs:language
+xs:boolean true
+# distinct-values((xs:token('a'), 'a'))
+xs:token a
+# xs:normalizedString(' a ')
+xs:normalizedString  a 
+# xs:NCName('')
+error FORG0001
+# xs:language('de-DE-1996')
+xs:language de-DE-1996
+# xs:language('de-')
+error FORG0001
+# xs:language('1de')
+error FORG0001
+# xs:Name(':a')
+xs:Name :a
+# xs:NCName('-a')
+error FORG0001
+# xs:NMTOKEN('a b')
+error FORG0001
+# xs:token('a') instance of xs:normalizedString
+xs:boolean true
+# xs:token('a') instance of xs:NCName
+xs:boolean false
+# xs:NCName('a') instance of xs:token
+xs:boolean true
+# xs:token('  ') 
+xs:token 
+# xs:normalizedString(xs:token('a')) instance of xs:token
+xs:boolean false
+# 'a' instance of xs:token
+xs:boolean false
+# xs:token(xs:double('1e3'))
+xs:token 1000
+# xs:Name(xs:date('2020-01-01'))
+error FORG0001
+# xs:ID(xs:untypedAtomic(' x '))
+xs:ID x
+# xs:token('ab') lt xs:NCName('b')
+xs:boolean true
+# xs:language('en') castable as xs:NCName
+xs:boolean true
+# xs:NCName('a') treat as xs:string
+xs:NCName a
+# xs:NCName(codepoints-to-string(65306))
+xs:NCName ：
+# xs:ID(codepoints-to-string(1417))
+xs:ID ։
+# xs:NCName(concat(codepoints-to-string(1417), ":a"))
+error FORG0001

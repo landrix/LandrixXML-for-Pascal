@@ -311,8 +311,8 @@ and the parsers also take a pointer and a length (`...Buf`).
   read back unchanged.
 - The [W3C XPath/XQuery test suite QT3](https://github.com/w3c/qt3tests)
   measures how much of XPath 2.0 the evaluator covers (`tools/run-qt3.py`,
-  pinned suite revision): of 15,144 applicable XPath 2.0 cases 8,544 pass
-  (56 %) and 1,464 more raise an error where one is expected, but with
+  pinned suite revision): of 15,144 applicable XPath 2.0 cases 8,676 pass
+  (57 %) and 1,430 more raise an error where one is expected, but with
   another code. Most failures are types and functions not implemented
   yet (durations, `xs:float`, the `xs:g*` and binary types).
   The passing cases are a baseline: the CI fails if one of them stops

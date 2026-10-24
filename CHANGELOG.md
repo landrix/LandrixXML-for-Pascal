@@ -152,6 +152,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: the types derived from `xs:string` (`xs:normalizedString`,
+  `xs:token`, `xs:language`, `xs:NMTOKEN`, `xs:Name`, `xs:NCName`, `xs:ID`,
+  `xs:IDREF`, `xs:ENTITY`) with constructor functions and casts (white
+  space of the type, then the lexical check with the name characters of
+  XML 1.0 fifth edition, FORG0001); they behave as strings and take part
+  in derivation. QT3: 132 more cases pass (8,676 in the XPath 2.0 profile,
+  8,663 in the Saxon profile).
 - XPath: the types derived from `xs:integer` (`xs:long`, `xs:int`,
   `xs:short`, `xs:byte`, the unsigned and the signed-range types) with
   their constructor functions, casts with range checks (FORG0001),

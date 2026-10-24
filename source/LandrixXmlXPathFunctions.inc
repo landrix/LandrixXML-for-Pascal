@@ -60,7 +60,7 @@ begin
             if Item.Kind = xikAnyUri then
               Item := StringItem(xikString, Item.Text)
             else
-              Ok := Item.Kind = xikString;
+              Ok := AtomicKindMatches(Item.Kind, xikString);
           xikUntypedAtomic: Ok := Item.Kind = xikUntypedAtomic;
           xikBoolean: Ok := Item.Kind = xikBoolean;
           xikDecimal: Ok := AtomicKindMatches(Item.Kind, xikDecimal);
@@ -74,7 +74,8 @@ begin
           xikDateTime: Ok := Item.Kind = xikDateTime;
           xikTime: Ok := Item.Kind = xikTime;
           xikAnyUri: Ok := Item.Kind = xikAnyUri;
-          xikNonPositiveInteger .. xikPositiveInteger: Ok := AtomicKindMatches(Item.Kind, T.AtomicType);
+          xikNonPositiveInteger .. xikPositiveInteger, xikNormalizedString .. xikENTITY:
+            Ok := AtomicKindMatches(Item.Kind, T.AtomicType);
         else
           Ok := False;
         end;
@@ -396,7 +397,7 @@ begin
         { xs:anyURI among strings compares and returns as xs:string }
         Found := False;
         for I := 0 to A.Count - 1 do
-          if A.Items[I].Kind = xikString then
+          if BasicKind(A.Items[I].Kind) = xikString then
             Found := True;
         if Found then
           for I := 0 to A.Count - 1 do
@@ -474,7 +475,7 @@ begin
           Saxon joins any atomic values }
         if Xp20 then
           for I := 0 to A.Count - 1 do
-            if not (A.Items[I].Kind in [xikString, xikUntypedAtomic, xikAnyUri]) then
+            if not IsStringLike(A.Items[I].Kind) then
               Fail('XPTY0004', Name + ': ' + KindName(A.Items[I].Kind) + ' is not an xs:string');
         T := '';
         if ArgCount > 1 then
@@ -841,7 +842,8 @@ begin
         Result := LandrixXmlXPathNodeItem(FDocBases[I]);
       end;
     xfnXsString, xfnXsBoolean, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsDate,
-    xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic, xfnXsNonPositiveInteger .. xfnXsPositiveInteger:
+    xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic, xfnXsNonPositiveInteger .. xfnXsPositiveInteger,
+    xfnXsNormalizedString .. xfnXsENTITY:
       begin
         if not OptAtom(0, Item) then
           Exit;
@@ -856,7 +858,7 @@ begin
           xfnXsTime: Result := SingleSeq(CastTo(Item, xikTime, Xp20));
           xfnXsAnyUri: Result := SingleSeq(CastTo(Item, xikAnyUri, Xp20));
           xfnXsUntypedAtomic: Result := SingleSeq(CastTo(Item, xikUntypedAtomic, Xp20));
-          xfnXsNonPositiveInteger .. xfnXsPositiveInteger:
+          xfnXsNonPositiveInteger .. xfnXsPositiveInteger, xfnXsNormalizedString .. xfnXsENTITY:
             Result := SingleSeq(CastTo(Item, FNodes[Index].AtomicType, Xp20));
         else
           Fail('FOER0000', 'xs:float is not supported');

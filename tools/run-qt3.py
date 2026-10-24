@@ -383,7 +383,13 @@ INTEGER_BASES = {
     "xs:unsignedByte": "xs:unsignedShort", "xs:positiveInteger": "xs:nonNegativeInteger",
 }
 NUMERIC = {"xs:integer", "xs:decimal", "xs:double"} | set(INTEGER_BASES)
-STRINGS = {"xs:string", "xs:anyURI", "xs:untypedAtomic"}
+# the types derived from xs:string and the type each one restricts
+STRING_BASES = {
+    "xs:normalizedString": "xs:string", "xs:token": "xs:normalizedString",
+    "xs:language": "xs:token", "xs:NMTOKEN": "xs:token", "xs:Name": "xs:token",
+    "xs:NCName": "xs:Name", "xs:ID": "xs:NCName", "xs:IDREF": "xs:NCName", "xs:ENTITY": "xs:NCName",
+}
+STRINGS = {"xs:string", "xs:anyURI", "xs:untypedAtomic"} | set(STRING_BASES)
 
 
 def number(t, v):
@@ -547,6 +553,12 @@ ATOMIC_PARENTS = {
     "xs:dateTime": {"xs:dateTime", "xs:anyAtomicType"},
     "xs:time": {"xs:time", "xs:anyAtomicType"},
 }
+for _derived in STRING_BASES:
+    _chain, _t = {_derived}, _derived
+    while _t in STRING_BASES:
+        _t = STRING_BASES[_t]
+        _chain.add(_t)
+    ATOMIC_PARENTS[_derived] = _chain | ATOMIC_PARENTS["xs:string"]
 for _derived in INTEGER_BASES:
     _chain, _t = {_derived}, _derived
     while _t in INTEGER_BASES:
@@ -803,6 +815,8 @@ def self_test():
         ("<assert-type>xs:decimal</assert-type>", {"R": items(i1)}, "pass"),
         ("<assert-type>xs:integer</assert-type>", {"R": items(("xs:byte", "1"))}, "pass"),
         ("<assert-type>xs:long</assert-type>", {"R": items(i1)}, "fail"),
+        ("<assert-type>xs:token</assert-type>", {"R": items(("xs:ID", "a"))}, "pass"),
+        ("<assert-eq>'a'</assert-eq>", {"R": items(("xs:NCName", "a")), "V1": items(("xs:string", "a"))}, "pass"),
         ("<assert-eq>1</assert-eq>", {"R": items(("xs:unsignedLong", "1")), "V1": items(i1)}, "pass"),
         ("<assert-type>xs:string</assert-type>", {"R": items(i1)}, "fail"),
         ("<assert-type>xs:int</assert-type>", {"R": items(i1)}, "fail"),

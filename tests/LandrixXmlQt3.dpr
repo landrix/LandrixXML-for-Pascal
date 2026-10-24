@@ -168,7 +168,9 @@ const
     'xs:boolean', 'xs:integer', 'xs:decimal', 'xs:double', 'xs:date', 'xs:dateTime', 'xs:time', 'xs:float', 'xs:anyAtomicType', 'none',
     'xs:nonPositiveInteger', 'xs:negativeInteger', 'xs:long', 'xs:int', 'xs:short', 'xs:byte',
     'xs:nonNegativeInteger', 'xs:unsignedLong', 'xs:unsignedInt', 'xs:unsignedShort', 'xs:unsignedByte',
-    'xs:positiveInteger');
+    'xs:positiveInteger',
+    'xs:normalizedString', 'xs:token', 'xs:language', 'xs:NMTOKEN', 'xs:Name', 'xs:NCName', 'xs:ID',
+    'xs:IDREF', 'xs:ENTITY');
   NodeKindNames: array[TLandrixXmlXPathNodeKind] of string = ('document-node', 'element', 'attribute', 'text',
     'comment', 'processing-instruction');
 

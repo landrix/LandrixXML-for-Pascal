@@ -1,0 +1,63 @@
+expr xs:token(1)
+expr xs:NCName(1)
+expr xs:NCName('a1')
+expr xs:token(xs:anyURI('a  b'))
+expr xs:NCName(true())
+expr xs:normalizedString('a&#9;b&#10;c')
+expr xs:normalizedString(concat('a', codepoints-to-string(9), 'b'))
+expr xs:token(concat(' a ', codepoints-to-string(10), ' b '))
+expr xs:language(' en-US ')
+expr xs:language('toolonglanguage')
+expr xs:Name('a:b')
+expr xs:NCName('a:b')
+expr xs:NMTOKEN('1abc')
+expr xs:Name('1abc')
+expr xs:ID(' id1 ')
+expr xs:IDREF('x')
+expr xs:ENTITY('e')
+expr xs:NCName(codepoints-to-string(895))
+expr xs:NMTOKEN(codepoints-to-string(183))
+expr xs:token(/r/a)
+expr xs:token('') instance of xs:string
+expr xs:ID('a') instance of xs:NCName
+expr xs:ID('a') instance of xs:token
+expr xs:token('a') = 'a'
+expr xs:token('a') eq xs:NCName('a')
+expr string-length(xs:token(' a b '))
+expr xs:token('a') cast as xs:NCName
+expr xs:NCName('a') cast as xs:integer
+expr xs:token('5') cast as xs:integer
+expr upper-case(xs:token('a'))
+expr concat(xs:token('a'), xs:ID('b'))
+expr data(xs:Name('n'))
+expr xs:token('a') castable as xs:language
+expr max((xs:token('a'), 'b'))
+expr max((xs:token('b'), xs:anyURI('a')))
+expr string-join((xs:token('a'), xs:NCName('b')), '-')
+expr xs:untypedAtomic(xs:token('a'))
+expr xs:anyURI(xs:token('a'))
+expr xs:language('de') instance of xs:language
+expr distinct-values((xs:token('a'), 'a'))
+expr xs:normalizedString(' a ')
+expr xs:NCName('')
+expr xs:language('de-DE-1996')
+expr xs:language('de-')
+expr xs:language('1de')
+expr xs:Name(':a')
+expr xs:NCName('-a')
+expr xs:NMTOKEN('a b')
+expr xs:token('a') instance of xs:normalizedString
+expr xs:token('a') instance of xs:NCName
+expr xs:NCName('a') instance of xs:token
+expr xs:token('  ') 
+expr xs:normalizedString(xs:token('a')) instance of xs:token
+expr 'a' instance of xs:token
+expr xs:token(xs:double('1e3'))
+expr xs:Name(xs:date('2020-01-01'))
+expr xs:ID(xs:untypedAtomic(' x '))
+expr xs:token('ab') lt xs:NCName('b')
+expr xs:language('en') castable as xs:NCName
+expr xs:NCName('a') treat as xs:string
+expr xs:NCName(codepoints-to-string(65306))
+expr xs:ID(codepoints-to-string(1417))
+expr xs:NCName(concat(codepoints-to-string(1417), ":a"))

@@ -544,12 +544,17 @@ end;
 const
   { xs:integer and the types derived from it }
   IntegerKinds = [xikInteger, xikNonPositiveInteger .. xikPositiveInteger];
+  { xs:string and the types derived from it }
+  StringKinds = [xikString, xikNormalizedString .. xikENTITY];
 
-{ The kind an operation sees: xs:integer for the types derived from it. }
+{ The kind an operation sees: xs:integer and xs:string for the types
+  derived from them. }
 function BasicKind(Kind: TLandrixXmlXPathItemKind): TLandrixXmlXPathItemKind;
 begin
   if Kind in IntegerKinds then
     Result := xikInteger
+  else if Kind in StringKinds then
+    Result := xikString
   else
     Result := Kind;
 end;
@@ -561,7 +566,7 @@ end;
 
 function IsStringLike(Kind: TLandrixXmlXPathItemKind): Boolean;
 begin
-  Result := Kind in [xikString, xikUntypedAtomic, xikAnyUri];
+  Result := Kind in StringKinds + [xikUntypedAtomic, xikAnyUri];
 end;
 
 function KindName(Kind: TLandrixXmlXPathItemKind): string;
@@ -1168,6 +1173,11 @@ begin
     xikUnsignedInt: Result := xikUnsignedLong;
     xikUnsignedShort: Result := xikUnsignedInt;
     xikUnsignedByte: Result := xikUnsignedShort;
+    xikNormalizedString: Result := xikString;
+    xikToken: Result := xikNormalizedString;
+    xikLanguage, xikNMTOKEN, xikName: Result := xikToken;
+    xikNCName: Result := xikName;
+    xikID, xikIDREF, xikENTITY: Result := xikNCName;
   else
     Result := xikAnyAtomic;
   end;

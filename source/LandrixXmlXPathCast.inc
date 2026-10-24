@@ -590,10 +590,105 @@ begin
   end;
 end;
 
+{ True if the ASCII character C occurs in S (compared as bytes: no
+  conversion, which could map other characters to C). }
+function ContainsByte(const S: TLandrixXmlUtf8; C: AnsiChar): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to Integer(Length(S)) do
+    if S[I] = C then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
+{ True if every character of S is an XML name character (fifth edition,
+  as the reader); Name: the first one may start a name. }
+function NameCharacters(const S: TLandrixXmlUtf8; Name: Boolean): Boolean;
+var
+  P, N: Integer;
+  CP: Cardinal;
+begin
+  Result := S <> '';
+  P := 1;
+  while Result and (P <= Integer(Length(S))) do
+  begin
+    N := LandrixXmlDecodeUtf8(PAnsiChar(@S[P]), Integer(Length(S)) - P + 1, CP);
+    if N = 0 then
+      Result := False
+    else if Name and (P = 1) then
+      Result := LandrixXmlIsNameStartChar(CP)
+    else
+      Result := LandrixXmlIsNameChar(CP);
+    Inc(P, N);
+  end;
+end;
+
+{ xs:language: 1 to 8 letters, then any number of "-" and 1 to 8 letters
+  or digits }
+function IsLanguage(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, Run: Integer;
+  First: Boolean;
+begin
+  Result := S <> '';
+  Run := 0;
+  First := True;
+  I := 1;
+  while Result and (I <= Length(S)) do
+  begin
+    if S[I] = '-' then
+    begin
+      Result := Run > 0;
+      Run := 0;
+      First := False;
+    end
+    else
+    begin
+      Inc(Run);
+      Result := (Run <= 8) and ((S[I] in ['a'..'z', 'A'..'Z']) or
+        (not First and (S[I] in ['0'..'9'])));
+    end;
+    Inc(I);
+  end;
+  Result := Result and (Run > 0);
+end;
+
+{ The value of a type derived from xs:string: S with the white space of
+  the type (normalizedString replaces TAB, CR and LF by spaces, the
+  others also collapse spaces) if it is in the lexical space. }
+function DerivedStringValue(var S: TLandrixXmlUtf8; T: TLandrixXmlXPathItemKind): Boolean;
+var
+  I: Integer;
+begin
+  if T = xikNormalizedString then
+  begin
+    for I := 1 to Length(S) do
+      if S[I] in [#9, #10, #13] then
+        S[I] := ' ';
+    Result := True;
+    Exit;
+  end;
+  S := NormalizeSpace(S);
+  case T of
+    xikToken: Result := True;
+    xikLanguage: Result := IsLanguage(S);
+    xikNMTOKEN: Result := NameCharacters(S, False);
+    xikName: Result := NameCharacters(S, True);
+  else
+    { NCName, ID, IDREF, ENTITY }
+    Result := NameCharacters(S, True) and (not ContainsByte(S, ':'));
+  end;
+end;
+
 function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem;
 var
   D: TLandrixXmlDecimal;
+  Str: TLandrixXmlUtf8;
   F: TLandrixXmlDouble;
   StringSource: Boolean;
 
@@ -604,7 +699,7 @@ var
 
 begin
   { xs:anyURI casts only to strings (and anyURI) }
-  StringSource := Item.Kind in [xikString, xikUntypedAtomic];
+  StringSource := BasicKind(Item.Kind) in [xikString, xikUntypedAtomic];
   InitItem(Result, xikString);
   case T of
     xikString:
@@ -738,6 +833,15 @@ begin
           Fail('FORG0001', LandrixXmlUtf8ToString(AtomicString(Result)) + ' is out of the range of ' +
             LandrixXmlXPathAtomicTypeName(T));
         Result.Kind := T;
+      end;
+    xikNormalizedString .. xikENTITY:
+      begin
+        { through xs:string, then the white space and the lexical check }
+        Str := AtomicString(CastTo(Item, xikString, Xp20));
+        if not DerivedStringValue(Str, T) then
+          Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(Str, 60) + ''' to ' +
+            LandrixXmlXPathAtomicTypeName(T));
+        Result := StringItem(T, Str);
       end;
   else
     Fail('FOER0000', 'casts to ' + LandrixXmlXPathAtomicTypeName(T) + ' are not supported');
