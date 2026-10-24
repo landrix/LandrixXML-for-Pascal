@@ -248,6 +248,7 @@ type
     procedure ComputeBases;
     function TreeOf(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
     function NodeMatches(Node: Integer; const T: TLandrixXmlXPathSequenceType): Boolean;
+    function SequenceMatches(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType): Boolean;
     function RootOf(Node: Integer): Integer;
     function SlotRef(Slot: Integer): Pointer;
     function ReadVariable(Slot: Integer): TLandrixXmlXPathSequence;
@@ -901,8 +902,10 @@ const
 begin
   case Nodes[Index].Kind of
     xakGeneralCompare, xakValueCompare, xakAnd, xakOr, xakString, xakCastable, xakUnion, xakSome, xakEvery,
-    xakStep, xakIntersectExcept, xakNodeCompare:
+    xakStep, xakIntersectExcept, xakNodeCompare, xakInstanceOf:
       Result := False;
+    xakTreat:
+      Result := MayBePositional(Nodes, Nodes[Index].Children[0]);
     xakPath:
       Result := Nodes[Nodes[Index].Children[Integer(High(Nodes[Index].Children))]].Kind <> xakStep;
     xakFunction:
@@ -1134,6 +1137,63 @@ begin
         Result := Result and (Elements = 1);
       end;
     end;
+  end;
+end;
+
+{ The type an atomic type is derived from by restriction; xikAnyAtomic
+  for the primitive types (and xs:untypedAtomic). }
+function BaseKind(Kind: TLandrixXmlXPathItemKind): TLandrixXmlXPathItemKind;
+begin
+  case Kind of
+    xikInteger: Result := xikDecimal;
+  else
+    Result := xikAnyAtomic;
+  end;
+end;
+
+{ True if an atomic value of Kind is an instance of the atomic type T:
+  Kind is T or derived from it (no promotion, which belongs to the
+  function conversion rules). }
+function AtomicKindMatches(Kind, T: TLandrixXmlXPathItemKind): Boolean;
+begin
+  Result := True;
+  while Kind <> xikAnyAtomic do
+  begin
+    if Kind = T then
+      Exit;
+    Kind := BaseKind(Kind);
+  end;
+  Result := T = xikAnyAtomic;
+end;
+
+{ SequenceType matching: instance of, treat as. }
+function TLandrixXmlXPathEvaluator.SequenceMatches(const S: TLandrixXmlXPathSequence;
+  const T: TLandrixXmlXPathSequenceType): Boolean;
+var
+  I: Integer;
+begin
+  if T.Kind = xtkEmpty then
+  begin
+    Result := S.Count = 0;
+    Exit;
+  end;
+  case T.Occurrence of
+    xocOne: Result := S.Count = 1;
+    xocOptional: Result := S.Count <= 1;
+    xocOneOrMore: Result := S.Count >= 1;
+  else
+    Result := True;
+  end;
+  I := 0;
+  while Result and (I < S.Count) do
+  begin
+    case T.Kind of
+      xtkNode: Result := (S.Items[I].Kind = xikNode) and NodeMatches(S.Items[I].Node, T);
+      xtkAtomic: Result := (S.Items[I].Kind <> xikNode) and AtomicKindMatches(S.Items[I].Kind, T.AtomicType);
+    else
+      { item() }
+    end;
+    Inc(I);
   end;
 end;
 
@@ -1690,8 +1750,10 @@ begin
   case Nodes[Index].Kind of
     { "." too: a pattern's predicates are evaluated on nodes }
     xakGeneralCompare, xakValueCompare, xakAnd, xakOr, xakString, xakCastable, xakUnion, xakSome, xakEvery,
-    xakStep, xakEmpty, xakRoot, xakContextItem, xakIntersectExcept, xakNodeCompare:
+    xakStep, xakEmpty, xakRoot, xakContextItem, xakIntersectExcept, xakNodeCompare, xakInstanceOf:
       Result := False;
+    xakTreat:
+      Result := MayBeNumeric(Nodes, Nodes[Index].Children[0]);
     xakPath:
       Result := Nodes[Nodes[Index].Children[Integer(High(Nodes[Index].Children))]].Kind <> xakStep;
     xakIf:
@@ -1761,6 +1823,9 @@ end;
   it is none. }
 function LiteralPosition(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Int64;
 begin
+  { treat as keeps the value (or raises XPDY0050) }
+  while Nodes[Index].Kind = xakTreat do
+    Index := Nodes[Index].Children[0];
   { xs:integer(1) too }
   if (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) and
     (TLandrixXmlXPathFunctionId(Nodes[Index].Op) = xfnXsInteger) and (Length(Nodes[Index].Children) = 1) then
@@ -2454,6 +2519,20 @@ begin
             Result := BooleanSeq(A.Items[0].Node = B.Items[0].Node);
           end;
         end;
+      end;
+    xakInstanceOf:
+      begin
+        A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
+        N := @FNodes[Index];
+        Result := BooleanSeq(SequenceMatches(A, N^.SequenceType));
+      end;
+    xakTreat:
+      begin
+        Result := Eval(N^.Children[0], Context, Position, Size, ContextItem);
+        N := @FNodes[Index];
+        if not SequenceMatches(Result, N^.SequenceType) then
+          Fail('XPDY0050', 'treat as ' + LandrixXmlXPathSequenceTypeName(N^.SequenceType) +
+            ': the value does not match');
       end;
     xakCast, xakCastable:
       begin

@@ -635,6 +635,7 @@ begin
     CheckEquals(2, Count('//a[normalize-space(v) != ''z''][reverse(v)]'), 'reverse() of nodes');
     CheckEquals(2, Count('//a[xs:integer(v[1]) > 0][.]'), 'the context node');
     CheckEquals(1, Count('//a[xs:integer(v[1]) > 0][xs:integer(1)][last()]'), 'xs:integer(1) as [1]');
+    CheckEquals(1, Count('//a[xs:integer(v[1]) > 0][1 treat as xs:integer][last()]'), 'treat as around [1]');
     CheckEquals(1, Count('//(a[xs:integer(v[1]) > 0][1])[last()]'), 'a filter after a resolved [1]');
     CheckEquals(1, Count('//((a[xs:integer(v[1]) > 0])[1])[last()]'), 'a nested filter after a resolved [1]');
     CheckEquals(1, Count('//(a[xs:integer(v[1]) > 0])[1]'), 'a filter: the first item comes before the error');

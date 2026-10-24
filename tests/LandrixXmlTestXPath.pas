@@ -119,6 +119,8 @@ begin
           Result := Result + '?';
         Result := Result + ')';
       end;
+    xakInstanceOf: Result := '(instance-of' + Kids + ' ' + LandrixXmlXPathSequenceTypeName(N.SequenceType) + ')';
+    xakTreat: Result := '(treat' + Kids + ' ' + LandrixXmlXPathSequenceTypeName(N.SequenceType) + ')';
     xakRoot: Result := '/';
     xakPath:
       begin
@@ -252,6 +254,13 @@ begin
   CheckParse('a | b union c', '(| (| child::{}a child::{}b) child::{}c)');
   CheckParse('a castable as xs:decimal', '(castable child::{}a xs:decimal)');
   CheckParse('a cast as xs:date?', '(cast child::{}a xs:date?)');
+  CheckParse('a instance of element(b)*', '(instance-of child::{}a element(b)*)');
+  CheckParse('a treat as xs:integer', '(treat child::{}a xs:integer)');
+  { instance of binds tighter than intersect and +, treat tighter than instance of }
+  CheckParse('1 + a instance of item()', '(+ 1 (instance-of child::{}a item()))');
+  CheckParse('a intersect b instance of node()', '(intersect child::{}a (instance-of child::{}b node()))');
+  CheckParse('a treat as node() instance of node()', '(instance-of (treat child::{}a node()) node())');
+  CheckParse('a castable as xs:integer treat as xs:boolean', '(treat (castable child::{}a xs:integer) xs:boolean)');
   CheckParse('1.5', '1.5d');
   CheckParse('.5', '0.5d');
   CheckParse('1e3', '1000e');
@@ -281,11 +290,14 @@ begin
   SetUpContext;
   CheckError('a +', 'XPST0003');
   CheckError('(a', 'XPST0003');
-  CheckError('a instance of xs:integer', 'XPST0003');
   CheckError('namespace::a', 'XPST0003');
   CheckError('namespace::a', 'XPST0003');
   CheckError('element(a)', 'XPST0003');
   CheckError('''abc', 'XPST0003');
+  CheckError('1 instance of xs:integer instance of xs:boolean', 'XPST0003');
+  CheckError('1 instance xs:integer', 'XPST0003');
+  CheckError('1 treat xs:integer', 'XPST0003');
+  CheckError('(1, 2) instance of xs:integer + 1', 'XPST0003');
   CheckError('1a', 'XPST0003');
   CheckError('$undeclared', 'XPST0008');
   CheckError('unknown(1)', 'XPST0017');

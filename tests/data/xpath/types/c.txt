@@ -1,0 +1,79 @@
+expr 1 instance of xs:integer
+expr 1 instance of xs:decimal
+expr 1 instance of xs:double
+expr 1 instance of xs:anyAtomicType
+expr 1.5 instance of xs:integer
+expr 1.5 instance of xs:decimal
+expr 1e0 instance of xs:double
+expr 'a' instance of xs:string
+expr xs:anyURI('a') instance of xs:string
+expr xs:anyURI('a') instance of xs:anyURI
+expr xs:untypedAtomic('1') instance of xs:string
+expr xs:untypedAtomic('1') instance of xs:untypedAtomic
+expr true() instance of xs:boolean
+expr xs:date('2020-01-01') instance of xs:date
+expr xs:date('2020-01-01') instance of xs:dateTime
+expr (1, 2) instance of xs:integer
+expr (1, 2) instance of xs:integer+
+expr (1, 2) instance of xs:integer*
+expr (1, 2) instance of xs:integer?
+expr () instance of xs:integer?
+expr () instance of xs:integer
+expr () instance of xs:integer+
+expr () instance of empty-sequence()
+expr 1 instance of empty-sequence()
+expr (1, 'a') instance of xs:anyAtomicType*
+expr (1, 'a') instance of xs:integer*
+expr (1, 'a') instance of item()+
+expr //a instance of element()+
+expr //a instance of element(a)*
+expr //a instance of element(b)*
+expr //a instance of element(*, xs:untyped)+
+expr //a instance of element(a, xs:string)*
+expr //a instance of xs:untypedAtomic*
+expr /r/@k instance of attribute(k)
+expr /r/@k instance of attribute()
+expr /r/@k instance of element()
+expr /r/@k instance of attribute(*, xs:untypedAtomic)
+expr /r/@k instance of xs:untypedAtomic
+expr data(/r/@k) instance of xs:untypedAtomic
+expr / instance of document-node()
+expr / instance of document-node(element(r))
+expr / instance of document-node(element(a))
+expr /r instance of document-node()
+expr /r/comment() instance of comment()
+expr /r/comment() instance of text()
+expr /r/processing-instruction() instance of processing-instruction(pi)
+expr /r/processing-instruction() instance of processing-instruction('pi')
+expr /r/processing-instruction() instance of processing-instruction(other)
+expr //a[1]/text() instance of text()
+expr //node() instance of node()*
+expr (//a, 1) instance of node()*
+expr 1 treat as xs:integer
+expr (1, 2) treat as xs:integer+
+expr 1 treat as xs:decimal
+expr 1 treat as xs:string
+expr () treat as xs:integer
+expr () treat as empty-sequence()
+expr //a treat as element(a)+
+expr count(//b treat as element(b))
+expr 1 + 2 instance of xs:integer
+expr (1 + 2) instance of xs:integer
+expr 1 instance of xs:integer and true()
+expr - 1 instance of xs:integer
+expr 1 instance of xs:integer instance of xs:boolean
+expr 1 treat as xs:integer instance of xs:integer
+expr 'x' castable as xs:integer instance of xs:boolean
+expr (1, 2) instance of xs:integer + 1
+expr 5 instance of xs:integer*
+expr //a intersect //a instance of element()*
+expr 1 instance of item()
+expr (1, 2) instance of item()
+expr if (1 instance of xs:integer) then 'y' else 'n'
+expr //a[. instance of element(a)][1]/@k/string()
+expr 1 instance of xs:unknown
+expr 1 instance of foo:bar
+expr 1 instance of element(a, xs:unknown)
+expr (/) instance of document-node()
+expr (/) instance of document-node(element(r))
+expr (/) instance of document-node(element(a))

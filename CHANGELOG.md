@@ -152,6 +152,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `instance of` and `treat as` (XPDY0050) with all XPath 2.0
+  sequence types; `xs:integer` is an instance of `xs:decimal`, without the
+  promotions of the function conversion rules. QT3: 326 more cases pass
+  (6,513 in the XPath 2.0 profile, 6,500 in the Saxon profile).
 - `LandrixXmlXPathParseSequenceType` and `LandrixXmlXPathSequenceTypeName`:
   XPath 2.0 sequence types (`xs:decimal?`, `element(a)*`,
   `document-node(element(*, xs:untyped))`, `empty-sequence()`, ...) with

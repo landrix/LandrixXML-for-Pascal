@@ -86,7 +86,9 @@ type
     xakVariable,      { Slot }
     xakContextItem,   { . }
     xakFunction,      { Op = function id (built-in) or -1 - user function index; Children = arguments }
-    xakLet            { internal binding: Slot, Children = value, body }
+    xakLet,           { internal binding: Slot, Children = value, body }
+    xakInstanceOf,    { Children = operand; SequenceType }
+    xakTreat          { Children = operand; SequenceType }
   );
 
   TLandrixXmlXPathCompare = (xpcEq, xpcNe, xpcLt, xpcLe, xpcGt, xpcGe);
@@ -108,6 +110,7 @@ type
     xikAnyAtomic (abstract) and xikNone (no type) only label types. }
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
     xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone);
+
 
   { Sequence types: the declared type of a variable, parameter or function
     result. Occurrence: exactly one, ?, * and +. }
@@ -160,6 +163,8 @@ type
     DoubleValue: TLandrixXmlDouble;
     AtomicType: TLandrixXmlXPathItemKind;
     AllowEmpty: Boolean;
+    { instance of, treat as }
+    SequenceType: TLandrixXmlXPathSequenceType;
     { 1-based byte index into the expression text (messages print it
       0-based as "offset") }
     Position: Integer;
@@ -594,6 +599,8 @@ type
     function ParseMultiplicative: Integer;
     function ParseUnion: Integer;
     function ParseIntersectExcept: Integer;
+    function ParseInstanceOf: Integer;
+    function ParseTreat: Integer;
     function ParseCastable: Integer;
     function ParseCast: Integer;
     function ParseUnary: Integer;
@@ -1295,22 +1302,55 @@ function TParser.ParseIntersectExcept: Integer;
 var
   N: Integer;
 
-  function Operand: Integer;
-  begin
-    Result := ParseCastable;
-    if IsName('instance') or IsName('treat') then
-      Error('"' + LandrixXmlUtf8ToString(FToken.Text) + '" is not supported', FToken.Position);
-  end;
-
 begin
-  Result := Operand;
+  Result := ParseInstanceOf;
   while IsName('intersect') or IsName('except') do
   begin
     N := NewNode(xakIntersectExcept, FToken.Position);
     FNodes[N].Op := Ord(IsName('except'));
     Next;
     AddChild(N, Result);
-    AddChild(N, Operand);
+    AddChild(N, ParseInstanceOf);
+    Result := N;
+  end;
+end;
+
+function TParser.ParseInstanceOf: Integer;
+var
+  N: Integer;
+  T: TLandrixXmlXPathSequenceType;
+begin
+  Result := ParseTreat;
+  if IsName('instance') then
+  begin
+    N := NewNode(xakInstanceOf, FToken.Position);
+    Next;
+    if not IsName('of') then
+      Error('"of" was expected', FToken.Position);
+    Next;
+    AddChild(N, Result);
+    T := ParseSequenceType;
+    FNodes[N].SequenceType := T;
+    Result := N;
+  end;
+end;
+
+function TParser.ParseTreat: Integer;
+var
+  N: Integer;
+  T: TLandrixXmlXPathSequenceType;
+begin
+  Result := ParseCastable;
+  if IsName('treat') then
+  begin
+    N := NewNode(xakTreat, FToken.Position);
+    Next;
+    if not IsName('as') then
+      Error('"as" was expected', FToken.Position);
+    Next;
+    AddChild(N, Result);
+    T := ParseSequenceType;
+    FNodes[N].SequenceType := T;
     Result := N;
   end;
 end;

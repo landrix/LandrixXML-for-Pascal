@@ -1,0 +1,166 @@
+# 1 instance of xs:integer
+xs:boolean true
+# 1 instance of xs:decimal
+xs:boolean true
+# 1 instance of xs:double
+xs:boolean false
+# 1 instance of xs:anyAtomicType
+xs:boolean true
+# 1.5 instance of xs:integer
+xs:boolean false
+# 1.5 instance of xs:decimal
+xs:boolean true
+# 1e0 instance of xs:double
+xs:boolean true
+# 'a' instance of xs:string
+xs:boolean true
+# xs:anyURI('a') instance of xs:string
+xs:boolean false
+# xs:anyURI('a') instance of xs:anyURI
+xs:boolean true
+# xs:untypedAtomic('1') instance of xs:string
+xs:boolean false
+# xs:untypedAtomic('1') instance of xs:untypedAtomic
+xs:boolean true
+# true() instance of xs:boolean
+xs:boolean true
+# xs:date('2020-01-01') instance of xs:date
+xs:boolean true
+# xs:date('2020-01-01') instance of xs:dateTime
+xs:boolean false
+# (1, 2) instance of xs:integer
+xs:boolean false
+# (1, 2) instance of xs:integer+
+xs:boolean true
+# (1, 2) instance of xs:integer*
+xs:boolean true
+# (1, 2) instance of xs:integer?
+xs:boolean false
+# () instance of xs:integer?
+xs:boolean true
+# () instance of xs:integer
+xs:boolean false
+# () instance of xs:integer+
+xs:boolean false
+# () instance of empty-sequence()
+xs:boolean true
+# 1 instance of empty-sequence()
+xs:boolean false
+# (1, 'a') instance of xs:anyAtomicType*
+xs:boolean true
+# (1, 'a') instance of xs:integer*
+xs:boolean false
+# (1, 'a') instance of item()+
+xs:boolean true
+# //a instance of element()+
+xs:boolean true
+# //a instance of element(a)*
+xs:boolean true
+# //a instance of element(b)*
+xs:boolean false
+# //a instance of element(*, xs:untyped)+
+xs:boolean true
+# //a instance of element(a, xs:string)*
+xs:boolean false
+# //a instance of xs:untypedAtomic*
+xs:boolean false
+# /r/@k instance of attribute(k)
+xs:boolean true
+# /r/@k instance of attribute()
+xs:boolean true
+# /r/@k instance of element()
+xs:boolean false
+# /r/@k instance of attribute(*, xs:untypedAtomic)
+xs:boolean true
+# /r/@k instance of xs:untypedAtomic
+xs:boolean false
+# data(/r/@k) instance of xs:untypedAtomic
+xs:boolean true
+# / instance of document-node()
+error XPST0003
+# / instance of document-node(element(r))
+error XPST0003
+# / instance of document-node(element(a))
+error XPST0003
+# /r instance of document-node()
+xs:boolean false
+# /r/comment() instance of comment()
+xs:boolean true
+# /r/comment() instance of text()
+xs:boolean false
+# /r/processing-instruction() instance of processing-instruction(pi)
+xs:boolean true
+# /r/processing-instruction() instance of processing-instruction('pi')
+xs:boolean true
+# /r/processing-instruction() instance of processing-instruction(other)
+xs:boolean false
+# //a[1]/text() instance of text()
+xs:boolean true
+# //node() instance of node()*
+xs:boolean true
+# (//a, 1) instance of node()*
+xs:boolean false
+# 1 treat as xs:integer
+xs:integer 1
+# (1, 2) treat as xs:integer+
+xs:integer 1
+xs:integer 2
+# 1 treat as xs:decimal
+xs:integer 1
+# 1 treat as xs:string
+error XPDY0050
+# () treat as xs:integer
+error XPDY0050
+# () treat as empty-sequence()
+# //a treat as element(a)+
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[1]/Q{}a[2]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}a[2]
+# count(//b treat as element(b))
+xs:integer 1
+# 1 + 2 instance of xs:integer
+error XPTY0004
+# (1 + 2) instance of xs:integer
+xs:boolean true
+# 1 instance of xs:integer and true()
+xs:boolean true
+# - 1 instance of xs:integer
+xs:boolean true
+# 1 instance of xs:integer instance of xs:boolean
+error XPST0003
+# 1 treat as xs:integer instance of xs:integer
+xs:boolean true
+# 'x' castable as xs:integer instance of xs:boolean
+xs:boolean true
+# (1, 2) instance of xs:integer + 1
+error XPST0003
+# 5 instance of xs:integer*
+xs:boolean true
+# //a intersect //a instance of element()*
+error XPTY0004
+# 1 instance of item()
+xs:boolean true
+# (1, 2) instance of item()
+xs:boolean false
+# if (1 instance of xs:integer) then 'y' else 'n'
+xs:string y
+# //a[. instance of element(a)][1]/@k/string()
+xs:string 1
+xs:string 2
+xs:string 6
+xs:string 3
+# 1 instance of xs:unknown
+error XPST0051
+# 1 instance of foo:bar
+error XPST0081
+# 1 instance of element(a, xs:unknown)
+error XPST0008
+# (/) instance of document-node()
+xs:boolean true
+# (/) instance of document-node(element(r))
+xs:boolean true
+# (/) instance of document-node(element(a))
+xs:boolean false
