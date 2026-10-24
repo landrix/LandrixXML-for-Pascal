@@ -165,7 +165,10 @@ end;
 
 const
   KindNames: array[TLandrixXmlXPathItemKind] of string = ('node', 'xs:untypedAtomic', 'xs:string', 'xs:anyURI',
-    'xs:boolean', 'xs:integer', 'xs:decimal', 'xs:double', 'xs:date', 'xs:dateTime', 'xs:time', 'xs:float', 'xs:anyAtomicType', 'none');
+    'xs:boolean', 'xs:integer', 'xs:decimal', 'xs:double', 'xs:date', 'xs:dateTime', 'xs:time', 'xs:float', 'xs:anyAtomicType', 'none',
+    'xs:nonPositiveInteger', 'xs:negativeInteger', 'xs:long', 'xs:int', 'xs:short', 'xs:byte',
+    'xs:nonNegativeInteger', 'xs:unsignedLong', 'xs:unsignedInt', 'xs:unsignedShort', 'xs:unsignedByte',
+    'xs:positiveInteger');
   NodeKindNames: array[TLandrixXmlXPathNodeKind] of string = ('document-node', 'element', 'attribute', 'text',
     'comment', 'processing-instruction');
 

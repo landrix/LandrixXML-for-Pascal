@@ -15,3 +15,6 @@ xs:integer(xs:double('9.223372036854775808E18'))	xs:integer 9223372036854775808	
 xs:double('9.223372036854775808E18') idiv 1	xs:integer 9223372036854775808	xs:integer 9223372036854775807	the same in idiv
 matches('input', '[0-9-.]*/')	error FORX0002	xs:boolean false	XPath 2.0 regexes use the XML Schema 1.0 character classes: a hyphen after a range must be escaped
 matches('a', '(?:a)')	error FORX0002	xs:boolean true	non-capturing groups are XPath 3.0
+floor(xs:long(5))	xs:integer 5	xs:long 5	F&O 2.0 6.4: for a type derived from xs:integer the result is an xs:integer; Saxon returns the argument when the value stays
+round(xs:short(5))	xs:integer 5	xs:short 5	the same for round
+abs(xs:byte(5))	xs:integer 5	xs:byte 5	the same for abs of a positive number

@@ -374,7 +374,15 @@ def run_set(exe, cases, timeout_per_case, profile):
 
 # --- values ------------------------------------------------------------------
 
-NUMERIC = {"xs:integer", "xs:decimal", "xs:double"}
+# the types derived from xs:integer and the type each one restricts
+INTEGER_BASES = {
+    "xs:nonPositiveInteger": "xs:integer", "xs:negativeInteger": "xs:nonPositiveInteger",
+    "xs:long": "xs:integer", "xs:int": "xs:long", "xs:short": "xs:int", "xs:byte": "xs:short",
+    "xs:nonNegativeInteger": "xs:integer", "xs:unsignedLong": "xs:nonNegativeInteger",
+    "xs:unsignedInt": "xs:unsignedLong", "xs:unsignedShort": "xs:unsignedInt",
+    "xs:unsignedByte": "xs:unsignedShort", "xs:positiveInteger": "xs:nonNegativeInteger",
+}
+NUMERIC = {"xs:integer", "xs:decimal", "xs:double"} | set(INTEGER_BASES)
 STRINGS = {"xs:string", "xs:anyURI", "xs:untypedAtomic"}
 
 
@@ -539,6 +547,12 @@ ATOMIC_PARENTS = {
     "xs:dateTime": {"xs:dateTime", "xs:anyAtomicType"},
     "xs:time": {"xs:time", "xs:anyAtomicType"},
 }
+for _derived in INTEGER_BASES:
+    _chain, _t = {_derived}, _derived
+    while _t in INTEGER_BASES:
+        _t = INTEGER_BASES[_t]
+        _chain.add(_t)
+    ATOMIC_PARENTS[_derived] = _chain | ATOMIC_PARENTS["xs:integer"]
 NODE_TESTS = {"element": "element", "attribute": "attribute", "text": "text", "comment": "comment",
               "processing-instruction": "processing-instruction", "document-node": "document-node"}
 
@@ -787,6 +801,9 @@ def self_test():
         ("<assert-permutation>2, 1</assert-permutation>", {"R": items(i1, ("xs:integer", "2")),
                                                            "V1": items(("xs:integer", "2"), i1)}, "pass"),
         ("<assert-type>xs:decimal</assert-type>", {"R": items(i1)}, "pass"),
+        ("<assert-type>xs:integer</assert-type>", {"R": items(("xs:byte", "1"))}, "pass"),
+        ("<assert-type>xs:long</assert-type>", {"R": items(i1)}, "fail"),
+        ("<assert-eq>1</assert-eq>", {"R": items(("xs:unsignedLong", "1")), "V1": items(i1)}, "pass"),
         ("<assert-type>xs:string</assert-type>", {"R": items(i1)}, "fail"),
         ("<assert-type>xs:int</assert-type>", {"R": items(i1)}, "fail"),
         ("<assert-type>xs:integer*</assert-type>", {"R": items(i1, i1)}, "pass"),

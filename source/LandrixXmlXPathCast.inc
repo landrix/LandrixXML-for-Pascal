@@ -10,7 +10,7 @@
 
 function AtomicString(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
 begin
-  case Item.Kind of
+  case BasicKind(Item.Kind) of
     xikBoolean:
       if ItemBoolean(Item) then
         Result := 'true'
@@ -38,7 +38,7 @@ begin
   end;
   if S.Count > 1 then
     Fail('FORG0006', 'the effective boolean value of a sequence of several atomic values');
-  case S.Items[0].Kind of
+  case BasicKind(S.Items[0].Kind) of
     xikBoolean:
       Result := ItemBoolean(S.Items[0]);
     xikString, xikUntypedAtomic, xikAnyUri:
@@ -342,7 +342,11 @@ begin
   if Item.Kind = xikUntypedAtomic then
     Result := DoubleItem(ParseDouble(Item.Text, Xp20))
   else if IsNumeric(Item.Kind) then
-    Result := Item
+  begin
+    { the operators of the types derived from xs:integer are xs:integer's }
+    Result := Item;
+    Result.Kind := BasicKind(Item.Kind);
+  end
   else
   begin
     if Item.Kind in [xikDate, xikDateTime, xikTime] then
@@ -354,7 +358,7 @@ end;
 
 function DecimalScaleOf(const Item: TLandrixXmlXPathItem): Integer;
 begin
-  if Item.Kind = xikInteger then
+  if BasicKind(Item.Kind) = xikInteger then
     Result := 0
   else
     Result := LandrixXmlDecimalScale(ItemDecimal(Item));
@@ -454,7 +458,7 @@ begin
     X := CastTo(X, xikInteger, Xp20);
   if Y.Kind = xikUntypedAtomic then
     Y := CastTo(Y, xikInteger, Xp20);
-  if (X.Kind <> xikInteger) or (Y.Kind <> xikInteger) then
+  if (BasicKind(X.Kind) <> xikInteger) or (BasicKind(Y.Kind) <> xikInteger) then
     Fail('XPTY0004', 'the operands of "to" must be integers');
   if LandrixXmlDecimalCompare(ItemDecimal(X), ItemDecimal(Y)) > 0 then
     Exit;
@@ -553,6 +557,39 @@ begin
   end;
 end;
 
+{ True if the integer V is in the value space of the type T derived from
+  xs:integer. }
+function InIntegerRange(const V: TLandrixXmlDecimal; T: TLandrixXmlXPathItemKind): Boolean;
+
+  function AtLeast(const Bound: TLandrixXmlUtf8): Boolean;
+  begin
+    Result := LandrixXmlDecimalCompare(V, LandrixXmlParseDecimal(Bound)) >= 0;
+  end;
+
+  function AtMost(const Bound: TLandrixXmlUtf8): Boolean;
+  begin
+    Result := LandrixXmlDecimalCompare(V, LandrixXmlParseDecimal(Bound)) <= 0;
+  end;
+
+begin
+  case T of
+    xikNonPositiveInteger: Result := AtMost('0');
+    xikNegativeInteger: Result := AtMost('-1');
+    xikLong: Result := AtLeast('-9223372036854775808') and AtMost('9223372036854775807');
+    xikInt: Result := AtLeast('-2147483648') and AtMost('2147483647');
+    xikShort: Result := AtLeast('-32768') and AtMost('32767');
+    xikByte: Result := AtLeast('-128') and AtMost('127');
+    xikNonNegativeInteger: Result := AtLeast('0');
+    xikUnsignedLong: Result := AtLeast('0') and AtMost('18446744073709551615');
+    xikUnsignedInt: Result := AtLeast('0') and AtMost('4294967295');
+    xikUnsignedShort: Result := AtLeast('0') and AtMost('65535');
+    xikUnsignedByte: Result := AtLeast('0') and AtMost('255');
+    xikPositiveInteger: Result := AtLeast('1');
+  else
+    Result := True;
+  end;
+end;
+
 function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem;
 var
@@ -588,7 +625,7 @@ begin
       else
         NotAllowed;
     xikBoolean:
-      case Item.Kind of
+      case BasicKind(Item.Kind) of
         xikBoolean:
           Result := Item;
         xikInteger, xikDecimal:
@@ -603,7 +640,7 @@ begin
           NotAllowed;
       end;
     xikDecimal:
-      case Item.Kind of
+      case BasicKind(Item.Kind) of
         xikInteger, xikDecimal:
           Result := DecimalItem(ItemDecimal(Item));
         xikDouble:
@@ -625,9 +662,12 @@ begin
           NotAllowed;
       end;
     xikInteger:
-      case Item.Kind of
+      case BasicKind(Item.Kind) of
         xikInteger:
-          Result := Item;
+          begin
+            Result := Item;
+            Result.Kind := xikInteger;
+          end;
         xikDecimal:
           Result := IntegerItem(LandrixXmlDecimalRound(ItemDecimal(Item), 0, xdrDown));
         xikDouble:
@@ -649,7 +689,7 @@ begin
           NotAllowed;
       end;
     xikDouble:
-      case Item.Kind of
+      case BasicKind(Item.Kind) of
         xikDouble:
           Result := Item;
         xikInteger, xikDecimal:
@@ -684,6 +724,20 @@ begin
             ' are not supported')
         else
           NotAllowed;
+      end;
+    xikNonPositiveInteger .. xikPositiveInteger:
+      begin
+        { the messages name the target type }
+        if not (StringSource or IsNumeric(Item.Kind) or (Item.Kind = xikBoolean)) then
+          NotAllowed;
+        if StringSource and not LandrixXmlTryParseDecimalInteger(Item.Text, D) then
+          Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(Item.Text, 60) + ''' to ' +
+            LandrixXmlXPathAtomicTypeName(T));
+        Result := CastTo(Item, xikInteger, Xp20);
+        if not InIntegerRange(ItemDecimal(Result), T) then
+          Fail('FORG0001', LandrixXmlUtf8ToString(AtomicString(Result)) + ' is out of the range of ' +
+            LandrixXmlXPathAtomicTypeName(T));
+        Result.Kind := T;
       end;
   else
     Fail('FOER0000', 'casts to ' + LandrixXmlXPathAtomicTypeName(T) + ' are not supported');

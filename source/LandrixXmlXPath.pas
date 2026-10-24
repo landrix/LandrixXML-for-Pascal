@@ -106,10 +106,14 @@ type
   { The type labels: the kind of an item (a node or an atomic value) and
     the atomic type of a cast, a constructor function or a parameter. The
     list grows with the supported types; new labels are appended. Items
-    have the kinds xikNode to xikTime; xikFloat (no xs:float values yet),
-    xikAnyAtomic (abstract) and xikNone (no type) only label types. }
+    have the kinds xikNode to xikTime and the types derived from
+    xs:integer (xikNonPositiveInteger to xikPositiveInteger); xikFloat (no
+    xs:float values yet), xikAnyAtomic (abstract) and xikNone (no type)
+    only label types. }
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
-    xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone);
+    xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone,
+    xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt, xikShort, xikByte, xikNonNegativeInteger,
+    xikUnsignedLong, xikUnsignedInt, xikUnsignedShort, xikUnsignedByte, xikPositiveInteger);
 
 
   { Sequence types: the declared type of a variable, parameter or function
@@ -183,7 +187,10 @@ type
     xfnReverse, xfnDistinctValues, xfnSubsequence, xfnIndexOf, xfnData, xfnExactlyOne,
     xfnZeroOrOne, xfnOneOrMore, xfnCurrent, xfnDocument,
     xfnXsString, xfnXsBoolean, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsDate,
-    xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic
+    xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic,
+    xfnXsNonPositiveInteger, xfnXsNegativeInteger, xfnXsLong, xfnXsInt, xfnXsShort, xfnXsByte,
+    xfnXsNonNegativeInteger, xfnXsUnsignedLong, xfnXsUnsignedInt, xfnXsUnsignedShort, xfnXsUnsignedByte,
+    xfnXsPositiveInteger
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -371,12 +378,26 @@ const
     (Name: 'dateTime'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'time'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'anyURI'; MinArgs: 1; MaxArgs: 1; Xs: True),
-    (Name: 'untypedAtomic'; MinArgs: 1; MaxArgs: 1; Xs: True)
+    (Name: 'untypedAtomic'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'nonPositiveInteger'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'negativeInteger'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'long'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'int'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'short'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'byte'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'nonNegativeInteger'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'unsignedLong'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'unsignedInt'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'unsignedShort'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'unsignedByte'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'positiveInteger'; MinArgs: 1; MaxArgs: 1; Xs: True)
   );
 
   { local names in the xs namespace; empty for the labels without one }
   AtomicNames: array[TLandrixXmlXPathItemKind] of string = ('', 'untypedAtomic', 'string', 'anyURI',
-    'boolean', 'integer', 'decimal', 'double', 'date', 'dateTime', 'time', 'float', 'anyAtomicType', '');
+    'boolean', 'integer', 'decimal', 'double', 'date', 'dateTime', 'time', 'float', 'anyAtomicType', '',
+    'nonPositiveInteger', 'negativeInteger', 'long', 'int', 'short', 'byte', 'nonNegativeInteger',
+    'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte', 'positiveInteger');
 
 function LandrixXmlXPathFunctionName(Id: TLandrixXmlXPathFunctionId): string;
 begin

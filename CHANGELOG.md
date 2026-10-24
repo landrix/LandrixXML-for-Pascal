@@ -152,6 +152,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: the types derived from `xs:integer` (`xs:long`, `xs:int`,
+  `xs:short`, `xs:byte`, the unsigned and the signed-range types) with
+  their constructor functions, casts with range checks (FORG0001),
+  derivation in `instance of` and in the function conversion rules;
+  arithmetic gives `xs:integer`. In the Saxon profile `floor`, `ceiling`,
+  `round`, `round-half-to-even` and `abs` return such an argument as it is
+  in the cases where Saxon does (listed in the evaluator), XPath 2.0 gives
+  an `xs:integer`. QT3: 2,031 more
+  cases pass (8,544 in the XPath 2.0 profile, 8,531 in the Saxon
+  profile); the test driver knows the derived types.
 - XPath: `instance of` and `treat as` (XPDY0050) with all XPath 2.0
   sequence types; `xs:integer` is an instance of `xs:decimal`, without the
   promotions of the function conversion rules. QT3: 326 more cases pass

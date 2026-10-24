@@ -63,10 +63,10 @@ begin
               Ok := Item.Kind = xikString;
           xikUntypedAtomic: Ok := Item.Kind = xikUntypedAtomic;
           xikBoolean: Ok := Item.Kind = xikBoolean;
-          xikDecimal: Ok := Item.Kind in [xikInteger, xikDecimal];
-          xikInteger: Ok := Item.Kind = xikInteger;
+          xikDecimal: Ok := AtomicKindMatches(Item.Kind, xikDecimal);
+          xikInteger: Ok := AtomicKindMatches(Item.Kind, xikInteger);
           xikDouble:
-            if Item.Kind in [xikInteger, xikDecimal] then
+            if BasicKind(Item.Kind) in [xikInteger, xikDecimal] then
               Item := DoubleItem(LandrixXmlDoubleFromDecimal(ItemDecimal(Item)))
             else
               Ok := Item.Kind = xikDouble;
@@ -74,6 +74,7 @@ begin
           xikDateTime: Ok := Item.Kind = xikDateTime;
           xikTime: Ok := Item.Kind = xikTime;
           xikAnyUri: Ok := Item.Kind = xikAnyUri;
+          xikNonPositiveInteger .. xikPositiveInteger: Ok := AtomicKindMatches(Item.Kind, T.AtomicType);
         else
           Ok := False;
         end;
@@ -217,7 +218,7 @@ var
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' is empty');
     if V.Kind = xikUntypedAtomic then
       V := CastTo(V, xikInteger, Xp20);
-    if V.Kind <> xikInteger then
+    if BasicKind(V.Kind) <> xikInteger then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' must be an integer');
     if not LandrixXmlDecimalTryToInt64(ItemDecimal(V), I64) or (I64 > High(Integer)) or (I64 < Low(Integer)) then
       Fail('FOAR0002', Name + ': integer out of range');
@@ -362,6 +363,10 @@ begin
             Fail('FORG0006', Name + ': ' + KindName(Item.Kind) + ' is not a number');
           Acc := Arithmetic(Acc, Item, xpaAdd, Xp20);
         end;
+        { a single number is the sum as it is (no addition, so no promotion
+          to the type xs:integer for its derived types) }
+        if (Id = xfnSum) and (A.Count = 1) and IsNumeric(A.Items[0].Kind) then
+          Acc := A.Items[0];
         if Id = xfnAvg then
           Acc := Arithmetic(Acc, IntegerItemOf(A.Count), xpaDivide, Xp20);
         Result := SingleSeq(Acc);
@@ -631,7 +636,7 @@ begin
           Item := A.Items[I];
           if Item.Kind = xikUntypedAtomic then
             Item := CastTo(Item, xikInteger, Xp20);
-          if Item.Kind <> xikInteger then
+          if BasicKind(Item.Kind) <> xikInteger then
             Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not an integer');
           if not LandrixXmlDecimalTryToInt64(ItemDecimal(Item), V64) or (V64 < 1) or (V64 > $10FFFF) or
             not LandrixXmlIsXmlChar(Cardinal(V64)) then
@@ -669,6 +674,8 @@ begin
       begin
         if not OptAtom(0, Item) then
           Exit;
+        { the argument as it was }
+        Acc := Item;
         Item := NumericKind(Item);
         K := 0;
         if (Id in [xfnRound, xfnRoundHalfToEven]) and (ArgCount > 1) then
@@ -698,6 +705,30 @@ begin
           else
             Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), 0, xdrCeiling));
           end;
+        { an argument of a type derived from xs:integer: XPath 2.0 returns an
+          xs:integer, Saxon (checked with values from documents) the argument
+          itself: floor and ceiling always, round with a precision of at least
+          0, for 0 or, beyond Int64, if the value stays, round-half-to-even if
+          the value stays (in Int64 and not 0: with a precision from -15 on),
+          abs if it is positive }
+        if not Xp20 and (Acc.Kind in IntegerKinds) then
+        begin
+          case Id of
+            xfnFloor, xfnCeiling: Found := True;
+            xfnRound:
+              Found := (K >= 0) or (LandrixXmlDecimalSign(ItemDecimal(Acc)) = 0) or
+                (not LandrixXmlDecimalTryToInt64(ItemDecimal(Acc), V64) and
+                (LandrixXmlDecimalCompare(ItemDecimal(Acc), ItemDecimal(Item)) = 0));
+            xfnRoundHalfToEven:
+              Found := (LandrixXmlDecimalCompare(ItemDecimal(Acc), ItemDecimal(Item)) = 0) and
+                ((K >= -15) or (LandrixXmlDecimalSign(ItemDecimal(Acc)) = 0) or
+                not LandrixXmlDecimalTryToInt64(ItemDecimal(Acc), V64));
+          else
+            Found := LandrixXmlDecimalSign(ItemDecimal(Acc)) > 0;
+          end;
+          if Found then
+            Item := Acc;
+        end;
         Result := SingleSeq(Item);
       end;
     xfnName, xfnLocalName, xfnNamespaceUri:
@@ -810,7 +841,7 @@ begin
         Result := LandrixXmlXPathNodeItem(FDocBases[I]);
       end;
     xfnXsString, xfnXsBoolean, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsDate,
-    xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic:
+    xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic, xfnXsNonPositiveInteger .. xfnXsPositiveInteger:
       begin
         if not OptAtom(0, Item) then
           Exit;
@@ -825,6 +856,8 @@ begin
           xfnXsTime: Result := SingleSeq(CastTo(Item, xikTime, Xp20));
           xfnXsAnyUri: Result := SingleSeq(CastTo(Item, xikAnyUri, Xp20));
           xfnXsUntypedAtomic: Result := SingleSeq(CastTo(Item, xikUntypedAtomic, Xp20));
+          xfnXsNonPositiveInteger .. xfnXsPositiveInteger:
+            Result := SingleSeq(CastTo(Item, FNodes[Index].AtomicType, Xp20));
         else
           Fail('FOER0000', 'xs:float is not supported');
         end;

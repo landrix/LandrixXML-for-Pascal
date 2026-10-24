@@ -1,0 +1,237 @@
+# xs:long('-9223372036854775808')
+xs:long -9223372036854775808
+# xs:long('9223372036854775808')
+error FORG0001
+# xs:int(2147483647)
+xs:int 2147483647
+# xs:int(2147483648)
+error FORG0001
+# xs:short(-32768)
+xs:short -32768
+# xs:short(32768)
+error FORG0001
+# xs:byte(' 127 ')
+xs:byte 127
+# xs:byte(128)
+error FORG0001
+# xs:byte(-129)
+error FORG0001
+# xs:unsignedLong('18446744073709551615')
+xs:unsignedLong 18446744073709551615
+# xs:unsignedLong(-1)
+error FORG0001
+# xs:unsignedInt(4294967295)
+xs:unsignedInt 4294967295
+# xs:unsignedShort(65536)
+error FORG0001
+# xs:unsignedByte(255)
+xs:unsignedByte 255
+# xs:unsignedByte(1.9)
+xs:unsignedByte 1
+# xs:unsignedByte(-0.5)
+xs:unsignedByte 0
+# xs:nonPositiveInteger(0)
+xs:nonPositiveInteger 0
+# xs:nonPositiveInteger(1)
+error FORG0001
+# xs:negativeInteger(-1)
+xs:negativeInteger -1
+# xs:negativeInteger(0)
+error FORG0001
+# xs:nonNegativeInteger('0')
+xs:nonNegativeInteger 0
+# xs:positiveInteger(0)
+error FORG0001
+# xs:positiveInteger('+1')
+xs:positiveInteger 1
+# xs:long(1.5e0)
+xs:long 1
+# xs:long('1.5')
+error FORG0001
+# xs:byte(true())
+xs:byte 1
+# xs:byte(/r/a[1])
+xs:byte 5
+# xs:byte(/r/b)
+error FORG0001
+# xs:long(())
+# xs:long(xs:double('INF'))
+error FOCA0002
+# xs:short(xs:long(5))
+xs:short 5
+# xs:long(xs:short(5))
+xs:long 5
+# xs:long(1) + xs:long(2)
+xs:integer 3
+# xs:byte(100) + xs:byte(100)
+xs:integer 200
+# xs:byte(1) - xs:long(2)
+xs:integer -1
+# xs:short(7) idiv xs:short(2)
+xs:integer 3
+# xs:short(7) div xs:short(2)
+xs:decimal 3.5
+# xs:int(7) mod 3
+xs:integer 1
+# - xs:byte(5)
+xs:integer -5
+# + xs:byte(5)
+xs:integer 5
+# xs:byte(5) * 1.5
+xs:decimal 7.5
+# xs:int(5) * 1e0
+xs:double 5
+# abs(xs:byte(-5))
+xs:integer 5
+# round(xs:short(5))
+xs:short 5
+# floor(xs:long(5))
+xs:long 5
+# ceiling(xs:int(5))
+xs:int 5
+# round-half-to-even(xs:long(15), -1)
+xs:integer 20
+# sum((xs:byte(1), xs:byte(2)))
+xs:integer 3
+# sum(xs:byte(1))
+xs:byte 1
+# avg((xs:int(1), xs:int(2)))
+xs:decimal 1.5
+# max((xs:byte(1), xs:byte(2)))
+xs:byte 2
+# min((xs:byte(1), 2))
+xs:byte 1
+# xs:byte(1) = 1
+xs:boolean true
+# xs:byte(1) eq xs:long(1)
+xs:boolean true
+# xs:unsignedLong(5) lt xs:negativeInteger(-1)
+xs:boolean false
+# xs:byte(1) instance of xs:integer
+xs:boolean true
+# xs:byte(1) instance of xs:short
+xs:boolean true
+# xs:byte(1) instance of xs:decimal
+xs:boolean true
+# xs:byte(1) instance of xs:unsignedByte
+xs:boolean false
+# 1 instance of xs:byte
+xs:boolean false
+# xs:unsignedByte(1) instance of xs:nonNegativeInteger
+xs:boolean true
+# xs:positiveInteger(1) instance of xs:unsignedLong
+xs:boolean false
+# xs:negativeInteger(-1) instance of xs:nonPositiveInteger
+xs:boolean true
+# xs:short(1) treat as xs:integer
+xs:short 1
+# 5 castable as xs:byte
+xs:boolean true
+# 500 castable as xs:byte
+xs:boolean false
+# 'x' castable as xs:long
+xs:boolean false
+# 5 cast as xs:unsignedShort
+xs:unsignedShort 5
+# string(xs:long(-5))
+xs:string -5
+# xs:string(xs:unsignedLong('18446744073709551615'))
+xs:string 18446744073709551615
+# xs:decimal(xs:byte(5))
+xs:decimal 5
+# xs:double(xs:byte(5))
+xs:double 5
+# xs:boolean(xs:byte(0))
+xs:boolean false
+# xs:integer(xs:byte(5))
+xs:integer 5
+# string-join(for $i in (xs:byte(1), xs:short(2)) return string($i), ',')
+xs:string 1,2
+# 1 to xs:byte(3)
+xs:integer 1
+xs:integer 2
+xs:integer 3
+# xs:byte(2) to 4
+xs:integer 2
+xs:integer 3
+xs:integer 4
+# substring('abcdef', xs:byte(2), xs:short(3))
+xs:string bcd
+# codepoints-to-string(xs:unsignedByte(65))
+xs:string A
+# (1, 2, 3)[xs:byte(2)]
+xs:integer 2
+# distinct-values((xs:byte(1), 1, xs:long(1)))
+xs:byte 1
+# index-of((1, 2, 3), xs:byte(2))
+xs:integer 2
+# data(xs:byte(5))
+xs:byte 5
+# xs:long(xs:untypedAtomic('7'))
+xs:long 7
+# /r/a[xs:long(.) gt 0]/string()
+xs:string 5
+# count(/r/a[xs:byte(.) instance of xs:byte])
+xs:integer 2
+# xs:long(1) cast as xs:short
+xs:short 1
+# round-half-to-even(xs:byte(5))
+xs:byte 5
+# round-half-to-even(xs:byte(5), 1)
+xs:byte 5
+# sum((xs:short(4)))
+xs:short 4
+# sum(xs:untypedAtomic(4))
+xs:double 4
+# abs(xs:byte(5))
+xs:byte 5
+# abs(xs:nonPositiveInteger(-5))
+xs:integer 5
+# round(xs:short(15), -1)
+xs:integer 20
+# round(xs:byte(0), -1)
+xs:byte 0
+# round-half-to-even(xs:byte(10), -1)
+xs:byte 10
+# round(xs:byte(-5), -1)
+xs:integer 0
+# abs(xs:byte(0))
+xs:integer 0
+# round(xs:byte(/r/a[1] * 2), -1)
+xs:integer 10
+# round(xs:byte(/r/a[1] * 0), -1)
+xs:byte 0
+# round-half-to-even(xs:byte(/r/a[1] * 2), -1)
+xs:byte 10
+# round(xs:byte(/r/a[1]), 1)
+xs:byte 5
+# floor(xs:byte(/r/a[1]))
+xs:byte 5
+# abs(xs:byte(/r/a[1] * 0))
+xs:integer 0
+# abs(xs:byte(/r/a[2]))
+xs:integer 3
+# round(xs:byte(10), -1)
+xs:integer 10
+# for $n in (xs:long(10), xs:byte(10)) return round($n, -1)
+xs:integer 10
+xs:integer 10
+# for $n in (xs:long(10), xs:byte(10)) return floor($n)
+xs:long 10
+xs:byte 10
+# round(xs:unsignedLong(xs:integer(/r/a[1]) * 2000000000000000000), -1)
+xs:unsignedLong 10000000000000000000
+# round(xs:unsignedLong(xs:integer(/r/a[1]) * 2000000000000000000 + 1), -1)
+xs:integer 10000000000000000000
+# round(xs:long(xs:integer(/r/a[1]) * 2), -1)
+xs:integer 10
+# round-half-to-even(xs:long(xs:integer(/r/a[1]) * 2000000000000000), -16)
+xs:integer 10000000000000000
+# round-half-to-even(xs:long(xs:integer(/r/a[1]) * 2000000000000000), -15)
+xs:long 10000000000000000
+# round-half-to-even(xs:unsignedLong(xs:integer(/r/a[1]) * 2000000000000000000), -18)
+xs:unsignedLong 10000000000000000000
+# round-half-to-even(xs:byte(/r/a[1] * 0), -16)
+xs:byte 0
+# round-half-to-even(xs:long(xs:integer(/r/a[1]) * -2000000000000000), -16)
+xs:integer -10000000000000000

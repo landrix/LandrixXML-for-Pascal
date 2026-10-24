@@ -541,9 +541,22 @@ begin
   Result := TDateTimeValue(Item.Payload.Instance).Value;
 end;
 
+const
+  { xs:integer and the types derived from it }
+  IntegerKinds = [xikInteger, xikNonPositiveInteger .. xikPositiveInteger];
+
+{ The kind an operation sees: xs:integer for the types derived from it. }
+function BasicKind(Kind: TLandrixXmlXPathItemKind): TLandrixXmlXPathItemKind;
+begin
+  if Kind in IntegerKinds then
+    Result := xikInteger
+  else
+    Result := Kind;
+end;
+
 function IsNumeric(Kind: TLandrixXmlXPathItemKind): Boolean;
 begin
-  Result := Kind in [xikInteger, xikDecimal, xikDouble];
+  Result := Kind in IntegerKinds + [xikDecimal, xikDouble];
 end;
 
 function IsStringLike(Kind: TLandrixXmlXPathItemKind): Boolean;
@@ -1146,6 +1159,15 @@ function BaseKind(Kind: TLandrixXmlXPathItemKind): TLandrixXmlXPathItemKind;
 begin
   case Kind of
     xikInteger: Result := xikDecimal;
+    xikNonPositiveInteger, xikLong, xikNonNegativeInteger: Result := xikInteger;
+    xikNegativeInteger: Result := xikNonPositiveInteger;
+    xikInt: Result := xikLong;
+    xikShort: Result := xikInt;
+    xikByte: Result := xikShort;
+    xikUnsignedLong, xikPositiveInteger: Result := xikNonNegativeInteger;
+    xikUnsignedInt: Result := xikUnsignedLong;
+    xikUnsignedShort: Result := xikUnsignedInt;
+    xikUnsignedByte: Result := xikUnsignedShort;
   else
     Result := xikAnyAtomic;
   end;
@@ -1739,7 +1761,7 @@ function MayBeNumeric(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Bo
 const
   Numeric = [xfnCount, xfnSum, xfnAvg, xfnMin, xfnMax, xfnStringLength, xfnNumber, xfnAbs, xfnRound,
     xfnRoundHalfToEven, xfnFloor, xfnCeiling, xfnPosition, xfnLast, xfnIndexOf, xfnStringToCodepoints,
-    xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat];
+    xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsNonPositiveInteger .. xfnXsPositiveInteger];
   { the items of the first argument (distinct-values and data atomize
     them: untyped values, numbers only if the argument has numbers) }
   PassOn = [xfnReverse, xfnDistinctValues, xfnSubsequence, xfnData, xfnExactlyOne, xfnZeroOrOne,
@@ -1771,7 +1793,7 @@ begin
             Result := True;
       end;
     xakCast:
-      Result := Nodes[Index].AtomicType in [xikAnyAtomic, xikDecimal, xikInteger, xikDouble, xikFloat];
+      Result := Nodes[Index].AtomicType in IntegerKinds + [xikAnyAtomic, xikDecimal, xikDouble, xikFloat];
     xakFunction:
       if Nodes[Index].Op < 0 then
         Result := True
