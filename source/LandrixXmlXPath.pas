@@ -106,16 +106,18 @@ type
   { The type labels: the kind of an item (a node or an atomic value) and
     the atomic type of a cast, a constructor function or a parameter. The
     list grows with the supported types; new labels are appended. Items
-    have the kinds xikNode to xikTime and the types derived from
+    have the kinds xikNode to xikTime, the types derived from
     xs:integer (xikNonPositiveInteger to xikPositiveInteger) and from
-    xs:string (xikNormalizedString to xikENTITY); xikFloat (no xs:float
-    values yet), xikAnyAtomic (abstract) and xikNone (no type) only label
+    xs:string (xikNormalizedString to xikENTITY) and the durations
+    (xikDuration to xikDayTimeDuration); xikFloat (no xs:float values
+    yet), xikAnyAtomic (abstract) and xikNone (no type) only label
     types. }
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
     xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone,
     xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt, xikShort, xikByte, xikNonNegativeInteger,
     xikUnsignedLong, xikUnsignedInt, xikUnsignedShort, xikUnsignedByte, xikPositiveInteger,
-    xikNormalizedString, xikToken, xikLanguage, xikNMTOKEN, xikName, xikNCName, xikID, xikIDREF, xikENTITY);
+    xikNormalizedString, xikToken, xikLanguage, xikNMTOKEN, xikName, xikNCName, xikID, xikIDREF, xikENTITY,
+    xikDuration, xikYearMonthDuration, xikDayTimeDuration);
 
 
   { Sequence types: the declared type of a variable, parameter or function
@@ -194,7 +196,10 @@ type
     xfnXsNonNegativeInteger, xfnXsUnsignedLong, xfnXsUnsignedInt, xfnXsUnsignedShort, xfnXsUnsignedByte,
     xfnXsPositiveInteger,
     xfnXsNormalizedString, xfnXsToken, xfnXsLanguage, xfnXsNMTOKEN, xfnXsName, xfnXsNCName, xfnXsID,
-    xfnXsIDREF, xfnXsENTITY
+    xfnXsIDREF, xfnXsENTITY,
+    xfnXsDuration, xfnXsYearMonthDuration, xfnXsDayTimeDuration,
+    xfnYearsFromDuration, xfnMonthsFromDuration, xfnDaysFromDuration, xfnHoursFromDuration,
+    xfnMinutesFromDuration, xfnSecondsFromDuration
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -403,7 +408,16 @@ const
     (Name: 'NCName'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'ID'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'IDREF'; MinArgs: 1; MaxArgs: 1; Xs: True),
-    (Name: 'ENTITY'; MinArgs: 1; MaxArgs: 1; Xs: True)
+    (Name: 'ENTITY'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'duration'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'yearMonthDuration'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'dayTimeDuration'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'years-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'months-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'days-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'hours-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'minutes-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'seconds-from-duration'; MinArgs: 1; MaxArgs: 1; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }
@@ -411,7 +425,8 @@ const
     'boolean', 'integer', 'decimal', 'double', 'date', 'dateTime', 'time', 'float', 'anyAtomicType', '',
     'nonPositiveInteger', 'negativeInteger', 'long', 'int', 'short', 'byte', 'nonNegativeInteger',
     'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte', 'positiveInteger',
-    'normalizedString', 'token', 'language', 'NMTOKEN', 'Name', 'NCName', 'ID', 'IDREF', 'ENTITY');
+    'normalizedString', 'token', 'language', 'NMTOKEN', 'Name', 'NCName', 'ID', 'IDREF', 'ENTITY',
+    'duration', 'yearMonthDuration', 'dayTimeDuration');
 
 function LandrixXmlXPathFunctionName(Id: TLandrixXmlXPathFunctionId): string;
 begin

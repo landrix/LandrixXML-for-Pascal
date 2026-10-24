@@ -1,0 +1,395 @@
+# xs:duration(/r/dur)
+xs:duration -P1Y2M3DT4H5M6.7S
+# xs:yearMonthDuration(/r/ymd)
+xs:yearMonthDuration P1Y2M
+# xs:dayTimeDuration(/r/dtd)
+xs:dayTimeDuration P1DT2H3M4.5S
+# string(xs:duration(/r/dur))
+xs:string -P1Y2M3DT4H5M6.7S
+# xs:duration(concat(' ', /r/ymd, ' '))
+xs:duration P1Y2M
+# xs:duration('P01Y')
+xs:duration P1Y
+# xs:duration('-P0Y')
+xs:duration PT0S
+# xs:duration('PT0.000S')
+xs:duration PT0S
+# xs:yearMonthDuration('P0Y')
+xs:yearMonthDuration P0M
+# xs:duration('P0Y')
+xs:duration PT0S
+# xs:duration('P')
+error FORG0001
+# xs:duration('PT')
+error FORG0001
+# xs:duration('P1YT')
+error FORG0001
+# xs:duration('+P1Y')
+error FORG0001
+# xs:duration('P-1Y')
+error FORG0001
+# xs:duration('P1.5Y')
+error FORG0001
+# xs:duration('PT.5S')
+error FORG0001
+# xs:duration('PT5.S')
+error FORG0001
+# xs:duration('PT1.5M')
+error FORG0001
+# xs:duration('P1M1Y')
+error FORG0001
+# xs:duration('PT1H1H')
+error FORG0001
+# xs:duration('P1D1Y')
+error FORG0001
+# xs:duration('P1DT')
+error FORG0001
+# xs:duration('-')
+error FORG0001
+# xs:duration('p1y')
+error FORG0001
+# xs:yearMonthDuration('P1D')
+error FORG0001
+# xs:yearMonthDuration('PT1H')
+error FORG0001
+# xs:dayTimeDuration('P1Y')
+error FORG0001
+# xs:dayTimeDuration('P0Y1D')
+error FORG0001
+# xs:dayTimeDuration('PT36H')
+xs:dayTimeDuration P1DT12H
+# xs:dayTimeDuration('PT3600M')
+xs:dayTimeDuration P2DT12H
+# xs:dayTimeDuration('PT90061.5S')
+xs:dayTimeDuration P1DT1H1M1.5S
+# xs:yearMonthDuration('P25M')
+xs:yearMonthDuration P2Y1M
+# xs:yearMonthDuration(/r/big)
+xs:yearMonthDuration P178956970Y7M
+# xs:yearMonthDuration(/r/y)
+xs:yearMonthDuration P178956970Y7M
+# xs:yearMonthDuration(/r/yy)
+error FORG0001
+# xs:duration(/r/frac10)
+xs:duration PT1.123456789S
+# xs:duration(/r/frac11)
+error FODT0002
+# xs:dayTimeDuration(/r/d31)
+xs:dayTimeDuration P2147483647D
+# xs:dayTimeDuration(/r/d32)
+error FODT0002
+# xs:dayTimeDuration('PT2147483647S')
+xs:dayTimeDuration P24855DT3H14M7S
+# xs:dayTimeDuration('PT2147483648S')
+error FODT0002
+# xs:dayTimeDuration('PT2147483647H')
+xs:dayTimeDuration P89478485DT7H
+# xs:yearMonthDuration(xs:duration(/r/dur))
+xs:yearMonthDuration -P1Y2M
+# xs:dayTimeDuration(xs:duration(/r/dur))
+xs:dayTimeDuration -P3DT4H5M6.7S
+# xs:duration(xs:yearMonthDuration(/r/ymd))
+xs:duration P1Y2M
+# xs:dayTimeDuration(xs:yearMonthDuration(/r/ymd))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration(xs:dayTimeDuration(/r/dtd))
+xs:yearMonthDuration P0M
+# xs:duration(xs:untypedAtomic(/r/ymd))
+xs:duration P1Y2M
+# xs:duration(1)
+error XPTY0004
+# xs:duration(true())
+error XPTY0004
+# xs:duration(xs:date('2000-01-01'))
+error XPTY0004
+# xs:dayTimeDuration(/r/dtd) cast as xs:string
+xs:string P1DT2H3M4.5S
+# xs:dayTimeDuration(/r/dtd) cast as xs:untypedAtomic
+xs:untypedAtomic P1DT2H3M4.5S
+# xs:dayTimeDuration(/r/dtd) cast as xs:boolean
+error XPTY0004
+# xs:dayTimeDuration(/r/dtd) cast as xs:integer
+error XPTY0004
+# xs:dayTimeDuration(/r/dtd) castable as xs:yearMonthDuration
+xs:boolean true
+# 'P1Y' castable as xs:dayTimeDuration
+xs:boolean false
+# xs:token(xs:yearMonthDuration(/r/ymd))
+xs:token P1Y2M
+# xs:yearMonthDuration(xs:token(' P1Y '))
+xs:yearMonthDuration P1Y
+# xs:dayTimeDuration(/r/dtd) instance of xs:duration
+xs:boolean true
+# xs:yearMonthDuration(/r/ymd) instance of xs:dayTimeDuration
+xs:boolean false
+# xs:duration(/r/dur) instance of xs:yearMonthDuration
+xs:boolean false
+# data(xs:dayTimeDuration(/r/dtd))
+xs:dayTimeDuration P1DT2H3M4.5S
+# boolean(xs:dayTimeDuration(/r/dtd))
+error FORG0006
+# xs:duration('P1Y') eq xs:yearMonthDuration('P12M')
+xs:boolean true
+# xs:yearMonthDuration('P0M') eq xs:dayTimeDuration(/r/e)
+xs:boolean true
+# xs:duration('P1D') eq xs:duration('PT24H')
+xs:boolean true
+# xs:duration('P1M') eq xs:duration('P30D')
+xs:boolean false
+# xs:duration('P1Y') ne xs:duration(/r/ymd)
+xs:boolean true
+# xs:yearMonthDuration(/r/ymd) lt xs:yearMonthDuration('P2Y')
+xs:boolean true
+# xs:yearMonthDuration(/r/ymd) ge xs:yearMonthDuration('P14M')
+xs:boolean true
+# xs:dayTimeDuration(/r/dtd) gt xs:dayTimeDuration('P1D')
+xs:boolean true
+# xs:dayTimeDuration('-PT1S') lt xs:dayTimeDuration(/r/e)
+xs:boolean true
+# xs:duration('P1Y') lt xs:duration(/r/ymd)
+error XPTY0004
+# xs:yearMonthDuration('P1Y') lt xs:dayTimeDuration(/r/dtd)
+error XPTY0004
+# xs:duration('P1Y') eq 1
+error XPTY0004
+# xs:duration('P1Y') = 1
+error XPTY0004
+# xs:untypedAtomic(/r/ymd) = xs:yearMonthDuration('P14M')
+xs:boolean true
+# xs:untypedAtomic('P1Y') = xs:yearMonthDuration('P12M')
+xs:boolean true
+# /r/dtd = xs:dayTimeDuration('PT26H3M4.5S')
+xs:boolean true
+# /r/dtd < xs:dayTimeDuration('P2D')
+xs:boolean true
+# xs:dayTimeDuration('PT1S') eq xs:untypedAtomic('PT1S')
+error XPTY0004
+# distinct-values((xs:duration('P1Y'), xs:yearMonthDuration('P12M'), xs:dayTimeDuration(/r/e), xs:yearMonthDuration('P0M')))
+xs:duration P1Y
+xs:dayTimeDuration PT0S
+# index-of((xs:duration('P1Y'), xs:yearMonthDuration('P12M'), xs:dayTimeDuration('P1D')), xs:yearMonthDuration(/r/ymd) - xs:yearMonthDuration('P2M'))
+xs:integer 1
+xs:integer 2
+# xs:yearMonthDuration(/r/ymd) + xs:yearMonthDuration('P11M')
+xs:yearMonthDuration P2Y1M
+# xs:yearMonthDuration(/r/ymd) - xs:yearMonthDuration('P2Y')
+xs:yearMonthDuration -P10M
+# xs:dayTimeDuration(/r/dtd) + xs:dayTimeDuration('PT21H56M55.5S')
+xs:dayTimeDuration P2D
+# xs:dayTimeDuration(/r/dtd) - xs:dayTimeDuration('P2D')
+xs:dayTimeDuration -PT21H56M55.5S
+# xs:dayTimeDuration(/r/dtd) + xs:yearMonthDuration(/r/ymd)
+error XPTY0004
+# xs:duration(/r/dur) + xs:duration(/r/dur)
+error XPTY0004
+# xs:dayTimeDuration(/r/dtd) + xs:untypedAtomic('PT1S')
+error XPTY0004
+# - xs:dayTimeDuration(/r/dtd)
+error XPTY0004
+# + xs:dayTimeDuration(/r/dtd)
+error XPTY0004
+# xs:yearMonthDuration(/r/ymd) * /r/n2
+xs:yearMonthDuration P2Y4M
+# /r/n2 * xs:yearMonthDuration(/r/ymd)
+xs:yearMonthDuration P2Y4M
+# xs:yearMonthDuration(/r/ymd) * xs:double(/r/h)
+xs:yearMonthDuration P7M
+# xs:yearMonthDuration('P1M') * xs:double(/r/h)
+xs:yearMonthDuration P1M
+# xs:yearMonthDuration('-P1M') * xs:double(/r/h)
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('-P3M') * 0.5
+xs:yearMonthDuration -P1M
+# xs:yearMonthDuration('P1M') * 1.5
+xs:yearMonthDuration P2M
+# xs:yearMonthDuration('P1M') * xs:double('2.5')
+xs:yearMonthDuration P3M
+# xs:yearMonthDuration('P1M') div xs:double(/r/n3)
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P2M') div xs:double(/r/n3)
+xs:yearMonthDuration P1M
+# xs:yearMonthDuration('P3M') div xs:double(/r/n2)
+xs:yearMonthDuration P2M
+# xs:yearMonthDuration('-P3M') div xs:double(/r/n2)
+xs:yearMonthDuration -P1M
+# xs:yearMonthDuration('P1M') div 0.4
+xs:yearMonthDuration P3M
+# xs:yearMonthDuration(/r/ymd) div 0
+error FODT0002
+# xs:yearMonthDuration(/r/ymd) div xs:double('-0')
+error FODT0002
+# xs:yearMonthDuration(/r/ymd) div xs:double('INF')
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration(/r/ymd) * xs:double('NaN')
+error FOCA0005
+# xs:yearMonthDuration(/r/ymd) * xs:double('INF')
+error FODT0002
+# xs:yearMonthDuration(/r/ymd) * xs:double('3e9')
+error FODT0002
+# xs:yearMonthDuration(/r/big) * 1.0000000005
+error FODT0002
+# xs:yearMonthDuration(/r/big) * 1
+xs:yearMonthDuration P178956970Y7M
+# xs:dayTimeDuration('PT1S') div xs:double(/r/n3)
+xs:dayTimeDuration PT0.333333333S
+# xs:dayTimeDuration('PT2S') div xs:double(/r/n3)
+xs:dayTimeDuration PT0.666666666S
+# xs:dayTimeDuration('-PT2S') div xs:double(/r/n3)
+xs:dayTimeDuration -PT0.666666666S
+# xs:dayTimeDuration('PT2S') div xs:decimal(/r/n3)
+xs:dayTimeDuration PT0.666666666S
+# xs:dayTimeDuration('PT0.000000003S') div xs:double(/r/n2)
+xs:dayTimeDuration PT0.000000001S
+# xs:dayTimeDuration('PT0.000000001S') div xs:double(/r/n2)
+xs:dayTimeDuration PT0S
+# xs:dayTimeDuration('PT0.000000003S') * xs:double(/r/h)
+xs:dayTimeDuration PT0.000000001S
+# xs:dayTimeDuration('PT1S') * 0.0000000015
+xs:dayTimeDuration PT0.000000001S
+# xs:dayTimeDuration('PT1S') * 0.0000000025
+xs:dayTimeDuration PT0.000000002S
+# xs:dayTimeDuration('PT1S') * -0.0000000015
+xs:dayTimeDuration -PT0.000000001S
+# xs:dayTimeDuration('PT1S') * xs:double('0.0000000015')
+xs:dayTimeDuration PT0.000000001S
+# xs:dayTimeDuration('PT1S') * 9223372036.854775807
+xs:dayTimeDuration P106751DT23H47M16.854775807S
+# xs:dayTimeDuration('PT1S') * 9223372037
+xs:dayTimeDuration P106751DT23H47M17S
+# xs:dayTimeDuration('PT1S') * xs:double('-0')
+xs:dayTimeDuration PT0S
+# xs:dayTimeDuration('P1D') * 1e8
+xs:dayTimeDuration P100000000D
+# xs:dayTimeDuration(/r/d31) * 4294967296
+error FODT0002
+# xs:dayTimeDuration(/r/dtd) * xs:double('1e300')
+error FODT0002
+# xs:dayTimeDuration(/r/dtd) div 0
+error FODT0002
+# xs:dayTimeDuration(/r/dtd) * xs:untypedAtomic('2')
+xs:dayTimeDuration P2DT4H6M9S
+# xs:untypedAtomic('2') * xs:dayTimeDuration(/r/dtd)
+xs:dayTimeDuration P2DT4H6M9S
+# 2 div xs:dayTimeDuration(/r/dtd)
+error XPTY0004
+# xs:dayTimeDuration(/r/dtd) idiv 1
+error XPTY0004
+# xs:dayTimeDuration(/r/dtd) mod xs:dayTimeDuration('PT1S')
+error XPTY0004
+# xs:duration(/r/dur) * 2
+error XPTY0004
+# xs:dayTimeDuration('PT1S') div xs:dayTimeDuration('PT3S')
+xs:decimal 0.33333333333333333333
+# xs:dayTimeDuration('PT2S') div xs:dayTimeDuration('PT3S')
+xs:decimal 0.66666666666666666667
+# xs:dayTimeDuration(/r/dtd) div xs:dayTimeDuration('PT1.5S')
+xs:decimal 62523
+# xs:yearMonthDuration('P1M') div xs:yearMonthDuration('P3M')
+xs:decimal 0.33333333333333333333
+# xs:yearMonthDuration('P2M') div xs:yearMonthDuration('-P3M')
+xs:decimal -0.66666666666666666667
+# xs:yearMonthDuration(/r/ymd) div xs:yearMonthDuration('P7M')
+xs:decimal 2
+# xs:yearMonthDuration('P1M') div xs:yearMonthDuration('P0M')
+error FOAR0001
+# xs:dayTimeDuration(/r/dtd) div xs:dayTimeDuration(/r/e)
+error FOAR0001
+# xs:yearMonthDuration('P1M') div xs:dayTimeDuration('PT1S')
+error XPTY0004
+# years-from-duration(xs:duration(/r/dur))
+xs:integer -1
+# months-from-duration(xs:duration(/r/dur))
+xs:integer -2
+# days-from-duration(xs:duration(/r/dur))
+xs:integer -3
+# hours-from-duration(xs:duration(/r/dur))
+xs:integer -4
+# minutes-from-duration(xs:duration(/r/dur))
+xs:integer -5
+# seconds-from-duration(xs:duration(/r/dur))
+xs:decimal -6.7
+# years-from-duration(xs:duration('-P1Y14M'))
+xs:integer -2
+# months-from-duration(xs:duration('-P1Y14M'))
+xs:integer -2
+# days-from-duration(xs:duration('-P1Y2M3DT27H'))
+xs:integer -4
+# hours-from-duration(xs:duration('-P1Y2M3DT27H'))
+xs:integer -3
+# seconds-from-duration(xs:dayTimeDuration('-PT61.5S'))
+xs:decimal -1.5
+# seconds-from-duration(xs:dayTimeDuration(/r/dtd))
+xs:decimal 4.5
+# days-from-duration(xs:yearMonthDuration(/r/ymd))
+xs:integer 0
+# years-from-duration(xs:dayTimeDuration(/r/dtd))
+xs:integer 0
+# years-from-duration(/r/ymd)
+xs:integer 1
+# years-from-duration(())
+# years-from-duration('P1Y')
+error XPTY0004
+# years-from-duration(1)
+error XPTY0004
+# sum((xs:dayTimeDuration(/r/dtd), xs:dayTimeDuration('PT2S')))
+xs:dayTimeDuration P1DT2H3M6.5S
+# sum((xs:yearMonthDuration(/r/ymd), xs:yearMonthDuration('P2M')), ())
+xs:yearMonthDuration P1Y4M
+# sum((), xs:yearMonthDuration(/r/ymd))
+xs:yearMonthDuration P1Y2M
+# sum(xs:yearMonthDuration(/r/ymd))
+xs:yearMonthDuration P1Y2M
+# sum((xs:dayTimeDuration('PT1S'), xs:yearMonthDuration(/r/ymd)))
+error XPTY0004
+# sum((xs:yearMonthDuration(/r/ymd), 1))
+error FORG0006
+# sum((1, xs:yearMonthDuration(/r/ymd)))
+error FORG0006
+# sum(xs:duration(/r/dur))
+error FORG0006
+# avg((xs:yearMonthDuration('P1M'), xs:yearMonthDuration('P2M')))
+xs:yearMonthDuration P2M
+# avg((xs:yearMonthDuration('-P1M'), xs:yearMonthDuration('-P2M')))
+xs:yearMonthDuration -P1M
+# avg((xs:dayTimeDuration('PT1S'), xs:dayTimeDuration('PT2S')))
+xs:dayTimeDuration PT1.5S
+# avg((xs:dayTimeDuration(/r/dtd), xs:dayTimeDuration('PT1.5S')))
+xs:dayTimeDuration PT13H1M33S
+# avg((xs:yearMonthDuration('P1M'), xs:dayTimeDuration('PT2S')))
+error FORG0006
+# max((xs:dayTimeDuration(/r/dtd), xs:dayTimeDuration('PT2S')))
+xs:dayTimeDuration P1DT2H3M4.5S
+# min((xs:yearMonthDuration(/r/ymd), xs:yearMonthDuration('P2M')))
+xs:yearMonthDuration P2M
+# max((xs:duration('PT1S'), xs:duration('PT2S')))
+error FORG0006
+# max(xs:duration(/r/dur))
+error FORG0006
+# min((xs:yearMonthDuration('P1M'), xs:dayTimeDuration('PT2S')))
+error FORG0006
+# xs:duration(/r/dur) treat as xs:duration
+xs:duration -P1Y2M3DT4H5M6.7S
+# (xs:dayTimeDuration(/r/dtd), xs:yearMonthDuration(/r/ymd))[. instance of xs:dayTimeDuration]
+xs:dayTimeDuration P1DT2H3M4.5S
+# xs:yearMonthDuration('P3M') * xs:double('0.16666666666666666')
+xs:yearMonthDuration P1M
+# xs:yearMonthDuration('P1M') div 2.00000000000000001
+xs:yearMonthDuration P1M
+# xs:yearMonthDuration('P45M') * 0.7
+xs:yearMonthDuration P2Y8M
+# xs:yearMonthDuration('P50M') * 0.29
+xs:yearMonthDuration P1Y3M
+# xs:yearMonthDuration('-P1M') * xs:double('2.5')
+xs:yearMonthDuration -P2M
+# xs:yearMonthDuration('P1M') * xs:double('0.49999999999999994')
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P7M') div 2
+xs:yearMonthDuration P4M
+# xs:dayTimeDuration('PT1S') * xs:double('0.7')
+xs:dayTimeDuration PT0.7S
+# xs:dayTimeDuration('PT1S') * xs:double(/r/h)
+xs:dayTimeDuration PT0.5S
+# xs:dayTimeDuration('P1D') div xs:double(/r/n3)
+xs:dayTimeDuration PT7H59M59.999999999S
+# xs:dayTimeDuration('P1D') div /r/n3
+xs:dayTimeDuration PT7H59M59.999999999S

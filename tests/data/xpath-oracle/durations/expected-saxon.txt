@@ -1,0 +1,1680 @@
+# xs:yearMonthDuration('-P15Y7M') + xs:yearMonthDuration('P221M')
+xs:yearMonthDuration P2Y10M
+# xs:yearMonthDuration('-P15Y7M') - xs:yearMonthDuration('P221M')
+xs:yearMonthDuration -P34Y
+# string(xs:duration(xs:yearMonthDuration('-P29984Y1M')))
+xs:string -P29984Y1M
+# xs:dayTimeDuration(xs:yearMonthDuration('-P29984Y1M'))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration('-P17Y10M')
+xs:yearMonthDuration -P17Y10M
+# xs:duration('P16Y')
+xs:duration P16Y
+# 9481.2 * xs:dayTimeDuration('P29DT53H40S')
+xs:dayTimeDuration P295896DT20H8M48S
+# xs:dayTimeDuration('P29DT53H40S') div 9481.2
+xs:dayTimeDuration PT4M44.398599333S
+# sum((xs:dayTimeDuration('-P434439DT46H719M5.8S'), xs:dayTimeDuration('-P10DT62H45.9S'), xs:dayTimeDuration('PT58.249297217S'), xs:dayTimeDuration('P36DT84H980M24S')))
+xs:dayTimeDuration -P434413DT19H38M29.450702783S
+# max((xs:dayTimeDuration('-P434439DT46H719M5.8S'), xs:dayTimeDuration('-P10DT62H45.9S'), xs:dayTimeDuration('PT58.249297217S'), xs:dayTimeDuration('P36DT84H980M24S')))
+xs:dayTimeDuration P40DT4H20M24S
+# sum((xs:yearMonthDuration('P13Y'), xs:yearMonthDuration('P19Y')))
+xs:yearMonthDuration P32Y
+# max((xs:yearMonthDuration('P13Y'), xs:yearMonthDuration('P19Y')))
+xs:yearMonthDuration P19Y
+# avg((xs:yearMonthDuration('P13Y'), xs:yearMonthDuration('P19Y')))
+xs:yearMonthDuration P16Y
+# xs:yearMonthDuration('P12006Y16M') * -19
+xs:yearMonthDuration -P228139Y4M
+# xs:yearMonthDuration('P12006Y16M') div -19
+xs:yearMonthDuration -P632Y
+# xs:dayTimeDuration('P17DT10S')
+xs:dayTimeDuration P17DT10S
+# xs:duration('P679689DT58H20M1S')
+xs:duration P679691DT10H20M1S
+# years-from-duration(xs:dayTimeDuration('P16DT1S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P16DT1S'))
+xs:decimal 1
+# string(xs:duration(xs:yearMonthDuration('P55923Y500M')))
+xs:string P55964Y8M
+# xs:dayTimeDuration(xs:yearMonthDuration('P55923Y500M'))
+xs:dayTimeDuration PT0S
+# -16 * xs:dayTimeDuration('P414080DT41H8.0S')
+xs:dayTimeDuration -P6625307DT8H2M8S
+# xs:dayTimeDuration('P414080DT41H8.0S') div -16
+xs:dayTimeDuration -P25880DT2H33M45.5S
+# xs:dayTimeDuration('P26DT1H52.967240586S') div xs:dayTimeDuration('P868129DT24M13S')
+xs:decimal 0.00002999816756374875
+# 12.523 * xs:dayTimeDuration('P310454DT15H39M42957.9S')
+xs:dayTimeDuration P3887829DT20H1M36.4017S
+# xs:dayTimeDuration('P310454DT15H39M42957.9S') div 12.523
+xs:dayTimeDuration P24790DT19H7M30.107801944S
+# xs:yearMonthDuration('P49706Y468M') div xs:yearMonthDuration('P0Y')
+error FOAR0001
+# xs:yearMonthDuration('P6Y9M') * 1
+xs:yearMonthDuration P6Y9M
+# xs:yearMonthDuration('P6Y9M') div 1
+xs:yearMonthDuration P6Y9M
+# xs:yearMonthDuration('-P79165Y69M') div xs:yearMonthDuration('P6M')
+xs:decimal -158341.5
+# xs:yearMonthDuration('P19Y292M') * -15
+xs:yearMonthDuration -P650Y
+# xs:yearMonthDuration('P19Y292M') div -15
+xs:yearMonthDuration -P2Y11M
+# xs:dayTimeDuration('P0DT50M39S') lt xs:dayTimeDuration('-PT10S')
+xs:boolean false
+# xs:dayTimeDuration('P0DT50M39S') eq xs:dayTimeDuration('-PT10S')
+xs:boolean false
+# xs:dayTimeDuration('P0DT50M39S') ge xs:dayTimeDuration('-PT10S')
+xs:boolean true
+# sum((xs:dayTimeDuration('PT40H29M50S'), xs:dayTimeDuration('P30DT23H36803S'), xs:dayTimeDuration('-P94884DT18H14M75891S')))
+xs:dayTimeDuration -P94852DT13H35M38S
+# max((xs:dayTimeDuration('PT40H29M50S'), xs:dayTimeDuration('P30DT23H36803S'), xs:dayTimeDuration('-P94884DT18H14M75891S')))
+xs:dayTimeDuration P31DT9H13M23S
+# -16 * xs:dayTimeDuration('P641090DT4.888S')
+xs:dayTimeDuration -P10257440DT1M18.208S
+# xs:dayTimeDuration('P641090DT4.888S') div -16
+xs:dayTimeDuration -P40068DT3H0.3055S
+# xs:yearMonthDuration('-P25Y')
+xs:yearMonthDuration -P25Y
+# xs:duration('-P0Y486M')
+xs:duration -P40Y6M
+# xs:yearMonthDuration('P263M') * 429.98
+xs:yearMonthDuration P9423Y9M
+# xs:yearMonthDuration('P263M') div 429.98
+xs:yearMonthDuration P1M
+# xs:yearMonthDuration('P88106Y') lt xs:yearMonthDuration('-P365M')
+xs:boolean false
+# xs:yearMonthDuration('P88106Y') eq xs:yearMonthDuration('-P365M')
+xs:boolean false
+# xs:yearMonthDuration('P88106Y') ge xs:yearMonthDuration('-P365M')
+xs:boolean true
+# string(xs:duration(xs:yearMonthDuration('P32796Y435M')))
+xs:string P32832Y3M
+# xs:dayTimeDuration(xs:yearMonthDuration('P32796Y435M'))
+xs:dayTimeDuration PT0S
+# xs:dayTimeDuration('P21DT3H426M3S')
+xs:dayTimeDuration P21DT10H6M3S
+# xs:duration('PT8H5.008028558S')
+xs:duration PT8H5.008028558S
+# sum((xs:dayTimeDuration('PT16H19.8S'), xs:dayTimeDuration('PT77H16S'), xs:dayTimeDuration('P519072DT91H393M34S')))
+xs:dayTimeDuration P519079DT22H34M9.8S
+# max((xs:dayTimeDuration('PT16H19.8S'), xs:dayTimeDuration('PT77H16S'), xs:dayTimeDuration('P519072DT91H393M34S')))
+xs:dayTimeDuration P519076DT1H33M34S
+# sum((xs:yearMonthDuration('P80858Y')))
+xs:yearMonthDuration P80858Y
+# max((xs:yearMonthDuration('P80858Y')))
+xs:yearMonthDuration P80858Y
+# avg((xs:yearMonthDuration('P80858Y')))
+xs:yearMonthDuration P80858Y
+# 7314.9 * xs:dayTimeDuration('P24DT12H129M78732.546S')
+xs:dayTimeDuration P186536DT2H12M26.7354S
+# xs:dayTimeDuration('P24DT12H129M78732.546S') div 7314.9
+xs:dayTimeDuration PT5M1.203372021S
+# xs:dayTimeDuration('-PT56H31M15.221841309S') div xs:dayTimeDuration('-P12DT18H53M34S')
+xs:decimal 0.18417147306361885349
+# xs:dayTimeDuration('P36DT36S') + xs:dayTimeDuration('P78835DT11H515M48.0S')
+xs:dayTimeDuration P78871DT19H36M24S
+# xs:dayTimeDuration('P36DT36S') - xs:dayTimeDuration('P78835DT11H515M48.0S')
+xs:dayTimeDuration -P78799DT19H35M12S
+# string(xs:duration(xs:yearMonthDuration('P39950Y173M')))
+xs:string P39964Y5M
+# xs:dayTimeDuration(xs:yearMonthDuration('P39950Y173M'))
+xs:dayTimeDuration PT0S
+# xs:dayTimeDuration('PT17H612M12.495618793S') + xs:dayTimeDuration('PT79H33M0.622068246S')
+xs:dayTimeDuration P4DT10H45M13.117687039S
+# xs:dayTimeDuration('PT17H612M12.495618793S') - xs:dayTimeDuration('PT79H33M0.622068246S')
+xs:dayTimeDuration -P2DT4H20M48.126449453S
+# xs:dayTimeDuration('P769477DT23H253M94540.2S') lt xs:dayTimeDuration('P25DT794M22S')
+xs:boolean false
+# xs:dayTimeDuration('P769477DT23H253M94540.2S') eq xs:dayTimeDuration('P25DT794M22S')
+xs:boolean false
+# xs:dayTimeDuration('P769477DT23H253M94540.2S') ge xs:dayTimeDuration('P25DT794M22S')
+xs:boolean true
+# sum((xs:dayTimeDuration('PT44M38.8S')))
+xs:dayTimeDuration PT44M38.8S
+# max((xs:dayTimeDuration('PT44M38.8S')))
+xs:dayTimeDuration PT44M38.8S
+# avg((xs:dayTimeDuration('PT44M38.8S')))
+xs:dayTimeDuration PT44M38.8S
+# xs:dayTimeDuration('-P33DT65H41.8S') div xs:dayTimeDuration('-PT12H11M21.277849524S')
+xs:decimal 70.30884129171883285197
+# xs:yearMonthDuration('P27Y5M')
+xs:yearMonthDuration P27Y5M
+# xs:duration('P0Y320M')
+xs:duration P26Y8M
+# -7 * xs:dayTimeDuration('P481706DT57M19.3S')
+xs:dayTimeDuration -P3371942DT6H41M15.1S
+# xs:dayTimeDuration('P481706DT57M19.3S') div -7
+xs:dayTimeDuration -P68815DT3H33M54.185713988S
+# xs:dayTimeDuration('-P25DT828M56S') + xs:dayTimeDuration('P738117DT23H21M39S')
+xs:dayTimeDuration P738092DT9H32M43S
+# xs:dayTimeDuration('-P25DT828M56S') - xs:dayTimeDuration('P738117DT23H21M39S')
+xs:dayTimeDuration -P738143DT13H10M35S
+# xs:yearMonthDuration('P15Y') * -2
+xs:yearMonthDuration -P30Y
+# xs:yearMonthDuration('P15Y') div -2
+xs:yearMonthDuration -P7Y6M
+# sum((xs:dayTimeDuration('P889101DT9H901M50S'), xs:dayTimeDuration('-P918874DT7H29S'), xs:dayTimeDuration('P37192DT2M3620S'), xs:dayTimeDuration('P8DT24H28M16.3S')))
+xs:dayTimeDuration P7428DT18H31M57.3S
+# max((xs:dayTimeDuration('P889101DT9H901M50S'), xs:dayTimeDuration('-P918874DT7H29S'), xs:dayTimeDuration('P37192DT2M3620S'), xs:dayTimeDuration('P8DT24H28M16.3S')))
+xs:dayTimeDuration P889102DT1M50S
+# avg((xs:dayTimeDuration('P889101DT9H901M50S'), xs:dayTimeDuration('-P918874DT7H29S'), xs:dayTimeDuration('P37192DT2M3620S'), xs:dayTimeDuration('P8DT24H28M16.3S')))
+xs:dayTimeDuration P1857DT4H37M59.325S
+# xs:yearMonthDuration('P219M')
+xs:yearMonthDuration P18Y3M
+# xs:duration('P46298Y')
+xs:duration P46298Y
+# xs:dayTimeDuration('PT83508.093S') + xs:dayTimeDuration('PT34M57S')
+xs:dayTimeDuration PT23H46M45.093S
+# xs:dayTimeDuration('PT83508.093S') - xs:dayTimeDuration('PT34M57S')
+xs:dayTimeDuration PT22H36M51.093S
+# xs:dayTimeDuration('P17DT10H2M46S')
+xs:dayTimeDuration P17DT10H2M46S
+# xs:duration('P16DT3H35.991103454S')
+xs:duration P16DT3H35.991103454S
+# sum((xs:dayTimeDuration('P12DT85343.573036454S'), xs:dayTimeDuration('P19DT41H532M41564S'), xs:dayTimeDuration('P20DT18H17M59.6S')))
+xs:dayTimeDuration P55DT7H25M7.173036454S
+# max((xs:dayTimeDuration('P12DT85343.573036454S'), xs:dayTimeDuration('P19DT41H532M41564S'), xs:dayTimeDuration('P20DT18H17M59.6S')))
+xs:dayTimeDuration P21DT13H24M44S
+# xs:yearMonthDuration('-P64510Y')
+xs:yearMonthDuration -P64510Y
+# xs:duration('P23Y10M')
+xs:duration P23Y10M
+# string(xs:duration(xs:dayTimeDuration('P557977DT8.198213107S')))
+xs:string P557977DT8.198213107S
+# xs:yearMonthDuration(xs:dayTimeDuration('P557977DT8.198213107S'))
+xs:yearMonthDuration P0M
+# xs:dayTimeDuration('P34DT68M33.918210729S')
+xs:dayTimeDuration P34DT1H8M33.918210729S
+# xs:duration('-PT37M14.9S')
+xs:duration -PT37M14.9S
+# days-from-duration(xs:yearMonthDuration('P0M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P0M'))
+xs:decimal 0
+# -9.8321 * xs:dayTimeDuration('-P34DT630M37.377770579S')
+xs:dayTimeDuration P338DT14H19M57.841978109S
+# xs:dayTimeDuration('-P34DT630M37.377770579S') div -9.8321
+xs:dayTimeDuration P3DT12H3M44.808308558S
+# xs:yearMonthDuration('P721Y1M') div xs:yearMonthDuration('P41360Y292M')
+xs:decimal 0.0174240654676085153
+# sum((xs:dayTimeDuration('-P444782DT23M59.0S'), xs:dayTimeDuration('PT12H17M49.467S')))
+xs:dayTimeDuration -P444781DT12H6M9.533S
+# max((xs:dayTimeDuration('-P444782DT23M59.0S'), xs:dayTimeDuration('PT12H17M49.467S')))
+xs:dayTimeDuration PT12H17M49.467S
+# avg((xs:dayTimeDuration('-P444782DT23M59.0S'), xs:dayTimeDuration('PT12H17M49.467S')))
+xs:dayTimeDuration -P222390DT18H3M4.7665S
+# xs:dayTimeDuration('-PT37M16.294S') lt xs:dayTimeDuration('P27DT6H25M19608S')
+xs:boolean true
+# xs:dayTimeDuration('-PT37M16.294S') eq xs:dayTimeDuration('P27DT6H25M19608S')
+xs:boolean false
+# xs:dayTimeDuration('-PT37M16.294S') ge xs:dayTimeDuration('P27DT6H25M19608S')
+xs:boolean false
+# xs:yearMonthDuration('-P0Y332M')
+xs:yearMonthDuration -P27Y8M
+# xs:duration('-P111M')
+xs:duration -P9Y3M
+# xs:yearMonthDuration('P55001Y11M') + xs:yearMonthDuration('P62876Y')
+xs:yearMonthDuration P117877Y11M
+# xs:yearMonthDuration('P55001Y11M') - xs:yearMonthDuration('P62876Y')
+xs:yearMonthDuration -P7874Y1M
+# years-from-duration(xs:yearMonthDuration('-P38567Y8M'))
+xs:integer -38567
+# seconds-from-duration(xs:yearMonthDuration('-P38567Y8M'))
+xs:decimal 0
+# xs:dayTimeDuration('-P949369DT21H426M18.680389733S') + xs:dayTimeDuration('P0DT19H8M59.4S')
+xs:dayTimeDuration -P949369DT8H57M19.280389733S
+# xs:dayTimeDuration('-P949369DT21H426M18.680389733S') - xs:dayTimeDuration('P0DT19H8M59.4S')
+xs:dayTimeDuration -P949370DT23H15M18.080389733S
+# xs:dayTimeDuration('P239662DT34H73511S') div xs:dayTimeDuration('P558660DT16H17M17.7S')
+xs:decimal 0.42899791704680991752
+# string(xs:duration(xs:dayTimeDuration('-PT74H32S')))
+xs:string -P3DT2H32S
+# xs:yearMonthDuration(xs:dayTimeDuration('-PT74H32S'))
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P0M') lt xs:yearMonthDuration('-P70624Y')
+xs:boolean false
+# xs:yearMonthDuration('P0M') eq xs:yearMonthDuration('-P70624Y')
+xs:boolean false
+# xs:yearMonthDuration('P0M') ge xs:yearMonthDuration('-P70624Y')
+xs:boolean true
+# xs:yearMonthDuration('P74393Y4M') * -19
+xs:yearMonthDuration -P1413473Y4M
+# xs:yearMonthDuration('P74393Y4M') div -19
+xs:yearMonthDuration -P3915Y5M
+# -11 * xs:dayTimeDuration('-P293782DT20H736M45485.142S')
+xs:dayTimeDuration P3231622DT13H54M56.562S
+# xs:dayTimeDuration('-P293782DT20H736M45485.142S') div -11
+xs:dayTimeDuration P26707DT14H59M27.740181841S
+# xs:yearMonthDuration('-P23Y5M') lt xs:yearMonthDuration('P2M')
+xs:boolean true
+# xs:yearMonthDuration('-P23Y5M') eq xs:yearMonthDuration('P2M')
+xs:boolean false
+# xs:yearMonthDuration('-P23Y5M') ge xs:yearMonthDuration('P2M')
+xs:boolean false
+# xs:yearMonthDuration('P1043Y') + xs:yearMonthDuration('P84042Y2M')
+xs:yearMonthDuration P85085Y2M
+# xs:yearMonthDuration('P1043Y') - xs:yearMonthDuration('P84042Y2M')
+xs:yearMonthDuration -P82999Y2M
+# xs:dayTimeDuration('P760610DT15H34M57.4S') + xs:dayTimeDuration('P629241DT13M70625.4S')
+xs:dayTimeDuration P1389852DT11H25M2.8S
+# xs:dayTimeDuration('P760610DT15H34M57.4S') - xs:dayTimeDuration('P629241DT13M70625.4S')
+xs:dayTimeDuration P131368DT19H44M52S
+# string(xs:duration(xs:dayTimeDuration('-P6DT83H557M43.664695225S')))
+xs:string -P9DT20H17M43.664695225S
+# xs:yearMonthDuration(xs:dayTimeDuration('-P6DT83H557M43.664695225S'))
+xs:yearMonthDuration P0M
+# string(xs:duration(xs:dayTimeDuration('P77958DT30M56.2S')))
+xs:string P77958DT30M56.2S
+# xs:yearMonthDuration(xs:dayTimeDuration('P77958DT30M56.2S'))
+xs:yearMonthDuration P0M
+# string(xs:duration(xs:dayTimeDuration('P38DT85H654M34S')))
+xs:string P41DT23H54M34S
+# xs:yearMonthDuration(xs:dayTimeDuration('P38DT85H654M34S'))
+xs:yearMonthDuration P0M
+# minutes-from-duration(xs:yearMonthDuration('P30Y'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P30Y'))
+xs:decimal 0
+# xs:dayTimeDuration('P425862DT14565S') div xs:dayTimeDuration('P33DT34H991M51.3S')
+xs:decimal 12130.94005650237760810162
+# xs:yearMonthDuration('P469M') + xs:yearMonthDuration('P33225Y')
+xs:yearMonthDuration P33264Y1M
+# xs:yearMonthDuration('P469M') - xs:yearMonthDuration('P33225Y')
+xs:yearMonthDuration -P33185Y11M
+# years-from-duration(xs:dayTimeDuration('P18DT624M3S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P18DT624M3S'))
+xs:decimal 3
+# sum((xs:yearMonthDuration('P50231Y203M')))
+xs:yearMonthDuration P50247Y11M
+# max((xs:yearMonthDuration('P50231Y203M')))
+xs:yearMonthDuration P50247Y11M
+# avg((xs:yearMonthDuration('P50231Y203M')))
+xs:yearMonthDuration P50247Y11M
+# xs:yearMonthDuration('-P236M') + xs:yearMonthDuration('P86924Y3M')
+xs:yearMonthDuration P86904Y7M
+# xs:yearMonthDuration('-P236M') - xs:yearMonthDuration('P86924Y3M')
+xs:yearMonthDuration -P86943Y11M
+# sum((xs:dayTimeDuration('P32DT19H52M29S'), xs:dayTimeDuration('P563852DT51M86822S'), xs:dayTimeDuration('-P980868DT5H22M27S'), xs:dayTimeDuration('-PT64H669M15S')))
+xs:dayTimeDuration -P416985DT11H41M11S
+# max((xs:dayTimeDuration('P32DT19H52M29S'), xs:dayTimeDuration('P563852DT51M86822S'), xs:dayTimeDuration('-P980868DT5H22M27S'), xs:dayTimeDuration('-PT64H669M15S')))
+xs:dayTimeDuration P563853DT58M2S
+# avg((xs:dayTimeDuration('P32DT19H52M29S'), xs:dayTimeDuration('P563852DT51M86822S'), xs:dayTimeDuration('-P980868DT5H22M27S'), xs:dayTimeDuration('-PT64H669M15S')))
+xs:dayTimeDuration -P104246DT8H55M17.75S
+# months-from-duration(xs:yearMonthDuration('-P3Y500M'))
+xs:integer -8
+# seconds-from-duration(xs:yearMonthDuration('-P3Y500M'))
+xs:decimal 0
+# xs:yearMonthDuration('P9Y')
+xs:yearMonthDuration P9Y
+# xs:duration('P17Y8M')
+xs:duration P17Y8M
+# sum((xs:dayTimeDuration('PT8H22M17073.271360189S')))
+xs:dayTimeDuration PT13H6M33.271360189S
+# max((xs:dayTimeDuration('PT8H22M17073.271360189S')))
+xs:dayTimeDuration PT13H6M33.271360189S
+# avg((xs:dayTimeDuration('PT8H22M17073.271360189S')))
+xs:dayTimeDuration PT13H6M33.271360189S
+# sum((xs:yearMonthDuration('P10822Y78M'), xs:yearMonthDuration('-P23Y'), xs:yearMonthDuration('P88170Y'), xs:yearMonthDuration('P10M')))
+xs:yearMonthDuration P98976Y4M
+# max((xs:yearMonthDuration('P10822Y78M'), xs:yearMonthDuration('-P23Y'), xs:yearMonthDuration('P88170Y'), xs:yearMonthDuration('P10M')))
+xs:yearMonthDuration P88170Y
+# avg((xs:yearMonthDuration('P10822Y78M'), xs:yearMonthDuration('-P23Y'), xs:yearMonthDuration('P88170Y'), xs:yearMonthDuration('P10M')))
+xs:yearMonthDuration P24744Y1M
+# xs:yearMonthDuration('-P4Y') * -45.255
+xs:yearMonthDuration P181Y
+# xs:yearMonthDuration('-P4Y') div -45.255
+xs:yearMonthDuration P1M
+# xs:dayTimeDuration('-PT19H53S')
+xs:dayTimeDuration -PT19H53S
+# xs:duration('-PT55H251M32S')
+xs:duration -P2DT11H11M32S
+# years-from-duration(xs:yearMonthDuration('P17557Y130M'))
+xs:integer 17567
+# seconds-from-duration(xs:yearMonthDuration('P17557Y130M'))
+xs:decimal 0
+# xs:yearMonthDuration('P49551Y279M') * -18
+xs:yearMonthDuration -P892336Y6M
+# xs:yearMonthDuration('P49551Y279M') div -18
+xs:yearMonthDuration -P2754Y1M
+# sum((xs:yearMonthDuration('P8M'), xs:yearMonthDuration('P95698Y'), xs:yearMonthDuration('-P0Y6M')))
+xs:yearMonthDuration P95698Y2M
+# max((xs:yearMonthDuration('P8M'), xs:yearMonthDuration('P95698Y'), xs:yearMonthDuration('-P0Y6M')))
+xs:yearMonthDuration P95698Y
+# avg((xs:yearMonthDuration('P8M'), xs:yearMonthDuration('P95698Y'), xs:yearMonthDuration('-P0Y6M')))
+xs:yearMonthDuration P31899Y5M
+# sum((xs:yearMonthDuration('P0M'), xs:yearMonthDuration('P5Y22M'), xs:yearMonthDuration('P27Y204M')))
+xs:yearMonthDuration P50Y10M
+# max((xs:yearMonthDuration('P0M'), xs:yearMonthDuration('P5Y22M'), xs:yearMonthDuration('P27Y204M')))
+xs:yearMonthDuration P44Y
+# avg((xs:yearMonthDuration('P0M'), xs:yearMonthDuration('P5Y22M'), xs:yearMonthDuration('P27Y204M')))
+xs:yearMonthDuration P16Y11M
+# days-from-duration(xs:dayTimeDuration('-PT311M77244.8S'))
+xs:integer -1
+# seconds-from-duration(xs:dayTimeDuration('-PT311M77244.8S'))
+xs:decimal -24.8
+# xs:yearMonthDuration('P3097Y') lt xs:yearMonthDuration('P5M')
+xs:boolean false
+# xs:yearMonthDuration('P3097Y') eq xs:yearMonthDuration('P5M')
+xs:boolean false
+# xs:yearMonthDuration('P3097Y') ge xs:yearMonthDuration('P5M')
+xs:boolean true
+# xs:yearMonthDuration('P8M') lt xs:yearMonthDuration('P0M')
+xs:boolean false
+# xs:yearMonthDuration('P8M') eq xs:yearMonthDuration('P0M')
+xs:boolean false
+# xs:yearMonthDuration('P8M') ge xs:yearMonthDuration('P0M')
+xs:boolean true
+# xs:yearMonthDuration('P27Y5M') + xs:yearMonthDuration('P10M')
+xs:yearMonthDuration P28Y3M
+# xs:yearMonthDuration('P27Y5M') - xs:yearMonthDuration('P10M')
+xs:yearMonthDuration P26Y7M
+# sum((xs:dayTimeDuration('-P49405DT20.317877236S')))
+xs:dayTimeDuration -P49405DT20.317877236S
+# max((xs:dayTimeDuration('-P49405DT20.317877236S')))
+xs:dayTimeDuration -P49405DT20.317877236S
+# avg((xs:dayTimeDuration('-P49405DT20.317877236S')))
+xs:dayTimeDuration -P49405DT20.317877236S
+# xs:yearMonthDuration('P0M')
+xs:yearMonthDuration P0M
+# xs:duration('P92651Y339M')
+xs:duration P92679Y3M
+# 19 * xs:dayTimeDuration('PT16H125M7247.5S')
+xs:dayTimeDuration P15DT21H50M2.5S
+# xs:dayTimeDuration('PT16H125M7247.5S') div 19
+xs:dayTimeDuration PT1H3M27.763157894S
+# -907.97 * xs:dayTimeDuration('PT920M')
+xs:dayTimeDuration -P580DT2H12M24S
+# xs:dayTimeDuration('PT920M') div -907.97
+xs:dayTimeDuration -PT1M0.794960185S
+# xs:yearMonthDuration('P64288Y5M') * -4881.8
+error FODT0002
+# xs:yearMonthDuration('P64288Y5M') div -4881.8
+xs:yearMonthDuration -P13Y2M
+# xs:yearMonthDuration('P9Y9M') * -19
+xs:yearMonthDuration -P185Y3M
+# xs:yearMonthDuration('P9Y9M') div -19
+xs:yearMonthDuration -P6M
+# months-from-duration(xs:yearMonthDuration('P18Y1M'))
+xs:integer 1
+# seconds-from-duration(xs:yearMonthDuration('P18Y1M'))
+xs:decimal 0
+# sum((xs:dayTimeDuration('P16DT50M14.3S'), xs:dayTimeDuration('P730095DT4H55.0S'), xs:dayTimeDuration('-P0DT20M56.934548615S'), xs:dayTimeDuration('P125709DT49M38.027S')))
+xs:dayTimeDuration P855820DT5H19M50.392451385S
+# max((xs:dayTimeDuration('P16DT50M14.3S'), xs:dayTimeDuration('P730095DT4H55.0S'), xs:dayTimeDuration('-P0DT20M56.934548615S'), xs:dayTimeDuration('P125709DT49M38.027S')))
+xs:dayTimeDuration P730095DT4H55S
+# sum((xs:yearMonthDuration('P0M'), xs:yearMonthDuration('P11M'), xs:yearMonthDuration('-P97493Y'), xs:yearMonthDuration('P9Y')))
+xs:yearMonthDuration -P97483Y1M
+# max((xs:yearMonthDuration('P0M'), xs:yearMonthDuration('P11M'), xs:yearMonthDuration('-P97493Y'), xs:yearMonthDuration('P9Y')))
+xs:yearMonthDuration P9Y
+# avg((xs:yearMonthDuration('P0M'), xs:yearMonthDuration('P11M'), xs:yearMonthDuration('-P97493Y'), xs:yearMonthDuration('P9Y')))
+xs:yearMonthDuration -P24370Y9M
+# xs:yearMonthDuration('P10Y480M') lt xs:yearMonthDuration('-P38310Y10M')
+xs:boolean false
+# xs:yearMonthDuration('P10Y480M') eq xs:yearMonthDuration('-P38310Y10M')
+xs:boolean false
+# xs:yearMonthDuration('P10Y480M') ge xs:yearMonthDuration('-P38310Y10M')
+xs:boolean true
+# xs:yearMonthDuration('P112M') div xs:yearMonthDuration('P29Y')
+xs:decimal 0.32183908045977011494
+# xs:yearMonthDuration('P0M') + xs:yearMonthDuration('-P374M')
+xs:yearMonthDuration -P31Y2M
+# xs:yearMonthDuration('P0M') - xs:yearMonthDuration('-P374M')
+xs:yearMonthDuration P31Y2M
+# xs:yearMonthDuration('-P17Y')
+xs:yearMonthDuration -P17Y
+# xs:duration('P15Y297M')
+xs:duration P39Y9M
+# -9 * xs:dayTimeDuration('-PT71H28M73734.2S')
+xs:dayTimeDuration P34DT11H32M7.8S
+# xs:dayTimeDuration('-PT71H28M73734.2S') div -9
+xs:dayTimeDuration PT10H12M59.355555555S
+# xs:yearMonthDuration('-P0Y449M') * -394.6
+xs:yearMonthDuration P14764Y7M
+# xs:yearMonthDuration('-P0Y449M') div -394.6
+xs:yearMonthDuration P1M
+# xs:yearMonthDuration('P0M') div xs:yearMonthDuration('-P7083Y')
+xs:decimal 0
+# xs:yearMonthDuration('P16M') div xs:yearMonthDuration('-P11Y444M')
+xs:decimal -0.02777777777777777778
+# days-from-duration(xs:dayTimeDuration('-P15DT22H49S'))
+xs:integer -15
+# seconds-from-duration(xs:dayTimeDuration('-P15DT22H49S'))
+xs:decimal -49
+# xs:dayTimeDuration('P23DT11H25M1.324728993S') lt xs:dayTimeDuration('-P132914DT468M80221S')
+xs:boolean false
+# xs:dayTimeDuration('P23DT11H25M1.324728993S') eq xs:dayTimeDuration('-P132914DT468M80221S')
+xs:boolean false
+# xs:dayTimeDuration('P23DT11H25M1.324728993S') ge xs:dayTimeDuration('-P132914DT468M80221S')
+xs:boolean true
+# -81.862 * xs:dayTimeDuration('P20DT157M56.1S')
+xs:dayTimeDuration -P1646DT5H14M28.4982S
+# xs:dayTimeDuration('P20DT157M56.1S') div -81.862
+xs:dayTimeDuration -PT5H53M44.452126749S
+# string(xs:duration(xs:yearMonthDuration('P182M')))
+xs:string P15Y2M
+# xs:dayTimeDuration(xs:yearMonthDuration('P182M'))
+xs:dayTimeDuration PT0S
+# sum((xs:dayTimeDuration('-P342953DT12H44.3S')))
+xs:dayTimeDuration -P342953DT12H44.3S
+# max((xs:dayTimeDuration('-P342953DT12H44.3S')))
+xs:dayTimeDuration -P342953DT12H44.3S
+# avg((xs:dayTimeDuration('-P342953DT12H44.3S')))
+xs:dayTimeDuration -P342953DT12H44.3S
+# xs:yearMonthDuration('-P0M') * 1.5175
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('-P0M') div 1.5175
+xs:yearMonthDuration P0M
+# 3 * xs:dayTimeDuration('P22DT49S')
+xs:dayTimeDuration P66DT2M27S
+# xs:dayTimeDuration('P22DT49S') div 3
+xs:dayTimeDuration P7DT8H16.333333333S
+# xs:yearMonthDuration('P0Y')
+xs:yearMonthDuration P0M
+# xs:duration('P6Y294M')
+xs:duration P30Y6M
+# xs:yearMonthDuration('P0M') * 11
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P0M') div 11
+xs:yearMonthDuration P0M
+# sum((xs:yearMonthDuration('P13Y337M')))
+xs:yearMonthDuration P41Y1M
+# max((xs:yearMonthDuration('P13Y337M')))
+xs:yearMonthDuration P41Y1M
+# avg((xs:yearMonthDuration('P13Y337M')))
+xs:yearMonthDuration P41Y1M
+# xs:dayTimeDuration('P20DT8H10.0S')
+xs:dayTimeDuration P20DT8H10S
+# xs:duration('-P972253DT6H669M31.653428499S')
+xs:duration -P972253DT17H9M31.653428499S
+# 9147.8 * xs:dayTimeDuration('P22DT66H63063.994S')
+xs:dayTimeDuration P233085DT2H18M44.3132S
+# xs:dayTimeDuration('P22DT66H63063.994S') div 9147.8
+xs:dayTimeDuration PT4M0.655020223S
+# xs:yearMonthDuration('P68072Y7M') + xs:yearMonthDuration('P9M')
+xs:yearMonthDuration P68073Y4M
+# xs:yearMonthDuration('P68072Y7M') - xs:yearMonthDuration('P9M')
+xs:yearMonthDuration P68071Y10M
+# sum((xs:dayTimeDuration('P28DT36.2S'), xs:dayTimeDuration('P8784DT13.500277259S'), xs:dayTimeDuration('-PT933M33.595268092S')))
+xs:dayTimeDuration P8811DT8H27M16.105009167S
+# max((xs:dayTimeDuration('P28DT36.2S'), xs:dayTimeDuration('P8784DT13.500277259S'), xs:dayTimeDuration('-PT933M33.595268092S')))
+xs:dayTimeDuration P8784DT13.500277259S
+# avg((xs:dayTimeDuration('P28DT36.2S'), xs:dayTimeDuration('P8784DT13.500277259S'), xs:dayTimeDuration('-PT933M33.595268092S')))
+xs:dayTimeDuration P2937DT2H49M5.368336389S
+# string(xs:duration(xs:dayTimeDuration('P178025DT19H843.5S')))
+xs:string P178025DT19H14M3.5S
+# xs:yearMonthDuration(xs:dayTimeDuration('P178025DT19H843.5S'))
+xs:yearMonthDuration P0M
+# hours-from-duration(xs:yearMonthDuration('P67213Y2M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P67213Y2M'))
+xs:decimal 0
+# xs:dayTimeDuration('P89309DT12H24M11.534S') lt xs:dayTimeDuration('PT18H24M53S')
+xs:boolean false
+# xs:dayTimeDuration('P89309DT12H24M11.534S') eq xs:dayTimeDuration('PT18H24M53S')
+xs:boolean false
+# xs:dayTimeDuration('P89309DT12H24M11.534S') ge xs:dayTimeDuration('PT18H24M53S')
+xs:boolean true
+# sum((xs:yearMonthDuration('P23Y'), xs:yearMonthDuration('-P13Y'), xs:yearMonthDuration('P55994Y11M'), xs:yearMonthDuration('P10Y')))
+xs:yearMonthDuration P56014Y11M
+# max((xs:yearMonthDuration('P23Y'), xs:yearMonthDuration('-P13Y'), xs:yearMonthDuration('P55994Y11M'), xs:yearMonthDuration('P10Y')))
+xs:yearMonthDuration P55994Y11M
+# avg((xs:yearMonthDuration('P23Y'), xs:yearMonthDuration('-P13Y'), xs:yearMonthDuration('P55994Y11M'), xs:yearMonthDuration('P10Y')))
+xs:yearMonthDuration P14003Y9M
+# xs:yearMonthDuration('P0Y11M') * 3
+xs:yearMonthDuration P2Y9M
+# xs:yearMonthDuration('P0Y11M') div 3
+xs:yearMonthDuration P4M
+# xs:dayTimeDuration('P510780DT38H310M24.808521838S') div xs:dayTimeDuration('-PT14H20.884878933S')
+xs:decimal -875263.24717969582216385599
+# xs:dayTimeDuration('P29DT50H34S') lt xs:dayTimeDuration('P15DT23.9S')
+xs:boolean false
+# xs:dayTimeDuration('P29DT50H34S') eq xs:dayTimeDuration('P15DT23.9S')
+xs:boolean false
+# xs:dayTimeDuration('P29DT50H34S') ge xs:dayTimeDuration('P15DT23.9S')
+xs:boolean true
+# 19 * xs:dayTimeDuration('PT50H24S')
+xs:dayTimeDuration P39DT14H7M36S
+# xs:dayTimeDuration('PT50H24S') div 19
+xs:dayTimeDuration PT2H37M54.947368421S
+# xs:yearMonthDuration('-P19Y3M') * -20
+xs:yearMonthDuration P385Y
+# xs:yearMonthDuration('-P19Y3M') div -20
+xs:yearMonthDuration P1Y
+# xs:dayTimeDuration('P116812DT23H9M34.8S') + xs:dayTimeDuration('PT9M17537.912336324S')
+xs:dayTimeDuration P116813DT4H10M52.712336324S
+# xs:dayTimeDuration('P116812DT23H9M34.8S') - xs:dayTimeDuration('PT9M17537.912336324S')
+xs:dayTimeDuration P116812DT18H8M16.887663676S
+# 3 * xs:dayTimeDuration('-PT63H35M8S')
+xs:dayTimeDuration -P7DT22H45M24S
+# xs:dayTimeDuration('-PT63H35M8S') div 3
+xs:dayTimeDuration -PT21H11M42.666666666S
+# xs:yearMonthDuration('P11Y15M') div xs:yearMonthDuration('P0M')
+error FOAR0001
+# xs:dayTimeDuration('-PT55M28S')
+xs:dayTimeDuration -PT55M28S
+# xs:duration('P30DT4H41M27.562S')
+xs:duration P30DT4H41M27.562S
+# xs:yearMonthDuration('-P3M') * -8579.4
+xs:yearMonthDuration P2144Y10M
+# xs:yearMonthDuration('-P3M') div -8579.4
+xs:yearMonthDuration P0M
+# sum((xs:yearMonthDuration('P44805Y24M'), xs:yearMonthDuration('P22Y9M'), xs:yearMonthDuration('-P32170Y10M')))
+xs:yearMonthDuration P12658Y11M
+# max((xs:yearMonthDuration('P44805Y24M'), xs:yearMonthDuration('P22Y9M'), xs:yearMonthDuration('-P32170Y10M')))
+xs:yearMonthDuration P44807Y
+# avg((xs:yearMonthDuration('P44805Y24M'), xs:yearMonthDuration('P22Y9M'), xs:yearMonthDuration('-P32170Y10M')))
+xs:yearMonthDuration P4219Y8M
+# xs:yearMonthDuration('P0M')
+xs:yearMonthDuration P0M
+# xs:duration('P278M')
+xs:duration P23Y2M
+# sum((xs:yearMonthDuration('P16Y11M'), xs:yearMonthDuration('-P77572Y')))
+xs:yearMonthDuration -P77555Y1M
+# max((xs:yearMonthDuration('P16Y11M'), xs:yearMonthDuration('-P77572Y')))
+xs:yearMonthDuration P16Y11M
+# avg((xs:yearMonthDuration('P16Y11M'), xs:yearMonthDuration('-P77572Y')))
+xs:yearMonthDuration -P38777Y6M
+# xs:yearMonthDuration('-P0Y334M') lt xs:yearMonthDuration('P0Y249M')
+xs:boolean true
+# xs:yearMonthDuration('-P0Y334M') eq xs:yearMonthDuration('P0Y249M')
+xs:boolean false
+# xs:yearMonthDuration('-P0Y334M') ge xs:yearMonthDuration('P0Y249M')
+xs:boolean false
+# sum((xs:dayTimeDuration('P463086DT34H763M29.604S'), xs:dayTimeDuration('-P32DT21H573M30.225S'), xs:dayTimeDuration('P4DT3H54M56.114709604S')))
+xs:dayTimeDuration P463058DT20H4M55.493709604S
+# max((xs:dayTimeDuration('P463086DT34H763M29.604S'), xs:dayTimeDuration('-P32DT21H573M30.225S'), xs:dayTimeDuration('P4DT3H54M56.114709604S')))
+xs:dayTimeDuration P463087DT22H43M29.604S
+# string(xs:duration(xs:yearMonthDuration('P61559Y9M')))
+xs:string P61559Y9M
+# xs:dayTimeDuration(xs:yearMonthDuration('P61559Y9M'))
+xs:dayTimeDuration PT0S
+# -7.0628 * xs:dayTimeDuration('PT50M41S')
+xs:dayTimeDuration -PT5H57M57.9748S
+# xs:dayTimeDuration('PT50M41S') div -7.0628
+xs:dayTimeDuration -PT7M10.565781276S
+# xs:yearMonthDuration('P91191Y9M') lt xs:yearMonthDuration('-P15Y447M')
+xs:boolean false
+# xs:yearMonthDuration('P91191Y9M') eq xs:yearMonthDuration('-P15Y447M')
+xs:boolean false
+# xs:yearMonthDuration('P91191Y9M') ge xs:yearMonthDuration('-P15Y447M')
+xs:boolean true
+# xs:yearMonthDuration('-P284M') * 398.05
+xs:yearMonthDuration -P9420Y6M
+# xs:yearMonthDuration('-P284M') div 398.05
+xs:yearMonthDuration -P1M
+# xs:yearMonthDuration('P2Y430M') * -250.49
+xs:yearMonthDuration -P9476Y10M
+# xs:yearMonthDuration('P2Y430M') div -250.49
+xs:yearMonthDuration -P2M
+# xs:yearMonthDuration('P6M') + xs:yearMonthDuration('P0Y393M')
+xs:yearMonthDuration P33Y3M
+# xs:yearMonthDuration('P6M') - xs:yearMonthDuration('P0Y393M')
+xs:yearMonthDuration -P32Y3M
+# months-from-duration(xs:dayTimeDuration('PT4.5S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('PT4.5S'))
+xs:decimal 4.5
+# -651.86 * xs:dayTimeDuration('PT87H952M30S')
+xs:dayTimeDuration -P2794DT4H5M51S
+# xs:dayTimeDuration('PT87H952M30S') div -651.86
+xs:dayTimeDuration -PT9M28.143466388S
+# xs:dayTimeDuration('P479263DT505M56S')
+xs:dayTimeDuration P479263DT8H25M56S
+# xs:duration('P12DT31S')
+xs:duration P12DT31S
+# days-from-duration(xs:dayTimeDuration('PT24.1S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('PT24.1S'))
+xs:decimal 24.1
+# days-from-duration(xs:dayTimeDuration('-PT91H265M35S'))
+xs:integer -3
+# seconds-from-duration(xs:dayTimeDuration('-PT91H265M35S'))
+xs:decimal -35
+# xs:dayTimeDuration('PT13H490M49S') div xs:dayTimeDuration('PT12H57S')
+xs:decimal 1.76269736690015488823
+# xs:yearMonthDuration('P9M') lt xs:yearMonthDuration('P19Y454M')
+xs:boolean true
+# xs:yearMonthDuration('P9M') eq xs:yearMonthDuration('P19Y454M')
+xs:boolean false
+# xs:yearMonthDuration('P9M') ge xs:yearMonthDuration('P19Y454M')
+xs:boolean false
+# sum((xs:dayTimeDuration('-PT5H52S'), xs:dayTimeDuration('P39DT10M25S'), xs:dayTimeDuration('PT23H813M9234.843S'), xs:dayTimeDuration('PT19H')))
+xs:dayTimeDuration P41DT5H16M27.843S
+# max((xs:dayTimeDuration('-PT5H52S'), xs:dayTimeDuration('P39DT10M25S'), xs:dayTimeDuration('PT23H813M9234.843S'), xs:dayTimeDuration('PT19H')))
+xs:dayTimeDuration P39DT10M25S
+# avg((xs:dayTimeDuration('-PT5H52S'), xs:dayTimeDuration('P39DT10M25S'), xs:dayTimeDuration('PT23H813M9234.843S'), xs:dayTimeDuration('PT19H')))
+xs:dayTimeDuration P10DT7H19M6.96075S
+# xs:dayTimeDuration('-P22DT40M59264S') div xs:dayTimeDuration('P258613DT38.717647372S')
+xs:decimal -0.00008782893228238999
+# string(xs:duration(xs:yearMonthDuration('P88M')))
+xs:string P7Y4M
+# xs:dayTimeDuration(xs:yearMonthDuration('P88M'))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration('-P43M') * -20
+xs:yearMonthDuration P71Y8M
+# xs:yearMonthDuration('-P43M') div -20
+xs:yearMonthDuration P2M
+# xs:dayTimeDuration('-P34DT67H48S') lt xs:dayTimeDuration('P218388DT20S')
+xs:boolean true
+# xs:dayTimeDuration('-P34DT67H48S') eq xs:dayTimeDuration('P218388DT20S')
+xs:boolean false
+# xs:dayTimeDuration('-P34DT67H48S') ge xs:dayTimeDuration('P218388DT20S')
+xs:boolean false
+# string(xs:duration(xs:dayTimeDuration('P837016DT16H26M17.233648749S')))
+xs:string P837016DT16H26M17.233648749S
+# xs:yearMonthDuration(xs:dayTimeDuration('P837016DT16H26M17.233648749S'))
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P39265Y477M') div xs:yearMonthDuration('-P68271Y')
+xs:decimal -0.57571662931552196394
+# xs:yearMonthDuration('-P6896Y6M') + xs:yearMonthDuration('-P11M')
+xs:yearMonthDuration -P6897Y5M
+# xs:yearMonthDuration('-P6896Y6M') - xs:yearMonthDuration('-P11M')
+xs:yearMonthDuration -P6895Y7M
+# xs:yearMonthDuration('P0Y') * 10
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P0Y') div 10
+xs:yearMonthDuration P0M
+# sum((xs:dayTimeDuration('-P38DT2H56M48S')))
+xs:dayTimeDuration -P38DT2H56M48S
+# max((xs:dayTimeDuration('-P38DT2H56M48S')))
+xs:dayTimeDuration -P38DT2H56M48S
+# avg((xs:dayTimeDuration('-P38DT2H56M48S')))
+xs:dayTimeDuration -P38DT2H56M48S
+# xs:yearMonthDuration('P16Y10M') * -65.975
+xs:yearMonthDuration -P1110Y7M
+# xs:yearMonthDuration('P16Y10M') div -65.975
+xs:yearMonthDuration -P3M
+# hours-from-duration(xs:yearMonthDuration('P58035Y250M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P58035Y250M'))
+xs:decimal 0
+# sum((xs:yearMonthDuration('-P7M'), xs:yearMonthDuration('P14Y')))
+xs:yearMonthDuration P13Y5M
+# max((xs:yearMonthDuration('-P7M'), xs:yearMonthDuration('P14Y')))
+xs:yearMonthDuration P14Y
+# avg((xs:yearMonthDuration('-P7M'), xs:yearMonthDuration('P14Y')))
+xs:yearMonthDuration P6Y9M
+# xs:dayTimeDuration('P0DT8H180M39.345S') + xs:dayTimeDuration('PT94H3M12.192534466S')
+xs:dayTimeDuration P4DT9H3M51.537534466S
+# xs:dayTimeDuration('P0DT8H180M39.345S') - xs:dayTimeDuration('PT94H3M12.192534466S')
+xs:dayTimeDuration -P3DT11H2M32.847534466S
+# xs:dayTimeDuration('-P476245DT2M52S')
+xs:dayTimeDuration -P476245DT2M52S
+# xs:duration('PT19H408M17.578S')
+xs:duration P1DT1H48M17.578S
+# string(xs:duration(xs:yearMonthDuration('P82M')))
+xs:string P6Y10M
+# xs:dayTimeDuration(xs:yearMonthDuration('P82M'))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration('P23Y479M') div xs:yearMonthDuration('P12Y4M')
+xs:decimal 5.10135135135135135135
+# xs:yearMonthDuration('-P21Y11M') div xs:yearMonthDuration('-P24Y')
+xs:decimal 0.91319444444444444444
+# xs:dayTimeDuration('-PT562M35578.052S') + xs:dayTimeDuration('P373036DT14H57M95117.451S')
+xs:dayTimeDuration P373036DT22H7M19.399S
+# xs:dayTimeDuration('-PT562M35578.052S') - xs:dayTimeDuration('P373036DT14H57M95117.451S')
+xs:dayTimeDuration -P373038DT12H37M15.503S
+# days-from-duration(xs:dayTimeDuration('P27DT21M4.812S'))
+xs:integer 27
+# seconds-from-duration(xs:dayTimeDuration('P27DT21M4.812S'))
+xs:decimal 4.812
+# xs:yearMonthDuration('P8M') * 19
+xs:yearMonthDuration P12Y8M
+# xs:yearMonthDuration('P8M') div 19
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('-P10M') * 3952.0
+xs:yearMonthDuration -P3293Y4M
+# xs:yearMonthDuration('-P10M') div 3952.0
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P4Y261M')
+xs:yearMonthDuration P25Y9M
+# xs:duration('-P19Y41M')
+xs:duration -P22Y5M
+# xs:yearMonthDuration('P17Y') * -9
+xs:yearMonthDuration -P153Y
+# xs:yearMonthDuration('P17Y') div -9
+xs:yearMonthDuration -P1Y11M
+# -3.6715 * xs:dayTimeDuration('P748285DT34H942M35.1S')
+xs:dayTimeDuration -P2747335DT23H34M9.64965S
+# xs:dayTimeDuration('P748285DT34H942M35.1S') div -3.6715
+xs:dayTimeDuration -P203809DT15H12M57.801989946S
+# xs:yearMonthDuration('-P3479Y193M') lt xs:yearMonthDuration('-P11M')
+xs:boolean true
+# xs:yearMonthDuration('-P3479Y193M') eq xs:yearMonthDuration('-P11M')
+xs:boolean false
+# xs:yearMonthDuration('-P3479Y193M') ge xs:yearMonthDuration('-P11M')
+xs:boolean false
+# sum((xs:yearMonthDuration('P58540Y')))
+xs:yearMonthDuration P58540Y
+# max((xs:yearMonthDuration('P58540Y')))
+xs:yearMonthDuration P58540Y
+# avg((xs:yearMonthDuration('P58540Y')))
+xs:yearMonthDuration P58540Y
+# days-from-duration(xs:dayTimeDuration('PT99H38M25S'))
+xs:integer 4
+# seconds-from-duration(xs:dayTimeDuration('PT99H38M25S'))
+xs:decimal 25
+# -55.333 * xs:dayTimeDuration('P30DT18H34.421S')
+xs:dayTimeDuration -P1701DT12H16M59.017193S
+# xs:dayTimeDuration('P30DT18H34.421S') div -55.333
+xs:dayTimeDuration -PT13H20M15.369146802S
+# years-from-duration(xs:dayTimeDuration('P943303DT64H619M25.525247206S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P943303DT64H619M25.525247206S'))
+xs:decimal 25.525247206
+# -891.14 * xs:dayTimeDuration('P17DT853M29S')
+xs:dayTimeDuration -P15677DT13H20M20.26S
+# xs:dayTimeDuration('P17DT853M29S') div -891.14
+xs:dayTimeDuration -PT28M25.6904639S
+# xs:yearMonthDuration('-P12650Y296M') + xs:yearMonthDuration('-P0M')
+xs:yearMonthDuration -P12674Y8M
+# xs:yearMonthDuration('-P12650Y296M') - xs:yearMonthDuration('-P0M')
+xs:yearMonthDuration -P12674Y8M
+# -9602.2 * xs:dayTimeDuration('-P0DT11H524M20S')
+xs:dayTimeDuration P7897DT8H45M32S
+# xs:dayTimeDuration('-P0DT11H524M20S') div -9602.2
+xs:dayTimeDuration PT7.400387411S
+# xs:dayTimeDuration('P913530DT1H312M48.492454607S') + xs:dayTimeDuration('P321023DT513M23S')
+xs:dayTimeDuration P1234553DT14H46M11.492454607S
+# xs:dayTimeDuration('P913530DT1H312M48.492454607S') - xs:dayTimeDuration('P321023DT513M23S')
+xs:dayTimeDuration P592506DT21H39M25.492454607S
+# xs:dayTimeDuration('PT944M35S') + xs:dayTimeDuration('-P376258DT52H437M7.540S')
+xs:dayTimeDuration -P376259DT19H32M32.54S
+# xs:dayTimeDuration('PT944M35S') - xs:dayTimeDuration('-P376258DT52H437M7.540S')
+xs:dayTimeDuration P376261DT3H1M42.54S
+# sum((xs:dayTimeDuration('-PT3H117M52.974S'), xs:dayTimeDuration('-P383460DT44H14S'), xs:dayTimeDuration('PT44M4S'), xs:dayTimeDuration('PT43H21M37.4S')))
+xs:dayTimeDuration -P383460DT4H52M25.574S
+# max((xs:dayTimeDuration('-PT3H117M52.974S'), xs:dayTimeDuration('-P383460DT44H14S'), xs:dayTimeDuration('PT44M4S'), xs:dayTimeDuration('PT43H21M37.4S')))
+xs:dayTimeDuration P1DT19H21M37.4S
+# avg((xs:dayTimeDuration('-PT3H117M52.974S'), xs:dayTimeDuration('-P383460DT44H14S'), xs:dayTimeDuration('PT44M4S'), xs:dayTimeDuration('PT43H21M37.4S')))
+xs:dayTimeDuration -P95865DT1H13M6.3935S
+# xs:dayTimeDuration('P233870DT15H33.183663235S') lt xs:dayTimeDuration('P810569DT14H76943S')
+xs:boolean true
+# xs:dayTimeDuration('P233870DT15H33.183663235S') eq xs:dayTimeDuration('P810569DT14H76943S')
+xs:boolean false
+# xs:dayTimeDuration('P233870DT15H33.183663235S') ge xs:dayTimeDuration('P810569DT14H76943S')
+xs:boolean false
+# string(xs:duration(xs:yearMonthDuration('P469M')))
+xs:string P39Y1M
+# xs:dayTimeDuration(xs:yearMonthDuration('P469M'))
+xs:dayTimeDuration PT0S
+# -3 * xs:dayTimeDuration('PT842M19.468586933S')
+xs:dayTimeDuration -P1DT18H6M58.405760799S
+# xs:dayTimeDuration('PT842M19.468586933S') div -3
+xs:dayTimeDuration -PT4H40M46.489528977S
+# xs:yearMonthDuration('P27Y7M') div xs:yearMonthDuration('-P198M')
+xs:decimal -1.67171717171717171717
+# -66.124 * xs:dayTimeDuration('PT18H535M2.1S')
+xs:dayTimeDuration -P74DT3H52M34.4604S
+# xs:dayTimeDuration('PT18H535M2.1S') div -66.124
+xs:dayTimeDuration -PT24M25.460347226S
+# xs:yearMonthDuration('-P11Y123M') lt xs:yearMonthDuration('-P2493Y')
+xs:boolean false
+# xs:yearMonthDuration('-P11Y123M') eq xs:yearMonthDuration('-P2493Y')
+xs:boolean false
+# xs:yearMonthDuration('-P11Y123M') ge xs:yearMonthDuration('-P2493Y')
+xs:boolean true
+# -3994.3 * xs:dayTimeDuration('P303347DT399M24S')
+xs:dayTimeDuration -P1211660029DT23H7M25.2S
+# xs:dayTimeDuration('P303347DT399M24S') div -3994.3
+xs:dayTimeDuration -P75DT22H40M51.544450842S
+# minutes-from-duration(xs:dayTimeDuration('PT65H344M55.799S'))
+xs:integer 44
+# seconds-from-duration(xs:dayTimeDuration('PT65H344M55.799S'))
+xs:decimal 55.799
+# xs:dayTimeDuration('P26DT18M11S') + xs:dayTimeDuration('PT30M88204.428691050S')
+xs:dayTimeDuration P27DT1H18M15.42869105S
+# xs:dayTimeDuration('P26DT18M11S') - xs:dayTimeDuration('PT30M88204.428691050S')
+xs:dayTimeDuration P24DT23H18M6.57130895S
+# xs:dayTimeDuration('P21DT76H41.608558716S')
+xs:dayTimeDuration P24DT4H41.608558716S
+# xs:duration('P14DT2H51.900768455S')
+xs:duration P14DT2H51.900768455S
+# xs:yearMonthDuration('P51878Y')
+xs:yearMonthDuration P51878Y
+# xs:duration('-P59235Y171M')
+xs:duration -P59249Y3M
+# -3 * xs:dayTimeDuration('P16DT7H263M45S')
+xs:dayTimeDuration -P49DT10H11M15S
+# xs:dayTimeDuration('P16DT7H263M45S') div -3
+xs:dayTimeDuration -P5DT11H47M54.999999999S
+# xs:yearMonthDuration('P86M') * -18
+xs:yearMonthDuration -P129Y
+# xs:yearMonthDuration('P86M') div -18
+xs:yearMonthDuration -P5M
+# months-from-duration(xs:yearMonthDuration('-P6Y'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('-P6Y'))
+xs:decimal 0
+# months-from-duration(xs:dayTimeDuration('P23DT19H58M76034.365S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P23DT19H58M76034.365S'))
+xs:decimal 14.365
+# xs:dayTimeDuration('-P4DT6H2M53S')
+xs:dayTimeDuration -P4DT6H2M53S
+# xs:duration('P27DT13H623M56695.882S')
+xs:duration P28DT15H7M55.882S
+# xs:dayTimeDuration('P0DT22H439M7.385S') div xs:dayTimeDuration('P240324DT6.346977252S')
+xs:decimal 0.00000508319290599941
+# -2 * xs:dayTimeDuration('PT17S')
+xs:dayTimeDuration -PT34S
+# xs:dayTimeDuration('PT17S') div -2
+xs:dayTimeDuration -PT8.5S
+# xs:yearMonthDuration('P0Y34M')
+xs:yearMonthDuration P2Y10M
+# xs:duration('P0M')
+xs:duration PT0S
+# months-from-duration(xs:yearMonthDuration('P22690Y1M'))
+xs:integer 1
+# seconds-from-duration(xs:yearMonthDuration('P22690Y1M'))
+xs:decimal 0
+# xs:yearMonthDuration('P24810Y') + xs:yearMonthDuration('P8554Y5M')
+xs:yearMonthDuration P33364Y5M
+# xs:yearMonthDuration('P24810Y') - xs:yearMonthDuration('P8554Y5M')
+xs:yearMonthDuration P16255Y7M
+# 163.29 * xs:dayTimeDuration('P454605DT90H57080.796259211S')
+xs:dayTimeDuration P74233170DT15H59M23.221166564S
+# xs:dayTimeDuration('P454605DT90H57080.796259211S') div 163.29
+xs:dayTimeDuration P2784DT1H28M38.003529072S
+# xs:dayTimeDuration('PT11H679M36.159S') lt xs:dayTimeDuration('P295874DT16H41S')
+xs:boolean true
+# xs:dayTimeDuration('PT11H679M36.159S') eq xs:dayTimeDuration('P295874DT16H41S')
+xs:boolean false
+# xs:dayTimeDuration('PT11H679M36.159S') ge xs:dayTimeDuration('P295874DT16H41S')
+xs:boolean false
+# sum((xs:dayTimeDuration('-P29DT10.017S'), xs:dayTimeDuration('P386740DT3H38M15.008S'), xs:dayTimeDuration('P883984DT6H53.462S'), xs:dayTimeDuration('-P16DT11H72M53.215S')))
+xs:dayTimeDuration P1270678DT21H26M5.238S
+# max((xs:dayTimeDuration('-P29DT10.017S'), xs:dayTimeDuration('P386740DT3H38M15.008S'), xs:dayTimeDuration('P883984DT6H53.462S'), xs:dayTimeDuration('-P16DT11H72M53.215S')))
+xs:dayTimeDuration P883984DT6H53.462S
+# avg((xs:dayTimeDuration('-P29DT10.017S'), xs:dayTimeDuration('P386740DT3H38M15.008S'), xs:dayTimeDuration('P883984DT6H53.462S'), xs:dayTimeDuration('-P16DT11H72M53.215S')))
+xs:dayTimeDuration P317669DT17H21M31.3095S
+# sum((xs:yearMonthDuration('P62579Y413M'), xs:yearMonthDuration('-P28Y496M'), xs:yearMonthDuration('P4806Y45M')))
+xs:yearMonthDuration P67353Y10M
+# max((xs:yearMonthDuration('P62579Y413M'), xs:yearMonthDuration('-P28Y496M'), xs:yearMonthDuration('P4806Y45M')))
+xs:yearMonthDuration P62613Y5M
+# avg((xs:yearMonthDuration('P62579Y413M'), xs:yearMonthDuration('-P28Y496M'), xs:yearMonthDuration('P4806Y45M')))
+xs:yearMonthDuration P22451Y3M
+# string(xs:duration(xs:yearMonthDuration('P22M')))
+xs:string P1Y10M
+# xs:dayTimeDuration(xs:yearMonthDuration('P22M'))
+xs:dayTimeDuration PT0S
+# xs:dayTimeDuration('P12DT14H23M37S') lt xs:dayTimeDuration('PT14H47.3S')
+xs:boolean false
+# xs:dayTimeDuration('P12DT14H23M37S') eq xs:dayTimeDuration('PT14H47.3S')
+xs:boolean false
+# xs:dayTimeDuration('P12DT14H23M37S') ge xs:dayTimeDuration('PT14H47.3S')
+xs:boolean true
+# -82.746 * xs:dayTimeDuration('P19495DT5H989M17S')
+xs:dayTimeDuration -P1613207DT8H31M50.322S
+# xs:dayTimeDuration('P19495DT5H989M17S') div -82.746
+xs:dayTimeDuration -P235DT14H40M19.145336332S
+# xs:yearMonthDuration('-P24Y4M')
+xs:yearMonthDuration -P24Y4M
+# xs:duration('-P40009Y')
+xs:duration -P40009Y
+# sum((xs:yearMonthDuration('P29Y488M'), xs:yearMonthDuration('P32438Y445M'), xs:yearMonthDuration('-P355M'), xs:yearMonthDuration('-P79689Y')))
+xs:yearMonthDuration -P47173Y10M
+# max((xs:yearMonthDuration('P29Y488M'), xs:yearMonthDuration('P32438Y445M'), xs:yearMonthDuration('-P355M'), xs:yearMonthDuration('-P79689Y')))
+xs:yearMonthDuration P32475Y1M
+# avg((xs:yearMonthDuration('P29Y488M'), xs:yearMonthDuration('P32438Y445M'), xs:yearMonthDuration('-P355M'), xs:yearMonthDuration('-P79689Y')))
+xs:yearMonthDuration -P11793Y5M
+# xs:dayTimeDuration('PT58H27M55847.5S') div xs:dayTimeDuration('P30DT3.081S')
+xs:decimal 0.10272653684395832707
+# xs:dayTimeDuration('PT50H39M37S')
+xs:dayTimeDuration P2DT2H39M37S
+# xs:duration('-PT954M13S')
+xs:duration -PT15H54M13S
+# xs:dayTimeDuration('PT59779.441S') + xs:dayTimeDuration('-P40DT47H440M38.204235230S')
+xs:dayTimeDuration -P41DT13H44M18.76323523S
+# xs:dayTimeDuration('PT59779.441S') - xs:dayTimeDuration('-P40DT47H440M38.204235230S')
+xs:dayTimeDuration P42DT22H56M57.64523523S
+# xs:dayTimeDuration('P363423DT3H42.143S') lt xs:dayTimeDuration('-PT5H40.2S')
+xs:boolean false
+# xs:dayTimeDuration('P363423DT3H42.143S') eq xs:dayTimeDuration('-PT5H40.2S')
+xs:boolean false
+# xs:dayTimeDuration('P363423DT3H42.143S') ge xs:dayTimeDuration('-PT5H40.2S')
+xs:boolean true
+# 121.95 * xs:dayTimeDuration('PT46H18M36S')
+xs:dayTimeDuration P235DT7H30M16.2S
+# xs:dayTimeDuration('PT46H18M36S') div 121.95
+xs:dayTimeDuration PT22M47.084870848S
+# xs:dayTimeDuration('P557933DT7H15.8S') + xs:dayTimeDuration('P26DT224M3.922792571S')
+xs:dayTimeDuration P557959DT10H44M19.722792571S
+# xs:dayTimeDuration('P557933DT7H15.8S') - xs:dayTimeDuration('P26DT224M3.922792571S')
+xs:dayTimeDuration P557907DT3H16M11.877207429S
+# xs:yearMonthDuration('-P8Y')
+xs:yearMonthDuration -P8Y
+# xs:duration('-P28Y')
+xs:duration -P28Y
+# string(xs:duration(xs:yearMonthDuration('-P20Y345M')))
+xs:string -P48Y9M
+# xs:dayTimeDuration(xs:yearMonthDuration('-P20Y345M'))
+xs:dayTimeDuration PT0S
+# xs:dayTimeDuration('P308959DT74H11M16130S') div xs:dayTimeDuration('PT58M29.586S')
+xs:decimal 7606122.42868532071874004512
+# string(xs:duration(xs:yearMonthDuration('P369M')))
+xs:string P30Y9M
+# xs:dayTimeDuration(xs:yearMonthDuration('P369M'))
+xs:dayTimeDuration PT0S
+# hours-from-duration(xs:dayTimeDuration('P968300DT48H0.485S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P968300DT48H0.485S'))
+xs:decimal 0.485
+# xs:dayTimeDuration('P224461DT63M48S') + xs:dayTimeDuration('PT65H46M48S')
+xs:dayTimeDuration P224463DT18H50M36S
+# xs:dayTimeDuration('P224461DT63M48S') - xs:dayTimeDuration('PT65H46M48S')
+xs:dayTimeDuration P224458DT7H17M
+# xs:dayTimeDuration('P22047DT55H43M45.223S') div xs:dayTimeDuration('P213193DT14H277M26.932049666S')
+xs:decimal 0.10342385441193765136
+# xs:dayTimeDuration('-P469475DT36H57.266561660S') + xs:dayTimeDuration('-PT3H61436S')
+xs:dayTimeDuration -P469477DT8H4M53.26656166S
+# xs:dayTimeDuration('-P469475DT36H57.266561660S') - xs:dayTimeDuration('-PT3H61436S')
+xs:dayTimeDuration -P469475DT15H57M1.26656166S
+# -5660.1 * xs:dayTimeDuration('-PT47M44.0S')
+xs:dayTimeDuration P187DT14H55M26.4S
+# xs:dayTimeDuration('-PT47M44.0S') div -5660.1
+xs:dayTimeDuration PT0.505998127S
+# months-from-duration(xs:dayTimeDuration('-P376104DT19M22S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('-P376104DT19M22S'))
+xs:decimal -22
+# xs:dayTimeDuration('-P18DT11H20.822S') div xs:dayTimeDuration('P18DT69H34.835S')
+xs:decimal -0.88422600354134322317
+# sum((xs:yearMonthDuration('P46378Y')))
+xs:yearMonthDuration P46378Y
+# max((xs:yearMonthDuration('P46378Y')))
+xs:yearMonthDuration P46378Y
+# avg((xs:yearMonthDuration('P46378Y')))
+xs:yearMonthDuration P46378Y
+# sum((xs:dayTimeDuration('P27DT6H113M21.108265020S')))
+xs:dayTimeDuration P27DT7H53M21.10826502S
+# max((xs:dayTimeDuration('P27DT6H113M21.108265020S')))
+xs:dayTimeDuration P27DT7H53M21.10826502S
+# avg((xs:dayTimeDuration('P27DT6H113M21.108265020S')))
+xs:dayTimeDuration P27DT7H53M21.10826502S
+# xs:yearMonthDuration('-P3M') lt xs:yearMonthDuration('P15Y8M')
+xs:boolean true
+# xs:yearMonthDuration('-P3M') eq xs:yearMonthDuration('P15Y8M')
+xs:boolean false
+# xs:yearMonthDuration('-P3M') ge xs:yearMonthDuration('P15Y8M')
+xs:boolean false
+# sum((xs:dayTimeDuration('P8DT16H625M34.516S'), xs:dayTimeDuration('P27DT16H42M59S')))
+xs:dayTimeDuration P36DT19H8M33.516S
+# max((xs:dayTimeDuration('P8DT16H625M34.516S'), xs:dayTimeDuration('P27DT16H42M59S')))
+xs:dayTimeDuration P27DT16H42M59S
+# avg((xs:dayTimeDuration('P8DT16H625M34.516S'), xs:dayTimeDuration('P27DT16H42M59S')))
+xs:dayTimeDuration P18DT9H34M16.758S
+# string(xs:duration(xs:yearMonthDuration('-P28Y')))
+xs:string -P28Y
+# xs:dayTimeDuration(xs:yearMonthDuration('-P28Y'))
+xs:dayTimeDuration PT0S
+# 19 * xs:dayTimeDuration('P621544DT18H40.942750247S')
+xs:dayTimeDuration P11809350DT6H12M57.912254693S
+# xs:dayTimeDuration('P621544DT18H40.942750247S') div 19
+xs:dayTimeDuration P32712DT21H9M30.575934166S
+# xs:dayTimeDuration('-PT16H21.678S') + xs:dayTimeDuration('-PT11H28M1345.971206417S')
+xs:dayTimeDuration -P1DT3H50M47.649206417S
+# xs:dayTimeDuration('-PT16H21.678S') - xs:dayTimeDuration('-PT11H28M1345.971206417S')
+xs:dayTimeDuration -PT4H9M55.706793583S
+# hours-from-duration(xs:yearMonthDuration('P34M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P34M'))
+xs:decimal 0
+# xs:yearMonthDuration('P38601Y') lt xs:yearMonthDuration('P0Y')
+xs:boolean false
+# xs:yearMonthDuration('P38601Y') eq xs:yearMonthDuration('P0Y')
+xs:boolean false
+# xs:yearMonthDuration('P38601Y') ge xs:yearMonthDuration('P0Y')
+xs:boolean true
+# xs:yearMonthDuration('-P85746Y') div xs:yearMonthDuration('P0Y')
+error FOAR0001
+# xs:yearMonthDuration('P3M') * -14
+xs:yearMonthDuration -P3Y6M
+# xs:yearMonthDuration('P3M') div -14
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('-P39017Y2M') div xs:yearMonthDuration('-P0M')
+error FOAR0001
+# string(xs:duration(xs:yearMonthDuration('P0Y244M')))
+xs:string P20Y4M
+# xs:dayTimeDuration(xs:yearMonthDuration('P0Y244M'))
+xs:dayTimeDuration PT0S
+# string(xs:duration(xs:dayTimeDuration('P11DT25H805M8S')))
+xs:string P12DT14H25M8S
+# xs:yearMonthDuration(xs:dayTimeDuration('P11DT25H805M8S'))
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P0Y34M') lt xs:yearMonthDuration('P23Y7M')
+xs:boolean true
+# xs:yearMonthDuration('P0Y34M') eq xs:yearMonthDuration('P23Y7M')
+xs:boolean false
+# xs:yearMonthDuration('P0Y34M') ge xs:yearMonthDuration('P23Y7M')
+xs:boolean false
+# xs:dayTimeDuration('-P136620DT23H53M96709S') lt xs:dayTimeDuration('P986705DT12H316M58.0S')
+xs:boolean true
+# xs:dayTimeDuration('-P136620DT23H53M96709S') eq xs:dayTimeDuration('P986705DT12H316M58.0S')
+xs:boolean false
+# xs:dayTimeDuration('-P136620DT23H53M96709S') ge xs:dayTimeDuration('P986705DT12H316M58.0S')
+xs:boolean false
+# xs:yearMonthDuration('P87290Y') div xs:yearMonthDuration('P20239Y9M')
+xs:decimal 4.31280030632789436628
+# string(xs:duration(xs:dayTimeDuration('P237044DT8.410S')))
+xs:string P237044DT8.41S
+# xs:yearMonthDuration(xs:dayTimeDuration('P237044DT8.410S'))
+xs:yearMonthDuration P0M
+# xs:dayTimeDuration('-P477529DT36H23M56.1S') + xs:dayTimeDuration('P61297DT16H3M47.905S')
+xs:dayTimeDuration -P416232DT20H20M8.195S
+# xs:dayTimeDuration('-P477529DT36H23M56.1S') - xs:dayTimeDuration('P61297DT16H3M47.905S')
+xs:dayTimeDuration -P538828DT4H27M44.005S
+# xs:yearMonthDuration('P0Y103M') * 6
+xs:yearMonthDuration P51Y6M
+# xs:yearMonthDuration('P0Y103M') div 6
+xs:yearMonthDuration P1Y5M
+# -18 * xs:dayTimeDuration('-P15DT18H19S')
+xs:dayTimeDuration P283DT12H5M42S
+# xs:dayTimeDuration('-P15DT18H19S') div -18
+xs:dayTimeDuration PT21H1.055555555S
+# sum((xs:dayTimeDuration('P26DT19H333M8S'), xs:dayTimeDuration('-P6DT52H33S'), xs:dayTimeDuration('P4DT20H25M31.1S'), xs:dayTimeDuration('PT77H55M22911.928S')))
+xs:dayTimeDuration P27DT5H14M58.028S
+# max((xs:dayTimeDuration('P26DT19H333M8S'), xs:dayTimeDuration('-P6DT52H33S'), xs:dayTimeDuration('P4DT20H25M31.1S'), xs:dayTimeDuration('PT77H55M22911.928S')))
+xs:dayTimeDuration P27DT33M8S
+# avg((xs:dayTimeDuration('P26DT19H333M8S'), xs:dayTimeDuration('-P6DT52H33S'), xs:dayTimeDuration('P4DT20H25M31.1S'), xs:dayTimeDuration('PT77H55M22911.928S')))
+xs:dayTimeDuration P6DT19H18M44.507S
+# xs:dayTimeDuration('-P776915DT9H46M26.7S')
+xs:dayTimeDuration -P776915DT9H46M26.7S
+# xs:duration('P39DT16H256M27.7S')
+xs:duration P39DT20H16M27.7S
+# xs:yearMonthDuration('P15Y') div xs:yearMonthDuration('P0M')
+error FOAR0001
+# -8.8038 * xs:dayTimeDuration('P40DT28H876M34432.497S')
+xs:dayTimeDuration -P371DT6H53M40.3850886S
+# xs:dayTimeDuration('P40DT28H876M34432.497S') div -8.8038
+xs:dayTimeDuration -P4DT18H58M8.60457984S
+# xs:dayTimeDuration('PT6H7M30S') div xs:dayTimeDuration('P33DT45M31.6S')
+xs:decimal 0.00772618376698306294
+# xs:yearMonthDuration('-P18Y4M') * 15.798
+xs:yearMonthDuration -P289Y8M
+# xs:yearMonthDuration('-P18Y4M') div 15.798
+xs:yearMonthDuration -P1Y2M
+# xs:dayTimeDuration('-P23DT92H617M1.5S') div xs:dayTimeDuration('-P309227DT56.320S')
+xs:decimal 0.00008816119827569593
+# xs:dayTimeDuration(xs:yearMonthDuration('P0M'))
+xs:dayTimeDuration PT0S
+# -85.44 * xs:dayTimeDuration('P0DT19H42M30.433S')
+xs:dayTimeDuration -P70DT3H53M24.99552S
+# xs:dayTimeDuration('P0DT19H42M30.433S') div -85.44
+xs:dayTimeDuration -PT13M50.412371254S
+# xs:dayTimeDuration('P749575DT31.7S') + xs:dayTimeDuration('P34DT35H858M45S')
+xs:dayTimeDuration P749611DT1H19M16.7S
+# xs:dayTimeDuration('P749575DT31.7S') - xs:dayTimeDuration('P34DT35H858M45S')
+xs:dayTimeDuration P749538DT22H41M46.7S
+# months-from-duration(xs:yearMonthDuration('-P470M'))
+xs:integer -2
+# seconds-from-duration(xs:yearMonthDuration('-P470M'))
+xs:decimal 0
+# sum((xs:yearMonthDuration('P12Y10M'), xs:yearMonthDuration('P13Y278M'), xs:yearMonthDuration('-P19Y1M')))
+xs:yearMonthDuration P29Y11M
+# max((xs:yearMonthDuration('P12Y10M'), xs:yearMonthDuration('P13Y278M'), xs:yearMonthDuration('-P19Y1M')))
+xs:yearMonthDuration P36Y2M
+# avg((xs:yearMonthDuration('P12Y10M'), xs:yearMonthDuration('P13Y278M'), xs:yearMonthDuration('-P19Y1M')))
+xs:yearMonthDuration P10Y
+# xs:yearMonthDuration('P0Y') div xs:yearMonthDuration('P1Y')
+xs:decimal 0
+# sum((xs:dayTimeDuration('-P596124DT149M46S'), xs:dayTimeDuration('-PT15H50M55055.916S')))
+xs:dayTimeDuration -P596125DT9H37M21.916S
+# max((xs:dayTimeDuration('-P596124DT149M46S'), xs:dayTimeDuration('-PT15H50M55055.916S')))
+xs:dayTimeDuration -P1DT7H7M35.916S
+# avg((xs:dayTimeDuration('-P596124DT149M46S'), xs:dayTimeDuration('-PT15H50M55055.916S')))
+xs:dayTimeDuration -P298062DT16H48M40.958S
+# xs:dayTimeDuration('P806040DT13H68299.479S') div xs:dayTimeDuration('P35DT94H25.6S')
+xs:decimal 20711.82514773828750292646
+# string(xs:duration(xs:dayTimeDuration('PT6M62276S')))
+xs:string PT17H23M56S
+# xs:yearMonthDuration(xs:dayTimeDuration('PT6M62276S'))
+xs:yearMonthDuration P0M
+# string(xs:duration(xs:yearMonthDuration('P21982Y4M')))
+xs:string P21982Y4M
+# xs:dayTimeDuration(xs:yearMonthDuration('P21982Y4M'))
+xs:dayTimeDuration PT0S
+# -9 * xs:dayTimeDuration('-P18DT17H19S')
+xs:dayTimeDuration P168DT9H2M51S
+# xs:dayTimeDuration('-P18DT17H19S') div -9
+xs:dayTimeDuration P2DT1H53M22.111111111S
+# xs:dayTimeDuration('-P410635DT38H49M46841.618S') + xs:dayTimeDuration('P828696DT19H39M9.256S')
+xs:dayTimeDuration P418059DT15H49M27.638S
+# xs:dayTimeDuration('-P410635DT38H49M46841.618S') - xs:dayTimeDuration('P828696DT19H39M9.256S')
+xs:dayTimeDuration -P1239333DT23H28M50.874S
+# xs:yearMonthDuration('-P0Y475M') * 372.27
+xs:yearMonthDuration -P14735Y8M
+# xs:yearMonthDuration('-P0Y475M') div 372.27
+xs:yearMonthDuration -P1M
+# xs:yearMonthDuration('P0Y') + xs:yearMonthDuration('P58544Y183M')
+xs:yearMonthDuration P58559Y3M
+# xs:yearMonthDuration('P0Y') - xs:yearMonthDuration('P58544Y183M')
+xs:yearMonthDuration -P58559Y3M
+# 67.754 * xs:dayTimeDuration('PT7H20.719852250S')
+xs:dayTimeDuration P19DT18H40M4.652869346S
+# xs:dayTimeDuration('PT7H20.719852250S') div 67.754
+xs:dayTimeDuration PT6M12.23957039S
+# xs:dayTimeDuration('-P0DT1S') div xs:dayTimeDuration('-P960239DT43H45.5S')
+xs:decimal 0.00000000001205330389
+# xs:yearMonthDuration('-P14Y314M') lt xs:yearMonthDuration('P45M')
+xs:boolean true
+# xs:yearMonthDuration('-P14Y314M') eq xs:yearMonthDuration('P45M')
+xs:boolean false
+# xs:yearMonthDuration('-P14Y314M') ge xs:yearMonthDuration('P45M')
+xs:boolean false
+# xs:dayTimeDuration('-PT36H45S') + xs:dayTimeDuration('-PT13H16.9S')
+xs:dayTimeDuration -P2DT1H1M1.9S
+# xs:dayTimeDuration('-PT36H45S') - xs:dayTimeDuration('-PT13H16.9S')
+xs:dayTimeDuration -PT23H28.1S
+# xs:dayTimeDuration('-P23DT20.3S') + xs:dayTimeDuration('P970809DT12H110M13S')
+xs:dayTimeDuration P970786DT13H49M52.7S
+# xs:dayTimeDuration('-P23DT20.3S') - xs:dayTimeDuration('P970809DT12H110M13S')
+xs:dayTimeDuration -P970832DT13H50M33.3S
+# xs:dayTimeDuration('P3DT4H16.4S') lt xs:dayTimeDuration('-P20DT69634.090S')
+xs:boolean false
+# xs:dayTimeDuration('P3DT4H16.4S') eq xs:dayTimeDuration('-P20DT69634.090S')
+xs:boolean false
+# xs:dayTimeDuration('P3DT4H16.4S') ge xs:dayTimeDuration('-P20DT69634.090S')
+xs:boolean true
+# xs:dayTimeDuration('P362498DT50H749M48S')
+xs:dayTimeDuration P362500DT14H29M48S
+# xs:duration('P12DT98H258M33S')
+xs:duration P16DT6H18M33S
+# xs:dayTimeDuration('P0DT5H25.499S')
+xs:dayTimeDuration PT5H25.499S
+# xs:duration('P5DT78H42M45.4S')
+xs:duration P8DT6H42M45.4S
+# months-from-duration(xs:yearMonthDuration('-P7Y'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('-P7Y'))
+xs:decimal 0
+# xs:yearMonthDuration('P26M') * -8.445
+xs:yearMonthDuration -P18Y4M
+# xs:yearMonthDuration('P26M') div -8.445
+xs:yearMonthDuration -P3M
+# -4 * xs:dayTimeDuration('PT14H40M29S')
+xs:dayTimeDuration -P2DT10H41M56S
+# xs:dayTimeDuration('PT14H40M29S') div -4
+xs:dayTimeDuration -PT3H40M7.25S
+# string(xs:duration(xs:yearMonthDuration('P34559Y')))
+xs:string P34559Y
+# xs:dayTimeDuration(xs:yearMonthDuration('P34559Y'))
+xs:dayTimeDuration PT0S
+# months-from-duration(xs:dayTimeDuration('P22DT56H50S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P22DT56H50S'))
+xs:decimal 50
+# xs:dayTimeDuration('-P36DT47H719M24S') lt xs:dayTimeDuration('P978859DT38H6S')
+xs:boolean true
+# xs:dayTimeDuration('-P36DT47H719M24S') eq xs:dayTimeDuration('P978859DT38H6S')
+xs:boolean false
+# xs:dayTimeDuration('-P36DT47H719M24S') ge xs:dayTimeDuration('P978859DT38H6S')
+xs:boolean false
+# 825.3 * xs:dayTimeDuration('PT401M54.649505194S')
+xs:dayTimeDuration P230DT8H17M0.236636608S
+# xs:dayTimeDuration('PT401M54.649505194S') div 825.3
+xs:dayTimeDuration PT29.219253005S
+# xs:yearMonthDuration('P47066Y') * -5
+xs:yearMonthDuration -P235330Y
+# xs:yearMonthDuration('P47066Y') div -5
+xs:yearMonthDuration -P9413Y2M
+# xs:dayTimeDuration('-PT2H64776S') + xs:dayTimeDuration('-P262244DT15H93M35.662981400S')
+xs:dayTimeDuration -P262245DT12H33M11.6629814S
+# xs:dayTimeDuration('-PT2H64776S') - xs:dayTimeDuration('-P262244DT15H93M35.662981400S')
+xs:dayTimeDuration P262243DT20H33M59.6629814S
+# xs:dayTimeDuration('-P699001DT4H2M35.074S')
+xs:dayTimeDuration -P699001DT4H2M35.074S
+# xs:duration('P28DT6H4M41S')
+xs:duration P28DT6H4M41S
+# xs:yearMonthDuration('P74311Y6M') div xs:yearMonthDuration('-P214M')
+xs:decimal -4167
+# sum((xs:dayTimeDuration('-P20DT8H37M49.632S'), xs:dayTimeDuration('P226204DT31H43M48.089054416S'), xs:dayTimeDuration('-P898536DT30H205M21159S'), xs:dayTimeDuration('-P262741DT22H55M23.001S')))
+xs:dayTimeDuration -P935094DT15H7M3.543945584S
+# max((xs:dayTimeDuration('-P20DT8H37M49.632S'), xs:dayTimeDuration('P226204DT31H43M48.089054416S'), xs:dayTimeDuration('-P898536DT30H205M21159S'), xs:dayTimeDuration('-P262741DT22H55M23.001S')))
+xs:dayTimeDuration P226205DT7H43M48.089054416S
+# avg((xs:dayTimeDuration('-P20DT8H37M49.632S'), xs:dayTimeDuration('P226204DT31H43M48.089054416S'), xs:dayTimeDuration('-P898536DT30H205M21159S'), xs:dayTimeDuration('-P262741DT22H55M23.001S')))
+xs:dayTimeDuration -P233773DT15H46M45.885986396S
+# -8.8693 * xs:dayTimeDuration('-PT26S')
+xs:dayTimeDuration PT3M50.6018S
+# xs:dayTimeDuration('-PT26S') div -8.8693
+xs:dayTimeDuration PT2.931460205S
+# xs:yearMonthDuration('P75M')
+xs:yearMonthDuration P6Y3M
+# xs:duration('P77247Y83M')
+xs:duration P77253Y11M
+# string(xs:duration(xs:yearMonthDuration('P4M')))
+xs:string P4M
+# xs:dayTimeDuration(xs:yearMonthDuration('P4M'))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration('P11M') * 87.769
+xs:yearMonthDuration P80Y5M
+# xs:yearMonthDuration('P11M') div 87.769
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P28Y234M') lt xs:yearMonthDuration('P0Y113M')
+xs:boolean false
+# xs:yearMonthDuration('P28Y234M') eq xs:yearMonthDuration('P0Y113M')
+xs:boolean false
+# xs:yearMonthDuration('P28Y234M') ge xs:yearMonthDuration('P0Y113M')
+xs:boolean true
+# sum((xs:yearMonthDuration('P0M')))
+xs:yearMonthDuration P0M
+# max((xs:yearMonthDuration('P0M')))
+xs:yearMonthDuration P0M
+# avg((xs:yearMonthDuration('P0M')))
+xs:yearMonthDuration P0M
+# xs:dayTimeDuration('P394676DT21H32M55272.8S') lt xs:dayTimeDuration('-PT32H41.034S')
+xs:boolean false
+# xs:dayTimeDuration('P394676DT21H32M55272.8S') eq xs:dayTimeDuration('-PT32H41.034S')
+xs:boolean false
+# xs:dayTimeDuration('P394676DT21H32M55272.8S') ge xs:dayTimeDuration('-PT32H41.034S')
+xs:boolean true
+# hours-from-duration(xs:dayTimeDuration('PT9M57.655754930S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('PT9M57.655754930S'))
+xs:decimal 57.65575493
+# xs:dayTimeDuration('P0DT50H39M51S') div xs:dayTimeDuration('PT22H48M26S')
+xs:decimal 2.22140891043285508976
+# xs:yearMonthDuration('P52419Y') * -4.4592
+xs:yearMonthDuration -P233746Y10M
+# xs:yearMonthDuration('P52419Y') div -4.4592
+xs:yearMonthDuration -P11755Y3M
+# xs:yearMonthDuration('P12Y495M') * 223.7
+xs:yearMonthDuration P11912Y
+# xs:yearMonthDuration('P12Y495M') div 223.7
+xs:yearMonthDuration P3M
+# sum((xs:dayTimeDuration('-PT63H869M25210.010S'), xs:dayTimeDuration('P193428DT39106.8S'), xs:dayTimeDuration('-P19DT27H38S')))
+xs:dayTimeDuration P193404DT19H21M58.79S
+# max((xs:dayTimeDuration('-PT63H869M25210.010S'), xs:dayTimeDuration('P193428DT39106.8S'), xs:dayTimeDuration('-P19DT27H38S')))
+xs:dayTimeDuration P193428DT10H51M46.8S
+# days-from-duration(xs:dayTimeDuration('PT15H44S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('PT15H44S'))
+xs:decimal 44
+# sum((xs:yearMonthDuration('P7M'), xs:yearMonthDuration('-P12Y8M'), xs:yearMonthDuration('-P18Y'), xs:yearMonthDuration('-P15Y')))
+xs:yearMonthDuration -P45Y1M
+# max((xs:yearMonthDuration('P7M'), xs:yearMonthDuration('-P12Y8M'), xs:yearMonthDuration('-P18Y'), xs:yearMonthDuration('-P15Y')))
+xs:yearMonthDuration P7M
+# avg((xs:yearMonthDuration('P7M'), xs:yearMonthDuration('-P12Y8M'), xs:yearMonthDuration('-P18Y'), xs:yearMonthDuration('-P15Y')))
+xs:yearMonthDuration -P11Y3M
+# sum((xs:yearMonthDuration('P7M')))
+xs:yearMonthDuration P7M
+# max((xs:yearMonthDuration('P7M')))
+xs:yearMonthDuration P7M
+# avg((xs:yearMonthDuration('P7M')))
+xs:yearMonthDuration P7M
+# xs:yearMonthDuration('-P1M') + xs:yearMonthDuration('-P15Y56M')
+xs:yearMonthDuration -P19Y9M
+# xs:yearMonthDuration('-P1M') - xs:yearMonthDuration('-P15Y56M')
+xs:yearMonthDuration P19Y7M
+# -1789.4 * xs:dayTimeDuration('-P872230DT19M32.860S')
+xs:dayTimeDuration P1560768386DT6H58M35.684S
+# xs:dayTimeDuration('-P872230DT19M32.860S') div -1789.4
+xs:dayTimeDuration P487DT10H37M31.510483959S
+# xs:dayTimeDuration('-PT88H41M50.2S') + xs:dayTimeDuration('-P171377DT436M7.923S')
+xs:dayTimeDuration -P171380DT23H57M58.123S
+# xs:dayTimeDuration('-PT88H41M50.2S') - xs:dayTimeDuration('-P171377DT436M7.923S')
+xs:dayTimeDuration P171373DT14H34M17.723S
+# string(xs:duration(xs:yearMonthDuration('P5Y')))
+xs:string P5Y
+# xs:dayTimeDuration(xs:yearMonthDuration('P5Y'))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration('P62819Y')
+xs:yearMonthDuration P62819Y
+# xs:duration('-P28Y413M')
+xs:duration -P62Y5M
+# xs:dayTimeDuration('P349291DT52.380S') div xs:dayTimeDuration('P69276DT37H49M59.887S')
+xs:decimal 5.04190560380032769629
+# xs:yearMonthDuration('P292M') + xs:yearMonthDuration('-P0Y')
+xs:yearMonthDuration P24Y4M
+# xs:yearMonthDuration('P292M') - xs:yearMonthDuration('-P0Y')
+xs:yearMonthDuration P24Y4M
+# xs:dayTimeDuration('P12DT4S') lt xs:dayTimeDuration('PT15M23S')
+xs:boolean false
+# xs:dayTimeDuration('P12DT4S') eq xs:dayTimeDuration('PT15M23S')
+xs:boolean false
+# xs:dayTimeDuration('P12DT4S') ge xs:dayTimeDuration('PT15M23S')
+xs:boolean true
+# hours-from-duration(xs:yearMonthDuration('P3Y'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P3Y'))
+xs:decimal 0
+# minutes-from-duration(xs:yearMonthDuration('P78815Y6M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P78815Y6M'))
+xs:decimal 0
+# -20 * xs:dayTimeDuration('PT52H64462S')
+xs:dayTimeDuration -P58DT6H7M20S
+# xs:dayTimeDuration('PT52H64462S') div -20
+xs:dayTimeDuration -PT3H29M43.1S
+# xs:dayTimeDuration('P5DT91H46S') lt xs:dayTimeDuration('PT48M26S')
+xs:boolean false
+# xs:dayTimeDuration('P5DT91H46S') eq xs:dayTimeDuration('PT48M26S')
+xs:boolean false
+# xs:dayTimeDuration('P5DT91H46S') ge xs:dayTimeDuration('PT48M26S')
+xs:boolean true
+# string(xs:duration(xs:yearMonthDuration('-P96157Y16M')))
+xs:string -P96158Y4M
+# xs:dayTimeDuration(xs:yearMonthDuration('-P96157Y16M'))
+xs:dayTimeDuration PT0S
+# minutes-from-duration(xs:yearMonthDuration('P0M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P0M'))
+xs:decimal 0
+# xs:dayTimeDuration('P35DT74H83M6.3S') div xs:dayTimeDuration('PT5H48M52S')
+xs:decimal 157.43293999617810051596
+# string(xs:duration(xs:yearMonthDuration('P494M')))
+xs:string P41Y2M
+# xs:dayTimeDuration(xs:yearMonthDuration('P494M'))
+xs:dayTimeDuration PT0S
+# years-from-duration(xs:yearMonthDuration('P2750Y7M'))
+xs:integer 2750
+# seconds-from-duration(xs:yearMonthDuration('P2750Y7M'))
+xs:decimal 0
+# xs:yearMonthDuration('-P0Y11M') div xs:yearMonthDuration('P22Y66M')
+xs:decimal -0.03333333333333333333
+# xs:yearMonthDuration('-P0M') lt xs:yearMonthDuration('-P98962Y5M')
+xs:boolean false
+# xs:yearMonthDuration('-P0M') eq xs:yearMonthDuration('-P98962Y5M')
+xs:boolean false
+# xs:yearMonthDuration('-P0M') ge xs:yearMonthDuration('-P98962Y5M')
+xs:boolean true
+# sum((xs:yearMonthDuration('-P14Y')))
+xs:yearMonthDuration -P14Y
+# max((xs:yearMonthDuration('-P14Y')))
+xs:yearMonthDuration -P14Y
+# avg((xs:yearMonthDuration('-P14Y')))
+xs:yearMonthDuration -P14Y
+# hours-from-duration(xs:yearMonthDuration('-P7M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('-P7M'))
+xs:decimal 0
+# sum((xs:yearMonthDuration('P96940Y4M'), xs:yearMonthDuration('P14Y9M'), xs:yearMonthDuration('P10158Y17M')))
+xs:yearMonthDuration P107114Y6M
+# max((xs:yearMonthDuration('P96940Y4M'), xs:yearMonthDuration('P14Y9M'), xs:yearMonthDuration('P10158Y17M')))
+xs:yearMonthDuration P96940Y4M
+# avg((xs:yearMonthDuration('P96940Y4M'), xs:yearMonthDuration('P14Y9M'), xs:yearMonthDuration('P10158Y17M')))
+xs:yearMonthDuration P35704Y10M
+# -88.947 * xs:dayTimeDuration('P20DT3H34.411S')
+xs:dayTimeDuration -P1790DT2H15M4.355217S
+# xs:dayTimeDuration('P20DT3H34.411S') div -88.947
+xs:dayTimeDuration -PT5H25M49.106895117S
+# 4.8296 * xs:dayTimeDuration('PT4H20M32S')
+xs:dayTimeDuration PT20H58M16.3072S
+# xs:dayTimeDuration('PT4H20M32S') div 4.8296
+xs:dayTimeDuration PT53M56.706973662S
+# 6.32 * xs:dayTimeDuration('-PT20H354M20.190S')
+xs:dayTimeDuration -P6DT19H43M24.4008S
+# xs:dayTimeDuration('-PT20H354M20.190S') div 6.32
+xs:dayTimeDuration -PT4H5M56.359177215S
+# xs:yearMonthDuration('P10Y') * -15
+xs:yearMonthDuration -P150Y
+# xs:yearMonthDuration('P10Y') div -15
+xs:yearMonthDuration -P8M
+# sum((xs:yearMonthDuration('P496M')))
+xs:yearMonthDuration P41Y4M
+# max((xs:yearMonthDuration('P496M')))
+xs:yearMonthDuration P41Y4M
+# avg((xs:yearMonthDuration('P496M')))
+xs:yearMonthDuration P41Y4M
+# 7 * xs:dayTimeDuration('PT2H36M21S')
+xs:dayTimeDuration PT18H14M27S
+# xs:dayTimeDuration('PT2H36M21S') div 7
+xs:dayTimeDuration PT22M20.142857142S
+# sum((xs:yearMonthDuration('P0Y')))
+xs:yearMonthDuration P0M
+# max((xs:yearMonthDuration('P0Y')))
+xs:yearMonthDuration P0M
+# avg((xs:yearMonthDuration('P0Y')))
+xs:yearMonthDuration P0M
+# xs:dayTimeDuration('P30DT85H41M16S') + xs:dayTimeDuration('P16324DT31H8M90348.933S')
+xs:dayTimeDuration P16359DT21H55M4.933S
+# xs:dayTimeDuration('P30DT85H41M16S') - xs:dayTimeDuration('P16324DT31H8M90348.933S')
+xs:dayTimeDuration -P16292DT18H32M32.933S
+# -79.235 * xs:dayTimeDuration('PT31M49S')
+xs:dayTimeDuration -P1DT18H59.615S
+# xs:dayTimeDuration('PT31M49S') div -79.235
+xs:dayTimeDuration -PT24.092888243S
+# minutes-from-duration(xs:yearMonthDuration('P14Y'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P14Y'))
+xs:decimal 0
+# xs:dayTimeDuration('PT648M24.676672914S')
+xs:dayTimeDuration PT10H48M24.676672914S
+# xs:duration('PT22M11931S')
+xs:duration PT3H40M51S
+# xs:yearMonthDuration('P77651Y') * 14
+xs:yearMonthDuration P1087114Y
+# xs:yearMonthDuration('P77651Y') div 14
+xs:yearMonthDuration P5546Y6M
+# 7.5 * xs:dayTimeDuration('PT13H982M38S')
+xs:dayTimeDuration P9DT4H19M45S
+# xs:dayTimeDuration('PT13H982M38S') div 7.5
+xs:dayTimeDuration PT3H55M1.066666666S
+# sum((xs:dayTimeDuration('P670967DT877M15.9S'), xs:dayTimeDuration('PT15.044513683S')))
+xs:dayTimeDuration P670967DT14H37M30.944513683S
+# max((xs:dayTimeDuration('P670967DT877M15.9S'), xs:dayTimeDuration('PT15.044513683S')))
+xs:dayTimeDuration P670967DT14H37M15.9S
+# xs:dayTimeDuration('-P396609DT63H46M10.8S')
+xs:dayTimeDuration -P396611DT15H46M10.8S
+# xs:duration('PT31H23M88666S')
+xs:duration P2DT8H46S
+# xs:dayTimeDuration('P966691DT49H14297S')
+xs:dayTimeDuration P966693DT4H58M17S
+# xs:duration('-PT12H58.514542088S')
+xs:duration -PT12H58.514542088S
+# 18 * xs:dayTimeDuration('P81471DT14M3S')
+xs:dayTimeDuration P1466478DT4H12M54S
+# xs:dayTimeDuration('P81471DT14M3S') div 18
+xs:dayTimeDuration P4526DT4H46.833333294S
+# xs:yearMonthDuration('P57962Y3M')
+xs:yearMonthDuration P57962Y3M
+# xs:duration('-P27Y')
+xs:duration -P27Y
+# xs:yearMonthDuration('-P11M') lt xs:yearMonthDuration('-P476M')
+xs:boolean false
+# xs:yearMonthDuration('-P11M') eq xs:yearMonthDuration('-P476M')
+xs:boolean false
+# xs:yearMonthDuration('-P11M') ge xs:yearMonthDuration('-P476M')
+xs:boolean true
+# xs:yearMonthDuration('P47325Y9M') * -9.156
+xs:yearMonthDuration -P433314Y7M
+# xs:yearMonthDuration('P47325Y9M') div -9.156
+xs:yearMonthDuration -P5168Y10M
+# xs:yearMonthDuration('P27Y') * 3
+xs:yearMonthDuration P81Y
+# xs:yearMonthDuration('P27Y') div 3
+xs:yearMonthDuration P9Y
+# sum((xs:yearMonthDuration('-P13419Y'), xs:yearMonthDuration('P23Y5M')))
+xs:yearMonthDuration -P13395Y7M
+# max((xs:yearMonthDuration('-P13419Y'), xs:yearMonthDuration('P23Y5M')))
+xs:yearMonthDuration P23Y5M
+# avg((xs:yearMonthDuration('-P13419Y'), xs:yearMonthDuration('P23Y5M')))
+xs:yearMonthDuration -P6697Y9M
+# sum((xs:yearMonthDuration('P17Y347M'), xs:yearMonthDuration('-P131M'), xs:yearMonthDuration('-P87519Y'), xs:yearMonthDuration('P83479Y3M')))
+xs:yearMonthDuration -P4004Y9M
+# max((xs:yearMonthDuration('P17Y347M'), xs:yearMonthDuration('-P131M'), xs:yearMonthDuration('-P87519Y'), xs:yearMonthDuration('P83479Y3M')))
+xs:yearMonthDuration P83479Y3M
+# avg((xs:yearMonthDuration('P17Y347M'), xs:yearMonthDuration('-P131M'), xs:yearMonthDuration('-P87519Y'), xs:yearMonthDuration('P83479Y3M')))
+xs:yearMonthDuration -P1001Y2M
+# string(xs:duration(xs:yearMonthDuration('-P16Y')))
+xs:string -P16Y
+# xs:dayTimeDuration(xs:yearMonthDuration('-P16Y'))
+xs:dayTimeDuration PT0S
+# xs:dayTimeDuration('-P482009DT997M7S') lt xs:dayTimeDuration('P19DT31H47M17.937430748S')
+xs:boolean true
+# xs:dayTimeDuration('-P482009DT997M7S') eq xs:dayTimeDuration('P19DT31H47M17.937430748S')
+xs:boolean false
+# xs:dayTimeDuration('-P482009DT997M7S') ge xs:dayTimeDuration('P19DT31H47M17.937430748S')
+xs:boolean false
+# xs:dayTimeDuration('P445482DT13H38.982533813S') + xs:dayTimeDuration('P6DT12H670M36.689S')
+xs:dayTimeDuration P445489DT12H11M15.671533813S
+# xs:dayTimeDuration('P445482DT13H38.982533813S') - xs:dayTimeDuration('P6DT12H670M36.689S')
+xs:dayTimeDuration P445475DT13H50M2.293533813S
+# years-from-duration(xs:dayTimeDuration('P0DT7H16M10S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P0DT7H16M10S'))
+xs:decimal 10
+# xs:yearMonthDuration('P38110Y119M') lt xs:yearMonthDuration('P0Y430M')
+xs:boolean false
+# xs:yearMonthDuration('P38110Y119M') eq xs:yearMonthDuration('P0Y430M')
+xs:boolean false
+# xs:yearMonthDuration('P38110Y119M') ge xs:yearMonthDuration('P0Y430M')
+xs:boolean true
+# sum((xs:dayTimeDuration('-P27DT72H19.414436272S'), xs:dayTimeDuration('PT34H28M24S')))
+xs:dayTimeDuration -P28DT13H31M55.414436272S
+# max((xs:dayTimeDuration('-P27DT72H19.414436272S'), xs:dayTimeDuration('PT34H28M24S')))
+xs:dayTimeDuration P1DT10H28M24S
+# avg((xs:dayTimeDuration('-P27DT72H19.414436272S'), xs:dayTimeDuration('PT34H28M24S')))
+xs:dayTimeDuration -P14DT6H45M57.707218136S
+# sum((xs:yearMonthDuration('P17073Y'), xs:yearMonthDuration('P20Y134M')))
+xs:yearMonthDuration P17104Y2M
+# max((xs:yearMonthDuration('P17073Y'), xs:yearMonthDuration('P20Y134M')))
+xs:yearMonthDuration P17073Y
+# avg((xs:yearMonthDuration('P17073Y'), xs:yearMonthDuration('P20Y134M')))
+xs:yearMonthDuration P8552Y1M
+# xs:yearMonthDuration('P73944Y1M') * 8
+xs:yearMonthDuration P591552Y8M
+# xs:yearMonthDuration('P73944Y1M') div 8
+xs:yearMonthDuration P9243Y
+# xs:dayTimeDuration('PT1H24578S')
+xs:dayTimeDuration PT7H49M38S
+# xs:duration('P45473DT78H31.061S')
+xs:duration P45476DT6H31.061S
+# sum((xs:yearMonthDuration('P6M'), xs:yearMonthDuration('P359M'), xs:yearMonthDuration('P7M'), xs:yearMonthDuration('P30M')))
+xs:yearMonthDuration P33Y6M
+# max((xs:yearMonthDuration('P6M'), xs:yearMonthDuration('P359M'), xs:yearMonthDuration('P7M'), xs:yearMonthDuration('P30M')))
+xs:yearMonthDuration P29Y11M
+# avg((xs:yearMonthDuration('P6M'), xs:yearMonthDuration('P359M'), xs:yearMonthDuration('P7M'), xs:yearMonthDuration('P30M')))
+xs:yearMonthDuration P8Y5M
+# string(xs:duration(xs:dayTimeDuration('PT18H967M18554.851117299S')))
+xs:string P1DT15H16M14.851117299S
+# xs:yearMonthDuration(xs:dayTimeDuration('PT18H967M18554.851117299S'))
+xs:yearMonthDuration P0M
+# xs:dayTimeDuration('-P24DT12M41S') lt xs:dayTimeDuration('P307490DT20H810M8.741254648S')
+xs:boolean true
+# xs:dayTimeDuration('-P24DT12M41S') eq xs:dayTimeDuration('P307490DT20H810M8.741254648S')
+xs:boolean false
+# xs:dayTimeDuration('-P24DT12M41S') ge xs:dayTimeDuration('P307490DT20H810M8.741254648S')
+xs:boolean false
+# xs:yearMonthDuration('P25Y1M')
+xs:yearMonthDuration P25Y1M
+# xs:duration('-P67687Y485M')
+xs:duration -P67727Y5M
+# years-from-duration(xs:yearMonthDuration('-P25Y58M'))
+xs:integer -29
+# seconds-from-duration(xs:yearMonthDuration('-P25Y58M'))
+xs:decimal 0
+# string(xs:duration(xs:yearMonthDuration('-P17Y')))
+xs:string -P17Y
+# xs:dayTimeDuration(xs:yearMonthDuration('-P17Y'))
+xs:dayTimeDuration PT0S
+# string(xs:duration(xs:yearMonthDuration('P1Y')))
+xs:string P1Y
+# xs:dayTimeDuration(xs:yearMonthDuration('P1Y'))
+xs:dayTimeDuration PT0S
+# string(xs:duration(xs:dayTimeDuration('-PT15H5M32.433S')))
+xs:string -PT15H5M32.433S
+# xs:yearMonthDuration(xs:dayTimeDuration('-PT15H5M32.433S'))
+xs:yearMonthDuration P0M
+# string(xs:duration(xs:yearMonthDuration('P92407Y8M')))
+xs:string P92407Y8M
+# xs:dayTimeDuration(xs:yearMonthDuration('P92407Y8M'))
+xs:dayTimeDuration PT0S
+# string(xs:duration(xs:dayTimeDuration('P617887DT28.179S')))
+xs:string P617887DT28.179S
+# xs:yearMonthDuration(xs:dayTimeDuration('P617887DT28.179S'))
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P0M') div xs:yearMonthDuration('-P5Y173M')
+xs:decimal 0
+# sum((xs:yearMonthDuration('-P0Y319M'), xs:yearMonthDuration('P0Y405M')))
+xs:yearMonthDuration P7Y2M
+# max((xs:yearMonthDuration('-P0Y319M'), xs:yearMonthDuration('P0Y405M')))
+xs:yearMonthDuration P33Y9M
+# avg((xs:yearMonthDuration('-P0Y319M'), xs:yearMonthDuration('P0Y405M')))
+xs:yearMonthDuration P3Y7M
+# days-from-duration(xs:dayTimeDuration('P9DT96H507M40.539124474S'))
+xs:integer 13
+# seconds-from-duration(xs:dayTimeDuration('P9DT96H507M40.539124474S'))
+xs:decimal 40.539124474
+# xs:yearMonthDuration('P24Y') div xs:yearMonthDuration('P21Y489M')
+xs:decimal 0.38866396761133603239
+# xs:yearMonthDuration('P8Y3M')
+xs:yearMonthDuration P8Y3M
+# xs:duration('P3M')
+xs:duration P3M
+# string(xs:duration(xs:dayTimeDuration('P814556DT10H32M12S')))
+xs:string P814556DT10H32M12S
+# xs:yearMonthDuration(xs:dayTimeDuration('P814556DT10H32M12S'))
+xs:yearMonthDuration P0M
+# xs:yearMonthDuration('P14Y')
+xs:yearMonthDuration P14Y
+# xs:duration('-P30Y9M')
+xs:duration -P30Y9M
+# minutes-from-duration(xs:dayTimeDuration('P819937DT10H47M44.236S'))
+xs:integer 47
+# seconds-from-duration(xs:dayTimeDuration('P819937DT10H47M44.236S'))
+xs:decimal 44.236
+# months-from-duration(xs:dayTimeDuration('P571562DT12S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P571562DT12S'))
+xs:decimal 12
+# minutes-from-duration(xs:yearMonthDuration('P18888Y10M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P18888Y10M'))
+xs:decimal 0
+# xs:yearMonthDuration('P4500Y')
+xs:yearMonthDuration P4500Y
+# xs:duration('P74908Y3M')
+xs:duration P74908Y3M
+# xs:dayTimeDuration('-P18DT122M9.290S') div xs:dayTimeDuration('P552476DT6H3M52.8S')
+xs:decimal -0.00003273413048464993
+# xs:yearMonthDuration('P50627Y') div xs:yearMonthDuration('-P86577Y')
+xs:decimal -0.58476269679014056851
+# years-from-duration(xs:dayTimeDuration('P528271DT85H23M73442.420S'))
+xs:integer 0
+# seconds-from-duration(xs:dayTimeDuration('P528271DT85H23M73442.420S'))
+xs:decimal 2.42
+# xs:yearMonthDuration('P1M') div xs:yearMonthDuration('P9Y52M')
+xs:decimal 0.00625
+# xs:dayTimeDuration(xs:yearMonthDuration('P0M'))
+xs:dayTimeDuration PT0S
+# string(xs:duration(xs:yearMonthDuration('P16Y293M')))
+xs:string P40Y5M
+# xs:dayTimeDuration(xs:yearMonthDuration('P16Y293M'))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration('P20Y314M') + xs:yearMonthDuration('-P17104Y')
+xs:yearMonthDuration -P17057Y10M
+# xs:yearMonthDuration('P20Y314M') - xs:yearMonthDuration('-P17104Y')
+xs:yearMonthDuration P17150Y2M
+# xs:yearMonthDuration('P27Y377M') * -7.5868
+xs:yearMonthDuration -P443Y2M
+# xs:yearMonthDuration('P27Y377M') div -7.5868
+xs:yearMonthDuration -P7Y8M
+# string(xs:duration(xs:yearMonthDuration('P12Y19M')))
+xs:string P13Y7M
+# xs:dayTimeDuration(xs:yearMonthDuration('P12Y19M'))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration('-P36973Y389M') * -18
+xs:yearMonthDuration P666097Y6M
+# xs:yearMonthDuration('-P36973Y389M') div -18
+xs:yearMonthDuration P2055Y10M
+# xs:dayTimeDuration(xs:yearMonthDuration('-P0M'))
+xs:dayTimeDuration PT0S
+# xs:yearMonthDuration('-P18Y392M') * 9196.6
+xs:yearMonthDuration -P465961Y1M
+# xs:yearMonthDuration('-P18Y392M') div 9196.6
+xs:yearMonthDuration P0M
+# sum((xs:dayTimeDuration('P825285DT88H27M54.1S'), xs:dayTimeDuration('-P14DT4H617M37S')))
+xs:dayTimeDuration P825274DT2H10M17.1S
+# max((xs:dayTimeDuration('P825285DT88H27M54.1S'), xs:dayTimeDuration('-P14DT4H617M37S')))
+xs:dayTimeDuration P825288DT16H27M54.1S
+# avg((xs:dayTimeDuration('P825285DT88H27M54.1S'), xs:dayTimeDuration('-P14DT4H617M37S')))
+xs:dayTimeDuration P412637DT1H5M8.55S
+# days-from-duration(xs:yearMonthDuration('P390M'))
+xs:integer 0
+# seconds-from-duration(xs:yearMonthDuration('P390M'))
+xs:decimal 0

@@ -99,7 +99,9 @@ begin
   Result := Copy(S, P + 1, MaxInt);
 end;
 
-procedure RunFolder(const Name: string);
+{ The cases of Folder (c.txt, d.xml) in Profile against the results in
+  the file ExpectedName, which Source (Saxon, an oracle) computed. }
+procedure RunCases(const Folder, Name, ExpectedName, Source: string; Profile: TLandrixXmlXPathProfile);
 var
   Cases, Expected: TLandrixXmlUtf8Array;
   Tree: TLandrixXmlXPathTree;
@@ -112,19 +114,18 @@ var
   Head, Rest, Prefix: TLandrixXmlUtf8;
   Report: string;
 begin
-  Cases := Lines(DataFolder(Name) + 'c.txt');
-  Expected := Lines(DataFolder(Name) + 'expected.txt');
+  Cases := Lines(Folder + 'c.txt');
+  Expected := Lines(Folder + ExpectedName);
   Tree := TLandrixXmlXPathTree.Create;
   Context := TLandrixXmlXPathStaticContext.Create;
-  { the expected results come from Saxon }
-  Context.Profile := xppSaxon;
+  Context.Profile := Profile;
   Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
   Mismatches := 0;
   Count := 0;
   Report := '';
   E := 0;
   try
-    Tree.LoadFromFile(DataFolder(Name) + 'd.xml');
+    Tree.LoadFromFile(Folder + 'd.xml');
     for I := 0 to Integer(Length(Cases)) - 1 do
     begin
       Rest := AfterSpace(Cases[I], Head);
@@ -176,19 +177,25 @@ begin
         begin
           Inc(Mismatches);
           if Mismatches <= 10 then
-            Report := Report + #10 + '  ' + LandrixXmlUtf8ToString(Rest) + #10 + '  saxon: ' +
+            Report := Report + #10 + '  ' + LandrixXmlUtf8ToString(Rest) + #10 + '  ' + Source + ': ' +
               LandrixXmlUtf8ToString(Want) + '  got:   ' + LandrixXmlUtf8ToString(Got);
         end;
       end;
     end;
     Check(Count > 0, Name + ': cases present');
-    Check(Mismatches = 0, Name + ': ' + IntToStr(Mismatches) + ' of ' + IntToStr(Count) + ' cases differ from Saxon:' +
-      Report);
+    Check(Mismatches = 0, Name + ': ' + IntToStr(Mismatches) + ' of ' + IntToStr(Count) + ' cases differ from ' +
+      Source + ':' + Report);
   finally
     Evaluator.Free;
     Context.Free;
     Tree.Free;
   end;
+end;
+
+{ a folder of tests/data/xpath: the expected results come from Saxon }
+procedure RunFolder(const Name: string);
+begin
+  RunCases(DataFolder(Name), Name, 'expected.txt', 'saxon', xppSaxon);
 end;
 
 procedure TestSaxonCases;
@@ -216,6 +223,19 @@ begin
   finally
     Names.Free;
   end;
+end;
+
+{ tests/data/xpath-oracle/durations: generated cases with the results of
+  an independent oracle (tools/gen-duration-testdata.py) for both
+  profiles. }
+procedure TestOracleCases;
+var
+  Folder: string;
+begin
+  Folder := IncludeTrailingPathDelimiter(RepositoryRoot) + 'tests' + PathDelim + 'data' + PathDelim +
+    'xpath-oracle' + PathDelim + 'durations' + PathDelim;
+  RunCases(Folder, 'durations', 'expected.txt', 'oracle', xppXPath20);
+  RunCases(Folder, 'durations (Saxon)', 'expected-saxon.txt', 'oracle', xppSaxon);
 end;
 
 { Variables bound by value and lazily, globals and frames, user functions
@@ -821,6 +841,44 @@ begin
   end;
 end;
 
+{ The limits of durations where Saxon's own results are wrong (its
+  canonical form overflows), in both profiles. }
+procedure TestDurationLimits;
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Profile: TLandrixXmlXPathProfile;
+
+  procedure Expect(const Expr, Want: string);
+  begin
+    Check(ProfileResult(U(Expr), Profile, Evaluator) = U(Want), Expr + ': ' +
+      LandrixXmlUtf8ToString(ProfileResult(U(Expr), Profile, Evaluator)));
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  try
+    Tree.LoadFromUtf8(U('<r/>'));
+    for Profile := Low(TLandrixXmlXPathProfile) to High(TLandrixXmlXPathProfile) do
+    begin
+      Expect('xs:dayTimeDuration(''PT1S'') * -9223372036854775807',
+        'xs:dayTimeDuration -P106751991167300DT15H30M7S');
+      Expect('xs:dayTimeDuration(''PT1S'') * -9223372036854775808', 'error FODT0002');
+      Expect('xs:dayTimeDuration(''-PT1S'') * 9223372036854775808', 'error FODT0002');
+      Expect('days-from-duration(xs:dayTimeDuration(''PT1S'') * 9223372036854775807)', 'xs:integer 106751991167300');
+      Expect('xs:dayTimeDuration(''P2147483647D'') + xs:dayTimeDuration(''P2147483647D'')',
+        'xs:dayTimeDuration P4294967294D');
+      Expect('xs:yearMonthDuration(''P2147483647M'') + xs:yearMonthDuration(''P1M'')', 'error FODT0002');
+      Expect('xs:yearMonthDuration(''-P2147483647M'') - xs:yearMonthDuration(''P1M'')', 'error FODT0002');
+      Expect('xs:date(''2000-01-01'') + xs:dayTimeDuration(''P1D'')', 'error FOER0000');
+    end;
+  finally
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 { tests/data/xpath/profiles.txt: each row in both profiles; a row that
   does not differ is an error of the table. }
 procedure TestProfiles;
@@ -962,6 +1020,8 @@ end;
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
+  RegisterTest('XPathEval.OracleCases', TestOracleCases);
+  RegisterTest('XPathEval.DurationLimits', TestDurationLimits);
   RegisterTest('XPathEval.MixedProfiles', TestMixedProfiles);
   RegisterTest('XPathEval.Profiles', TestProfiles);
   RegisterTest('XPathEval.Variables', TestVariables);

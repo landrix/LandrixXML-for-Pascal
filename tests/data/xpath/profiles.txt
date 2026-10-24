@@ -18,3 +18,8 @@ matches('a', '(?:a)')	error FORX0002	xs:boolean true	non-capturing groups are XP
 floor(xs:long(5))	xs:integer 5	xs:long 5	F&O 2.0 6.4: for a type derived from xs:integer the result is an xs:integer; Saxon returns the argument when the value stays
 round(xs:short(5))	xs:integer 5	xs:short 5	the same for round
 abs(xs:byte(5))	xs:integer 5	xs:byte 5	the same for abs of a positive number
+sum((xs:dayTimeDuration('PT1S'), xs:yearMonthDuration('P1M')))	error FORG0006	error XPTY0004	F&O 2.0 fn:sum: FORG0006 for durations of different types; Saxon reports the failed addition
+xs:dayTimeDuration('P16DT7H263M45S') div -3	xs:dayTimeDuration -P5DT11H47M55S	xs:dayTimeDuration -P5DT11H47M54.999999999S	the exact quotient in XPath 2.0; Saxon multiplies by 1 div the number as xs:double
+xs:yearMonthDuration('P178956970Y8M')	error FODT0002	error FORG0001	more months than the implementation holds: FODT0002 in F&O 2.0; Saxon reports FORG0001
+xs:yearMonthDuration('P1M') div 2.00000000000000001	xs:yearMonthDuration P0M	xs:yearMonthDuration P1M	the exact quotient rounds down; Saxon divides as xs:double, where the divisor is 2
+xs:yearMonthDuration('P3M') * xs:double('0.16666666666666666')	xs:yearMonthDuration P0M	xs:yearMonthDuration P1M	the shortest digits times 3 are below 0.5; Saxon multiplies months as xs:double, which gives 0.5

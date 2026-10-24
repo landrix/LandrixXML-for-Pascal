@@ -74,7 +74,8 @@ begin
           xikDateTime: Ok := Item.Kind = xikDateTime;
           xikTime: Ok := Item.Kind = xikTime;
           xikAnyUri: Ok := Item.Kind = xikAnyUri;
-          xikNonPositiveInteger .. xikPositiveInteger, xikNormalizedString .. xikENTITY:
+          xikNonPositiveInteger .. xikPositiveInteger, xikNormalizedString .. xikENTITY,
+          xikDuration, xikYearMonthDuration, xikDayTimeDuration:
             Ok := AtomicKindMatches(Item.Kind, T.AtomicType);
         else
           Ok := False;
@@ -99,6 +100,42 @@ begin
   else
     { any number }
   end;
+end;
+
+{ years-from-duration() ... seconds-from-duration(): the component of
+  the canonical form, with the duration's sign }
+function DurationComponent(const D: TLandrixXmlXPathItem; Id: TLandrixXmlXPathFunctionId): TLandrixXmlXPathItem;
+var
+  M, Whole, V: Int64;
+  Abs: TLandrixXmlDecimal;
+  Negative: Boolean;
+begin
+  M := ItemMonths(D);
+  Negative := (M < 0) or (LandrixXmlDecimalSign(ItemSeconds(D)) < 0);
+  if M < 0 then
+    M := -M;
+  Abs := LandrixXmlDecimalAbs(ItemSeconds(D));
+  if not LandrixXmlDecimalTryToInt64(LandrixXmlDecimalRound(Abs, 0, xdrDown), Whole) then
+    Whole := 0;
+  if Id = xfnSecondsFromDuration then
+  begin
+    Abs := LandrixXmlDecimalSubtract(Abs, LandrixXmlDecimalFromInt64(Whole - Whole mod 60));
+    if Negative then
+      Abs := LandrixXmlDecimalNegate(Abs);
+    Result := DecimalItem(Abs);
+    Exit;
+  end;
+  case Id of
+    xfnYearsFromDuration: V := M div 12;
+    xfnMonthsFromDuration: V := M mod 12;
+    xfnDaysFromDuration: V := Whole div 86400;
+    xfnHoursFromDuration: V := Whole mod 86400 div 3600;
+  else
+    V := Whole mod 3600 div 60;
+  end;
+  if Negative then
+    V := -V;
+  Result := IntegerItemOf(V);
 end;
 
 { A double argument rounded as fn:round does, for positions. }
@@ -294,6 +331,8 @@ var
           Result := False;
       end;
     end
+    else if (P.Kind in DurationKinds) and (Q.Kind in DurationKinds) then
+      Result := CompareDurations(P, Q, xpcEq) = 0
     else
       Result := False;
   end;
@@ -354,21 +393,44 @@ begin
             Result := SingleSeq(IntegerItemOf(0));
           Exit;
         end;
-        if not IsNumeric(A.Items[0].Kind) and (A.Items[0].Kind <> xikUntypedAtomic) then
-          Fail('FORG0006', Name + ': ' + KindName(A.Items[0].Kind) + ' is not a number');
-        Acc := NumericOperand(A.Items[0], Xp20);
-        for I := 1 to A.Count - 1 do
+        { numbers, or durations of one subtype }
+        if A.Items[0].Kind in [xikYearMonthDuration, xikDayTimeDuration] then
         begin
-          Item := A.Items[I];
-          if not IsNumeric(Item.Kind) and (Item.Kind <> xikUntypedAtomic) then
-            Fail('FORG0006', Name + ': ' + KindName(Item.Kind) + ' is not a number');
-          Acc := Arithmetic(Acc, Item, xpaAdd, Xp20);
+          Acc := A.Items[0];
+          for I := 1 to A.Count - 1 do
+          begin
+            { Saxon reports the missing addition of two durations }
+            if (A.Items[I].Kind <> Acc.Kind) and (A.Items[I].Kind in DurationKinds) and not Xp20 and
+              (Id = xfnSum) then
+              Fail('XPTY0004', Name + ': ' + KindName(A.Items[I].Kind) + ' and ' + KindName(Acc.Kind) +
+                ' cannot be added')
+            else if A.Items[I].Kind <> Acc.Kind then
+              Fail('FORG0006', Name + ': ' + KindName(A.Items[I].Kind) + ' and ' + KindName(Acc.Kind) +
+                ' cannot be added');
+            Acc := Arithmetic(Acc, A.Items[I], xpaAdd, Xp20);
+          end;
+        end
+        else
+        begin
+          if not IsNumeric(A.Items[0].Kind) and (A.Items[0].Kind <> xikUntypedAtomic) then
+            Fail('FORG0006', Name + ': ' + KindName(A.Items[0].Kind) + ' is not a number');
+          Acc := NumericOperand(A.Items[0], Xp20);
+          for I := 1 to A.Count - 1 do
+          begin
+            Item := A.Items[I];
+            if not IsNumeric(Item.Kind) and (Item.Kind <> xikUntypedAtomic) then
+              Fail('FORG0006', Name + ': ' + KindName(Item.Kind) + ' is not a number');
+            Acc := Arithmetic(Acc, Item, xpaAdd, Xp20);
+          end;
         end;
         { a single number is the sum as it is (no addition, so no promotion
           to the type xs:integer for its derived types) }
         if (Id = xfnSum) and (A.Count = 1) and IsNumeric(A.Items[0].Kind) then
           Acc := A.Items[0];
-        if Id = xfnAvg then
+        { the average of durations is the exact quotient (Saxon too) }
+        if (Id = xfnAvg) and (Acc.Kind in DurationKinds) then
+          Acc := ScaleDuration(Acc, IntegerItemOf(A.Count), True, True)
+        else if Id = xfnAvg then
           Acc := Arithmetic(Acc, IntegerItemOf(A.Count), xpaDivide, Xp20);
         Result := SingleSeq(Acc);
       end;
@@ -394,6 +456,10 @@ begin
             end;
           end
         end;
+        { xs:duration has no order, not even with itself }
+        for I := 0 to A.Count - 1 do
+          if A.Items[I].Kind = xikDuration then
+            Fail('FORG0006', Name + ': xs:duration values have no order');
         { xs:anyURI among strings compares and returns as xs:string }
         Found := False;
         for I := 0 to A.Count - 1 do
@@ -841,9 +907,18 @@ begin
           Fail('FODC0002', Name + ': the document ' + LandrixXmlUtf8ToString(S) + ' is not available');
         Result := LandrixXmlXPathNodeItem(FDocBases[I]);
       end;
+    xfnYearsFromDuration .. xfnSecondsFromDuration:
+      if OptAtom(0, Item) then
+      begin
+        if Item.Kind = xikUntypedAtomic then
+          Item := CastTo(Item, xikDuration, Xp20);
+        if not (Item.Kind in DurationKinds) then
+          Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not a duration');
+        Result := SingleSeq(DurationComponent(Item, Id));
+      end;
     xfnXsString, xfnXsBoolean, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsDate,
     xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic, xfnXsNonPositiveInteger .. xfnXsPositiveInteger,
-    xfnXsNormalizedString .. xfnXsENTITY:
+    xfnXsNormalizedString .. xfnXsENTITY, xfnXsDuration .. xfnXsDayTimeDuration:
       begin
         if not OptAtom(0, Item) then
           Exit;
@@ -858,7 +933,8 @@ begin
           xfnXsTime: Result := SingleSeq(CastTo(Item, xikTime, Xp20));
           xfnXsAnyUri: Result := SingleSeq(CastTo(Item, xikAnyUri, Xp20));
           xfnXsUntypedAtomic: Result := SingleSeq(CastTo(Item, xikUntypedAtomic, Xp20));
-          xfnXsNonPositiveInteger .. xfnXsPositiveInteger, xfnXsNormalizedString .. xfnXsENTITY:
+          xfnXsNonPositiveInteger .. xfnXsPositiveInteger, xfnXsNormalizedString .. xfnXsENTITY,
+          xfnXsDuration .. xfnXsDayTimeDuration:
             Result := SingleSeq(CastTo(Item, FNodes[Index].AtomicType, Xp20));
         else
           Fail('FOER0000', 'xs:float is not supported');

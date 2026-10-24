@@ -368,6 +368,16 @@ type
     function Instance: TObject;
   end;
 
+  { a duration: months and seconds with the same sign (the seconds with
+    at most nine fraction digits) }
+  TDurationValue = class(TInterfacedObject, ILandrixXmlXPathValue)
+  public
+    Months: Integer;
+    Seconds: TLandrixXmlDecimal;
+    constructor Create(AMonths: Integer; const ASeconds: TLandrixXmlDecimal);
+    function Instance: TObject;
+  end;
+
 procedure Fail(const Code, Msg: string);
 begin
   raise ELandrixXmlXPathError.CreateXPath(Code, Msg);
@@ -415,6 +425,18 @@ begin
 end;
 
 function TDateTimeValue.Instance: TObject;
+begin
+  Result := Self;
+end;
+
+constructor TDurationValue.Create(AMonths: Integer; const ASeconds: TLandrixXmlDecimal);
+begin
+  inherited Create;
+  Months := AMonths;
+  Seconds := ASeconds;
+end;
+
+function TDurationValue.Instance: TObject;
 begin
   Result := Self;
 end;
@@ -513,6 +535,16 @@ begin
   Result.Text := Text;
 end;
 
+{ An xs:duration, xs:yearMonthDuration or xs:dayTimeDuration with its
+  lexical form (DurationText). }
+function DurationValueItem(Kind: TLandrixXmlXPathItemKind; Months: Integer; const Seconds: TLandrixXmlDecimal;
+  const Text: TLandrixXmlUtf8): TLandrixXmlXPathItem;
+begin
+  InitItem(Result, Kind);
+  Result.Payload := TDurationValue.Create(Months, Seconds);
+  Result.Text := Text;
+end;
+
 { The values of items. Only InitItem, the constructors above and these
   functions use the value fields of an item. }
 
@@ -541,11 +573,23 @@ begin
   Result := TDateTimeValue(Item.Payload.Instance).Value;
 end;
 
+{ the months and seconds of a duration }
+function ItemMonths(const Item: TLandrixXmlXPathItem): Integer;
+begin
+  Result := TDurationValue(Item.Payload.Instance).Months;
+end;
+
+function ItemSeconds(const Item: TLandrixXmlXPathItem): TLandrixXmlDecimal;
+begin
+  Result := TDurationValue(Item.Payload.Instance).Seconds;
+end;
+
 const
   { xs:integer and the types derived from it }
   IntegerKinds = [xikInteger, xikNonPositiveInteger .. xikPositiveInteger];
   { xs:string and the types derived from it }
   StringKinds = [xikString, xikNormalizedString .. xikENTITY];
+  DurationKinds = [xikDuration, xikYearMonthDuration, xikDayTimeDuration];
 
 { The kind an operation sees: xs:integer and xs:string for the types
   derived from them. }
@@ -1178,6 +1222,7 @@ begin
     xikLanguage, xikNMTOKEN, xikName: Result := xikToken;
     xikNCName: Result := xikName;
     xikID, xikIDREF, xikENTITY: Result := xikNCName;
+    xikYearMonthDuration, xikDayTimeDuration: Result := xikDuration;
   else
     Result := xikAnyAtomic;
   end;

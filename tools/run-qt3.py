@@ -454,6 +454,23 @@ def temporal_key(t, v):
     return (zone is not None, seconds, decimal.Decimal(frac or ".0"))
 
 
+DURATIONS = {"xs:duration", "xs:yearMonthDuration", "xs:dayTimeDuration"}
+DURATION_RE = re.compile(r"^(-)?P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$")
+
+
+def duration_key(v):
+    """A duration as (months, seconds); None if it cannot be read."""
+    m = DURATION_RE.match(v)
+    if not m or v.endswith("P") or v.endswith("T"):
+        return None
+    sign, y, mo, d, h, mi, sec = m.groups()
+    months = int(y or 0) * 12 + int(mo or 0)
+    seconds = (int(d or 0) * 86400 + int(h or 0) * 3600 + int(mi or 0) * 60) + decimal.Decimal(sec or 0)
+    if sign:
+        months, seconds = -months, -seconds
+    return (months, seconds)
+
+
 def atomic_equal(x, y, deep=False):
     """eq of two items from the serialization (nodes atomized to
     xs:untypedAtomic, which compares as a string); None if not decidable
@@ -474,6 +491,11 @@ def atomic_equal(x, y, deep=False):
         return same_number(a, b)
     if tx in STRINGS and ty in STRINGS:
         return vx == vy
+    if tx in DURATIONS and ty in DURATIONS:
+        kx, ky = duration_key(vx), duration_key(vy)
+        if kx is None or ky is None:
+            return vx == vy
+        return kx == ky
     if tx == ty and tx in ("xs:date", "xs:dateTime", "xs:time"):
         kx, ky = temporal_key(tx, vx), temporal_key(ty, vy)
         if kx is None or ky is None:
@@ -552,6 +574,9 @@ ATOMIC_PARENTS = {
     "xs:date": {"xs:date", "xs:anyAtomicType"},
     "xs:dateTime": {"xs:dateTime", "xs:anyAtomicType"},
     "xs:time": {"xs:time", "xs:anyAtomicType"},
+    "xs:duration": {"xs:duration", "xs:anyAtomicType"},
+    "xs:yearMonthDuration": {"xs:yearMonthDuration", "xs:duration", "xs:anyAtomicType"},
+    "xs:dayTimeDuration": {"xs:dayTimeDuration", "xs:duration", "xs:anyAtomicType"},
 }
 for _derived in STRING_BASES:
     _chain, _t = {_derived}, _derived
@@ -818,6 +843,13 @@ def self_test():
         ("<assert-type>xs:token</assert-type>", {"R": items(("xs:ID", "a"))}, "pass"),
         ("<assert-eq>'a'</assert-eq>", {"R": items(("xs:NCName", "a")), "V1": items(("xs:string", "a"))}, "pass"),
         ("<assert-eq>1</assert-eq>", {"R": items(("xs:unsignedLong", "1")), "V1": items(i1)}, "pass"),
+        ("<assert-eq>x</assert-eq>", {"R": items(("xs:duration", "P1Y")),
+                                     "V1": items(("xs:yearMonthDuration", "P12M"))}, "pass"),
+        ("<assert-eq>x</assert-eq>", {"R": items(("xs:dayTimeDuration", "PT0S")),
+                                     "V1": items(("xs:yearMonthDuration", "P0M"))}, "pass"),
+        ("<assert-eq>x</assert-eq>", {"R": items(("xs:dayTimeDuration", "P1D")),
+                                     "V1": items(("xs:yearMonthDuration", "P1M"))}, "fail"),
+        ("<assert-type>xs:duration</assert-type>", {"R": items(("xs:dayTimeDuration", "P1D"))}, "pass"),
         ("<assert-type>xs:string</assert-type>", {"R": items(i1)}, "fail"),
         ("<assert-type>xs:int</assert-type>", {"R": items(i1)}, "fail"),
         ("<assert-type>xs:integer*</assert-type>", {"R": items(i1, i1)}, "pass"),

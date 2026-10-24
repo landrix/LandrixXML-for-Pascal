@@ -152,6 +152,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `xs:duration`, `xs:yearMonthDuration` and `xs:dayTimeDuration`
+  with constructor functions, casts, the canonical lexical form,
+  comparisons (`eq` and `ne` on any durations, the order on the two
+  subtypes), addition, subtraction, multiplication and division by
+  numbers, the quotient of two durations (`xs:decimal`), `sum`, `avg`,
+  `min`, `max` and the six component functions (`years-from-duration`
+  ...). The limits are Saxon's: every number of the lexical form below
+  2^31, the months below 2^31, the whole seconds below 2^63, nine fraction
+  digits (a tenth is dropped, more give FODT0002). XPath 2.0 computes
+  exactly (an `xs:double` operand as its shortest digits); the Saxon
+  profile divides durations and multiplies months by an `xs:double`
+  through `xs:double` as Saxon does, reports FORG0001 for too many months
+  and XPTY0004 for a sum of different duration types.
+  `tools/gen-duration-testdata.py` generates 840 cases with an
+  independent oracle (Python's `decimal`) for both profiles; its Saxon
+  variant matches Saxon on every case. QT3: 1,245 more cases pass (9,921
+  in the XPath 2.0 profile, 9,908 in the Saxon profile).
 - XPath: the types derived from `xs:string` (`xs:normalizedString`,
   `xs:token`, `xs:language`, `xs:NMTOKEN`, `xs:Name`, `xs:NCName`, `xs:ID`,
   `xs:IDREF`, `xs:ENTITY`) with constructor functions and casts (white

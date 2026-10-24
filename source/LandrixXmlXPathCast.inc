@@ -251,6 +251,297 @@ begin
     Result := 1;
 end;
 
+{ --- durations ------------------------------------------------------------ }
+
+{ The limits are Saxon's: every number of the lexical form fits into 31
+  bits, the months too, the seconds into 63 bits, at most nine fraction
+  digits (ten are read, the tenth dropped). }
+
+function Int64Text(V: Int64): TLandrixXmlUtf8;
+begin
+  { not IntToStr: Delphi 7 computes it on the x87 }
+  Result := LandrixXmlFormatDecimal(LandrixXmlDecimalFromInt64(V));
+end;
+
+{ A / B (B not zero) rounded to Digits fraction digits; Mode is xdrDown,
+  xdrHalfCeiling or xdrHalfEven. }
+function DivideRounded(const A, B: TLandrixXmlDecimal; Digits: Integer;
+  Mode: TLandrixXmlDecimalRounding): TLandrixXmlDecimal;
+var
+  X, Q, R: TLandrixXmlDecimal;
+  C, Sign: Integer;
+  Away: Boolean;
+begin
+  X := LandrixXmlDecimalMultiplyPow10(A, Digits);
+  Q := LandrixXmlDecimalIntegerQuotient(X, B);
+  R := LandrixXmlDecimalSubtract(X, LandrixXmlDecimalMultiply(Q, B));
+  if not LandrixXmlDecimalIsZero(R) and (Mode <> xdrDown) then
+  begin
+    Sign := LandrixXmlDecimalSign(X) * LandrixXmlDecimalSign(B);
+    C := LandrixXmlDecimalCompare(LandrixXmlDecimalAbs(LandrixXmlDecimalAdd(R, R)), LandrixXmlDecimalAbs(B));
+    if C <> 0 then
+      Away := C > 0
+    else if Mode = xdrHalfCeiling then
+      Away := Sign > 0
+    else
+      Away := not LandrixXmlDecimalIsZero(LandrixXmlDecimalModulo(Q, LandrixXmlDecimalFromInt64(2)));
+    if Away then
+      Q := LandrixXmlDecimalAdd(Q, LandrixXmlDecimalFromInt64(Sign));
+  end;
+  Result := LandrixXmlDecimalMultiplyPow10(Q, -Digits);
+end;
+
+{ The canonical lexical form: P, then years, months, days, T, hours,
+  minutes and seconds where not zero; PT0S (P0M for
+  xs:yearMonthDuration) for zero. }
+function DurationText(Kind: TLandrixXmlXPathItemKind; Months: Integer;
+  const Seconds: TLandrixXmlDecimal): TLandrixXmlUtf8;
+var
+  M, Whole: Int64;
+  Abs, Fraction: TLandrixXmlDecimal;
+  Time: TLandrixXmlUtf8;
+begin
+  M := Months;
+  if M < 0 then
+    M := -M;
+  Abs := LandrixXmlDecimalAbs(Seconds);
+  if not LandrixXmlDecimalTryToInt64(LandrixXmlDecimalRound(Abs, 0, xdrDown), Whole) then
+    Whole := 0;
+  Fraction := LandrixXmlDecimalSubtract(Abs, LandrixXmlDecimalFromInt64(Whole));
+  if (M = 0) and LandrixXmlDecimalIsZero(Abs) then
+  begin
+    if Kind = xikYearMonthDuration then
+      Result := 'P0M'
+    else
+      Result := 'PT0S';
+    Exit;
+  end;
+  Result := 'P';
+  if M div 12 > 0 then
+    Result := Result + Int64Text(M div 12) + 'Y';
+  if M mod 12 > 0 then
+    Result := Result + Int64Text(M mod 12) + 'M';
+  if Whole div 86400 > 0 then
+    Result := Result + Int64Text(Whole div 86400) + 'D';
+  Time := '';
+  if Whole mod 86400 div 3600 > 0 then
+    Time := Time + Int64Text(Whole mod 86400 div 3600) + 'H';
+  if Whole mod 3600 div 60 > 0 then
+    Time := Time + Int64Text(Whole mod 3600 div 60) + 'M';
+  if (Whole mod 60 > 0) or not LandrixXmlDecimalIsZero(Fraction) then
+    Time := Time + LandrixXmlFormatDecimal(LandrixXmlDecimalAdd(LandrixXmlDecimalFromInt64(Whole mod 60),
+      Fraction)) + 'S';
+  if Time <> '' then
+    Result := Result + 'T' + Time;
+  if (Months < 0) or (LandrixXmlDecimalSign(Seconds) < 0) then
+    Result := '-' + Result;
+end;
+
+{ A duration of Kind (xs:yearMonthDuration keeps only the months,
+  xs:dayTimeDuration only the seconds); FODT0002 beyond the limits. }
+function DurationItem(Kind: TLandrixXmlXPathItemKind; const Months, Seconds: TLandrixXmlDecimal): TLandrixXmlXPathItem;
+var
+  M64, Whole: Int64;
+  M: Integer;
+  S: TLandrixXmlDecimal;
+begin
+  M := 0;
+  S := LandrixXmlDecimalZero;
+  if Kind <> xikDayTimeDuration then
+  begin
+    if not LandrixXmlDecimalTryToInt64(Months, M64) or (M64 > High(Integer)) or (M64 < -High(Integer)) then
+      Fail('FODT0002', 'the duration is too large');
+    M := Integer(M64);
+  end;
+  if Kind <> xikYearMonthDuration then
+  begin
+    S := LandrixXmlDecimalRound(Seconds, 9, xdrDown);
+    if not LandrixXmlDecimalTryToInt64(LandrixXmlDecimalRound(S, 0, xdrDown), Whole) or (Whole = Low(Int64)) then
+      Fail('FODT0002', 'the duration is too large');
+  end;
+  Result := DurationValueItem(Kind, M, S, DurationText(Kind, M, S));
+end;
+
+function ParseDuration(const Text: TLandrixXmlUtf8; Kind: TLandrixXmlXPathItemKind; Xp20: Boolean): TLandrixXmlXPathItem;
+var
+  S, Digits, Fraction: TLandrixXmlUtf8;
+  I, Start, Order: Integer;
+  Negative, InTime, TooLarge, Valid, YearMonth: Boolean;
+  Value, Months, Whole: Int64;
+  Seconds: TLandrixXmlDecimal;
+begin
+  S := Trimmed(Text);
+  Valid := True;
+  TooLarge := False;
+  Negative := False;
+  InTime := False;
+  YearMonth := False;
+  Months := 0;
+  Whole := 0;
+  Fraction := '';
+  { 0 none yet, then 1 Y, 2 M, 3 D, 4 T, 5 H, 6 M, 7 S }
+  Order := 0;
+  I := 1;
+  if (I <= Length(S)) and (S[I] = '-') then
+  begin
+    Negative := True;
+    Inc(I);
+  end;
+  if (I > Length(S)) or (S[I] <> 'P') then
+    Valid := False;
+  Inc(I);
+  if I > Length(S) then
+    Valid := False;
+  while Valid and (I <= Length(S)) do
+  begin
+    if S[I] = 'T' then
+    begin
+      Valid := not InTime and (I < Length(S));
+      InTime := True;
+      Order := 4;
+      Inc(I);
+      Continue;
+    end;
+    Start := I;
+    while (I <= Length(S)) and (S[I] in ['0'..'9']) do
+      Inc(I);
+    Digits := Copy(S, Start, I - Start);
+    if Digits = '' then
+    begin
+      Valid := False;
+      Break;
+    end;
+    while (Length(Digits) > 1) and (Digits[1] = '0') do
+      Delete(Digits, 1, 1);
+    Value := 0;
+    if Length(Digits) > 10 then
+      TooLarge := True
+    else
+    begin
+      Value := StrToInt64(LandrixXmlUtf8ToString(Digits));
+      if Value > High(Integer) then
+        TooLarge := True;
+    end;
+    if TooLarge then
+      Value := 0;
+    if (I <= Length(S)) and (S[I] = '.') then
+    begin
+      Inc(I);
+      Start := I;
+      while (I <= Length(S)) and (S[I] in ['0'..'9']) do
+        Inc(I);
+      Fraction := Copy(S, Start, I - Start);
+      Valid := (Fraction <> '') and InTime and (I <= Length(S)) and (S[I] = 'S');
+      if not Valid then
+        Break;
+    end;
+    if I > Length(S) then
+    begin
+      Valid := False;
+      Break;
+    end;
+    case S[I] of
+      'Y':
+        begin
+          Valid := not InTime and (Order < 1);
+          Order := 1;
+          YearMonth := True;
+          Months := Months + 12 * Value;
+        end;
+      'M':
+        if InTime then
+        begin
+          Valid := Order < 6;
+          Order := 6;
+          Whole := Whole + 60 * Value;
+        end
+        else
+        begin
+          Valid := Order < 2;
+          Order := 2;
+          YearMonth := True;
+          Months := Months + Value;
+        end;
+      'D':
+        begin
+          Valid := not InTime and (Order < 3);
+          Order := 3;
+          Whole := Whole + 86400 * Value;
+        end;
+      'H':
+        begin
+          Valid := InTime and (Order < 5);
+          Order := 5;
+          Whole := Whole + 3600 * Value;
+        end;
+      'S':
+        begin
+          Valid := InTime and (Order < 7);
+          Order := 7;
+          Whole := Whole + Value;
+        end;
+    else
+      Valid := False;
+    end;
+    Inc(I);
+  end;
+  if Valid and (Kind = xikYearMonthDuration) then
+    Valid := Order in [1, 2]
+  else if Valid and (Kind = xikDayTimeDuration) then
+    Valid := Order >= 3;
+  if Valid and (Kind = xikDayTimeDuration) then
+    Valid := not YearMonth;
+  if not Valid then
+    Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(Text, 60) + ''' to ' +
+      LandrixXmlXPathAtomicTypeName(Kind));
+  if TooLarge or (Length(Fraction) > 10) then
+    Fail('FODT0002', 'the duration ''' + LandrixXmlEscapeForMessage(Text, 60) + ''' is too large');
+  { Saxon reports FORG0001 }
+  if (Months > High(Integer)) and Xp20 then
+    Fail('FODT0002', 'the duration ''' + LandrixXmlEscapeForMessage(Text, 60) + ''' has too many months')
+  else if Months > High(Integer) then
+    Fail('FORG0001', 'the duration ''' + LandrixXmlEscapeForMessage(Text, 60) + ''' has too many months');
+  Seconds := LandrixXmlDecimalFromInt64(Whole);
+  if Fraction <> '' then
+    Seconds := LandrixXmlDecimalAdd(Seconds, LandrixXmlDecimalMultiplyPow10(
+      LandrixXmlParseDecimal(Copy(Fraction, 1, 9)), -Integer(Length(Copy(Fraction, 1, 9)))));
+  if Negative then
+  begin
+    Months := -Months;
+    Seconds := LandrixXmlDecimalNegate(Seconds);
+  end;
+  Result := DurationItem(Kind, LandrixXmlDecimalFromInt64(Months), Seconds);
+end;
+
+{ The order of two durations for Op: eq and ne on any durations, the
+  others on two xs:yearMonthDuration or two xs:dayTimeDuration values. }
+function CompareDurations(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare): Integer;
+begin
+  if Op in [xpcEq, xpcNe] then
+  begin
+    if (ItemMonths(A) = ItemMonths(B)) and (LandrixXmlDecimalCompare(ItemSeconds(A), ItemSeconds(B)) = 0) then
+      Result := 0
+    else
+      Result := 1;
+  end
+  else if (A.Kind = xikYearMonthDuration) and (B.Kind = xikYearMonthDuration) then
+  begin
+    if ItemMonths(A) < ItemMonths(B) then
+      Result := -1
+    else if ItemMonths(A) > ItemMonths(B) then
+      Result := 1
+    else
+      Result := 0;
+  end
+  else if (A.Kind = xikDayTimeDuration) and (B.Kind = xikDayTimeDuration) then
+    Result := LandrixXmlDecimalCompare(ItemSeconds(A), ItemSeconds(B))
+  else
+  begin
+    Fail('XPTY0004', 'cannot compare ' + KindName(A.Kind) + ' with ' + KindName(B.Kind) + ' by order');
+    Result := 0;
+  end;
+end;
+
 function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem; forward;
 function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXmlDecimal; forward;
@@ -269,6 +560,8 @@ begin
     Order := Ord(ItemBoolean(A)) - Ord(ItemBoolean(B))
   else if (A.Kind in [xikDate, xikDateTime, xikTime]) and (A.Kind = B.Kind) then
     Order := CompareDates(A, B)
+  else if (A.Kind in DurationKinds) and (B.Kind in DurationKinds) then
+    Order := CompareDurations(A, B, Op)
   else
   begin
     Fail('XPTY0004', 'cannot compare ' + KindName(A.Kind) + ' with ' + KindName(B.Kind));
@@ -300,6 +593,7 @@ begin
         xikDate: X := CastTo(X, xikDate, Xp20);
         xikDateTime: X := CastTo(X, xikDateTime, Xp20);
         xikTime: X := CastTo(X, xikTime, Xp20);
+        xikDuration, xikYearMonthDuration, xikDayTimeDuration: X := CastTo(X, Y.Kind, Xp20);
       else
         { compared as they are: a type error }
       end;
@@ -314,6 +608,7 @@ begin
         xikDate: Y := CastTo(Y, xikDate, Xp20);
         xikDateTime: Y := CastTo(Y, xikDateTime, Xp20);
         xikTime: Y := CastTo(Y, xikTime, Xp20);
+        xikDuration, xikYearMonthDuration, xikDayTimeDuration: Y := CastTo(Y, X.Kind, Xp20);
       else
         { compared as they are: a type error }
       end;
@@ -356,6 +651,163 @@ begin
   end;
 end;
 
+{ The decimal value of the shortest digits of a finite double (Java's
+  BigDecimal.valueOf). }
+function ShortestDecimal(const D: TLandrixXmlDouble): TLandrixXmlDecimal;
+var
+  S: TLandrixXmlUtf8;
+  I: Integer;
+begin
+  S := LandrixXmlDoubleFormat(D);
+  I := Pos('E', LandrixXmlUtf8ToString(S));
+  if I = 0 then
+    Result := LandrixXmlParseDecimal(S)
+  else
+    Result := LandrixXmlDecimalMultiplyPow10(LandrixXmlParseDecimal(Copy(S, 1, I - 1)),
+      StrToInt(LandrixXmlUtf8ToString(Copy(S, I + 1, MaxInt))));
+end;
+
+{ A duration times a number, or divided by one (Divide): the months
+  rounded as fn:round, the seconds truncated to nanoseconds. An
+  xs:double counts as the decimal of its shortest digits, and the
+  product or quotient is exact. Saxon divides through xs:double: the
+  months as a double quotient, the seconds times 1 div the number; it
+  multiplies months by an xs:double as a double too. }
+function ScaleDuration(const D, Number: TLandrixXmlXPathItem; Divide, Xp20: Boolean): TLandrixXmlXPathItem;
+var
+  N: TLandrixXmlXPathItem;
+  Factor: TLandrixXmlDecimal;
+  F, P: TLandrixXmlDouble;
+begin
+  N := NumericOperand(Number, Xp20);
+  if not Xp20 and (Divide or ((N.Kind = xikDouble) and (D.Kind = xikYearMonthDuration))) then
+  begin
+    F := ToDouble(N);
+    if LandrixXmlDoubleIsNaN(F) then
+      Fail('FOCA0005', 'NaN as the factor or divisor of a duration');
+    if Divide and LandrixXmlDoubleIsZero(F) then
+      Fail('FODT0002', 'division of a duration by zero');
+    if D.Kind = xikYearMonthDuration then
+    begin
+      if Divide then
+        P := LandrixXmlDoubleDivide(LandrixXmlDoubleFromInt64(ItemMonths(D)), F)
+      else
+        P := LandrixXmlDoubleMultiply(LandrixXmlDoubleFromInt64(ItemMonths(D)), F);
+      if LandrixXmlDoubleIsNaN(P) or LandrixXmlDoubleIsInfinite(P) then
+        Fail('FODT0002', 'the duration is too large');
+      Result := DurationItem(D.Kind, LandrixXmlDoubleToDecimal(LandrixXmlDoubleRound(P, 0, xdrHalfCeiling)),
+        LandrixXmlDecimalZero);
+      Exit;
+    end;
+    N := DoubleItem(LandrixXmlDoubleDivide(LandrixXmlDoubleFromInt64(1), F));
+    Divide := False;
+  end;
+  if N.Kind = xikDouble then
+  begin
+    if LandrixXmlDoubleIsNaN(ItemDouble(N)) then
+      Fail('FOCA0005', 'NaN as the factor or divisor of a duration');
+    if LandrixXmlDoubleIsInfinite(ItemDouble(N)) then
+    begin
+      if not Divide then
+        Fail('FODT0002', 'the duration is too large');
+      Result := DurationItem(D.Kind, LandrixXmlDecimalZero, LandrixXmlDecimalZero);
+      Exit;
+    end;
+    Factor := ShortestDecimal(ItemDouble(N));
+  end
+  else
+    Factor := ItemDecimal(N);
+  if Divide and LandrixXmlDecimalIsZero(Factor) then
+    Fail('FODT0002', 'division of a duration by zero');
+  if D.Kind = xikYearMonthDuration then
+  begin
+    if Divide then
+      Result := DurationItem(D.Kind, DivideRounded(LandrixXmlDecimalFromInt64(ItemMonths(D)), Factor, 0,
+        xdrHalfCeiling), LandrixXmlDecimalZero)
+    else
+      Result := DurationItem(D.Kind, LandrixXmlDecimalRound(LandrixXmlDecimalMultiply(
+        LandrixXmlDecimalFromInt64(ItemMonths(D)), Factor), 0, xdrHalfCeiling), LandrixXmlDecimalZero);
+  end
+  else if Divide then
+    Result := DurationItem(D.Kind, LandrixXmlDecimalZero, DivideRounded(ItemSeconds(D), Factor, 9, xdrDown))
+  else
+    Result := DurationItem(D.Kind, LandrixXmlDecimalZero,
+      LandrixXmlDecimalRound(LandrixXmlDecimalMultiply(ItemSeconds(D), Factor), 9, xdrDown));
+end;
+
+{ Arithmetic with a duration operand: the sum and difference of two
+  durations of the same subtype, their quotient (xs:decimal), a duration
+  times or divided by a number. xs:duration itself has no operators. }
+function DurationArithmetic(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathArithmetic;
+  Xp20: Boolean): TLandrixXmlXPathItem;
+var
+  YearMonth: Boolean;
+
+  { the operators of F&O 2.0 10.6 on dates and times with durations }
+  function DateOperator: Boolean;
+  begin
+    if (A.Kind in [xikDate, xikDateTime]) and (B.Kind in [xikYearMonthDuration, xikDayTimeDuration]) or
+      (A.Kind = xikTime) and (B.Kind = xikDayTimeDuration) then
+      Result := Op in [xpaAdd, xpaSubtract]
+    else
+      Result := (Op = xpaAdd) and ((A.Kind in [xikYearMonthDuration, xikDayTimeDuration]) and
+        (B.Kind in [xikDate, xikDateTime]) or (A.Kind = xikDayTimeDuration) and (B.Kind = xikTime));
+  end;
+
+  procedure NotAllowed;
+  begin
+    if DateOperator then
+      Fail('FOER0000', 'arithmetic on ' + KindName(A.Kind) + ' and ' + KindName(B.Kind) + ' is not supported');
+    Fail('XPTY0004', 'no arithmetic operator for ' + KindName(A.Kind) + ' and ' + KindName(B.Kind));
+  end;
+
+begin
+  InitItem(Result, xikDayTimeDuration);
+  if (A.Kind in DurationKinds) and (B.Kind in DurationKinds) then
+  begin
+    if (A.Kind <> B.Kind) or (A.Kind = xikDuration) then
+      NotAllowed;
+    YearMonth := A.Kind = xikYearMonthDuration;
+    case Op of
+      xpaAdd:
+        Result := DurationItem(A.Kind, LandrixXmlDecimalAdd(LandrixXmlDecimalFromInt64(ItemMonths(A)),
+          LandrixXmlDecimalFromInt64(ItemMonths(B))), LandrixXmlDecimalAdd(ItemSeconds(A), ItemSeconds(B)));
+      xpaSubtract:
+        Result := DurationItem(A.Kind, LandrixXmlDecimalSubtract(LandrixXmlDecimalFromInt64(ItemMonths(A)),
+          LandrixXmlDecimalFromInt64(ItemMonths(B))), LandrixXmlDecimalSubtract(ItemSeconds(A), ItemSeconds(B)));
+      xpaDivide:
+        if YearMonth then
+        begin
+          if ItemMonths(B) = 0 then
+            Fail('FOAR0001', 'division by a zero duration');
+          Result := DecimalItem(DivideRounded(LandrixXmlDecimalFromInt64(ItemMonths(A)),
+            LandrixXmlDecimalFromInt64(ItemMonths(B)), 20, xdrHalfEven));
+        end
+        else
+        begin
+          if LandrixXmlDecimalIsZero(ItemSeconds(B)) then
+            Fail('FOAR0001', 'division by a zero duration');
+          Result := DecimalItem(DivideRounded(ItemSeconds(A), ItemSeconds(B), 20, xdrHalfEven));
+        end;
+    else
+      NotAllowed;
+    end;
+  end
+  else if A.Kind in DurationKinds then
+  begin
+    if (A.Kind = xikDuration) or not (Op in [xpaMultiply, xpaDivide]) or
+      not (IsNumeric(B.Kind) or (B.Kind = xikUntypedAtomic)) then
+      NotAllowed;
+    Result := ScaleDuration(A, B, Op = xpaDivide, Xp20);
+  end
+  else
+  begin
+    if (B.Kind = xikDuration) or (Op <> xpaMultiply) or not (IsNumeric(A.Kind) or (A.Kind = xikUntypedAtomic)) then
+      NotAllowed;
+    Result := ScaleDuration(B, A, False, Xp20);
+  end;
+end;
+
 function DecimalScaleOf(const Item: TLandrixXmlXPathItem): Integer;
 begin
   if BasicKind(Item.Kind) = xikInteger then
@@ -371,6 +823,11 @@ var
   DA, DB, Q: TLandrixXmlDouble;
   IsInt: Boolean;
 begin
+  if (A0.Kind in DurationKinds) or (B0.Kind in DurationKinds) then
+  begin
+    Result := DurationArithmetic(A0, B0, Op, Xp20);
+    Exit;
+  end;
   A := NumericOperand(A0, Xp20);
   B := NumericOperand(B0, Xp20);
   if (A.Kind = xikDouble) or (B.Kind = xikDouble) then
@@ -834,6 +1291,13 @@ begin
             LandrixXmlXPathAtomicTypeName(T));
         Result.Kind := T;
       end;
+    xikDuration, xikYearMonthDuration, xikDayTimeDuration:
+      if StringSource then
+        Result := ParseDuration(Item.Text, T, Xp20)
+      else if Item.Kind in DurationKinds then
+        Result := DurationItem(T, LandrixXmlDecimalFromInt64(ItemMonths(Item)), ItemSeconds(Item))
+      else
+        NotAllowed;
     xikNormalizedString .. xikENTITY:
       begin
         { through xs:string, then the white space and the lexical check }

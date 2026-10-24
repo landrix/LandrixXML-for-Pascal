@@ -170,7 +170,7 @@ const
     'xs:nonNegativeInteger', 'xs:unsignedLong', 'xs:unsignedInt', 'xs:unsignedShort', 'xs:unsignedByte',
     'xs:positiveInteger',
     'xs:normalizedString', 'xs:token', 'xs:language', 'xs:NMTOKEN', 'xs:Name', 'xs:NCName', 'xs:ID',
-    'xs:IDREF', 'xs:ENTITY');
+    'xs:IDREF', 'xs:ENTITY', 'xs:duration', 'xs:yearMonthDuration', 'xs:dayTimeDuration');
   NodeKindNames: array[TLandrixXmlXPathNodeKind] of string = ('document-node', 'element', 'attribute', 'text',
     'comment', 'processing-instruction');
 
