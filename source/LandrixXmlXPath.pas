@@ -577,6 +577,7 @@ type
     procedure ErrorCode(const Code, Msg: string; Position: Integer);
     procedure SkipSpace;
     procedure Next;
+    procedure CheckName(const Name: TLandrixXmlUtf8; Position: Integer);
     function PeekChar(Offset: Integer): AnsiChar;
     function IsSymbol(const S: TLandrixXmlUtf8): Boolean;
     function IsName(const S: TLandrixXmlUtf8): Boolean;
@@ -917,6 +918,48 @@ begin
     else
       Error('unexpected character', Start);
   end;
+  if FToken.Kind in [tkName, tkVariable] then
+    CheckName(FToken.Text, Start);
+end;
+
+{ The lexer takes every byte from $80 on as a name character: a name
+  with such bytes must consist of the name characters of XML 1.0 fifth
+  edition (as the reader), prefix and local part each; a "*" part is a
+  wildcard. }
+procedure TParser.CheckName(const Name: TLandrixXmlUtf8; Position: Integer);
+var
+  I, First: Integer;
+  Ascii: Boolean;
+
+  procedure Part(Last: Integer);
+  var
+    Bad: Integer;
+  begin
+    if (Last < First) or ((Last = First) and (Name[First] = '*')) then
+      Exit;
+    Bad := LandrixXmlCheckName(PAnsiChar(@Name[First]), Last - First + 1);
+    if Bad >= 0 then
+      Error('"' + LandrixXmlEscapeForMessage(Name, 60) + '" is not a name', Position + First - 1 + Bad);
+  end;
+
+begin
+  Ascii := True;
+  for I := 1 to Length(Name) do
+    if Ord(Name[I]) >= $80 then
+    begin
+      Ascii := False;
+      Break;
+    end;
+  if Ascii then
+    Exit;
+  First := 1;
+  for I := 1 to Length(Name) do
+    if Name[I] = ':' then
+    begin
+      Part(I - 1);
+      First := I + 1;
+    end;
+  Part(Length(Name));
 end;
 
 function TParser.IsSymbol(const S: TLandrixXmlUtf8): Boolean;

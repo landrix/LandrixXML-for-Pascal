@@ -153,6 +153,24 @@ end;
 var
   Context: TLandrixXmlXPathStaticContext;
 
+procedure CheckParseUtf8(const Expr: TLandrixXmlUtf8; const Expected: string);
+var
+  E: TLandrixXmlXPathExpression;
+begin
+  E := nil;
+  try
+    try
+      E := TLandrixXmlXPathExpression.Create(Expr, Context);
+      CheckEqualsStr(Expected, Dump(E, E.Root), LandrixXmlEscapeForMessage(Expr, 60));
+    except
+      on X: ELandrixXmlError do
+        Check(False, LandrixXmlEscapeForMessage(Expr, 60) + ': ' + X.Message);
+    end;
+  finally
+    E.Free;
+  end;
+end;
+
 procedure CheckParse(const Expr, Expected: string);
 var
   E: TLandrixXmlXPathExpression;
@@ -194,6 +212,29 @@ begin
   end;
 end;
 
+procedure CheckErrorUtf8(const Expr: TLandrixXmlUtf8; const Code: string);
+var
+  E: TLandrixXmlXPathExpression;
+begin
+  E := nil;
+  try
+    try
+      E := TLandrixXmlXPathExpression.Create(Expr, Context);
+      FailNotRaised(Code + ' for ' + LandrixXmlEscapeForMessage(Expr, 60));
+    except
+      on X: ELandrixXmlXPathError do
+      begin
+        CheckEqualsStr(Code, X.XPathCode, LandrixXmlEscapeForMessage(Expr, 60) + ': ' + X.Message);
+        CheckEquals(Ord(xecXPath), Ord(X.Code), LandrixXmlEscapeForMessage(Expr, 60) + ': error code');
+      end;
+      on X: ELandrixXmlError do
+        Check(False, LandrixXmlEscapeForMessage(Expr, 60) + ': not an XPath error: ' + X.Message);
+    end;
+  finally
+    E.Free;
+  end;
+end;
+
 procedure SetUpContext;
 begin
   Context.Free;
@@ -209,6 +250,9 @@ end;
 procedure TestPaths;
 begin
   SetUpContext;
+  { names with the characters of XML 1.0 fifth edition: U+00E4, U+037F }
+  CheckParseUtf8(U('cbc:') + Utf8Bytes([$C3, $A4]), 'child::{urn:cbc}' + LandrixXmlUtf8ToString(Utf8Bytes([$C3, $A4])));
+  CheckParseUtf8(Utf8Bytes([$CD, $BF]) + U('-a'), 'child::{}' + LandrixXmlUtf8ToString(Utf8Bytes([$CD, $BF])) + '-a');
   CheckParse('cbc:ID', 'child::{urn:cbc}ID');
   CheckParse('cac:Party/cbc:ID', '(path child::{urn:cac}Party child::{urn:cbc}ID)');
   CheckParse('/cac:Invoice', '(path/ child::{urn:cac}Invoice)');
@@ -294,6 +338,15 @@ begin
   CheckError('namespace::a', 'XPST0003');
   CheckError('element(a)', 'XPST0003');
   CheckError('''abc', 'XPST0003');
+  { U+00B7 may not start a name, U+00D7 is no name character, $FF no UTF-8 }
+  CheckErrorUtf8(Utf8Bytes([$C2, $B7]), 'XPST0003');
+  CheckErrorUtf8(U('a') + Utf8Bytes([$C3, $97]), 'XPST0003');
+  CheckErrorUtf8(U('cbc:') + Utf8Bytes([$C2, $B7]), 'XPST0003');
+  CheckErrorUtf8(Utf8Bytes([$C2, $B7]) + U(':a'), 'XPST0003');
+  CheckErrorUtf8(U('$') + Utf8Bytes([$C2, $B7]), 'XPST0003');
+  CheckErrorUtf8(U('*:') + Utf8Bytes([$C2, $B7]), 'XPST0003');
+  CheckErrorUtf8(U('a') + Utf8Bytes([$FF]), 'XPST0003');
+  CheckErrorUtf8(U('processing-instruction(') + Utf8Bytes([$C2, $B7]) + U(')'), 'XPST0003');
   CheckError('1 instance of xs:integer instance of xs:boolean', 'XPST0003');
   CheckError('1 instance xs:integer', 'XPST0003');
   CheckError('1 treat xs:integer', 'XPST0003');

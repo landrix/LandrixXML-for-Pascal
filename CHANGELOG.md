@@ -209,6 +209,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   optionally checks them against Saxon.
 
 ### Fixed
+- XPath: names with characters from U+0080 on must consist of the name
+  characters of XML 1.0 fifth edition, as in the reader (XPST0003); before,
+  every such byte counted as a name character (U+00B7 at the start, U+00D7).
 - `TLandrixXmlXPathTree.StringValueUtf8` no longer makes the tree's text
   strings unique (a write), so validators in several threads can share
   rules with embedded documents (`document()`).
