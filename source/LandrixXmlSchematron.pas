@@ -290,47 +290,25 @@ begin
   Result := Node.AttributeValueUtf8(U(''), U(Name));
 end;
 
-{ An XPath sequence type as XSLT writes it in "as": xs:string?, node()*,
-  item()+, element() ... }
-function ParseSequenceType(const S: TLandrixXmlUtf8; const Where: string): TLandrixXmlXPathSequenceType;
-var
-  T: TLandrixXmlUtf8;
-  Last: AnsiChar;
+{ The sequence type of an "as" attribute (xs:string?, node()*,
+  element(a) ...), its prefixes from Context; no "as": item()* without
+  conversion. }
+function ParseSequenceType(const S: TLandrixXmlUtf8; const Where: string;
+  Context: TLandrixXmlXPathStaticContext): TLandrixXmlXPathSequenceType;
 begin
-  Result.Declared := S <> '';
-  Result.Kind := xtkAnyItem;
-  Result.AtomicType := xikNone;
-  Result.Occurrence := xocOne;
-  if not Result.Declared then
+  if S = '' then
   begin
-    Result.Occurrence := xocMany;
+    Result := LandrixXmlXPathParseSequenceType('item()*', nil);
+    Result.Declared := False;
     Exit;
   end;
-  T := S;
-  Last := AnsiChar(T[Length(T)]);
-  if Last in ['?', '*', '+'] then
-  begin
-    case Last of
-      '?': Result.Occurrence := xocOptional;
-      '*': Result.Occurrence := xocMany;
-    else
-      Result.Occurrence := xocOneOrMore;
-    end;
-    T := Copy(T, 1, Length(T) - 1);
+  try
+    Result := LandrixXmlXPathParseSequenceType(S, Context);
+  except
+    on E: ELandrixXmlXPathError do
+      raise ELandrixXmlXPathError.CreateXPath(E.XPathCode, Where + ': ' + Copy(E.Message, Length(E.XPathCode) + 3,
+        MaxInt));
   end;
-  if T = 'item()' then
-    Result.Kind := xtkAnyItem
-  else if (T = 'node()') or (T = 'element()') or (T = 'attribute()') or (T = 'text()') or (T = 'document-node()') then
-    Result.Kind := xtkNode
-  else if Copy(T, 1, 3) = 'xs:' then
-  begin
-    Result.Kind := xtkAtomic;
-    Result.AtomicType := LandrixXmlXPathAtomicTypeByName(Copy(T, 4, MaxInt));
-    if Result.AtomicType = xikNone then
-      SchemaError(Where + ': the type "' + LandrixXmlUtf8ToString(S) + '" is not supported');
-  end
-  else
-    SchemaError(Where + ': the type "' + LandrixXmlUtf8ToString(S) + '" is not supported');
 end;
 
 { Splits a rule context at the "|" outside brackets and strings and
@@ -881,7 +859,7 @@ begin
           FOwnedFunctions.Add(Def);
           FFunctions.Add(Def);
           Def.Name := LandrixXmlUtf8ToString(AttrOf(N, 'name'));
-          Def.ResultType := ParseSequenceType(AttrOf(N, 'as'), Where);
+          Def.ResultType := ParseSequenceType(AttrOf(N, 'as'), Where, Ctx);
           F := N.FirstChildElement;
           while F <> nil do
           begin
@@ -897,7 +875,7 @@ begin
                 SetLength(Def.ParamSlots, I + 1);
                 SetLength(Def.ParamTypes, I + 1);
                 Def.ParamSlots[I] := Slot;
-                Def.ParamTypes[I] := ParseSequenceType(AttrOf(F, 'as'), Where);
+                Def.ParamTypes[I] := ParseSequenceType(AttrOf(F, 'as'), Where, Ctx);
               end
               else
               begin
@@ -906,9 +884,7 @@ begin
                 SetLength(Def.LocalTypes, I + 1);
                 SetLength(Def.LocalExpressions, I + 1);
                 Def.LocalSlots[I] := Slot;
-                Def.LocalTypes[I] := ParseSequenceType(AttrOf(F, 'as'), Where);
-                if not Def.LocalTypes[I].Declared then
-                  Def.LocalTypes[I].Occurrence := xocMany;
+                Def.LocalTypes[I] := ParseSequenceType(AttrOf(F, 'as'), Where, Ctx);
               end;
             end;
             F := F.NextSiblingElement;

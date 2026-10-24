@@ -18,13 +18,27 @@ var
   A: TLandrixXmlXPathSequence;
   Ok: Boolean;
 begin
-  if not T.Declared or (T.Kind = xtkAnyItem) then
+  { no "as": no conversion, any number of items }
+  if not T.Declared then
+  begin
+    Result := S;
+    Exit;
+  end;
+  if T.Kind = xtkAnyItem then
     Result := S
+  else if T.Kind = xtkEmpty then
+  begin
+    if S.Count > 0 then
+      Fail('XPTY0004', FunctionName + ': an empty sequence was expected, got ' + IntToStr(S.Count) + ' items');
+    Result := S;
+  end
   else if T.Kind = xtkNode then
   begin
     for I := 0 to S.Count - 1 do
       if S.Items[I].Kind <> xikNode then
-        Fail('XPTY0004', FunctionName + ': a node was expected');
+        Fail('XPTY0004', FunctionName + ': a node was expected')
+      else if not NodeMatches(S.Items[I].Node, T) then
+        Fail('XPTY0004', FunctionName + ': the node does not match ' + LandrixXmlXPathSequenceTypeName(T));
     Result := S;
   end
   else

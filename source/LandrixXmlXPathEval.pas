@@ -130,17 +130,6 @@ type
     Count: Integer;
   end;
 
-  { The declared type of a variable, parameter or function result. }
-  TLandrixXmlXPathOccurrence = (xocOne, xocOptional, xocMany, xocOneOrMore);
-  TLandrixXmlXPathTypeKind = (xtkAnyItem, xtkNode, xtkAtomic);
-  TLandrixXmlXPathSequenceType = record
-    Kind: TLandrixXmlXPathTypeKind;
-    AtomicType: TLandrixXmlXPathItemKind;
-    Occurrence: TLandrixXmlXPathOccurrence;
-    { False: no "as", anything goes }
-    Declared: Boolean;
-  end;
-
   TLandrixXmlXPathSlotState = (xssUnbound, xssValue, xssLazy, xssEvaluating, xssError);
 
   TLandrixXmlXPathSlot = record
@@ -258,6 +247,7 @@ type
     procedure LeaveExpression(SavedExpr: TLandrixXmlXPathExpression; SavedBase: Integer);
     procedure ComputeBases;
     function TreeOf(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
+    function NodeMatches(Node: Integer; const T: TLandrixXmlXPathSequenceType): Boolean;
     function RootOf(Node: Integer): Integer;
     function SlotRef(Slot: Integer): Pointer;
     function ReadVariable(Slot: Integer): TLandrixXmlXPathSequence;
@@ -1081,6 +1071,70 @@ end;
 function TLandrixXmlXPathEvaluator.TreeOf(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
 begin
   Result := NodeTree(FTree, FDocTrees, FDocBases, Node, Base);
+end;
+
+{ The name and type annotation of element(N, T) or attribute(N, T) on an
+  untyped tree: elements are xs:untyped, attributes xs:untypedAtomic. }
+function NameAndTypeMatch(Tree: TLandrixXmlXPathTree; I: Integer; const T: TLandrixXmlXPathSequenceType;
+  Element: Boolean): Boolean;
+begin
+  Result := (T.LocalName = '') or ((Tree.LocalNameUtf8(I) = T.LocalName) and
+    (Tree.NamespaceUriUtf8(I) = T.NamespaceUri));
+  if Result and (T.ContentType <> '') then
+    if Element then
+      Result := (T.ContentType = 'anyType') or (T.ContentType = 'untyped')
+    else
+      Result := (T.ContentType = 'anyType') or (T.ContentType = 'anySimpleType') or
+        (T.ContentType = 'anyAtomicType') or (T.ContentType = 'untypedAtomic');
+end;
+
+{ True if the node matches the kind test of T (T.Kind = xtkNode). }
+function TLandrixXmlXPathEvaluator.NodeMatches(Node: Integer; const T: TLandrixXmlXPathSequenceType): Boolean;
+var
+  Tree: TLandrixXmlXPathTree;
+  Base, I, Child, Elements: Integer;
+  K: TLandrixXmlXPathNodeKind;
+begin
+  Tree := TreeOf(Node, Base);
+  I := Node - Base;
+  K := Tree.Kind[I];
+  case T.KindTest of
+    xktAnyNode: Result := True;
+    xktElement: Result := (K = xnkElement) and NameAndTypeMatch(Tree, I, T, True);
+    xktAttribute: Result := (K = xnkAttribute) and NameAndTypeMatch(Tree, I, T, False);
+    xktText: Result := K = xnkText;
+    xktComment: Result := K = xnkComment;
+    xktProcessingInstruction:
+      Result := (K = xnkProcessingInstruction) and ((T.LocalName = '') or (Tree.LocalNameUtf8(I) = T.LocalName));
+  else
+    begin
+      Result := K = xnkDocument;
+      { document-node(element(...)): exactly one element, which matches,
+        besides comments and processing instructions only }
+      if Result and T.ElementTest then
+      begin
+        Elements := 0;
+        Child := Tree.FirstChild(I);
+        while Child >= 0 do
+        begin
+          case Tree.Kind[Child] of
+            xnkElement:
+              begin
+                Inc(Elements);
+                if not NameAndTypeMatch(Tree, Child, T, True) then
+                  Result := False;
+              end;
+            xnkText:
+              Result := False;
+          else
+            { comments, processing instructions }
+          end;
+          Child := Tree.NextSibling[Child];
+        end;
+        Result := Result and (Elements = 1);
+      end;
+    end;
+  end;
 end;
 
 { the document node of Node's tree }

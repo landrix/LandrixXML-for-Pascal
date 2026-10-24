@@ -152,6 +152,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- `LandrixXmlXPathParseSequenceType` and `LandrixXmlXPathSequenceTypeName`:
+  XPath 2.0 sequence types (`xs:decimal?`, `element(a)*`,
+  `document-node(element(*, xs:untyped))`, `empty-sequence()`, ...) with
+  prefixes from a static context. `TLandrixXmlXPathSequenceType` moved to
+  `LandrixXmlXPath` and describes kind tests with names and type names
+  (`KindTest`, `NamespaceUri`, `LocalName`, `ContentType`, `Nilled`,
+  `ElementTest`; `xtkEmpty`). Schematron reads `as` with it: prefixes are
+  resolved through the rule file's namespaces, `element(a)` and the other
+  kind tests are checked (they were all taken as `node()`), and type
+  errors are XPath errors (`xecXPath`). A type with `Declared = False` is
+  not checked at all (function definitions built in code without types
+  had their results checked as exactly one item).
 - XPath: a compact item record (`TLandrixXmlXPathItem`: kind, node, an
   Int64 for doubles, booleans and integers, text, and a shared immutable
   `ILandrixXmlXPathValue` for decimals, large integers and dates) instead

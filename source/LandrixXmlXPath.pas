@@ -109,6 +109,38 @@ type
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
     xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone);
 
+  { Sequence types: the declared type of a variable, parameter or function
+    result. Occurrence: exactly one, ?, * and +. }
+  TLandrixXmlXPathOccurrence = (xocOne, xocOptional, xocMany, xocOneOrMore);
+  { item(), a kind test, an atomic type, empty-sequence() }
+  TLandrixXmlXPathTypeKind = (xtkAnyItem, xtkNode, xtkAtomic, xtkEmpty);
+  { the kind tests: node(), document-node(), element(), attribute(),
+    text(), comment(), processing-instruction() }
+  TLandrixXmlXPathKindTest = (xktAnyNode, xktDocument, xktElement, xktAttribute, xktText, xktComment,
+    xktProcessingInstruction);
+  TLandrixXmlXPathSequenceType = record
+    Kind: TLandrixXmlXPathTypeKind;
+    { xtkAtomic }
+    AtomicType: TLandrixXmlXPathItemKind;
+    { xtkNode }
+    KindTest: TLandrixXmlXPathKindTest;
+    { the name of element(N), attribute(N) and processing-instruction(N),
+      empty LocalName for any name }
+    NamespaceUri: TLandrixXmlUtf8;
+    LocalName: TLandrixXmlUtf8;
+    { element(N, T) and attribute(N, T): the local name of T in the xs
+      namespace, empty if none }
+    ContentType: TLandrixXmlUtf8;
+    { element(N, T?) }
+    Nilled: Boolean;
+    { document-node(element(...)): NamespaceUri, LocalName, ContentType
+      and Nilled describe the element }
+    ElementTest: Boolean;
+    Occurrence: TLandrixXmlXPathOccurrence;
+    { False: no "as", anything goes }
+    Declared: Boolean;
+  end;
+
   TLandrixXmlXPathAstNode = record
     Kind: TLandrixXmlXPathAstKind;
     Op: Integer;
@@ -243,6 +275,18 @@ function LandrixXmlXPathAtomicTypeName(T: TLandrixXmlXPathItemKind): string;
 { The atomic type with this local name in the xs namespace; xikNone if it
   is not supported. }
 function LandrixXmlXPathAtomicTypeByName(const LocalName: TLandrixXmlUtf8): TLandrixXmlXPathItemKind;
+
+{ Parses an XPath 2.0 SequenceType ("xs:decimal?", "element(a)*",
+  "document-node(element(*, xs:untyped))", "empty-sequence()"); the
+  prefixes are Context's (nil: xml, xs and fn). Raises
+  ELandrixXmlXPathError (XPST0003 syntax, XPST0081 prefix, XPST0051
+  unknown or unsupported atomic type, XPST0008 unknown type name or
+  schema-element()). }
+function LandrixXmlXPathParseSequenceType(const Text: TLandrixXmlUtf8;
+  Context: TLandrixXmlXPathStaticContext): TLandrixXmlXPathSequenceType;
+{ A sequence type as XPath writes it, for messages (a name in a
+  namespace as Q, the URI in curly brackets, and the local name). }
+function LandrixXmlXPathSequenceTypeName(const T: TLandrixXmlXPathSequenceType): string;
 
 implementation
 
@@ -562,6 +606,9 @@ type
     function ParseFunctionCall(const AName: TLandrixXmlUtf8; Position: Integer): Integer;
     procedure ParsePredicates(Node: Integer);
     procedure ParseSingleType(Node: Integer);
+    function ParseSequenceType: TLandrixXmlXPathSequenceType;
+    procedure ParseKindTest(var T: TLandrixXmlXPathSequenceType);
+    procedure ParseNameAndType(var T: TLandrixXmlXPathSequenceType; Element: Boolean);
     function DescendantStep(Position: Integer): Integer;
     function StartsStep: Boolean;
   public
@@ -583,6 +630,14 @@ begin
   while (B >= A) and (S[B] in [' ', #9, #10, #13]) do
     Dec(B);
   Result := Copy(S, A, B - A + 1);
+end;
+
+{ True if S is an NCName (the target of processing-instruction('...')),
+  with the name characters of XML 1.0 fifth edition as the reader. }
+function IsNCName(const S: TLandrixXmlUtf8): Boolean;
+begin
+  Result := (S <> '') and (Pos(':', LandrixXmlUtf8ToString(S)) = 0) and
+    (LandrixXmlCheckName(PAnsiChar(S), Integer(Length(S))) = -1);
 end;
 
 function IsNameStart(C: AnsiChar): Boolean;
@@ -1319,6 +1374,200 @@ begin
   end;
 end;
 
+procedure InitSequenceType(out T: TLandrixXmlXPathSequenceType);
+begin
+  T.Kind := xtkAnyItem;
+  T.AtomicType := xikNone;
+  T.KindTest := xktAnyNode;
+  T.NamespaceUri := '';
+  T.LocalName := '';
+  T.ContentType := '';
+  T.Nilled := False;
+  T.ElementTest := False;
+  T.Occurrence := xocOne;
+  T.Declared := True;
+end;
+
+const
+  { the built-in types of XML Schema 1.0 and XPath 2.0 }
+  TypeNames: array[0..50] of string = (
+    'anyType', 'anySimpleType', 'anyAtomicType', 'untyped', 'untypedAtomic', 'string', 'boolean', 'decimal',
+    'float', 'double', 'duration', 'dayTimeDuration', 'yearMonthDuration', 'dateTime', 'time', 'date',
+    'gYearMonth', 'gYear', 'gMonthDay', 'gDay', 'gMonth', 'hexBinary', 'base64Binary', 'anyURI', 'QName',
+    'NOTATION', 'normalizedString', 'token', 'language', 'NMTOKEN', 'NMTOKENS', 'Name', 'NCName', 'ID',
+    'IDREF', 'IDREFS', 'ENTITY', 'ENTITIES', 'integer', 'nonPositiveInteger', 'negativeInteger', 'long',
+    'int', 'short', 'byte', 'nonNegativeInteger', 'unsignedLong', 'unsignedInt', 'unsignedShort',
+    'unsignedByte', 'positiveInteger');
+
+{ The type names of element(N, T) and attribute(N, T). }
+function KnownTypeName(const LocalName: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  for I := Low(TypeNames) to High(TypeNames) do
+    if LandrixXmlStringToUtf8(TypeNames[I]) = LocalName then
+    begin
+      Result := True;
+      Exit;
+    end;
+  Result := False;
+end;
+
+{ SequenceType: empty-sequence(), or an item type with an optional
+  occurrence indicator. }
+function TParser.ParseSequenceType: TLandrixXmlXPathSequenceType;
+var
+  Name, Uri, Local: TLandrixXmlUtf8;
+  Position: Integer;
+begin
+  InitSequenceType(Result);
+  if FToken.Kind <> tkName then
+    Error('a sequence type was expected', FToken.Position);
+  Name := FToken.Text;
+  Position := FToken.Position;
+  if NextIsSymbol('(') then
+  begin
+    if Name = 'empty-sequence' then
+    begin
+      Next;
+      Expect('(');
+      Expect(')');
+      { no occurrence indicator: matches the empty sequence only }
+      Result.Kind := xtkEmpty;
+      Result.Occurrence := xocOptional;
+      Exit;
+    end;
+    if Name = 'item' then
+    begin
+      Next;
+      Expect('(');
+      Expect(')');
+    end
+    else
+    begin
+      Result.Kind := xtkNode;
+      ParseKindTest(Result);
+    end;
+  end
+  else
+  begin
+    if Pos('*', LandrixXmlUtf8ToString(Name)) > 0 then
+      Error('an atomic type name was expected', Position);
+    ResolveName(Name, Position, False, Uri, Local);
+    if Uri <> LandrixXmlXPathSchemaNamespace then
+      ErrorCode('XPST0051', 'unknown atomic type "' + LandrixXmlUtf8ToString(Name) + '"', Position);
+    Result.Kind := xtkAtomic;
+    Result.AtomicType := LandrixXmlXPathAtomicTypeByName(Local);
+    { xs:float: no float values yet }
+    if Result.AtomicType in [xikNone, xikFloat] then
+      ErrorCode('XPST0051', 'the type "' + LandrixXmlUtf8ToString(Name) + '" is not supported here', Position);
+    Next;
+  end;
+  if IsSymbol('?') then
+    Result.Occurrence := xocOptional
+  else if IsName('*') then
+    Result.Occurrence := xocMany
+  else if IsSymbol('+') then
+    Result.Occurrence := xocOneOrMore
+  else
+    Exit;
+  Next;
+end;
+
+{ A kind test at the current token (its name; "(" follows). }
+procedure TParser.ParseKindTest(var T: TLandrixXmlXPathSequenceType);
+var
+  Name: TLandrixXmlUtf8;
+  Position: Integer;
+begin
+  Name := FToken.Text;
+  Position := FToken.Position;
+  if Name = 'node' then
+    T.KindTest := xktAnyNode
+  else if Name = 'document-node' then
+    T.KindTest := xktDocument
+  else if Name = 'element' then
+    T.KindTest := xktElement
+  else if Name = 'attribute' then
+    T.KindTest := xktAttribute
+  else if Name = 'text' then
+    T.KindTest := xktText
+  else if Name = 'comment' then
+    T.KindTest := xktComment
+  else if Name = 'processing-instruction' then
+    T.KindTest := xktProcessingInstruction
+  else if (Name = 'schema-element') or (Name = 'schema-attribute') then
+    ErrorCode('XPST0008', '"' + LandrixXmlUtf8ToString(Name) + '()" needs a schema, none is in scope', Position)
+  else
+    Error('unknown item type "' + LandrixXmlUtf8ToString(Name) + '()"', Position);
+  Next;
+  Expect('(');
+  case T.KindTest of
+    xktProcessingInstruction:
+      if (FToken.Kind = tkName) or (FToken.Kind = tkString) then
+      begin
+        if (FToken.Kind = tkName) and ((Pos(':', LandrixXmlUtf8ToString(FToken.Text)) > 0) or (FToken.Text = '*')) then
+          Error('the target of processing-instruction() must be a name without prefix', FToken.Position);
+        if (FToken.Kind = tkString) and not IsNCName(Trimmed(FToken.Text)) then
+          ErrorCode('XPTY0004', 'the target of processing-instruction() is not a name', FToken.Position);
+        T.LocalName := Trimmed(FToken.Text);
+        Next;
+      end;
+    xktDocument:
+      if IsName('element') then
+      begin
+        T.ElementTest := True;
+        Next;
+        Expect('(');
+        ParseNameAndType(T, True);
+        Expect(')');
+      end
+      else if IsName('schema-element') then
+        ErrorCode('XPST0008', '"schema-element()" needs a schema, none is in scope', FToken.Position);
+    xktElement:
+      ParseNameAndType(T, True);
+    xktAttribute:
+      ParseNameAndType(T, False);
+  else
+    { node(), text(), comment() }
+  end;
+  Expect(')');
+end;
+
+{ The arguments of element() and attribute(): nothing, a name or *, and
+  optionally a type name (with "?" for elements). }
+procedure TParser.ParseNameAndType(var T: TLandrixXmlXPathSequenceType; Element: Boolean);
+var
+  Uri, Local: TLandrixXmlUtf8;
+begin
+  if IsSymbol(')') then
+    Exit;
+  if FToken.Kind <> tkName then
+    Error('a name or "*" was expected', FToken.Position);
+  if FToken.Text <> '*' then
+  begin
+    if Pos('*', LandrixXmlUtf8ToString(FToken.Text)) > 0 then
+      Error('a name or "*" was expected', FToken.Position);
+    ResolveName(FToken.Text, FToken.Position, False, T.NamespaceUri, T.LocalName);
+  end;
+  Next;
+  if not IsSymbol(',') then
+    Exit;
+  Next;
+  if (FToken.Kind <> tkName) or (Pos('*', LandrixXmlUtf8ToString(FToken.Text)) > 0) then
+    Error('a type name was expected', FToken.Position);
+  ResolveName(FToken.Text, FToken.Position, False, Uri, Local);
+  if (Uri <> LandrixXmlXPathSchemaNamespace) or not KnownTypeName(Local) then
+    ErrorCode('XPST0008', 'unknown type "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
+  T.ContentType := Local;
+  Next;
+  if Element and IsSymbol('?') then
+  begin
+    T.Nilled := True;
+    Next;
+  end;
+end;
+
 function TParser.ParseUnary: Integer;
 var
   N: Integer;
@@ -1543,6 +1792,8 @@ begin
       begin
         if (FToken.Kind = tkName) and ((Pos(':', LandrixXmlUtf8ToString(FToken.Text)) > 0) or (FToken.Text = '*')) then
           Error('the target of processing-instruction() must be a name without prefix', FToken.Position);
+        if (FToken.Kind = tkString) and not IsNCName(Trimmed(FToken.Text)) then
+          ErrorCode('XPTY0004', 'the target of processing-instruction() is not a name', FToken.Position);
         FNodes[Step].LocalName := Trimmed(FToken.Text);
         Next;
       end;
@@ -1750,6 +2001,86 @@ begin
     end;
   if not Found then
     ErrorCode('XPST0017', 'unknown function ' + LandrixXmlUtf8ToString(Name) + '#' + IntToStr(Args), Position);
+end;
+
+{ --- sequence types --------------------------------------------------- }
+
+function LandrixXmlXPathParseSequenceType(const Text: TLandrixXmlUtf8;
+  Context: TLandrixXmlXPathStaticContext): TLandrixXmlXPathSequenceType;
+var
+  P: TParser;
+begin
+  P := TParser.Create(Text, Context);
+  try
+    P.Next;
+    Result := P.ParseSequenceType;
+    if P.FToken.Kind <> tkEnd then
+      P.Error('unexpected "' + LandrixXmlUtf8ToString(P.FToken.Text) + '"', P.FToken.Position);
+  finally
+    P.Free;
+  end;
+end;
+
+function LandrixXmlXPathSequenceTypeName(const T: TLandrixXmlXPathSequenceType): string;
+
+  function NameText: string;
+  begin
+    if T.LocalName = '' then
+      Result := '*'
+    else if T.NamespaceUri = '' then
+      Result := LandrixXmlUtf8ToString(T.LocalName)
+    else
+      Result := 'Q{' + LandrixXmlUtf8ToString(T.NamespaceUri) + '}' + LandrixXmlUtf8ToString(T.LocalName);
+  end;
+
+  function NameAndType: string;
+  begin
+    Result := '';
+    if T.ContentType <> '' then
+    begin
+      Result := NameText + ', xs:' + LandrixXmlUtf8ToString(T.ContentType);
+      if T.Nilled then
+        Result := Result + '?';
+    end
+    else if T.LocalName <> '' then
+      Result := NameText;
+  end;
+
+begin
+  case T.Kind of
+    xtkEmpty:
+      begin
+        Result := 'empty-sequence()';
+        Exit;
+      end;
+    xtkAtomic:
+      Result := LandrixXmlXPathAtomicTypeName(T.AtomicType);
+    xtkNode:
+      case T.KindTest of
+        xktDocument:
+          if T.ElementTest then
+            Result := 'document-node(element(' + NameAndType + '))'
+          else
+            Result := 'document-node()';
+        xktElement: Result := 'element(' + NameAndType + ')';
+        xktAttribute: Result := 'attribute(' + NameAndType + ')';
+        xktText: Result := 'text()';
+        xktComment: Result := 'comment()';
+        xktProcessingInstruction:
+          Result := 'processing-instruction(' + LandrixXmlUtf8ToString(T.LocalName) + ')';
+      else
+        Result := 'node()';
+      end;
+  else
+    Result := 'item()';
+  end;
+  case T.Occurrence of
+    xocOptional: Result := Result + '?';
+    xocMany: Result := Result + '*';
+    xocOneOrMore: Result := Result + '+';
+  else
+    { exactly one }
+  end;
 end;
 
 { --- TLandrixXmlXPathExpression ---------------------------------------- }

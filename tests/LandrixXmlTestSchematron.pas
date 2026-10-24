@@ -554,8 +554,10 @@ begin
   CheckLoadError('<let name="g" value="1" line="1"/><let name="g" value="2" line="2"/>', xecSchema, 'duplicate global');
   CheckLoadError('<let name="g" value="1" line="1"/><pattern id="A"><rule context="p:a" id="" line="1">' +
     '<let name="g" value="2"/></rule></pattern>', xecSchema, 'rule variable hides a global');
-  CheckLoadError('<function name="p:f" as="xs:duration" line="1"><result value="1"/></function>', xecSchema,
+  CheckLoadError('<function name="p:f" as="xs:duration" line="1"><result value="1"/></function>', xecXPath,
     'unsupported type');
+  CheckLoadError('<function name="p:f" as="q:a" line="1"><result value="1"/></function>', xecXPath,
+    'undeclared prefix in a type');
   CheckLoadError('<function name="p:f" as="" line="1"><param name="a" as=""/><result value="1"/></function>' +
     '<function name="p:f" as="" line="2"><param name="b" as=""/><result value="2"/></function>', xecSchema,
     'duplicate function');

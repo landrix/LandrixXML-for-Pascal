@@ -297,6 +297,123 @@ begin
   end;
 end;
 
+{ The kind tests of sequence types on a parameter: f:id($x) with $x of
+  the declared type, called with an argument; XPTY0004 if it does not
+  match. }
+procedure TestSequenceTypeMatching;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context, FnContext: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Body: TLandrixXmlXPathExpression;
+  Def: TLandrixXmlXPathFunctionDef;
+  Functions: TList;
+
+  procedure CheckMatch(const TypeText, Arg: string; Matches: Boolean);
+  var
+    Expr: TLandrixXmlXPathExpression;
+    Ok: Boolean;
+    Msg: string;
+  begin
+    Def.ParamTypes[0] := LandrixXmlXPathParseSequenceType(U(TypeText), FnContext);
+    Expr := TLandrixXmlXPathExpression.Create(U('count(f:id(' + Arg + '))'), Context);
+    try
+      Ok := False;
+      Msg := '';
+      try
+        Evaluator.EvaluateString(Expr, 0);
+        Ok := True;
+      except
+        on X: ELandrixXmlXPathError do
+        begin
+          Msg := X.Message;
+          CheckEqualsStr('XPTY0004', X.XPathCode, TypeText + ' for ' + Arg + ': ' + Msg);
+        end;
+      end;
+      CheckEquals(Ord(Matches), Ord(Ok), TypeText + ' for ' + Arg + ' ' + Msg);
+    finally
+      Expr.Free;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  FnContext := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Functions := TList.Create;
+  Def := TLandrixXmlXPathFunctionDef.Create;
+  Body := nil;
+  try
+    Tree.LoadFromUtf8(U('<r xmlns:p="urn:p"><a k="1" p:k="2">t<!--c--><?pi x?></a><p:b/></r>'));
+    FnContext.AddNamespace(U('p'), U('urn:p'));
+    SetLength(Def.ParamSlots, 1);
+    SetLength(Def.ParamTypes, 1);
+    Def.ParamSlots[0] := FnContext.DeclareVariable(U('x'));
+    Body := TLandrixXmlXPathExpression.Create(U('$x'), FnContext);
+    Def.Body := Body;
+    Def.FrameSize := FnContext.VariableCount;
+    Def.Name := 'f:id';
+    Functions.Add(Def);
+    Context.AddNamespace(U('f'), U('urn:f'));
+    Context.DeclareFunction(U('urn:f'), U('id'), 1);
+    Evaluator.Functions := Functions;
+    Evaluator.SetFrameSize(Context.VariableCount);
+    CheckMatch('node()', '/r/a/@k', True);
+    CheckMatch('element()', '/r/a', True);
+    CheckMatch('element()', '/r/a/text()', False);
+    CheckMatch('element()', '/r/a/@k', False);
+    CheckMatch('element(a)', '/r/a', True);
+    CheckMatch('element(a)', '/r/*[2]', False);
+    CheckMatch('element(p:b)', '/r/*[2]', True);
+    CheckMatch('element(b)', '/r/*[2]', False);
+    CheckMatch('element(*, xs:untyped)', '/r/a', True);
+    CheckMatch('element(*, xs:anyType)', '/r/a', True);
+    CheckMatch('element(a, xs:string)', '/r/a', False);
+    CheckMatch('element(a, xs:untypedAtomic)', '/r/a', False);
+    CheckMatch('attribute()', '/r/a/@k', True);
+    CheckMatch('attribute()', '/r/a', False);
+    CheckMatch('attribute(k)', '/r/a/@k', True);
+    CheckMatch('attribute(p:k)', '/r/a/@*[2]', True);
+    CheckMatch('attribute(k)', '/r/a/@*[2]', False);
+    CheckMatch('attribute(*, xs:untypedAtomic)', '/r/a/@k', True);
+    CheckMatch('attribute(*, xs:anyAtomicType)', '/r/a/@k', True);
+    CheckMatch('attribute(*, xs:anySimpleType)', '/r/a/@k', True);
+    CheckMatch('attribute(*, xs:anyType)', '/r/a/@k', True);
+    CheckMatch('attribute(*, xs:untyped)', '/r/a/@k', False);
+    CheckMatch('attribute(*, xs:string)', '/r/a/@k', False);
+    CheckMatch('text()', '/r/a/text()', True);
+    CheckMatch('text()', '/r/a/comment()', False);
+    CheckMatch('comment()', '/r/a/comment()', True);
+    CheckMatch('processing-instruction()', '/r/a/processing-instruction()', True);
+    CheckMatch('processing-instruction(pi)', '/r/a/processing-instruction()', True);
+    CheckMatch('processing-instruction(''pi'')', '/r/a/processing-instruction()', True);
+    CheckMatch('processing-instruction(other)', '/r/a/processing-instruction()', False);
+    CheckMatch('document-node()', '/', True);
+    CheckMatch('document-node()', '/r', False);
+    CheckMatch('document-node(element(r))', '/', True);
+    CheckMatch('document-node(element())', '/', True);
+    CheckMatch('document-node(element(a))', '/', False);
+    CheckMatch('document-node(element(r, xs:untyped))', '/', True);
+    CheckMatch('node()*', '/r/a/node()', True);
+    CheckMatch('element()', '/r/*', False);
+    CheckMatch('element()+', '()', False);
+    CheckMatch('element()?', '()', True);
+    CheckMatch('empty-sequence()', '()', True);
+    CheckMatch('empty-sequence()', '/r', False);
+    CheckMatch('empty-sequence()', '1', False);
+    CheckMatch('element()', '1', False);
+  finally
+    Body.Free;
+    Def.Free;
+    Functions.Free;
+    Evaluator.Free;
+    FnContext.Free;
+    Context.Free;
+    Tree.Free;
+  end;
+end;
+
 { Results must not share storage with variables: a union, min() and
   max() once changed the value of the variable they read. }
 procedure TestNoAliasing;
@@ -847,6 +964,7 @@ begin
   RegisterTest('XPathEval.MixedProfiles', TestMixedProfiles);
   RegisterTest('XPathEval.Profiles', TestProfiles);
   RegisterTest('XPathEval.Variables', TestVariables);
+  RegisterTest('XPathEval.SequenceTypeMatching', TestSequenceTypeMatching);
   RegisterTest('XPathEval.NoAliasing', TestNoAliasing);
   RegisterTest('XPathEval.KeptValues', TestKeptValues);
   RegisterTest('XPathEval.Patterns', TestPatterns);

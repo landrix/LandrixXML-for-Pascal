@@ -297,7 +297,94 @@ begin
   CheckError('a cast as xs:anyAtomicType', 'XPST0080');
   CheckError('a cast as xs:NOTATION', 'XPST0080');
   CheckError('processing-instruction(cbc:x)', 'XPST0003');
+  CheckError('processing-instruction('''')', 'XPTY0004');
   CheckError('document-node(element(a))', 'XPST0003');
+end;
+
+procedure CheckType(const Text, Expected: string);
+begin
+  CheckEqualsStr(Expected, LandrixXmlXPathSequenceTypeName(LandrixXmlXPathParseSequenceType(U(Text), Context)),
+    Text);
+end;
+
+procedure CheckTypeError(const Text, Code: string);
+begin
+  try
+    LandrixXmlXPathParseSequenceType(U(Text), Context);
+    FailNotRaised(Code + ' for ' + Text);
+  except
+    on X: ELandrixXmlXPathError do
+      CheckEqualsStr(Code, X.XPathCode, Text + ': ' + X.Message);
+  end;
+end;
+
+procedure TestSequenceTypes;
+var
+  T: TLandrixXmlXPathSequenceType;
+begin
+  SetUpContext;
+  CheckType('xs:decimal', 'xs:decimal');
+  CheckType('xs:string?', 'xs:string?');
+  CheckType(' xs:anyAtomicType * ', 'xs:anyAtomicType*');
+  CheckType('item()+', 'item()+');
+  CheckType('empty-sequence()', 'empty-sequence()');
+  CheckType('node()*', 'node()*');
+  CheckType('text()', 'text()');
+  CheckType('comment()?', 'comment()?');
+  CheckType('processing-instruction()', 'processing-instruction()');
+  CheckType('processing-instruction(pi)', 'processing-instruction(pi)');
+  CheckType('processing-instruction('' pi '')', 'processing-instruction(pi)');
+  CheckType('element()', 'element()');
+  CheckType('element(*)', 'element()');
+  CheckType('element(cbc:ID)', 'element(Q{urn:cbc}ID)');
+  CheckType('element(a, xs:untyped?)+', 'element(a, xs:untyped?)+');
+  CheckType('element(*, xs:anyType)', 'element(*, xs:anyType)');
+  CheckType('attribute(currencyID)', 'attribute(currencyID)');
+  CheckType('attribute(*, xs:string)', 'attribute(*, xs:string)');
+  CheckType('document-node()', 'document-node()');
+  CheckType('document-node(element(cac:Invoice))', 'document-node(element(Q{urn:cac}Invoice))');
+  T := LandrixXmlXPathParseSequenceType(U('document-node(element(a, xs:untyped))'), Context);
+  Check((T.Kind = xtkNode) and (T.KindTest = xktDocument) and T.ElementTest and (T.LocalName = 'a') and
+    (T.ContentType = 'untyped') and not T.Nilled and (T.Occurrence = xocOne) and T.Declared,
+    'the fields of document-node(element(a, xs:untyped))');
+  T := LandrixXmlXPathParseSequenceType(U('empty-sequence()'), Context);
+  Check((T.Kind = xtkEmpty) and (T.Occurrence = xocOptional), 'the fields of empty-sequence()');
+  CheckTypeError('', 'XPST0003');
+  CheckTypeError('xs:duration', 'XPST0051');
+  CheckTypeError('xs:float', 'XPST0051');
+  CheckType('element(*, xs:duration)', 'element(*, xs:duration)');
+  CheckType('attribute(a, xs:QName)', 'attribute(a, xs:QName)');
+  CheckType('element(a, xs:dayTimeDuration)', 'element(a, xs:dayTimeDuration)');
+  CheckType('element(a, xs:unsignedByte)', 'element(a, xs:unsignedByte)');
+  CheckTypeError('cbc:ID', 'XPST0051');
+  CheckTypeError('item', 'XPST0051');
+  CheckTypeError('q:a', 'XPST0081');
+  CheckTypeError('element(q:a)', 'XPST0081');
+  CheckTypeError('element(a, xs:unknown)', 'XPST0008');
+  CheckTypeError('element(a, cbc:ID)', 'XPST0008');
+  CheckTypeError('schema-element(a)', 'XPST0008');
+  CheckTypeError('document-node(schema-element(a))', 'XPST0008');
+  CheckTypeError('empty-sequence()?', 'XPST0003');
+  CheckTypeError('element(a', 'XPST0003');
+  CheckTypeError('element(*:a)', 'XPST0003');
+  CheckTypeError('element(cbc:*)', 'XPST0003');
+  CheckTypeError('attribute(a, xs:string?)', 'XPST0003');
+  CheckTypeError('document-node(text())', 'XPST0003');
+  CheckTypeError('xs:string xs:string', 'XPST0003');
+  CheckTypeError('xs:string**', 'XPST0003');
+  CheckTypeError('map(*)', 'XPST0003');
+  CheckTypeError('processing-instruction(cbc:x)', 'XPST0003');
+  CheckTypeError('processing-instruction('''')', 'XPTY0004');
+  CheckTypeError('processing-instruction('' '')', 'XPTY0004');
+  CheckTypeError('processing-instruction(''a b'')', 'XPTY0004');
+  CheckTypeError('processing-instruction(''a:b'')', 'XPTY0004');
+  { U+037F is a name character since XML 1.0 fifth edition }
+  T := LandrixXmlXPathParseSequenceType(U('processing-instruction(''') + Utf8Bytes([$CD, $BF]) + U(''')'),
+    Context);
+  CheckEqualsUtf8(Utf8Bytes([$CD, $BF]), T.LocalName, 'a target with U+037F');
+  CheckTypeError('*', 'XPST0003');
+  CheckTypeError('xs:*', 'XPST0003');
+  CheckTypeError('*:string', 'XPST0003');
 end;
 
 procedure TestSlots;
@@ -345,6 +432,7 @@ begin
     TestOperators;
     TestExpressions;
     TestErrors;
+    TestSequenceTypes;
     TestSlots;
   finally
     TearDown;
