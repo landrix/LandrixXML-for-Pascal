@@ -315,6 +315,25 @@ var
     Result := V.Items[0].Node;
   end;
 
+  { an element() argument (one element node); OwnTree and K (the tree's
+    first node) are set for it }
+  function ElementArg(Arg0: Integer): Integer;
+  var
+    V: TLandrixXmlXPathSequence;
+  begin
+    V := Arg(Arg0);
+    Result := -1;
+    if (V.Count = 1) and (V.Items[0].Kind = xikNode) then
+    begin
+      Result := V.Items[0].Node;
+      OwnTree := TreeOf(Result, K);
+      if OwnTree.Kind[Result - K] <> xnkElement then
+        Result := -1;
+    end;
+    if Result < 0 then
+      Fail('XPTY0004', Name + ': argument ' + IntToStr(Arg0 + 1) + ' must be a single element');
+  end;
+
   function Compile(PatternArg, FlagArg: Integer): TLandrixXmlRegex;
   var
     Flags: TLandrixXmlUtf8;
@@ -868,6 +887,59 @@ begin
       end;
     xfnQName:
       Result := SingleSeq(MakeQName(StrArg(0), ReqStrArg(1), Xp20));
+    xfnResolveQName:
+      begin
+        { the element is checked also for an empty name, as Saxon does }
+        I := ElementArg(1);
+        if not OptAtom(0, Item) then
+          Exit;
+        if not IsStringLike(Item.Kind) then
+          Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
+        S := Trimmed(Item.Text);
+        if not SplitQName(S, T, R) then
+          Fail('FOCA0002', '''' + LandrixXmlEscapeForMessage(Item.Text, 60) + ''' is no lexical xs:QName');
+        { without a prefix: the default namespace, if any }
+        if not OwnTree.LookupNamespace(I - K, T, S) and (T <> '') then
+          Fail('FONS0004', 'the prefix "' + LandrixXmlUtf8ToString(T) + '" is not bound');
+        Result := SingleSeq(QNameItem(S, T, R));
+      end;
+    xfnNamespaceUriForPrefix:
+      begin
+        T := StrArg(0);
+        I := ElementArg(1);
+        if OwnTree.LookupNamespace(I - K, T, S) then
+          Result := SingleSeq(StringItem(xikAnyUri, S));
+      end;
+    xfnInScopePrefixes:
+      begin
+        I := ElementArg(0);
+        Parts := OwnTree.InScopePrefixesUtf8(I - K);
+        { as Saxon: the prefixes sorted (UTF-16 order), xml last; F&O 2.0
+          returns a prefix as an xs:NCName, Saxon as an xs:string }
+        Len := 0;
+        for J := 0 to Integer(Length(Parts)) - 1 do
+          if Parts[J] <> 'xml' then
+          begin
+            S := Parts[J];
+            I := Len;
+            while (I > 0) and (CompareUtf16Order(Parts[I - 1], S) > 0) do
+            begin
+              Parts[I] := Parts[I - 1];
+              Dec(I);
+            end;
+            Parts[I] := S;
+            Inc(Len);
+          end;
+        T2 := xikString;
+        if Xp20 then
+          T2 := xikNCName;
+        for J := 0 to Len - 1 do
+          if Parts[J] = '' then
+            LandrixXmlXPathAppend(Result, StringItem(xikString, ''))
+          else
+            LandrixXmlXPathAppend(Result, StringItem(T2, Parts[J]));
+        LandrixXmlXPathAppend(Result, StringItem(T2, 'xml'));
+      end;
     xfnPrefixFromQName, xfnLocalNameFromQName, xfnNamespaceUriFromQName:
       begin
         if not OptAtom(0, Item) then

@@ -152,6 +152,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `resolve-QName`, `namespace-uri-for-prefix` and
+  `in-scope-prefixes` (sorted, `xml` last, as Saxon; the prefixes are
+  `xs:NCName` in XPath 2.0, `xs:string` in the Saxon profile). The XPath
+  tree keeps the namespace declarations of elements:
+  `TLandrixXmlXPathTree.LookupNamespace` and `InScopePrefixesUtf8` give
+  the namespaces in scope of an element (`xml` always bound, `xmlns`
+  never; a prefix of an element or attribute name whose declaration a DOM
+  has lost still counts).
 - XPath: `xs:QName`: the constructor function and casts (prefixes
   resolved with the static namespaces, FONS0004 if unbound), `QName`,
   `prefix-from-QName`, `local-name-from-QName`,

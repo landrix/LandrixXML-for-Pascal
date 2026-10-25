@@ -1,0 +1,141 @@
+# in-scope-prefixes(/*)
+xs:string 
+xs:string a
+xs:string z
+xs:string xml
+# in-scope-prefixes(//*:c)
+xs:string a
+xs:string m
+xs:string z
+xs:string xml
+# in-scope-prefixes(//*:d)
+xs:string a
+xs:string b
+xs:string m
+xs:string z
+xs:string xml
+# in-scope-prefixes(//*:e)
+xs:string 
+xs:string a
+xs:string m
+xs:string z
+xs:string xml
+# in-scope-prefixes(//*:f)
+xs:string 
+xs:string a
+xs:string z
+xs:string xml
+# in-scope-prefixes(/)
+error XPTY0004
+# in-scope-prefixes(())
+error XPTY0004
+# in-scope-prefixes(/*/@*)
+error XPTY0004
+# in-scope-prefixes(//*)
+error XPTY0004
+# in-scope-prefixes('r')
+error XPTY0004
+# count(in-scope-prefixes(/*))
+xs:integer 4
+# namespace-uri-for-prefix('a', /*)
+xs:anyURI urn:a
+# namespace-uri-for-prefix('a', //*:d)
+xs:anyURI urn:a2
+# namespace-uri-for-prefix('', /*)
+xs:anyURI urn:d
+# namespace-uri-for-prefix('', //*:c)
+# namespace-uri-for-prefix('', //*:e)
+xs:anyURI urn:e2
+# namespace-uri-for-prefix((), /*)
+xs:anyURI urn:d
+# namespace-uri-for-prefix('m', /*)
+# namespace-uri-for-prefix('m', //*:d)
+xs:anyURI urn:m
+# namespace-uri-for-prefix('xml', /*)
+xs:anyURI http://www.w3.org/XML/1998/namespace
+# namespace-uri-for-prefix('xmlns', /*)
+# namespace-uri-for-prefix(' a', /*)
+# namespace-uri-for-prefix(xs:untypedAtomic('z'), //*:e)
+xs:anyURI urn:z
+# namespace-uri-for-prefix(1, /*)
+error XPTY0004
+# namespace-uri-for-prefix('a', ())
+error XPTY0004
+# namespace-uri-for-prefix('a', /)
+error XPTY0004
+# namespace-uri-for-prefix('a', /*/@*)
+error XPTY0004
+# resolve-QName('a:q', /*)
+xs:QName a:q
+# resolve-QName('a:q', //*:d)
+xs:QName a:q
+# namespace-uri-from-QName(resolve-QName('a:q', //*:d))
+xs:anyURI urn:a2
+# namespace-uri-from-QName(resolve-QName('q', /*))
+xs:anyURI urn:d
+# namespace-uri-from-QName(resolve-QName('q', //*:c))
+xs:anyURI 
+# namespace-uri-from-QName(resolve-QName('q', //*:e))
+xs:anyURI urn:e2
+# resolve-QName(' a:q ', /*)
+xs:QName a:q
+# resolve-QName('a:', /*)
+error FOCA0002
+# resolve-QName(':q', /*)
+error FOCA0002
+# resolve-QName('a:b:c', /*)
+error FOCA0002
+# resolve-QName('n:q', /*)
+error FONS0004
+# resolve-QName('m:q', /*)
+error FONS0004
+# resolve-QName('xml:q', /*)
+xs:QName xml:q
+# namespace-uri-from-QName(resolve-QName('xml:q', /*))
+xs:anyURI http://www.w3.org/XML/1998/namespace
+# resolve-QName('xmlns:q', /*)
+error FONS0004
+# resolve-QName((), /*)
+# resolve-QName('q', ())
+error XPTY0004
+# resolve-QName((), ())
+error XPTY0004
+# resolve-QName('q', /*/@*)
+error XPTY0004
+# resolve-QName(xs:untypedAtomic('a:q'), /*)
+xs:QName a:q
+# resolve-QName(1, /*)
+error XPTY0004
+# resolve-QName('a:q', (/*, /*))
+error XPTY0004
+# resolve-QName('a:q', /*) eq QName('urn:a', 'q')
+xs:boolean true
+# resolve-QName('a:q', //*:d) eq QName('urn:a', 'q')
+xs:boolean false
+# prefix-from-QName(resolve-QName('b:x', //*:d))
+xs:NCName b
+# local-name-from-QName(resolve-QName('b:x', //*:d))
+xs:NCName x
+# for $e in //* return string-join(in-scope-prefixes($e), ',')
+xs:string ,a,z,xml
+xs:string a,m,z,xml
+xs:string a,b,m,z,xml
+xs:string ,a,m,z,xml
+xs:string ,a,z,xml
+xs:string ,a,z,zz,é,xml
+# for $e in //* return namespace-uri-for-prefix(prefix-from-QName(node-name($e)), $e)
+xs:anyURI urn:d
+xs:anyURI urn:e2
+xs:anyURI urn:d
+xs:anyURI urn:d
+# //*[resolve-QName('q', .) eq QName('urn:d', 'q')]
+node /Q{urn:d}r[1]
+node /Q{urn:d}r[1]/Q{urn:d}f[1]
+node /Q{urn:d}r[1]/Q{urn:d}g[1]
+# in-scope-prefixes(//*:g)
+xs:string 
+xs:string a
+xs:string z
+xs:string zz
+xs:string é
+xs:string xml

@@ -343,6 +343,50 @@ begin
     Result := 2;
 end;
 
+{ UTF-16 order (Java's String.compareTo, which Saxon sorts with): code
+  point order but for the characters beyond U+FFFF, whose surrogates sort
+  between U+D7FF and U+E000. }
+function CompareUtf16Order(const A, B: TLandrixXmlUtf8): Integer;
+var
+  CA, CB: TLandrixXmlCodePoints;
+  I, KA, KB: Integer;
+
+  function Key(C: Integer): Integer;
+  begin
+    if C >= $10000 then
+      Result := C - $10000 + $D800
+    else if C >= $E000 then
+      Result := C + $100000
+    else
+      Result := C;
+  end;
+
+begin
+  CA := LandrixXmlUtf8ToCodePoints(A);
+  CB := LandrixXmlUtf8ToCodePoints(B);
+  I := 0;
+  while (I < Integer(Length(CA))) and (I < Integer(Length(CB))) do
+  begin
+    KA := Key(CA[I]);
+    KB := Key(CB[I]);
+    if KA <> KB then
+    begin
+      if KA < KB then
+        Result := -1
+      else
+        Result := 1;
+      Exit;
+    end;
+    Inc(I);
+  end;
+  if Integer(Length(CA)) < Integer(Length(CB)) then
+    Result := -1
+  else if Integer(Length(CA)) > Integer(Length(CB)) then
+    Result := 1
+  else
+    Result := 0;
+end;
+
 function CompareStrings(const A, B: TLandrixXmlUtf8): Integer;
 begin
   { UTF-8 byte order is code point order }

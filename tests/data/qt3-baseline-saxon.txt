@@ -2255,8 +2255,11 @@ fn-implicit-timezone/fn-implicit-timezone-8 pass
 fn-implicit-timezone/fn-implicit-timezone-9 pass
 fn-in-scope-prefixes/K-InScopePrefixesFunc-1 pass
 fn-in-scope-prefixes/K-InScopePrefixesFunc-2 pass
-fn-in-scope-prefixes/fn-in-scope-prefixes-2 wrong-code
-fn-in-scope-prefixes/fn-in-scope-prefixes-23 wrong-code
+fn-in-scope-prefixes/fn-in-scope-prefixes-2 pass
+fn-in-scope-prefixes/fn-in-scope-prefixes-21 pass
+fn-in-scope-prefixes/fn-in-scope-prefixes-22 pass
+fn-in-scope-prefixes/fn-in-scope-prefixes-23 pass
+fn-in-scope-prefixes/fn-in-scope-prefixes-26 pass
 fn-index-of/K-SeqIndexOfFunc-1 pass
 fn-index-of/K-SeqIndexOfFunc-10 pass
 fn-index-of/K-SeqIndexOfFunc-11 pass
@@ -3552,7 +3555,11 @@ fn-replace/fn-replaceErr-3 pass
 fn-resolve-QName/K-ResolveQNameConstructFunc-1 pass
 fn-resolve-QName/K-ResolveQNameConstructFunc-2 pass
 fn-resolve-QName/K-ResolveQNameConstructFunc-3 pass
-fn-resolve-QName/K-ResolveQNameConstructFunc-4 wrong-code
+fn-resolve-QName/K-ResolveQNameConstructFunc-4 pass
+fn-resolve-QName/fn-resolve-qname-23 pass
+fn-resolve-QName/fn-resolve-qname-24 pass
+fn-resolve-QName/fn-resolve-qname-25 pass
+fn-resolve-QName/fn-resolve-qname-26 pass
 fn-resolve-uri/K-ResolveURIFunc-1 pass
 fn-resolve-uri/K-ResolveURIFunc-2 pass
 fn-resolve-uri/fn-resolve-uri-24 wrong-code

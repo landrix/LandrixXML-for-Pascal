@@ -41,3 +41,4 @@ string('xml:lang') castable as xs:QName	xs:boolean false	xs:boolean true	the sam
 count(node-name())	error XPST0017	xs:integer 0	node-name with no argument is XPath 3.0
 local-name-from-QName(xs:untypedAtomic('xml:lang'))	error XPTY0004	error XPTY0117	XPath 3.0 reports an untypedAtomic for a QName parameter with a code of its own
 string(namespace-uri-from-QName(QName(' urn:p  x ', 'a')))	xs:string  urn:p  x 	xs:string urn:p x	Saxon collapses the white space of the namespace URI of fn:QName, as of an xs:anyURI
+in-scope-prefixes(/*)	xs:NCName xml	xs:string xml	F&O 2.0 returns a prefix as an xs:NCName (the default namespace as a zero-length xs:string); Saxon returns xs:string

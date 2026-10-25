@@ -209,7 +209,8 @@ type
     xfnAdjustDateTimeToTimezone, xfnAdjustDateToTimezone, xfnAdjustTimeToTimezone,
     xfnDateTime, xfnCurrentDateTime, xfnCurrentDate, xfnCurrentTime, xfnImplicitTimezone,
     xfnXsGYearMonth, xfnXsGYear, xfnXsGMonthDay, xfnXsGDay, xfnXsGMonth, xfnXsHexBinary, xfnXsBase64Binary,
-    xfnXsQName, xfnQName, xfnPrefixFromQName, xfnLocalNameFromQName, xfnNamespaceUriFromQName, xfnNodeName
+    xfnXsQName, xfnQName, xfnPrefixFromQName, xfnLocalNameFromQName, xfnNamespaceUriFromQName, xfnNodeName,
+    xfnResolveQName, xfnNamespaceUriForPrefix, xfnInScopePrefixes
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -469,7 +470,10 @@ const
     (Name: 'prefix-from-QName'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'local-name-from-QName'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'namespace-uri-from-QName'; MinArgs: 1; MaxArgs: 1; Xs: False),
-    (Name: 'node-name'; MinArgs: 0; MaxArgs: 1; Xs: False)
+    (Name: 'node-name'; MinArgs: 0; MaxArgs: 1; Xs: False),
+    (Name: 'resolve-QName'; MinArgs: 2; MaxArgs: 2; Xs: False),
+    (Name: 'namespace-uri-for-prefix'; MinArgs: 2; MaxArgs: 2; Xs: False),
+    (Name: 'in-scope-prefixes'; MinArgs: 1; MaxArgs: 1; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }

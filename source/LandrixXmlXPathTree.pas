@@ -14,7 +14,8 @@
   Node 0 is the document node. An element is followed by its attributes,
   then its children, as XPath orders them; SubtreeEnd is the last node
   below it, so every axis is a loop over index ranges. Namespace
-  declarations are not attributes; adjacent text and CDATA form one text
+  declarations are not attributes (the tree keeps them for
+  LookupNamespace and InScopePrefixesUtf8); adjacent text and CDATA form one text
   node; white space is kept (as Saxon keeps it); comments and processing
   instructions are nodes; text outside the root element and the document
   type are not. Names are numbered: nodes with the same namespace URI and
@@ -68,6 +69,13 @@ type
     FColumns: TLandrixXmlXPathIntArray;
     FDomNodes: TLandrixXmlXPathDomArray;
     FDomAttrs: TLandrixXmlXPathIntArray;
+    { the first namespace declaration of an element, -1 if none; the
+      declarations of an element are consecutive (FDeclOwners) }
+    FDeclFirsts: TLandrixXmlXPathIntArray;
+    FDeclCount: Integer;
+    FDeclOwners: TLandrixXmlXPathIntArray;
+    FDeclPrefixes: TLandrixXmlUtf8Array;
+    FDeclUris: TLandrixXmlUtf8Array;
     { the position among the siblings of the same kind and name, computed
       for all children of a parent when first needed; 0 = not yet }
     FPositions: TLandrixXmlXPathIntArray;
@@ -97,8 +105,13 @@ type
       DomNode: TLandrixXmlNode);
     procedure AddAttribute(const NamespaceUri, Prefix, LocalName, Value: TLandrixXmlUtf8;
       DomNode: TLandrixXmlNode; DomIndex: Integer);
+    procedure AddDeclaration(const Prefix, NamespaceUri: TLandrixXmlUtf8);
     procedure EndElement;
     procedure Finish;
+    function DeclarationIndex(Element: Integer; const Prefix: TLandrixXmlUtf8): Integer;
+    function NamedPrefixUri(Element: Integer; const Prefix: TLandrixXmlUtf8;
+      out NamespaceUri: TLandrixXmlUtf8): Boolean;
+    function ElementOf(Index: Integer): Integer;
     procedure ComputePositions(Parent: Integer);
     function GetKind(Index: Integer): TLandrixXmlXPathNodeKind;
     function GetParent(Index: Integer): Integer;
@@ -163,6 +176,22 @@ type
     property DomNode[Index: Integer]: TLandrixXmlNode read GetDomNode;
     { the attribute's index in DomNode, -1 for other nodes }
     property DomAttributeIndex[Index: Integer]: Integer read GetDomAttributeIndex;
+    { The namespace bound to Prefix ('' = default namespace) in the scope
+      of an element (an attribute: of its element): the nearest
+      declaration; "xml" is always bound, "xmlns" never (unlike the
+      reader and the DOM); xmlns="" undeclares the default namespace.
+      Without a declaration the prefix of the name of the element or of
+      one of its attributes counts, here or at an ancestor (a DOM may
+      have lost an xmlns attribute; a name in no namespace does not
+      undeclare the default namespace). False for other nodes and an
+      unbound prefix (NamespaceUri ''). }
+    function LookupNamespace(Index: Integer; const Prefix: TLandrixXmlUtf8;
+      out NamespaceUri: TLandrixXmlUtf8): Boolean;
+    { The prefixes LookupNamespace binds for this node, each once, '' for
+      a default namespace, "xml" included; the order is stable but not
+      part of the contract. Empty for nodes that are no element or
+      attribute. }
+    function InScopePrefixesUtf8(Index: Integer): TLandrixXmlUtf8Array;
   end;
 
 implementation
@@ -228,6 +257,11 @@ begin
   FColumns := nil;
   FDomNodes := nil;
   FDomAttrs := nil;
+  FDeclFirsts := nil;
+  FDeclCount := 0;
+  FDeclOwners := nil;
+  FDeclPrefixes := nil;
+  FDeclUris := nil;
   FNameCount := 0;
   FNameLocals := nil;
   FNameUris := nil;
@@ -325,6 +359,7 @@ begin
     SetLength(FColumns, N);
     SetLength(FDomNodes, N);
     SetLength(FDomAttrs, N);
+    SetLength(FDeclFirsts, N);
   end;
   Result := FCount;
   FKinds[Result] := Kind;
@@ -338,6 +373,7 @@ begin
   FColumns[Result] := Column;
   FDomNodes[Result] := nil;
   FDomAttrs[Result] := -1;
+  FDeclFirsts[Result] := -1;
   Inc(FCount);
 end;
 
@@ -408,6 +444,29 @@ begin
   Inc(FAttrCounts[E]);
 end;
 
+{ A namespace declaration of the element just started; xmlns:xml is
+  not kept ("xml" is always bound). }
+procedure TLandrixXmlXPathTree.AddDeclaration(const Prefix, NamespaceUri: TLandrixXmlUtf8);
+var
+  E: Integer;
+begin
+  if Prefix = 'xml' then
+    Exit;
+  E := FStack[FDepth - 1];
+  if FDeclCount = Length(FDeclOwners) then
+  begin
+    SetLength(FDeclOwners, 2 * FDeclCount + 16);
+    SetLength(FDeclPrefixes, 2 * FDeclCount + 16);
+    SetLength(FDeclUris, 2 * FDeclCount + 16);
+  end;
+  if FDeclFirsts[E] < 0 then
+    FDeclFirsts[E] := FDeclCount;
+  FDeclOwners[FDeclCount] := E;
+  FDeclPrefixes[FDeclCount] := Prefix;
+  FDeclUris[FDeclCount] := NamespaceUri;
+  Inc(FDeclCount);
+end;
+
 procedure TLandrixXmlXPathTree.EndElement;
 begin
   Dec(FDepth);
@@ -439,6 +498,15 @@ begin
           begin
             StartElement(Reader.NamespaceUriUtf8, Reader.PrefixUtf8, Reader.LocalNameUtf8, Reader.Line,
               Reader.Column, nil);
+            { xmlns declares the default namespace, xmlns:p the prefix p }
+            for I := 0 to Reader.AttributeCount - 1 do
+              if Reader.IsNamespaceDeclaration(I) then
+              begin
+                if Reader.AttributePrefixSpan(I).Len = 0 then
+                  AddDeclaration('', Reader.AttributeValueUtf8(I))
+                else
+                  AddDeclaration(Reader.AttributeLocalNameUtf8(I), Reader.AttributeValueUtf8(I));
+              end;
             for I := 0 to Reader.AttributeCount - 1 do
               if not Reader.IsNamespaceDeclaration(I) then
                 AddAttribute(Reader.AttributeNamespaceUriUtf8(I), LandrixXmlSpanToUtf8(Reader.AttributePrefixSpan(I)),
@@ -516,6 +584,14 @@ begin
           begin
             StartElement(Node.NamespaceUriUtf8, Node.PrefixUtf8, Node.LocalNameUtf8, Node.Line, Node.Column, Node);
             for I := 0 to Node.AttributeCount - 1 do
+              if Node.IsNamespaceDeclaration(I) then
+              begin
+                if Node.AttributePrefixUtf8(I) = '' then
+                  AddDeclaration('', Node.AttributeValueUtf8(I))
+                else
+                  AddDeclaration(Node.AttributeLocalNameUtf8(I), Node.AttributeValueUtf8(I));
+              end;
+            for I := 0 to Node.AttributeCount - 1 do
               if not Node.IsNamespaceDeclaration(I) then
                 AddAttribute(Node.AttributeNamespaceUriUtf8(I), Node.AttributePrefixUtf8(I),
                   Node.AttributeLocalNameUtf8(I), Node.AttributeValueUtf8(I), Node, I);
@@ -559,6 +635,166 @@ begin
     raise;
   end;
   Finish;
+end;
+
+{ --- namespaces ---------------------------------------------------------- }
+
+{ The element of an element or attribute, -1 for other nodes. }
+function TLandrixXmlXPathTree.ElementOf(Index: Integer): Integer;
+begin
+  Result := Index;
+  if FKinds[Result] = xnkAttribute then
+    Result := FParents[Result];
+  if FKinds[Result] <> xnkElement then
+    Result := -1;
+end;
+
+{ The declaration of Prefix on Element, -1 if none. }
+function TLandrixXmlXPathTree.DeclarationIndex(Element: Integer; const Prefix: TLandrixXmlUtf8): Integer;
+begin
+  Result := FDeclFirsts[Element];
+  if Result < 0 then
+    Exit;
+  while (Result < FDeclCount) and (FDeclOwners[Result] = Element) do
+  begin
+    if FDeclPrefixes[Result] = Prefix then
+      Exit;
+    Inc(Result);
+  end;
+  Result := -1;
+end;
+
+{ Prefix in the name of Element or of one of its attributes, with a
+  namespace URI (unprefixed attributes have none). }
+function TLandrixXmlXPathTree.NamedPrefixUri(Element: Integer; const Prefix: TLandrixXmlUtf8;
+  out NamespaceUri: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  NamespaceUri := NamespaceUriUtf8(Element);
+  if (PrefixUtf8(Element) = Prefix) and (NamespaceUri <> '') then
+    Exit;
+  if Prefix <> '' then
+    for I := Element + 1 to Element + FAttrCounts[Element] do
+      if PrefixUtf8(I) = Prefix then
+      begin
+        NamespaceUri := NamespaceUriUtf8(I);
+        Exit;
+      end;
+  NamespaceUri := '';
+  Result := False;
+end;
+
+function TLandrixXmlXPathTree.LookupNamespace(Index: Integer; const Prefix: TLandrixXmlUtf8;
+  out NamespaceUri: TLandrixXmlUtf8): Boolean;
+var
+  E, N, D: Integer;
+begin
+  NamespaceUri := '';
+  Result := False;
+  E := ElementOf(Index);
+  if (E < 0) or (Prefix = 'xmlns') then
+    Exit;
+  if Prefix = 'xml' then
+  begin
+    NamespaceUri := LandrixXmlNamespaceXml;
+    Result := True;
+    Exit;
+  end;
+  { the parent of the root element is the document node 0 }
+  N := E;
+  while N > 0 do
+  begin
+    D := DeclarationIndex(N, Prefix);
+    if D >= 0 then
+    begin
+      NamespaceUri := FDeclUris[D];
+      Result := NamespaceUri <> '';
+      Exit;
+    end;
+    N := FParents[N];
+  end;
+  N := E;
+  while N > 0 do
+  begin
+    if NamedPrefixUri(N, Prefix, NamespaceUri) then
+    begin
+      Result := True;
+      Exit;
+    end;
+    N := FParents[N];
+  end;
+end;
+
+function HasPrefix(const List: TLandrixXmlUtf8Array; Count: Integer; const S: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  for I := 0 to Count - 1 do
+    if List[I] = S then
+      Exit;
+  Result := False;
+end;
+
+procedure AddPrefix(var List: TLandrixXmlUtf8Array; var Count: Integer; const S: TLandrixXmlUtf8);
+begin
+  if Count = Length(List) then
+    SetLength(List, 2 * Count + 8);
+  List[Count] := S;
+  Inc(Count);
+end;
+
+function TLandrixXmlXPathTree.InScopePrefixesUtf8(Index: Integer): TLandrixXmlUtf8Array;
+var
+  Seen: TLandrixXmlUtf8Array;
+  E, N, D, I, Count, SeenCount: Integer;
+  P: TLandrixXmlUtf8;
+begin
+  Result := nil;
+  E := ElementOf(Index);
+  if E < 0 then
+    Exit;
+  Seen := nil;
+  Count := 0;
+  SeenCount := 0;
+  { the nearest declaration of a prefix counts, xmlns="" included }
+  N := E;
+  while N > 0 do
+  begin
+    D := FDeclFirsts[N];
+    if D >= 0 then
+      while (D < FDeclCount) and (FDeclOwners[D] = N) do
+      begin
+        if not HasPrefix(Seen, SeenCount, FDeclPrefixes[D]) then
+        begin
+          AddPrefix(Seen, SeenCount, FDeclPrefixes[D]);
+          if FDeclUris[D] <> '' then
+            AddPrefix(Result, Count, FDeclPrefixes[D]);
+        end;
+        Inc(D);
+      end;
+    N := FParents[N];
+  end;
+  { then the prefixes of names without a declaration, as LookupNamespace }
+  N := E;
+  while N > 0 do
+  begin
+    for I := N to N + FAttrCounts[N] do
+    begin
+      P := PrefixUtf8(I);
+      if ((I = N) or (P <> '')) and (P <> 'xml') and (NamespaceUriUtf8(I) <> '') and
+        not HasPrefix(Seen, SeenCount, P) then
+      begin
+        AddPrefix(Seen, SeenCount, P);
+        AddPrefix(Result, Count, P);
+      end;
+    end;
+    N := FParents[N];
+  end;
+  AddPrefix(Result, Count, 'xml');
+  SetLength(Result, Count);
 end;
 
 function TLandrixXmlXPathTree.GetKind(Index: Integer): TLandrixXmlXPathNodeKind;

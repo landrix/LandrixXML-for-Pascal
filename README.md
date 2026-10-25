@@ -311,11 +311,10 @@ and the parsers also take a pointer and a length (`...Buf`).
   read back unchanged.
 - The [W3C XPath/XQuery test suite QT3](https://github.com/w3c/qt3tests)
   measures how much of XPath 2.0 the evaluator covers (`tools/run-qt3.py`,
-  pinned suite revision): of 15,144 applicable XPath 2.0 cases 13,882
-  pass (92 %) and 302 more raise an error where one is expected, but
+  pinned suite revision): of 15,144 applicable XPath 2.0 cases 13,892
+  pass (92 %) and 299 more raise an error where one is expected, but
   with another code. Most failures are functions not implemented yet
-  (`deep-equal`, `compare`, `remove`, `resolve-QName` and the other
-  functions on the namespaces of elements).
+  (`deep-equal`, `compare`, `remove`).
   The passing cases are a baseline: the CI fails if one of them stops
   passing. The evaluator has two profiles
   (`TLandrixXmlXPathStaticContext.Profile`): `xppXPath20` (the default)

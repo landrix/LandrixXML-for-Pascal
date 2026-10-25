@@ -5,8 +5,8 @@
   or https://opensource.org/licenses/MIT for the full license text.
 
   Tests for the XPath tree: node order, attributes, merged text, names,
-  string values and SchXslt locations, built from the reader and from the
-  DOM. }
+  string values, SchXslt locations and the namespaces in scope, built
+  from the reader and from the DOM. }
 
 unit LandrixXmlTestXPathTree;
 
@@ -306,6 +306,104 @@ begin
   end;
 end;
 
+const
+  NsSample =
+    '<r xmlns:z="urn:z" xmlns="urn:d" xmlns:xml="http://www.w3.org/XML/1998/namespace" a="1">' +
+    '<c xmlns="" xmlns:m="urn:m"><d xmlns:z="urn:z2"/></c><!--x--></r>';
+
+{ The prefixes of an element joined with commas, in the tree's order. }
+function Prefixes(T: TLandrixXmlXPathTree; Index: Integer): TLandrixXmlUtf8;
+var
+  P: TLandrixXmlUtf8Array;
+  I: Integer;
+begin
+  P := T.InScopePrefixesUtf8(Index);
+  Result := '';
+  for I := 0 to Integer(Length(P)) - 1 do
+  begin
+    if I > 0 then
+      Result := Result + ',';
+    Result := Result + P[I];
+  end;
+end;
+
+function Lookup(T: TLandrixXmlXPathTree; Index: Integer; const Prefix: string): TLandrixXmlUtf8;
+begin
+  if not T.LookupNamespace(Index, U(Prefix), Result) then
+  begin
+    CheckEqualsUtf8(U(''), Result, 'unbound: empty URI');
+    Result := U('-');
+  end;
+end;
+
+{ LookupNamespace and InScopePrefixesUtf8: nearest declaration, xmlns=""
+  undeclares, xml always and once, xmlns never, attributes use their
+  element, other nodes have none. }
+procedure TestNamespaces;
+var
+  T: TLandrixXmlXPathTree;
+  Doc: TLandrixXmlDocument;
+  R, C, D, Pass: Integer;
+  Mode: string;
+begin
+  T := TLandrixXmlXPathTree.Create;
+  Doc := TLandrixXmlDocument.Create;
+  try
+    for Pass := 1 to 2 do
+    begin
+      if Pass = 1 then
+      begin
+        T.LoadFromUtf8(U(NsSample));
+        Mode := 'reader';
+      end
+      else
+      begin
+        Doc.LoadFromUtf8(U(NsSample));
+        T.LoadFromDocument(Doc);
+        Mode := 'DOM';
+      end;
+      R := T.DocumentElement;
+      C := T.FirstChild(R);
+      D := T.FirstChild(C);
+      CheckEqualsUtf8(U('urn:d'), Lookup(T, R, ''), Mode + ': default namespace');
+      CheckEqualsUtf8(U('urn:z'), Lookup(T, R, 'z'), Mode + ': z on the root');
+      CheckEqualsUtf8(U('-'), Lookup(T, C, ''), Mode + ': xmlns="" undeclares');
+      CheckEqualsUtf8(U('urn:z2'), Lookup(T, D, 'z'), Mode + ': nearest declaration');
+      CheckEqualsUtf8(U('urn:m'), Lookup(T, D, 'm'), Mode + ': inherited');
+      CheckEqualsUtf8(U('-'), Lookup(T, R, 'm'), Mode + ': declared below');
+      CheckEqualsUtf8(U(LandrixXmlNamespaceXml), Lookup(T, D, 'xml'), Mode + ': xml');
+      CheckEqualsUtf8(U('-'), Lookup(T, R, 'xmlns'), Mode + ': xmlns is not bound');
+      CheckEqualsUtf8(U('urn:z'), Lookup(T, R + 1, 'z'), Mode + ': attribute: its element');
+      CheckEqualsUtf8(U('-'), Lookup(T, 0, 'z'), Mode + ': document node');
+      CheckEqualsUtf8(U('-'), Lookup(T, 0, 'xml'), Mode + ': xml: not for the document node');
+      CheckEqualsUtf8(U('-'), Lookup(T, T.NextSibling[C], 'z'), Mode + ': comment');
+      CheckEqualsUtf8(U('z,,xml'), Prefixes(T, R), Mode + ': prefixes of the root');
+      CheckEqualsUtf8(U('m,z,xml'), Prefixes(T, C), Mode + ': prefixes of c');
+      CheckEqualsUtf8(U('z,m,xml'), Prefixes(T, D), Mode + ': prefixes of d');
+      CheckEqualsUtf8(U('z,,xml'), Prefixes(T, R + 1), Mode + ': prefixes of an attribute');
+      CheckEquals(0, Length(T.InScopePrefixesUtf8(0)), Mode + ': no prefixes for the document');
+    end;
+    { a DOM that lost its declarations: the names still bind their
+      prefixes, a declaration wins }
+    Doc.LoadFromUtf8(U('<p:r xmlns:p="urn:p" xmlns:q="urn:q" q:a="1"><p:s xmlns:p="urn:p2"/></p:r>'));
+    Check(Doc.Root.RemoveAttribute(U(LandrixXmlNamespaceXmlns), U('p')), 'xmlns:p removed');
+    Check(Doc.Root.RemoveAttribute(U(LandrixXmlNamespaceXmlns), U('q')), 'xmlns:q removed');
+    T.LoadFromDocument(Doc);
+    R := T.DocumentElement;
+    D := T.FirstChild(R);
+    CheckEqualsUtf8(U('urn:p'), Lookup(T, R, 'p'), 'fixup: the element name');
+    CheckEqualsUtf8(U('urn:q'), Lookup(T, R, 'q'), 'fixup: an attribute name');
+    CheckEqualsUtf8(U('urn:q'), Lookup(T, D, 'q'), 'fixup: from an ancestor');
+    CheckEqualsUtf8(U('urn:p2'), Lookup(T, D, 'p'), 'fixup: a declaration wins');
+    CheckEqualsUtf8(U('-'), Lookup(T, R, ''), 'fixup: no default namespace');
+    CheckEqualsUtf8(U('p,q,xml'), Prefixes(T, R), 'fixup: prefixes of the root');
+    CheckEqualsUtf8(U('p,q,xml'), Prefixes(T, D), 'fixup: prefixes of the child');
+  finally
+    Doc.Free;
+    T.Free;
+  end;
+end;
+
 { A malformed document leaves an empty tree. }
 procedure TestFailedLoad;
 var
@@ -338,6 +436,7 @@ begin
   RegisterTest('XPathTree.EmptyAndReload', TestEmptyAndReload);
   RegisterTest('XPathTree.Tricky', TestTricky);
   RegisterTest('XPathTree.ManyNames', TestManyNames);
+  RegisterTest('XPathTree.Namespaces', TestNamespaces);
   RegisterTest('XPathTree.FailedLoad', TestFailedLoad);
 end;
 
