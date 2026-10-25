@@ -624,6 +624,8 @@ ATOMIC_PARENTS = {
     "xs:gMonthDay": {"xs:gMonthDay", "xs:anyAtomicType"},
     "xs:gDay": {"xs:gDay", "xs:anyAtomicType"},
     "xs:gMonth": {"xs:gMonth", "xs:anyAtomicType"},
+    "xs:hexBinary": {"xs:hexBinary", "xs:anyAtomicType"},
+    "xs:base64Binary": {"xs:base64Binary", "xs:anyAtomicType"},
     "xs:string": {"xs:string", "xs:anyAtomicType"},
     "xs:anyURI": {"xs:anyURI", "xs:anyAtomicType"},
     "xs:untypedAtomic": {"xs:untypedAtomic", "xs:anyAtomicType"},

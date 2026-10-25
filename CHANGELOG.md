@@ -152,6 +152,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `xs:hexBinary` and `xs:base64Binary`: constructor functions,
+  casts from strings, between the two types and to strings, the
+  canonical lexical form (hex digits in upper case, base64 without
+  spaces), `eq` and `ne` on the octets, `distinct-values` and `index-of`.
+  XPath 2.0 has no order on them (XPTY0004, FORG0006 in `min` and `max`);
+  the Saxon profile orders them octet by octet as Saxon (XPath 3.1) does.
+  QT3: 521 more cases pass (13,644 in the XPath 2.0 profile, 13,629 in
+  the Saxon profile).
 - XPath: the Gregorian types `xs:gYearMonth`, `xs:gYear`,
   `xs:gMonthDay`, `xs:gDay` and `xs:gMonth`: constructor functions, casts
   from strings, `xs:date` and `xs:dateTime` (the time zone is kept) and to

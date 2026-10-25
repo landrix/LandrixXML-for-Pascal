@@ -620,6 +620,7 @@ const
   StringKinds = [xikString, xikNormalizedString .. xikENTITY];
   { xs:gYearMonth, xs:gYear, xs:gMonthDay, xs:gDay, xs:gMonth }
   GregorianKinds = [xikGYearMonth .. xikGMonth];
+  BinaryKinds = [xikHexBinary, xikBase64Binary];
   DurationKinds = [xikDuration, xikYearMonthDuration, xikDayTimeDuration];
 
 { The kind an operation sees: xs:integer and xs:string for the types

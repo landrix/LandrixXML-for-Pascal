@@ -30,3 +30,6 @@ xs:float(1.00000005960464477539062500000001)	xs:float 1.0000001	xs:float 1	the s
 xs:float('1.0000001') eq 1.00000005960464477539062500000001	xs:boolean true	xs:boolean false	the same when a decimal is promoted next to a float
 xs:float('+INF')	error FORG0001	xs:float INF	+INF is an XML Schema 1.1 lexical form
 xs:integer(xs:float('1e20'))	xs:integer 100000002004087734272	xs:integer 100000002004087730000	as for xs:double: Saxon truncates the shortest digits of the double from 2^63 on
+xs:hexBinary('ab') lt xs:hexBinary('ac')	error XPTY0004	xs:boolean true	XPath 2.0 has eq and ne on the binary types; XPath 3.0 (Saxon) orders them octet by octet
+max((xs:hexBinary('ab'), xs:hexBinary('cd')))	error FORG0006	xs:hexBinary CD	the same in max
+min(xs:base64Binary('AQID'))	error FORG0006	xs:base64Binary AQID	the same in min, also for a single value

@@ -647,6 +647,129 @@ end;
 
 {$I LandrixXmlXPathDate.inc}
 
+{ --- binary types ---------------------------------------------------------- }
+
+{ Values are kept as their canonical lexical form: hexBinary in upper
+  case, base64Binary without spaces. }
+
+const
+  HexDigitChars: AnsiString = '0123456789ABCDEF';
+  Base64Chars: AnsiString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+function HexDigitValue(C: AnsiChar): Integer;
+begin
+  if C <= '9' then
+    Result := Ord(C) - Ord('0')
+  else
+    Result := Ord(C) - Ord('A') + 10;
+end;
+
+function Base64Value(C: AnsiChar): Integer;
+begin
+  case C of
+    'A'..'Z': Result := Ord(C) - Ord('A');
+    'a'..'z': Result := Ord(C) - Ord('a') + 26;
+    '0'..'9': Result := Ord(C) - Ord('0') + 52;
+    '+': Result := 62;
+  else
+    Result := 63;
+  end;
+end;
+
+{ The octets of a canonical hexBinary as canonical base64Binary. }
+function HexToBase64(const Hex: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  Count, I, J, K, Group: Integer;
+begin
+  Count := Length(Hex) div 2;
+  Result := '';
+  SetLength(Result, ((Count + 2) div 3) * 4);
+  I := 0;
+  K := 0;
+  while I < Count do
+  begin
+    { three octets (missing ones zero) as 24 bits }
+    Group := 0;
+    for J := 0 to 2 do
+    begin
+      Group := Group shl 8;
+      if I + J < Count then
+        Group := Group or (HexDigitValue(AnsiChar(Hex[2 * (I + J) + 1])) shl 4) or
+          HexDigitValue(AnsiChar(Hex[2 * (I + J) + 2]));
+    end;
+    for J := 0 to 3 do
+      { r octets of the group fill r + 1 characters, the rest is padding }
+      if I + J <= Count then
+        Result[K + J + 1] := Base64Chars[((Group shr (18 - 6 * J)) and 63) + 1]
+      else
+        Result[K + J + 1] := '=';
+    Inc(I, 3);
+    Inc(K, 4);
+  end;
+end;
+
+{ The octets of a canonical base64Binary as canonical hexBinary. }
+function Base64ToHex(const B64: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I, N, Acc, Bits, Octet: Integer;
+begin
+  Result := '';
+  SetLength(Result, (Length(B64) div 4) * 6);
+  N := 0;
+  Acc := 0;
+  Bits := 0;
+  for I := 1 to Length(B64) do
+  begin
+    if B64[I] = '=' then
+      Break;
+    Acc := ((Acc shl 6) or Base64Value(AnsiChar(B64[I]))) and $FFFF;
+    Inc(Bits, 6);
+    if Bits >= 8 then
+    begin
+      Dec(Bits, 8);
+      Octet := (Acc shr Bits) and 255;
+      Result[N + 1] := HexDigitChars[Octet shr 4 + 1];
+      Result[N + 2] := HexDigitChars[Octet and 15 + 1];
+      Inc(N, 2);
+    end;
+  end;
+  SetLength(Result, N);
+end;
+
+{ An xs:hexBinary or xs:base64Binary from its lexical form (XML Schema
+  1.0). }
+function ParseBinary(const S: TLandrixXmlUtf8; Kind: TLandrixXmlXPathItemKind): TLandrixXmlXPathItem;
+var
+  T: TLandrixXmlXsdSimpleType;
+  V: TLandrixXmlXsdValue;
+  E: TLandrixXmlXsdError;
+  Name: TLandrixXmlUtf8;
+begin
+  if Kind = xikHexBinary then
+    Name := 'hexBinary'
+  else
+    Name := 'base64Binary';
+  T := LandrixXmlXsdBuiltinType(Name);
+  if not T.Validate(S, V, E) then
+    Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:' +
+      LandrixXmlUtf8ToString(Name));
+  Result := StringItem(Kind, LandrixXmlXsdValueText(V));
+end;
+
+{ Two values of the same binary type: equal if they have the same
+  octets. XPath 2.0 has eq and ne only; Saxon (XPath 3.1) also orders
+  them octet by octet, a prefix first. }
+function CompareBinary(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean): Integer;
+begin
+  if Xp20 and not (Op in [xpcEq, xpcNe]) then
+    Fail('XPTY0004', KindName(A.Kind) + ' values have no order in XPath 2.0');
+  if A.Kind = xikHexBinary then
+    { two hex digits per octet, digits before letters: the string order }
+    Result := CompareStrings(A.Text, B.Text)
+  else
+    Result := CompareStrings(Base64ToHex(A.Text), Base64ToHex(B.Text));
+end;
+
 { eq and ne of two values of the same Gregorian type: their starting
   instants as dateTimes (F&O 2.0 10.4.13 to 10.4.17), the missing parts
   from the reference date 1972-12-31 (a leap year, so --02-29 exists);
@@ -701,6 +824,8 @@ begin
     Order := CompareDurations(A, B, Op)
   else if (A.Kind in GregorianKinds) and (A.Kind = B.Kind) then
     Order := CompareGregorian(A, B, Op, Tz)
+  else if (A.Kind in BinaryKinds) and (A.Kind = B.Kind) then
+    Order := CompareBinary(A, B, Op, Xp20)
   else
   begin
     Fail('XPTY0004', 'cannot compare ' + KindName(A.Kind) + ' with ' + KindName(B.Kind));
@@ -734,7 +859,8 @@ begin
         xikDate: X := CastTo(X, xikDate, Xp20);
         xikDateTime: X := CastTo(X, xikDateTime, Xp20);
         xikTime: X := CastTo(X, xikTime, Xp20);
-        xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth:
+        xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth, xikHexBinary,
+        xikBase64Binary:
           X := CastTo(X, Y.Kind, Xp20);
       else
         { compared as they are: a type error }
@@ -750,7 +876,8 @@ begin
         xikDate: Y := CastTo(Y, xikDate, Xp20);
         xikDateTime: Y := CastTo(Y, xikDateTime, Xp20);
         xikTime: Y := CastTo(Y, xikTime, Xp20);
-        xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth:
+        xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth, xikHexBinary,
+        xikBase64Binary:
           Y := CastTo(Y, X.Kind, Xp20);
       else
         { compared as they are: a type error }
@@ -1475,6 +1602,17 @@ begin
       else if Item.Kind in [xikDate, xikDateTime] then
         { the parts of the type, the time zone kept }
         Result := DateItem(T, ItemDateTime(Item), DateText(ItemDateTime(Item), T))
+      else
+        NotAllowed;
+    xikHexBinary, xikBase64Binary:
+      if StringSource then
+        Result := ParseBinary(Item.Text, T)
+      else if Item.Kind = T then
+        Result := Item
+      else if Item.Kind = xikHexBinary then
+        Result := StringItem(T, HexToBase64(Item.Text))
+      else if Item.Kind = xikBase64Binary then
+        Result := StringItem(T, Base64ToHex(Item.Text))
       else
         NotAllowed;
     xikNonPositiveInteger .. xikPositiveInteger:

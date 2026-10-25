@@ -109,16 +109,17 @@ type
     have the kinds xikNode to xikTime, the types derived from
     xs:integer (xikNonPositiveInteger to xikPositiveInteger) and from
     xs:string (xikNormalizedString to xikENTITY) and the durations
-    (xikDuration to xikDayTimeDuration), xikFloat and the Gregorian types
-    (xikGYearMonth to xikGMonth); xikAnyAtomic (abstract) and xikNone (no
-    type) only label types. }
+    (xikDuration to xikDayTimeDuration), xikFloat, the Gregorian types
+    (xikGYearMonth to xikGMonth) and the binary types (xikHexBinary,
+    xikBase64Binary); xikAnyAtomic (abstract) and xikNone (no type) only
+    label types. }
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
     xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone,
     xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt, xikShort, xikByte, xikNonNegativeInteger,
     xikUnsignedLong, xikUnsignedInt, xikUnsignedShort, xikUnsignedByte, xikPositiveInteger,
     xikNormalizedString, xikToken, xikLanguage, xikNMTOKEN, xikName, xikNCName, xikID, xikIDREF, xikENTITY,
     xikDuration, xikYearMonthDuration, xikDayTimeDuration,
-    xikGYearMonth, xikGYear, xikGMonthDay, xikGDay, xikGMonth);
+    xikGYearMonth, xikGYear, xikGMonthDay, xikGDay, xikGMonth, xikHexBinary, xikBase64Binary);
 
 
   { Sequence types: the declared type of a variable, parameter or function
@@ -207,7 +208,7 @@ type
     xfnHoursFromTime, xfnMinutesFromTime, xfnSecondsFromTime, xfnTimezoneFromTime,
     xfnAdjustDateTimeToTimezone, xfnAdjustDateToTimezone, xfnAdjustTimeToTimezone,
     xfnDateTime, xfnCurrentDateTime, xfnCurrentDate, xfnCurrentTime, xfnImplicitTimezone,
-    xfnXsGYearMonth, xfnXsGYear, xfnXsGMonthDay, xfnXsGDay, xfnXsGMonth
+    xfnXsGYearMonth, xfnXsGYear, xfnXsGMonthDay, xfnXsGDay, xfnXsGMonth, xfnXsHexBinary, xfnXsBase64Binary
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -453,7 +454,9 @@ const
     (Name: 'gYear'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'gMonthDay'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'gDay'; MinArgs: 1; MaxArgs: 1; Xs: True),
-    (Name: 'gMonth'; MinArgs: 1; MaxArgs: 1; Xs: True)
+    (Name: 'gMonth'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'hexBinary'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'base64Binary'; MinArgs: 1; MaxArgs: 1; Xs: True)
   );
 
   { local names in the xs namespace; empty for the labels without one }
@@ -462,7 +465,8 @@ const
     'nonPositiveInteger', 'negativeInteger', 'long', 'int', 'short', 'byte', 'nonNegativeInteger',
     'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte', 'positiveInteger',
     'normalizedString', 'token', 'language', 'NMTOKEN', 'Name', 'NCName', 'ID', 'IDREF', 'ENTITY',
-    'duration', 'yearMonthDuration', 'dayTimeDuration', 'gYearMonth', 'gYear', 'gMonthDay', 'gDay', 'gMonth');
+    'duration', 'yearMonthDuration', 'dayTimeDuration', 'gYearMonth', 'gYear', 'gMonthDay', 'gDay', 'gMonth',
+    'hexBinary', 'base64Binary');
 
 function LandrixXmlXPathFunctionName(Id: TLandrixXmlXPathFunctionId): string;
 begin
