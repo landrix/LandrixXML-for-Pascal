@@ -1,0 +1,132 @@
+expr string(xs:float('1e23'))
+expr string(xs:float('0.1'))
+expr string(xs:float('1e6'))
+expr string(xs:float('999999'))
+expr string(xs:float('1000001'))
+expr string(xs:float('1e-6'))
+expr string(xs:float('3.4028235e38'))
+expr string(xs:float('1.4e-45'))
+expr string(xs:float('1e-40'))
+expr string(xs:float('16777217'))
+expr string(xs:float('2e-7'))
+expr string(xs:float('0.3'))
+expr string(xs:float('1.17549435E-38'))
+expr string(xs:float('8.589973e9'))
+expr string(xs:float('-0'))
+expr xs:float('0.1') + xs:float('0.2')
+expr xs:float('0.1') * 3
+expr xs:float('0.1') + 0.2
+expr xs:float('0.1') + xs:double('0.2')
+expr xs:double(xs:float('0.1'))
+expr xs:decimal(xs:float('0.1'))
+expr xs:float('1') div 3
+expr xs:float('5') mod xs:float('3')
+expr xs:float('0.1') eq 0.1
+expr xs:float('0.5') eq 0.5
+expr xs:float('1e40')
+expr xs:float(1e40)
+expr xs:integer(xs:float('1e10'))
+expr xs:float('1.0000001') + 0.00000000000000000000000000000001
+expr xs:decimal(xs:float('1e20'))
+expr xs:integer(xs:float('1.5e10'))
+expr round(xs:float('2.5'))
+expr round(xs:float('-0.5'))
+expr ceiling(xs:float('-0.5'))
+expr floor(xs:float('1.5'))
+expr abs(xs:float('-1.5'))
+expr round-half-to-even(xs:float('0.125'), 2)
+expr round-half-to-even(xs:float('1.15'), 1)
+expr round-half-to-even(xs:float('2.5'))
+expr round-half-to-even(xs:float('3.4028235e38'), -38)
+expr round-half-to-even(xs:float('0.1'), 20)
+expr round-half-to-even(xs:float('1.2345678'), 3)
+expr round(xs:float('0.1000000015'))
+expr sum((xs:float(1), 2))
+expr sum((xs:float('0.1'), xs:double('0.2')))
+expr sum((xs:float('0.1'), xs:float('0.2'), xs:float('0.3')))
+expr sum((xs:float('0.1'), 0.2))
+expr avg((xs:float(1), xs:float(2)))
+expr avg((xs:float(1), xs:float(2), xs:float(4)))
+expr avg((xs:float(1), 2))
+expr min((xs:float(1), 2))
+expr max((xs:float(1), 2.5))
+expr min((xs:float(1), xs:double(2)))
+expr max((xs:float('NaN'), 2))
+expr min((xs:float(3), xs:untypedAtomic('2')))
+expr xs:float('1') idiv 0
+expr xs:float(5) idiv xs:float(2)
+expr xs:float(1) div 0
+expr xs:float(-1) div 0
+expr xs:float(0) div 0
+expr xs:float(5.5) mod 2
+expr xs:float('1e10') idiv 1
+expr xs:float('3e38') * 10
+expr xs:dayTimeDuration('PT1S') * xs:float('0.1')
+expr xs:yearMonthDuration('P10M') * xs:float('0.15')
+expr xs:dayTimeDuration('PT1S') div xs:float('3')
+expr xs:float('NaN') eq xs:float('NaN')
+expr distinct-values((xs:float('NaN'), xs:double('NaN')))
+expr distinct-values((xs:float('0.1'), xs:double('0.1'), 0.1))
+expr index-of((xs:float(1), 2), 1)
+expr number(xs:float('0.1'))
+expr xs:float(' 1 ')
+expr xs:float('1e')
+expr xs:boolean(xs:float('NaN'))
+expr xs:boolean(xs:float('0.5'))
+expr xs:float(true())
+expr xs:string(xs:float('1.5e7'))
+expr xs:float(xs:untypedAtomic('1.5'))
+expr xs:untypedAtomic('0.1') = xs:float('0.1')
+expr xs:float(16777216) + 1
+expr -xs:float('0.1')
+expr +xs:float('1')
+expr xs:float('1') instance of xs:double
+expr xs:float('1') instance of xs:float
+expr 1 instance of xs:float
+expr 1 to xs:float(3)
+expr xs:float(xs:double('1e-46'))
+expr xs:float(xs:double('-1e-46'))
+expr xs:float('-0') eq 0
+expr xs:float('1') + xs:untypedAtomic('1')
+expr xs:float('1') = '1'
+expr xs:float('2') > xs:untypedAtomic('10')
+expr xs:float(xs:double('0.1')) eq xs:float('0.1')
+expr string(xs:float('100'))
+expr xs:float('5') treat as xs:float
+expr xs:float(12) cast as xs:double
+expr xs:float('1.5') castable as xs:integer
+expr 'a' castable as xs:float
+expr xs:float(xs:double('INF'))
+expr xs:float(xs:dayTimeDuration('PT1S'))
+expr xs:float(xs:date('2024-01-01'))
+expr xs:nonNegativeInteger(xs:float('5.9'))
+expr xs:byte(xs:float('300'))
+expr xs:float('5') eq xs:integer(5)
+expr string(xs:float('0.0000009999999'))
+expr xs:float('1e-7') * 10
+expr xs:float(xs:integer('16777217'))
+expr xs:float(xs:integer('99999999999999999999'))
+expr xs:float('1.5') + xs:dayTimeDuration('PT1S')
+expr empty(xs:float(()))
+expr xs:float(/r/f)
+expr xs:float(/r/g)
+expr xs:float(/r/h)
+expr xs:float(/r/i)
+expr /r/f = xs:float('0.1')
+expr xs:float(/r/f) + 1
+expr xs:float(/r/f) * /r/f
+expr xs:float(/r/f) eq xs:float('0.1')
+expr xs:float(/r/f) instance of xs:float
+expr sum(for $x in (1, 2, 3) return xs:float($x div 10))
+expr xs:float(/r/f) castable as xs:boolean
+expr xs:float('1e-45') lt xs:float('1.4e-45')
+expr round-half-to-even(xs:float('2.345e-40'), 42)
+expr string(xs:float('9.999999e-7'))
+expr string(-xs:float('1e6'))
+expr string(xs:float('123456.7'))
+expr string(xs:float('0.00001234'))
+expr xs:float('16777214') idiv xs:float('0.99999994')
+expr xs:float('-16777214') idiv 0.99999994
+expr (xs:float('16777214') div xs:float('0.99999994')) cast as xs:integer
+expr max((xs:float(16777216), 16777217, xs:double(0)))
+expr max((xs:float(1), 16777217))

@@ -20,6 +20,8 @@ begin
       Result := LandrixXmlFormatDecimal(ItemDecimal(Item));
     xikDouble:
       Result := LandrixXmlDoubleFormat(ItemDouble(Item));
+    xikFloat:
+      Result := LandrixXmlDoubleFormatFloat(ItemDouble(Item));
   else
     Result := Item.Text;
   end;
@@ -45,7 +47,7 @@ begin
       Result := S.Items[0].Text <> '';
     xikInteger, xikDecimal:
       Result := not LandrixXmlDecimalIsZero(ItemDecimal(S.Items[0]));
-    xikDouble:
+    xikDouble, xikFloat:
       Result := not LandrixXmlDoubleIsZero(ItemDouble(S.Items[0])) and
         not LandrixXmlDoubleIsNaN(ItemDouble(S.Items[0]));
   else
@@ -53,9 +55,10 @@ begin
   end;
 end;
 
+{ A number as xs:double (a float is promoted exactly). }
 function ToDouble(const Item: TLandrixXmlXPathItem): TLandrixXmlDouble;
 begin
-  if Item.Kind = xikDouble then
+  if Item.Kind in [xikDouble, xikFloat] then
     Result := ItemDouble(Item)
   else
     Result := LandrixXmlDoubleFromDecimal(ItemDecimal(Item));
@@ -63,7 +66,7 @@ end;
 
 function NumericEqualsInteger(const Item: TLandrixXmlXPathItem; Value: Integer): Boolean;
 begin
-  if Item.Kind = xikDouble then
+  if Item.Kind in [xikDouble, xikFloat] then
     Result := LandrixXmlDoubleCompare(ItemDouble(Item), LandrixXmlDoubleFromInt64(Value)) = 0
   else
     Result := LandrixXmlDecimalCompare(ItemDecimal(Item), LandrixXmlDecimalFromInt64(Value)) = 0;
@@ -75,6 +78,65 @@ function ParseDouble(const S: TLandrixXmlUtf8; Xp20: Boolean): TLandrixXmlDouble
 begin
   if not LandrixXmlDoubleTryParse(Trimmed(S), Result) or (Xp20 and (Trimmed(S) = '+INF')) then
     Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:double');
+end;
+
+{ An xs:decimal as xs:float (casts and the promotion of a decimal next to
+  a float): XPath 2.0 rounds once to the nearest float, Saxon through the
+  nearest double. }
+function DecimalToFloat(const D: TLandrixXmlDecimal; Xp20: Boolean): TLandrixXmlDouble;
+begin
+  if Xp20 then
+    Result := LandrixXmlDoubleFloatFromDecimal(D)
+  else
+    Result := LandrixXmlDoubleRoundToFloat(LandrixXmlDoubleFromDecimal(D));
+end;
+
+{ A number other than xs:double as xs:float. }
+function ToFloat(const Item: TLandrixXmlXPathItem; Xp20: Boolean): TLandrixXmlDouble;
+begin
+  if Item.Kind in [xikDouble, xikFloat] then
+    Result := LandrixXmlDoubleRoundToFloat(ItemDouble(Item))
+  else
+    Result := DecimalToFloat(ItemDecimal(Item), Xp20);
+end;
+
+{ untypedAtomic or a string as xs:float: XPath 2.0 rounds once (and has
+  no "+INF"), Saxon reads a double and rounds it again. }
+function ParseFloat(const S: TLandrixXmlUtf8; Xp20: Boolean): TLandrixXmlDouble;
+var
+  Ok: Boolean;
+begin
+  if Xp20 then
+    Ok := LandrixXmlDoubleTryParseFloat(Trimmed(S), Result) and (Trimmed(S) <> '+INF')
+  else
+  begin
+    Ok := LandrixXmlDoubleTryParse(Trimmed(S), Result);
+    Result := LandrixXmlDoubleRoundToFloat(Result);
+  end;
+  if not Ok then
+    Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:float');
+end;
+
+{ fn:round and its relatives on an xs:float: the exact value rounded to
+  Precision fraction digits, then the nearest float (Saxon: the nearest
+  double, then the nearest float); a zero keeps the sign of A. }
+function RoundFloat(const A: TLandrixXmlDouble; Precision: Integer; Mode: TLandrixXmlDecimalRounding;
+  Xp20: Boolean): TLandrixXmlDouble;
+var
+  R: TLandrixXmlDecimal;
+begin
+  { a float has at most 149 fraction digits }
+  if not Xp20 or (Precision > 160) or LandrixXmlDoubleIsNaN(A) or LandrixXmlDoubleIsInfinite(A) or
+    LandrixXmlDoubleIsZero(A) then
+  begin
+    Result := LandrixXmlDoubleRoundToFloat(LandrixXmlDoubleRound(A, Precision, Mode));
+    Exit;
+  end;
+  R := LandrixXmlDecimalRound(LandrixXmlDoubleToDecimal(A), Precision, Mode);
+  if LandrixXmlDecimalIsZero(R) then
+    Result := LandrixXmlDoubleZero(LandrixXmlDoubleSignBit(A))
+  else
+    Result := LandrixXmlDoubleFloatFromDecimal(R);
 end;
 
 function Pad(Value, Digits: Integer): TLandrixXmlUtf8;
@@ -251,16 +313,18 @@ begin
   end;
 end;
 
-function CompareNumbers(const A, B: TLandrixXmlXPathItem): Integer;
+{ Numbers compared in their common type: xs:double, else xs:float, else
+  xs:decimal. }
+function CompareNumbers(const A, B: TLandrixXmlXPathItem; Xp20: Boolean): Integer;
 begin
   if (A.Kind = xikDouble) or (B.Kind = xikDouble) then
-  begin
-    Result := LandrixXmlDoubleCompare(ToDouble(A), ToDouble(B));
-    if Result = LandrixXmlDoubleUnordered then
-      Result := 2;
-  end
+    Result := LandrixXmlDoubleCompare(ToDouble(A), ToDouble(B))
+  else if (A.Kind = xikFloat) or (B.Kind = xikFloat) then
+    Result := LandrixXmlDoubleCompare(ToFloat(A, Xp20), ToFloat(B, Xp20))
   else
     Result := LandrixXmlDecimalCompare(ItemDecimal(A), ItemDecimal(B));
+  if Result = LandrixXmlDoubleUnordered then
+    Result := 2;
 end;
 
 function CompareStrings(const A, B: TLandrixXmlUtf8): Integer;
@@ -573,12 +637,13 @@ function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXml
 
 { Compares two atomic values of comparable types (after the conversions of
   general or value comparisons); Tz is the implicit time zone. }
-function CompareAtomic(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Tz: Integer): Boolean;
+function CompareAtomic(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
+  Tz: Integer): Boolean;
 var
   Order: Integer;
 begin
   if IsNumeric(A.Kind) and IsNumeric(B.Kind) then
-    Order := CompareNumbers(A, B)
+    Order := CompareNumbers(A, B, Xp20)
   else if IsStringLike(A.Kind) and IsStringLike(B.Kind) then
     Order := CompareStrings(A.Text, B.Text)
   else if (A.Kind = xikBoolean) and (B.Kind = xikBoolean) then
@@ -596,9 +661,10 @@ begin
 end;
 
 { "eq", "lt", ...: untypedAtomic is compared as a string. }
-function ValueCompare(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Tz: Integer): Boolean;
+function ValueCompare(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
+  Tz: Integer): Boolean;
 begin
-  Result := CompareAtomic(A, B, Op, Tz);
+  Result := CompareAtomic(A, B, Op, Xp20, Tz);
 end;
 
 { The conversions of a general comparison for one pair. }
@@ -639,7 +705,7 @@ begin
         { compared as they are: a type error }
       end;
   end;
-  Result := CompareAtomic(X, Y, Op, Tz);
+  Result := CompareAtomic(X, Y, Op, Xp20, Tz);
 end;
 
 function GeneralCompare(const A, B: TLandrixXmlXPathSequence; Op: TLandrixXmlXPathCompare;
@@ -704,6 +770,9 @@ var
   F, P: TLandrixXmlDouble;
 begin
   N := NumericOperand(Number, Xp20);
+  { an xs:float is promoted to xs:double }
+  if N.Kind = xikFloat then
+    N := DoubleItem(ItemDouble(N));
   if not Xp20 and (Divide or ((N.Kind = xikDouble) and (D.Kind = xikYearMonthDuration))) then
   begin
     F := ToDouble(N);
@@ -848,7 +917,7 @@ function Arithmetic(const A0, B0: TLandrixXmlXPathItem; Op: TLandrixXmlXPathArit
 var
   A, B: TLandrixXmlXPathItem;
   DA, DB, Q: TLandrixXmlDouble;
-  IsInt: Boolean;
+  IsInt, Float: Boolean;
 begin
   if (A0.Kind in DurationKinds) or (B0.Kind in DurationKinds) then
   begin
@@ -862,28 +931,47 @@ begin
   end;
   A := NumericOperand(A0, Xp20);
   B := NumericOperand(B0, Xp20);
-  if (A.Kind = xikDouble) or (B.Kind = xikDouble) then
+  if (A.Kind in [xikDouble, xikFloat]) or (B.Kind in [xikDouble, xikFloat]) then
   begin
-    DA := ToDouble(A);
-    DB := ToDouble(B);
+    { xs:float if no xs:double is involved: the double operation on the
+      floats, rounded to float, is the float operation }
+    Float := (A.Kind <> xikDouble) and (B.Kind <> xikDouble);
+    if Float then
+    begin
+      DA := ToFloat(A, Xp20);
+      DB := ToFloat(B, Xp20);
+    end
+    else
+    begin
+      DA := ToDouble(A);
+      DB := ToDouble(B);
+    end;
     case Op of
-      xpaAdd: Result := DoubleItem(LandrixXmlDoubleAdd(DA, DB));
-      xpaSubtract: Result := DoubleItem(LandrixXmlDoubleSubtract(DA, DB));
-      xpaMultiply: Result := DoubleItem(LandrixXmlDoubleMultiply(DA, DB));
-      xpaDivide: Result := DoubleItem(LandrixXmlDoubleDivide(DA, DB));
-      xpaModulo: Result := DoubleItem(LandrixXmlDoubleModulo(DA, DB));
+      xpaAdd: Q := LandrixXmlDoubleAdd(DA, DB);
+      xpaSubtract: Q := LandrixXmlDoubleSubtract(DA, DB);
+      xpaMultiply: Q := LandrixXmlDoubleMultiply(DA, DB);
+      xpaDivide: Q := LandrixXmlDoubleDivide(DA, DB);
+      xpaModulo: Q := LandrixXmlDoubleModulo(DA, DB);
     else
       begin
         if LandrixXmlDoubleIsZero(DB) then
           Fail('FOAR0001', 'integer division by zero');
+        { (A div B) cast as xs:integer: the quotient in the operands' type }
         Q := LandrixXmlDoubleDivide(DA, DB);
+        if Float then
+          Q := LandrixXmlDoubleRoundToFloat(Q);
         if LandrixXmlDoubleIsNaN(DA) or LandrixXmlDoubleIsNaN(DB) or LandrixXmlDoubleIsInfinite(DA) then
           Fail('FOAR0002', 'idiv of NaN or infinity');
         if LandrixXmlDoubleIsNaN(Q) or LandrixXmlDoubleIsInfinite(Q) then
           Fail('FOCA0002', 'the quotient of idiv is too large');
         Result := IntegerItem(DoubleToInteger(Q, Xp20));
+        Exit;
       end;
     end;
+    if Float then
+      Result := FloatItem(Q)
+    else
+      Result := DoubleItem(Q);
     Exit;
   end;
   if (Op in [xpaDivide, xpaIntegerDivide, xpaModulo]) and LandrixXmlDecimalIsZero(ItemDecimal(B)) then
@@ -926,6 +1014,8 @@ begin
     Exit;
   if Result.Kind = xikDouble then
     Result := DoubleItem(LandrixXmlDoubleNegate(ItemDouble(Result)))
+  else if Result.Kind = xikFloat then
+    Result := FloatItem(LandrixXmlDoubleNegate(ItemDouble(Result)))
   else
     Result := DecimalKindItem(Result.Kind, LandrixXmlDecimalNegate(ItemDecimal(Result)));
 end;
@@ -1214,7 +1304,7 @@ begin
           Result := Item;
         xikInteger, xikDecimal:
           Result := BooleanItem(not LandrixXmlDecimalIsZero(ItemDecimal(Item)));
-        xikDouble:
+        xikDouble, xikFloat:
           Result := BooleanItem(not LandrixXmlDoubleIsZero(ItemDouble(Item)) and
             not LandrixXmlDoubleIsNaN(ItemDouble(Item)));
       else
@@ -1227,7 +1317,7 @@ begin
       case BasicKind(Item.Kind) of
         xikInteger, xikDecimal:
           Result := DecimalItem(ItemDecimal(Item));
-        xikDouble:
+        xikDouble, xikFloat:
           begin
             if LandrixXmlDoubleIsNaN(ItemDouble(Item)) or LandrixXmlDoubleIsInfinite(ItemDouble(Item)) then
               Fail('FOCA0002', 'cannot convert NaN or infinity to xs:decimal');
@@ -1254,7 +1344,7 @@ begin
           end;
         xikDecimal:
           Result := IntegerItem(LandrixXmlDecimalRound(ItemDecimal(Item), 0, xdrDown));
-        xikDouble:
+        xikDouble, xikFloat:
           begin
             if LandrixXmlDoubleIsNaN(ItemDouble(Item)) or LandrixXmlDoubleIsInfinite(ItemDouble(Item)) then
               Fail('FOCA0002', 'cannot convert NaN or infinity to xs:integer');
@@ -1276,6 +1366,8 @@ begin
       case BasicKind(Item.Kind) of
         xikDouble:
           Result := Item;
+        xikFloat:
+          Result := DoubleItem(ItemDouble(Item));
         xikInteger, xikDecimal:
           Result := DoubleItem(LandrixXmlDoubleFromDecimal(ItemDecimal(Item)));
         xikBoolean:
@@ -1286,6 +1378,22 @@ begin
           F := ParseDouble(Item.Text, Xp20);
           Result := DoubleItem(F);
         end
+        else
+          NotAllowed;
+      end;
+    xikFloat:
+      case BasicKind(Item.Kind) of
+        xikFloat:
+          Result := Item;
+        xikDouble:
+          Result := FloatItem(ItemDouble(Item));
+        xikInteger, xikDecimal:
+          Result := FloatItem(DecimalToFloat(ItemDecimal(Item), Xp20));
+        xikBoolean:
+          Result := FloatItem(LandrixXmlDoubleFromInt64(Ord(ItemBoolean(Item))));
+      else
+        if StringSource then
+          Result := FloatItem(ParseFloat(Item.Text, Xp20))
         else
           NotAllowed;
       end;

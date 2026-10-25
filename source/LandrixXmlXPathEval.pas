@@ -36,10 +36,7 @@
   of a user function). for, some and every use slots of their own.
 
   Not supported (a dynamic error XPST0017 or FOER0000, never a wrong
-  value): xs:float values (no rule set uses them), date and time
-  arithmetic, casts between xs:date, xs:dateTime and xs:time, comparing
-  dates with and without time zone (Saxon uses the machine's implicit
-  time zone), ranges ("to") of more than 10,000,000 items (FOAR0002;
+  value): ranges ("to") of more than 10,000,000 items (FOAR0002;
   Saxon would stream them), the year 0000 (XML Schema 1.0). Unlike Saxon
   the binding sequence of for, some and every is evaluated before the
   first item is used, so an error in a later item is raised even if an
@@ -542,6 +539,13 @@ begin
   Result.Bits := D.Bits;
 end;
 
+{ An xs:float: D rounded to the nearest binary32 value, kept as a double. }
+function FloatItem(const D: TLandrixXmlDouble): TLandrixXmlXPathItem;
+begin
+  InitItem(Result, xikFloat);
+  Result.Bits := LandrixXmlDoubleRoundToFloat(D).Bits;
+end;
+
 { An xs:integer (Kind xikInteger) or xs:decimal. }
 function DecimalKindItem(Kind: TLandrixXmlXPathItemKind; const D: TLandrixXmlDecimal): TLandrixXmlXPathItem;
 begin
@@ -630,7 +634,7 @@ end;
 
 function IsNumeric(Kind: TLandrixXmlXPathItemKind): Boolean;
 begin
-  Result := Kind in IntegerKinds + [xikDecimal, xikDouble];
+  Result := Kind in IntegerKinds + [xikDecimal, xikDouble, xikFloat];
 end;
 
 function IsStringLike(Kind: TLandrixXmlXPathItemKind): Boolean;
@@ -2631,7 +2635,7 @@ begin
           if (A.Count > 1) or (B.Count > 1) then
             Fail('XPTY0004', 'a value comparison needs single items');
           Result := BooleanSeq(ValueCompare(A.Items[0], B.Items[0], TLandrixXmlXPathCompare(FNodes[Index].Op),
-            FImplicitTimeZone));
+            Xp20, FImplicitTimeZone));
         end;
       end;
     xakRange:

@@ -109,9 +109,8 @@ type
     have the kinds xikNode to xikTime, the types derived from
     xs:integer (xikNonPositiveInteger to xikPositiveInteger) and from
     xs:string (xikNormalizedString to xikENTITY) and the durations
-    (xikDuration to xikDayTimeDuration); xikFloat (no xs:float values
-    yet), xikAnyAtomic (abstract) and xikNone (no type) only label
-    types. }
+    (xikDuration to xikDayTimeDuration) and xikFloat; xikAnyAtomic
+    (abstract) and xikNone (no type) only label types. }
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
     xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone,
     xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt, xikShort, xikByte, xikNonNegativeInteger,
@@ -1635,8 +1634,7 @@ begin
       ErrorCode('XPST0051', 'unknown atomic type "' + LandrixXmlUtf8ToString(Name) + '"', Position);
     Result.Kind := xtkAtomic;
     Result.AtomicType := LandrixXmlXPathAtomicTypeByName(Local);
-    { xs:float: no float values yet }
-    if Result.AtomicType in [xikNone, xikFloat] then
+    if Result.AtomicType = xikNone then
       ErrorCode('XPST0051', 'the type "' + LandrixXmlUtf8ToString(Name) + '" is not supported here', Position);
     Next;
   end;

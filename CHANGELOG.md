@@ -152,6 +152,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `xs:float` values: the constructor function, casts from and to
+  the other types, the promotions (integers and decimals to `xs:float`
+  next to a float, `xs:float` to `xs:double`), arithmetic in single
+  precision, comparisons, `abs`, `round`, `round-half-to-even`, `floor`,
+  `ceiling`, `sum`, `avg`, `min`, `max` and the string value as Saxon
+  writes floats. XPath 2.0 rounds a string or a decimal to the nearest
+  float once; the Saxon profile goes through a double first and accepts
+  `+INF`, as Saxon does. QT3: 857 more cases pass (12,012 in the XPath
+  2.0 profile, 11,997 in the Saxon profile).
 - `LandrixXmlDouble`: `xs:float` (IEEE 754 binary32) as a
   `TLandrixXmlDouble` restricted to binary32 values:
   `LandrixXmlDoubleRoundToFloat`, `LandrixXmlDoubleIsFloat`,
@@ -288,6 +297,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   optionally checks them against Saxon.
 
 ### Fixed
+- XPath: `min` and `max` report a type error or a failed conversion of
+  any value even if an earlier value is NaN; before, the first NaN was
+  returned at once.
 - XPath: names with characters from U+0080 on must consist of the name
   characters of XML 1.0 fifth edition, as in the reader (XPST0003); before,
   every such byte counted as a name character (U+00B7 at the start, U+00D7).

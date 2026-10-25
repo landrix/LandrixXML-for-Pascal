@@ -55,6 +55,7 @@ import time
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
+from fractions import Fraction
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 COMMIT = "201a6e466940cdfc727f4babfedcde5332b9f578"
@@ -401,7 +402,7 @@ INTEGER_BASES = {
     "xs:unsignedInt": "xs:unsignedLong", "xs:unsignedShort": "xs:unsignedInt",
     "xs:unsignedByte": "xs:unsignedShort", "xs:positiveInteger": "xs:nonNegativeInteger",
 }
-NUMERIC = {"xs:integer", "xs:decimal", "xs:double"} | set(INTEGER_BASES)
+NUMERIC = {"xs:integer", "xs:decimal", "xs:double", "xs:float"} | set(INTEGER_BASES)
 # the types derived from xs:string and the type each one restricts
 STRING_BASES = {
     "xs:normalizedString": "xs:string", "xs:token": "xs:normalizedString",
@@ -411,16 +412,44 @@ STRING_BASES = {
 STRINGS = {"xs:string", "xs:anyURI", "xs:untypedAtomic"} | set(STRING_BASES)
 
 
+def to_float32(x):
+    """The binary32 value nearest to x (a float or an exact decimal.Decimal,
+    rounded once), as a Python float; +-inf beyond the range."""
+    if isinstance(x, float):
+        if x != x or x in (float("inf"), float("-inf")):
+            return x
+        x = Fraction(x)
+    else:
+        x = Fraction(x)
+    if x == 0:
+        return 0.0
+    a = abs(x)
+    e = a.numerator.bit_length() - a.denominator.bit_length()
+    while Fraction(2) ** e > a:
+        e -= 1
+    while Fraction(2) ** (e + 1) <= a:
+        e += 1
+    ulp = Fraction(2) ** (max(e, -126) - 23)
+    v = round(a / ulp) * ulp
+    if v >= Fraction(2) ** 128:
+        return float("inf") if x > 0 else float("-inf")
+    return float(v) if x > 0 else -float(v)
+
+
 def number(t, v):
-    if t == "xs:double":
+    if t in ("xs:double", "xs:float"):
         try:
-            return float(v.replace("INF", "inf"))
+            x = float(v.replace("INF", "inf"))
         except ValueError:
             return float("nan")
+        return to_float32(x) if t == "xs:float" else x
     return decimal.Decimal(v)
 
 
-def same_number(a, b):
+def same_number(a, b, float32=False):
+    """eq of two numbers; float32: in xs:float (no xs:double involved)."""
+    if float32:
+        return to_float32(a) == to_float32(b)
     if isinstance(a, float) or isinstance(b, float):
         return float(a) == float(b)
     return a == b
@@ -512,7 +541,7 @@ def atomic_equal(x, y, deep=False):
             return False
         if deep and isinstance(a, float) and isinstance(b, float) and a != a and b != b:
             return True
-        return same_number(a, b)
+        return same_number(a, b, "xs:float" in (tx, ty) and "xs:double" not in (tx, ty))
     if tx in STRINGS and ty in STRINGS:
         return vx == vy
     if tx in DURATIONS and ty in DURATIONS:
@@ -589,6 +618,7 @@ ATOMIC_PARENTS = {
     "xs:integer": {"xs:integer", "xs:decimal", "xs:anyAtomicType"},
     "xs:decimal": {"xs:decimal", "xs:anyAtomicType"},
     "xs:double": {"xs:double", "xs:anyAtomicType"},
+    "xs:float": {"xs:float", "xs:anyAtomicType"},
     "xs:string": {"xs:string", "xs:anyAtomicType"},
     "xs:anyURI": {"xs:anyURI", "xs:anyAtomicType"},
     "xs:untypedAtomic": {"xs:untypedAtomic", "xs:anyAtomicType"},
@@ -850,6 +880,18 @@ def self_test():
         ("<assert-true/>", {"R": ("error", "XPST0017", "")}, "fail"),
         ("<assert-eq>1.0</assert-eq>", {"R": items(i1), "V1": items(("xs:decimal", "1"))}, "pass"),
         ("<assert-eq>1</assert-eq>", {"R": items(("xs:double", "1")), "V1": items(i1)}, "pass"),
+        ("<assert-eq>0.1</assert-eq>", {"R": items(("xs:float", "0.1")), "V1": items(("xs:decimal", "0.1"))},
+         "pass"),
+        ("<assert-eq>0.1e0</assert-eq>", {"R": items(("xs:float", "0.1")), "V1": items(("xs:double", "0.1"))},
+         "fail"),
+        ("<assert-type>xs:float</assert-type>", {"R": items(("xs:float", "1"))}, "pass"),
+        # a decimal next to a float is rounded once (not through a double)
+        ("<assert-eq>1.00000005960464477539062500000001</assert-eq>",
+         {"R": items(("xs:float", "1.0000001")), "V1": items(("xs:decimal", "1.00000005960464477539062500000001"))},
+         "pass"),
+        ("<assert-eq>1.00000005960464477539062500000001</assert-eq>",
+         {"R": items(("xs:float", "1")), "V1": items(("xs:decimal", "1.00000005960464477539062500000001"))},
+         "fail"),
         ("<assert-eq>'1'</assert-eq>", {"R": items(i1), "V1": items(("xs:string", "1"))}, "fail"),
         ("<assert-eq>2</assert-eq>", {"R": items(i1), "V1": items(("xs:integer", "2"))}, "fail"),
         ("<assert-eq>'a'</assert-eq>", {"R": items(("node:element", "a")), "V1": items(("xs:string", "a"))}, "pass"),

@@ -1593,7 +1593,7 @@ var
   Exact: TLandrixXmlUtf8;
   All, Candidate, Text: AnsiString;
   I, P, CK: Integer;
-  Up: Boolean;
+  Up, Done: Boolean;
   Back: TLandrixXmlDouble;
 begin
   { the exact value is 0.000...ddd: K counts the zeros after the point }
@@ -1608,10 +1608,9 @@ begin
   All := '';
   SetLength(All, Length(Exact) - I + 1);
   Move(Exact[I], PAnsiChar(All)^, Length(All));
-  CK := K;
-  P := 2;
-  while True do
-  begin
+  P := 1;
+  repeat
+    Inc(P);
     CK := K;
     if Length(All) <= P then
       Candidate := All
@@ -1646,10 +1645,8 @@ begin
     Exact := '';
     SetLength(Exact, Length(Text));
     Move(PAnsiChar(Text)^, PAnsiChar(Exact)^, Length(Text));
-    if LandrixXmlDoubleTryParseFloat(Exact, Back) and (Back.Bits = A.Bits) then
-      Break;
-    Inc(P);
-  end;
+    Done := LandrixXmlDoubleTryParseFloat(Exact, Back) and (Back.Bits = A.Bits);
+  until Done;
   while (Length(Candidate) > 1) and (Candidate[Length(Candidate)] = '0') do
     SetLength(Candidate, Length(Candidate) - 1);
   Digits := Candidate;

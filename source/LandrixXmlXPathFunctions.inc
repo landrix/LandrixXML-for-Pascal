@@ -52,7 +52,8 @@ begin
         Item := CastTo(Item, T.AtomicType, AsXPath20)
       else
       begin
-        { promotions: integer and decimal to double, anyURI to string }
+        { promotions: integer and decimal to float and double, float to
+          double, anyURI to string }
         Ok := True;
         case T.AtomicType of
           xikAnyAtomic: ;
@@ -66,10 +67,15 @@ begin
           xikDecimal: Ok := AtomicKindMatches(Item.Kind, xikDecimal);
           xikInteger: Ok := AtomicKindMatches(Item.Kind, xikInteger);
           xikDouble:
-            if BasicKind(Item.Kind) in [xikInteger, xikDecimal] then
-              Item := DoubleItem(LandrixXmlDoubleFromDecimal(ItemDecimal(Item)))
+            if BasicKind(Item.Kind) in [xikInteger, xikDecimal, xikFloat] then
+              Item := DoubleItem(ToDouble(Item))
             else
               Ok := Item.Kind = xikDouble;
+          xikFloat:
+            if BasicKind(Item.Kind) in [xikInteger, xikDecimal] then
+              Item := FloatItem(DecimalToFloat(ItemDecimal(Item), AsXPath20))
+            else
+              Ok := Item.Kind = xikFloat;
           xikDate: Ok := Item.Kind = xikDate;
           xikDateTime: Ok := Item.Kind = xikDateTime;
           xikTime: Ok := Item.Kind = xikTime;
@@ -198,7 +204,8 @@ var
   Def: TLandrixXmlXPathFunctionDef;
   Args: array of TLandrixXmlXPathSequence;
   Re: TLandrixXmlRegex;
-  Found, HasDouble: Boolean;
+  Found, HasDouble, HasFloat: Boolean;
+  NaNAt: Integer;
   Name: string;
   T2: TLandrixXmlXPathItemKind;
   OwnTree: TLandrixXmlXPathTree;
@@ -333,13 +340,13 @@ var
       Q.Kind := xikString;
     if IsNumeric(P.Kind) and IsNumeric(Q.Kind) then
     begin
-      if (P.Kind = xikDouble) and (Q.Kind = xikDouble) and LandrixXmlDoubleIsNaN(ItemDouble(P)) and
-        LandrixXmlDoubleIsNaN(ItemDouble(Q)) then
+      if (P.Kind in [xikDouble, xikFloat]) and (Q.Kind in [xikDouble, xikFloat]) and
+        LandrixXmlDoubleIsNaN(ItemDouble(P)) and LandrixXmlDoubleIsNaN(ItemDouble(Q)) then
       begin
         Result := NaNEqual;
         Exit;
       end;
-      Result := CompareNumbers(P, Q) = 0;
+      Result := CompareNumbers(P, Q, Xp20) = 0;
     end
     else if IsStringLike(P.Kind) and IsStringLike(Q.Kind) then
       Result := P.Text = Q.Text
@@ -458,18 +465,20 @@ begin
         { a copy: A may be the storage of a variable }
         A.Items := Copy(A.Items, 0, A.Count);
         HasDouble := False;
+        HasFloat := False;
+        NaNAt := -1;
         for I := 0 to A.Count - 1 do
         begin
           if A.Items[I].Kind = xikUntypedAtomic then
             A.Items[I] := DoubleItem(ParseDouble(A.Items[I].Text, Xp20));
-          if A.Items[I].Kind = xikDouble then
+          if A.Items[I].Kind in [xikDouble, xikFloat] then
           begin
-            HasDouble := True;
-            if LandrixXmlDoubleIsNaN(ItemDouble(A.Items[I])) then
-            begin
-              Result := SingleSeq(A.Items[I]);
-              Exit;
-            end;
+            if A.Items[I].Kind = xikDouble then
+              HasDouble := True
+            else
+              HasFloat := True;
+            if LandrixXmlDoubleIsNaN(ItemDouble(A.Items[I])) and (NaNAt < 0) then
+              NaNAt := I;
           end
         end;
         { xs:duration has no order, not even with itself }
@@ -485,14 +494,25 @@ begin
           for I := 0 to A.Count - 1 do
             if A.Items[I].Kind = xikAnyUri then
               A.Items[I].Kind := xikString;
+        { numbers are compared in their common type: xs:double if a double
+          is there, else xs:float if a float is there (xs:integer stays, it
+          is a decimal) }
+        for I := 0 to A.Count - 1 do
+          if IsNumeric(A.Items[I].Kind) then
+          begin
+            if HasDouble and (A.Items[I].Kind <> xikDouble) then
+              A.Items[I] := DoubleItem(ToDouble(A.Items[I]))
+            else if HasFloat and not HasDouble and (A.Items[I].Kind <> xikFloat) then
+              A.Items[I] := FloatItem(ToFloat(A.Items[I], Xp20));
+          end;
         K := 0;
         for I := 1 to A.Count - 1 do
         begin
           Item := A.Items[I];
           Acc := A.Items[K];
           try
-            if (Id = xfnMin) and CompareAtomic(Item, Acc, xpcLt, FImplicitTimeZone) or
-              (Id = xfnMax) and CompareAtomic(Item, Acc, xpcGt, FImplicitTimeZone) then
+            if (Id = xfnMin) and CompareAtomic(Item, Acc, xpcLt, Xp20, FImplicitTimeZone) or
+              (Id = xfnMax) and CompareAtomic(Item, Acc, xpcGt, Xp20, FImplicitTimeZone) then
               K := I;
           except
             on E: ELandrixXmlXPathError do
@@ -504,15 +524,12 @@ begin
             end;
           end;
         end;
+        { a NaN is the result, once every value has been converted and
+          compared (type errors first) }
+        if NaNAt >= 0 then
+          K := NaNAt;
         Item := A.Items[K];
-        { promoted to xs:double if a double is there (xs:integer stays, it is
-          a decimal) }
-        if IsNumeric(Item.Kind) then
-        begin
-          if HasDouble and (Item.Kind <> xikDouble) then
-            Item := DoubleItem(ToDouble(Item));
-        end
-        else if Item.Kind = xikUntypedAtomic then
+        if Item.Kind = xikUntypedAtomic then
           Item.Kind := xikString;
         Result := SingleSeq(Item);
       end;
@@ -767,7 +784,16 @@ begin
         { far below the value's digits the result is 0 either way }
         if K < -100000 then
           K := -100000;
-        if Item.Kind = xikDouble then
+        if Item.Kind = xikFloat then
+          case Id of
+            xfnAbs: Item := FloatItem(LandrixXmlDoubleAbs(ItemDouble(Item)));
+            xfnRound: Item := FloatItem(RoundFloat(ItemDouble(Item), K, xdrHalfCeiling, Xp20));
+            xfnRoundHalfToEven: Item := FloatItem(RoundFloat(ItemDouble(Item), K, xdrHalfEven, Xp20));
+            xfnFloor: Item := FloatItem(RoundFloat(ItemDouble(Item), 0, xdrFloor, Xp20));
+          else
+            Item := FloatItem(RoundFloat(ItemDouble(Item), 0, xdrCeiling, Xp20));
+          end
+        else if Item.Kind = xikDouble then
           case Id of
             xfnAbs: Item := DoubleItem(LandrixXmlDoubleAbs(ItemDouble(Item)));
             xfnRound: Item := DoubleItem(LandrixXmlDoubleRound(ItemDouble(Item), K, xdrHalfCeiling));
@@ -1020,6 +1046,7 @@ begin
           xfnXsDecimal: Result := SingleSeq(CastTo(Item, xikDecimal, Xp20));
           xfnXsInteger: Result := SingleSeq(CastTo(Item, xikInteger, Xp20));
           xfnXsDouble: Result := SingleSeq(CastTo(Item, xikDouble, Xp20));
+          xfnXsFloat: Result := SingleSeq(CastTo(Item, xikFloat, Xp20));
           xfnXsDate: Result := SingleSeq(CastTo(Item, xikDate, Xp20));
           xfnXsDateTime: Result := SingleSeq(CastTo(Item, xikDateTime, Xp20));
           xfnXsTime: Result := SingleSeq(CastTo(Item, xikTime, Xp20));
@@ -1029,7 +1056,7 @@ begin
           xfnXsDuration .. xfnXsDayTimeDuration:
             Result := SingleSeq(CastTo(Item, FNodes[Index].AtomicType, Xp20));
         else
-          Fail('FOER0000', 'xs:float is not supported');
+          { every constructor function is listed above }
         end;
       end;
   end;

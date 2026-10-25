@@ -416,7 +416,7 @@ begin
   Check((T.Kind = xtkEmpty) and (T.Occurrence = xocOptional), 'the fields of empty-sequence()');
   CheckTypeError('', 'XPST0003');
   CheckTypeError('xs:gYear', 'XPST0051');
-  CheckTypeError('xs:float', 'XPST0051');
+  CheckType('xs:float*', 'xs:float*');
   CheckType('element(*, xs:duration)', 'element(*, xs:duration)');
   CheckType('attribute(a, xs:QName)', 'attribute(a, xs:QName)');
   CheckType('element(a, xs:dayTimeDuration)', 'element(a, xs:dayTimeDuration)');
