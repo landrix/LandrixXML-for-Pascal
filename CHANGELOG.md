@@ -152,6 +152,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `xs:QName`: the constructor function and casts (prefixes
+  resolved with the static namespaces, FONS0004 if unbound), `QName`,
+  `prefix-from-QName`, `local-name-from-QName`,
+  `namespace-uri-from-QName`, `node-name`, `eq` and `ne` on the namespace
+  URI and local name, `distinct-values` and `index-of`. XPath 2.0 casts
+  only a string literal to `xs:QName` (XPTY0004, `castable as` gives
+  false); the Saxon profile casts any string or `xs:untypedAtomic`, as
+  Saxon (XPath 3.1) does, and allows `node-name()` without an argument.
+  `TLandrixXmlXPathExpression.LookupNamespace` gives the namespaces the
+  expression was compiled with. QT3: 238 more cases pass (13,882 in the
+  XPath 2.0 profile, 13,861 in the Saxon profile).
 - XPath: `xs:hexBinary` and `xs:base64Binary`: constructor functions,
   casts from strings, between the two types and to strings, the
   canonical lexical form (hex digits in upper case, base64 without

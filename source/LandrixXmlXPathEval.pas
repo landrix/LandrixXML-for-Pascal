@@ -400,6 +400,17 @@ type
     function Instance: TObject;
   end;
 
+  { an xs:QName: namespace URI, prefix (may be empty) and local name; the
+    item's text is the lexical form }
+  TQNameValue = class(TInterfacedObject, ILandrixXmlXPathValue)
+  public
+    NamespaceUri: TLandrixXmlUtf8;
+    Prefix: TLandrixXmlUtf8;
+    LocalName: TLandrixXmlUtf8;
+    constructor Create(const AUri, APrefix, ALocal: TLandrixXmlUtf8);
+    function Instance: TObject;
+  end;
+
 procedure Fail(const Code, Msg: string);
 begin
   raise ELandrixXmlXPathError.CreateXPath(Code, Msg);
@@ -459,6 +470,19 @@ begin
 end;
 
 function TDurationValue.Instance: TObject;
+begin
+  Result := Self;
+end;
+
+constructor TQNameValue.Create(const AUri, APrefix, ALocal: TLandrixXmlUtf8);
+begin
+  inherited Create;
+  NamespaceUri := AUri;
+  Prefix := APrefix;
+  LocalName := ALocal;
+end;
+
+function TQNameValue.Instance: TObject;
 begin
   Result := Self;
 end;
@@ -537,6 +561,22 @@ function DoubleItem(const D: TLandrixXmlDouble): TLandrixXmlXPathItem;
 begin
   InitItem(Result, xikDouble);
   Result.Bits := D.Bits;
+end;
+
+{ An xs:QName from its parts. }
+function QNameItem(const Uri, Prefix, LocalName: TLandrixXmlUtf8): TLandrixXmlXPathItem;
+begin
+  InitItem(Result, xikQName);
+  Result.Payload := TQNameValue.Create(Uri, Prefix, LocalName);
+  if Prefix = '' then
+    Result.Text := LocalName
+  else
+    Result.Text := Prefix + ':' + LocalName;
+end;
+
+function ItemQName(const Item: TLandrixXmlXPathItem): TQNameValue;
+begin
+  Result := TQNameValue(Item.Payload.Instance);
 end;
 
 { An xs:float: D rounded to the nearest binary32 value, kept as a double. }
@@ -894,7 +934,7 @@ const
 
 const
   ContextFunctions = [xfnString, xfnStringLength, xfnNormalizeSpace, xfnNumber, xfnName, xfnLocalName,
-    xfnNamespaceUri, xfnRoot];
+    xfnNamespaceUri, xfnRoot, xfnNodeName];
 
 { What the value of node Index depends on besides the tree and the global
   variables; Free receives the nodes that depend on nothing else but the
@@ -2625,7 +2665,8 @@ begin
       begin
         A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
         B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        Result := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op), Xp20, FImplicitTimeZone));
+        Result := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op), Xp20, FImplicitTimeZone,
+          FExpr));
       end;
     xakValueCompare:
       begin
@@ -2740,6 +2781,8 @@ begin
             Result := BooleanSeq(N^.AllowEmpty)
           else if A.Count > 1 then
             Result := BooleanSeq(False)
+          else if N^.AtomicType = xikQName then
+            Result := BooleanSeq(CastableToQName(A.Items[0], FExpr, Xp20, FNodes[N^.Children[0]].Kind = xakString))
           else
             Result := BooleanSeq(Castable(A.Items[0], N^.AtomicType, Xp20));
         end
@@ -2753,7 +2796,10 @@ begin
         begin
           if A.Count > 1 then
             Fail('XPTY0004', 'a sequence of several items cannot be cast');
-          Result := SingleSeq(CastTo(A.Items[0], N^.AtomicType, Xp20));
+          if N^.AtomicType = xikQName then
+            Result := SingleSeq(CastToQName(A.Items[0], FExpr, Xp20, FNodes[N^.Children[0]].Kind = xakString))
+          else
+            Result := SingleSeq(CastTo(A.Items[0], N^.AtomicType, Xp20));
         end;
       end;
     xakFunction:

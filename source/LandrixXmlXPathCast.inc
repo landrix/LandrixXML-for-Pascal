@@ -803,6 +803,20 @@ end;
 
 function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem; forward;
+function CastToQName(const Item: TLandrixXmlXPathItem; Expr: TLandrixXmlXPathExpression;
+  Xp20, Literal: Boolean): TLandrixXmlXPathItem; forward;
+
+{ eq and ne of two xs:QName values: the same namespace URI and local name
+  (the prefix does not count); they have no order. }
+function CompareQNames(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare): Integer;
+begin
+  if not (Op in [xpcEq, xpcNe]) then
+    Fail('XPTY0004', 'xs:QName values have no order');
+  if (ItemQName(A).NamespaceUri = ItemQName(B).NamespaceUri) and (ItemQName(A).LocalName = ItemQName(B).LocalName) then
+    Result := 0
+  else
+    Result := 1;
+end;
 function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXmlDecimal; forward;
 
 { Compares two atomic values of comparable types (after the conversions of
@@ -826,6 +840,8 @@ begin
     Order := CompareGregorian(A, B, Op, Tz)
   else if (A.Kind in BinaryKinds) and (A.Kind = B.Kind) then
     Order := CompareBinary(A, B, Op, Xp20)
+  else if (A.Kind = xikQName) and (B.Kind = xikQName) then
+    Order := CompareQNames(A, B, Op)
   else
   begin
     Fail('XPTY0004', 'cannot compare ' + KindName(A.Kind) + ' with ' + KindName(B.Kind));
@@ -842,8 +858,10 @@ begin
 end;
 
 { The conversions of a general comparison for one pair. }
+{ Expr: the expression being evaluated, whose namespaces a cast of an
+  untypedAtomic to xs:QName uses (Saxon profile). }
 function ComparePair(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
-  Tz: Integer): Boolean;
+  Tz: Integer; Expr: TLandrixXmlXPathExpression): Boolean;
 var
   X, Y: TLandrixXmlXPathItem;
 begin
@@ -862,6 +880,10 @@ begin
         xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth, xikHexBinary,
         xikBase64Binary:
           X := CastTo(X, Y.Kind, Xp20);
+        { XPath 2.0 does not cast untypedAtomic to xs:QName: a type error }
+        xikQName:
+          if not Xp20 then
+            X := CastToQName(X, Expr, False, False);
       else
         { compared as they are: a type error }
       end;
@@ -879,6 +901,9 @@ begin
         xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth, xikHexBinary,
         xikBase64Binary:
           Y := CastTo(Y, X.Kind, Xp20);
+        xikQName:
+          if not Xp20 then
+            Y := CastToQName(Y, Expr, False, False);
       else
         { compared as they are: a type error }
       end;
@@ -887,13 +912,13 @@ begin
 end;
 
 function GeneralCompare(const A, B: TLandrixXmlXPathSequence; Op: TLandrixXmlXPathCompare;
-  Xp20: Boolean; Tz: Integer): Boolean;
+  Xp20: Boolean; Tz: Integer; Expr: TLandrixXmlXPathExpression): Boolean;
 var
   I, J: Integer;
 begin
   for I := 0 to A.Count - 1 do
     for J := 0 to B.Count - 1 do
-      if ComparePair(A.Items[I], B.Items[J], Op, Xp20, Tz) then
+      if ComparePair(A.Items[I], B.Items[J], Op, Xp20, Tz, Expr) then
       begin
         Result := True;
         Exit;
@@ -1441,6 +1466,103 @@ begin
   end;
 end;
 
+{ --- xs:QName ---------------------------------------------------------------- }
+
+{ Splits a lexical QName (prefix:local or local); False if T is none. }
+function SplitQName(const T: TLandrixXmlUtf8; out Prefix, Local: TLandrixXmlUtf8): Boolean;
+var
+  I, P: Integer;
+begin
+  P := 0;
+  for I := 1 to Length(T) do
+    if T[I] = ':' then
+    begin
+      P := I;
+      Break;
+    end;
+  if P = 0 then
+  begin
+    Prefix := '';
+    Local := T;
+  end
+  else
+  begin
+    Prefix := Copy(T, 1, P - 1);
+    Local := Copy(T, P + 1, MaxInt);
+  end;
+  Result := (Local <> '') and NameCharacters(Local, True) and not ContainsByte(Local, ':') and
+    ((P = 0) or (Prefix <> '') and NameCharacters(Prefix, True));
+end;
+
+{ A lexical QName (white space trimmed) with its prefix resolved by the
+  static namespaces of Expr: FORG0001 for an invalid name, FONS0004 for
+  an unbound prefix; without a prefix the name is in no namespace. }
+function StringToQName(const S: TLandrixXmlUtf8; Expr: TLandrixXmlXPathExpression): TLandrixXmlXPathItem;
+var
+  T, Prefix, Local, Uri: TLandrixXmlUtf8;
+begin
+  T := Trimmed(S);
+  if not SplitQName(T, Prefix, Local) then
+    Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:QName');
+  Uri := '';
+  if (Prefix <> '') and ((Expr = nil) or not Expr.LookupNamespace(Prefix, Uri)) then
+    Fail('FONS0004', 'the prefix "' + LandrixXmlUtf8ToString(Prefix) + '" is not bound');
+  Result := QNameItem(Uri, Prefix, Local);
+end;
+
+{ cast as xs:QName and xs:QName(): an xs:QName stays; XPath 2.0 casts
+  only a string literal (Literal: the operand is one), Saxon (XPath 3.1)
+  any string or untypedAtomic; prefixes are those of Expr. }
+function CastToQName(const Item: TLandrixXmlXPathItem; Expr: TLandrixXmlXPathExpression;
+  Xp20, Literal: Boolean): TLandrixXmlXPathItem;
+begin
+  if Item.Kind = xikQName then
+  begin
+    Result := Item;
+    Exit;
+  end;
+  if Xp20 and not (Literal and (Item.Kind = xikString)) then
+    Fail('XPTY0004', 'XPath 2.0 casts only a string literal to xs:QName');
+  if not (BasicKind(Item.Kind) in [xikString, xikUntypedAtomic]) then
+    Fail('XPTY0004', 'cannot cast ' + KindName(Item.Kind) + ' to xs:QName');
+  Result := StringToQName(Item.Text, Expr);
+end;
+
+{ castable as xs:QName: false where the cast fails (in XPath 2.0 also for
+  an operand that is no string literal, as QT3 expects). }
+function CastableToQName(const Item: TLandrixXmlXPathItem; Expr: TLandrixXmlXPathExpression;
+  Xp20, Literal: Boolean): Boolean;
+begin
+  try
+    CastToQName(Item, Expr, Xp20, Literal);
+    Result := True;
+  except
+    on E: ELandrixXmlXPathError do
+    begin
+      if E.XPathCode = 'FOER0000' then
+        raise;
+      Result := False;
+    end;
+  end;
+end;
+
+{ fn:QName: a namespace URI (empty: none) and a lexical QName; FOCA0002
+  for an invalid name or a prefix without a URI. Saxon collapses the
+  white space of the URI, as of an xs:anyURI. }
+function MakeQName(const AUri, Lexical: TLandrixXmlUtf8; Xp20: Boolean): TLandrixXmlXPathItem;
+var
+  Prefix, Local, Uri: TLandrixXmlUtf8;
+begin
+  Uri := AUri;
+  if not Xp20 then
+    Uri := NormalizeSpace(Uri);
+  if not SplitQName(Lexical, Prefix, Local) then
+    Fail('FOCA0002', '''' + LandrixXmlEscapeForMessage(Lexical, 60) + ''' is no lexical xs:QName');
+  if (Prefix <> '') and (Uri = '') then
+    Fail('FOCA0002', 'the prefix "' + LandrixXmlUtf8ToString(Prefix) + '" needs a namespace URI');
+  Result := QNameItem(Uri, Prefix, Local);
+end;
+
 function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem;
 var
@@ -1613,6 +1735,12 @@ begin
         Result := StringItem(T, HexToBase64(Item.Text))
       else if Item.Kind = xikBase64Binary then
         Result := StringItem(T, Base64ToHex(Item.Text))
+      else
+        NotAllowed;
+    { a string needs the static namespaces: CastToQName }
+    xikQName:
+      if Item.Kind = xikQName then
+        Result := Item
       else
         NotAllowed;
     xikNonPositiveInteger .. xikPositiveInteger:

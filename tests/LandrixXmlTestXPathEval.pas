@@ -394,6 +394,9 @@ begin
     CheckMatch('xs:float', 'xs:float(1)', True);
     CheckMatch('xs:float', '1.5', True);
     CheckMatch('xs:float', 'xs:double(1)', False);
+    CheckMatch('xs:QName', 'xs:QName(''xml:lang'')', True);
+    CheckMatch('xs:QName', 'xs:untypedAtomic(''a'')', False);
+    CheckMatch('xs:QName', '''xml:lang''', False);
     CheckMatch('element()', '/r/a', True);
     CheckMatch('element()', '/r/a/text()', False);
     CheckMatch('element()', '/r/a/@k', False);

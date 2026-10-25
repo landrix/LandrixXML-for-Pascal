@@ -33,3 +33,11 @@ xs:integer(xs:float('1e20'))	xs:integer 100000002004087734272	xs:integer 1000000
 xs:hexBinary('ab') lt xs:hexBinary('ac')	error XPTY0004	xs:boolean true	XPath 2.0 has eq and ne on the binary types; XPath 3.0 (Saxon) orders them octet by octet
 max((xs:hexBinary('ab'), xs:hexBinary('cd')))	error FORG0006	xs:hexBinary CD	the same in max
 min(xs:base64Binary('AQID'))	error FORG0006	xs:base64Binary AQID	the same in min, also for a single value
+xs:QName(string('xml:lang'))	error XPTY0004	xs:QName xml:lang	XPath 2.0 casts only a string literal to xs:QName; XPath 3.0 (Saxon) any string, with the static namespaces
+concat('a', '') cast as xs:QName	error XPTY0004	xs:QName a	the same in cast as
+xs:QName(xs:untypedAtomic('xml:lang'))	error XPTY0004	xs:QName xml:lang	XPath 2.0 does not cast xs:untypedAtomic to xs:QName
+xs:untypedAtomic('xml:lang') = xs:QName('xml:lang')	error XPTY0004	xs:boolean true	the same in a general comparison
+string('xml:lang') castable as xs:QName	xs:boolean false	xs:boolean true	the same in castable
+count(node-name())	error XPST0017	xs:integer 0	node-name with no argument is XPath 3.0
+local-name-from-QName(xs:untypedAtomic('xml:lang'))	error XPTY0004	error XPTY0117	XPath 3.0 reports an untypedAtomic for a QName parameter with a code of its own
+string(namespace-uri-from-QName(QName(' urn:p  x ', 'a')))	xs:string  urn:p  x 	xs:string urn:p x	Saxon collapses the white space of the namespace URI of fn:QName, as of an xs:anyURI

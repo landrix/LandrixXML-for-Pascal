@@ -1,0 +1,160 @@
+# xs:QName('p:a')
+xs:QName p:a
+# xs:QName('a')
+xs:QName a
+# xs:QName('zz:a')
+error FONS0004
+# xs:QName('1a')
+error FORG0001
+# xs:QName(' p:a ')
+xs:QName p:a
+# xs:QName('xml:lang')
+xs:QName xml:lang
+# xs:QName(string('p:a'))
+xs:QName p:a
+# xs:QName(xs:untypedAtomic('p:a'))
+xs:QName p:a
+# 'p:a' cast as xs:QName
+xs:QName p:a
+# 'p:a' castable as xs:QName
+xs:boolean true
+# 'zz:a' castable as xs:QName
+xs:boolean false
+# string(xs:QName('p:a'))
+xs:string p:a
+# xs:string(xs:QName('p:a'))
+xs:string p:a
+# xs:untypedAtomic(xs:QName('p:a'))
+xs:untypedAtomic p:a
+# xs:QName(xs:QName('p:a'))
+xs:QName p:a
+# xs:QName(1)
+error XPTY0004
+# xs:QName('p:a') eq xs:QName('p:a')
+xs:boolean true
+# xs:QName('p:a') eq QName('urn:p', 'other:a')
+xs:boolean true
+# xs:QName('p:a') lt xs:QName('p:b')
+error XPTY0004
+# QName('urn:x', 'x:a')
+xs:QName x:a
+# QName('', 'a')
+xs:QName a
+# QName((), 'a')
+xs:QName a
+# QName('', 'x:a')
+error FOCA0002
+# QName('urn:x', '')
+error FOCA0002
+# QName('urn:x', '1a')
+error FOCA0002
+# prefix-from-QName(QName('urn:x', 'x:a'))
+xs:NCName x
+# prefix-from-QName(QName('urn:x', 'a'))
+# prefix-from-QName(())
+# local-name-from-QName(QName('urn:x', 'x:a'))
+xs:NCName a
+# namespace-uri-from-QName(QName('urn:x', 'x:a'))
+xs:anyURI urn:x
+# namespace-uri-from-QName(QName('', 'a'))
+xs:anyURI 
+# namespace-uri-from-QName(xs:QName('a'))
+xs:anyURI 
+# node-name(/*:r/*:a)
+xs:QName a
+# node-name(/*:r/*:a/@v)
+xs:QName v
+# node-name(/*:r/*:a/text())
+# node-name(())
+# node-name(/)
+# distinct-values((xs:QName('p:a'), QName('urn:p', 'a'), QName('urn:p', 'z:a')))
+xs:QName p:a
+# index-of((xs:QName('p:a'), xs:QName('p:b')), QName('urn:p', 'b'))
+xs:integer 2
+# max((xs:QName('p:a'), xs:QName('p:b')))
+error FORG0006
+# boolean(xs:QName('p:a'))
+error FORG0006
+# xs:QName('p:a') instance of xs:QName
+xs:boolean true
+# node-name(/*:r/*:a) = xs:QName('p:a')
+xs:boolean false
+# xs:untypedAtomic('p:a') = xs:QName('p:a')
+xs:boolean true
+# xs:QName('p:a') = 'p:a'
+error XPTY0004
+# local-name-from-QName(node-name(/*:r/*:a))
+xs:NCName a
+# string(node-name(/*:r/p:c))
+xs:string p:c
+# xs:QName('p:a') cast as xs:string
+xs:string p:a
+# string-length(xs:QName('p:a'))
+error XPTY0004
+# concat(xs:QName('p:a'), 'x')
+xs:string p:ax
+# node-name(/*:r/*:a/@v) eq QName('', 'v')
+xs:boolean true
+# node-name(/*:r/p:c) eq xs:QName('p:c')
+xs:boolean true
+# namespace-uri-from-QName(node-name(/*:r/*:a))
+xs:anyURI urn:d
+# prefix-from-QName(node-name(/*:r/p:c))
+xs:NCName p
+# node-name(/*:r/*:a/processing-instruction())
+# xs:QName('p:a') ne xs:QName('p:b')
+xs:boolean true
+# QName('urn:p', 'a') eq QName('urn:q', 'a')
+xs:boolean false
+# QName('urn:p', 'p:a') instance of xs:anyAtomicType
+xs:boolean true
+# string(QName('urn:p', 'z:a'))
+xs:string z:a
+# xs:QName('p:a') castable as xs:QName
+xs:boolean true
+# xs:QName('  a  ')
+xs:QName a
+# xs:QName('a:')
+error FORG0001
+# xs:QName(':a')
+error FORG0001
+# xs:QName('a:b:c')
+error FORG0001
+# xs:QName('')
+error FORG0001
+# QName('urn:x', 'x:1')
+error FOCA0002
+# QName('urn:x', ' a')
+error FOCA0002
+# QName('urn:x', 'a') = QName('urn:x', 'y:a')
+xs:boolean true
+# for $n in (/*:r/*:a, /*:r/p:c) return local-name-from-QName(node-name($n))
+xs:NCName a
+xs:NCName c
+# distinct-values(for $n in //* return node-name($n))
+xs:QName r
+xs:QName a
+xs:QName p:c
+# xs:QName(/*:r/*:a/@v)
+error FONS0004
+# /*:r/*:a/@v cast as xs:QName
+error FONS0004
+# /*:r/*:a/@u castable as xs:QName
+xs:boolean false
+# string(/*:r/*:a) cast as xs:QName
+xs:QName p:b
+# local-name-from-QName(xs:untypedAtomic('xml:lang'))
+error XPTY0117
+# prefix-from-QName(/*:r/*:a/@v)
+error XPTY0117
+# namespace-uri-from-QName(xs:untypedAtomic('a'))
+error XPTY0117
+# QName('urn:p ', 'a') eq QName('urn:p', 'a')
+xs:boolean true
+# count(/*:r/*[node-name() eq QName('urn:d', 'a')])
+xs:integer 1
+# for $n in /*:r/* return string(node-name($n))
+xs:string a
+xs:string p:c
+# /*:r/*[node-name() eq xs:QName('p:c')]/name()
+xs:string p:c

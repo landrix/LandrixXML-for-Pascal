@@ -488,6 +488,39 @@ begin
   end;
 end;
 
+{ The namespaces an expression keeps from its static context: a copy,
+  unaffected by later changes to the context or its release. }
+procedure TestExpressionNamespaces;
+var
+  C: TLandrixXmlXPathStaticContext;
+  E: TLandrixXmlXPathExpression;
+  Uri: TLandrixXmlUtf8;
+begin
+  C := TLandrixXmlXPathStaticContext.Create;
+  E := nil;
+  try
+    C.AddNamespace(U('p'), U('urn:p'));
+    E := TLandrixXmlXPathExpression.Create(U('1'), C);
+    C.AddNamespace(U('p'), U('urn:changed'));
+    C.AddNamespace(U('q'), U('urn:q'));
+    C.Free;
+    C := nil;
+    Check(E.LookupNamespace(U('p'), Uri) and (Uri = 'urn:p'), 'p as when compiled');
+    Check(not E.LookupNamespace(U('q'), Uri) and (Uri = ''), 'q came later');
+    Check(E.LookupNamespace(U('xml'), Uri) and (Uri = 'http://www.w3.org/XML/1998/namespace'), 'xml predeclared');
+  finally
+    E.Free;
+    C.Free;
+  end;
+  E := TLandrixXmlXPathExpression.Create(U('1'), nil);
+  try
+    Check(E.LookupNamespace(U('xs'), Uri) and (Uri = 'http://www.w3.org/2001/XMLSchema'), 'xs without a context');
+    Check(not E.LookupNamespace(U('p'), Uri), 'nothing else without a context');
+  finally
+    E.Free;
+  end;
+end;
+
 procedure TearDown;
 begin
   Context.Free;
@@ -503,6 +536,7 @@ begin
     TestErrors;
     TestSequenceTypes;
     TestSlots;
+    TestExpressionNamespaces;
   finally
     TearDown;
   end;

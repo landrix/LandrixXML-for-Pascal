@@ -171,7 +171,8 @@ const
     'xs:positiveInteger',
     'xs:normalizedString', 'xs:token', 'xs:language', 'xs:NMTOKEN', 'xs:Name', 'xs:NCName', 'xs:ID',
     'xs:IDREF', 'xs:ENTITY', 'xs:duration', 'xs:yearMonthDuration', 'xs:dayTimeDuration',
-    'xs:gYearMonth', 'xs:gYear', 'xs:gMonthDay', 'xs:gDay', 'xs:gMonth', 'xs:hexBinary', 'xs:base64Binary');
+    'xs:gYearMonth', 'xs:gYear', 'xs:gMonthDay', 'xs:gDay', 'xs:gMonth', 'xs:hexBinary', 'xs:base64Binary',
+    'xs:QName');
   NodeKindNames: array[TLandrixXmlXPathNodeKind] of string = ('document-node', 'element', 'attribute', 'text',
     'comment', 'processing-instruction');
 

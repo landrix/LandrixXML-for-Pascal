@@ -48,6 +48,10 @@ begin
     for I := 0 to A.Count - 1 do
     begin
       Item := A.Items[I];
+      { an untypedAtomic does not become a QName (namespace-sensitive):
+        XPath 3.1 has an error code of its own for it }
+      if (Item.Kind = xikUntypedAtomic) and (T.AtomicType = xikQName) and not AsXPath20 then
+        Fail('XPTY0117', FunctionName + ': xs:untypedAtomic does not convert to xs:QName');
       if (Item.Kind = xikUntypedAtomic) and (T.AtomicType <> xikAnyAtomic) and (T.AtomicType <> xikUntypedAtomic) then
         Item := CastTo(Item, T.AtomicType, AsXPath20)
       else
@@ -82,7 +86,7 @@ begin
           xikAnyUri: Ok := Item.Kind = xikAnyUri;
           xikNonPositiveInteger .. xikPositiveInteger, xikNormalizedString .. xikENTITY,
           xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth, xikHexBinary,
-          xikBase64Binary:
+          xikBase64Binary, xikQName:
             Ok := AtomicKindMatches(Item.Kind, T.AtomicType);
         else
           Ok := False;
@@ -361,6 +365,8 @@ var
       Result := CompareGregorian(P, Q, xpcEq, FImplicitTimeZone) = 0
     else if (P.Kind in BinaryKinds) and (P.Kind = Q.Kind) then
       Result := P.Text = Q.Text
+    else if (P.Kind = xikQName) and (Q.Kind = xikQName) then
+      Result := CompareQNames(P, Q, xpcEq) = 0
     else
       Result := False;
   end;
@@ -486,11 +492,11 @@ begin
               NaNAt := I;
           end
         end;
-        { xs:duration and the Gregorian types have no order, not even
-          with themselves; nor have the binary types in XPath 2.0 (Saxon
-          orders them) }
+        { xs:duration, xs:QName and the Gregorian types have no order, not
+          even with themselves; nor have the binary types in XPath 2.0
+          (Saxon orders them) }
         for I := 0 to A.Count - 1 do
-          if (A.Items[I].Kind in [xikDuration] + GregorianKinds) or Xp20 and (A.Items[I].Kind in BinaryKinds) then
+          if (A.Items[I].Kind in [xikDuration, xikQName] + GregorianKinds) or Xp20 and (A.Items[I].Kind in BinaryKinds) then
             Fail('FORG0006', Name + ': ' + KindName(A.Items[I].Kind) + ' values have no order');
         { xs:anyURI among strings compares and returns as xs:string }
         Found := False;
@@ -848,6 +854,41 @@ begin
         end;
         Result := SingleSeq(Item);
       end;
+    xfnNodeName:
+      begin
+        I := NodeArg;
+        if I >= 0 then
+        begin
+          OwnTree := TreeOf(I, K);
+          { elements, attributes and processing instructions have names }
+          S := OwnTree.LocalNameUtf8(I - K);
+          if S <> '' then
+            Result := SingleSeq(QNameItem(OwnTree.NamespaceUriUtf8(I - K), OwnTree.PrefixUtf8(I - K), S));
+        end;
+      end;
+    xfnQName:
+      Result := SingleSeq(MakeQName(StrArg(0), ReqStrArg(1), Xp20));
+    xfnPrefixFromQName, xfnLocalNameFromQName, xfnNamespaceUriFromQName:
+      begin
+        if not OptAtom(0, Item) then
+          Exit;
+        if (Item.Kind = xikUntypedAtomic) and not Xp20 then
+          Fail('XPTY0117', Name + ': xs:untypedAtomic does not convert to xs:QName');
+        if Item.Kind <> xikQName then
+          Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not an xs:QName');
+        case Id of
+          xfnPrefixFromQName:
+            if ItemQName(Item).Prefix <> '' then
+              Result := SingleSeq(StringItem(xikNCName, ItemQName(Item).Prefix));
+          xfnLocalNameFromQName:
+            Result := SingleSeq(StringItem(xikNCName, ItemQName(Item).LocalName));
+        else
+          Result := SingleSeq(StringItem(xikAnyUri, ItemQName(Item).NamespaceUri));
+        end;
+      end;
+    xfnXsQName:
+      if OptAtom(0, Item) then
+        Result := SingleSeq(CastToQName(Item, FExpr, Xp20, FNodes[FNodes[Index].Children[0]].Kind = xakString));
     xfnName, xfnLocalName, xfnNamespaceUri:
       begin
         I := NodeArg;

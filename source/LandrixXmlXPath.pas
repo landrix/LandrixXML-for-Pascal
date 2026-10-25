@@ -110,16 +110,16 @@ type
     xs:integer (xikNonPositiveInteger to xikPositiveInteger) and from
     xs:string (xikNormalizedString to xikENTITY) and the durations
     (xikDuration to xikDayTimeDuration), xikFloat, the Gregorian types
-    (xikGYearMonth to xikGMonth) and the binary types (xikHexBinary,
-    xikBase64Binary); xikAnyAtomic (abstract) and xikNone (no type) only
-    label types. }
+    (xikGYearMonth to xikGMonth), the binary types (xikHexBinary,
+    xikBase64Binary) and xikQName; xikAnyAtomic (abstract) and xikNone (no
+    type) only label types. }
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
     xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone,
     xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt, xikShort, xikByte, xikNonNegativeInteger,
     xikUnsignedLong, xikUnsignedInt, xikUnsignedShort, xikUnsignedByte, xikPositiveInteger,
     xikNormalizedString, xikToken, xikLanguage, xikNMTOKEN, xikName, xikNCName, xikID, xikIDREF, xikENTITY,
     xikDuration, xikYearMonthDuration, xikDayTimeDuration,
-    xikGYearMonth, xikGYear, xikGMonthDay, xikGDay, xikGMonth, xikHexBinary, xikBase64Binary);
+    xikGYearMonth, xikGYear, xikGMonthDay, xikGDay, xikGMonth, xikHexBinary, xikBase64Binary, xikQName);
 
 
   { Sequence types: the declared type of a variable, parameter or function
@@ -208,7 +208,8 @@ type
     xfnHoursFromTime, xfnMinutesFromTime, xfnSecondsFromTime, xfnTimezoneFromTime,
     xfnAdjustDateTimeToTimezone, xfnAdjustDateToTimezone, xfnAdjustTimeToTimezone,
     xfnDateTime, xfnCurrentDateTime, xfnCurrentDate, xfnCurrentTime, xfnImplicitTimezone,
-    xfnXsGYearMonth, xfnXsGYear, xfnXsGMonthDay, xfnXsGDay, xfnXsGMonth, xfnXsHexBinary, xfnXsBase64Binary
+    xfnXsGYearMonth, xfnXsGYear, xfnXsGMonthDay, xfnXsGDay, xfnXsGMonth, xfnXsHexBinary, xfnXsBase64Binary,
+    xfnXsQName, xfnQName, xfnPrefixFromQName, xfnLocalNameFromQName, xfnNamespaceUriFromQName, xfnNodeName
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -269,6 +270,8 @@ type
     FFirstLocalSlot: Integer;
     FSerial: Int64;
     FProfile: TLandrixXmlXPathProfile;
+    FNsPrefixes: TLandrixXmlUtf8Array;
+    FNsUris: TLandrixXmlUtf8Array;
     function GetNode(Index: Integer): TLandrixXmlXPathAstNode;
     function GetNodeCount: Integer;
   public
@@ -276,6 +279,10 @@ type
       fn, no variables, no user functions, profile xppXPath20). Raises
       ELandrixXmlXPathError. }
     constructor Create(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXPathStaticContext);
+    { The namespaces of the static context when the expression was compiled
+      (xml, xs and fn included); a cast to xs:QName resolves its prefix
+      with them. False if Prefix is not bound. }
+    function LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
     property Text: TLandrixXmlUtf8 read FText;
     property Root: Integer read FRoot;
     property Nodes[Index: Integer]: TLandrixXmlXPathAstNode read GetNode;
@@ -456,7 +463,13 @@ const
     (Name: 'gDay'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'gMonth'; MinArgs: 1; MaxArgs: 1; Xs: True),
     (Name: 'hexBinary'; MinArgs: 1; MaxArgs: 1; Xs: True),
-    (Name: 'base64Binary'; MinArgs: 1; MaxArgs: 1; Xs: True)
+    (Name: 'base64Binary'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'QName'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'QName'; MinArgs: 2; MaxArgs: 2; Xs: False),
+    (Name: 'prefix-from-QName'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'local-name-from-QName'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'namespace-uri-from-QName'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'node-name'; MinArgs: 0; MaxArgs: 1; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }
@@ -466,7 +479,7 @@ const
     'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte', 'positiveInteger',
     'normalizedString', 'token', 'language', 'NMTOKEN', 'Name', 'NCName', 'ID', 'IDREF', 'ENTITY',
     'duration', 'yearMonthDuration', 'dayTimeDuration', 'gYearMonth', 'gYear', 'gMonthDay', 'gDay', 'gMonth',
-    'hexBinary', 'base64Binary');
+    'hexBinary', 'base64Binary', 'QName');
 
 function LandrixXmlXPathFunctionName(Id: TLandrixXmlXPathFunctionId): string;
 begin
@@ -2129,7 +2142,8 @@ var
   Found: Boolean;
   Args, User: Integer;
 
-  { round and string-join have other arities only from XPath 3.0 on }
+  { round, string-join and node-name have other arities only from XPath
+    3.0 on }
   function ArityIn20(F: TLandrixXmlXPathFunctionId; Count: Integer): Boolean;
   begin
     if FContext.Profile <> xppXPath20 then
@@ -2138,6 +2152,7 @@ var
       case F of
         xfnRound: Result := Count = 1;
         xfnStringJoin: Result := Count = 2;
+        xfnNodeName: Result := Count = 1;
       else
         Result := True;
       end;
@@ -2292,9 +2307,28 @@ begin
     FSlotCount := P.FSlotCount;
     FFirstLocalSlot := P.FContext.VariableCount;
     FProfile := P.FContext.Profile;
+    { a copy: the static context may change or go after compiling }
+    FNsPrefixes := Copy(P.FContext.FPrefixes, 0, Length(P.FContext.FPrefixes));
+    FNsUris := Copy(P.FContext.FUris, 0, Length(P.FContext.FUris));
   finally
     P.Free;
   end;
+end;
+
+function TLandrixXmlXPathExpression.LookupNamespace(const Prefix: TLandrixXmlUtf8;
+  out NamespaceUri: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  for I := 0 to Integer(Length(FNsPrefixes)) - 1 do
+    if FNsPrefixes[I] = Prefix then
+    begin
+      NamespaceUri := FNsUris[I];
+      Result := True;
+      Exit;
+    end;
+  NamespaceUri := '';
+  Result := False;
 end;
 
 function TLandrixXmlXPathExpression.GetNode(Index: Integer): TLandrixXmlXPathAstNode;
