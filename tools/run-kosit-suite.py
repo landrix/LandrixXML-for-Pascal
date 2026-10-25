@@ -32,6 +32,7 @@ import argparse
 import concurrent.futures
 import difflib
 import hashlib
+import http.client
 import importlib.util
 import io
 import os
@@ -39,6 +40,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
@@ -75,6 +78,22 @@ SCN = "{http://www.xoev.de/de/validator/framework/1/scenarios}"
 REP = "{http://www.xoev.de/de/validator/varl/1}"
 
 
+def read_url(url, timeout=120):
+    """The body of url; a failed request is retried, as runners lose DNS now and then.
+    An HTTP client error other than 408 and 429 fails at once."""
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as resp:
+                return resp.read()
+        except (OSError, http.client.HTTPException) as e:
+            permanent = (isinstance(e, urllib.error.HTTPError) and 400 <= e.code < 500
+                         and e.code not in (408, 429))
+            if permanent or attempt == 3:
+                raise
+            print("download failed (%s), retrying" % e)
+            time.sleep(10 * (attempt + 1))
+
+
 def fetch():
     for name, (url, digest) in PACKAGES.items():
         target = os.path.join(DATA, name)
@@ -82,7 +101,7 @@ def fetch():
         if os.path.exists(stamp) and open(stamp).read().strip() == digest:
             continue
         print("downloading", url)
-        data = urllib.request.urlopen(url, timeout=120).read()
+        data = read_url(url)
         got = hashlib.sha256(data).hexdigest()
         if got != digest:
             sys.exit("%s has SHA-256 %s, expected %s" % (url, got, digest))

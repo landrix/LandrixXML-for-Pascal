@@ -8,7 +8,22 @@ jobs:
   fpc-linux:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      - name: Cache the downloaded test suites
+        id: suites
+        uses: actions/cache@v6
+        with:
+          path: |
+            tests/data/xmlconf-suite
+            tests/data/qt3-suite
+            tests/data/kosit-suite
+          key: suites-${{ hashFiles('tools/run-xmlconf.py', 'tools/run-qt3.py', 'tools/run-kosit-suite.py') }}
+
+      # a failed restore may leave a partial suite that the scripts would reuse
+      - name: Remove a partially restored cache
+        if: steps.suites.outputs.cache-hit != 'true'
+        run: rm -rf tests/data/xmlconf-suite tests/data/qt3-suite tests/data/kosit-suite
 
       - name: Install Free Pascal
         run: |

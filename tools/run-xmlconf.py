@@ -29,6 +29,7 @@ Exit code: 0 if there are no unexplained failures.
 """
 
 import argparse
+import http.client
 import io
 import os
 import re
@@ -36,6 +37,8 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
+import urllib.error
 import urllib.request
 import xml.parsers.expat
 
@@ -55,11 +58,26 @@ TEST_RE = re.compile(r"<TEST\s+([^>]*)>", re.S)
 ENTITY_RE = re.compile(r'<!ENTITY\s+\S+\s+SYSTEM\s+"([^"]+)"\s*>')
 
 
+def read_url(url, timeout=120):
+    """The body of url; a failed request is retried, as runners lose DNS now and then.
+    An HTTP client error other than 408 and 429 fails at once."""
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as resp:
+                return resp.read()
+        except (OSError, http.client.HTTPException) as e:
+            permanent = (isinstance(e, urllib.error.HTTPError) and 400 <= e.code < 500
+                         and e.code not in (408, 429))
+            if permanent or attempt == 3:
+                raise
+            print("download failed (%s), retrying" % e)
+            time.sleep(10 * (attempt + 1))
+
+
 def download():
     os.makedirs(SUITE_DIR, exist_ok=True)
     print("downloading", URL)
-    with urllib.request.urlopen(URL) as resp:
-        data = resp.read()
+    data = read_url(URL)
     with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
         tar.extractall(SUITE_DIR, filter="data")
 

@@ -44,12 +44,15 @@ import collections
 import concurrent.futures
 import decimal
 import hashlib
+import http.client
 import io
 import os
 import re
 import subprocess
 import sys
 import tarfile
+import time
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -78,10 +81,26 @@ XML_VERSIONS = {"1.0", "1.0:5+"}
 XSD_VERSIONS = {"1.0"}
 
 
+def read_url(url, timeout=120):
+    """The body of url; a failed request is retried, as runners lose DNS now and then.
+    An HTTP client error other than 408 and 429 fails at once."""
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as resp:
+                return resp.read()
+        except (OSError, http.client.HTTPException) as e:
+            permanent = (isinstance(e, urllib.error.HTTPError) and 400 <= e.code < 500
+                         and e.code not in (408, 429))
+            if permanent or attempt == 3:
+                raise
+            print("download failed (%s), retrying" % e)
+            time.sleep(10 * (attempt + 1))
+
+
 def download():
     os.makedirs(SUITE_DIR, exist_ok=True)
     print("downloading", URL)
-    data = urllib.request.urlopen(URL).read()
+    data = read_url(URL)
     with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
         for member in tar.getmembers():
             name = os.path.normpath(member.name)
