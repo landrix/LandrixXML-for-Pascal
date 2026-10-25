@@ -386,6 +386,14 @@ begin
     Evaluator.Functions := Functions;
     Evaluator.SetFrameSize(Context.VariableCount);
     CheckMatch('node()', '/r/a/@k', True);
+    CheckMatch('xs:gYear', 'xs:gYear(''2024'')', True);
+    CheckMatch('xs:gYear', 'xs:untypedAtomic(''2024'')', True);
+    CheckMatch('xs:gYear', 'xs:gMonth(''--01'')', False);
+    CheckMatch('xs:gYear', '''2024''', False);
+    CheckMatch('xs:gMonthDay*', '(xs:gMonthDay(''--02-29''), xs:gMonthDay(''--03-01''))', True);
+    CheckMatch('xs:float', 'xs:float(1)', True);
+    CheckMatch('xs:float', '1.5', True);
+    CheckMatch('xs:float', 'xs:double(1)', False);
     CheckMatch('element()', '/r/a', True);
     CheckMatch('element()', '/r/a/text()', False);
     CheckMatch('element()', '/r/a/@k', False);

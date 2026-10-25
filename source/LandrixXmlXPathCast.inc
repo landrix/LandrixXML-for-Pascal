@@ -154,14 +154,25 @@ var
   Tz: Integer;
 begin
   Result := '';
-  if Kind in [xikDate, xikDateTime] then
+  if Kind in [xikDate, xikDateTime, xikGYearMonth, xikGYear] then
   begin
     if D.Year < 0 then
       Result := '-' + Pad(-D.Year, 4)
     else
       Result := Pad(D.Year, 4);
-    Result := Result + '-' + Pad(D.Month, 2) + '-' + Pad(D.Day, 2);
-  end;
+    if Kind <> xikGYear then
+      Result := Result + '-' + Pad(D.Month, 2);
+    if Kind in [xikDate, xikDateTime] then
+      Result := Result + '-' + Pad(D.Day, 2);
+  end
+  else if Kind in [xikGMonthDay, xikGMonth] then
+  begin
+    Result := '--' + Pad(D.Month, 2);
+    if Kind = xikGMonthDay then
+      Result := Result + '-' + Pad(D.Day, 2);
+  end
+  else if Kind = xikGDay then
+    Result := '---' + Pad(D.Day, 2);
   if Kind = xikDateTime then
     Result := Result + 'T';
   if Kind in [xikDateTime, xikTime] then
@@ -266,22 +277,27 @@ begin
   Result := T.Validate(LandrixXmlStringToUtf8(IntToStr(Y)) + Copy(Text, I, MaxInt), V, E);
 end;
 
+{ An xs:date, xs:dateTime, xs:time or Gregorian type from its lexical
+  form. }
 function ParseDateKind(const S: TLandrixXmlUtf8; Kind: TLandrixXmlXPathItemKind; Xp20: Boolean): TLandrixXmlXPathItem;
 var
   T: TLandrixXmlXsdSimpleType;
   V: TLandrixXmlXsdValue;
   E: TLandrixXmlXsdError;
-  Name: TLandrixXmlUtf8;
+  Name, Text: TLandrixXmlUtf8;
   D: TLandrixXmlXsdDateTime;
 begin
-  case Kind of
-    xikDate: Name := 'date';
-    xikDateTime: Name := 'dateTime';
-  else
-    Name := 'time';
-  end;
+  Name := LandrixXmlStringToUtf8(LandrixXmlXPathAtomicTypeName(Kind));
+  { the local name after "xs:" }
+  Name := Copy(Name, 4, MaxInt);
   T := LandrixXmlXsdBuiltinType(Name);
-  if not T.Validate(S, V, E) and (Kind <> xikTime) and TooLargeYear(T, S, Xp20) then
+  { Xerces also reads --MM--, the gMonth of XML Schema 1.0 before its
+    errata; XPath (and Saxon) do not }
+  Text := Trimmed(S);
+  if (Kind = xikGMonth) and (Length(Text) >= 6) and (Copy(Text, 5, 2) = '--') then
+    Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:gMonth');
+  if not T.Validate(S, V, E) and (Kind in [xikDate, xikDateTime, xikGYearMonth, xikGYear]) and
+    TooLargeYear(T, S, Xp20) then
     Fail('FODT0001', 'the year of ''' + LandrixXmlEscapeForMessage(S, 60) + ''' is out of range');
   if not T.Validate(S, V, E) then
     Fail('FORG0001', 'cannot convert ''' + LandrixXmlEscapeForMessage(S, 60) + ''' to xs:' +
@@ -631,6 +647,37 @@ end;
 
 {$I LandrixXmlXPathDate.inc}
 
+{ eq and ne of two values of the same Gregorian type: their starting
+  instants as dateTimes (F&O 2.0 10.4.13 to 10.4.17), the missing parts
+  from the reference date 1972-12-31 (a leap year, so --02-29 exists);
+  the other comparisons are type errors. }
+function CompareGregorian(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Tz: Integer): Integer;
+
+  function Instant(const Item: TLandrixXmlXPathItem): TLandrixXmlDecimal;
+  var
+    D: TLandrixXmlXsdDateTime;
+  begin
+    D := ItemDateTime(Item);
+    if Item.Kind in [xikGMonthDay, xikGDay, xikGMonth] then
+      D.Year := 1972;
+    if Item.Kind = xikGDay then
+      D.Month := 12;
+    if Item.Kind in [xikGYearMonth, xikGYear, xikGMonth] then
+      D.Day := 1;
+    if Item.Kind = xikGYear then
+      D.Month := 1;
+    D.Hour := 0;
+    D.Minute := 0;
+    D.Second := LandrixXmlDecimalZero;
+    Result := UtcSeconds(D, xikDateTime, Tz);
+  end;
+
+begin
+  if not (Op in [xpcEq, xpcNe]) then
+    Fail('XPTY0004', KindName(A.Kind) + ' values have no order');
+  Result := LandrixXmlDecimalCompare(Instant(A), Instant(B));
+end;
+
 function CastTo(const Item: TLandrixXmlXPathItem; T: TLandrixXmlXPathItemKind;
   Xp20: Boolean): TLandrixXmlXPathItem; forward;
 function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXmlDecimal; forward;
@@ -652,6 +699,8 @@ begin
     Order := CompareDates(A, B, Tz)
   else if (A.Kind in DurationKinds) and (B.Kind in DurationKinds) then
     Order := CompareDurations(A, B, Op)
+  else if (A.Kind in GregorianKinds) and (A.Kind = B.Kind) then
+    Order := CompareGregorian(A, B, Op, Tz)
   else
   begin
     Fail('XPTY0004', 'cannot compare ' + KindName(A.Kind) + ' with ' + KindName(B.Kind));
@@ -685,7 +734,8 @@ begin
         xikDate: X := CastTo(X, xikDate, Xp20);
         xikDateTime: X := CastTo(X, xikDateTime, Xp20);
         xikTime: X := CastTo(X, xikTime, Xp20);
-        xikDuration, xikYearMonthDuration, xikDayTimeDuration: X := CastTo(X, Y.Kind, Xp20);
+        xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth:
+          X := CastTo(X, Y.Kind, Xp20);
       else
         { compared as they are: a type error }
       end;
@@ -700,7 +750,8 @@ begin
         xikDate: Y := CastTo(Y, xikDate, Xp20);
         xikDateTime: Y := CastTo(Y, xikDateTime, Xp20);
         xikTime: Y := CastTo(Y, xikTime, Xp20);
-        xikDuration, xikYearMonthDuration, xikDayTimeDuration: Y := CastTo(Y, X.Kind, Xp20);
+        xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth:
+          Y := CastTo(Y, X.Kind, Xp20);
       else
         { compared as they are: a type error }
       end;
@@ -1416,6 +1467,16 @@ begin
         else
           NotAllowed;
       end;
+    xikGYearMonth .. xikGMonth:
+      if StringSource then
+        Result := ParseDateKind(Item.Text, T, Xp20)
+      else if Item.Kind = T then
+        Result := Item
+      else if Item.Kind in [xikDate, xikDateTime] then
+        { the parts of the type, the time zone kept }
+        Result := DateItem(T, ItemDateTime(Item), DateText(ItemDateTime(Item), T))
+      else
+        NotAllowed;
     xikNonPositiveInteger .. xikPositiveInteger:
       begin
         { the messages name the target type }

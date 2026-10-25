@@ -109,14 +109,16 @@ type
     have the kinds xikNode to xikTime, the types derived from
     xs:integer (xikNonPositiveInteger to xikPositiveInteger) and from
     xs:string (xikNormalizedString to xikENTITY) and the durations
-    (xikDuration to xikDayTimeDuration) and xikFloat; xikAnyAtomic
-    (abstract) and xikNone (no type) only label types. }
+    (xikDuration to xikDayTimeDuration), xikFloat and the Gregorian types
+    (xikGYearMonth to xikGMonth); xikAnyAtomic (abstract) and xikNone (no
+    type) only label types. }
   TLandrixXmlXPathItemKind = (xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikBoolean, xikInteger,
     xikDecimal, xikDouble, xikDate, xikDateTime, xikTime, xikFloat, xikAnyAtomic, xikNone,
     xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt, xikShort, xikByte, xikNonNegativeInteger,
     xikUnsignedLong, xikUnsignedInt, xikUnsignedShort, xikUnsignedByte, xikPositiveInteger,
     xikNormalizedString, xikToken, xikLanguage, xikNMTOKEN, xikName, xikNCName, xikID, xikIDREF, xikENTITY,
-    xikDuration, xikYearMonthDuration, xikDayTimeDuration);
+    xikDuration, xikYearMonthDuration, xikDayTimeDuration,
+    xikGYearMonth, xikGYear, xikGMonthDay, xikGDay, xikGMonth);
 
 
   { Sequence types: the declared type of a variable, parameter or function
@@ -204,7 +206,8 @@ type
     xfnYearFromDate, xfnMonthFromDate, xfnDayFromDate, xfnTimezoneFromDate,
     xfnHoursFromTime, xfnMinutesFromTime, xfnSecondsFromTime, xfnTimezoneFromTime,
     xfnAdjustDateTimeToTimezone, xfnAdjustDateToTimezone, xfnAdjustTimeToTimezone,
-    xfnDateTime, xfnCurrentDateTime, xfnCurrentDate, xfnCurrentTime, xfnImplicitTimezone
+    xfnDateTime, xfnCurrentDateTime, xfnCurrentDate, xfnCurrentTime, xfnImplicitTimezone,
+    xfnXsGYearMonth, xfnXsGYear, xfnXsGMonthDay, xfnXsGDay, xfnXsGMonth
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -445,7 +448,12 @@ const
     (Name: 'current-dateTime'; MinArgs: 0; MaxArgs: 0; Xs: False),
     (Name: 'current-date'; MinArgs: 0; MaxArgs: 0; Xs: False),
     (Name: 'current-time'; MinArgs: 0; MaxArgs: 0; Xs: False),
-    (Name: 'implicit-timezone'; MinArgs: 0; MaxArgs: 0; Xs: False)
+    (Name: 'implicit-timezone'; MinArgs: 0; MaxArgs: 0; Xs: False),
+    (Name: 'gYearMonth'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'gYear'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'gMonthDay'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'gDay'; MinArgs: 1; MaxArgs: 1; Xs: True),
+    (Name: 'gMonth'; MinArgs: 1; MaxArgs: 1; Xs: True)
   );
 
   { local names in the xs namespace; empty for the labels without one }
@@ -454,7 +462,7 @@ const
     'nonPositiveInteger', 'negativeInteger', 'long', 'int', 'short', 'byte', 'nonNegativeInteger',
     'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte', 'positiveInteger',
     'normalizedString', 'token', 'language', 'NMTOKEN', 'Name', 'NCName', 'ID', 'IDREF', 'ENTITY',
-    'duration', 'yearMonthDuration', 'dayTimeDuration');
+    'duration', 'yearMonthDuration', 'dayTimeDuration', 'gYearMonth', 'gYear', 'gMonthDay', 'gDay', 'gMonth');
 
 function LandrixXmlXPathFunctionName(Id: TLandrixXmlXPathFunctionId): string;
 begin

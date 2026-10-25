@@ -357,7 +357,7 @@ begin
   CheckError('count(1, 2)', 'XPST0017');
   CheckError('u:slack(1)', 'XPST0017');
   CheckError('p:a', 'XPST0081');
-  CheckError('a cast as xs:gYear', 'XPST0051');
+  CheckError('a cast as xs:IDREFS', 'XPST0051');
   CheckError('a cast as cbc:x', 'XPST0051');
   CheckError('a cast as xs:anyAtomicType', 'XPST0080');
   CheckError('a cast as xs:NOTATION', 'XPST0080');
@@ -415,7 +415,7 @@ begin
   T := LandrixXmlXPathParseSequenceType(U('empty-sequence()'), Context);
   Check((T.Kind = xtkEmpty) and (T.Occurrence = xocOptional), 'the fields of empty-sequence()');
   CheckTypeError('', 'XPST0003');
-  CheckTypeError('xs:gYear', 'XPST0051');
+  CheckTypeError('xs:IDREFS', 'XPST0051');
   CheckType('xs:float*', 'xs:float*');
   CheckType('element(*, xs:duration)', 'element(*, xs:duration)');
   CheckType('attribute(a, xs:QName)', 'attribute(a, xs:QName)');

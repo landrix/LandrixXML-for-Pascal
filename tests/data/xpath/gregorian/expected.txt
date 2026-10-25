@@ -1,0 +1,201 @@
+# xs:gYear('2024')
+xs:gYear 2024
+# xs:gYear('2024Z')
+xs:gYear 2024Z
+# xs:gYear('2024+00:00')
+xs:gYear 2024Z
+# xs:gYear('2024-05:00')
+xs:gYear 2024-05:00
+# xs:gYear('-0044')
+xs:gYear -0044
+# xs:gYear('12345')
+xs:gYear 12345
+# xs:gYear('024')
+error FORG0001
+# xs:gYear('02024')
+error FORG0001
+# xs:gYear(' 2024 ')
+xs:gYear 2024
+# xs:gYearMonth('2024-02')
+xs:gYearMonth 2024-02
+# xs:gYearMonth('2024-13')
+error FORG0001
+# xs:gYearMonth('2024-02+14:00')
+xs:gYearMonth 2024-02+14:00
+# xs:gMonth('--05')
+xs:gMonth --05
+# xs:gMonth('--05--')
+error FORG0001
+# xs:gMonth('--13')
+error FORG0001
+# xs:gMonth('--05Z')
+xs:gMonth --05Z
+# xs:gMonthDay('--02-29')
+xs:gMonthDay --02-29
+# xs:gMonthDay('--02-30')
+error FORG0001
+# xs:gMonthDay('--04-31')
+error FORG0001
+# xs:gMonthDay('--12-31-01:30')
+xs:gMonthDay --12-31-01:30
+# xs:gDay('---31')
+xs:gDay ---31
+# xs:gDay('---32')
+error FORG0001
+# xs:gDay('---01+01:00')
+xs:gDay ---01+01:00
+# xs:gYear(xs:date('2024-03-15+01:00'))
+xs:gYear 2024+01:00
+# xs:gYearMonth(xs:dateTime('2024-03-15T23:00:00-05:00'))
+xs:gYearMonth 2024-03-05:00
+# xs:gMonth(xs:date('2024-03-15'))
+xs:gMonth --03
+# xs:gMonthDay(xs:dateTime('2024-03-15T10:00:00Z'))
+xs:gMonthDay --03-15Z
+# xs:gDay(xs:date('2024-03-15'))
+xs:gDay ---15
+# xs:gYear(xs:date('-0044-03-15'))
+xs:gYear -0044
+# xs:gYear(xs:time('10:00:00'))
+error XPTY0004
+# xs:gYear(xs:gYearMonth('2024-02'))
+error XPTY0004
+# xs:gYear(2024)
+error XPTY0004
+# xs:date(xs:gYear('2024'))
+error XPTY0004
+# xs:string(xs:gMonthDay('--02-29Z'))
+xs:string --02-29Z
+# xs:untypedAtomic(xs:gDay('---05'))
+xs:untypedAtomic ---05
+# xs:gYear('2024') eq xs:gYear('2024Z')
+xs:boolean true
+# xs:gYear('2024') eq xs:gYear('2024')
+xs:boolean true
+# xs:gYear('2024') ne xs:gYear('2025')
+xs:boolean true
+# xs:gYear('2024') lt xs:gYear('2025')
+error XPTY0004
+# xs:gYear('2024') eq xs:gYearMonth('2024-01')
+error XPTY0004
+# xs:gDay('---31+14:00') eq xs:gDay('---31-10:00')
+xs:boolean false
+# xs:gDay('---01+14:00') eq xs:gDay('---31-10:00')
+xs:boolean false
+# xs:gMonth('--12+14:00') eq xs:gMonth('--01-10:00')
+xs:boolean false
+# xs:gMonthDay('--12-31+14:00') eq xs:gMonthDay('--01-01-10:00')
+xs:boolean false
+# xs:gYear('2024') = '2024'
+error XPTY0004
+# xs:untypedAtomic('2024') = xs:gYear('2024')
+xs:boolean true
+# distinct-values((xs:gYear('2024'), xs:gYear('2024Z'), xs:gYear('2025')))
+xs:gYear 2024
+xs:gYear 2025
+# index-of((xs:gMonth('--05'), xs:gMonth('--06')), xs:gMonth('--06'))
+xs:integer 2
+# max((xs:gYear('2024'), xs:gYear('2025')))
+error FORG0006
+# min(xs:gDay('---05'))
+error FORG0006
+# xs:gYear('2024') instance of xs:gYear
+xs:boolean true
+# xs:gYear('2024') instance of xs:anyAtomicType
+xs:boolean true
+# 'abc' castable as xs:gYear
+xs:boolean false
+# '2024' castable as xs:gYear
+xs:boolean true
+# xs:gYear('2024') + xs:yearMonthDuration('P1Y')
+error XPTY0004
+# string(xs:gYear('-2024'))
+xs:string -2024
+# xs:gYearMonth('-0001-12')
+xs:gYearMonth -0001-12
+# xs:gYear('2147483648')
+error FODT0001
+# xs:gYear('-2147483648')
+error FODT0001
+# xs:gYear('99999999999')
+error FODT0001
+# data(xs:gYearMonth('2024-02')) instance of xs:gYearMonth
+xs:boolean true
+# timezone-from-date(xs:gYear('2024'))
+error XPTY0004
+# boolean(xs:gYear('2024'))
+error FORG0006
+# xs:gYear(xs:untypedAtomic('2024'))
+xs:gYear 2024
+# xs:gMonthDay('--02-29') eq xs:gMonthDay('--02-29')
+xs:boolean true
+# xs:gYear('1972+14:00') eq xs:gYear('1971-10:00')
+xs:boolean false
+# string(xs:gYear('2024-00:00'))
+xs:string 2024Z
+# xs:gYearMonth(xs:date('2024-12-31+14:00'))
+xs:gYearMonth 2024-12+14:00
+# xs:gYear('2024') eq xs:gYear('2024+00:00')
+xs:boolean true
+# xs:gYear(/r/y)
+xs:gYear 2024
+# /r/y = xs:gYear('2024')
+xs:boolean true
+# /r/y = xs:gYear('2024Z')
+xs:boolean true
+# xs:gYearMonth(/r/ym) eq xs:gYearMonth('2024-01-31T23:00:00Z' cast as xs:dateTime)
+xs:boolean false
+# xs:gYearMonth(xs:dateTime('2024-01-31T23:00:00Z'))
+xs:gYearMonth 2024-01Z
+# xs:gYearMonth(/r/ym) eq xs:gYearMonth('2024-02')
+xs:boolean false
+# xs:gYearMonth('2024-02+01:00') eq xs:gYearMonth('2024-01-23:00')
+error FORG0001
+# xs:gMonthDay(/r/md)
+xs:gMonthDay --02-29
+# xs:gMonthDay(xs:date(/r/d))
+xs:gMonthDay --03-15
+# xs:gDay(xs:date(/r/d)) eq xs:gDay('---15')
+xs:boolean true
+# xs:gMonth(xs:untypedAtomic('--11'))
+xs:gMonth --11
+# xs:gMonth('--11') instance of xs:gYear
+xs:boolean false
+# (xs:gYear('2024'), xs:gMonth('--01'))[2] instance of xs:gMonth
+xs:boolean true
+# xs:gYear('2024') treat as xs:gYear
+xs:gYear 2024
+# string-join(for $g in (xs:gDay('---01'), xs:gDay('---02Z')) return string($g), ',')
+xs:string ---01,---02Z
+# concat(xs:gYear('2024'), 'x')
+xs:string 2024x
+# xs:gYear('2024') cast as xs:string
+xs:string 2024
+# xs:gYear('2024') castable as xs:gYearMonth
+xs:boolean false
+# xs:date('2024-02-29') cast as xs:gMonthDay
+xs:gMonthDay --02-29
+# xs:gYear(xs:dateTime('-2024-02-29T00:00:00'))
+xs:gYear -2024
+# xs:gYearMonth('2024-02') ne xs:gYearMonth('2024-02Z')
+xs:boolean false
+# xs:gDay('---31') eq xs:gDay('---31Z')
+xs:boolean true
+# xs:gYear('2024') ge xs:gYear('2024')
+error XPTY0004
+# xs:gYear('2147483647')
+xs:gYear 2147483647
+# xs:gYearMonth('2147483648-01')
+error FODT0001
+# xs:gYear('-2147483647')
+xs:gYear -2147483647
+# xs:gYear('12a4')
+error FORG0001
+# xs:gMonthDay('--2-29')
+error FORG0001
+# xs:gDay('--05')
+error FORG0001
+# xs:gMonth('-05')
+error FORG0001
+# xs:gYear('')
+error FORG0001

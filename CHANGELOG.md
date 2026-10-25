@@ -152,6 +152,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: the Gregorian types `xs:gYearMonth`, `xs:gYear`,
+  `xs:gMonthDay`, `xs:gDay` and `xs:gMonth`: constructor functions, casts
+  from strings, `xs:date` and `xs:dateTime` (the time zone is kept) and to
+  strings, the canonical lexical form, `eq` and `ne` on the starting
+  instants (F&O 2.0 10.4.13 to 10.4.17, with the implicit time zone),
+  `distinct-values` and `index-of`. They have no order (XPTY0004, FORG0006
+  in `min` and `max`). As for dates, the lexical forms are those of XML
+  Schema 1.0 (no year 0000) and `--MM--` is no `xs:gMonth`. QT3: 1,111 more
+  cases pass (13,123 in the XPath 2.0 profile, 13,108 in the Saxon
+  profile).
 - XPath: `xs:float` values: the constructor function, casts from and to
   the other types, the promotions (integers and decimals to `xs:float`
   next to a float, `xs:float` to `xs:double`), arithmetic in single

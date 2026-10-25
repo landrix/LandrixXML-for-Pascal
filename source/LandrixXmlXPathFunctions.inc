@@ -81,7 +81,7 @@ begin
           xikTime: Ok := Item.Kind = xikTime;
           xikAnyUri: Ok := Item.Kind = xikAnyUri;
           xikNonPositiveInteger .. xikPositiveInteger, xikNormalizedString .. xikENTITY,
-          xikDuration, xikYearMonthDuration, xikDayTimeDuration:
+          xikDuration, xikYearMonthDuration, xikDayTimeDuration, xikGYearMonth .. xikGMonth:
             Ok := AtomicKindMatches(Item.Kind, T.AtomicType);
         else
           Ok := False;
@@ -356,6 +356,8 @@ var
       Result := CompareDates(P, Q, FImplicitTimeZone) = 0
     else if (P.Kind in DurationKinds) and (Q.Kind in DurationKinds) then
       Result := CompareDurations(P, Q, xpcEq) = 0
+    else if (P.Kind in GregorianKinds) and (P.Kind = Q.Kind) then
+      Result := CompareGregorian(P, Q, xpcEq, FImplicitTimeZone) = 0
     else
       Result := False;
   end;
@@ -481,10 +483,11 @@ begin
               NaNAt := I;
           end
         end;
-        { xs:duration has no order, not even with itself }
+        { xs:duration and the Gregorian types have no order, not even
+          with themselves }
         for I := 0 to A.Count - 1 do
-          if A.Items[I].Kind = xikDuration then
-            Fail('FORG0006', Name + ': xs:duration values have no order');
+          if A.Items[I].Kind in [xikDuration] + GregorianKinds then
+            Fail('FORG0006', Name + ': ' + KindName(A.Items[I].Kind) + ' values have no order');
         { xs:anyURI among strings compares and returns as xs:string }
         Found := False;
         for I := 0 to A.Count - 1 do
@@ -1036,7 +1039,7 @@ begin
         LandrixXmlDecimalFromInt64(Int64(FImplicitTimeZone) * 60)));
     xfnXsString, xfnXsBoolean, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsDate,
     xfnXsDateTime, xfnXsTime, xfnXsAnyUri, xfnXsUntypedAtomic, xfnXsNonPositiveInteger .. xfnXsPositiveInteger,
-    xfnXsNormalizedString .. xfnXsENTITY, xfnXsDuration .. xfnXsDayTimeDuration:
+    xfnXsNormalizedString .. xfnXsENTITY, xfnXsDuration .. xfnXsDayTimeDuration, xfnXsGYearMonth .. xfnXsGMonth:
       begin
         if not OptAtom(0, Item) then
           Exit;
@@ -1053,7 +1056,7 @@ begin
           xfnXsAnyUri: Result := SingleSeq(CastTo(Item, xikAnyUri, Xp20));
           xfnXsUntypedAtomic: Result := SingleSeq(CastTo(Item, xikUntypedAtomic, Xp20));
           xfnXsNonPositiveInteger .. xfnXsPositiveInteger, xfnXsNormalizedString .. xfnXsENTITY,
-          xfnXsDuration .. xfnXsDayTimeDuration:
+          xfnXsDuration .. xfnXsDayTimeDuration, xfnXsGYearMonth .. xfnXsGMonth:
             Result := SingleSeq(CastTo(Item, FNodes[Index].AtomicType, Xp20));
         else
           { every constructor function is listed above }
