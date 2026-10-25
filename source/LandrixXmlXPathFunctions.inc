@@ -177,6 +177,60 @@ begin
   Result := LandrixXmlDoubleRound(D, 0, xdrHalfCeiling);
 end;
 
+const
+  CodepointCollation = 'http://www.w3.org/2005/xpath-functions/collation/codepoint';
+
+{ C or the next sibling after it that fn:deep-equal compares (comments and
+  processing instructions are skipped); -1 if none. }
+function NextCompared(Tree: TLandrixXmlXPathTree; C: Integer): Integer;
+begin
+  Result := C;
+  while (Result >= 0) and (Tree.Kind[Result] in [xnkComment, xnkProcessingInstruction]) do
+    Result := Tree.NextSibling[Result];
+end;
+
+{ fn:deep-equal of two nodes without their children: the same kind, the
+  same expanded name (elements, attributes, processing instructions),
+  for elements the same attributes in any order, for the other nodes
+  but documents the same string value (an attribute's typed value is
+  untypedAtomic). }
+function ShallowEqual(TX: TLandrixXmlXPathTree; P: Integer; TY: TLandrixXmlXPathTree; Q: Integer): Boolean;
+var
+  I, J: Integer;
+  Same: Boolean;
+begin
+  Result := False;
+  if TX.Kind[P] <> TY.Kind[Q] then
+    Exit;
+  if TX.Kind[P] in [xnkElement, xnkAttribute, xnkProcessingInstruction] then
+    if (TX.LocalNameUtf8(P) <> TY.LocalNameUtf8(Q)) or (TX.NamespaceUriUtf8(P) <> TY.NamespaceUriUtf8(Q)) then
+      Exit;
+  case TX.Kind[P] of
+    xnkDocument:
+      Result := True;
+    xnkElement:
+      begin
+        if TX.AttributeCount[P] <> TY.AttributeCount[Q] then
+          Exit;
+        for I := P + 1 to P + TX.AttributeCount[P] do
+        begin
+          Same := False;
+          for J := Q + 1 to Q + TY.AttributeCount[Q] do
+            if (TX.LocalNameUtf8(I) = TY.LocalNameUtf8(J)) and (TX.NamespaceUriUtf8(I) = TY.NamespaceUriUtf8(J)) then
+            begin
+              Same := TX.ValueUtf8(I) = TY.ValueUtf8(J);
+              Break;
+            end;
+          if not Same then
+            Exit;
+        end;
+        Result := True;
+      end;
+  else
+    Result := TX.ValueUtf8(P) = TY.ValueUtf8(Q);
+  end;
+end;
+
 { True if position P (an integer) is >= Start and < Stop (doubles; NaN never). }
 function InRange(P: Integer; const Start, Stop: TLandrixXmlDouble; HasStop: Boolean): Boolean;
 var
@@ -209,7 +263,7 @@ var
   Def: TLandrixXmlXPathFunctionDef;
   Args: array of TLandrixXmlXPathSequence;
   Re: TLandrixXmlRegex;
-  Found, HasDouble, HasFloat: Boolean;
+  Found, HasDouble, HasFloat, Second: Boolean;
   NaNAt: Integer;
   Name: string;
   T2: TLandrixXmlXPathItemKind;
@@ -334,6 +388,82 @@ var
       Fail('XPTY0004', Name + ': argument ' + IntToStr(Arg0 + 1) + ' must be a single element');
   end;
 
+  { a collation argument K, if given: only the code point collation }
+  procedure CheckCollation(K: Integer);
+  var
+    C: TLandrixXmlUtf8;
+  begin
+    if K >= ArgCount then
+      Exit;
+    C := ReqStrArg(K);
+    if C <> CodepointCollation then
+      Fail('FOCH0002', Name + ': the collation ' + LandrixXmlUtf8ToString(C) +
+        ' is not supported (only the code point collation)');
+  end;
+
+  { fn:deep-equal of two nodes (numbers across all trees): both subtrees
+    walked in step, without recursion (documents may be deep); Ps and Qs
+    hold the current child on each level, -1 after the last }
+  function NodesDeepEqual(X, Y: Integer): Boolean;
+  var
+    TX, TY: TLandrixXmlXPathTree;
+    Ps, Qs: TLandrixXmlXPathIntArray;
+    BX, BY, P, Q, Depth: Integer;
+  begin
+    TX := TreeOf(X, BX);
+    TY := TreeOf(Y, BY);
+    P := X - BX;
+    Q := Y - BY;
+    Result := ShallowEqual(TX, P, TY, Q);
+    if not Result or not (TX.Kind[P] in [xnkDocument, xnkElement]) then
+      Exit;
+    Result := False;
+    Ps := nil;
+    Qs := nil;
+    SetLength(Ps, 16);
+    SetLength(Qs, 16);
+    { the children, without comments and processing instructions }
+    Ps[0] := NextCompared(TX, TX.FirstChild(P));
+    Qs[0] := NextCompared(TY, TY.FirstChild(Q));
+    Depth := 1;
+    while Depth > 0 do
+    begin
+      P := Ps[Depth - 1];
+      Q := Qs[Depth - 1];
+      if (P < 0) or (Q < 0) then
+      begin
+        { one has more children than the other }
+        if P <> Q then
+          Exit;
+        Dec(Depth);
+        if Depth > 0 then
+        begin
+          Ps[Depth - 1] := NextCompared(TX, TX.NextSibling[Ps[Depth - 1]]);
+          Qs[Depth - 1] := NextCompared(TY, TY.NextSibling[Qs[Depth - 1]]);
+        end;
+      end
+      else if not ShallowEqual(TX, P, TY, Q) then
+        Exit
+      else if TX.Kind[P] = xnkElement then
+      begin
+        if Depth = Length(Ps) then
+        begin
+          SetLength(Ps, 2 * Depth);
+          SetLength(Qs, 2 * Depth);
+        end;
+        Ps[Depth] := NextCompared(TX, TX.FirstChild(P));
+        Qs[Depth] := NextCompared(TY, TY.FirstChild(Q));
+        Inc(Depth);
+      end
+      else
+      begin
+        Ps[Depth - 1] := NextCompared(TX, TX.NextSibling[P]);
+        Qs[Depth - 1] := NextCompared(TY, TY.NextSibling[Q]);
+      end;
+    end;
+    Result := True;
+  end;
+
   function Compile(PatternArg, FlagArg: Integer): TLandrixXmlRegex;
   var
     Flags: TLandrixXmlUtf8;
@@ -414,6 +544,15 @@ begin
   Id := TLandrixXmlXPathFunctionId(N^.Op);
   Name := LandrixXmlXPathFunctionName(Id) + '()';
   Result := LandrixXmlXPathEmpty;
+  case Id of
+    xfnContains, xfnStartsWith, xfnEndsWith, xfnSubstringBefore, xfnSubstringAfter, xfnIndexOf,
+    xfnDeepEqual, xfnCompare:
+      CheckCollation(2);
+    xfnDistinctValues, xfnMin, xfnMax:
+      CheckCollation(1);
+  else
+    { no collation argument }
+  end;
   case Id of
     xfnNot:
       Result := BooleanSeq(not SequenceBoolean(Arg(0)));
@@ -887,6 +1026,41 @@ begin
       end;
     xfnQName:
       Result := SingleSeq(MakeQName(StrArg(0), ReqStrArg(1), Xp20));
+    xfnDeepEqual:
+      begin
+        A := Arg(0);
+        B := Arg(1);
+        Found := A.Count = B.Count;
+        I := 0;
+        while Found and (I < A.Count) do
+        begin
+          if (A.Items[I].Kind = xikNode) and (B.Items[I].Kind = xikNode) then
+            Found := NodesDeepEqual(A.Items[I].Node, B.Items[I].Node)
+          else if (A.Items[I].Kind = xikNode) or (B.Items[I].Kind = xikNode) then
+            Found := False
+          else
+            Found := SameValue(A.Items[I], B.Items[I], True);
+          Inc(I);
+        end;
+        Result := BooleanSeq(Found);
+      end;
+    xfnCompare, xfnCodepointEqual:
+      begin
+        { both arguments are checked, also when one is empty }
+        Found := OptAtom(0, Item);
+        Second := OptAtom(1, Acc);
+        if (Found and not IsStringLike(Item.Kind)) or (Second and not IsStringLike(Acc.Kind)) then
+          Fail('XPTY0004', Name + ': the arguments must be strings');
+        if not Found or not Second then
+          Exit;
+        I := CompareStrings(Item.Text, Acc.Text);
+        if Id = xfnCompare then
+          Result := SingleSeq(IntegerItemOf(I))
+        else
+          Result := BooleanSeq(I = 0);
+      end;
+    xfnDefaultCollation:
+      Result := SingleSeq(StringItem(xikString, CodepointCollation));
     xfnResolveQName:
       begin
         { the element is checked also for an empty name, as Saxon does }

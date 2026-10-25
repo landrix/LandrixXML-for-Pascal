@@ -24,6 +24,7 @@ uses
   LandrixXmlBase,
   LandrixXmlDecimal,
   LandrixXmlXsdTypes,
+  LandrixXmlReader,
   LandrixXmlXPathTree,
   LandrixXmlXPath,
   LandrixXmlXPathEval,
@@ -804,6 +805,69 @@ begin
   end;
 end;
 
+{ deep-equal across two trees and on documents nested deeper than the
+  stack would allow for one call per level. }
+procedure TestDeepEqual;
+const
+  Levels = 17;
+var
+  Tree, Other: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  Reader: TLandrixXmlReader;
+  Open, Close: TLandrixXmlUtf8;
+  I: Integer;
+
+  function Run(const S: string): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), nil);
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0));
+  end;
+
+  procedure Load(T: TLandrixXmlXPathTree; const Text: TLandrixXmlUtf8);
+  begin
+    Reader := TLandrixXmlReader.Create;
+    try
+      Reader.MaxDepth := 1 shl (Levels + 1);
+      Reader.LoadFromUtf8(Text);
+      T.LoadFromReader(Reader);
+    finally
+      Reader.Free;
+      Reader := nil;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Other := TLandrixXmlXPathTree.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Expr := nil;
+  Reader := nil;
+  try
+    { 2^17 nested elements }
+    Open := U('<a>');
+    Close := U('</a>');
+    for I := 1 to Levels do
+    begin
+      Open := Open + Open;
+      Close := Close + Close;
+    end;
+    Load(Tree, Open + U('x') + Close);
+    Load(Other, Open + U('y') + Close);
+    Evaluator.AddDocument(U('other.xml'), Other);
+    CheckEqualsStr('true', Run('deep-equal(/, /)'), 'a deep document equals itself');
+    CheckEqualsStr('false', Run('deep-equal(/, document(''other.xml''))'), 'the innermost text differs');
+    CheckEqualsStr('false', Run('deep-equal(/a/a, document(''other.xml'')/a/a/a)'), 'one level less');
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    Other.Free;
+    Tree.Free;
+  end;
+end;
+
 { The fields of a line separated by tabs. }
 function Fields(const S: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
 var
@@ -1204,6 +1268,7 @@ begin
   RegisterTest('XPathEval.KeptValues', TestKeptValues);
   RegisterTest('XPathEval.Patterns', TestPatterns);
   RegisterTest('XPathEval.Documents', TestDocuments);
+  RegisterTest('XPathEval.DeepEqual', TestDeepEqual);
 end;
 
 end.

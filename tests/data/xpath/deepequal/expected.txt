@@ -1,0 +1,168 @@
+# deep-equal(//a[1], //a[2])
+xs:boolean true
+# deep-equal(//a[1], //a[3])
+xs:boolean false
+# deep-equal(//a[2], //a[3])
+xs:boolean false
+# deep-equal(//*:b[1], //*:b[2])
+xs:boolean true
+# deep-equal(//*:b[1], //*:b[3])
+xs:boolean true
+# deep-equal(//c[1], //c[2])
+xs:boolean false
+# deep-equal(//d[1], //d[2])
+xs:boolean false
+# deep-equal(//e[1], //e[2])
+xs:boolean true
+# deep-equal(//e[1], //e[3])
+xs:boolean true
+# deep-equal(//e[1], //e[4])
+xs:boolean false
+# deep-equal(//e[4], //e[1])
+xs:boolean false
+# deep-equal(//e[1]/@*, //e[4]/@*)
+xs:boolean false
+# deep-equal(//a[1]/@x, //e[4]/@x)
+xs:boolean true
+# deep-equal(/, /)
+xs:boolean true
+# deep-equal(//a[1]/text()[1], //a[2]/text()[1])
+xs:boolean true
+# deep-equal(//a[1]/comment(), //e[3]/comment())
+xs:boolean false
+# deep-equal(//a[1]/processing-instruction(), //a[2]/processing-instruction())
+xs:boolean false
+# deep-equal((), ())
+xs:boolean true
+# deep-equal(1, ())
+xs:boolean false
+# deep-equal(1, 1.0)
+xs:boolean true
+# deep-equal(1, '1')
+xs:boolean false
+# deep-equal('a', xs:untypedAtomic('a'))
+xs:boolean true
+# deep-equal('a', xs:anyURI('a'))
+xs:boolean true
+# deep-equal(xs:double('NaN'), xs:float('NaN'))
+xs:boolean true
+# deep-equal(xs:double('NaN'), 0 div 0)
+error FOAR0001
+# deep-equal((1, 2), (1, 2))
+xs:boolean true
+# deep-equal((1, 2), (2, 1))
+xs:boolean false
+# deep-equal(1, //d[1])
+xs:boolean false
+# deep-equal(//d[1], 1)
+xs:boolean false
+# deep-equal(xs:date('2001-01-01'), xs:dateTime('2001-01-01T00:00:00'))
+xs:boolean false
+# deep-equal(xs:yearMonthDuration('P0M'), xs:dayTimeDuration('PT0S'))
+xs:boolean true
+# deep-equal(true(), 1)
+xs:boolean false
+# deep-equal(xs:QName('xs:a'), QName('http://www.w3.org/2001/XMLSchema', 'b:a'))
+xs:boolean true
+# deep-equal(xs:hexBinary('0f'), xs:base64Binary('Dw=='))
+xs:boolean false
+# deep-equal(xs:gYear('2001'), xs:gYear('2001Z'))
+xs:boolean true
+# deep-equal('a', 'a', 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:boolean true
+# deep-equal('a', 'a', 'http://example.com/c')
+error FOCH0002
+# deep-equal('a', 'a', 'codepoint')
+error FOCH0002
+# deep-equal(//a[1], //d[1])
+xs:boolean false
+# deep-equal(//a[1]/@x, //a[1]/@x/string())
+xs:boolean false
+# deep-equal(xs:time('12:00:00Z'), xs:time('13:00:00+01:00'))
+xs:boolean true
+# deep-equal(xs:decimal('1'), xs:double('1'))
+xs:boolean true
+# deep-equal(//e, //e)
+xs:boolean true
+# deep-equal(//e[1], //e[2]/f)
+xs:boolean false
+# compare('a', 'b')
+xs:integer -1
+# compare('b', 'a')
+xs:integer 1
+# compare('a', 'a')
+xs:integer 0
+# compare('', 'a')
+xs:integer -1
+# compare((), 'a')
+# compare('a', ())
+# compare('a', 'a', 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:integer 0
+# compare('a', 'a', 'http://example.com/c')
+error FOCH0002
+# compare(xs:untypedAtomic('a'), 'b')
+xs:integer -1
+# compare(1, 'a')
+error XPTY0004
+# compare('ﬁ', '𐀀')
+xs:integer -1
+# compare('𐀀', 'ﬁ')
+xs:integer 1
+# codepoint-equal('a', 'a')
+xs:boolean true
+# codepoint-equal('a', 'b')
+xs:boolean false
+# codepoint-equal((), 'a')
+# codepoint-equal(xs:anyURI('a'), 'a')
+xs:boolean true
+# default-collation()
+xs:string http://www.w3.org/2005/xpath-functions/collation/codepoint
+# contains('abc', 'b', 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:boolean true
+# contains('abc', 'b', 'x')
+error FOCH0002
+# starts-with('abc', 'a', 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:boolean true
+# ends-with('abc', 'c', 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:boolean true
+# substring-before('abc', 'b', 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:string a
+# substring-after('abc', 'b', 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:string c
+# distinct-values(('a', 'a'), 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:string a
+# index-of(('a', 'b'), 'b', 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:integer 2
+# max(('a', 'b'), 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:string b
+# min(('a', 'b'), 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:string a
+# max(('a', 'b'), 'x')
+error FOCH0002
+# contains('abc', 'b', ())
+error XPTY0004
+# distinct-values((1, 1), 'x')
+error FOCH0002
+# min((1, 2), 'http://www.w3.org/2005/xpath-functions/collation/codepoint')
+xs:integer 1
+# compare('a', 'b', ' http://www.w3.org/2005/xpath-functions/collation/codepoint ')
+error FOCH0002
+# deep-equal(//a[1], //a[1]/..)
+xs:boolean false
+# deep-equal(//a[1]/text(), (//a[2]/text()))
+xs:boolean true
+# deep-equal(/r, /r/*)
+xs:boolean false
+# deep-equal(//e[1], //e[2], "http://www.w3.org/2005/xpath-functions/collation/codepoint")
+xs:boolean true
+# deep-equal(//*:b[1]/text(), //*:b[3]/text())
+xs:boolean true
+# compare((), 1)
+error XPTY0004
+# compare(1, ())
+error XPTY0004
+# codepoint-equal((), 1)
+error XPTY0004
+# codepoint-equal(1, ())
+error XPTY0004
+# compare((), ())

@@ -1973,7 +1973,7 @@ function MayBeNumeric(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Bo
 const
   Numeric = [xfnCount, xfnSum, xfnAvg, xfnMin, xfnMax, xfnStringLength, xfnNumber, xfnAbs, xfnRound,
     xfnRoundHalfToEven, xfnFloor, xfnCeiling, xfnPosition, xfnLast, xfnIndexOf, xfnStringToCodepoints,
-    xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsNonPositiveInteger .. xfnXsPositiveInteger];
+    xfnCompare, xfnXsDecimal, xfnXsInteger, xfnXsDouble, xfnXsFloat, xfnXsNonPositiveInteger .. xfnXsPositiveInteger];
   { the items of the first argument (distinct-values and data atomize
     them: untyped values, numbers only if the argument has numbers) }
   PassOn = [xfnReverse, xfnDistinctValues, xfnSubsequence, xfnData, xfnExactlyOne, xfnZeroOrOne,

@@ -15,8 +15,9 @@
   >>, the namespace and following axes, element() and attribute() tests
   with arguments, schema-element(), typeswitch is not XPath 2.0) is
   rejected when the expression is compiled, with the XPath error code
-  XPST0003 and the position, never ignored. Functions take no collation
-  argument (only the code point collation exists).
+  XPST0003 and the position, never ignored. The only collation is the
+  code point collation; a collation argument naming another gives
+  FOCH0002.
 
   Names in the expression are resolved when it is compiled, with the
   namespaces of the static context: an unprefixed name test means no
@@ -210,7 +211,8 @@ type
     xfnDateTime, xfnCurrentDateTime, xfnCurrentDate, xfnCurrentTime, xfnImplicitTimezone,
     xfnXsGYearMonth, xfnXsGYear, xfnXsGMonthDay, xfnXsGDay, xfnXsGMonth, xfnXsHexBinary, xfnXsBase64Binary,
     xfnXsQName, xfnQName, xfnPrefixFromQName, xfnLocalNameFromQName, xfnNamespaceUriFromQName, xfnNodeName,
-    xfnResolveQName, xfnNamespaceUriForPrefix, xfnInScopePrefixes
+    xfnResolveQName, xfnNamespaceUriForPrefix, xfnInScopePrefixes,
+    xfnDeepEqual, xfnCompare, xfnCodepointEqual, xfnDefaultCollation
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -349,8 +351,8 @@ const
     (Name: 'count'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'sum'; MinArgs: 1; MaxArgs: 2; Xs: False),
     (Name: 'avg'; MinArgs: 1; MaxArgs: 1; Xs: False),
-    (Name: 'min'; MinArgs: 1; MaxArgs: 1; Xs: False),
-    (Name: 'max'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'min'; MinArgs: 1; MaxArgs: 2; Xs: False),
+    (Name: 'max'; MinArgs: 1; MaxArgs: 2; Xs: False),
     (Name: 'exists'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'empty'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'string'; MinArgs: 0; MaxArgs: 1; Xs: False),
@@ -359,11 +361,11 @@ const
     (Name: 'concat'; MinArgs: 2; MaxArgs: -1; Xs: False),
     (Name: 'string-join'; MinArgs: 1; MaxArgs: 2; Xs: False),
     (Name: 'substring'; MinArgs: 2; MaxArgs: 3; Xs: False),
-    (Name: 'substring-before'; MinArgs: 2; MaxArgs: 2; Xs: False),
-    (Name: 'substring-after'; MinArgs: 2; MaxArgs: 2; Xs: False),
-    (Name: 'contains'; MinArgs: 2; MaxArgs: 2; Xs: False),
-    (Name: 'starts-with'; MinArgs: 2; MaxArgs: 2; Xs: False),
-    (Name: 'ends-with'; MinArgs: 2; MaxArgs: 2; Xs: False),
+    (Name: 'substring-before'; MinArgs: 2; MaxArgs: 3; Xs: False),
+    (Name: 'substring-after'; MinArgs: 2; MaxArgs: 3; Xs: False),
+    (Name: 'contains'; MinArgs: 2; MaxArgs: 3; Xs: False),
+    (Name: 'starts-with'; MinArgs: 2; MaxArgs: 3; Xs: False),
+    (Name: 'ends-with'; MinArgs: 2; MaxArgs: 3; Xs: False),
     (Name: 'upper-case'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'lower-case'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'translate'; MinArgs: 3; MaxArgs: 3; Xs: False),
@@ -385,9 +387,9 @@ const
     (Name: 'position'; MinArgs: 0; MaxArgs: 0; Xs: False),
     (Name: 'last'; MinArgs: 0; MaxArgs: 0; Xs: False),
     (Name: 'reverse'; MinArgs: 1; MaxArgs: 1; Xs: False),
-    (Name: 'distinct-values'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'distinct-values'; MinArgs: 1; MaxArgs: 2; Xs: False),
     (Name: 'subsequence'; MinArgs: 2; MaxArgs: 3; Xs: False),
-    (Name: 'index-of'; MinArgs: 2; MaxArgs: 2; Xs: False),
+    (Name: 'index-of'; MinArgs: 2; MaxArgs: 3; Xs: False),
     (Name: 'data'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'exactly-one'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'zero-or-one'; MinArgs: 1; MaxArgs: 1; Xs: False),
@@ -473,7 +475,11 @@ const
     (Name: 'node-name'; MinArgs: 0; MaxArgs: 1; Xs: False),
     (Name: 'resolve-QName'; MinArgs: 2; MaxArgs: 2; Xs: False),
     (Name: 'namespace-uri-for-prefix'; MinArgs: 2; MaxArgs: 2; Xs: False),
-    (Name: 'in-scope-prefixes'; MinArgs: 1; MaxArgs: 1; Xs: False)
+    (Name: 'in-scope-prefixes'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'deep-equal'; MinArgs: 2; MaxArgs: 3; Xs: False),
+    (Name: 'compare'; MinArgs: 2; MaxArgs: 3; Xs: False),
+    (Name: 'codepoint-equal'; MinArgs: 2; MaxArgs: 2; Xs: False),
+    (Name: 'default-collation'; MinArgs: 0; MaxArgs: 0; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }

@@ -152,6 +152,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `deep-equal` (comments and processing instructions skipped,
+  attributes in any order, NaN equal to NaN), `compare`,
+  `codepoint-equal`, `default-collation`, and the collation argument of
+  `contains`, `starts-with`, `ends-with`, `substring-before`,
+  `substring-after`, `distinct-values`, `index-of`, `min` and `max`: the
+  code point collation is the only one, another gives FOCH0002. QT3: 355
+  more cases pass in both profiles.
 - XPath: `resolve-QName`, `namespace-uri-for-prefix` and
   `in-scope-prefixes` (sorted, `xml` last, as Saxon; the prefixes are
   `xs:NCName` in XPath 2.0, `xs:string` in the Saxon profile). The XPath
