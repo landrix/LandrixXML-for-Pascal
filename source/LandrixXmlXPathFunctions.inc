@@ -352,6 +352,25 @@ var
     Result := Integer(I64);
   end;
 
+  { an xs:integer position (remove, insert-before): beyond Int64 the
+    nearest Int64, which is outside every sequence just as well }
+  function PositionArg(K: Integer): Int64;
+  var
+    V: TLandrixXmlXPathItem;
+  begin
+    if not OptAtom(K, V) then
+      Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' is empty');
+    if V.Kind = xikUntypedAtomic then
+      V := CastTo(V, xikInteger, Xp20);
+    if BasicKind(V.Kind) <> xikInteger then
+      Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' must be an integer');
+    if not LandrixXmlDecimalTryToInt64(ItemDecimal(V), Result) then
+      if LandrixXmlDecimalSign(ItemDecimal(V)) > 0 then
+        Result := High(Int64)
+      else
+        Result := -High(Int64);
+  end;
+
   { the node argument of name(), local-name(), ...: -1 for the empty sequence }
   function NodeArg: Integer;
   var
@@ -1061,6 +1080,65 @@ begin
       end;
     xfnDefaultCollation:
       Result := SingleSeq(StringItem(xikString, CodepointCollation));
+    xfnRemove:
+      begin
+        A := Arg(0);
+        V64 := PositionArg(1);
+        for I := 0 to A.Count - 1 do
+          if Int64(I) + 1 <> V64 then
+            LandrixXmlXPathAppend(Result, A.Items[I]);
+      end;
+    xfnInsertBefore:
+      begin
+        A := Arg(0);
+        V64 := PositionArg(1);
+        B := Arg(2);
+        { before the first item from position 1 down, after the last
+          beyond the end }
+        if V64 < 1 then
+          V64 := 1;
+        if V64 > Int64(A.Count) + 1 then
+          V64 := Int64(A.Count) + 1;
+        for I := 0 to A.Count do
+        begin
+          if Int64(I) + 1 = V64 then
+            for J := 0 to B.Count - 1 do
+              LandrixXmlXPathAppend(Result, B.Items[J]);
+          if I < A.Count then
+            LandrixXmlXPathAppend(Result, A.Items[I]);
+        end;
+      end;
+    xfnUnordered:
+      { the order stays: any order is allowed }
+      Result := Arg(0);
+    xfnError:
+      begin
+        { the error code is the local name of the QName (as Saxon reports
+          it; the message names the namespace too), FOER0000 without one;
+          the description must be a string; the third argument is
+          evaluated (its errors come first, as in Saxon) but not reported.
+          XPath 2.0 has no error(()), Saxon (XPath 3.1) does. }
+        Found := (ArgCount > 0) and OptAtom(0, Item);
+        if (ArgCount = 1) and not Found and Xp20 then
+          Fail('XPTY0004', Name + ': the error code must not be empty');
+        if Found then
+        begin
+          if (Item.Kind = xikUntypedAtomic) and not Xp20 then
+            Fail('XPTY0117', Name + ': xs:untypedAtomic does not convert to xs:QName');
+          if Item.Kind <> xikQName then
+            Fail('XPTY0004', Name + ': ' + KindName(Item.Kind) + ' is not an xs:QName');
+        end;
+        T := 'error() was called';
+        if ArgCount > 1 then
+          T := ReqStrArg(1);
+        if ArgCount > 2 then
+          Arg(2);
+        if Found then
+          raise ELandrixXmlXPathRaised.CreateXPath(LandrixXmlUtf8ToString(ItemQName(Item).LocalName),
+            LandrixXmlUtf8ToString('Q{' + ItemQName(Item).NamespaceUri + '}' + ItemQName(Item).LocalName + ': ' + T))
+        else
+          raise ELandrixXmlXPathRaised.CreateXPath('FOER0000', LandrixXmlUtf8ToString(T));
+      end;
     xfnResolveQName:
       begin
         { the element is checked also for an empty name, as Saxon does }

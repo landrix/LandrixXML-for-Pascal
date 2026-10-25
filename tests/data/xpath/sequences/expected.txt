@@ -1,0 +1,158 @@
+# remove((1,2,3), 2)
+xs:integer 1
+xs:integer 3
+# remove((1,2,3), 0)
+xs:integer 1
+xs:integer 2
+xs:integer 3
+# remove((1,2,3), 4)
+xs:integer 1
+xs:integer 2
+xs:integer 3
+# remove((1,2,3), -1)
+xs:integer 1
+xs:integer 2
+xs:integer 3
+# remove((), 1)
+# remove((1,2,3), 99999999999999999999)
+xs:integer 1
+xs:integer 2
+xs:integer 3
+# remove((1,2,3), -99999999999999999999)
+xs:integer 1
+xs:integer 2
+xs:integer 3
+# remove((1,2,3), 1.0)
+error XPTY0004
+# remove((1,2,3), xs:untypedAtomic('2'))
+xs:integer 1
+xs:integer 3
+# remove((1,2,3), '2')
+error XPTY0004
+# remove((1,2,3), ())
+error XPTY0004
+# remove((1,2,3), (1,2))
+error XPTY0004
+# remove((1,2,3), xs:double('2'))
+error XPTY0004
+# remove((1,2,3), xs:long(2))
+xs:integer 1
+xs:integer 3
+# remove(//a, 2)
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[3]
+# count(remove(//a, 2))
+xs:integer 2
+# insert-before((1,2,3), 2, ('a','b'))
+xs:integer 1
+xs:string a
+xs:string b
+xs:integer 2
+xs:integer 3
+# insert-before((1,2,3), 0, 'a')
+xs:string a
+xs:integer 1
+xs:integer 2
+xs:integer 3
+# insert-before((1,2,3), -5, 'a')
+xs:string a
+xs:integer 1
+xs:integer 2
+xs:integer 3
+# insert-before((1,2,3), 4, 'a')
+xs:integer 1
+xs:integer 2
+xs:integer 3
+xs:string a
+# insert-before((1,2,3), 9, 'a')
+xs:integer 1
+xs:integer 2
+xs:integer 3
+xs:string a
+# insert-before((), 3, 'a')
+xs:string a
+# insert-before((1,2), 1, ())
+xs:integer 1
+xs:integer 2
+# insert-before((1,2), 99999999999999999999, 'z')
+xs:integer 1
+xs:integer 2
+xs:string z
+# insert-before((1,2), -99999999999999999999, 'z')
+xs:string z
+xs:integer 1
+xs:integer 2
+# insert-before((1,2), (), 'z')
+error XPTY0004
+# insert-before((1,2), 1.5, 'z')
+error XPTY0004
+# insert-before((1,2), xs:untypedAtomic('2'), 'z')
+xs:integer 1
+xs:string z
+xs:integer 2
+# insert-before(//a, 2, //a[3])
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[3]
+node /Q{}r[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[3]
+# unordered((3,1,2))
+xs:integer 3
+xs:integer 1
+xs:integer 2
+# unordered(())
+# unordered(//a)
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[2]
+node /Q{}r[1]/Q{}a[3]
+# count(unordered(//a))
+xs:integer 3
+# //a[remove((1,2), 1)]
+node /Q{}r[1]/Q{}a[2]
+# //a[insert-before((), 1, 2)]
+node /Q{}r[1]/Q{}a[2]
+# //a[unordered(2)]
+node /Q{}r[1]/Q{}a[2]
+# (//a)[remove((3, 2), 1)]
+node /Q{}r[1]/Q{}a[2]
+# remove((1, 2), 1) instance of xs:integer+
+xs:boolean true
+# error()
+error FOER0000
+# error(QName('http://www.w3.org/2005/xqt-errors', 'err:FOAR0001'))
+error FOAR0001
+# error(QName('urn:x', 'my:E'))
+error E
+# error(QName('', 'E'))
+error E
+# error((), 'msg')
+error FOER0000
+# error((), 'msg', 1)
+error FOER0000
+# error('FOER0000')
+error XPTY0004
+# error(xs:untypedAtomic('a'))
+error XPTY0117
+# error(QName('urn:x', 'my:E'), 'msg')
+error E
+# error(QName('urn:x', 'my:E'), 1)
+error XPTY0004
+# error(QName('urn:x', 'my:E'), 'm', (1, 2))
+error E
+# if (1 = 2) then error() else 3
+xs:integer 3
+# count((1, error()))
+error FOER0000
+# true() or error()
+xs:boolean true
+# remove(error(), 1)
+error FOER0000
+# error(QName('http://www.w3.org/2005/xqt-errors', 'FOAR0002'))
+error FOAR0002
+# error((), ())
+error XPTY0004
+# error(QName('urn:x', 'my:E'), 'm', 1 div 0)
+error FOAR0001
+# error((), 'm', error(QName('urn:x', 'my:F')))
+error F
+# error() or true()
+xs:boolean true

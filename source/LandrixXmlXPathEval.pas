@@ -136,6 +136,8 @@ type
     ContextNode: Integer;
     ErrorCode: string;
     ErrorMessage: string;
+    { the error came from fn:error }
+    ErrorRaised: Boolean;
     { the declared type the value is converted to (xsl:variable as=) }
     DeclaredType: TLandrixXmlXPathSequenceType;
   end;
@@ -415,6 +417,11 @@ procedure Fail(const Code, Msg: string);
 begin
   raise ELandrixXmlXPathError.CreateXPath(Code, Msg);
 end;
+
+type
+  { raised by fn:error: an error of the expression itself, also with the
+    code FOER0000, which otherwise marks what is not supported }
+  ELandrixXmlXPathRaised = class(ELandrixXmlXPathError);
 
 { --- sequences ---------------------------------------------------------- }
 
@@ -1472,6 +1479,7 @@ begin
   Slot.ContextNode := -1;
   Slot.ErrorCode := '';
   Slot.ErrorMessage := '';
+  Slot.ErrorRaised := False;
   Slot.DeclaredType.Declared := False;
 end;
 
@@ -1636,6 +1644,7 @@ begin
             P^.State := xssError;
             P^.ErrorCode := E.XPathCode;
             P^.ErrorMessage := E.Message;
+            P^.ErrorRaised := E is ELandrixXmlXPathRaised;
             raise;
           end;
           on Exception do
@@ -1659,6 +1668,7 @@ begin
               P^.State := xssError;
               P^.ErrorCode := E.XPathCode;
               P^.ErrorMessage := E.Message;
+              P^.ErrorRaised := E is ELandrixXmlXPathRaised;
               raise;
             end;
           end;
@@ -1675,7 +1685,12 @@ begin
       end;
     xssError:
       begin
-        raise ELandrixXmlXPathError.CreateXPath(P^.ErrorCode, Copy(P^.ErrorMessage, Length(P^.ErrorCode) + 3, MaxInt));
+        if P^.ErrorRaised then
+          raise ELandrixXmlXPathRaised.CreateXPath(P^.ErrorCode, Copy(P^.ErrorMessage, Length(P^.ErrorCode) + 3,
+            MaxInt))
+        else
+          raise ELandrixXmlXPathError.CreateXPath(P^.ErrorCode, Copy(P^.ErrorMessage, Length(P^.ErrorCode) + 3,
+            MaxInt));
       end;
   else
     Fail('XPDY0002', 'variable slot ' + IntToStr(Slot) + ' is not bound');
@@ -1951,14 +1966,16 @@ begin
 end;
 
 { An error in a pattern's predicate that means "no match": a dynamic
-  error of the rules. Not what this implementation does not support
-  (FOER0000, XPST0017, xecUnsupported and the like) and not a circular
-  variable (XTDE0640): these are raised. }
+  error of the rules, fn:error included. Not what this implementation
+  does not support (FOER0000, XPST0017, xecUnsupported and the like) and
+  not a circular variable (XTDE0640): these are raised. }
 function PatternMismatch(E: ELandrixXmlError): Boolean;
 var
   Code: string;
 begin
-  if E is ELandrixXmlXPathError then
+  if E is ELandrixXmlXPathRaised then
+    Result := True
+  else if E is ELandrixXmlXPathError then
   begin
     Code := ELandrixXmlXPathError(E).XPathCode;
     Result := (Code <> 'XTDE0640') and (Code <> 'FOER0000') and (Code <> 'XPST0017');
@@ -1977,7 +1994,7 @@ const
   { the items of the first argument (distinct-values and data atomize
     them: untyped values, numbers only if the argument has numbers) }
   PassOn = [xfnReverse, xfnDistinctValues, xfnSubsequence, xfnData, xfnExactlyOne, xfnZeroOrOne,
-    xfnOneOrMore];
+    xfnOneOrMore, xfnRemove, xfnUnordered];
 var
   J: Integer;
 begin
@@ -2011,6 +2028,10 @@ begin
         Result := True
       else if TLandrixXmlXPathFunctionId(Nodes[Index].Op) in PassOn then
         Result := (Length(Nodes[Index].Children) = 0) or MayBeNumeric(Nodes, Nodes[Index].Children[0])
+      { insert-before: the items of the first and the third argument }
+      else if TLandrixXmlXPathFunctionId(Nodes[Index].Op) = xfnInsertBefore then
+        Result := (Length(Nodes[Index].Children) < 3) or MayBeNumeric(Nodes, Nodes[Index].Children[0]) or
+          MayBeNumeric(Nodes, Nodes[Index].Children[2])
       else
         Result := TLandrixXmlXPathFunctionId(Nodes[Index].Op) in Numeric;
   else
@@ -2527,6 +2548,7 @@ var
   I: Integer;
   Left, Right: Boolean;
   LeftError: ELandrixXmlXPathError;
+  LeftRaised: Boolean;
   ErrCode, ErrMsg: string;
   Mark, Split: Integer;
 begin
@@ -2631,6 +2653,7 @@ begin
         { like Saxon: an error in one operand does not matter if the other
           one decides }
         LeftError := nil;
+        LeftRaised := False;
         Left := False;
         ErrCode := '';
         ErrMsg := '';
@@ -2640,6 +2663,7 @@ begin
           on E: ELandrixXmlXPathError do
           begin
             LeftError := E;
+            LeftRaised := E is ELandrixXmlXPathRaised;
             ErrCode := E.XPathCode;
             ErrMsg := Copy(E.Message, Length(E.XPathCode) + 3, MaxInt);
           end;
@@ -2657,7 +2681,10 @@ begin
             Result := BooleanSeq(Right);
             Exit;
           end;
-          raise ELandrixXmlXPathError.CreateXPath(ErrCode, ErrMsg);
+          if LeftRaised then
+            raise ELandrixXmlXPathRaised.CreateXPath(ErrCode, ErrMsg)
+          else
+            raise ELandrixXmlXPathError.CreateXPath(ErrCode, ErrMsg);
         end;
         Result := BooleanSeq(Right);
       end;

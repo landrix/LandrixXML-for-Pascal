@@ -677,6 +677,11 @@ begin
     CheckEquals(1, Count('//(a[xs:integer(v[1]) > 0][1])[last()]'), 'a filter after a resolved [1]');
     CheckEquals(1, Count('//((a[xs:integer(v[1]) > 0])[1])[last()]'), 'a nested filter after a resolved [1]');
     CheckEquals(1, Count('//(a[xs:integer(v[1]) > 0])[1]'), 'a filter: the first item comes before the error');
+    { fn:error is an error of the rules: no match, also with FOER0000 }
+    CheckEquals(0, Count('//a[error()]'), 'error() in a predicate');
+    CheckEquals(0, Count('//a[error() or false()]'), 'error() before or');
+    CheckEquals(0, Count('//a[error() and true()]'), 'error() before and');
+    CheckEquals(1, Count('//a[if (v = ''x'') then error(QName(''urn:e'', ''E'')) else v = 2]'), 'error(QName) for one a');
     { what is not supported is not "no match" }
     Raised := '';
     try
@@ -720,6 +725,16 @@ begin
         Raised := E.XPathCode;
     end;
     CheckEqualsStr('FORG0001', Raised, 'the variable in a pattern');
+    { fn:error in a variable: no match on every node, also when the
+      stored error is raised again }
+    Bound.Free;
+    Bound := nil;
+    Bound := TLandrixXmlXPathExpression.Create(U('error()'), nil);
+    Evaluator.BindLazy(0, Bound, 0);
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('//a[$v]'), Context);
+    CheckEquals(0, Evaluator.EvaluatePattern(Expr, 0).Count, 'error() in a variable');
     { a nested filter whose error is caught keeps the failure seen before }
     Tree.LoadFromUtf8(U('<r><a k="bad"/><a k="1"/><a k="2"/></r>'));
     Evaluator.ClearCache;

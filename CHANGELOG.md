@@ -152,6 +152,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `remove`, `insert-before`, `unordered` (keeps the order) and
+  `error` (the local name of the QName as the error code, FOER0000
+  without one; in a Schematron rule context an error means no match).
+  QT3: 326 more cases pass (325 in the Saxon profile).
 - XPath: `deep-equal` (comments and processing instructions skipped,
   attributes in any order, NaN equal to NaN), `compare`,
   `codepoint-equal`, `default-collation`, and the collation argument of

@@ -42,3 +42,5 @@ count(node-name())	error XPST0017	xs:integer 0	node-name with no argument is XPa
 local-name-from-QName(xs:untypedAtomic('xml:lang'))	error XPTY0004	error XPTY0117	XPath 3.0 reports an untypedAtomic for a QName parameter with a code of its own
 string(namespace-uri-from-QName(QName(' urn:p  x ', 'a')))	xs:string  urn:p  x 	xs:string urn:p x	Saxon collapses the white space of the namespace URI of fn:QName, as of an xs:anyURI
 in-scope-prefixes(/*)	xs:NCName xml	xs:string xml	F&O 2.0 returns a prefix as an xs:NCName (the default namespace as a zero-length xs:string); Saxon returns xs:string
+error(xs:untypedAtomic('a'))	error XPTY0004	error XPTY0117	the same for the error code of fn:error
+error(())	error XPTY0004	error FOER0000	F&O 2.0 fn:error with one argument takes an xs:QName; XPath 3.1 an xs:QName?

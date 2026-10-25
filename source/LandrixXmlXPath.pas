@@ -212,7 +212,8 @@ type
     xfnXsGYearMonth, xfnXsGYear, xfnXsGMonthDay, xfnXsGDay, xfnXsGMonth, xfnXsHexBinary, xfnXsBase64Binary,
     xfnXsQName, xfnQName, xfnPrefixFromQName, xfnLocalNameFromQName, xfnNamespaceUriFromQName, xfnNodeName,
     xfnResolveQName, xfnNamespaceUriForPrefix, xfnInScopePrefixes,
-    xfnDeepEqual, xfnCompare, xfnCodepointEqual, xfnDefaultCollation
+    xfnDeepEqual, xfnCompare, xfnCodepointEqual, xfnDefaultCollation,
+    xfnRemove, xfnInsertBefore, xfnUnordered, xfnError
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -479,7 +480,11 @@ const
     (Name: 'deep-equal'; MinArgs: 2; MaxArgs: 3; Xs: False),
     (Name: 'compare'; MinArgs: 2; MaxArgs: 3; Xs: False),
     (Name: 'codepoint-equal'; MinArgs: 2; MaxArgs: 2; Xs: False),
-    (Name: 'default-collation'; MinArgs: 0; MaxArgs: 0; Xs: False)
+    (Name: 'default-collation'; MinArgs: 0; MaxArgs: 0; Xs: False),
+    (Name: 'remove'; MinArgs: 2; MaxArgs: 2; Xs: False),
+    (Name: 'insert-before'; MinArgs: 3; MaxArgs: 3; Xs: False),
+    (Name: 'unordered'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'error'; MinArgs: 0; MaxArgs: 3; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }
