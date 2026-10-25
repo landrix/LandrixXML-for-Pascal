@@ -152,6 +152,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- `LandrixXmlDouble`: `xs:float` (IEEE 754 binary32) as a
+  `TLandrixXmlDouble` restricted to binary32 values:
+  `LandrixXmlDoubleRoundToFloat`, `LandrixXmlDoubleIsFloat`,
+  `LandrixXmlDoubleTryParseFloat` / `LandrixXmlDoubleParseFloat` and
+  `LandrixXmlDoubleFloatFromDecimal` (rounded once to the nearest float,
+  never through a double) and `LandrixXmlDoubleFormatFloat` (the XPath
+  string value with the digits Saxon writes for floats). The XML Schema
+  validator uses them for `xs:float`. `tools/gen-float-testdata.py`
+  generates 5,811 cases with an independent oracle (exact fractions); the
+  string values and Saxon's own reading of `xs:float` literals (through a
+  double) match Saxon on every compared case.
 - XPath: date and time arithmetic (F&O 2.0 10.4 to 10.8): `xs:date`,
   `xs:dateTime` and `xs:time` minus each other, plus and minus durations,
   comparisons of values with and without time zone, casts between the

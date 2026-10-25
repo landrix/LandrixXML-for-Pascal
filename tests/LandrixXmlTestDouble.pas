@@ -6,7 +6,8 @@
 
   Tests for LandrixXmlDouble: generated cases (tests/data/double, Python as
   IEEE oracle, checked against Saxon HE 12), special values, Saxon's
-  formatting quirks and the conversions to native Double. }
+  formatting quirks, the conversions to native Double and xs:float
+  (float-cases.txt, exact fractions as oracle). }
 
 unit LandrixXmlTestDouble;
 
@@ -185,6 +186,79 @@ begin
   finally
     L.Free;
   end;
+end;
+
+{ xs:float: tools/gen-float-testdata.py }
+function EvaluateFloat(const Op, A: string): string;
+var
+  V: TLandrixXmlDouble;
+begin
+  try
+    if Op = 'roundtofloat' then
+      Result := ToHex(LandrixXmlDoubleRoundToFloat(FromHex(A)))
+    else if Op = 'isfloat' then
+    begin
+      if LandrixXmlDoubleIsFloat(FromHex(A)) then
+        Result := 'true'
+      else
+        Result := 'false';
+    end
+    else if Op = 'parse' then
+    begin
+      if LandrixXmlDoubleTryParseFloat(U(A), V) then
+        Result := ToHex(V)
+      else
+        Result := 'error';
+    end
+    else if Op = 'fromdecimal' then
+      Result := ToHex(LandrixXmlDoubleFloatFromDecimal(LandrixXmlParseDecimal(U(A))))
+    else if Op = 'format' then
+      Result := N(LandrixXmlDoubleFormatFloat(FromHex(A)))
+    else
+      Result := 'unknown op ' + Op;
+  except
+    on E: ELandrixXmlError do
+      Result := 'unexpected error: ' + E.Message;
+  end;
+end;
+
+procedure TestFloatData;
+var
+  L: TStringList;
+  K: Integer;
+  Op, A, B, Expected: string;
+begin
+  L := TStringList.Create;
+  try
+    L.LoadFromFile(DataFile('float-cases.txt'));
+    Check(L.Count > 5000, 'float cases present');
+    for K := 0 to L.Count - 1 do
+    begin
+      SplitFields(L[K], Op, A, B, Expected);
+      CheckEqualsStr(Expected, EvaluateFloat(Op, A), 'float ' + Op + ' "' + A + '"');
+    end;
+  finally
+    L.Free;
+  end;
+end;
+
+{ The raising variant and a double that is not a float. }
+procedure TestFloatApi;
+var
+  Raised: Boolean;
+begin
+  CheckEqualsStr('0.1', N(LandrixXmlDoubleFormatFloat(Dbl('0.1'))), 'format rounds to float first');
+  CheckEqualsStr('3FB99999A0000000', ToHex(LandrixXmlDoubleParseFloat(U('0.1'))), 'ParseFloat');
+  Check(not LandrixXmlDoubleIsFloat(Dbl('0.1')), 'the double 0.1 is no float');
+  Check(LandrixXmlDoubleIsFloat(LandrixXmlDoubleParseFloat(U('0.1'))), 'the float 0.1 is');
+  Raised := False;
+  try
+    LandrixXmlDoubleParseFloat(U('1,5'));
+  except
+    on E: ELandrixXmlError do
+      Raised := E.Code = xecConversion;
+  end;
+  Check(Raised, 'invalid xs:float raises xecConversion');
 end;
 
 procedure TestSpecialValues;
@@ -366,6 +440,8 @@ begin
   RegisterTest('Double.LongInputs', TestLongInputs);
   RegisterTest('Double.Conversions', TestConversions);
   RegisterTest('Double.Rounding', TestRounding);
+  RegisterTest('Double.FloatData', TestFloatData);
+  RegisterTest('Double.FloatApi', TestFloatApi);
 end;
 
 end.

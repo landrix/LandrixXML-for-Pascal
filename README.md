@@ -43,7 +43,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlDom` | `TLandrixXmlDocument`, `TLandrixXmlNode` |
 | `LandrixXmlConvert` | `xs:*` value conversion |
 | `LandrixXmlDecimal` | exact `xs:decimal`/`xs:integer` arithmetic with Saxon-compatible division (first of the optional validation units; the units above do not use it) |
-| `LandrixXmlDouble` | `xs:double` in software (IEEE 754 bit pattern, Saxon-compatible string value), optional validation unit |
+| `LandrixXmlDouble` | `xs:double` and `xs:float` in software (IEEE 754 bit pattern, Saxon-compatible string value), optional validation unit |
 | `LandrixXmlRegex` | XSD and XPath regular expressions, linear-time matching, optional validation unit |
 | `LandrixXmlUnicode` | Unicode 6.2.0 general categories, code point strings, optional validation unit |
 | `LandrixXmlXsdTypes` | XML Schema simple types and facets, optional validation unit |

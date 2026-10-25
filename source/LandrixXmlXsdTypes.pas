@@ -976,138 +976,6 @@ begin
   Result := True;
 end;
 
-{ binary32 rounding of a double (float value space), ties to even unless
-  TieDirection says otherwise; Tie tells whether D lay exactly halfway
-  between two floats. }
-function RoundToFloat(const D: TLandrixXmlDouble; TieDirection: Integer; out Tie: Boolean): TLandrixXmlDouble;
-var
-  Bits, Mantissa, Kept, Rest, Half: Int64;
-  Biased, Drop: Integer;
-begin
-  Result := D;
-  Tie := False;
-  Bits := D.Bits;
-  Biased := Integer((Bits shr 52) and 2047);
-  if (Biased = 2047) or ((Bits and not Low(Int64)) = 0) then
-    Exit;
-  { binary32: 24 significant bits, exponents -126 .. 127, subnormals to
-    2^-149; in binary64 terms a biased exponent of 1023 - 126 = 897 }
-  if Biased > 1023 + 127 then
-  begin
-    { 2^128 and above }
-    Result := LandrixXmlDoubleInfinity(Bits < 0);
-    Exit;
-  end;
-  if Biased = 0 then
-  begin
-    Result := LandrixXmlDoubleZero(Bits < 0);
-    Exit;
-  end;
-  Mantissa := (Bits and Int64($000FFFFFFFFFFFFF)) or Int64($0010000000000000);
-  { bits to drop from the 53-bit significand }
-  if Biased >= 1023 - 126 then
-    Drop := 29
-  else
-    Drop := 29 + (1023 - 126 - Biased);
-  if Drop > 54 then
-  begin
-    Result := LandrixXmlDoubleZero(Bits < 0);
-    Exit;
-  end;
-  Kept := Mantissa shr Drop;
-  Rest := Mantissa - (Kept shl Drop);
-  Half := Int64(1) shl (Drop - 1);
-  Tie := Rest = Half;
-  { a tie goes to even, or away from zero / towards zero if the exact value
-    is known to lie above / below the double (TieDirection 1 / -1) }
-  if (Rest > Half) or (Tie and (((TieDirection = 0) and Odd(Kept)) or (TieDirection > 0))) then
-    Inc(Kept);
-  Mantissa := Kept shl Drop;
-  { renormalize: a carry may raise the exponent }
-  while Mantissa >= Int64($0020000000000000) do
-  begin
-    Mantissa := Mantissa shr 1;
-    Inc(Biased);
-  end;
-  if Mantissa = 0 then
-  begin
-    Result := LandrixXmlDoubleZero(Bits < 0);
-    Exit;
-  end;
-  while Mantissa < Int64($0010000000000000) do
-  begin
-    Mantissa := Mantissa shl 1;
-    Dec(Biased);
-  end;
-  if Biased > 1023 + 127 then
-  begin
-    Result := LandrixXmlDoubleInfinity(Bits < 0);
-    Exit;
-  end;
-  Result.Bits := (Bits and Low(Int64)) or (Int64(Biased) shl 52) or (Mantissa and Int64($000FFFFFFFFFFFFF));
-end;
-
-{ The float nearest to the number written in Text, given D, the double
-  nearest to it. Rounding D again would round twice; that matters only if
-  D lies exactly halfway between two floats, and then the exact value of
-  Text decides (as Java parses floats directly to binary32). }
-function FloatFromLexical(const Text: TLandrixXmlUtf8; const D: TLandrixXmlDouble): TLandrixXmlDouble;
-var
-  Tie, Negative: Boolean;
-  P, E, I, Digits: Integer;
-  Mantissa, Exact, Approx: TLandrixXmlDecimal;
-  C: Integer;
-begin
-  Result := RoundToFloat(D, 0, Tie);
-  if not Tie then
-    Exit;
-  { exact decimal value of Text: mantissa times 10^exponent }
-  P := 0;
-  for I := 1 to Length(Text) do
-    if (Text[I] = 'e') or (Text[I] = 'E') then
-    begin
-      P := I;
-      Break;
-    end;
-  if P = 0 then
-  begin
-    if not LandrixXmlTryParseDecimal(Text, Exact) then
-      Exit;
-  end
-  else
-  begin
-    if not LandrixXmlTryParseDecimal(Copy(Text, 1, P - 1), Mantissa) then
-      Exit;
-    { exponent: sign, digits; an exponent of more than six significant
-      digits cannot give a value in the float range, so no tie }
-    Negative := False;
-    I := P + 1;
-    if (I <= Length(Text)) and ((Text[I] = '+') or (Text[I] = '-')) then
-    begin
-      Negative := Text[I] = '-';
-      Inc(I);
-    end;
-    E := 0;
-    Digits := 0;
-    while I <= Length(Text) do
-    begin
-      if (E > 0) or (Text[I] <> '0') then
-        Inc(Digits);
-      if Digits > 6 then
-        Exit;
-      E := E * 10 + (Ord(Text[I]) - Ord('0'));
-      Inc(I);
-    end;
-    if Negative then
-      E := -E;
-    Exact := LandrixXmlDecimalMultiplyPow10(Mantissa, E);
-  end;
-  Approx := LandrixXmlDoubleToDecimal(D);
-  C := LandrixXmlDecimalCompare(LandrixXmlDecimalAbs(Exact), LandrixXmlDecimalAbs(Approx));
-  if C <> 0 then
-    Result := RoundToFloat(D, C, Tie);
-end;
-
 { The lexical check of a primitive type; Normalized is already white space
   processed. }
 function ParsePrimitive(Primitive: TLandrixXmlXsdPrimitive; Rule: TLandrixXmlXsdLexicalRule;
@@ -1158,9 +1026,10 @@ begin
         { XML Schema 1.0 has no "+INF" }
         if Normalized = '+INF' then
           Exit;
-        Result := LandrixXmlDoubleTryParse(Normalized, Value.DoubleValue);
-        if Result and (Primitive = xspFloat) then
-          Value.DoubleValue := FloatFromLexical(Normalized, Value.DoubleValue);
+        if Primitive = xspFloat then
+          Result := LandrixXmlDoubleTryParseFloat(Normalized, Value.DoubleValue)
+        else
+          Result := LandrixXmlDoubleTryParse(Normalized, Value.DoubleValue);
       end;
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth:
       Result := ParseDateTimeKind(Normalized, Primitive, Value.DateTime);
@@ -1792,9 +1661,10 @@ var
     T: TLandrixXmlUtf8;
   begin
     T := Text(Ds, E);
-    Back := LandrixXmlDoubleParse(T);
     if IsFloat then
-      Back := FloatFromLexical(T, Back);
+      Back := LandrixXmlDoubleParseFloat(T)
+    else
+      Back := LandrixXmlDoubleParse(T);
     Result := Back.Bits = D.Bits;
   end;
 

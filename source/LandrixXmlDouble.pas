@@ -7,7 +7,8 @@
   xs:double for the validation units (IEEE 754 binary64): arithmetic,
   comparison, rounding, lexical parsing with correct rounding, the XPath
   string value (shortest digits, as Saxon prints doubles) and the exact
-  conversions between xs:double and xs:decimal.
+  conversions between xs:double and xs:decimal; xs:float (binary32) as a
+  TLandrixXmlDouble restricted to binary32 values.
 
   Everything is computed in software on the bit pattern with integer
   arithmetic: every operation is first done exactly and then rounded once
@@ -120,6 +121,35 @@ function LandrixXmlDoubleCompare(const A, B: TLandrixXmlDouble): Integer;
 function LandrixXmlDoubleRound(const A: TLandrixXmlDouble; Precision: Integer;
   Mode: TLandrixXmlDecimalRounding): TLandrixXmlDouble;
 
+{ xs:float has no type of its own: a float is a TLandrixXmlDouble whose
+  value is a binary32 value. Float arithmetic is the double operation
+  followed by LandrixXmlDoubleRoundToFloat; for + - * / that equals the
+  binary32 operation, as a double holds more than twice the float
+  precision. A native Single converts exactly through
+  LandrixXmlDoubleFromNative and ...ToNative. }
+
+{ The nearest binary32 value, ties to even: values from 2^128 on (after
+  rounding) give +-INF, values below half of the smallest float subnormal
+  give +-0; NaN, infinities and zeros are returned unchanged. }
+function LandrixXmlDoubleRoundToFloat(const A: TLandrixXmlDouble): TLandrixXmlDouble;
+{ True if A is a binary32 value (NaN, infinities and zeros included). }
+function LandrixXmlDoubleIsFloat(const A: TLandrixXmlDouble): Boolean;
+{ xs:float lexical form, the rules of LandrixXmlDoubleTryParse; the result
+  is the binary32 value nearest to the number written, rounded once (not
+  through the nearest double). }
+function LandrixXmlDoubleTryParseFloat(const S: TLandrixXmlUtf8; out Value: TLandrixXmlDouble): Boolean;
+{ Like LandrixXmlDoubleTryParseFloat, but raises ELandrixXmlError
+  (xecConversion). }
+function LandrixXmlDoubleParseFloat(const S: TLandrixXmlUtf8): TLandrixXmlDouble;
+{ The binary32 value nearest to A, rounded once (xs:float(decimal)). }
+function LandrixXmlDoubleFloatFromDecimal(const A: TLandrixXmlDecimal): TLandrixXmlDouble;
+{ The XPath string value of the float nearest to A as Saxon HE 12 writes
+  floats: the notation of LandrixXmlDoubleFormat, plain from the float
+  nearest to 1E-6 to below 1E6; the digits of Saxon's algorithm at float
+  precision; subnormal floats with Java's Float.toString digits (the
+  closest of the shortest that read back, at least two: "1.4E-45"). }
+function LandrixXmlDoubleFormatFloat(const A: TLandrixXmlDouble): TLandrixXmlUtf8;
+
 implementation
 
 const
@@ -139,6 +169,10 @@ const
   BitsMaxDouble = Int64($7FEFFFFFFFFFFFFF);
   { 2^53: below, every double's integer part is exact in any decimal form }
   BitsTwoPow53 = Int64($4340000000000000);
+  { the float nearest to 1E-6, the lower limit of the plain notation of
+    floats, and 2^-126, the smallest normal float }
+  BitsFloatMillionth = Int64($3EB0C6F7A0000000);
+  BitsFloatMinNormal = Int64($3810000000000000);
 
 type
   { Unsigned big integer, base 2^15, least significant limb first, no zero
@@ -581,10 +615,10 @@ end;
 
 { The double nearest to Q * 2^E2 (+ a non-zero rest below the last bit of
   Q if Sticky), ties to even; subnormal results and overflow to infinity
-  included. }
-function PackRounded(Negative: Boolean; const Q: TBig; E2: Integer; Sticky: Boolean): Int64;
+  included. With Float the nearest binary32 value instead, as a double. }
+function PackRoundedTo(Negative: Boolean; const Q: TBig; E2: Integer; Sticky, Float: Boolean): Int64;
 var
-  L, X, P, Drop: Integer;
+  L, X, P, Drop, Precision, MinExponent, MaxExponent: Integer;
   M: Int64;
   Guard, Rest: Boolean;
 begin
@@ -595,18 +629,30 @@ begin
   L := BigBitLength(Q);
   if L = 0 then
     Exit;
+  if Float then
+  begin
+    Precision := 24;
+    MinExponent := -126;
+    MaxExponent := 127;
+  end
+  else
+  begin
+    Precision := 53;
+    MinExponent := -1022;
+    MaxExponent := 1023;
+  end;
   { leading bit at 2^X }
   X := L - 1 + E2;
-  if X > 1023 then
+  if X > MaxExponent then
   begin
     Result := Result or BitsInfinity;
     Exit;
   end;
-  { significant bits to keep: 53, fewer for subnormals }
-  if X >= -1022 then
-    P := 53
+  { significant bits to keep: Precision, fewer for subnormals }
+  if X >= MinExponent then
+    P := Precision
   else
-    P := X + 1075;
+    P := X - MinExponent + Precision;
   if P < 0 then
     Exit; { below half of the smallest subnormal }
   Drop := L - P;
@@ -621,6 +667,15 @@ begin
     Rest := Sticky or BigAnyLowBit(Q, Drop - 1);
     if Guard and (Rest or ((M and 1) <> 0)) then
       Inc(M);
+  end;
+  if Float then
+  begin
+    { M * 2^(E2 + Drop) is a double; a carry may reach 2^(MaxExponent + 1) }
+    if (X = MaxExponent) and (M = Int64(1) shl Precision) then
+      Result := Result or BitsInfinity
+    else
+      Result := PackRoundedTo(Negative, BigFromInt64(M), E2 + Drop, False, False);
+    Exit;
   end;
   if X >= -1022 then
   begin
@@ -641,8 +696,14 @@ begin
     Result := Result or M;
 end;
 
-{ The double nearest to N * 10^E (N > 0 with DigitCount decimal digits). }
-function NearestDouble(Negative: Boolean; const N: TBig; DigitCount, E: Integer): Int64;
+function PackRounded(Negative: Boolean; const Q: TBig; E2: Integer; Sticky: Boolean): Int64;
+begin
+  Result := PackRoundedTo(Negative, Q, E2, Sticky, False);
+end;
+
+{ The double nearest to N * 10^E (N > 0 with DigitCount decimal digits),
+  with Float the nearest binary32 value. }
+function NearestDouble(Negative: Boolean; const N: TBig; DigitCount, E: Integer; Float: Boolean): Int64;
 var
   Num, Den, Q, R: TBig;
   S: Integer;
@@ -683,7 +744,7 @@ begin
   else
     Den := BigShl(Den, -S);
   BigDivMod(Num, Den, Q, R);
-  Result := PackRounded(Negative, Q, -S, Length(R) > 0);
+  Result := PackRoundedTo(Negative, Q, -S, Length(R) > 0, Float);
 end;
 
 { ---------------------------------------------------------------------- }
@@ -716,7 +777,7 @@ const
     big-integer work bounded for very long inputs. }
   MaxKeptDigits = 800;
 
-function LandrixXmlDoubleTryParse(const S: TLandrixXmlUtf8; out Value: TLandrixXmlDouble): Boolean;
+function TryParseNumber(const S: TLandrixXmlUtf8; Float: Boolean; out Value: TLandrixXmlDouble): Boolean;
 var
   First, Last, I, DigitCount, FracDigits, ExtraIntDigits, E, Chunk, ChunkLen, J: Integer;
   ExpValue, ExpLimit, E64: Int64;
@@ -868,13 +929,30 @@ begin
     Inc(DigitCount);
     Dec(E);
   end;
-  Value.Bits := NearestDouble(Negative, N, DigitCount, E);
+  Value.Bits := NearestDouble(Negative, N, DigitCount, E, Float);
+end;
+
+function LandrixXmlDoubleTryParse(const S: TLandrixXmlUtf8; out Value: TLandrixXmlDouble): Boolean;
+begin
+  Result := TryParseNumber(S, False, Value);
 end;
 
 function LandrixXmlDoubleParse(const S: TLandrixXmlUtf8): TLandrixXmlDouble;
 begin
   if not LandrixXmlDoubleTryParse(S, Result) then
     raise ELandrixXmlError.CreateCode(xecConversion, 'Invalid xs:double value "' +
+      LandrixXmlEscapeForMessage(S, 40) + '"');
+end;
+
+function LandrixXmlDoubleTryParseFloat(const S: TLandrixXmlUtf8; out Value: TLandrixXmlDouble): Boolean;
+begin
+  Result := TryParseNumber(S, True, Value);
+end;
+
+function LandrixXmlDoubleParseFloat(const S: TLandrixXmlUtf8): TLandrixXmlDouble;
+begin
+  if not LandrixXmlDoubleTryParseFloat(S, Result) then
+    raise ELandrixXmlError.CreateCode(xecConversion, 'Invalid xs:float value "' +
       LandrixXmlEscapeForMessage(S, 40) + '"');
 end;
 
@@ -895,7 +973,7 @@ begin
   end;
 end;
 
-function LandrixXmlDoubleFromDecimal(const A: TLandrixXmlDecimal): TLandrixXmlDouble;
+function FromDecimal(const A: TLandrixXmlDecimal; Float: Boolean): TLandrixXmlDouble;
 var
   DigitCount, DropLimbs, I: Integer;
   Top: TLandrixXmlDecimalLimbs;
@@ -911,7 +989,7 @@ begin
   DigitCount := DecimalDigitCount(A);
   if DigitCount <= MaxKeptDigits then
   begin
-    Result.Bits := NearestDouble(A.Negative, BigFromDecimalLimbs(A.Limbs), DigitCount, A.Exponent);
+    Result.Bits := NearestDouble(A.Negative, BigFromDecimalLimbs(A.Limbs), DigitCount, A.Exponent, Float);
     Exit;
   end;
   { keep the top limbs (800 to 803 digits) and a final 1 for the rest,
@@ -927,10 +1005,39 @@ begin
   begin
     N := BigAdd(BigMulSmall(N, 10), BigFromInt64(1));
     Inc(DigitCount);
-    Result.Bits := NearestDouble(A.Negative, N, DigitCount, A.Exponent + 4 * DropLimbs - 1);
+    Result.Bits := NearestDouble(A.Negative, N, DigitCount, A.Exponent + 4 * DropLimbs - 1, Float);
   end
   else
-    Result.Bits := NearestDouble(A.Negative, N, DigitCount, A.Exponent);
+    Result.Bits := NearestDouble(A.Negative, N, DigitCount, A.Exponent, Float);
+end;
+
+function LandrixXmlDoubleFromDecimal(const A: TLandrixXmlDecimal): TLandrixXmlDouble;
+begin
+  Result := FromDecimal(A, False);
+end;
+
+function LandrixXmlDoubleFloatFromDecimal(const A: TLandrixXmlDecimal): TLandrixXmlDouble;
+begin
+  Result := FromDecimal(A, True);
+end;
+
+function LandrixXmlDoubleRoundToFloat(const A: TLandrixXmlDouble): TLandrixXmlDouble;
+var
+  Mantissa: Int64;
+  E2: Integer;
+begin
+  if not IsFiniteBits(A.Bits) or ((A.Bits and not SignMask) = 0) then
+  begin
+    Result := LandrixXmlDoubleFromBits(A.Bits);
+    Exit;
+  end;
+  Decompose(A.Bits, Mantissa, E2);
+  Result.Bits := PackRoundedTo(A.Bits < 0, BigFromInt64(Mantissa), E2, False, True);
+end;
+
+function LandrixXmlDoubleIsFloat(const A: TLandrixXmlDouble): Boolean;
+begin
+  Result := LandrixXmlDoubleRoundToFloat(A).Bits = LandrixXmlDoubleFromBits(A.Bits).Bits;
 end;
 
 function LandrixXmlDoubleFromInt64(Value: Int64): TLandrixXmlDouble;
@@ -1394,11 +1501,11 @@ end;
   while the upper boundary is reached inclusively but digit generation
   treats both boundaries exclusively (1E23 becomes 0.9999999999999999E23),
   and a tie between two final digits takes the lower one. Same contract
-  as ShortestDigits; Bits must be a normal number. }
-procedure SaxonDigits(Bits: Int64; out Digits: AnsiString; out K: Integer);
+  as ShortestDigits for the value Mantissa * 2^E2, a normal number of its
+  precision (the gap is 2^E2: floats pass their 24-bit mantissa). }
+procedure SaxonDigits(Mantissa: Int64; E2: Integer; out Digits: AnsiString; out K: Integer);
 var
-  Mantissa: Int64;
-  E2, D: Integer;
+  D: Integer;
   R, S, M, R2: TBig;
   Low, High: Boolean;
 begin
@@ -1407,7 +1514,6 @@ begin
   M := nil;
   R2 := nil;
   Digits := '';
-  Decompose(Bits and not SignMask, Mantissa, E2);
   if E2 >= 0 then
   begin
     R := BigShl(BigFromInt64(Mantissa), E2);
@@ -1478,13 +1584,90 @@ begin
     Result := '-' + Result;
 end;
 
-function LandrixXmlDoubleFormat(const A: TLandrixXmlDouble): TLandrixXmlUtf8;
+{ Java's Float.toString digits for a subnormal float A > 0 (as
+  ShortestDigits, but the closest of the shortest that read back and at
+  least two): the exact value rounded to 2, 3, ... digits, half to even,
+  until it reads back. }
+procedure JavaFloatDigits(const A: TLandrixXmlDouble; out Digits: AnsiString; out K: Integer);
 var
-  Magnitude: Int64;
+  Exact: TLandrixXmlUtf8;
+  All, Candidate, Text: AnsiString;
+  I, P, CK: Integer;
+  Up: Boolean;
+  Back: TLandrixXmlDouble;
+begin
+  { the exact value is 0.000...ddd: K counts the zeros after the point }
+  Exact := LandrixXmlFormatDecimal(LandrixXmlDoubleToDecimal(A));
+  I := 3;
+  K := 0;
+  while Exact[I] = '0' do
+  begin
+    Inc(I);
+    Dec(K);
+  end;
+  All := '';
+  SetLength(All, Length(Exact) - I + 1);
+  Move(Exact[I], PAnsiChar(All)^, Length(All));
+  CK := K;
+  P := 2;
+  while True do
+  begin
+    CK := K;
+    if Length(All) <= P then
+      Candidate := All
+    else
+    begin
+      Candidate := Copy(All, 1, P);
+      Up := All[P + 1] > '5';
+      if All[P + 1] = '5' then
+      begin
+        { the exact digits end without zeros, so a 5 followed by more is above the tie }
+        Up := (Length(All) > P + 1) or Odd(Ord(Candidate[P]));
+      end;
+      if Up then
+      begin
+        I := P;
+        while (I >= 1) and (Candidate[I] = '9') do
+        begin
+          Candidate[I] := '0';
+          Dec(I);
+        end;
+        if I >= 1 then
+          Candidate[I] := AnsiChar(Ord(Candidate[I]) + 1)
+        else
+        begin
+          Candidate := '1' + Copy(Candidate, 1, P - 1);
+          Inc(CK);
+        end;
+      end;
+    end;
+    Text := '0.' + Candidate + 'E' + IntToAnsi(CK);
+    { byte copy: a string cast would convert code pages on Delphi 2009+ }
+    Exact := '';
+    SetLength(Exact, Length(Text));
+    Move(PAnsiChar(Text)^, PAnsiChar(Exact)^, Length(Text));
+    if LandrixXmlDoubleTryParseFloat(Exact, Back) and (Back.Bits = A.Bits) then
+      Break;
+    Inc(P);
+  end;
+  while (Length(Candidate) > 1) and (Candidate[Length(Candidate)] = '0') do
+    SetLength(Candidate, Length(Candidate) - 1);
+  Digits := Candidate;
+  K := CK;
+end;
+
+{ The XPath string value of A, a double or (Float) a float. }
+function FormatNumber(const A: TLandrixXmlDouble; Float: Boolean): TLandrixXmlUtf8;
+var
+  Magnitude, Mantissa, Lower: Int64;
   Digits, Text: AnsiString;
-  K: Integer;
+  K, E2: Integer;
 begin
   Magnitude := A.Bits and not SignMask;
+  if Float then
+    Lower := BitsFloatMillionth
+  else
+    Lower := BitsMillionth;
   if not IsFiniteBits(A.Bits) then
   begin
     if Magnitude <> BitsInfinity then
@@ -1501,7 +1684,7 @@ begin
     else
       Text := '0';
   end
-  else if Magnitude = BitsMaxDouble then
+  else if (Magnitude = BitsMaxDouble) and not Float then
   begin
     { written literally by Saxon }
     if A.Bits < 0 then
@@ -1514,7 +1697,18 @@ begin
     { Saxon writes subnormal numbers with Java's Double.toString, which
       gives the shortest digits for them (4.9E-324 for the smallest is a
       literal in Saxon as well) }
-    if Magnitude = 1 then
+    if Float then
+    begin
+      if Magnitude < BitsFloatMinNormal then
+        JavaFloatDigits(Make(Magnitude), Digits, K)
+      else
+      begin
+        { the 24-bit mantissa of a normal float }
+        Decompose(Magnitude, Mantissa, E2);
+        SaxonDigits(Mantissa shr 29, E2 + 29, Digits, K);
+      end;
+    end
+    else if Magnitude = 1 then
     begin
       Digits := '49';
       K := -323;
@@ -1522,8 +1716,11 @@ begin
     else if BiasedExponent(A.Bits) = 0 then
       ShortestDigits(A.Bits, Digits, K)
     else
-      SaxonDigits(A.Bits, Digits, K);
-    if (Magnitude >= BitsMillionth) and (Magnitude < BitsMillion) then
+    begin
+      Decompose(Magnitude, Mantissa, E2);
+      SaxonDigits(Mantissa, E2, Digits, K);
+    end;
+    if (Magnitude >= Lower) and (Magnitude < BitsMillion) then
     begin
       if K <= 0 then
         Text := '0.' + Zeros(-K) + Digits
@@ -1548,6 +1745,16 @@ begin
   Result := '';
   SetLength(Result, Length(Text));
   Move(PAnsiChar(Text)^, PAnsiChar(Result)^, Length(Text));
+end;
+
+function LandrixXmlDoubleFormat(const A: TLandrixXmlDouble): TLandrixXmlUtf8;
+begin
+  Result := FormatNumber(A, False);
+end;
+
+function LandrixXmlDoubleFormatFloat(const A: TLandrixXmlDouble): TLandrixXmlUtf8;
+begin
+  Result := FormatNumber(LandrixXmlDoubleRoundToFloat(A), True);
 end;
 
 end.
