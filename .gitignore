@@ -104,3 +104,6 @@ tests/data/qt3-suite/
 
 # KoSIT XRechnung test suite and validator configuration (downloaded by tools/run-kosit-suite.py)
 tests/data/kosit-suite/
+
+# Unicode NormalizationTest.txt (downloaded by tools/fetch-unicode-tests.py)
+tests/data/unicode-suite/

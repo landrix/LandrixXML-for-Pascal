@@ -1673,6 +1673,41 @@ begin
             if FDocBases[I] = A.Items[0].Node then
               Result := SingleSeq(StringItem(xikAnyUri, FDocUris[I]));
       end;
+    xfnNormalizeUnicode:
+      begin
+        { the form: XML white space trimmed, ASCII case ignored (Saxon's
+          equalsIgnoreCase also takes the Kelvin sign for K: not
+          imitated); '' returns the argument; () gives '' unchecked }
+        T := 'NFC';
+        if ArgCount > 1 then
+        begin
+          T := Trimmed(ReqStrArg(1));
+          for I := 1 to Length(T) do
+            if T[I] in ['a'..'z'] then
+              T[I] := AnsiChar(Ord(T[I]) - 32);
+        end;
+        Found := OptAtom(0, Item);
+        if Found and not IsStringLike(Item.Kind) then
+          Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
+        S := '';
+        if Found then
+          S := Item.Text;
+        if Found and (T <> '') then
+        begin
+          if T = 'NFC' then
+            S := LandrixXmlNormalizeUtf8(S, xnfNfc)
+          else if T = 'NFD' then
+            S := LandrixXmlNormalizeUtf8(S, xnfNfd)
+          else if T = 'NFKC' then
+            S := LandrixXmlNormalizeUtf8(S, xnfNfkc)
+          else if T = 'NFKD' then
+            S := LandrixXmlNormalizeUtf8(S, xnfNfkd)
+          else
+            Fail('FOCH0003', Name + ': the normalization form ''' + LandrixXmlEscapeForMessage(T, 60) +
+              ''' is not supported');
+        end;
+        Result := LandrixXmlXPathStringItem(S);
+      end;
     xfnResolveUri:
       begin
         { RFC 3986 resolution (F&O 2.0 allows RFC 2396 or 3986); an

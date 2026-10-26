@@ -36,6 +36,7 @@ uses
   LandrixXmlTestDecimal,
   LandrixXmlTestDouble,
   LandrixXmlTestRegex,
+  LandrixXmlTestNormalize,
   LandrixXmlTestXsdTypes,
   LandrixXmlTestXsdContent,
   LandrixXmlTestXsdValidator,
@@ -68,6 +69,7 @@ begin
   LandrixXmlTestDecimal.Register;
   LandrixXmlTestDouble.Register;
   LandrixXmlTestRegex.Register;
+  LandrixXmlTestNormalize.Register;
   LandrixXmlTestXsdTypes.Register;
   LandrixXmlTestXsdContent.Register;
   LandrixXmlTestXsdValidator.Register;

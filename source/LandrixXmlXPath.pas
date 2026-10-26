@@ -215,7 +215,8 @@ type
     xfnDeepEqual, xfnCompare, xfnCodepointEqual, xfnDefaultCollation,
     xfnRemove, xfnInsertBefore, xfnUnordered, xfnError,
     xfnEncodeForUri, xfnIriToUri, xfnEscapeHtmlUri, xfnResolveUri,
-    xfnLang, xfnTrace, xfnDoc, xfnDocAvailable, xfnDocumentUri
+    xfnLang, xfnTrace, xfnDoc, xfnDocAvailable, xfnDocumentUri,
+    xfnNormalizeUnicode
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -495,7 +496,8 @@ const
     (Name: 'trace'; MinArgs: 1; MaxArgs: 2; Xs: False),
     (Name: 'doc'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'doc-available'; MinArgs: 1; MaxArgs: 1; Xs: False),
-    (Name: 'document-uri'; MinArgs: 1; MaxArgs: 1; Xs: False)
+    (Name: 'document-uri'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'normalize-unicode'; MinArgs: 1; MaxArgs: 2; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }

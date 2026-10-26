@@ -18,12 +18,13 @@ jobs:
             tests/data/xmlconf-suite
             tests/data/qt3-suite
             tests/data/kosit-suite
-          key: suites-${{ hashFiles('tools/run-xmlconf.py', 'tools/run-qt3.py', 'tools/run-kosit-suite.py') }}
+            tests/data/unicode-suite
+          key: suites-${{ hashFiles('tools/run-xmlconf.py', 'tools/run-qt3.py', 'tools/run-kosit-suite.py', 'tools/fetch-unicode-tests.py') }}
 
       # a failed restore may leave a partial suite that the scripts would reuse
       - name: Remove a partially restored cache
         if: steps.suites.outputs.cache-hit != 'true'
-        run: rm -rf tests/data/xmlconf-suite tests/data/qt3-suite tests/data/kosit-suite
+        run: rm -rf tests/data/xmlconf-suite tests/data/qt3-suite tests/data/kosit-suite tests/data/unicode-suite
 
       - name: Install Free Pascal
         run: |
@@ -45,6 +46,9 @@ jobs:
           if grep -E '\.(pas|inc|dpr|lpr)\([0-9]+(,[0-9]+)?\) (Warning|Hint|Note)' build/ci/build.log; then
             exit 1
           fi
+
+      - name: Download the Unicode normalization conformance file
+        run: python3 tools/fetch-unicode-tests.py
 
       - name: Run tests
         run: ./build/ci/LandrixXmlTests "$PWD"

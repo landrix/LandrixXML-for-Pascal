@@ -94,6 +94,7 @@ uses
   Contnrs,
   LandrixXmlRegex,
   LandrixXmlUnicode,
+  LandrixXmlNormalize,
   LandrixXmlXsdTypes,
   LandrixXmlXPathTree,
   LandrixXmlXPath;

@@ -152,6 +152,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- `LandrixXmlNormalize`: Unicode normalization NFC, NFD, NFKC and NFKD
+  (`LandrixXmlNormalizeUtf8`, `LandrixXmlNormalizeCodePoints`) with the
+  data of Unicode 15.0.0, the version of JDK 21 that Saxon uses; text
+  that is already normalized is detected by the Unicode quick check and
+  returned unchanged. `tools/gen-normalize-tables.py` generates the
+  tables, `tools/fetch-unicode-tests.py` downloads the Unicode
+  conformance file NormalizationTest.txt, which the test runner then
+  checks completely.
+- XPath: `normalize-unicode` with the four forms (FULLY-NORMALIZED and
+  other names raise FOCH0003; the form name is trimmed and compared
+  ignoring ASCII case, so unlike Saxon the Kelvin sign U+212A does not
+  stand for K). QT3: 45 more cases pass in both profiles.
 - XPath: `lang` (case ignored as Unicode's caseless match in XPath 2.0,
   character by character as Java's `equalsIgnoreCase` in the Saxon profile),
   `trace` (returns its value; nothing is written), `doc`,

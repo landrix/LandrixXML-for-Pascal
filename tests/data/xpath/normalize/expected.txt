@@ -1,0 +1,276 @@
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65, 778, 769))))
+xs:integer 506
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65, 778, 769)), 'NFC'))
+xs:integer 506
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65, 778, 769)), 'NFD'))
+xs:integer 65
+xs:integer 778
+xs:integer 769
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65, 778, 769)), 'NFKC'))
+xs:integer 506
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65, 778, 769)), 'NFKD'))
+xs:integer 65
+xs:integer 778
+xs:integer 769
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65, 778, 769)), ''))
+xs:integer 65
+xs:integer 778
+xs:integer 769
+# string-to-codepoints(normalize-unicode(codepoints-to-string((7835, 803))))
+xs:integer 7835
+xs:integer 803
+# string-to-codepoints(normalize-unicode(codepoints-to-string((7835, 803)), 'NFC'))
+xs:integer 7835
+xs:integer 803
+# string-to-codepoints(normalize-unicode(codepoints-to-string((7835, 803)), 'NFD'))
+xs:integer 383
+xs:integer 803
+xs:integer 775
+# string-to-codepoints(normalize-unicode(codepoints-to-string((7835, 803)), 'NFKC'))
+xs:integer 7785
+# string-to-codepoints(normalize-unicode(codepoints-to-string((7835, 803)), 'NFKD'))
+xs:integer 115
+xs:integer 803
+xs:integer 775
+# string-to-codepoints(normalize-unicode(codepoints-to-string((7835, 803)), ''))
+xs:integer 7835
+xs:integer 803
+# string-to-codepoints(normalize-unicode(codepoints-to-string((901))))
+xs:integer 901
+# string-to-codepoints(normalize-unicode(codepoints-to-string((901)), 'NFC'))
+xs:integer 901
+# string-to-codepoints(normalize-unicode(codepoints-to-string((901)), 'NFD'))
+xs:integer 168
+xs:integer 769
+# string-to-codepoints(normalize-unicode(codepoints-to-string((901)), 'NFKC'))
+xs:integer 32
+xs:integer 776
+xs:integer 769
+# string-to-codepoints(normalize-unicode(codepoints-to-string((901)), 'NFKD'))
+xs:integer 32
+xs:integer 776
+xs:integer 769
+# string-to-codepoints(normalize-unicode(codepoints-to-string((901)), ''))
+xs:integer 901
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65018))))
+xs:integer 65018
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65018)), 'NFC'))
+xs:integer 65018
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65018)), 'NFD'))
+xs:integer 65018
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65018)), 'NFKC'))
+xs:integer 1589
+xs:integer 1604
+xs:integer 1609
+xs:integer 32
+xs:integer 1575
+xs:integer 1604
+xs:integer 1604
+xs:integer 1607
+xs:integer 32
+xs:integer 1593
+xs:integer 1604
+xs:integer 1610
+xs:integer 1607
+xs:integer 32
+xs:integer 1608
+xs:integer 1587
+xs:integer 1604
+xs:integer 1605
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65018)), 'NFKD'))
+xs:integer 1589
+xs:integer 1604
+xs:integer 1609
+xs:integer 32
+xs:integer 1575
+xs:integer 1604
+xs:integer 1604
+xs:integer 1607
+xs:integer 32
+xs:integer 1593
+xs:integer 1604
+xs:integer 1610
+xs:integer 1607
+xs:integer 32
+xs:integer 1608
+xs:integer 1587
+xs:integer 1604
+xs:integer 1605
+# string-to-codepoints(normalize-unicode(codepoints-to-string((65018)), ''))
+xs:integer 65018
+# string-to-codepoints(normalize-unicode(codepoints-to-string((8486))))
+xs:integer 937
+# string-to-codepoints(normalize-unicode(codepoints-to-string((8486)), 'NFC'))
+xs:integer 937
+# string-to-codepoints(normalize-unicode(codepoints-to-string((8486)), 'NFD'))
+xs:integer 937
+# string-to-codepoints(normalize-unicode(codepoints-to-string((8486)), 'NFKC'))
+xs:integer 937
+# string-to-codepoints(normalize-unicode(codepoints-to-string((8486)), 'NFKD'))
+xs:integer 937
+# string-to-codepoints(normalize-unicode(codepoints-to-string((8486)), ''))
+xs:integer 8486
+# string-to-codepoints(normalize-unicode(codepoints-to-string((4352, 4449, 4520))))
+xs:integer 44033
+# string-to-codepoints(normalize-unicode(codepoints-to-string((4352, 4449, 4520)), 'NFC'))
+xs:integer 44033
+# string-to-codepoints(normalize-unicode(codepoints-to-string((4352, 4449, 4520)), 'NFD'))
+xs:integer 4352
+xs:integer 4449
+xs:integer 4520
+# string-to-codepoints(normalize-unicode(codepoints-to-string((4352, 4449, 4520)), 'NFKC'))
+xs:integer 44033
+# string-to-codepoints(normalize-unicode(codepoints-to-string((4352, 4449, 4520)), 'NFKD'))
+xs:integer 4352
+xs:integer 4449
+xs:integer 4520
+# string-to-codepoints(normalize-unicode(codepoints-to-string((4352, 4449, 4520)), ''))
+xs:integer 4352
+xs:integer 4449
+xs:integer 4520
+# string-to-codepoints(normalize-unicode(codepoints-to-string((44033))))
+xs:integer 44033
+# string-to-codepoints(normalize-unicode(codepoints-to-string((44033)), 'NFC'))
+xs:integer 44033
+# string-to-codepoints(normalize-unicode(codepoints-to-string((44033)), 'NFD'))
+xs:integer 4352
+xs:integer 4449
+xs:integer 4520
+# string-to-codepoints(normalize-unicode(codepoints-to-string((44033)), 'NFKC'))
+xs:integer 44033
+# string-to-codepoints(normalize-unicode(codepoints-to-string((44033)), 'NFKD'))
+xs:integer 4352
+xs:integer 4449
+xs:integer 4520
+# string-to-codepoints(normalize-unicode(codepoints-to-string((44033)), ''))
+xs:integer 44033
+# string-to-codepoints(normalize-unicode(codepoints-to-string((97, 1454, 768, 789, 98))))
+xs:integer 224
+xs:integer 1454
+xs:integer 789
+xs:integer 98
+# string-to-codepoints(normalize-unicode(codepoints-to-string((97, 1454, 768, 789, 98)), 'NFC'))
+xs:integer 224
+xs:integer 1454
+xs:integer 789
+xs:integer 98
+# string-to-codepoints(normalize-unicode(codepoints-to-string((97, 1454, 768, 789, 98)), 'NFD'))
+xs:integer 97
+xs:integer 1454
+xs:integer 768
+xs:integer 789
+xs:integer 98
+# string-to-codepoints(normalize-unicode(codepoints-to-string((97, 1454, 768, 789, 98)), 'NFKC'))
+xs:integer 224
+xs:integer 1454
+xs:integer 789
+xs:integer 98
+# string-to-codepoints(normalize-unicode(codepoints-to-string((97, 1454, 768, 789, 98)), 'NFKD'))
+xs:integer 97
+xs:integer 1454
+xs:integer 768
+xs:integer 789
+xs:integer 98
+# string-to-codepoints(normalize-unicode(codepoints-to-string((97, 1454, 768, 789, 98)), ''))
+xs:integer 97
+xs:integer 1454
+xs:integer 768
+xs:integer 789
+xs:integer 98
+# string-to-codepoints(normalize-unicode(codepoints-to-string((64976))))
+xs:integer 64976
+# string-to-codepoints(normalize-unicode(codepoints-to-string((64976)), 'NFC'))
+xs:integer 64976
+# string-to-codepoints(normalize-unicode(codepoints-to-string((64976)), 'NFD'))
+xs:integer 64976
+# string-to-codepoints(normalize-unicode(codepoints-to-string((64976)), 'NFKC'))
+xs:integer 64976
+# string-to-codepoints(normalize-unicode(codepoints-to-string((64976)), 'NFKD'))
+xs:integer 64976
+# string-to-codepoints(normalize-unicode(codepoints-to-string((64976)), ''))
+xs:integer 64976
+# string-to-codepoints(normalize-unicode(codepoints-to-string((69785, 69818))))
+xs:integer 69786
+# string-to-codepoints(normalize-unicode(codepoints-to-string((69785, 69818)), 'NFC'))
+xs:integer 69786
+# string-to-codepoints(normalize-unicode(codepoints-to-string((69785, 69818)), 'NFD'))
+xs:integer 69785
+xs:integer 69818
+# string-to-codepoints(normalize-unicode(codepoints-to-string((69785, 69818)), 'NFKC'))
+xs:integer 69786
+# string-to-codepoints(normalize-unicode(codepoints-to-string((69785, 69818)), 'NFKD'))
+xs:integer 69785
+xs:integer 69818
+# string-to-codepoints(normalize-unicode(codepoints-to-string((69785, 69818)), ''))
+xs:integer 69785
+xs:integer 69818
+# string-to-codepoints(normalize-unicode(codepoints-to-string((228, 120))))
+xs:integer 228
+xs:integer 120
+# string-to-codepoints(normalize-unicode(codepoints-to-string((228, 120)), 'NFC'))
+xs:integer 228
+xs:integer 120
+# string-to-codepoints(normalize-unicode(codepoints-to-string((228, 120)), 'NFD'))
+xs:integer 97
+xs:integer 776
+xs:integer 120
+# string-to-codepoints(normalize-unicode(codepoints-to-string((228, 120)), 'NFKC'))
+xs:integer 228
+xs:integer 120
+# string-to-codepoints(normalize-unicode(codepoints-to-string((228, 120)), 'NFKD'))
+xs:integer 97
+xs:integer 776
+xs:integer 120
+# string-to-codepoints(normalize-unicode(codepoints-to-string((228, 120)), ''))
+xs:integer 228
+xs:integer 120
+# normalize-unicode(())
+xs:string 
+# normalize-unicode((), 'BAD')
+xs:string 
+# normalize-unicode((), 'NFD')
+xs:string 
+# normalize-unicode('', 'BAD')
+error FOCH0003
+# normalize-unicode('', '')
+xs:string 
+# normalize-unicode('a', 'FULLY-NORMALIZED')
+error FOCH0003
+# normalize-unicode('a', ' nfkd ')
+xs:string a
+# normalize-unicode('a', 'nFkC')
+xs:string a
+# normalize-unicode('a', concat(codepoints-to-string((9, 10, 13)), 'nfd', codepoints-to-string(32)))
+xs:string a
+# normalize-unicode('a', concat('NFC', codepoints-to-string(160)))
+error FOCH0003
+# normalize-unicode('a', 'N F C')
+error FOCH0003
+# normalize-unicode('a', '  ')
+xs:string a
+# normalize-unicode(12)
+error XPTY0004
+# normalize-unicode('a', ())
+error XPTY0004
+# normalize-unicode('a', 1)
+error XPTY0004
+# normalize-unicode(('a', 'b'))
+error XPTY0004
+# normalize-unicode('a', ('NFC', 'NFD'))
+error XPTY0004
+# normalize-unicode(xs:untypedAtomic('a'))
+xs:string a
+# normalize-unicode(xs:anyURI('a'), 'NFD')
+xs:string a
+# normalize-unicode('a', xs:untypedAtomic('nfd'))
+xs:string a
+# normalize-unicode(/r)
+xs:string Å
+# normalize-unicode('plain text', 'NFKD')
+xs:string plain text
+# string-length(normalize-unicode(codepoints-to-string(65018), 'NFKD'))
+xs:integer 18
+# normalize-unicode(codepoints-to-string((65, 778)), 'NFC') eq codepoints-to-string(197)
+xs:boolean true
+# normalize-unicode(codepoints-to-string(8491)) eq normalize-unicode(codepoints-to-string(197))
+xs:boolean true

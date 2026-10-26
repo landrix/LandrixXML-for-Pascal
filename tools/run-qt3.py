@@ -9,7 +9,8 @@ baseline tests/data/qt3-baseline.txt.
 
 Applicability: the dependencies of the test set and of the test case
 must all hold (the tokens of one spec value are alternatives): spec
-XP20 or XP20+, no optional feature, XML 1.0 (fifth edition), XSD 1.0.
+XP20 or XP20+, no optional feature, XML 1.0 (fifth edition), XSD 1.0,
+the normalization forms NFC, NFD, NFKC and NFKD (not FULLY-NORMALIZED).
 Environments with schemas, typed sources, collections, collations, a
 static base URI, decimal formats or resources are not provided.
 
@@ -80,6 +81,7 @@ PLATFORM_DEPENDENT = {
 SPECS = {"XP20", "XP20+"}
 XML_VERSIONS = {"1.0", "1.0:5+"}
 XSD_VERSIONS = {"1.0"}
+NORMALIZATION_FORMS = {"NFC", "NFD", "NFKC", "NFKD"}
 
 
 def read_url(url, timeout=120):
@@ -131,6 +133,8 @@ def dependency_problem(dep):
         have = bool(tokens & XML_VERSIONS)
     elif kind == "xsd-version":
         have = bool(tokens & XSD_VERSIONS)
+    elif kind == "unicode-normalization-form":
+        have = bool(tokens & NORMALIZATION_FORMS)
     else:
         have = None
     if have is None:
