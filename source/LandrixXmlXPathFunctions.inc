@@ -231,6 +231,409 @@ begin
   end;
 end;
 
+{ --- URIs ------------------------------------------------------------------ }
+
+type
+  { The parts of a URI reference (RFC 3986 appendix B); Has* tells an
+    empty part from a missing one. }
+  TUriParts = record
+    Scheme, Authority, Path, Query, Fragment: TLandrixXmlUtf8;
+    HasScheme, HasAuthority, HasQuery, HasFragment: Boolean;
+  end;
+
+const
+  HexDigitsUpper: array[0..15] of AnsiChar = '0123456789ABCDEF';
+
+{ S with every byte percent-encoded that is not ASCII or not in Keep
+  (the bytes of a character beyond ASCII are always encoded). }
+function PercentEncode(const S: TLandrixXmlUtf8; const Keep: TSysCharSet): TLandrixXmlUtf8;
+var
+  I, N: Integer;
+  B: Byte;
+begin
+  N := 0;
+  for I := 1 to Length(S) do
+    if (Ord(S[I]) < $80) and (AnsiChar(S[I]) in Keep) then
+      Inc(N)
+    else
+      Inc(N, 3);
+  Result := '';
+  SetLength(Result, N);
+  N := 0;
+  for I := 1 to Length(S) do
+  begin
+    B := Ord(S[I]);
+    if (B < $80) and (AnsiChar(S[I]) in Keep) then
+    begin
+      Inc(N);
+      Result[N] := S[I];
+    end
+    else
+    begin
+      Result[N + 1] := '%';
+      Result[N + 2] := HexDigitsUpper[B shr 4];
+      Result[N + 3] := HexDigitsUpper[B and 15];
+      Inc(N, 3);
+    end;
+  end;
+end;
+
+function SplitUri(const S: TLandrixXmlUtf8): TUriParts;
+var
+  I, P: Integer;
+begin
+  Result.Scheme := '';
+  Result.Authority := '';
+  Result.Path := '';
+  Result.Query := '';
+  Result.Fragment := '';
+  Result.HasScheme := False;
+  Result.HasAuthority := False;
+  Result.HasQuery := False;
+  Result.HasFragment := False;
+  P := 1;
+  { a scheme: up to a ":" before any "/", "?" or "#", not empty }
+  for I := 1 to Length(S) do
+    if S[I] in ['/', '?', '#'] then
+      Break
+    else if S[I] = ':' then
+    begin
+      if I > 1 then
+      begin
+        Result.Scheme := Copy(S, 1, I - 1);
+        Result.HasScheme := True;
+        P := I + 1;
+      end;
+      Break;
+    end;
+  if Copy(S, P, 2) = '//' then
+  begin
+    I := P + 2;
+    while (I <= Length(S)) and not (S[I] in ['/', '?', '#']) do
+      Inc(I);
+    Result.Authority := Copy(S, P + 2, I - P - 2);
+    Result.HasAuthority := True;
+    P := I;
+  end;
+  I := P;
+  while (I <= Length(S)) and not (S[I] in ['?', '#']) do
+    Inc(I);
+  Result.Path := Copy(S, P, I - P);
+  if (I <= Length(S)) and (S[I] = '?') then
+  begin
+    P := I + 1;
+    I := P;
+    while (I <= Length(S)) and (S[I] <> '#') do
+      Inc(I);
+    Result.Query := Copy(S, P, I - P);
+    Result.HasQuery := True;
+  end;
+  if I <= Length(S) then
+  begin
+    Result.Fragment := Copy(S, I + 1, MaxInt);
+    Result.HasFragment := True;
+  end;
+end;
+
+{ Removes the last segment and its "/" from Output (RFC 3986 5.2.4). }
+procedure DropLastSegment(var Output: TLandrixXmlUtf8);
+var
+  I: Integer;
+begin
+  I := Length(Output);
+  while (I > 0) and (Output[I] <> '/') do
+    Dec(I);
+  if I > 0 then
+    SetLength(Output, I - 1)
+  else
+    Output := '';
+end;
+
+{ RFC 3986 5.2.4: "." and ".." segments removed. }
+function RemoveDotSegments(const Path: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  Input: TLandrixXmlUtf8;
+  I: Integer;
+begin
+  Input := Path;
+  Result := '';
+  while Input <> '' do
+    if Copy(Input, 1, 3) = '../' then
+      Delete(Input, 1, 3)
+    else if Copy(Input, 1, 2) = './' then
+      Delete(Input, 1, 2)
+    else if Copy(Input, 1, 3) = '/./' then
+      Delete(Input, 1, 2)
+    else if Input = '/.' then
+      Input := '/'
+    else if Copy(Input, 1, 4) = '/../' then
+    begin
+      Delete(Input, 1, 3);
+      DropLastSegment(Result);
+    end
+    else if Input = '/..' then
+    begin
+      Input := '/';
+      DropLastSegment(Result);
+    end
+    else if (Input = '.') or (Input = '..') then
+      Input := ''
+    else
+    begin
+      { the first segment with its leading "/" }
+      I := 2;
+      while (I <= Length(Input)) and (Input[I] <> '/') do
+        Inc(I);
+      Result := Result + Copy(Input, 1, I - 1);
+      Delete(Input, 1, I - 1);
+    end;
+end;
+
+{ An IPv4 address of RFC 3986 3.2.2: four decimal octets 0 to 255
+  (leading zeros accepted, as by Saxon). }
+function IPv4Valid(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, Start, Parts, V: Integer;
+begin
+  Result := False;
+  Parts := 0;
+  Start := 1;
+  for I := 1 to Length(S) + 1 do
+    if (I > Length(S)) or (S[I] = '.') then
+    begin
+      if (I = Start) or (I - Start > 3) then
+        Exit;
+      V := 0;
+      while Start < I do
+      begin
+        if not (S[Start] in ['0'..'9']) then
+          Exit;
+        V := V * 10 + Ord(S[Start]) - Ord('0');
+        Inc(Start);
+      end;
+      if V > 255 then
+        Exit;
+      Inc(Parts);
+      Start := I + 1;
+    end;
+  Result := Parts = 4;
+end;
+
+{ Groups of one to four hex digits separated by ":" (none if S is
+  empty); the last may be an IPv4 address if V4Last (two groups). }
+function HexGroups(const S: TLandrixXmlUtf8; V4Last: Boolean; out Count: Integer): Boolean;
+var
+  I, J, Start: Integer;
+  G: TLandrixXmlUtf8;
+begin
+  Count := 0;
+  Result := True;
+  if S = '' then
+    Exit;
+  Start := 1;
+  for I := 1 to Length(S) + 1 do
+    if (I > Length(S)) or (S[I] = ':') then
+    begin
+      G := Copy(S, Start, I - Start);
+      if (I > Length(S)) and V4Last and ContainsByte(G, '.') then
+      begin
+        if not IPv4Valid(G) then
+          Result := False;
+        Inc(Count, 2);
+      end
+      else
+      begin
+        if (G = '') or (Length(G) > 4) then
+          Result := False;
+        for J := 1 to Length(G) do
+          if not (G[J] in ['0'..'9', 'A'..'F', 'a'..'f']) then
+            Result := False;
+        Inc(Count);
+      end;
+      Start := I + 1;
+    end;
+end;
+
+{ An IPv6 address of RFC 3986 3.2.2 (eight groups, or fewer around one
+  "::"). }
+function IPv6Valid(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, P, L, R: Integer;
+begin
+  P := 0;
+  for I := 1 to Length(S) - 1 do
+    if (S[I] = ':') and (S[I + 1] = ':') then
+    begin
+      P := I;
+      Break;
+    end;
+  if P = 0 then
+    Result := HexGroups(S, True, L) and (L = 8)
+  else
+    Result := HexGroups(Copy(S, 1, P - 1), False, L) and HexGroups(Copy(S, P + 2, MaxInt), True, R) and
+      (L + R <= 7);
+end;
+
+{ An authority: no "[" or "]" in the user information (up to the last
+  "@"); in the host "[" only to start an IPv6 literal (as Saxon: no
+  IPvFuture), then an optional ":" port of digits. }
+function AuthorityValid(const A: TLandrixXmlUtf8): Boolean;
+var
+  I, Start: Integer;
+  Host: TLandrixXmlUtf8;
+begin
+  Start := 1;
+  for I := 1 to Length(A) do
+    if A[I] = '@' then
+      Start := I + 1;
+  if ContainsByte(Copy(A, 1, Start - 1), '[') or ContainsByte(Copy(A, 1, Start - 1), ']') then
+  begin
+    Result := False;
+    Exit;
+  end;
+  Host := Copy(A, Start, MaxInt);
+  if (Host <> '') and (Host[1] = '[') then
+  begin
+    { a server authority: no "@" in its user information (Saxon accepts
+      a@b@c only as a registry name) }
+    if ContainsByte(Copy(A, 1, Start - 2), '@') then
+    begin
+      Result := False;
+      Exit;
+    end;
+    I := 2;
+    while (I <= Length(Host)) and (Host[I] <> ']') do
+      Inc(I);
+    Result := (I <= Length(Host)) and IPv6Valid(Copy(Host, 2, I - 2));
+    if not Result then
+      Exit;
+    Inc(I);
+    if I <= Length(Host) then
+    begin
+      Result := Host[I] = ':';
+      for I := I + 1 to Length(Host) do
+        if not (Host[I] in ['0'..'9']) then
+          Result := False;
+    end;
+  end
+  else
+    Result := not ContainsByte(Host, '[') and not ContainsByte(Host, ']');
+end;
+
+{ True if S holds a C1 control character (U+0080..U+009F) or a Unicode
+  space separator (U+00A0, U+1680, U+2000..U+200A, U+2028, U+2029,
+  U+202F, U+205F, U+3000), which Saxon does not resolve. }
+function HasUnicodeSpaceOrControl(const S: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+  B1, B2, B3: Byte;
+begin
+  Result := True;
+  for I := 1 to Length(S) - 1 do
+  begin
+    B1 := Ord(S[I]);
+    B2 := Ord(S[I + 1]);
+    if (B1 = $C2) and (B2 >= $80) and (B2 <= $A0) then
+      Exit;
+    if I + 2 <= Length(S) then
+    begin
+      B3 := Ord(S[I + 2]);
+      if (B1 = $E1) and (B2 = $9A) and (B3 = $80) then
+        Exit;
+      if (B1 = $E2) and (B2 = $80) and ((B3 <= $8A) or (B3 = $A8) or (B3 = $A9) or (B3 = $AF)) then
+        Exit;
+      if (B1 = $E2) and (B2 = $81) and (B3 = $9F) then
+        Exit;
+      if (B1 = $E3) and (B2 = $80) and (B3 = $80) then
+        Exit;
+    end;
+  end;
+  Result := False;
+end;
+
+{ True if S can be resolved (beyond the xs:anyURI rules, as Saxon):
+  at most one "#", no character RFC 3986 has no place for (a space is
+  accepted, as by Saxon) nor C1 controls or Unicode spaces, no "[" or
+  "]" in a hierarchical path, a valid host. }
+function UriResolvable(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, Hashes: Integer;
+  U: TUriParts;
+begin
+  Result := False;
+  Hashes := 0;
+  for I := 1 to Length(S) do
+    if S[I] = '#' then
+      Inc(Hashes)
+    else if (Ord(S[I]) < 32) or (Ord(S[I]) = 127) or (S[I] in ['<', '>', '"', '{', '}', '|', '\', '^', '`']) then
+      Exit;
+  if (Hashes > 1) or HasUnicodeSpaceOrControl(S) then
+    Exit;
+  U := SplitUri(S);
+  { the opaque part of an absolute URI such as x:[a] may hold them }
+  if U.HasScheme and not U.HasAuthority and (Copy(U.Path, 1, 1) <> '/') then
+    Result := True
+  else
+    Result := not ContainsByte(U.Path, '[') and not ContainsByte(U.Path, ']') and
+      (not U.HasAuthority or AuthorityValid(U.Authority));
+end;
+
+{ RFC 3986 5.2.2 (strict) and 5.3: Relative resolved against Base. }
+function ResolveUriReference(const Relative, Base: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  R, B, T: TUriParts;
+  I: Integer;
+begin
+  R := SplitUri(Relative);
+  B := SplitUri(Base);
+  T := R;
+  if R.HasScheme then
+    T.Path := RemoveDotSegments(R.Path)
+  else
+  begin
+    T.Scheme := B.Scheme;
+    T.HasScheme := B.HasScheme;
+    if R.HasAuthority then
+      T.Path := RemoveDotSegments(R.Path)
+    else
+    begin
+      T.Authority := B.Authority;
+      T.HasAuthority := B.HasAuthority;
+      if R.Path = '' then
+      begin
+        T.Path := B.Path;
+        if not R.HasQuery then
+        begin
+          T.Query := B.Query;
+          T.HasQuery := B.HasQuery;
+        end;
+      end
+      else if R.Path[1] = '/' then
+        T.Path := RemoveDotSegments(R.Path)
+      else if B.HasAuthority and (B.Path = '') then
+        { 5.2.3: the merge with an empty base path }
+        T.Path := RemoveDotSegments('/' + R.Path)
+      else
+      begin
+        I := Length(B.Path);
+        while (I > 0) and (B.Path[I] <> '/') do
+          Dec(I);
+        T.Path := RemoveDotSegments(Copy(B.Path, 1, I) + R.Path);
+      end;
+    end;
+  end;
+  Result := '';
+  if T.HasScheme then
+    Result := T.Scheme + ':';
+  if T.HasAuthority then
+    Result := Result + '//' + T.Authority;
+  Result := Result + T.Path;
+  if T.HasQuery then
+    Result := Result + '?' + T.Query;
+  if T.HasFragment then
+    Result := Result + '#' + T.Fragment;
+end;
+
 { True if position P (an integer) is >= Start and < Stop (doubles; NaN never). }
 function InRange(P: Integer; const Start, Stop: TLandrixXmlDouble; HasStop: Boolean): Boolean;
 var
@@ -1111,6 +1514,49 @@ begin
     xfnUnordered:
       { the order stays: any order is allowed }
       Result := Arg(0);
+    xfnEncodeForUri:
+      { the unreserved characters of RFC 3986 stay }
+      Result := SingleSeq(StringItem(xikString, PercentEncode(StrArg(0), ['A'..'Z', 'a'..'z', '0'..'9', '-', '_',
+        '.', '~'])));
+    xfnIriToUri:
+      { F&O 2.0 7.4.11: what is allowed in a URI stays, "%" too }
+      Result := SingleSeq(StringItem(xikString, PercentEncode(StrArg(0), ['A'..'Z', 'a'..'z', '0'..'9', '-', '_',
+        '.', '!', '~', '*', '''', '(', ')', ';', '/', '?', ':', '@', '&', '=', '+', '$', ',', '#', '[', ']', '%'])));
+    xfnEscapeHtmlUri:
+      { the printable ASCII characters stay }
+      Result := SingleSeq(StringItem(xikString, PercentEncode(StrArg(0), [#32..#126])));
+    xfnResolveUri:
+      begin
+        { RFC 3986 resolution (F&O 2.0 allows RFC 2396 or 3986); an
+          absolute reference is returned unchanged; FORG0002 for an
+          invalid reference or a base that is no absolute hierarchical URI
+          or has a fragment; without a base (there is no static base URI)
+          FONS0005 }
+        if ArgCount > 1 then
+          T := ReqStrArg(1);
+        if not OptAtom(0, Item) then
+          Exit;
+        if not IsStringLike(Item.Kind) then
+          Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
+        S := Item.Text;
+        if not AnyUriValid(S) or not UriResolvable(S) then
+          Fail('FORG0002', Name + ': ''' + LandrixXmlEscapeForMessage(S, 60) + ''' is no valid URI');
+        { an absolute reference unchanged (F&O 2.0), a resolved one with
+          its white space collapsed (as Saxon) }
+        if SplitUri(S).HasScheme then
+        begin
+          Result := SingleSeq(StringItem(xikAnyUri, S));
+          Exit;
+        end;
+        if ArgCount < 2 then
+          Fail('FONS0005', Name + ': there is no static base URI');
+        Found := AnyUriValid(T) and UriResolvable(T) and SplitUri(T).HasScheme and not SplitUri(T).HasFragment and
+          (SplitUri(T).HasAuthority or (Copy(SplitUri(T).Path, 1, 1) = '/'));
+        if not Found then
+          Fail('FORG0002', Name + ': the base ''' + LandrixXmlEscapeForMessage(T, 60) +
+            ''' is no absolute hierarchical URI');
+        Result := SingleSeq(StringItem(xikAnyUri, NormalizeSpace(ResolveUriReference(S, T))));
+      end;
     xfnError:
       begin
         { the error code is the local name of the QName (as Saxon reports

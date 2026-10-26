@@ -152,6 +152,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `encode-for-uri`, `iri-to-uri`, `escape-html-uri` and
+  `resolve-uri` (RFC 3986; a base must be an absolute hierarchical URI
+  without a fragment, FORG0002 otherwise; there is no static base URI, so
+  the one-argument form resolves only absolute references). QT3: 146
+  more cases pass in both profiles.
 - XPath: `remove`, `insert-before`, `unordered` (keeps the order) and
   `error` (the local name of the QName as the error code, FOER0000
   without one; in a Schematron rule context an error means no match).

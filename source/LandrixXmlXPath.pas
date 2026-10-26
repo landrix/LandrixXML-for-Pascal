@@ -213,7 +213,8 @@ type
     xfnXsQName, xfnQName, xfnPrefixFromQName, xfnLocalNameFromQName, xfnNamespaceUriFromQName, xfnNodeName,
     xfnResolveQName, xfnNamespaceUriForPrefix, xfnInScopePrefixes,
     xfnDeepEqual, xfnCompare, xfnCodepointEqual, xfnDefaultCollation,
-    xfnRemove, xfnInsertBefore, xfnUnordered, xfnError
+    xfnRemove, xfnInsertBefore, xfnUnordered, xfnError,
+    xfnEncodeForUri, xfnIriToUri, xfnEscapeHtmlUri, xfnResolveUri
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -484,7 +485,11 @@ const
     (Name: 'remove'; MinArgs: 2; MaxArgs: 2; Xs: False),
     (Name: 'insert-before'; MinArgs: 3; MaxArgs: 3; Xs: False),
     (Name: 'unordered'; MinArgs: 1; MaxArgs: 1; Xs: False),
-    (Name: 'error'; MinArgs: 0; MaxArgs: 3; Xs: False)
+    (Name: 'error'; MinArgs: 0; MaxArgs: 3; Xs: False),
+    (Name: 'encode-for-uri'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'iri-to-uri'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'escape-html-uri'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'resolve-uri'; MinArgs: 1; MaxArgs: 2; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }

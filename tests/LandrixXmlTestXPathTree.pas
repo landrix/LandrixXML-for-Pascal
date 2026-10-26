@@ -381,7 +381,7 @@ begin
       CheckEqualsUtf8(U('m,z,xml'), Prefixes(T, C), Mode + ': prefixes of c');
       CheckEqualsUtf8(U('z,m,xml'), Prefixes(T, D), Mode + ': prefixes of d');
       CheckEqualsUtf8(U('z,,xml'), Prefixes(T, R + 1), Mode + ': prefixes of an attribute');
-      CheckEquals(0, Length(T.InScopePrefixesUtf8(0)), Mode + ': no prefixes for the document');
+      CheckEquals(0, Integer(Length(T.InScopePrefixesUtf8(0))), Mode + ': no prefixes for the document');
     end;
     { a DOM that lost its declarations: the names still bind their
       prefixes, a declaration wins }

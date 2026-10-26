@@ -883,6 +883,82 @@ begin
   end;
 end;
 
+const
+  { RFC 3986 5.4: the examples of resolution against http://a/b/c/d;p?q
+    (Saxon uses java.net.URI, which differs for ?y, "..." beyond the
+    root and g..) }
+  RfcExamples: array[0..41, 0..1] of string = (
+    ('g:h', 'g:h'),
+    ('g', 'http://a/b/c/g'),
+    ('./g', 'http://a/b/c/g'),
+    ('g/', 'http://a/b/c/g/'),
+    ('/g', 'http://a/g'),
+    ('//g', 'http://g'),
+    ('?y', 'http://a/b/c/d;p?y'),
+    ('g?y', 'http://a/b/c/g?y'),
+    ('#s', 'http://a/b/c/d;p?q#s'),
+    ('g#s', 'http://a/b/c/g#s'),
+    ('g?y#s', 'http://a/b/c/g?y#s'),
+    (';x', 'http://a/b/c/;x'),
+    ('g;x', 'http://a/b/c/g;x'),
+    ('g;x?y#s', 'http://a/b/c/g;x?y#s'),
+    ('', 'http://a/b/c/d;p?q'),
+    ('.', 'http://a/b/c/'),
+    ('./', 'http://a/b/c/'),
+    ('..', 'http://a/b/'),
+    ('../', 'http://a/b/'),
+    ('../g', 'http://a/b/g'),
+    ('../..', 'http://a/'),
+    ('../../', 'http://a/'),
+    ('../../g', 'http://a/g'),
+    ('../../../g', 'http://a/g'),
+    ('../../../../g', 'http://a/g'),
+    ('/./g', 'http://a/g'),
+    ('/../g', 'http://a/g'),
+    ('g.', 'http://a/b/c/g.'),
+    ('.g', 'http://a/b/c/.g'),
+    ('g..', 'http://a/b/c/g..'),
+    ('..g', 'http://a/b/c/..g'),
+    ('./../g', 'http://a/b/g'),
+    ('./g/.', 'http://a/b/c/g/'),
+    ('g/./h', 'http://a/b/c/g/h'),
+    ('g/../h', 'http://a/b/c/h'),
+    ('g;x=1/./y', 'http://a/b/c/g;x=1/y'),
+    ('g;x=1/../y', 'http://a/b/c/y'),
+    ('g?y/./x', 'http://a/b/c/g?y/./x'),
+    ('g?y/../x', 'http://a/b/c/g?y/../x'),
+    ('g#s/./x', 'http://a/b/c/g#s/./x'),
+    ('g#s/../x', 'http://a/b/c/g#s/../x'),
+    ('http:g', 'http:g'));
+
+procedure TestResolveUri;
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  I: Integer;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Expr := nil;
+  try
+    Tree.LoadFromUtf8(U('<r/>'));
+    for I := 0 to High(RfcExamples) do
+    begin
+      Expr.Free;
+      Expr := nil;
+      Expr := TLandrixXmlXPathExpression.Create(U('string(resolve-uri(''' + RfcExamples[I][0] +
+        ''', ''http://a/b/c/d;p?q''))'), nil);
+      CheckEqualsStr(RfcExamples[I][1], LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)),
+        'resolve-uri ''' + RfcExamples[I][0] + '''');
+    end;
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 { The fields of a line separated by tabs. }
 function Fields(const S: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
 var
@@ -1284,6 +1360,7 @@ begin
   RegisterTest('XPathEval.Patterns', TestPatterns);
   RegisterTest('XPathEval.Documents', TestDocuments);
   RegisterTest('XPathEval.DeepEqual', TestDeepEqual);
+  RegisterTest('XPathEval.ResolveUri', TestResolveUri);
 end;
 
 end.
