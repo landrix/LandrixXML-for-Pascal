@@ -152,6 +152,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the types of casts and parameters; it moved to `LandrixXmlXPath` and
   grows with the supported types (new labels are appended).
   `TLandrixXmlXPathAtomicType` is gone (`xatX` is now `xikX`).
+- XPath: `lang` (case ignored as Unicode's caseless match in XPath 2.0,
+  character by character as Java's `equalsIgnoreCase` in the Saxon profile),
+  `trace` (returns its value; nothing is written), `doc`,
+  `doc-available` and `document-uri` for the documents added with
+  `TLandrixXmlXPathEvaluator.AddDocument` (the evaluator's own document
+  has no URI); `AddDocument` now forgets kept values and evaluated lazy
+  variables. QT3: 90 more cases pass (89 in the Saxon profile).
 - XPath: `encode-for-uri`, `iri-to-uri`, `escape-html-uri` and
   `resolve-uri` (RFC 3986; a base must be an absolute hierarchical URI
   without a fragment, FORG0002 otherwise; there is no static base URI, so

@@ -1003,7 +1003,9 @@ begin
     if (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) then
     begin
       Id := TLandrixXmlXPathFunctionId(Nodes[Index].Op);
-      if (Id = xfnPosition) or (Id = xfnLast) or ((Id in ContextFunctions) and (Length(Nodes[Index].Children) = 0)) then
+      { lang() with one argument reads the context node }
+      if (Id = xfnPosition) or (Id = xfnLast) or ((Id in ContextFunctions) and (Length(Nodes[Index].Children) = 0)) or
+        ((Id = xfnLang) and (Length(Nodes[Index].Children) = 1)) then
         Include(Deps, xdFocus)
       else if Id = xfnCurrent then
         Include(Deps, xdOther);
@@ -1277,6 +1279,9 @@ begin
   SetLength(FDocTrees, N + 1);
   FDocUris[N] := Uri;
   FDocTrees[N] := Tree;
+  { kept values and evaluated lazy variables may have read the documents
+    (doc-available, doc) }
+  ResetDynamicContext;
   ComputeBases;
 end;
 
@@ -1994,7 +1999,7 @@ const
   { the items of the first argument (distinct-values and data atomize
     them: untyped values, numbers only if the argument has numbers) }
   PassOn = [xfnReverse, xfnDistinctValues, xfnSubsequence, xfnData, xfnExactlyOne, xfnZeroOrOne,
-    xfnOneOrMore, xfnRemove, xfnUnordered];
+    xfnOneOrMore, xfnRemove, xfnUnordered, xfnTrace];
 var
   J: Integer;
 begin

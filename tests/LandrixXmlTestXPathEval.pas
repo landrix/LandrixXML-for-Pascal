@@ -1013,6 +1013,75 @@ begin
   end;
 end;
 
+{ fn:lang in both profiles: XPath 2.0 folds case as Unicode's caseless
+  match (the sharp s is ss), Saxon as Java's equalsIgnoreCase (dotless i
+  equals dotted capital I). A document added later is available at once
+  (no kept value of doc-available). }
+procedure TestLangAndDocuments;
+const
+  Cases: array[0..7, 0..2] of string = (
+    ('lang(''it'', /r/b)', 'xs:boolean false', 'xs:boolean true'),
+    ('lang(codepoints-to-string(7838), /r)', 'xs:boolean true', 'xs:boolean true'),
+    ('lang(''ss'', /r)', 'xs:boolean true', 'xs:boolean false'),
+    ('lang(''SS-X'', /r)', 'xs:boolean true', 'xs:boolean false'),
+    ('lang(codepoints-to-string(223), /r)', 'xs:boolean true', 'xs:boolean true'),
+    ('lang(codepoints-to-string((305, 116)), /r/a)', 'xs:boolean false', 'xs:boolean true'),
+    ('lang(''it'', /r/a)', 'xs:boolean false', 'xs:boolean true'),
+    ('lang(''de'', /r/a)', 'xs:boolean false', 'xs:boolean false'));
+var
+  Tree, Late, Later: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr, Bound: TLandrixXmlXPathExpression;
+  Context: TLandrixXmlXPathStaticContext;
+  I: Integer;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Late := TLandrixXmlXPathTree.Create;
+  Later := TLandrixXmlXPathTree.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Expr := nil;
+  Bound := nil;
+  try
+    { the sharp s and the dotted capital I }
+    Tree.LoadFromUtf8(U('<r xml:lang="&#223;-x"><a xml:lang="&#304;t"/><b xml:lang="&#305;t"/></r>'));
+    for I := 0 to High(Cases) do
+    begin
+      CheckEqualsUtf8(U(Cases[I][1]), ProfileResult(U(Cases[I][0]), xppXPath20, Evaluator), 'XPath 2.0: ' + Cases[I][0]);
+      CheckEqualsUtf8(U(Cases[I][2]), ProfileResult(U(Cases[I][0]), xppSaxon, Evaluator), 'Saxon: ' + Cases[I][0]);
+    end;
+    Expr := TLandrixXmlXPathExpression.Create(U('doc-available(''late.xml'')'), nil);
+    CheckEqualsStr('false', LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'not added yet');
+    Late.LoadFromUtf8(U('<late/>'));
+    Evaluator.AddDocument(U('late.xml'), Late);
+    CheckEqualsStr('true', LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'added afterwards');
+    { a lazy variable read before is evaluated again }
+    Evaluator.SetGlobalCount(1);
+    Bound := TLandrixXmlXPathExpression.Create(U('doc-available(''later.xml'')'), nil);
+    Evaluator.BindLazy(0, Bound, 0);
+    Context.DeclareVariable(U('v'));
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('$v'), Context);
+    CheckEqualsStr('false', LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'variable: not added yet');
+    Later.LoadFromUtf8(U('<later/>'));
+    Evaluator.AddDocument(U('later.xml'), Later);
+    CheckEqualsStr('true', LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'variable: added afterwards');
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('document-uri(doc(''late.xml''))'), nil);
+    CheckEqualsStr('late.xml', LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'its URI');
+  finally
+    Expr.Free;
+    Bound.Free;
+    Context.Free;
+    Evaluator.Free;
+    Later.Free;
+    Late.Free;
+    Tree.Free;
+  end;
+end;
+
 { The implicit time zone and the current dateTime: defaults, changes
   after a first evaluation (kept values and lazy variables are dropped),
   a set and a cleared clock; years before 1 in XPath 2.0. }
@@ -1361,6 +1430,7 @@ begin
   RegisterTest('XPathEval.Documents', TestDocuments);
   RegisterTest('XPathEval.DeepEqual', TestDeepEqual);
   RegisterTest('XPathEval.ResolveUri', TestResolveUri);
+  RegisterTest('XPathEval.LangAndDocuments', TestLangAndDocuments);
 end;
 
 end.

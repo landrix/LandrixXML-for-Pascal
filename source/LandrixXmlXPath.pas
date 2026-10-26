@@ -214,7 +214,8 @@ type
     xfnResolveQName, xfnNamespaceUriForPrefix, xfnInScopePrefixes,
     xfnDeepEqual, xfnCompare, xfnCodepointEqual, xfnDefaultCollation,
     xfnRemove, xfnInsertBefore, xfnUnordered, xfnError,
-    xfnEncodeForUri, xfnIriToUri, xfnEscapeHtmlUri, xfnResolveUri
+    xfnEncodeForUri, xfnIriToUri, xfnEscapeHtmlUri, xfnResolveUri,
+    xfnLang, xfnTrace, xfnDoc, xfnDocAvailable, xfnDocumentUri
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -489,7 +490,12 @@ const
     (Name: 'encode-for-uri'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'iri-to-uri'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'escape-html-uri'; MinArgs: 1; MaxArgs: 1; Xs: False),
-    (Name: 'resolve-uri'; MinArgs: 1; MaxArgs: 2; Xs: False)
+    (Name: 'resolve-uri'; MinArgs: 1; MaxArgs: 2; Xs: False),
+    (Name: 'lang'; MinArgs: 1; MaxArgs: 2; Xs: False),
+    (Name: 'trace'; MinArgs: 1; MaxArgs: 2; Xs: False),
+    (Name: 'doc'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'doc-available'; MinArgs: 1; MaxArgs: 1; Xs: False),
+    (Name: 'document-uri'; MinArgs: 1; MaxArgs: 1; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }
@@ -2162,8 +2168,8 @@ var
   Found: Boolean;
   Args, User: Integer;
 
-  { round, string-join and node-name have other arities only from XPath
-    3.0 on }
+  { round, string-join, node-name and trace have other arities only from
+    XPath 3.0 on }
   function ArityIn20(F: TLandrixXmlXPathFunctionId; Count: Integer): Boolean;
   begin
     if FContext.Profile <> xppXPath20 then
@@ -2173,6 +2179,7 @@ var
         xfnRound: Result := Count = 1;
         xfnStringJoin: Result := Count = 2;
         xfnNodeName: Result := Count = 1;
+        xfnTrace: Result := Count = 2;
       else
         Result := True;
       end;

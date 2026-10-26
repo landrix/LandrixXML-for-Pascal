@@ -1,0 +1,93 @@
+# lang('en', //a)
+xs:boolean true
+# lang('EN', //a)
+xs:boolean true
+# lang('en-us', //a)
+xs:boolean true
+# lang('en-u', //a)
+xs:boolean false
+# lang('e', //a)
+xs:boolean false
+# lang('de', //b)
+xs:boolean true
+# lang('de', //b/text())
+xs:boolean true
+# lang('en', //c)
+xs:boolean false
+# lang('', //c)
+xs:boolean true
+# lang('', //a)
+xs:boolean false
+# lang((), //c)
+xs:boolean true
+# lang('en', //d)
+xs:boolean false
+# lang('en', //b/@xml:lang)
+xs:boolean false
+# lang('en', //comment())
+xs:boolean true
+# lang('en', /)
+xs:boolean false
+# lang('it', //e)
+xs:boolean true
+# lang('İt', //e)
+xs:boolean true
+# lang('en', //f)
+xs:boolean true
+# //*[lang('en')]
+node /Q{}r[1]
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}f[1]
+# count(//node()[lang('en')])
+xs:integer 4
+# lang('en')
+xs:boolean false
+# lang('en', ())
+error XPTY0004
+# lang('en', (//a, //b))
+error XPTY0004
+# lang(1, //a)
+error XPTY0004
+# lang(xs:untypedAtomic('en'), //a)
+xs:boolean true
+# lang('en', 1)
+error XPTY0004
+# doc(())
+# doc('nope.xml')
+error FODC0002
+# doc('%gg')
+error FODC0005
+# doc-available('nope.xml')
+xs:boolean false
+# doc-available(())
+xs:boolean false
+# doc-available('%gg')
+xs:boolean false
+# document-uri(())
+# document-uri(//a)
+# document-uri(1)
+error XPTY0004
+# lang('ss', //e)
+xs:boolean false
+# for $n in //* return lang('de', $n)
+xs:boolean false
+xs:boolean false
+xs:boolean true
+xs:boolean false
+xs:boolean false
+xs:boolean false
+xs:boolean false
+xs:boolean false
+# //*[lang('en-US')]
+node /Q{}r[1]
+node /Q{}r[1]/Q{}a[1]
+# lang('ß', //g)
+xs:boolean true
+# lang('SS', //g)
+xs:boolean false
+# lang('ss', //g)
+xs:boolean false
+# lang('ẞ', //g)
+xs:boolean true
+# lang(codepoints-to-string((305, 116)), //e)
+xs:boolean true

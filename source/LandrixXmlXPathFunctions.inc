@@ -634,6 +634,79 @@ begin
     Result := Result + '#' + T.Fragment;
 end;
 
+{ fn:lang: Lang equals Test or starts with Test and "-", ignoring case.
+  XPath 2.0: the caseless default match of Unicode, approximated per
+  character by lower(upper(...)) with the full mappings, applied twice
+  (ss for the sharp s and for the capital sharp s); the dotless i stays,
+  as in case folding. Saxon: Java's equalsIgnoreCase, character by character with
+  the simple mappings: the same upper case, or the same lower case of the
+  upper case (a full mapping of several characters keeps the character,
+  U+0130 lowers to i). The case tables are Saxon's upper-case and
+  lower-case, which leave Cherokee and Georgian Mtavruli unchanged: those
+  pairs do not match in either profile. }
+function LangMatches(const Lang, Test: TLandrixXmlUtf8; Xp20: Boolean): Boolean;
+var
+  L, T, One: TLandrixXmlCodePoints;
+  I: Integer;
+
+  function Simple(C: Integer; Upper: Boolean): Integer;
+  var
+    M: TLandrixXmlCodePoints;
+  begin
+    M := nil;
+    Result := C;
+    if (C = $130) and not Upper then
+      Result := Ord('i')
+    else
+    begin
+      SetLength(One, 1);
+      One[0] := C;
+      M := LandrixXmlUtf8ToCodePoints(MapCase(LandrixXmlCodePointsToUtf8(One, 0, 1), Upper));
+      if Integer(Length(M)) = 1 then
+        Result := M[0];
+    end;
+  end;
+
+  function Folded(const S: TLandrixXmlUtf8): TLandrixXmlCodePoints;
+  var
+    C: TLandrixXmlCodePoints;
+    K: Integer;
+    R: TLandrixXmlUtf8;
+  begin
+    C := LandrixXmlUtf8ToCodePoints(S);
+    R := '';
+    for K := 0 to Integer(Length(C)) - 1 do
+      if C[K] = $131 then
+        R := R + LandrixXmlCodePointsToUtf8(C, K, K + 1)
+      else
+        R := R + MapCase(MapCase(MapCase(MapCase(LandrixXmlCodePointsToUtf8(C, K, K + 1), True), False), True),
+          False);
+    Result := LandrixXmlUtf8ToCodePoints(R);
+  end;
+
+begin
+  One := nil;
+  if Xp20 then
+  begin
+    L := Folded(Lang);
+    T := Folded(Test);
+  end
+  else
+  begin
+    L := LandrixXmlUtf8ToCodePoints(Lang);
+    T := LandrixXmlUtf8ToCodePoints(Test);
+  end;
+  Result := False;
+  if (Integer(Length(L)) < Integer(Length(T))) or
+    ((Integer(Length(L)) > Integer(Length(T))) and (L[Integer(Length(T))] <> Ord('-'))) then
+    Exit;
+  for I := 0 to Integer(Length(T)) - 1 do
+    if (L[I] <> T[I]) and (Xp20 or ((Simple(L[I], True) <> Simple(T[I], True)) and
+      (Simple(Simple(L[I], True), False) <> Simple(Simple(T[I], True), False)))) then
+      Exit;
+  Result := True;
+end;
+
 { True if position P (an integer) is >= Start and < Stop (doubles; NaN never). }
 function InRange(P: Integer; const Start, Stop: TLandrixXmlDouble; HasStop: Boolean): Boolean;
 var
@@ -1525,6 +1598,81 @@ begin
     xfnEscapeHtmlUri:
       { the printable ASCII characters stay }
       Result := SingleSeq(StringItem(xikString, PercentEncode(StrArg(0), [#32..#126])));
+    xfnLang:
+      begin
+        T := StrArg(0);
+        if ArgCount > 1 then
+          A := Arg(1)
+        else
+          A := ContextSeq;
+        if (A.Count <> 1) or (A.Items[0].Kind <> xikNode) then
+          Fail('XPTY0004', Name + ': a single node was expected');
+        OwnTree := TreeOf(A.Items[0].Node, K);
+        { the nearest xml:lang of the node or an ancestor }
+        I := A.Items[0].Node - K;
+        if OwnTree.Kind[I] <> xnkElement then
+          I := OwnTree.Parent[I];
+        Found := False;
+        while (I > 0) and not Found do
+        begin
+          for J := I + 1 to I + OwnTree.AttributeCount[I] do
+            if (OwnTree.LocalNameUtf8(J) = 'lang') and (OwnTree.NamespaceUriUtf8(J) = LandrixXmlNamespaceXml) then
+            begin
+              Found := True;
+              S := OwnTree.ValueUtf8(J);
+              Break;
+            end;
+          if not Found then
+            I := OwnTree.Parent[I];
+        end;
+        Result := BooleanSeq(Found and LangMatches(S, T, Xp20));
+      end;
+    xfnTrace:
+      begin
+        { the value itself; the label is checked, nothing is written }
+        Result := Arg(0);
+        if ArgCount > 1 then
+          ReqStrArg(1);
+      end;
+    xfnDoc, xfnDocAvailable:
+      begin
+        { a URI AddDocument knows, as document() }
+        Found := OptAtom(0, Item);
+        if Found then
+        begin
+          if not IsStringLike(Item.Kind) then
+            Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
+          S := Item.Text;
+          Found := AnyUriValid(S);
+          { F&O 2.0: doc-available too raises FODC0005; Saxon returns false }
+          if not Found and ((Id = xfnDoc) or Xp20) then
+            Fail('FODC0005', Name + ': ''' + LandrixXmlEscapeForMessage(S, 60) + ''' is no valid URI');
+        end;
+        I := 0;
+        if Found then
+          while (I < Integer(Length(FDocUris))) and (FDocUris[I] <> S) do
+            Inc(I);
+        if Id = xfnDocAvailable then
+          Result := BooleanSeq(Found and (I < Integer(Length(FDocUris))))
+        else if Found then
+        begin
+          if I >= Integer(Length(FDocUris)) then
+            Fail('FODC0002', Name + ': the document ' + LandrixXmlUtf8ToString(S) + ' is not available');
+          Result := LandrixXmlXPathNodeItem(FDocBases[I]);
+        end;
+      end;
+    xfnDocumentUri:
+      begin
+        { the URI of a document added with AddDocument; the evaluator's
+          own document has none }
+        A := Arg(0);
+        if (A.Count > 1) or ((A.Count = 1) and (A.Items[0].Kind <> xikNode)) then
+          Fail('XPTY0004', Name + ': a single node was expected');
+        if A.Count = 1 then
+          for I := 0 to Integer(Length(FDocUris)) - 1 do
+            if FDocBases[I] = A.Items[0].Node then
+              Result := SingleSeq(StringItem(xikAnyUri, FDocUris[I]));
+      end;
     xfnResolveUri:
       begin
         { RFC 3986 resolution (F&O 2.0 allows RFC 2396 or 3986); an
