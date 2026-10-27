@@ -392,4 +392,6 @@ fpc -B -Fusource -Fisource -FUbuild/fpc -FEbuild/fpc tests/LandrixXmlTests.dpr
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE). The generated Unicode, XML 1.0 and case
+tables and the Xerces-compatible XML Schema validation are derived from
+third-party material; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

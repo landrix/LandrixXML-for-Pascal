@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `THIRD-PARTY-NOTICES.md` with `LICENSES/Unicode-3.0.txt` and
+  `LICENSES/Apache-2.0.txt`: the sources of the generated tables (Unicode
+  Character Database, XML 1.0 character classes, Saxon case mappings), the
+  Apache Xerces material of the XML Schema validation, and a pointer to the
+  notices of the test data.
 - `TLandrixXmlReader.TokenEndLine` and `TokenEndColumn`: the position right
   after the current token, where XML Schema validators report errors.
 - `LandrixXmlDecimal`: exact decimal arithmetic for `xs:decimal` and

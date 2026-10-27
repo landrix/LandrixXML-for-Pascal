@@ -26,6 +26,10 @@
   validated where global declarations exist. Content of a skip wildcard
   is not looked at.
 
+  The identity constraint matching (XPathMatcher, value stores) is ported
+  from Apache Xerces-J 2.12.2, Apache License 2.0; see
+  THIRD-PARTY-NOTICES.md and LICENSES/Apache-2.0.txt.
+
   Identity constraints (unique, key, keyref) are checked as Xerces does,
   including its quirks: names without prefix in selectors and fields
   have no namespace; the value tables of a key are collected per depth
