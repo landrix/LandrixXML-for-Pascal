@@ -388,11 +388,6 @@ begin
   CheckEqualsStr('[a][b]x', FlagReplace('(.)\1', '', 'aabbx', '[$1]'), 'replace with a back-reference');
 end;
 
-procedure TestUnsupported;
-begin
-  CheckError('\p{IsBasicLatin}', xrmXPath, xecUnsupported, 'block escape');
-end;
-
 procedure TestProperties;
 var
   R: TLandrixXmlRegex;
@@ -618,12 +613,49 @@ begin
   Check(not XsdMatches('\P{Nd}', '5'), '5 is Nd');
 end;
 
+{ Block escapes: Saxon's blocks in the XPath modes, Xerces' in XSD (more
+  cases against Saxon in tests/data/xpath/regexblocks). }
+procedure TestBlocks;
+var
+  Ext: AnsiString;
+  R: TLandrixXmlRegex;
+begin
+  Check(XPathMatches('^\p{IsBasicLatin}+$', 'abc'), 'IsBasicLatin');
+  Check(not XPathMatches('\P{IsBasicLatin}', 'abc'), 'not IsBasicLatin');
+  Check(XsdMatches('\p{IsBasicLatin}+', 'abc'), 'IsBasicLatin in XSD');
+  Check(XPath20Matches('^\p{IsGreek}$', 'x') = False, 'IsGreek (old name) in XPath 2.0');
+  CheckError('\p{IsFoo}', xrmXPath, xecRegex, 'an unknown block');
+  CheckError('\P{IsFoo}', xrmXPath, xecRegex, 'an unknown block, negated');
+  CheckError('\p{IsHighSurrogates}', xrmXsd, xecRegex, 'Xerces knows no surrogate blocks');
+  CheckError('\p{IsArabicSupplement}', xrmXsd, xecRegex, 'Xerces knows Unicode 3.1 only');
+  Check(XsdMatches('\p{Basic Latin}+', 'abc'), 'a plain block name in XSD (Xerces)');
+  Check(not XsdMatches('\P{Basic Latin}+', 'abc'), 'a plain block name negated');
+  CheckError('\p{BasicLatin}', xrmXsd, xecRegex, 'Xerces: a plain name keeps its spaces');
+  CheckError('\p{IsBasic Latin}', xrmXsd, xecRegex, 'Xerces: no spaces after Is');
+  CheckError('\p{Basic Latin}', xrmXPath, xecRegex, 'Saxon: no plain block names');
+  Check(XPathMatches('\p{IsBasic_Latin}', 'a'), 'Saxon ignores underscores after Is');
+  Check(FlagMatches('^\p{ I s B a s i c L a t i n }+$', 'x', 'hello world', xrmXPath),
+    'spaces removed by x; the space of the input is Basic Latin');
+  Check(FlagMatches('^\p{ IsBasicLatin}+$', 'x', 'helloworld', xrmXPath), 'x inside the braces');
+  { U+2A6DF: in CJK Unified Ideographs Extension B since Unicode 4.1 (Saxon),
+    not in Xerces' Unicode 3.1 block }
+  Ext := AnsiChar($F0) + AnsiChar($AA) + AnsiChar($9B) + AnsiChar($9F);
+  Check(not XsdMatchesUtf8('\p{IsCJKUnifiedIdeographsExtensionB}', LandrixXmlBufToUtf8(PAnsiChar(Ext), 4)),
+    'the block in Xerces');
+  R := TLandrixXmlRegex.Create(U('\p{IsCJKUnifiedIdeographsExtensionB}'), xrmXPath);
+  try
+    Check(R.Matches(LandrixXmlBufToUtf8(PAnsiChar(Ext), 4)), 'the block in Saxon');
+  finally
+    R.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('Regex.GeneratedData', TestGeneratedData);
   RegisterTest('Regex.XsdDialect', TestXsdDialect);
   RegisterTest('Regex.XPath20Dialect', TestXPath20Dialect);
-  RegisterTest('Regex.Unsupported', TestUnsupported);
+  RegisterTest('Regex.Blocks', TestBlocks);
   RegisterTest('Regex.Flags', TestFlags);
   RegisterTest('Regex.Properties', TestProperties);
   RegisterTest('Regex.LinearTime', TestLinearTime);

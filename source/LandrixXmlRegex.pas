@@ -54,9 +54,14 @@
   inside a character class is invalid. A group that took part in no
   match matches the empty string; with the flag i characters compare
   case-blind.
-  Not supported (ELandrixXmlError with xecUnsupported, never silently
-  ignored): block escapes (\p with IsBasicLatin and the like). Invalid
-  patterns and flags raise xecRegex.
+  Block escapes (\p or \P with Is and a block name; the XPath modes
+  ignore spaces, underscores, tabs and line ends after Is, as Saxon;
+  xrmXsd also takes the plain block name with its spaces, as Xerces):
+  the XPath modes know the blocks as Saxon (Unicode up to 6.0, old names
+  such as IsGreek kept), xrmXsd those of the Java runtime's Xerces
+  (Unicode 3.1, no surrogate blocks); LandrixXmlBlockData.inc. An
+  unknown block name makes the pattern invalid. Invalid patterns and
+  flags raise xecRegex.
 
   A hyphen in a character class follows XML Schema 1.0 in the modes XSD
   (as Xerces) and XPath 2.0: a literal hyphen only at the start or end of
@@ -129,7 +134,6 @@ type
     procedure Error(const Msg: string);
     function CharSet(Lo, Hi: Integer): TLandrixXmlRegexSet;
     procedure Nest;
-    procedure Unsupported(const Msg: string);
     function AtEnd: Boolean;
     function Peek: Integer;
     function PeekAt(Offset: Integer): Integer;
@@ -178,6 +182,7 @@ function LandrixXmlRegexFlagsValid(const Flags: TLandrixXmlUtf8; Mode: TLandrixX
 implementation
 
 {$I LandrixXmlCaseVariantsData.inc}
+{$I LandrixXmlBlockData.inc}
 
 const
   MaxCodePoint = $10FFFF;
@@ -410,6 +415,49 @@ begin
     Extra[I] := R[I];
   SetNormalize(Extra);
   Result := SetUnion(SetNameStart, Extra);
+end;
+
+{ The characters of the block Name ('IsBasicLatin'): from the XPath table
+  (Saxon) or, for XSD, the Xerces table; False for an unknown name. }
+function FindBlock(const Name: string; Xsd: Boolean; out S: TLandrixXmlRegexSet): Boolean;
+var
+  I, J, N: Integer;
+begin
+  S := nil;
+  Result := False;
+  if Xsd then
+  begin
+    I := 0;
+    while (I < XsdBlockCount) and (XsdBlockNames[I] <> Name) do
+      Inc(I);
+    if I = XsdBlockCount then
+      Exit;
+    SetLength(S, 2 * (XsdBlockFirst[I + 1] - XsdBlockFirst[I]));
+    N := 0;
+    for J := XsdBlockFirst[I] to XsdBlockFirst[I + 1] - 1 do
+    begin
+      S[N] := XsdBlockLo[J];
+      S[N + 1] := XsdBlockHi[J];
+      Inc(N, 2);
+    end;
+  end
+  else
+  begin
+    I := 0;
+    while (I < XPathBlockCount) and (XPathBlockNames[I] <> Name) do
+      Inc(I);
+    if I = XPathBlockCount then
+      Exit;
+    SetLength(S, 2 * (XPathBlockFirst[I + 1] - XPathBlockFirst[I]));
+    N := 0;
+    for J := XPathBlockFirst[I] to XPathBlockFirst[I + 1] - 1 do
+    begin
+      S[N] := XPathBlockLo[J];
+      S[N + 1] := XPathBlockHi[J];
+      Inc(N, 2);
+    end;
+  end;
+  Result := True;
 end;
 
 { The characters Lo .. Hi and their case variants (flag i): the variants
@@ -1114,12 +1162,6 @@ begin
     Result := SetRange(Lo, Hi);
 end;
 
-procedure TLandrixXmlRegex.Unsupported(const Msg: string);
-begin
-  raise ELandrixXmlError.CreateCode(xecUnsupported, 'Regular expression "' +
-    LandrixXmlEscapeForMessage(FSource, 60) + '": not supported: ' + Msg);
-end;
-
 function TLandrixXmlRegex.AtEnd: Boolean;
 begin
   Result := FPos >= Length(FPattern);
@@ -1511,7 +1553,7 @@ end;
 
 function TLandrixXmlRegex.ParseCategory(Negated: Boolean): TLandrixXmlRegexSet;
 var
-  Name: string;
+  Name, Original: string;
   C: Integer;
   Cats: TLandrixXmlUnicodeCategories;
   Major: Char;
@@ -1533,8 +1575,21 @@ begin
   Inc(FPos);
   if Name = 'Is' then
     Error('block name expected after \p{Is');
+  Original := Name;
   if Copy(Name, 1, 2) = 'Is' then
-    Unsupported('block escape \p{' + Name + '}');
+  begin
+    { Saxon ignores spaces, underscores, tabs and line ends after "Is";
+      Xerces does not }
+    if FMode <> xrmXsd then
+      for C := Length(Name) downto 3 do
+        if (Name[C] = ' ') or (Name[C] = '_') or (Name[C] = #9) or (Name[C] = #10) or (Name[C] = #13) then
+          Delete(Name, C, 1);
+    if not FindBlock(Name, FMode = xrmXsd, Result) then
+      Error('unknown block ' + LandrixXmlEscapeForMessage(LandrixXmlStringToUtf8(Original), 60));
+    if Negated then
+      Result := SetComplement(Result);
+    Exit;
+  end;
   Cats := [];
   if Length(Name) = 1 then
   begin
@@ -1578,8 +1633,15 @@ begin
   else if Name = 'Cf' then Cats := [xucCf]
   else if Name = 'Co' then Cats := [xucCo]
   else if Name = 'Cn' then Cats := [xucCn];
+  { Xerces also takes a plain block name such as "Basic Latin" }
+  if (Cats = []) and (FMode = xrmXsd) and FindBlock(Name, True, Result) then
+  begin
+    if Negated then
+      Result := SetComplement(Result);
+    Exit;
+  end;
   if Cats = [] then
-    Error('unknown category \p{' + Name + '}');
+    Error('unknown category ' + LandrixXmlEscapeForMessage(LandrixXmlStringToUtf8(Name), 60));
   Result := SetFromCategories(Cats);
   if Negated then
     Result := SetComplement(Result);

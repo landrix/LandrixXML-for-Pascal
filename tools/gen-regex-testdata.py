@@ -25,7 +25,7 @@ as "hex:" followed by its UTF-8 bytes in hex:
   replace   pattern  input   replacement  result|error
   tokenize  pattern  input   count  token1 ... | error
 "unsupported" marks patterns that Saxon accepts but this library rejects
-on purpose (block escapes).
+on purpose (none at present).
 
 The file is committed; rerun this script only when the set changes.
 """
@@ -79,7 +79,7 @@ XPATH_PATTERNS = [
 
 # Valid for Saxon, deliberately not supported here: the expected result is
 # "unsupported" (ELandrixXmlError with xecUnsupported).
-UNSUPPORTED = {BS + "p{IsBasicLatin}"}
+UNSUPPORTED = set()
 
 REPLACE_CASES = [
     ("([" + BS + "s])", ""), ("([ " + BS + "n" + BS + "r" + BS + "t" + BS + "s])", ""), ("(b)(c)", "[$2$1$0]"),

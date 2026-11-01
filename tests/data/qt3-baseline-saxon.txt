@@ -2946,6 +2946,8 @@ fn-matches/K2-MatchesFunc-17 pass
 fn-matches/K2-MatchesFunc-2 pass
 fn-matches/K2-MatchesFunc-3 pass
 fn-matches/K2-MatchesFunc-4 pass
+fn-matches/K2-MatchesFunc-5 pass
+fn-matches/K2-MatchesFunc-6 pass
 fn-matches/K2-MatchesFunc-7 pass
 fn-matches/K2-MatchesFunc-8 pass
 fn-matches/K2-MatchesFunc-9 pass
