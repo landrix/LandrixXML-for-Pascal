@@ -280,7 +280,7 @@ begin
   CheckError('[0-9-.]', xrmXPath20, xecRegex, 'a hyphen after a range (XML Schema 1.0)');
   Check(XPathMatches('[0-9-.]', '-'), 'the same in the Saxon dialect');
   CheckError('(?:a)', xrmXPath20, xecRegex, '(?: in XPath 2.0');
-  CheckError('(a)\1', xrmXPath20, xecUnsupported, 'a back-reference in XPath 2.0');
+  Check(XPath20Matches('^(a)\1$', 'aa'), 'a back-reference in XPath 2.0');
   Check(XPath20Matches('^a+?$', 'aa'), 'a reluctant quantifier in XPath 2.0');
 end;
 
@@ -374,11 +374,22 @@ begin
   Check(not FlagMatches('^\p{Lu}$', 'i', 'm', xrmXPath), 'i: categories unchanged');
   Check(FlagMatches('A.B', 'iq', 'xa.bx', xrmXPath), 'i with q');
   Check(FlagMatches('^A{2}$', 'i', 'aA', xrmXPath20), 'i in XPath 2.0');
+  { back-references (more cases against Saxon in tests/data/xpath/regexbackref) }
+  Check(FlagMatches('^(a)\1$', '', 'aa', xrmXPath), 'a back-reference');
+  Check(not FlagMatches('^(a)\1$', '', 'aA', xrmXPath), 'a back-reference is case-sensitive');
+  Check(FlagMatches('^(a)\1$', 'i', 'aA', xrmXPath), 'case-blind with i');
+  Check(FlagMatches('^(#)abc\11$', '', '#abc#1', xrmXPath), '\11 with one group is \1 and 1');
+  Check(FlagMatches('^(a)?b\1$', '', 'b', xrmXPath), 'an unset group matches empty');
+  Check(FlagMatches('^(a*)*\1b$', '', 'aab', xrmXPath), 'an empty iteration ends the loop');
+  CheckError('(a)\2', xrmXPath, xecRegex, 'a group that does not exist');
+  CheckError('(a\1)', xrmXPath, xecRegex, 'a group that is not closed');
+  CheckError('(a)[\1]', xrmXPath, xecRegex, 'a back-reference in a class');
+  CheckError('(?:a)\1', xrmXPath, xecRegex, 'a non-capturing group does not count');
+  CheckEqualsStr('[a][b]x', FlagReplace('(.)\1', '', 'aabbx', '[$1]'), 'replace with a back-reference');
 end;
 
 procedure TestUnsupported;
 begin
-  CheckError('(a)\1', xrmXPath, xecUnsupported, 'back-reference');
   CheckError('\p{IsBasicLatin}', xrmXPath, xecUnsupported, 'block escape');
 end;
 
@@ -486,6 +497,45 @@ end;
 
 { Oversized programs fail before they are built; large ones compile in
   linear time and run without recursion. }
+{ A back-reference pattern with exponential backtracking stops at the
+  step budget with xecLimit, never with a silent mismatch. }
+procedure CheckBacktrackBudget;
+var
+  R: TLandrixXmlRegex;
+  Raised: Boolean;
+  Started: TDateTime;
+begin
+  Started := Now;
+  Raised := False;
+  R := TLandrixXmlRegex.Create(U('^(a|a)*\1$'), xrmXPath);
+  try
+    try
+      R.Matches(U(StringOfChar('a', 40) + 'b'));
+    except
+      on E: ELandrixXmlError do
+        Raised := E.Code = xecLimit;
+    end;
+  finally
+    R.Free;
+  end;
+  Check(Raised, 'the backtracking budget');
+  { the characters a back-reference compares count too }
+  Raised := False;
+  R := TLandrixXmlRegex.Create(U('^(a+)\1b$'), xrmXPath);
+  try
+    try
+      R.Matches(U(StringOfChar('a', 100000) + 'c'));
+    except
+      on E: ELandrixXmlError do
+        Raised := E.Code = xecLimit;
+    end;
+  finally
+    R.Free;
+  end;
+  Check(Raised, 'the budget counts compared characters');
+  Check(Now - Started < 30 / (24 * 3600), 'the budget ends the search in time');
+end;
+
 procedure TestLimits;
 var
   R: TLandrixXmlRegex;
@@ -497,6 +547,7 @@ begin
   CheckLimit('x{99999}y{2}', 'repetitions above the limit together');
   CheckLimit('(x{1000}){200}', 'nested repetition above the limit');
   CheckLimit('(xy){2147483647}', 'a group MaxInt times');
+  CheckBacktrackBudget;
   Check(XPathMatches('^a{0000000001}$', 'a'), 'leading zeros in a quantifier');
   Check(XPathMatches('^a{0000000000001,00000000000000002}$', 'aa'), 'leading zeros in both bounds');
   CheckError('a{99999999999,9999999999}', xrmXPath, xecRegex, 'm < n beyond MaxInt');

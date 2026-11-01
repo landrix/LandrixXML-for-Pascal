@@ -1,0 +1,132 @@
+# matches('aa', '^(a)\1$')
+xs:boolean true
+# matches('ab', '^(a)\1$')
+xs:boolean false
+# matches('aA', '(a)\1', 'i')
+xs:boolean true
+# matches('Mum', '([md])[aeiou]\1', 'i')
+xs:boolean true
+# matches('Mud', '([md])[aeiou]\1', 'i')
+xs:boolean false
+# matches('#abc#1', '^(#)abc\11$')
+xs:boolean true
+# matches('abcdefghijkabcdefghijk', '(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\1\2\3\4\5\6\7\8\9\10\11')
+xs:boolean true
+# matches('abcdefghiabcdefghia0a1', '(a)(b)(c)(d)(e)(f)(g)(h)(i)\1\2\3\4\5\6\7\8\9\10\11')
+xs:boolean true
+# matches('abcdefghijj', '(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10')
+xs:boolean true
+# matches('ab()cd()ef()gh', '^(ab)([()]*)(cd)([)(]*)ef\4gh$')
+xs:boolean true
+# matches('A', '([A-Z])\1*')
+xs:boolean true
+# matches('AAA', '^([A-Z])\1*$')
+xs:boolean true
+# matches('b', '^(a)?b\1$')
+xs:boolean true
+# matches('b', '^(a)|b\1$')
+xs:boolean true
+# matches('aab', '^(a*)*\1b$')
+xs:boolean true
+# matches('abab', '^(ab)*\1$')
+xs:boolean true
+# matches('ababab', '^(ab)*\1$')
+xs:boolean true
+# matches('abcabc', '^(abc)\1{1}$')
+xs:boolean true
+# matches('abcabcabc', '^(abc)\1{2}$')
+xs:boolean true
+# matches('xyzzy', '(z)\1')
+xs:boolean true
+# matches('aaaa', '^(a+)\1$')
+xs:boolean true
+# matches('aaa', '^(a+)\1$')
+xs:boolean false
+# matches('abba', '^(a)(b)\2\1$')
+xs:boolean true
+# matches('abab', '^(a)(?:b)\1b$')
+xs:boolean true
+# matches('ab', '(a)(?:b)\2')
+error FORX0002
+# matches('aa', '(?:a)\1')
+error FORX0002
+# matches('a', '\1')
+error FORX0002
+# matches('aa', '(a\1)')
+error FORX0002
+# matches('aa', '(a)[\1]')
+error FORX0002
+# matches('aa', '(a)[a\1]')
+error FORX0002
+# matches('h', '(.)\3')
+error FORX0002
+# matches('h', '(.)\2')
+error FORX0002
+# matches('aA', '(a)\99')
+error FORX0002
+# matches('abcdefghijk', '(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k\11)')
+error FORX0002
+# matches('ii', '^(i)\1$', 'i')
+xs:boolean true
+# matches('iK', '^(k)\1$', 'i')
+xs:boolean false
+# matches('aa', '^(a) \1$', 'x')
+xs:boolean true
+# matches('aa1', '^(a)\1 1$', 'x')
+xs:boolean true
+# matches('aa', '^(a)\ 1$', 'x')
+xs:boolean true
+# matches("'x'", '^([''"]).*\1$')
+xs:boolean true
+# matches('<b>x</b>', '<([a-z]+)>.*</\1>')
+xs:boolean true
+# matches('<b>x</i>', '<([a-z]+)>.*</\1>')
+xs:boolean false
+# replace('aabbcc', '(.)\1', '<$1>')
+xs:string <a><b><c>
+# replace('abcabc', '(abc)\1', 'X')
+xs:string X
+# tokenize('a--b==c', '(.)\1')
+xs:string a
+xs:string b
+xs:string c
+# replace('xaaay', '(a)\1+?', '-')
+xs:string x-ay
+# matches('aaa', '^(a)\1{0,1}?a$')
+xs:boolean true
+# replace('abab', '(a|b)\1', 'x')
+xs:string abab
+# replace('', '(a)\1', 'x')
+xs:string 
+# replace('aa', '()\1', 'x')
+error FORX0003
+# tokenize('aa', '(a?)\1')
+error FORX0003
+# replace('aab', '^(a*)*\1b$', '[$1]')
+xs:string []
+# replace('b', '^(a*)*b()\2$', '[$1]')
+xs:string []
+# replace('abab', '^(?:(a)|b)*()\2$', '[$1]')
+error FORX0003
+# replace('aaa', '^(a?)*?()\2$', '[$1]')
+error FORX0003
+# replace('ab', '^(a|)*b()\2$', '[$1]')
+xs:string []
+# matches('xa', '^(?:(x?)(?:a\1)*)*$')
+xs:boolean true
+# matches('xaa', '^(?:(x?)(?:a\1)*)*$')
+xs:boolean true
+# matches('xaxa', '^(?:(x?)(?:a\1)*)*$')
+xs:boolean true
+# matches('xaxaa', '^(?:(x?)(?:a\1)*)*$')
+xs:boolean true
+# matches('xab', '^(?:(x?)(?:a\1)*)*b$')
+xs:boolean true
+# matches('xa', '^((x?)((a\2)*))*$')
+xs:boolean true
+# replace('aab', '^(a*)+\1b$', '[$1]')
+xs:string []
+# replace('aab', '^(a*){2,}\1b$', '[$1]')
+xs:string []
+# replace('ab', '^(?:(a)|b)*\1$', '[$1]')
+error FORX0003

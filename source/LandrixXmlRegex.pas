@@ -10,7 +10,16 @@
   Matching works on Unicode code points with a Pike VM (a Thompson NFA
   simulation that keeps the priority of alternatives and greedy
   quantifiers), so one match takes time linear in the input for every
-  pattern: untrusted documents cannot trigger catastrophic backtracking.
+  pattern without back-references: untrusted documents cannot trigger
+  catastrophic backtracking. Patterns with back-references (XPath modes)
+  run on a backtracking matcher over the same program instead, limited
+  to BacktrackSteps steps per call of Matches, Replace or Tokenize
+  (ELandrixXmlError with xecLimit beyond, never a silent mismatch); an
+  iteration of a loop that consumes nothing ends the loop, keeping its
+  captures (as Saxon). Every character a back-reference compares counts
+  as a step; a search that is quadratic in the input (such as
+  <([a-z]+)>.*</\1> without a match) reaches the limit at a few thousand
+  characters.
   Replace and Tokenize search again after every match, so a pattern whose
   match attempts run to the end of the input can take quadratic time
   there, as with Saxon. Matches are leftmost-first, as with a backtracking
@@ -39,9 +48,15 @@
   and, in xrmXPath only, q (every character literal; Replace then takes
   the replacement literally). XSD patterns match the whole string, take
   no flags, and ^ and $ are ordinary characters there.
+  Back-references \N (XPath modes): a first digit 1-9, further digits
+  as long as the number does not exceed the groups opened so far; the
+  group must exist and be closed before the reference, and a reference
+  inside a character class is invalid. A group that took part in no
+  match matches the empty string; with the flag i characters compare
+  case-blind.
   Not supported (ELandrixXmlError with xecUnsupported, never silently
-  ignored): back-references, block escapes (\p with IsBasicLatin and
-  the like). Invalid patterns and flags raise xecRegex.
+  ignored): block escapes (\p with IsBasicLatin and the like). Invalid
+  patterns and flags raise xecRegex.
 
   A hyphen in a character class follows XML Schema 1.0 in the modes XSD
   (as Xerces) and XPath 2.0: a literal hyphen only at the start or end of
@@ -80,11 +95,13 @@ type
 
   { Internal compiled forms, public only because Delphi 6 has no nested
     types. }
-  TLandrixXmlRegexOp = (xroSet, xroSplit, xroJump, xroSave, xroStart, xroEnd, xroMatch);
+  TLandrixXmlRegexOp = (xroSet, xroSplit, xroJump, xroSave, xroStart, xroEnd, xroMatch,
+    xroBackRef);
   TLandrixXmlRegexInstr = record
     Op: TLandrixXmlRegexOp;
-    A: Integer; { set index, save slot, or relative target }
-    B: Integer; { second relative target of xroSplit }
+    A: Integer; { set index, save slot, relative target or group }
+    B: Integer; { second relative target of xroSplit; 1 for a
+                  case-blind back-reference }
   end;
   TLandrixXmlRegexCode = array of TLandrixXmlRegexInstr;
   { Sorted disjoint code point ranges: Lo0, Hi0, Lo1, Hi1, ... }
@@ -106,6 +123,9 @@ type
     FMultiLine: Boolean;
     FLiteral: Boolean;
     FCaseless: Boolean;
+    FGroupClosed: array of Boolean;
+    FHasBackRef: Boolean;
+    FLoopHead: array of Boolean;
     procedure Error(const Msg: string);
     function CharSet(Lo, Hi: Integer): TLandrixXmlRegexSet;
     procedure Nest;
@@ -122,6 +142,7 @@ type
     function ParseClassExpr: TLandrixXmlRegexSet;
     function ParseEscape(out CodePoint: Integer): TLandrixXmlRegexSet;
     function ParseCategory(Negated: Boolean): TLandrixXmlRegexSet;
+    function ParseBackReference: TLandrixXmlRegexCode;
   public
     { Compiles Pattern with Flags (see LandrixXmlRegexFlagsValid; xecRegex
       for invalid flags). }
@@ -164,6 +185,9 @@ const
   MaxInstructions = 100000;
   { Limit of nested groups and class subtractions (recursive parser). }
   MaxDepth = 1000;
+  { Steps of the backtracking matcher per call of Matches, Replace or
+    Tokenize (patterns with back-references only). }
+  BacktrackSteps = 10000000;
   Unbounded = -1;
 
   CharTab = 9;
@@ -540,6 +564,14 @@ type
     PC: Integer;
     Captures: TLandrixXmlCodePoints;
   end;
+  { Kind 0: a choice point (A = PC, B = position); 1: undo a capture
+    (A = slot, B = old value); 2: undo a loop entry (A = PC, B = old
+    position). }
+  TBacktrackEntry = record
+    Kind: Integer;
+    A: Integer;
+    B: Integer;
+  end;
   TThreadArray = array of TThread;
   TThreadList = record
     Items: TThreadArray;
@@ -555,6 +587,13 @@ type
     StackCount: Integer;
     Current, Next: TThreadList;
     WantCaptures: Boolean;
+    { the backtracking matcher: steps used in this call, choice points
+      and undo entries, the captures and the loop entry positions }
+    Steps: Integer;
+    Trail: array of TBacktrackEntry;
+    TrailCount: Integer;
+    BtCaptures: TLandrixXmlCodePoints;
+    LoopPos: array of Integer;
   end;
 
 procedure InitVm(R: TLandrixXmlRegex; out State: TVmState; WantCaptures: Boolean);
@@ -573,6 +612,18 @@ begin
   State.Next.Items := nil;
   State.Next.Count := 0;
   State.WantCaptures := WantCaptures;
+  State.Steps := 0;
+  State.Trail := nil;
+  State.TrailCount := 0;
+  State.BtCaptures := nil;
+  State.LoopPos := nil;
+  if R.FHasBackRef then
+  begin
+    SetLength(State.BtCaptures, 2 * R.FGroupCount + 2);
+    SetLength(State.LoopPos, Length(R.FCode));
+    for I := 0 to Integer(Length(State.LoopPos)) - 1 do
+      State.LoopPos[I] := -1;
+  end;
 end;
 
 procedure Push(var State: TVmState; PC: Integer; const Captures: TLandrixXmlCodePoints);
@@ -709,6 +760,207 @@ begin
 end;
 
 { ---------------------------------------------------------------------- }
+{ Backtracking matcher (patterns with back-references)                   }
+{ ---------------------------------------------------------------------- }
+
+{ True if the input character C matches the character P of an earlier
+  match without regard to case (flag i). }
+function SameCaseBlind(P, C: Integer): Boolean;
+var
+  Lo, Hi, Mid, J: Integer;
+begin
+  Result := P = C;
+  if Result then
+    Exit;
+  Lo := 0;
+  Hi := CaseVariantCount - 1;
+  while Lo <= Hi do
+  begin
+    Mid := (Lo + Hi) div 2;
+    if CaseVariantKeys[Mid] < P then
+      Lo := Mid + 1
+    else if CaseVariantKeys[Mid] > P then
+      Hi := Mid - 1
+    else
+    begin
+      for J := CaseVariantStarts[Mid] to CaseVariantStarts[Mid + 1] - 1 do
+        if CaseVariantPool[J] = C then
+          Result := True;
+      Exit;
+    end;
+  end;
+end;
+
+procedure PushEntry(var State: TVmState; Kind, A, B: Integer);
+begin
+  if State.TrailCount = Length(State.Trail) then
+    SetLength(State.Trail, 2 * State.TrailCount + 64);
+  State.Trail[State.TrailCount].Kind := Kind;
+  State.Trail[State.TrailCount].A := A;
+  State.Trail[State.TrailCount].B := B;
+  Inc(State.TrailCount);
+end;
+
+{ One attempt at Start, alternatives in priority order (the order the
+  Pike VM keeps), so the result is the leftmost-first match. }
+function BacktrackAt(R: TLandrixXmlRegex; var State: TVmState; const Text: TLandrixXmlCodePoints;
+  Start: Integer): Boolean;
+var
+  PC, Position, I, G, Len: Integer;
+  Ok: Boolean;
+begin
+  { LoopPos needs no reset: a backward jump reaches a loop head only after
+    the head set it in this attempt. The captures are reset per attempt,
+    and that counts as work. }
+  for I := 0 to Integer(Length(State.BtCaptures)) - 1 do
+    State.BtCaptures[I] := -1;
+  Inc(State.Steps, Length(State.BtCaptures));
+  State.TrailCount := 0;
+  PC := 0;
+  Position := Start;
+  while True do
+  begin
+    Inc(State.Steps);
+    if State.Steps > BacktrackSteps then
+      raise ELandrixXmlError.CreateCode(xecLimit, 'Regular expression "' +
+        LandrixXmlEscapeForMessage(R.FSource, 60) + '": more than ' + IntToStr(BacktrackSteps) +
+        ' backtracking steps');
+    Ok := True;
+    case R.FCode[PC].Op of
+      xroSet:
+        if (Position < Length(Text)) and SetContains(R.FSets[R.FCode[PC].A], Text[Position]) then
+        begin
+          Inc(Position);
+          Inc(PC);
+        end
+        else
+          Ok := False;
+      xroSplit:
+        begin
+          { a loop head notes where this iteration starts }
+          if R.FLoopHead[PC] then
+          begin
+            PushEntry(State, 2, PC, State.LoopPos[PC]);
+            State.LoopPos[PC] := Position;
+          end;
+          PushEntry(State, 0, PC + R.FCode[PC].B, Position);
+          PC := PC + R.FCode[PC].A;
+        end;
+      xroJump:
+        begin
+          G := PC + R.FCode[PC].A;
+          { the end of an iteration that consumed nothing: the loop ends
+            here, with the captures of that iteration (as Saxon) }
+          if (R.FCode[PC].A < 0) and R.FLoopHead[G] and (State.LoopPos[G] = Position) then
+          begin
+            if R.FCode[G].A = 1 then
+              PC := G + R.FCode[G].B
+            else
+              PC := G + R.FCode[G].A;
+          end
+          else
+            PC := G;
+        end;
+      xroSave:
+        begin
+          PushEntry(State, 1, R.FCode[PC].A, State.BtCaptures[R.FCode[PC].A]);
+          State.BtCaptures[R.FCode[PC].A] := Position;
+          Inc(PC);
+        end;
+      xroStart:
+        if (Position = 0) or ((R.FCode[PC].A = 1) and (Text[Position - 1] = CharLf) and
+          (Position < Length(Text))) then
+          Inc(PC)
+        else
+          Ok := False;
+      xroEnd:
+        if (Position = Length(Text)) or ((R.FCode[PC].A = 1) and (Text[Position] = CharLf)) then
+          Inc(PC)
+        else
+          Ok := False;
+      xroBackRef:
+        begin
+          G := R.FCode[PC].A;
+          if (State.BtCaptures[2 * G] >= 0) and (State.BtCaptures[2 * G + 1] >= 0) then
+          begin
+            Len := State.BtCaptures[2 * G + 1] - State.BtCaptures[2 * G];
+            if Position + Len > Length(Text) then
+              Ok := False
+            else
+            begin
+              { every character compared counts as a step }
+              I := 0;
+              while Ok and (I < Len) do
+              begin
+                if (Text[State.BtCaptures[2 * G] + I] <> Text[Position + I]) and
+                  ((R.FCode[PC].B = 0) or not SameCaseBlind(Text[State.BtCaptures[2 * G] + I],
+                  Text[Position + I])) then
+                  Ok := False;
+                Inc(I);
+              end;
+              Inc(State.Steps, I);
+            end;
+            if Ok then
+              Inc(Position, Len);
+          end;
+          if Ok then
+            Inc(PC);
+        end;
+    else
+      { xroMatch }
+      Result := True;
+      Exit;
+    end;
+    if not Ok then
+    begin
+      { undo to the last choice point and take its other branch }
+      while (State.TrailCount > 0) and (State.Trail[State.TrailCount - 1].Kind <> 0) do
+      begin
+        Dec(State.TrailCount);
+        if State.Trail[State.TrailCount].Kind = 1 then
+          State.BtCaptures[State.Trail[State.TrailCount].A] := State.Trail[State.TrailCount].B
+        else
+          State.LoopPos[State.Trail[State.TrailCount].A] := State.Trail[State.TrailCount].B;
+      end;
+      if State.TrailCount = 0 then
+      begin
+        Result := False;
+        Exit;
+      end;
+      Dec(State.TrailCount);
+      PC := State.Trail[State.TrailCount].A;
+      Position := State.Trail[State.TrailCount].B;
+    end;
+  end;
+end;
+
+{ The leftmost-first match from StartPos (Search) or at StartPos, with
+  the matcher the pattern needs. }
+function RunMatch(R: TLandrixXmlRegex; var State: TVmState; const Text: TLandrixXmlCodePoints;
+  StartPos: Integer; Search: Boolean; out Captures: TLandrixXmlCodePoints): Boolean;
+var
+  Start, I: Integer;
+begin
+  if not R.FHasBackRef then
+  begin
+    Result := RunVm(R, State, Text, StartPos, Search, Captures);
+    Exit;
+  end;
+  Captures := nil;
+  Start := StartPos;
+  repeat
+    Result := BacktrackAt(R, State, Text, Start);
+    Inc(Start);
+  until Result or not Search or (Start > Length(Text));
+  if Result then
+  begin
+    SetLength(Captures, Length(State.BtCaptures));
+    for I := 0 to Integer(Length(Captures)) - 1 do
+      Captures[I] := State.BtCaptures[I];
+  end;
+end;
+
+{ ---------------------------------------------------------------------- }
 { Parser                                                                 }
 { ---------------------------------------------------------------------- }
 
@@ -823,8 +1075,19 @@ begin
   AppendInstr(FCode, Count, xroMatch, 0, 0);
   SetLength(FCode, Count);
   Empty := nil;
+  { the loop heads of the backtracking matcher: splits that a backward
+    jump returns to }
+  if FHasBackRef then
+  begin
+    SetLength(FLoopHead, Count);
+    for I := 0 to Count - 1 do
+      FLoopHead[I] := False;
+    for I := 0 to Count - 1 do
+      if (FCode[I].Op = xroJump) and (FCode[I].A < 0) and (FCode[I + FCode[I].A].Op = xroSplit) then
+        FLoopHead[I + FCode[I].A] := True;
+  end;
   InitVm(Self, State, False);
-  FMatchesEmpty := RunVm(Self, State, Empty, 0, False, Captures);
+  FMatchesEmpty := RunMatch(Self, State, Empty, 0, False, Captures);
 end;
 
 procedure TLandrixXmlRegex.Error(const Msg: string);
@@ -1071,6 +1334,7 @@ begin
       begin
         Inc(FPos);
         Nest;
+        Group := 0;
         if Peek = Ord('?') then
         begin
           if (FMode = xrmXPath) and (PeekAt(1) = Ord(':')) then
@@ -1085,6 +1349,8 @@ begin
         begin
           Inc(FGroupCount);
           Group := FGroupCount;
+          SetLength(FGroupClosed, Group + 1);
+          FGroupClosed[Group] := False;
           AppendInstr(Result, Count, xroSave, 2 * Group, 0);
           AppendCode(Result, Count, ParseRegExp);
           AppendInstr(Result, Count, xroSave, 2 * Group + 1, 0);
@@ -1093,6 +1359,8 @@ begin
         if Peek <> Ord(')') then
           Error('")" expected');
         Inc(FPos);
+        if Group > 0 then
+          FGroupClosed[Group] := True;
         Dec(FDepth);
       end;
     Ord('['):
@@ -1114,6 +1382,9 @@ begin
         Result := Instr(xroSet, AddSet(SetComplement(S)), 0);
       end;
     Ord('\'):
+      if (FMode <> xrmXsd) and (PeekAt(1) >= Ord('1')) and (PeekAt(1) <= Ord('9')) then
+        Result := ParseBackReference
+      else
       begin
         S := ParseEscape(CodePoint);
         { a single-character escape is a character (case variants) }
@@ -1140,6 +1411,28 @@ begin
       Result := Instr(xroSet, AddSet(CharSet(C, C)), 0);
     end;
   end;
+end;
+
+{ \N at FPos: the longest number not above the groups opened so far
+  (at least one digit); the group must be closed already. }
+function TLandrixXmlRegex.ParseBackReference: TLandrixXmlRegexCode;
+var
+  N: Integer;
+begin
+  Inc(FPos); { the backslash }
+  N := Peek - Ord('0');
+  Inc(FPos);
+  while (Peek >= Ord('0')) and (Peek <= Ord('9')) and (N * 10 + Peek - Ord('0') <= FGroupCount) do
+  begin
+    N := N * 10 + Peek - Ord('0');
+    Inc(FPos);
+  end;
+  if N > FGroupCount then
+    Error('back-reference to group ' + IntToStr(N) + ', which does not exist');
+  if not FGroupClosed[N] then
+    Error('back-reference to group ' + IntToStr(N) + ' inside that group');
+  FHasBackRef := True;
+  Result := Instr(xroBackRef, N, Ord(FCaseless));
 end;
 
 { An escape starting at '\'. CodePoint = the character for a single-character
@@ -1204,8 +1497,9 @@ begin
     Ord('P'):
       Result := ParseCategory(True);
     Ord('1')..Ord('9'):
+      { a back-reference outside a class is parsed by ParseAtom }
       if FMode <> xrmXsd then
-        Unsupported('back-reference')
+        Error('back-reference in a character class')
       else
         Error('unknown escape');
   else
@@ -1411,7 +1705,7 @@ var
   State: TVmState;
 begin
   InitVm(Self, State, False);
-  Result := RunVm(Self, State, LandrixXmlUtf8ToCodePoints(S), 0, FMode <> xrmXsd, Captures);
+  Result := RunMatch(Self, State, LandrixXmlUtf8ToCodePoints(S), 0, FMode <> xrmXsd, Captures);
 end;
 
 function TLandrixXmlRegex.Replace(const S, Replacement: TLandrixXmlUtf8): TLandrixXmlUtf8;
@@ -1449,7 +1743,7 @@ begin
   Buffer := TLandrixXmlBuffer.Create;
   try
     Position := 0;
-    while (Position <= Length(Text)) and RunVm(Self, State, Text, Position, True, Captures) do
+    while (Position <= Length(Text)) and RunMatch(Self, State, Text, Position, True, Captures) do
     begin
       for I := Position to Captures[0] - 1 do
         Buffer.AppendCodePoint(Cardinal(Text[I]));
@@ -1521,7 +1815,7 @@ begin
   InitVm(Self, State, True);
   N := 0;
   Position := 0;
-  while (Position <= Length(Text)) and RunVm(Self, State, Text, Position, True, Captures) do
+  while (Position <= Length(Text)) and RunMatch(Self, State, Text, Position, True, Captures) do
   begin
     if N = Length(Result) then
       SetLength(Result, 2 * N + 4);
