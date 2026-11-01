@@ -3690,7 +3690,11 @@ fn-namespace-uri/fn-namespace-uri-7 pass
 fn-namespace-uri/fn-namespace-uri-9 pass
 fn-nilled/K-NilledFunc-1 pass
 fn-nilled/K-NilledFunc-2 pass
-fn-nilled/K-NilledFunc-4 wrong-code
+fn-nilled/K-NilledFunc-3 pass
+fn-nilled/K-NilledFunc-4 pass
+fn-nilled/fn-nilled-1 pass
+fn-nilled/fn-nilled-2 pass
+fn-nilled/fn-nilled-3 pass
 fn-node-name/K-NodeNameFunc-1 wrong-code
 fn-node-name/K-NodeNameFunc-2 pass
 fn-node-name/K-NodeNameFunc-3 pass
@@ -4811,6 +4815,7 @@ fn-starts-with/fn-starts-with2args-4 pass
 fn-starts-with/fn-starts-with2args-5 pass
 fn-static-base-uri/K-StaticBaseURIFunc-1 pass
 fn-static-base-uri/K-StaticBaseURIFunc-2 pass
+fn-static-base-uri/K-StaticBaseURIFunc-3 pass
 fn-static-base-uri/fn-static-base-1 pass
 fn-string-join/K-StringJoinFunc-2 pass
 fn-string-join/K-StringJoinFunc-3 pass

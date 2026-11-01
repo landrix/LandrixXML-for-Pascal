@@ -1,0 +1,26 @@
+# nilled(/r)
+xs:boolean false
+# nilled(//a)
+xs:boolean false
+# nilled(//b)
+xs:boolean false
+# nilled(//a/@*)
+# nilled(//b/text())
+# nilled(//comment())
+# nilled(//processing-instruction())
+# nilled(/)
+# nilled(())
+# count(nilled(()))
+xs:integer 0
+# for $n in //node() return nilled($n)
+xs:boolean false
+xs:boolean false
+xs:boolean false
+xs:boolean false
+# nilled(1)
+error XPTY0004
+# nilled(//*)
+error XPTY0004
+# nilled('a')
+error XPTY0004
+# nilled(//c/@x)

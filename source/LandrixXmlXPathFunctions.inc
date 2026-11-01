@@ -1673,6 +1673,25 @@ begin
             if FDocBases[I] = A.Items[0].Node then
               Result := SingleSeq(StringItem(xikAnyUri, FDocUris[I]));
       end;
+    xfnNilled:
+      begin
+        { the tree has no type annotations: an element is never nilled
+          (also with xsi:nil="true", as untyped in Saxon); () for the
+          other nodes }
+        A := Arg(0);
+        if (A.Count > 1) or ((A.Count = 1) and (A.Items[0].Kind <> xikNode)) then
+          Fail('XPTY0004', Name + ': a single node was expected');
+        if A.Count = 1 then
+        begin
+          OwnTree := TreeOf(A.Items[0].Node, K);
+          if OwnTree.Kind[A.Items[0].Node - K] = xnkElement then
+            Result := BooleanSeq(False);
+        end;
+      end;
+    xfnStaticBaseUri:
+      { no static base URI in the static context: () (Saxon gives the
+        base URI of the stylesheet or query, not imitated) }
+      ;
     xfnNormalizeUnicode:
       begin
         { the form: XML white space trimmed, ASCII case ignored (Saxon's

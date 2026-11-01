@@ -181,6 +181,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   instructions; namespace declarations are not compared). QT3: the 120
   cases with `assert-xml` are now judged and all pass (15,063 in the XPath
   2.0 profile, 15,040 in the Saxon profile).
+- XPath: `nilled` and `static-base-uri`. The tree has no type
+  annotations, so an element is never nilled (also with `xsi:nil="true"`,
+  as for untyped elements in Saxon); other nodes give the empty sequence.
+  The static context has no base URI, so `static-base-uri()` is empty.
+  QT3: 6 more cases pass in both profiles.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
   matcher limited to 10,000,000 steps per call (`xecLimit` beyond, never

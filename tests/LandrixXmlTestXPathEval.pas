@@ -952,6 +952,11 @@ begin
       CheckEqualsStr(RfcExamples[I][1], LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)),
         'resolve-uri ''' + RfcExamples[I][0] + '''');
     end;
+    { no static base URI }
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('string(empty(static-base-uri()))'), nil);
+    CheckEqualsStr('true', LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'static-base-uri()');
   finally
     Expr.Free;
     Evaluator.Free;
