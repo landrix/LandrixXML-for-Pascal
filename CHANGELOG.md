@@ -205,6 +205,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   nothing). `schema-element()` and `schema-attribute()` raise XPST0008
   (no schema) after their name is checked, an unbound prefix XPST0081.
   QT3: 11 more cases pass in both profiles.
+- XPath: `collection`. No collections are available, so it raises
+  FODC0002 (also without an argument, as there is no default collection)
+  and FODC0004 for an invalid URI, the codes Saxon gives for a
+  collection that does not exist. QT3: 9 more cases pass in both profiles.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
   matcher limited to 10,000,000 steps per call (`xecLimit` beyond, never

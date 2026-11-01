@@ -578,6 +578,58 @@ begin
       (not U.HasAuthority or AuthorityValid(U.Authority));
 end;
 
+{ True if S names a collection Saxon would look for (fn:collection),
+  False for FODC0004: Saxon percent-encodes spaces, Unicode spaces and the
+  characters RFC 3986 has no place for first, so only the structure
+  counts: valid escapes, no other C0 control character than TAB, LF and
+  CR, at most one "#", a scheme that is not empty and is followed by more
+  than a fragment, an authority that is not empty or has something after
+  it, a valid host (a port after an IPv6 literal below 2^31), no "[" or
+  "]" in a hierarchical path. }
+function CollectionUriValid(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, Hashes: Integer;
+  U: TUriParts;
+  Port: TLandrixXmlUtf8;
+begin
+  Result := False;
+  if not AnyUriValid(S) or (Copy(S, 1, 1) = ':') then
+    Exit;
+  Hashes := 0;
+  for I := 1 to Length(S) do
+    if S[I] = '#' then
+      Inc(Hashes)
+    else if (Ord(S[I]) < 32) and not (S[I] in [#9, #10, #13]) then
+      Exit;
+  if Hashes > 1 then
+    Exit;
+  U := SplitUri(S);
+  if U.HasScheme and not U.HasAuthority and (U.Path = '') and not U.HasQuery then
+    Exit;
+  if U.HasAuthority and (U.Authority = '') and (U.Path = '') and not U.HasQuery and not U.HasFragment then
+    Exit;
+  if U.HasScheme and not U.HasAuthority and (Copy(U.Path, 1, 1) <> '/') then
+    Result := True
+  else
+    Result := not ContainsByte(U.Path, '[') and not ContainsByte(U.Path, ']') and
+      (not U.HasAuthority or (U.Authority = '') or AuthorityValid(U.Authority));
+  { the port after an IPv6 literal must fit into 32 bits (Java's server
+    authority; other hosts fall back to a registry authority) }
+  if Result and U.HasAuthority then
+  begin
+    I := Length(U.Authority);
+    while (I > 0) and (U.Authority[I] <> ']') do
+      Dec(I);
+    if (I > 0) and (Copy(U.Authority, I + 1, 1) = ':') then
+    begin
+      Port := Copy(U.Authority, I + 2, MaxInt);
+      while (Length(Port) > 1) and (Port[1] = '0') do
+        Delete(Port, 1, 1);
+      Result := (Length(Port) < 10) or ((Length(Port) = 10) and (Port <= '2147483647'));
+    end;
+  end;
+end;
+
 { RFC 3986 5.2.2 (strict) and 5.3: Relative resolved against Base. }
 function ResolveUriReference(const Relative, Base: TLandrixXmlUtf8): TLandrixXmlUtf8;
 var
@@ -1840,6 +1892,21 @@ begin
           if OwnTree.Kind[A.Items[0].Node - K] = xnkElement then
             Result := BooleanSeq(False);
         end;
+      end;
+    xfnCollection:
+      begin
+        { no collections are available (no default collection either):
+          FODC0004 for an invalid URI, else FODC0002 }
+        if (ArgCount > 0) and OptAtom(0, Item) then
+        begin
+          if not IsStringLike(Item.Kind) then
+            Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
+          S := Item.Text;
+          if not CollectionUriValid(S) then
+            Fail('FODC0004', Name + ': ''' + LandrixXmlEscapeForMessage(S, 60) + ''' is no valid URI');
+          Fail('FODC0002', Name + ': the collection ' + LandrixXmlUtf8ToString(S) + ' is not available');
+        end;
+        Fail('FODC0002', Name + ': there is no default collection');
       end;
     xfnStaticBaseUri:
       { no static base URI in the static context: () (Saxon gives the

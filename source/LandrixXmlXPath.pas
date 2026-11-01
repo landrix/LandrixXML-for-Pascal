@@ -218,7 +218,7 @@ type
     xfnRemove, xfnInsertBefore, xfnUnordered, xfnError,
     xfnEncodeForUri, xfnIriToUri, xfnEscapeHtmlUri, xfnResolveUri,
     xfnLang, xfnTrace, xfnDoc, xfnDocAvailable, xfnDocumentUri,
-    xfnNormalizeUnicode, xfnNilled, xfnStaticBaseUri, xfnBaseUri
+    xfnNormalizeUnicode, xfnNilled, xfnStaticBaseUri, xfnBaseUri, xfnCollection
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -502,7 +502,8 @@ const
     (Name: 'normalize-unicode'; MinArgs: 1; MaxArgs: 2; Xs: False),
     (Name: 'nilled'; MinArgs: 1; MaxArgs: 1; Xs: False),
     (Name: 'static-base-uri'; MinArgs: 0; MaxArgs: 0; Xs: False),
-    (Name: 'base-uri'; MinArgs: 0; MaxArgs: 1; Xs: False)
+    (Name: 'base-uri'; MinArgs: 0; MaxArgs: 1; Xs: False),
+    (Name: 'collection'; MinArgs: 0; MaxArgs: 1; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }

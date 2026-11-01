@@ -1,0 +1,86 @@
+# collection()
+error FODC0002
+# collection(())
+error FODC0002
+# collection("x")
+error FODC0002
+# collection("%gg")
+error FODC0004
+# collection(":/")
+error FODC0004
+# collection("##invalid")
+error FODC0004
+# collection("a b")
+error FODC0002
+# collection(1)
+error XPTY0004
+# collection(("a","b"))
+error XPTY0004
+# count(collection("x"))
+error FODC0002
+# collection(xs:untypedAtomic("x"))
+error FODC0002
+# collection(xs:anyURI("x"))
+error FODC0002
+# collection("x", "y")
+error XPST0017
+# collection(codepoints-to-string((120, 58)))
+error FODC0004
+# collection(codepoints-to-string((120, 58, 35, 102)))
+error FODC0004
+# collection(codepoints-to-string((104, 116, 116, 112, 58, 47, 47)))
+error FODC0004
+# collection(codepoints-to-string((47, 47)))
+error FODC0004
+# collection(codepoints-to-string((120, 58, 47, 47)))
+error FODC0004
+# collection(codepoints-to-string((109, 97, 105, 108, 116, 111, 58)))
+error FODC0004
+# collection(codepoints-to-string((97, 32, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 9, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 160, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 92, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 60, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 123, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 94, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 96, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 124, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 34, 98)))
+error FODC0002
+# collection(codepoints-to-string((97, 35, 98, 35, 99)))
+error FODC0004
+# collection(codepoints-to-string((37, 52)))
+error FODC0004
+# collection(codepoints-to-string((37, 52, 49)))
+error FODC0002
+# collection(codepoints-to-string((104, 116, 116, 112, 58, 47, 47, 91)))
+error FODC0004
+# collection(codepoints-to-string((97, 91, 98)))
+error FODC0004
+# collection(codepoints-to-string((97, 93, 98)))
+error FODC0004
+# collection(codepoints-to-string((233)))
+error FODC0002
+# collection(codepoints-to-string((49, 97, 58, 98)))
+error FODC0004
+# collection(codepoints-to-string((97, 64, 98)))
+error FODC0002
+# collection(codepoints-to-string((58, 97)))
+error FODC0004
+# collection(codepoints-to-string((110, 111, 102, 105, 108, 101, 46, 120, 109, 108)))
+error FODC0002
+# collection(codepoints-to-string((97, 127, 98)))
+error FODC0002
+# collection("//[::1]:2147483648/x")
+error FODC0004
+# collection("//[::1]:99999999999/x")
+error FODC0004
