@@ -197,6 +197,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   are. The Schematron validator's SVRL `documents` attribute
   now comes from the tree's `BaseUri` (same value). QT3: 3 more cases
   pass in both profiles.
+- XPath: kind tests with a name or type in path steps
+  (`//element(a)`, `attribute(x, xs:untypedAtomic)`,
+  `document-node(element(r))`), checked as in sequence types; an
+  abbreviated step with `attribute()` uses the attribute axis, as the
+  specification says (before, it was the child axis and selected
+  nothing). `schema-element()` and `schema-attribute()` raise XPST0008
+  (no schema) after their name is checked, an unbound prefix XPST0081.
+  QT3: 11 more cases pass in both profiles.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
   matcher limited to 10,000,000 steps per call (`xecLimit` beyond, never

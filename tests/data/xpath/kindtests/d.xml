@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<r xmlns:p="urn:p"><a x="1" p:x="2"><b/>t<!--c--><?pi d?></a><p:a x="3"/><b xml:lang="de"/></r>

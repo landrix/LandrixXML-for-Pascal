@@ -2238,6 +2238,7 @@ var
       xntDocumentNode: Result := K = xnkDocument;
       xntAnyElement: Result := K = xnkElement;
       xntAnyAttribute: Result := K = xnkAttribute;
+      xntKindTest: Result := NodeMatches(I + Base, N^.SequenceType);
     else
       { name tests: the principal node kind of the axis }
       if AttributeAxis then

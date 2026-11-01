@@ -99,10 +99,12 @@ type
     xaxFollowingSibling, xaxParent, xaxAncestor, xaxPrecedingSibling, xaxPreceding,
     xaxAncestorOrSelf, xaxFollowing);
 
-  { node tests: any node; a kind; names (uri + local, uri:*, *:local, *) }
+  { node tests: any node; a kind; names (uri + local, uri:*, *:local, *);
+    a kind test with a name or type (element(N), attribute(N, T),
+    document-node(element(...)): the step's SequenceType) }
   TLandrixXmlXPathNodeTest = (xntAnyNode, xntText, xntComment, xntProcessingInstruction,
     xntDocumentNode, xntAnyElement, xntAnyAttribute, xntName, xntNamespaceWildcard, xntLocalWildcard,
-    xntAnyName);
+    xntAnyName, xntKindTest);
 
   { The type labels: the kind of an item (a node or an atomic value) and
     the atomic type of a cast, a constructor function or a parameter. The
@@ -174,7 +176,7 @@ type
     DoubleValue: TLandrixXmlDouble;
     AtomicType: TLandrixXmlXPathItemKind;
     AllowEmpty: Boolean;
-    { instance of, treat as }
+    { instance of, treat as; a step with the node test xntKindTest }
     SequenceType: TLandrixXmlXPathSequenceType;
     { 1-based byte index into the expression text (messages print it
       0-based as "offset") }
@@ -750,6 +752,7 @@ type
     procedure ParseSingleType(Node: Integer);
     function ParseSequenceType: TLandrixXmlXPathSequenceType;
     procedure ParseKindTest(var T: TLandrixXmlXPathSequenceType);
+    procedure ParseSchemaTest;
     procedure ParseNameAndType(var T: TLandrixXmlXPathSequenceType; Element: Boolean);
     function DescendantStep(Position: Integer): Integer;
     function StartsStep: Boolean;
@@ -1728,7 +1731,7 @@ begin
   else if Name = 'processing-instruction' then
     T.KindTest := xktProcessingInstruction
   else if (Name = 'schema-element') or (Name = 'schema-attribute') then
-    ErrorCode('XPST0008', '"' + LandrixXmlUtf8ToString(Name) + '()" needs a schema, none is in scope', Position)
+    ParseSchemaTest
   else
     Error('unknown item type "' + LandrixXmlUtf8ToString(Name) + '()"', Position);
   Next;
@@ -1754,7 +1757,7 @@ begin
         Expect(')');
       end
       else if IsName('schema-element') then
-        ErrorCode('XPST0008', '"schema-element()" needs a schema, none is in scope', FToken.Position);
+        ParseSchemaTest;
     xktElement:
       ParseNameAndType(T, True);
     xktAttribute:
@@ -1763,6 +1766,26 @@ begin
     { node(), text(), comment() }
   end;
   Expect(')');
+end;
+
+{ schema-element(N) or schema-attribute(N) at the current token: the
+  name is checked (XPST0003 for none or a wildcard, XPST0081 for an
+  unbound prefix), then XPST0008, as there is no schema. }
+procedure TParser.ParseSchemaTest;
+var
+  Name, Uri, Local: TLandrixXmlUtf8;
+  Position: Integer;
+begin
+  Name := FToken.Text;
+  Position := FToken.Position;
+  Next;
+  Expect('(');
+  if (FToken.Kind <> tkName) or ContainsByte(FToken.Text, '*') then
+    Error('a name was expected', FToken.Position);
+  ResolveName(FToken.Text, FToken.Position, False, Uri, Local);
+  Next;
+  Expect(')');
+  ErrorCode('XPST0008', '"' + LandrixXmlUtf8ToString(Name) + '()" needs a schema, none is in scope', Position);
 end;
 
 { The arguments of element() and attribute(): nothing, a name or *, and
@@ -1958,13 +1981,17 @@ begin
     Result := Step;
     Exit;
   end;
-  { a name test or kind test on the child axis, else a filter expression }
+  { a name test or kind test on the child axis (the attribute axis for
+    attribute()), else a filter expression }
   if FToken.Kind = tkName then
   begin
     Step := NewNode(xakStep, FToken.Position);
     FNodes[Step].Axis := xaxChild;
     if ParseNodeTest(Step) then
     begin
+      if (FNodes[Step].NodeTest = xntAnyAttribute) or ((FNodes[Step].NodeTest = xntKindTest) and
+        (FNodes[Step].SequenceType.KindTest = xktAttribute)) then
+        FNodes[Step].Axis := xaxAttribute;
       ParsePredicates(Step);
       Result := Step;
       Exit;
@@ -1988,6 +2015,7 @@ function TParser.ParseNodeTest(Step: Integer): Boolean;
 var
   Name, Prefix, Local, Uri: TLandrixXmlUtf8;
   Position: Integer;
+  T: TLandrixXmlXPathSequenceType;
 begin
   Result := False;
   if FToken.Kind <> tkName then
@@ -1996,7 +2024,28 @@ begin
   Position := FToken.Position;
   if NextIsSymbol('(') then
   begin
-    { kind tests }
+    { element(), attribute() and document-node() as in a sequence type
+      (names, types, unbound prefixes XPST0081, schema-element() and
+      schema-attribute() XPST0008 without a schema) }
+    if (Name = 'element') or (Name = 'attribute') or (Name = 'document-node') or (Name = 'schema-element') or
+      (Name = 'schema-attribute') then
+    begin
+      InitSequenceType(T);
+      T.Kind := xtkNode;
+      ParseKindTest(T);
+      FNodes[Step].SequenceType := T;
+      FNodes[Step].NodeTest := xntKindTest;
+      if (T.LocalName = '') and (T.ContentType = '') and not T.ElementTest then
+        if T.KindTest = xktElement then
+          FNodes[Step].NodeTest := xntAnyElement
+        else if T.KindTest = xktAttribute then
+          FNodes[Step].NodeTest := xntAnyAttribute
+        else if T.KindTest = xktDocument then
+          FNodes[Step].NodeTest := xntDocumentNode;
+      Result := True;
+      Exit;
+    end;
+    { the other kind tests }
     if Name = 'node' then
       FNodes[Step].NodeTest := xntAnyNode
     else if Name = 'text' then
@@ -2005,18 +2054,10 @@ begin
       FNodes[Step].NodeTest := xntComment
     else if Name = 'processing-instruction' then
       FNodes[Step].NodeTest := xntProcessingInstruction
-    else if Name = 'document-node' then
-      FNodes[Step].NodeTest := xntDocumentNode
-    else if (Name = 'element') or (Name = 'attribute') then
-      FNodes[Step].NodeTest := xntAnyElement
-    else if (Name = 'schema-element') or (Name = 'schema-attribute') then
-      Error('"' + LandrixXmlUtf8ToString(Name) + '()" is not supported', Position)
     else
       Exit;
     Next;
     Expect('(');
-    if (FNodes[Step].NodeTest = xntDocumentNode) and not IsSymbol(')') then
-      Error('"document-node()" with an argument is not supported', Position);
     if FNodes[Step].NodeTest = xntProcessingInstruction then
     begin
       if (FToken.Kind = tkName) or (FToken.Kind = tkString) then
@@ -2028,16 +2069,6 @@ begin
         FNodes[Step].LocalName := Trimmed(FToken.Text);
         Next;
       end;
-    end
-    else if FNodes[Step].NodeTest = xntAnyElement then
-    begin
-      { element() and attribute(), also with "*"; no names or types }
-      if IsName('*') then
-        Next;
-      if not IsSymbol(')') then
-        Error('"' + LandrixXmlUtf8ToString(Name) + '()" with a name or type is not supported', Position);
-      if Name = 'attribute' then
-        FNodes[Step].NodeTest := xntAnyAttribute;
     end;
     Expect(')');
     Result := True;

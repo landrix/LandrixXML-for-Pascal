@@ -1,0 +1,101 @@
+# //element(a)
+node /Q{}r[1]/Q{}a[1]
+# //element(p:a)
+node /Q{}r[1]/Q{urn:p}a[1]
+# //element(*)
+node /Q{}r[1]
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}b[1]
+node /Q{}r[1]/Q{urn:p}a[1]
+node /Q{}r[1]/Q{}b[1]
+# //element()
+node /Q{}r[1]
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}b[1]
+node /Q{}r[1]/Q{urn:p}a[1]
+node /Q{}r[1]/Q{}b[1]
+# //element(a, xs:untyped)
+node /Q{}r[1]/Q{}a[1]
+# //element(a, xs:anyType)
+node /Q{}r[1]/Q{}a[1]
+# //element(a, xs:string)
+# //element(*, xs:untyped?)
+node /Q{}r[1]
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}a[1]/Q{}b[1]
+node /Q{}r[1]/Q{urn:p}a[1]
+node /Q{}r[1]/Q{}b[1]
+# //attribute(x)
+node /Q{}r[1]/Q{}a[1]/@Q{}x
+node /Q{}r[1]/Q{urn:p}a[1]/@Q{}x
+# //attribute(p:x)
+node /Q{}r[1]/Q{}a[1]/@Q{urn:p}x
+# //attribute(*)
+node /Q{}r[1]/Q{}a[1]/@Q{}x
+node /Q{}r[1]/Q{}a[1]/@Q{urn:p}x
+node /Q{}r[1]/Q{urn:p}a[1]/@Q{}x
+node /Q{}r[1]/Q{}b[1]/@Q{http://www.w3.org/XML/1998/namespace}lang
+# count(//attribute())
+xs:integer 4
+# //attribute(x, xs:untypedAtomic)
+node /Q{}r[1]/Q{}a[1]/@Q{}x
+node /Q{}r[1]/Q{urn:p}a[1]/@Q{}x
+# //attribute(x, xs:anyAtomicType)
+node /Q{}r[1]/Q{}a[1]/@Q{}x
+node /Q{}r[1]/Q{urn:p}a[1]/@Q{}x
+# //attribute(x, xs:string)
+# //@attribute(x)
+node /Q{}r[1]/Q{}a[1]/@Q{}x
+node /Q{}r[1]/Q{urn:p}a[1]/@Q{}x
+# //a/attribute::attribute(x)
+node /Q{}r[1]/Q{}a[1]/@Q{}x
+# //attribute::element(a)
+# //child::attribute(x)
+# /r/a/element(b)
+node /Q{}r[1]/Q{}a[1]/Q{}b[1]
+# /r/child::element(b)
+node /Q{}r[1]/Q{}b[1]
+# /self::document-node(element(r))
+node /
+# /self::document-node(element(s))
+# /self::document-node(element(*))
+node /
+# /self::document-node()
+node /
+# count(/descendant-or-self::document-node(element(r)))
+xs:integer 1
+# //b/self::element(b)[@xml:lang]
+node /Q{}r[1]/Q{}b[1]
+# //attribute(lang)
+# //attribute(xml:lang)
+node /Q{}r[1]/Q{}b[1]/@Q{http://www.w3.org/XML/1998/namespace}lang
+# element(notBound:ncname)
+error XPST0081
+# attribute(notBound:ncname)
+error XPST0081
+# //element(a, notBound:t)
+error XPST0081
+# //element(a, xs:notAType)
+error XPST0008
+# document-node(element(notBound:ncname))
+error XPST0081
+# schema-element(a)
+error XPST0008
+# schema-attribute(a)
+error XPST0008
+# document-node(schema-element(a))
+error XPST0008
+# //element(a, b, c)
+error XPST0008
+# //attribute(x, xs:untyped?)
+error XPST0003
+# schema-element(*)
+error XPST0003
+# schema-attribute(p:*)
+error XPST0003
+# //b/schema-element()
+error XPST0003
+# . instance of schema-element(*)
+error XPST0003
+# . instance of document-node(schema-element(*))
+error XPST0003

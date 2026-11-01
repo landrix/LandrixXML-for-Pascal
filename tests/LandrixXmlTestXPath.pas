@@ -73,6 +73,7 @@ var
       xntName: Result := '{' + LandrixXmlUtf8ToString(N.NamespaceUri) + '}' + LandrixXmlUtf8ToString(N.LocalName);
       xntNamespaceWildcard: Result := '{' + LandrixXmlUtf8ToString(N.NamespaceUri) + '}*';
       xntLocalWildcard: Result := '*:' + LandrixXmlUtf8ToString(N.LocalName);
+      xntKindTest: Result := LandrixXmlXPathSequenceTypeName(N.SequenceType);
     else
       Result := '*';
     end;
@@ -270,6 +271,11 @@ begin
   CheckParse('text()', 'child::text()');
   CheckParse('preceding-sibling::*', 'preceding-sibling::*');
   CheckParse('attribute::x', 'attribute::{}x');
+  CheckParse('element(cac:Party)', 'child::element(Q{urn:cac}Party)');
+  CheckParse('element(*, xs:untyped?)', 'child::element(*, xs:untyped?)');
+  CheckParse('attribute(x)', 'attribute::attribute(x)');
+  CheckParse('attribute(*)', 'attribute::attribute()');
+  CheckParse('self::document-node(element(a))', 'self::document-node(element(a))');
   CheckParse('cac:TaxCategory[cbc:ID = ''S''][1]',
     'child::{urn:cac}TaxCategory[(=eq child::{urn:cbc}ID "S")][1]');
   CheckParse('$profile/cbc:ID', '(path $0 child::{urn:cbc}ID)');
@@ -336,7 +342,9 @@ begin
   CheckError('(a', 'XPST0003');
   CheckError('namespace::a', 'XPST0003');
   CheckError('namespace::a', 'XPST0003');
-  CheckError('element(a)', 'XPST0003');
+  CheckError('element(p:a)', 'XPST0081');
+  CheckError('schema-element(a)', 'XPST0008');
+  CheckError('attribute(x, xs:untyped?)', 'XPST0003');
   CheckError('''abc', 'XPST0003');
   { U+00B7 may not start a name, U+00D7 is no name character, $FF no UTF-8 }
   CheckErrorUtf8(Utf8Bytes([$C2, $B7]), 'XPST0003');
@@ -363,7 +371,7 @@ begin
   CheckError('a cast as xs:NOTATION', 'XPST0080');
   CheckError('processing-instruction(cbc:x)', 'XPST0003');
   CheckError('processing-instruction('''')', 'XPTY0004');
-  CheckError('document-node(element(a))', 'XPST0003');
+  CheckError('document-node(element(p:a))', 'XPST0081');
 end;
 
 procedure CheckType(const Text, Expected: string);
