@@ -48,6 +48,9 @@ begin
     for I := 0 to A.Count - 1 do
     begin
       Item := A.Items[I];
+      { no value has the type xs:NOTATION }
+      if T.AtomicType = xikNone then
+        Fail('XPTY0004', FunctionName + ': ' + KindName(Item.Kind) + ' does not match xs:NOTATION');
       { an untypedAtomic does not become a QName (namespace-sensitive):
         XPath 3.1 has an error code of its own for it }
       if (Item.Kind = xikUntypedAtomic) and (T.AtomicType = xikQName) and not AsXPath20 then
@@ -933,7 +936,7 @@ function TLandrixXmlXPathEvaluator.CallFunction(Index: Integer; Context, Positio
 var
   N: ^TLandrixXmlXPathAstNode;
   Id: TLandrixXmlXPathFunctionId;
-  ArgCount, I, J, K, Len, Tok: Integer;
+  ArgCount, I, J, K, Len, Tok, DecimalPrecision: Integer;
   A, B: TLandrixXmlXPathSequence;
   S, T, R: TLandrixXmlUtf8;
   Item, Acc: TLandrixXmlXPathItem;
@@ -1017,7 +1020,9 @@ var
     Result := ToDouble(V);
   end;
 
-  function IntArg(K: Integer): Integer;
+  { the precision of round() and round-half-to-even(): beyond the Integer
+    range the nearest Integer, which keeps every digit or none just as well }
+  function PrecisionArg(K: Integer): Integer;
   var
     V: TLandrixXmlXPathItem;
     I64: Int64;
@@ -1028,9 +1033,17 @@ var
       V := CastTo(V, xikInteger, Xp20);
     if BasicKind(V.Kind) <> xikInteger then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' must be an integer');
-    if not LandrixXmlDecimalTryToInt64(ItemDecimal(V), I64) or (I64 > High(Integer)) or (I64 < Low(Integer)) then
-      Fail('FOAR0002', Name + ': integer out of range');
-    Result := Integer(I64);
+    if not LandrixXmlDecimalTryToInt64(ItemDecimal(V), I64) then
+      if LandrixXmlDecimalSign(ItemDecimal(V)) > 0 then
+        I64 := High(Int64)
+      else
+        I64 := Low(Int64);
+    if I64 > High(Integer) then
+      Result := High(Integer)
+    else if I64 < Low(Integer) then
+      Result := Low(Integer)
+    else
+      Result := Integer(I64);
   end;
 
   { an xs:integer position (remove, insert-before): beyond Int64 the
@@ -1050,6 +1063,26 @@ var
         Result := High(Int64)
       else
         Result := -High(Int64);
+  end;
+
+  { the document node with this URI (doc(), doc-available(), document()):
+    a document added with AddDocument, else the evaluator's own document
+    if the URI is its base URI (LoadFromFile: the file URI), as Saxon
+    finds a loaded document by its URI; -1 for none }
+  function DocumentNode(const Uri: TLandrixXmlUtf8): Integer;
+  var
+    D: Integer;
+  begin
+    for D := 0 to Integer(Length(FDocUris)) - 1 do
+      if FDocUris[D] = Uri then
+      begin
+        Result := FDocBases[D];
+        Exit;
+      end;
+    if (FTree.Count > 0) and (FTree.BaseUri <> '') and (FTree.BaseUri = Uri) then
+      Result := 0
+    else
+      Result := -1;
   end;
 
   { the node argument of name(), local-name(), ...: -1 for the empty sequence }
@@ -1651,8 +1684,11 @@ begin
         Item := NumericKind(Item);
         K := 0;
         if (Id in [xfnRound, xfnRoundHalfToEven]) and (ArgCount > 1) then
-          K := IntArg(1);
-        { far below the value's digits the result is 0 either way }
+          K := PrecisionArg(1);
+        { far below the value's digits the result is 0 either way (a float
+          or double has far fewer than 100000 digits; a decimal is rounded
+          at any precision) }
+        DecimalPrecision := K;
         if K < -100000 then
           K := -100000;
         if Item.Kind = xikFloat then
@@ -1678,10 +1714,12 @@ begin
             xfnAbs: Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalAbs(ItemDecimal(Item)));
             xfnRound:
               if (Item.Kind = xikDecimal) or (K < 0) then
-                Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), K, xdrHalfCeiling));
+                Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), DecimalPrecision,
+                  xdrHalfCeiling));
             xfnRoundHalfToEven:
               if (Item.Kind = xikDecimal) or (K < 0) then
-                Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), K, xdrHalfEven));
+                Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), DecimalPrecision,
+                  xdrHalfEven));
             xfnFloor: Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), 0, xdrFloor));
           else
             Item := DecimalKindItem(Item.Kind, LandrixXmlDecimalRound(ItemDecimal(Item), 0, xdrCeiling));
@@ -1853,30 +1891,33 @@ begin
           if not Found and ((Id = xfnDoc) or Xp20) then
             Fail('FODC0005', Name + ': ''' + LandrixXmlEscapeForMessage(S, 60) + ''' is no valid URI');
         end;
-        I := 0;
+        I := -1;
         if Found then
-          while (I < Integer(Length(FDocUris))) and (FDocUris[I] <> S) do
-            Inc(I);
+          I := DocumentNode(S);
         if Id = xfnDocAvailable then
-          Result := BooleanSeq(Found and (I < Integer(Length(FDocUris))))
+          Result := BooleanSeq(I >= 0)
         else if Found then
         begin
-          if I >= Integer(Length(FDocUris)) then
+          if I < 0 then
             Fail('FODC0002', Name + ': the document ' + LandrixXmlUtf8ToString(S) + ' is not available');
-          Result := LandrixXmlXPathNodeItem(FDocBases[I]);
+          Result := LandrixXmlXPathNodeItem(I);
         end;
       end;
     xfnDocumentUri:
       begin
         { the URI of a document added with AddDocument; the evaluator's
-          own document has none }
+          own document has its base URI (LoadFromFile: the file URI) }
         A := Arg(0);
         if (A.Count > 1) or ((A.Count = 1) and (A.Items[0].Kind <> xikNode)) then
           Fail('XPTY0004', Name + ': a single node was expected');
         if A.Count = 1 then
+        begin
           for I := 0 to Integer(Length(FDocUris)) - 1 do
             if FDocBases[I] = A.Items[0].Node then
               Result := SingleSeq(StringItem(xikAnyUri, FDocUris[I]));
+          if (A.Items[0].Node = 0) and (FTree.Count > 0) and (FTree.BaseUri <> '') then
+            Result := SingleSeq(StringItem(xikAnyUri, FTree.BaseUri));
+        end;
       end;
     xfnNilled:
       begin
@@ -2260,12 +2301,10 @@ begin
       if OptAtom(0, Item) then
       begin
         S := StringOf(Item);
-        I := 0;
-        while (I < Integer(Length(FDocUris))) and (FDocUris[I] <> S) do
-          Inc(I);
-        if I >= Integer(Length(FDocUris)) then
+        I := DocumentNode(S);
+        if I < 0 then
           Fail('FODC0002', Name + ': the document ' + LandrixXmlUtf8ToString(S) + ' is not available');
-        Result := LandrixXmlXPathNodeItem(FDocBases[I]);
+        Result := LandrixXmlXPathNodeItem(I);
       end;
     xfnYearsFromDuration .. xfnSecondsFromDuration:
       if OptAtom(0, Item) then

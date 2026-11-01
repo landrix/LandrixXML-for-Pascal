@@ -137,7 +137,9 @@ function LandrixXmlDecimalModulo(const A, B: TLandrixXmlDecimal): TLandrixXmlDec
 
 { Rounds A to Precision fraction digits (negative: to tens, hundreds, ...).
   fn:round(A) = Round(A, 0, xdrHalfCeiling); fn:floor, fn:ceiling and the
-  cast to xs:integer use Precision 0 with xdrFloor, xdrCeiling, xdrDown. }
+  cast to xs:integer use Precision 0 with xdrFloor, xdrCeiling, xdrDown.
+  Any Precision is allowed; a result other than 0 whose exponent is out of
+  range raises xecArithmetic. }
 function LandrixXmlDecimalRound(const A: TLandrixXmlDecimal; Precision: Integer;
   Mode: TLandrixXmlDecimalRounding): TLandrixXmlDecimal;
 
@@ -1050,31 +1052,31 @@ end;
 function LandrixXmlDecimalRound(const A: TLandrixXmlDecimal; Precision: Integer;
   Mode: TLandrixXmlDecimalRounding): TLandrixXmlDecimal;
 var
-  K: Integer;
+  UnitExponent, K: Int64;
   Den, Q, R: TLandrixXmlDecimalLimbs;
 begin
   Den := nil;
-  { checked before -Precision is computed (Low(Integer) would overflow);
-    a normalized value never has more than LandrixXmlDecimalMaxExponent
+  { a normalized value never has more than LandrixXmlDecimalMaxExponent
     fraction digits }
   if (Length(A.Limbs) = 0) or (Precision > LandrixXmlDecimalMaxExponent) then
   begin
     Result := A;
     Exit;
   end;
-  if Precision < -LandrixXmlDecimalMaxExponent then
-    RaiseArithmetic('Decimal exponent out of range');
-  if A.Exponent >= -Precision then
+  { the unit is 10^UnitExponent; Int64, as -Low(Integer) and K need not
+    fit an Integer }
+  UnitExponent := -Int64(Precision);
+  if A.Exponent >= UnitExponent then
   begin
     Result := A;
     Exit;
   end;
   { drop K digits }
-  K := -Precision - A.Exponent;
-  if K > NatDigitCount(A.Limbs) + 1 then
+  K := UnitExponent - A.Exponent;
+  if K > NatDigitCount(A.Limbs) then
   begin
-    { the dropped part is below a tenth of the unit 10^-Precision: only
-      floor and ceiling can move away from zero }
+    { the value is below a tenth of the unit (at most K - 1 digits):
+      only floor and ceiling can move away from zero }
     if ((Mode = xdrFloor) and A.Negative) or ((Mode = xdrCeiling) and not A.Negative) then
       Q := NatFromInteger(1)
     else
@@ -1082,12 +1084,19 @@ begin
   end
   else
   begin
-    Den := NatPow10(K);
+    { K <= NatDigitCount fits an Integer }
+    Den := NatPow10(Integer(K));
     NatDivMod(A.Limbs, Den, Q, R);
     if RoundsAway(Q, R, Den, A.Negative, Mode) then
       Q := NatAdd(Q, NatFromInteger(1));
   end;
-  Result := MakeDecimal(A.Negative, -Precision, Q);
+  { 0 has no exponent; any other result beyond the range raises }
+  if Length(Q) = 0 then
+    Result := MakeDecimal(False, 0, nil)
+  else if UnitExponent > LandrixXmlDecimalMaxExponent then
+    RaiseArithmetic('Decimal exponent out of range')
+  else
+    Result := MakeDecimal(A.Negative, Integer(UnitExponent), Q);
 end;
 
 function LandrixXmlDecimalFractionDigits(const A: TLandrixXmlDecimal): Integer;

@@ -77,3 +77,16 @@ expr 1 instance of element(a, xs:unknown)
 expr (/) instance of document-node()
 expr (/) instance of document-node(element(r))
 expr (/) instance of document-node(element(a))
+expr "a string" instance of xs:NOTATION
+expr () instance of xs:NOTATION?
+expr () instance of xs:NOTATION
+expr (1, 2) instance of xs:NOTATION*
+expr () instance of xs:NOTATION*
+expr () treat as xs:NOTATION?
+expr 1 treat as xs:NOTATION
+expr /r instance of xs:NOTATION?
+expr xs:QName('a') instance of xs:NOTATION
+expr "a" castable as xs:NOTATION
+expr "a" cast as xs:NOTATION
+expr "a" instance of xs:anySimpleType
+expr "a" instance of xs:IDREFS

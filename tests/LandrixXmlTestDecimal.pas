@@ -299,6 +299,18 @@ begin
   { exponent limit: 10^600000 squared exceeds the limit }
   Big := LandrixXmlDecimalRound(D('7'), -600000, xdrCeiling);
   CheckEquals(600000, Big.Exponent, 'huge exponent allowed');
+  { a unit beyond the exponent range: 0, or an error if the result is not 0 }
+  CheckEqualsStr('0', F(LandrixXmlDecimalRound(D('-7'), -2000000, xdrHalfEven)), 'unit 10^2000000');
+  CheckEqualsStr('0', F(LandrixXmlDecimalRound(D('7'), Low(Integer), xdrHalfCeiling)), 'Low(Integer)');
+  CheckEqualsStr('0', F(LandrixXmlDecimalRound(D('7'), -2000000, xdrFloor)), 'floor 7');
+  CheckEqualsStr('0', F(LandrixXmlDecimalRound(D('-7'), Low(Integer), xdrCeiling)), 'ceiling -7');
+  try
+    LandrixXmlDecimalRound(D('7'), -2000000, xdrCeiling);
+    FailNotRaised('ELandrixXmlError for ceiling to 10^2000000');
+  except
+    on E: ELandrixXmlError do
+      CheckEquals(Ord(xecArithmetic), Ord(E.Code), 'ceiling to 10^2000000');
+  end;
   try
     LandrixXmlDecimalMultiply(Big, Big);
     FailNotRaised('ELandrixXmlError for exponent overflow');
@@ -355,13 +367,8 @@ begin
   CheckEqualsStr('0', F(LandrixXmlDecimalRound(D('-0.0000001'), -5, xdrCeiling)), 'tiny negative ceiling');
   CheckEqualsStr('1.5', F(LandrixXmlDecimalRound(D('1.5'), High(Integer), xdrHalfCeiling)),
     'precision High(Integer)');
-  try
-    LandrixXmlDecimalRound(D('1.5'), Low(Integer), xdrHalfCeiling);
-    FailNotRaised('ELandrixXmlError for precision Low(Integer)');
-  except
-    on E: ELandrixXmlError do
-      CheckEquals(Ord(xecArithmetic), Ord(E.Code), 'precision Low(Integer)');
-  end;
+  CheckEqualsStr('0', F(LandrixXmlDecimalRound(D('1.5'), Low(Integer), xdrHalfCeiling)),
+    'precision Low(Integer)');
 end;
 
 procedure TestDigits;

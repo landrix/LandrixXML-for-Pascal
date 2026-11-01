@@ -20,7 +20,8 @@ judge itself: assert-true/false (a single xs:boolean), assert-empty,
 assert-count, assert-string-value, assert-type (from the item types),
 error codes, and assert-eq/assert-deep-eq/assert-permutation against
 the expected expression evaluated on its own. Only assert (an XPath
-expression over $result) is evaluated by the engine. assert-xml: the
+expression over $result) and an assert-type whose type is not read here
+($result instance of T) are evaluated by the engine. assert-xml: the
 helper writes the subtrees of the result nodes, the expected XML is
 parsed here with expat, and both are compared exactly as the XML
 serialization of the sequence (adjacent atomic values separated by a
@@ -235,6 +236,12 @@ def plan_assertion(case, el, base):
     elif tag == "assert":
         case.checks.append(el.text or "")
         case.idx[id(el)] = len(case.checks)
+    elif tag == "assert-type":
+        # a type the driver cannot read is checked by the helper
+        t = " ".join((el.text or "").split())
+        if t != "empty-sequence()" and not type_readable(t.rstrip("?*+").strip()):
+            case.checks.append("$result instance of " + t)
+            case.idx[id(el)] = len(case.checks)
     elif tag in ("assert-eq", "assert-deep-eq", "assert-permutation"):
         case.values.append(el.text or "")
         case.idx[id(el)] = len(case.values)
@@ -688,6 +695,22 @@ NODE_TESTS = {"element": "element", "attribute": "attribute", "text": "text", "c
               "processing-instruction": "processing-instruction", "document-node": "document-node"}
 
 
+def type_readable(t):
+    """Whether type_matches can read the item type t (no occurrence)."""
+    if t in ("item()", "node()"):
+        return True
+    m = re.match(r"^([a-z-]+)\((.*)\)$", t)
+    if m:
+        kind = NODE_TESTS.get(m.group(1))
+        arg = m.group(2).strip()
+        if kind is None:
+            return False
+        if arg and arg != "*":
+            return kind in ("element", "attribute") and "," not in arg and ":" not in arg
+        return True
+    return t.startswith("xs:")
+
+
 def type_matches(items, t):
     """assert-type from the item types; None if the type cannot be read."""
     t = " ".join(t.split())
@@ -696,6 +719,8 @@ def type_matches(items, t):
     occ = ""
     if t and t[-1] in "?*+":
         occ, t = t[-1], t[:-1].strip()
+    if not type_readable(t):
+        return None
     n = len(items)
     if (occ == "" and n != 1) or (occ == "?" and n > 1) or (occ == "+" and n < 1):
         return False
@@ -709,22 +734,13 @@ def type_matches(items, t):
         m = re.match(r"^([a-z-]+)\((.*)\)$", t)
         if m:
             kind = NODE_TESTS.get(m.group(1))
-            if kind is None:
-                return None
             if typ != "node:" + kind:
                 return False
             arg = m.group(2).strip()
-            if arg and arg != "*" and kind in ("element", "attribute"):
-                if "," in arg or ":" in arg:
-                    return None
-                # no default element namespace in the static context
-                if name != "Q{}" + arg:
-                    return False
-            elif arg and arg != "*":
-                return None
+            # no default element namespace in the static context
+            if arg and arg != "*" and name != "Q{}" + arg:
+                return False
             continue
-        if not t.startswith("xs:"):
-            return None
         if typ.startswith("node:") or t not in ATOMIC_PARENTS.get(typ, ()):
             return False
     return True
@@ -940,7 +956,12 @@ def check(el, r, idx):
     if tag == "assert-type":
         ok = type_matches(items, el.text or "")
         if ok is None:
-            return "assertion-unsupported", "assert-type " + (el.text or "")
+            c = r.get("C%d" % idx[id(el)]) if id(el) in idx else None
+            if isinstance(c, tuple):
+                return "assertion-error", "assert-type %s: %s" % (c[1], c[2][:200])
+            if c is None or len(c) != 1 or c[0][0] != "xs:boolean":
+                return "assertion-unsupported", "assert-type " + (el.text or "")
+            ok = c[0][2] == "true"
         return ("pass", "") if ok else ("fail", "expected type %s, got %s" % (el.text, show(items)))
     if tag == "assert":
         c = r.get("C%d" % idx[id(el)])
@@ -1171,6 +1192,13 @@ def self_test():
         ("<assert-xml>x='1'</assert-xml>", {"R": items(("node:attribute", "1")), "TR": {0: ["attr - Q{}x 1"]}},
          "fail"),
         ("<assert-xml>&lt;a></assert-xml>", {"R": []}, "assertion-error"),
+        ("<assert-type>document-node(element(a))</assert-type>",
+         {"R": items(("node:document", "")), "C1": items(b_true)}, "pass"),
+        ("<assert-type>document-node(element(a))</assert-type>",
+         {"R": items(("node:document", "")), "C1": items(("xs:boolean", "false"))}, "fail"),
+        ("<assert-type>document-node(element(a))</assert-type>",
+         {"R": items(("node:document", "")), "C1": ("error", "XPST0003", "")}, "assertion-error"),
+        ("<assert-type>xs:integer?</assert-type>", {"R": items(i1, i1)}, "fail"),
         ("<assert-xml ignore-prefixes=' 1 '>&lt;p:a xmlns:p='u'/></assert-xml>",
          {"R": items(("node:element", "")), "TR": {0: ["start q Q{u}a", "end"]}}, "pass"),
         ("<assert-xml>&lt;?xml version='1.0'?>\n&lt;a/></assert-xml>",
@@ -1183,6 +1211,9 @@ def self_test():
         for k, sub in enumerate([x for x in e.iter() if x.tag.replace(NS, "") in
                                  ("assert", "assert-eq", "assert-deep-eq", "assert-permutation")]):
             idx[id(sub)] = 1
+        for sub in e.iter(NS + "assert-type"):
+            if not type_readable(" ".join((sub.text or "").split()).rstrip("?*+").strip()):
+                idx[id(sub)] = 1
         for sub in e.iter(NS + "assert-xml"):
             idx[id(sub)] = sub.text or ""
         got = check(e, r, idx)[0]

@@ -975,7 +975,7 @@ const
     '</j><m xml:base="file:///C:/dir/"><n xml:base="sub/"/></m><o2 xml:base="//h.org"><o xml:base="p/x"/></o2>' +
     '<p2 xml:base="../../e"/><q2 xml:base="../e"/><s2 xml:base="./"/><u2 xml:base="..//e"/>' +
     '<v2 xml:base="../a:b"><w2 xml:base="#f"/></v2></r>';
-  Cases: array[0..18] of array[0..1] of string = (
+  Cases: array[0..19] of array[0..1] of string = (
     ('base-uri(/)', ''),
     ('base-uri(/r)', 'rel/x'),
     ('base-uri(//a)', 'rel/b/c'),
@@ -994,7 +994,8 @@ const
     ('base-uri(//s2)', 'rel/'),
     ('base-uri(//u2)', 'e'),
     ('base-uri(//v2)', './a:b'),
-    ('base-uri(//w2)', './a:b#f'));
+    ('base-uri(//w2)', './a:b#f'),
+    ('count(document-uri(/))', '0'));
 var
   Tree: TLandrixXmlXPathTree;
   Evaluator: TLandrixXmlXPathEvaluator;
@@ -1035,6 +1036,14 @@ begin
     Expr := TLandrixXmlXPathExpression.Create(U('concat(base-uri(/), '' '', base-uri(//d))'), nil);
     CheckEqualsStr('http://h.org/p/q.xml http://h.org/p/rel/e',
       LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'BaseUri set');
+    { it is the document URI too, and doc() finds the document by it }
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('concat(document-uri(/), '' '', count(document-uri(/r)), '' '', ' +
+      'doc(''http://h.org/p/q.xml'') is /, '' '', doc-available(''http://h.org/p/q.xml''), '' '', ' +
+      'doc-available(''http://h.org/p/x.xml''), '' '', document(''http://h.org/p/q.xml'') is /)'), nil);
+    CheckEqualsStr('http://h.org/p/q.xml 0 true true false true',
+      LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'document URI');
     Evaluator.Free;
     Evaluator := nil;
     Tree.LoadFromFile(DataFolder('baseuri') + 'd.xml');
@@ -1365,6 +1374,52 @@ begin
   end;
 end;
 
+{ round-half-to-even and round with a precision beyond Integer or far
+  below the digits of a large value (Saxon crashes on these). }
+procedure TestPrecisionLimits;
+const
+  { 10^100001 }
+  Big = 'xs:integer(concat(''1'', string-join(for $i in 1 to 100001 return ''0'', '''')))';
+  { 10^1000000, the largest exponent of a decimal }
+  Huge = 'xs:integer(concat(''1'', string-join(for $i in 1 to 1000000 return ''0'', '''')))';
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Profile: TLandrixXmlXPathProfile;
+
+  procedure Expect(const Expr, Want: string);
+  begin
+    Check(ProfileResult(U(Expr), Profile, Evaluator) = U(Want), Expr + ': ' +
+      LandrixXmlUtf8ToString(ProfileResult(U(Expr), Profile, Evaluator)));
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  try
+    Tree.LoadFromUtf8(U('<r/>'));
+    for Profile := Low(TLandrixXmlXPathProfile) to High(TLandrixXmlXPathProfile) do
+    begin
+      Expect('round-half-to-even(' + Big + ', -100002) eq 0', 'xs:boolean true');
+      Expect('round-half-to-even(' + Big + ', -2147483649) eq 0', 'xs:boolean true');
+      Expect('round-half-to-even(' + Big + ', -100001) eq ' + Big, 'xs:boolean true');
+      Expect('round-half-to-even(' + Huge + ', -2147483649) eq 0', 'xs:boolean true');
+      Expect('round-half-to-even(' + Huge + ', -1000001) eq 0', 'xs:boolean true');
+      Expect('round-half-to-even(' + Huge + ', -1000002) eq 0', 'xs:boolean true');
+      Expect('round-half-to-even(0.4, -1) eq 0', 'xs:boolean true');
+      Expect('round-half-to-even(65, -2)', 'xs:integer 100');
+      Expect('round-half-to-even(-65, -3)', 'xs:integer 0');
+      Expect('round-half-to-even(3.5, -99999999999999999999)', 'xs:decimal 0');
+      Expect('round-half-to-even(-35, -9223372036854775808)', 'xs:integer 0');
+      Expect('round-half-to-even(3.5E0, -4294967296)', 'xs:double 0');
+      Expect('round-half-to-even(2.5, 9223372036854775808)', 'xs:decimal 2.5');
+    end;
+  finally
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 { tests/data/xpath/profiles.txt: each row in both profiles; a row that
   does not differ is an error of the table. }
 procedure TestProfiles;
@@ -1508,6 +1563,7 @@ begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
   RegisterTest('XPathEval.OracleCases', TestOracleCases);
   RegisterTest('XPathEval.DurationLimits', TestDurationLimits);
+  RegisterTest('XPathEval.PrecisionLimits', TestPrecisionLimits);
   RegisterTest('XPathEval.DateContext', TestDateContext);
   RegisterTest('XPathEval.MixedProfiles', TestMixedProfiles);
   RegisterTest('XPathEval.Profiles', TestProfiles);

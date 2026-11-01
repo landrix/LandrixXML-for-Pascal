@@ -263,3 +263,25 @@ xs:integer 16777215
 xs:double 1.6777217E7
 # max((xs:float(1), 16777217))
 xs:float 1.6777216E7
+# round-half-to-even(3.567812E+3, 4294967296)
+xs:double 3567.812
+# round-half-to-even(3.567812, 4294967296)
+xs:decimal 3.567812
+# round-half-to-even(12, 4294967296)
+xs:integer 12
+# round-half-to-even(3.5, 99999999999999999999)
+xs:decimal 3.5
+# round-half-to-even(3.5E0, 99999999999999999999)
+xs:double 3.5
+# round-half-to-even(xs:float(3.25), 4294967296)
+xs:float 3.25
+# round-half-to-even(1.0E300, 2147483647)
+xs:double 1.0E300
+# round-half-to-even(1.0E-300, 2147483647)
+xs:double 1.0E-300
+# round-half-to-even(0.123456789012345678901234567890123, 2147483647)
+xs:decimal 0.123456789012345678901234567890123
+# round-half-to-even(0.125, 2147483648)
+xs:decimal 0.125
+# round-half-to-even(xs:decimal(concat('6', string-join(for $i in 1 to 100001 return '0', ''))), -100002) eq xs:decimal(concat('1', string-join(for $i in 1 to 100002 return '0', '')))
+xs:boolean true

@@ -164,3 +164,28 @@ xs:boolean true
 xs:boolean true
 # (/) instance of document-node(element(a))
 xs:boolean false
+# "a string" instance of xs:NOTATION
+xs:boolean false
+# () instance of xs:NOTATION?
+xs:boolean true
+# () instance of xs:NOTATION
+xs:boolean false
+# (1, 2) instance of xs:NOTATION*
+xs:boolean false
+# () instance of xs:NOTATION*
+xs:boolean true
+# () treat as xs:NOTATION?
+# 1 treat as xs:NOTATION
+error XPDY0050
+# /r instance of xs:NOTATION?
+xs:boolean false
+# xs:QName('a') instance of xs:NOTATION
+xs:boolean false
+# "a" castable as xs:NOTATION
+error XPST0080
+# "a" cast as xs:NOTATION
+error XPST0080
+# "a" instance of xs:anySimpleType
+error XPST0051
+# "a" instance of xs:IDREFS
+error XPST0051

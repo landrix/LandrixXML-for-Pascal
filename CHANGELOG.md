@@ -214,6 +214,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   element per ID in document order) and there are no IDREF attributes:
   `idref` is always empty, but checks its arguments as `id` does. QT3: 25
   more cases pass in both profiles.
+- XPath: the evaluator's own document has a document URI, the tree's
+  `BaseUri` (`LoadFromFile`: the file URI); `doc`, `doc-available` and
+  `document` find the document by it, as Saxon finds a loaded document.
+  `xs:NOTATION` is accepted in sequence types (`instance of`, `treat as`);
+  no value has this abstract type. The QT3 driver checks an `assert-type`
+  it cannot read itself with `instance of` in the helper. QT3: 8 more
+  cases pass in both profiles.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
   matcher limited to 10,000,000 steps per call (`xecLimit` beyond, never
@@ -449,6 +456,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   optionally checks them against Saxon.
 
 ### Fixed
+- XPath: a precision beyond the Integer range in `round` and
+  `round-half-to-even` keeps every digit or none, as a large one in the
+  range does; before, it raised FOAR0002. A decimal is rounded at a
+  precision below -100,000 as at any other (0 if the value is below half
+  the unit); before, such a precision was taken as
+  -100,000, which kept the value of a decimal with more digits.
+  `LandrixXmlDecimalRound` accepts any precision: below -1,000,000 it
+  raised `xecArithmetic` even for a result of 0; now only a result other
+  than 0 whose exponent is out of range does.
 - XPath: `min` and `max` report a type error or a failed conversion of
   any value even if an earlier value is NaN; before, the first NaN was
   returned at once.

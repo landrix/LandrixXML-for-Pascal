@@ -139,7 +139,10 @@ type
       LoadFromFile sets it to the file URI as Saxon gives it
       (file:/D:/x/y.xml, file:/home/x/y.xml), every other load resets
       it; set it after loading for a document of a known origin, and not
-      while an evaluator uses the tree. The URI a document is added with
+      while an evaluator uses the tree. For the evaluator's own tree it is
+      also the document URI (fn:document-uri), and doc() with this URI
+      returns the tree's document node (unless a document was added with
+      the same URI: that one wins). The URI a document is added with
       (TLandrixXmlXPathEvaluator.AddDocument) is only the name document()
       finds it by, not its base URI. }
     property BaseUri: TLandrixXmlUtf8 read FBaseUri write FBaseUri;

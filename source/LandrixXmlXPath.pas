@@ -136,7 +136,8 @@ type
     xktProcessingInstruction);
   TLandrixXmlXPathSequenceType = record
     Kind: TLandrixXmlXPathTypeKind;
-    { xtkAtomic }
+    { xtkAtomic; xikNone stands for xs:NOTATION, the abstract type that
+      no value has }
     AtomicType: TLandrixXmlXPathItemKind;
     { xtkNode }
     KindTest: TLandrixXmlXPathKindTest;
@@ -1696,7 +1697,7 @@ begin
       ErrorCode('XPST0051', 'unknown atomic type "' + LandrixXmlUtf8ToString(Name) + '"', Position);
     Result.Kind := xtkAtomic;
     Result.AtomicType := LandrixXmlXPathAtomicTypeByName(Local);
-    if Result.AtomicType = xikNone then
+    if (Result.AtomicType = xikNone) and (Local <> 'NOTATION') then
       ErrorCode('XPST0051', 'the type "' + LandrixXmlUtf8ToString(Name) + '" is not supported here', Position);
     Next;
   end;
@@ -2322,7 +2323,10 @@ begin
         Exit;
       end;
     xtkAtomic:
-      Result := LandrixXmlXPathAtomicTypeName(T.AtomicType);
+      if T.AtomicType = xikNone then
+        Result := 'xs:NOTATION'
+      else
+        Result := LandrixXmlXPathAtomicTypeName(T.AtomicType);
     xtkNode:
       case T.KindTest of
         xktDocument:

@@ -71,6 +71,7 @@ app-FunctxFn/functx-fn-days-from-duration-4 pass
 app-FunctxFn/functx-fn-days-from-duration-5 pass
 app-FunctxFn/functx-fn-days-from-duration-all pass
 app-FunctxFn/functx-fn-default-collation-1 pass
+app-FunctxFn/functx-fn-doc-available-1 pass
 app-FunctxFn/functx-fn-encode-for-uri-1 pass
 app-FunctxFn/functx-fn-encode-for-uri-2 pass
 app-FunctxFn/functx-fn-encode-for-uri-all pass
@@ -2015,6 +2016,7 @@ fn-doc-available/fn-doc-available-1 pass
 fn-doc-available/fn-doc-available-2 pass
 fn-doc-available/fn-doc-available-3 pass
 fn-doc-available/fn-doc-available-4 pass
+fn-doc-available/fn-doc-available-5 pass
 fn-doc-available/fn-doc-available-6 pass
 fn-doc-available/fn-doc-available-7 pass
 fn-doc-available/fn-doc-available-8 pass
@@ -2047,6 +2049,8 @@ fn-document-uri/K-DocumentURIFunc-2 pass
 fn-document-uri/K-DocumentURIFunc-3 pass
 fn-document-uri/fn-document-uri-13 pass
 fn-document-uri/fn-document-uri-14 pass
+fn-document-uri/fn-document-uri-20 pass
+fn-document-uri/fn-document-uri-21 pass
 fn-empty/K-SeqEmptyFunc-1 pass
 fn-empty/K-SeqEmptyFunc-2 pass
 fn-empty/K-SeqEmptyFunc-3 pass
@@ -4373,6 +4377,7 @@ fn-round-half-to-even/K2-RoundEvenFunc-6 pass
 fn-round-half-to-even/K2-RoundEvenFunc-7 pass
 fn-round-half-to-even/K2-RoundEvenFunc-8 pass
 fn-round-half-to-even/K2-RoundEvenFunc-9 pass
+fn-round-half-to-even/cbcl-round-half-to-even-001 pass
 fn-round-half-to-even/cbcl-round-half-to-even-002 pass
 fn-round-half-to-even/cbcl-round-half-to-even-003 pass
 fn-round-half-to-even/cbcl-round-half-to-even-004 pass
@@ -4383,6 +4388,7 @@ fn-round-half-to-even/cbcl-round-half-to-even-008 pass
 fn-round-half-to-even/cbcl-round-half-to-even-009 pass
 fn-round-half-to-even/cbcl-round-half-to-even-010 pass
 fn-round-half-to-even/cbcl-round-half-to-even-011 pass
+fn-round-half-to-even/cbcl-round-half-to-even-012 pass
 fn-round-half-to-even/cbcl-round-half-to-even-013 pass
 fn-round-half-to-even/cbcl-round-half-to-even-014 pass
 fn-round-half-to-even/fn-round-half-to-even-1 pass
@@ -13809,6 +13815,7 @@ prod-InstanceofExpr/K-SeqExprInstanceOf-42 pass
 prod-InstanceofExpr/K-SeqExprInstanceOf-43 pass
 prod-InstanceofExpr/K-SeqExprInstanceOf-44 pass
 prod-InstanceofExpr/K-SeqExprInstanceOf-45 pass
+prod-InstanceofExpr/K-SeqExprInstanceOf-46 pass
 prod-InstanceofExpr/K-SeqExprInstanceOf-47 pass
 prod-InstanceofExpr/K-SeqExprInstanceOf-48 pass
 prod-InstanceofExpr/K-SeqExprInstanceOf-49 pass
@@ -14189,6 +14196,7 @@ prod-NameTest/K2-NameTest-85 pass
 prod-NameTest/K2-NameTest-86 pass
 prod-NameTest/K2-NameTest-9 pass
 prod-NameTest/NodeTest003 pass
+prod-NameTest/NodeTest004 pass
 prod-NameTest/NodeTest005 pass
 prod-NodeTest/K2-NodeTest-10 wrong-code
 prod-NodeTest/K2-NodeTest-11 pass
