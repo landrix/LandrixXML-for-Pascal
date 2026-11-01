@@ -933,7 +933,7 @@ function TLandrixXmlXPathEvaluator.CallFunction(Index: Integer; Context, Positio
 var
   N: ^TLandrixXmlXPathAstNode;
   Id: TLandrixXmlXPathFunctionId;
-  ArgCount, I, J, K, Len: Integer;
+  ArgCount, I, J, K, Len, Tok: Integer;
   A, B: TLandrixXmlXPathSequence;
   S, T, R: TLandrixXmlUtf8;
   Item, Acc: TLandrixXmlXPathItem;
@@ -1892,6 +1892,73 @@ begin
           if OwnTree.Kind[A.Items[0].Node - K] = xnkElement then
             Result := BooleanSeq(False);
         end;
+      end;
+    xfnId, xfnIdref:
+      begin
+        { the tree has no DTD or schema types: the IDs are the xml:id
+          attributes (their values with white space collapsed), there
+          are no IDREF attributes, so idref() is always empty }
+        if ArgCount > 1 then
+          A := Arg(1)
+        else
+          A := ContextSeq;
+        if (A.Count <> 1) or (A.Items[0].Kind <> xikNode) then
+          Fail('XPTY0004', Name + ': a single node was expected');
+        B := Atomize(Arg(0));
+        for I := 0 to B.Count - 1 do
+          if not IsStringLike(B.Items[I].Kind) then
+            Fail('XPTY0004', Name + ': argument 1 holds ' + KindName(B.Items[I].Kind) + ', not xs:string');
+        if Id = xfnIdref then
+          Exit;
+        { the tokens that are NCNames }
+        Parts := nil;
+        Len := 0;
+        for I := 0 to B.Count - 1 do
+        begin
+          S := NormalizeSpace(B.Items[I].Text) + ' ';
+          J := 1;
+          while J <= Length(S) do
+          begin
+            Tok := J;
+            while S[J] <> ' ' do
+              Inc(J);
+            T := Copy(S, Tok, J - Tok);
+            Inc(J);
+            if (T <> '') and NameCharacters(T, True) and not ContainsByte(T, ':') then
+            begin
+              if Len >= Integer(Length(Parts)) then
+                SetLength(Parts, 2 * Len + 4);
+              Parts[Len] := T;
+              Inc(Len);
+            end;
+          end;
+        end;
+        { the first element in document order per ID }
+        OwnTree := TreeOf(A.Items[0].Node, K);
+        for I := 1 to OwnTree.Count - 1 do
+          if (Len > 0) and (OwnTree.Kind[I] = xnkElement) then
+            for J := I + 1 to I + OwnTree.AttributeCount[I] do
+              if (OwnTree.LocalNameUtf8(J) = 'id') and (OwnTree.NamespaceUriUtf8(J) = LandrixXmlNamespaceXml) then
+              begin
+                S := NormalizeSpace(OwnTree.ValueUtf8(J));
+                Found := False;
+                Tok := 0;
+                while Tok < Len do
+                  if Parts[Tok] = S then
+                  begin
+                    Found := True;
+                    Parts[Tok] := Parts[Len - 1];
+                    Dec(Len);
+                  end
+                  else
+                    Inc(Tok);
+                if Found then
+                begin
+                  InitItem(Item, xikNode);
+                  Item.Node := I + K;
+                  LandrixXmlXPathAppend(Result, Item);
+                end;
+              end;
       end;
     xfnCollection:
       begin

@@ -1004,9 +1004,9 @@ begin
     if (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) then
     begin
       Id := TLandrixXmlXPathFunctionId(Nodes[Index].Op);
-      { lang() with one argument reads the context node }
+      { lang(), id() and idref() with one argument read the context node }
       if (Id = xfnPosition) or (Id = xfnLast) or ((Id in ContextFunctions) and (Length(Nodes[Index].Children) = 0)) or
-        ((Id = xfnLang) and (Length(Nodes[Index].Children) = 1)) then
+        ((Id in [xfnLang, xfnId, xfnIdref]) and (Length(Nodes[Index].Children) = 1)) then
         Include(Deps, xdFocus)
       else if Id = xfnCurrent then
         Include(Deps, xdOther);

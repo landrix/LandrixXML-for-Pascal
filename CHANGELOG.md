@@ -209,6 +209,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   FODC0002 (also without an argument, as there is no default collection)
   and FODC0004 for an invalid URI, the codes Saxon gives for a
   collection that does not exist. QT3: 9 more cases pass in both profiles.
+- XPath: `id` and `idref`. The tree has no DTD or schema types, so the
+  IDs are the `xml:id` attributes (white space collapsed; the first
+  element per ID in document order) and there are no IDREF attributes:
+  `idref` is always empty, but checks its arguments as `id` does. QT3: 25
+  more cases pass in both profiles.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
   matcher limited to 10,000,000 steps per call (`xecLimit` beyond, never

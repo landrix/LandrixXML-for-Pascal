@@ -1,0 +1,57 @@
+# id('a1')
+node /Q{}r[1]/Q{}a[1]
+# id('b1')
+node /Q{}r[1]/Q{}b[1]
+# id('c1 a1')
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+# id(('c1', 'a1', 'c1'))
+node /Q{}r[1]/Q{}a[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+# id('  c1   b1  ')
+node /Q{}r[1]/Q{}b[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+# id('e1')
+# id('x')
+# id('p:q')
+# id('1x')
+# id('')
+# id(())
+# id(//a/@ref)
+node /Q{}r[1]/Q{}b[1]
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+# id('a1', //c)
+node /Q{}r[1]/Q{}a[1]
+# //c/id('a1')
+node /Q{}r[1]/Q{}a[1]
+# id(xs:untypedAtomic('c1'))
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+# id(xs:anyURI('c1'))
+node /Q{}r[1]/Q{}b[1]/Q{}c[1]
+# id(1)
+error XPTY0004
+# id('a1', 1)
+error XPTY0004
+# id('a1', (//a, //b))
+error XPTY0004
+# id('a1', ())
+error XPTY0004
+# (1, 2)[id('a1')]
+error XPTY0004
+# idref('a1')
+# idref('a1', //c)
+# idref(1)
+error XPTY0004
+# idref('a1', ())
+error XPTY0004
+# (1, 2)[idref('a1')]
+error XPTY0004
+# count(id(('a1', 'b1', 'c1')))
+xs:integer 3
+# id('a1 b1')/name()
+xs:string a
+xs:string b
+# id('a1', /)
+node /Q{}r[1]/Q{}a[1]
+# id('a1', //a/@ref)
+node /Q{}r[1]/Q{}a[1]
