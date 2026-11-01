@@ -20,8 +20,15 @@ judge itself: assert-true/false (a single xs:boolean), assert-empty,
 assert-count, assert-string-value, assert-type (from the item types),
 error codes, and assert-eq/assert-deep-eq/assert-permutation against
 the expected expression evaluated on its own. Only assert (an XPath
-expression over $result) is evaluated by the engine. assert-xml and the
-serialization assertions are not supported yet.
+expression over $result) is evaluated by the engine. assert-xml: the
+helper writes the subtrees of the result nodes, the expected XML is
+parsed here with expat, and both are compared exactly as the XML
+serialization of the sequence (adjacent atomic values separated by a
+space, a document node by its children, adjacent text merged): names
+with prefix (unless ignore-prefixes), attributes as a set, text,
+comments and processing instructions; namespace declarations are not
+compared. The serialization assertions (serialization-matches,
+assert-serialization-error) are not supported yet.
 
 Outcomes: pass; wrong-code (an error was expected, another code came);
 fail (with the error our engine raised, or "value"); assertion-error
@@ -56,6 +63,7 @@ import time
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
+import xml.parsers.expat
 from fractions import Fraction
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -68,7 +76,7 @@ BASELINES = {"xpath20": os.path.join(ROOT, "tests", "data", "qt3-baseline.txt"),
              "saxon": os.path.join(ROOT, "tests", "data", "qt3-baseline-saxon.txt")}
 BASELINE = BASELINES["xpath20"]
 WORK = os.path.join(ROOT, "build", "qt3")
-HARNESS_VERSION = "1"
+HARNESS_VERSION = "2"
 PROFILE = "xpath20"
 NS = "{http://www.w3.org/2010/09/qt-fots-catalog}"
 
@@ -199,8 +207,10 @@ class Case:
         self.result = None
         self.checks = []
         self.values = []
-        # assertion element (id) -> number of its check or value
+        # assertion element (id) -> number of its check or value; for
+        # assert-xml the expected XML (text inline, bytes from a file)
         self.idx = {}
+        self.serialize = False
         self.outcome = None
         self.detail = ""
 
@@ -209,12 +219,19 @@ class Case:
         return self.test_set + "/" + self.name
 
 
-def plan_assertion(case, el):
+def plan_assertion(case, el, base):
     """Number the checks and values the assertion tree needs (case.idx)."""
     tag = el.tag.replace(NS, "")
     if tag in ("any-of", "all-of", "not"):
         for ch in el:
-            plan_assertion(case, ch)
+            plan_assertion(case, ch, base)
+    elif tag == "assert-xml":
+        case.serialize = True
+        if el.get("file"):
+            with open(os.path.join(base, el.get("file")), "rb") as f:
+                case.idx[id(el)] = f.read()
+        else:
+            case.idx[id(el)] = el.text or ""
     elif tag == "assert":
         case.checks.append(el.text or "")
         case.idx[id(el)] = len(case.checks)
@@ -270,7 +287,7 @@ def load_cases(filt):
                 continue
             case.expr = test.text or ""
             case.result = list(tc.find(NS + "result"))[0]
-            plan_assertion(case, case.result)
+            plan_assertion(case, case.result, base)
     return cases
 
 
@@ -299,6 +316,8 @@ def job_text(cases, profile):
         lines.append("case " + esc(c.name, True))
         if profile == "saxon":
             lines.append("profile saxon")
+        if c.serialize:
+            lines.append("serialize")
         env = c.env
         if env:
             if env.source:
@@ -322,7 +341,9 @@ def job_text(cases, profile):
 
 def parse_output(text):
     """{case name: {tag: value}}; a value is ("error", code, msg) or a list
-    of items (type, name, string); "done" marks a complete case."""
+    of items (type, name, string); "done" marks a complete case. With
+    serialize, "T" + tag maps the index of a node item to the tree lines
+    of its subtree (tree_events reads them)."""
     out = collections.OrderedDict()
     cur = None
     for line in text.split("\n"):
@@ -349,6 +370,9 @@ def parse_output(text):
                 nk, _, rest = rest.partition(" ")
                 name, _, value = rest.partition(" ")
                 cur.setdefault(head, []).append(("node:" + nk, unesc(name), unesc(value)))
+            elif kind == "tree":
+                trees = cur.setdefault("T" + head, {})
+                trees.setdefault(len(cur[head]) - 1, []).append(rest)
             else:
                 cur.setdefault(head, []).append((kind, None, unesc(rest)))
     return out
@@ -613,6 +637,12 @@ def permutation_equal(a, b):
 XML_SPACE_RE = re.compile("[ \t\r\n]+")
 
 
+def xs_true(v):
+    """An xs:boolean attribute of the catalog: true or 1, maybe with XML
+    white space around."""
+    return v is not None and v.strip(" \t\r\n") in ("true", "1")
+
+
 def normalize_space(s):
     """fn:normalize-space: XML white space only (not U+00A0)."""
     return XML_SPACE_RE.sub(" ", s).strip(" ")
@@ -721,6 +751,144 @@ def effective_boolean(items):
     return None
 
 
+def tree_events(lines, ignore_prefixes):
+    """The events of the helper's tree lines: ("start", prefix, name,
+    attributes as a list of (name, prefix, value)), ("end",),
+    ("text", s), ("comment", s), ("pi", target, data)."""
+    out = []
+    for line in lines:
+        kind, _, rest = line.partition(" ")
+        if kind in ("start", "attr"):
+            prefix, _, rest = rest.partition(" ")
+            name, _, value = rest.partition(" ")
+            prefix = "" if prefix == "-" or ignore_prefixes else unesc(prefix)
+            if kind == "start":
+                out.append(("start", prefix, unesc(name), []))
+            elif out and out[-1][0] == "start":
+                out[-1][3].append((unesc(name), prefix, unesc(value)))
+            else:
+                # an attribute node outside an element (SENR0001)
+                return None
+        elif kind == "end":
+            out.append(("end",))
+        elif kind in ("text", "comment"):
+            out.append((kind, unesc(rest)))
+        elif kind == "pi":
+            target, _, data = rest.partition(" ")
+            out.append(("pi", unesc(target), unesc(data)))
+    return out
+
+
+def normalize_events(events):
+    """Sorted attributes, adjacent text merged, empty text dropped."""
+    out = []
+    for e in events:
+        if e[0] == "start":
+            e = ("start", e[1], e[2], tuple(sorted(e[3])))
+        elif e[0] == "text":
+            if out and out[-1][0] == "text":
+                out[-1] = ("text", out[-1][1] + e[1])
+                continue
+        out.append(e)
+    return [e for e in out if e != ("text", "")]
+
+
+XML_DECL_RE = re.compile(r"^[ \t\r\n]*<\?xml[ \t\r\n][^?]*\?>[ \t\r\n]*")
+XML_ENCODING_RE = re.compile(rb"^[ \t\r\n]*<\?xml[ \t\r\n][^?]*encoding[ \t\r\n]*=[ \t\r\n]*[\"']([A-Za-z0-9._-]+)")
+
+
+def xml_utf8(data):
+    """The expected XML as UTF-8 without byte order mark and XML
+    declaration (nor the white space after it). Text (inline in the
+    catalog) is already decoded; bytes (a file) are decoded by their byte
+    order mark, the UTF-16 signature of "<?" or the declared encoding."""
+    if isinstance(data, str):
+        text = data
+    elif data.startswith(b"\xef\xbb\xbf"):
+        text = data[3:].decode("utf-8")
+    elif data.startswith(b"\xff\xfe") or data.startswith(b"\xfe\xff"):
+        text = data.decode("utf-16")
+    elif data.startswith(b"\x00<\x00?"):
+        text = data.decode("utf-16-be")
+    elif data.startswith(b"<\x00?\x00"):
+        text = data.decode("utf-16-le")
+    else:
+        m = XML_ENCODING_RE.match(data)
+        text = data.decode(m.group(1).decode("ascii") if m else "utf-8")
+    return XML_DECL_RE.sub("", text, 1).encode("utf-8")
+
+
+def xml_events(data, ignore_prefixes):
+    """The events of the expected XML (a fragment, see xml_utf8); None if
+    it is not well-formed or cannot be decoded."""
+    events = []
+    sep = chr(1)
+
+    def name(n):
+        parts = n.split(sep)
+        if len(parts) == 1:
+            return "", "Q{}" + parts[0]
+        prefix = parts[2] if len(parts) == 3 and not ignore_prefixes else ""
+        return prefix, "Q{%s}%s" % (parts[0], parts[1])
+
+    def start(n, attrs):
+        prefix, q = name(n)
+        a = []
+        for i in range(0, len(attrs), 2):
+            ap, aq = name(attrs[i])
+            a.append((aq, ap, attrs[i + 1]))
+        events.append(("start", prefix, q, a))
+
+    p = xml.parsers.expat.ParserCreate("UTF-8", sep)
+    p.namespace_prefixes = True
+    p.ordered_attributes = True
+    p.StartElementHandler = start
+    p.EndElementHandler = lambda n: events.append(("end",))
+    p.CharacterDataHandler = lambda s: events.append(("text", s))
+    p.CommentHandler = lambda s: events.append(("comment", s))
+    p.ProcessingInstructionHandler = lambda t, d: events.append(("pi", t, d))
+    wrap = b"landrixxml-qt3-wrap"
+    try:
+        p.Parse(b"<" + wrap + b">" + xml_utf8(data) + b"</" + wrap + b">", True)
+    except (xml.parsers.expat.ExpatError, LookupError, UnicodeError):
+        return None
+    return normalize_events(events[1:-1])
+
+
+def result_events(items, trees, ignore_prefixes):
+    """The events of the XML serialization of the result; None for an
+    attribute node outside an element (SENR0001)."""
+    events = []
+    atomic = False
+    for i, (t, _, v) in enumerate(items):
+        if t.startswith("node:"):
+            e = tree_events(trees.get(i, []), ignore_prefixes)
+            if e is None:
+                return None
+            events.extend(e)
+            atomic = False
+        else:
+            if atomic:
+                events.append(("text", " "))
+            events.append(("text", v))
+            atomic = True
+    return normalize_events(events)
+
+
+def show_events(events):
+    parts = []
+    for e in events[:6]:
+        if e[0] == "start":
+            parts.append("<" + (e[1] + ":" if e[1] else "") + e[2] + ">")
+        elif e[0] == "end":
+            parts.append("</>")
+        else:
+            parts.append("%s %r" % (e[0], e[1][:30]))
+    if len(events) > 6:
+        parts.append("... (%d events)" % len(events))
+    return " ".join(parts)
+
+
 RANK = {"pass": 0, "wrong-code": 1, "assertion-unsupported": 2, "assertion-error": 3, "fail": 4}
 
 
@@ -766,7 +934,7 @@ def check(el, r, idx):
     if tag == "assert-string-value":
         got_s = " ".join(v for _, _, v in items)
         want = el.text or ""
-        if el.get("normalize-space") == "true":
+        if xs_true(el.get("normalize-space")):
             got_s, want = normalize_space(got_s), normalize_space(want)
         return ("pass", "") if got_s == want else ("fail", "expected %r, got %r" % (want[:100], got_s[:100]))
     if tag == "assert-type":
@@ -784,6 +952,21 @@ def check(el, r, idx):
         if ebv:
             return "pass", ""
         return "fail", "assert %s on %s" % ((el.text or "").strip()[:100], show(items))
+    if tag == "assert-xml":
+        ignore = xs_true(el.get("ignore-prefixes"))
+        want = xml_events(idx[id(el)], ignore)
+        if want is None:
+            return "assertion-error", "assert-xml: the expected XML is not well-formed"
+        got_e = result_events(items, r.get("TR", {}), ignore)
+        if got_e is None:
+            return "fail", "assert-xml: attribute node outside an element (SENR0001)"
+        if got_e == want:
+            return "pass", ""
+        k = 0
+        while k < min(len(got_e), len(want)) and got_e[k] == want[k]:
+            k += 1
+        return "fail", "assert-xml: from event %d expected %s, got %s" % (
+            k, show_events(want[k:]), show_events(got_e[k:]))
     if tag in ("assert-eq", "assert-deep-eq", "assert-permutation"):
         v = r.get("V%d" % idx[id(el)])
         if isinstance(v, tuple) or v is None:
@@ -971,7 +1154,27 @@ def self_test():
          "pass"),
         ("<assert-permutation>x</assert-permutation>", {"R": items(*([i1] * 999 + [("xs:integer", "2")])),
                                                         "V1": items(*([i1] * 1000))}, "fail"),
-        ("<assert-xml>&lt;a/&gt;</assert-xml>", {"R": items(("node:element", ""))}, "assertion-unsupported"),
+        ("<assert-xml>&lt;a x='1'>t&lt;/a></assert-xml>",
+         {"R": items(("node:element", "t")), "TR": {0: ["start - Q{}a", "attr - Q{}x 1", "text t", "end"]}}, "pass"),
+        ("<assert-xml>&lt;a x='2'>t&lt;/a></assert-xml>",
+         {"R": items(("node:element", "t")), "TR": {0: ["start - Q{}a", "attr - Q{}x 1", "text t", "end"]}}, "fail"),
+        ("<assert-xml>&lt;a>&lt;!--c-->&lt;?p d?>&lt;/a></assert-xml>",
+         {"R": items(("node:document-node", "")), "TR": {0: ["start - Q{}a", "comment c", "pi p d", "end"]}},
+         "pass"),
+        ("<assert-xml>1 2</assert-xml>", {"R": items(i1, ("xs:integer", "2"))}, "pass"),
+        ("<assert-xml>12</assert-xml>", {"R": items(i1, ("xs:integer", "2"))}, "fail"),
+        ("<assert-xml>a1</assert-xml>", {"R": items(("node:text", "a"), i1), "TR": {0: ["text a"]}}, "pass"),
+        ("<assert-xml>&lt;p:a xmlns:p='u'/></assert-xml>",
+         {"R": items(("node:element", "")), "TR": {0: ["start q Q{u}a", "end"]}}, "fail"),
+        ("<assert-xml ignore-prefixes='true'>&lt;p:a xmlns:p='u'/></assert-xml>",
+         {"R": items(("node:element", "")), "TR": {0: ["start q Q{u}a", "end"]}}, "pass"),
+        ("<assert-xml>x='1'</assert-xml>", {"R": items(("node:attribute", "1")), "TR": {0: ["attr - Q{}x 1"]}},
+         "fail"),
+        ("<assert-xml>&lt;a></assert-xml>", {"R": []}, "assertion-error"),
+        ("<assert-xml ignore-prefixes=' 1 '>&lt;p:a xmlns:p='u'/></assert-xml>",
+         {"R": items(("node:element", "")), "TR": {0: ["start q Q{u}a", "end"]}}, "pass"),
+        ("<assert-xml>&lt;?xml version='1.0'?>\n&lt;a/></assert-xml>",
+         {"R": items(("node:element", "")), "TR": {0: ["start - Q{}a", "end"]}}, "pass"),
     ]
     bad = 0
     for xml, r, want in cases:
@@ -980,6 +1183,8 @@ def self_test():
         for k, sub in enumerate([x for x in e.iter() if x.tag.replace(NS, "") in
                                  ("assert", "assert-eq", "assert-deep-eq", "assert-permutation")]):
             idx[id(sub)] = 1
+        for sub in e.iter(NS + "assert-xml"):
+            idx[id(sub)] = sub.text or ""
         got = check(e, r, idx)[0]
         if got != want:
             bad += 1
@@ -990,7 +1195,31 @@ def self_test():
     if judge(fake, {"R": ("exception", "EAccessViolation", "")})[0] != "fail":
         bad += 1
         print("self-test: an exception under not does not fail")
-    print("self-test: %d checks, %d wrong" % (len(cases) + 1, bad))
+    # expected files: byte order mark, declared encoding, UTF-16
+    plain = xml_events(("<a>" + chr(0xe9) + "</a>").encode("utf-8"), False)
+    for data in (bytes([0xef, 0xbb, 0xbf]) + b"<a>" + bytes([0xc3, 0xa9]) + b"</a>",
+                 b"<?xml version='1.0' encoding='ISO-8859-1'?>" + bytes([10]) + b"<a>" + bytes([0xe9]) + b"</a>",
+                 bytes([0xef, 0xbb, 0xbf]) + b"<?xml version='1.0'?><a>" + bytes([0xc3, 0xa9]) + b"</a>",
+                 "<a>" + chr(0xe9) + "</a>"):
+        if isinstance(data, str):
+            data = data.encode("utf-16")
+        if xml_events(data, False) != plain:
+            bad += 1
+            print("self-test: expected file %r not read as %r" % (data, plain))
+    # inline text is not decoded again; only XML white space follows a
+    # declaration
+    if xml_events("<?xml version='1.0' encoding='ISO-8859-1'?><a>" + chr(0xe9) + "</a>", False) != plain:
+        bad += 1
+        print("self-test: inline text decoded twice")
+    if xml_events("<?xml version='1.0'?>" + chr(0xa0) + "<a/>", False) == xml_events("<a/>", False):
+        bad += 1
+        print("self-test: U+00A0 after the declaration dropped")
+    for codec in ("utf-16-be", "utf-16-le"):
+        data = ("<?xml version='1.0' encoding='%s'?><a>" % codec.upper() + chr(0xe9) + "</a>").encode(codec)
+        if xml_events(data, False) != plain:
+            bad += 1
+            print("self-test: %s without byte order mark not read" % codec)
+    print("self-test: %d checks, %d wrong" % (len(cases) + 9, bad))
     return 1 if bad else 0
 
 

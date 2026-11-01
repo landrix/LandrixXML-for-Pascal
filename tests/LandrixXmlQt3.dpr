@@ -16,6 +16,7 @@
     doc URI FILE       document(URI) returns FILE
     ns PREFIX URI
     profile saxon      the Saxon profile (else XPath 2.0)
+    serialize          write the content of the nodes in the values
     param NAME EXPR    $NAME is the value of EXPR
     expr EXPR          the expression under test
     check EXPR         evaluated with $result bound to its value
@@ -25,10 +26,15 @@
   checks, V1.. the values) "X count N" and one line per item ("X TYPE
   VALUE", "X node KIND NAME VALUE"; NAME as in LocationPathUtf8 or -) or
   "X error CODE MESSAGE" (an XPath error) or "X exception CLASS MESSAGE"
-  (any other exception); "done" after the case. Every line is written at
-  once, so a crash leaves the cases before it complete. Only the context
-  item, variables and params are set; everything else is the default
-  static and dynamic context. }
+  (any other exception); "done" after the case. With serialize, every
+  node line is followed by the nodes of its subtree in document order (a
+  document node only by its children): "X tree start PREFIX NAME", one
+  "X tree attr PREFIX NAME VALUE" per attribute, the children, "X tree
+  end"; "X tree text VALUE", "X tree comment VALUE", "X tree pi TARGET
+  VALUE" (PREFIX "-" for none, NAME as in the node lines). Every line
+  is written at once, so a crash leaves the cases before it complete.
+  Only the context item, variables and params are set; everything else
+  is the default static and dynamic context. }
 
 program LandrixXmlQt3;
 
@@ -194,6 +200,7 @@ type
     Checks: TLandrixXmlUtf8Array;
     Values: TLandrixXmlUtf8Array;
     Saxon: Boolean;
+    Serialize: Boolean;
   end;
 
   { The trees and the evaluator of a case. }
@@ -209,10 +216,12 @@ type
     Expressions: TList;
     ItemsSlot: Integer;
     ItemStrings: TLandrixXmlXPathExpression;
+    Serialize: Boolean;
     constructor Create;
     destructor Destroy; override;
     function AddTree(const FileName: string; const Uri: TLandrixXmlUtf8): Integer;
     function Compile(const Text: TLandrixXmlUtf8): TLandrixXmlXPathExpression;
+    procedure PutTree(const Tag: TLandrixXmlUtf8; T: TLandrixXmlXPathTree; Node: Integer);
     procedure PutValue(const Tag: TLandrixXmlUtf8; const Value: TLandrixXmlXPathSequence);
   end;
 
@@ -276,6 +285,50 @@ begin
   Expressions.Add(Result);
 end;
 
+{ PREFIX NAME of an element or attribute }
+function TreeName(T: TLandrixXmlXPathTree; Node: Integer): TLandrixXmlUtf8;
+begin
+  Result := T.PrefixUtf8(Node);
+  if Result = '' then
+    Result := '-';
+  Result := Esc(Result, True) + ' ' + Esc(U('Q{') + T.NamespaceUriUtf8(Node) + U('}') + T.LocalNameUtf8(Node),
+    True);
+end;
+
+{ the serialize lines of the subtree of Node }
+procedure TRun.PutTree(const Tag: TLandrixXmlUtf8; T: TLandrixXmlXPathTree; Node: Integer);
+var
+  I, Child: Integer;
+begin
+  case T.Kind[Node] of
+    xnkDocument, xnkElement:
+      begin
+        if T.Kind[Node] = xnkElement then
+        begin
+          Put(Tag + U(' tree start ') + TreeName(T, Node));
+          for I := Node + 1 to Node + T.AttributeCount[Node] do
+            Put(Tag + U(' tree attr ') + TreeName(T, I) + ' ' + Esc(T.ValueUtf8(I), False));
+        end;
+        Child := T.FirstChild(Node);
+        while Child >= 0 do
+        begin
+          PutTree(Tag, T, Child);
+          Child := T.NextSibling[Child];
+        end;
+        if T.Kind[Node] = xnkElement then
+          Put(Tag + U(' tree end'));
+      end;
+    xnkAttribute:
+      Put(Tag + U(' tree attr ') + TreeName(T, Node) + ' ' + Esc(T.ValueUtf8(Node), False));
+    xnkText:
+      Put(Tag + U(' tree text ') + Esc(T.ValueUtf8(Node), False));
+    xnkComment:
+      Put(Tag + U(' tree comment ') + Esc(T.ValueUtf8(Node), False));
+    xnkProcessingInstruction:
+      Put(Tag + U(' tree pi ') + Esc(T.LocalNameUtf8(Node), True) + ' ' + Esc(T.ValueUtf8(Node), False));
+  end;
+end;
+
 procedure TRun.PutValue(const Tag: TLandrixXmlUtf8; const Value: TLandrixXmlXPathSequence);
 var
   Strings: TLandrixXmlXPathResult;
@@ -305,6 +358,8 @@ begin
           Name := '-';
         Put(Tag + U(' node ' + NodeKindNames[T.Kind[Node]] + ' ') + Esc(Name, True) + ' ' +
           Esc(Strings.StringValueUtf8(I), False));
+        if Serialize then
+          PutTree(Tag, T, Node);
       end
       else
         Put(Tag + U(' ' + KindNames[Value.Items[I].Kind] + ' ') + Esc(Strings.StringValueUtf8(I), False));
@@ -337,6 +392,7 @@ begin
   Put(U('case ') + Esc(C.Name, True));
   R := TRun.Create;
   try
+    R.Serialize := C.Serialize;
     Ok := False;
     try
       if C.Source <> '' then
@@ -480,6 +536,8 @@ begin
       end
       else if Head = 'profile' then
         C.Saxon := Rest = 'saxon'
+      else if Head = 'serialize' then
+        C.Serialize := True
       else if Head = 'expr' then
         C.Expr := Unesc(Rest)
       else if Head = 'check' then
