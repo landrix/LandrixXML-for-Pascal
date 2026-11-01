@@ -634,6 +634,159 @@ begin
     Result := Result + '#' + T.Fragment;
 end;
 
+{ Relative resolved against Base when both are relative paths (no
+  scheme, no authority, not from the root), as java.net.URI does: the
+  base path up to its last "/" and Relative's path, "." and empty
+  segments dropped, ".." dropping the segment before it while there is
+  one (a leading ".." stays, the path never starts at the root), "./"
+  before a first segment with ":", then Relative's query and fragment. }
+function ResolveRelativePath(const Relative, Base: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  R: TUriParts;
+  Path, Seg: TLandrixXmlUtf8;
+  Segs: TLandrixXmlUtf8Array;
+  I, Start, N: Integer;
+  Dir: Boolean;
+begin
+  Segs := nil;
+  R := SplitUri(Relative);
+  Path := SplitUri(Base).Path;
+  I := Length(Path);
+  while (I > 0) and (Path[I] <> '/') do
+    Dec(I);
+  Path := Copy(Path, 1, I) + R.Path;
+  { the segments; Dir: the path ends with "/" (also after "." or "..") }
+  N := 0;
+  Dir := False;
+  Start := 1;
+  for I := 1 to Length(Path) + 1 do
+    if (I > Length(Path)) or (Path[I] = '/') then
+    begin
+      Seg := Copy(Path, Start, I - Start);
+      Start := I + 1;
+      if (Seg = '.') or ((Seg = '') and (I > Length(Path))) then
+        Dir := True
+      else if Seg = '' then
+        { an empty segment is dropped }
+      else if (Seg = '..') and (N > 0) and (Segs[N - 1] <> '..') then
+      begin
+        Dec(N);
+        Dir := True;
+      end
+      else
+      begin
+        if N >= Integer(Length(Segs)) then
+          SetLength(Segs, 2 * N + 4);
+        Segs[N] := Seg;
+        Inc(N);
+        Dir := False;
+      end;
+    end;
+  Result := '';
+  for I := 0 to N - 1 do
+  begin
+    if I > 0 then
+      Result := Result + '/';
+    Result := Result + Segs[I];
+  end;
+  if Dir and (N > 0) then
+    Result := Result + '/';
+  { a first segment with ":" would read as a scheme }
+  if (N > 0) and ContainsByte(Segs[0], ':') then
+    Result := './' + Result;
+  if R.HasQuery then
+    Result := Result + '?' + R.Query;
+  if R.HasFragment then
+    Result := Result + '#' + R.Fragment;
+end;
+
+{ The base URI of node Node of Tree (fn:base-uri), False for none, as
+  Saxon computes it: from the document's BaseUri inwards, each xml:base
+  resolved (RFC 3986, as resolve-uri; a relative path against a relative
+  path as java.net.URI, ResolveRelativePath, as Saxon does for a
+  document without a system ID) against the base URI of its parent; an
+  empty one keeps the parent's. A value that is no valid URI reference (white space, a bad
+  escape, two "#") is taken with its white space collapsed and stays an
+  invalid base for the elements below it; an absolute one, and a
+  relative one whose parent base is invalid or absolute but not
+  hierarchical, are taken as they are. Other nodes than elements and the
+  document node take their parent's. }
+function NodeBaseUri(Tree: TLandrixXmlXPathTree; Node: Integer; out Uri: TLandrixXmlUtf8): Boolean;
+var
+  Bases: TLandrixXmlUtf8Array;
+  N, I, J: Integer;
+  V: TLandrixXmlUtf8;
+  Valid: Boolean;
+  U: TUriParts;
+
+  { as java.net.URI: also not an empty authority with nothing after it
+    ("//", "http://") nor a scheme with nothing but a fragment after it
+    ("http:", "http:#f") }
+  function UriValid(const S: TLandrixXmlUtf8): Boolean;
+  var
+    P: TUriParts;
+  begin
+    P := SplitUri(S);
+    Result := AnyUriValid(S) and UriResolvable(S) and not ContainsByte(S, ' ') and
+      not (P.HasAuthority and (P.Authority = '') and (P.Path = '') and not P.HasQuery and not P.HasFragment) and
+      not (P.HasScheme and not P.HasAuthority and (P.Path = '') and not P.HasQuery);
+  end;
+
+begin
+  Bases := nil;
+  N := Node;
+  if Tree.Kind[N] in [xnkAttribute, xnkText, xnkComment, xnkProcessingInstruction] then
+    N := Tree.Parent[N];
+  { the xml:base values from the node outwards }
+  while N > 0 do
+  begin
+    for I := N + 1 to N + Tree.AttributeCount[N] do
+      if (Tree.LocalNameUtf8(I) = 'base') and (Tree.NamespaceUriUtf8(I) = LandrixXmlNamespaceXml) then
+      begin
+        J := Integer(Length(Bases));
+        SetLength(Bases, J + 1);
+        Bases[J] := Tree.ValueUtf8(I);
+        Break;
+      end;
+    N := Tree.Parent[N];
+  end;
+  Uri := Tree.BaseUri;
+  Result := Uri <> '';
+  Valid := UriValid(Uri);
+  for J := Integer(High(Bases)) downto 0 do
+  begin
+    V := Bases[J];
+    { an empty value keeps a valid parent base; under an invalid one it
+      is '', as in Saxon }
+    if Result and Valid and (V = '') then
+      Continue;
+    U := SplitUri(Uri);
+    if not UriValid(V) then
+    begin
+      Uri := NormalizeSpace(V);
+      Valid := False;
+    end
+    else
+    begin
+      if not Result and not SplitUri(V).HasScheme and not SplitUri(V).HasAuthority and
+        (Copy(V, 1, 1) <> '/') and (SplitUri(V).Path <> '') then
+        { the outermost value without a document base: normalised as
+          against an empty base, as Saxon does }
+        Uri := ResolveRelativePath(V, '')
+      else if SplitUri(V).HasScheme or not Result or not Valid or
+        (U.HasScheme and not U.HasAuthority and (Copy(U.Path, 1, 1) <> '/')) then
+        Uri := V
+      else if not U.HasScheme and not U.HasAuthority and (Copy(U.Path, 1, 1) <> '/') and
+        not SplitUri(V).HasAuthority and (Copy(V, 1, 1) <> '/') and (SplitUri(V).Path <> '') then
+        Uri := ResolveRelativePath(V, Uri)
+      else
+        Uri := ResolveUriReference(V, Uri);
+      Valid := True;
+    end;
+    Result := True;
+  end;
+end;
+
 { fn:lang: Lang equals Test or starts with Test and "-", ignoring case.
   XPath 2.0: the caseless default match of Unicode, approximated per
   character by lower(upper(...)) with the full mappings, applied twice
@@ -1692,6 +1845,16 @@ begin
       { no static base URI in the static context: () (Saxon gives the
         base URI of the stylesheet or query, not imitated) }
       ;
+    xfnBaseUri:
+      begin
+        I := NodeArg;
+        if I >= 0 then
+        begin
+          OwnTree := TreeOf(I, K);
+          if NodeBaseUri(OwnTree, I - K, S) then
+            Result := SingleSeq(StringItem(xikAnyUri, S));
+        end;
+      end;
     xfnNormalizeUnicode:
       begin
         { the form: XML white space trimmed, ASCII case ignored (Saxon's

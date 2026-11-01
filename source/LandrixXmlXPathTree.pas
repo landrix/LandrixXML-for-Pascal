@@ -69,6 +69,7 @@ type
     FColumns: TLandrixXmlXPathIntArray;
     FDomNodes: TLandrixXmlXPathDomArray;
     FDomAttrs: TLandrixXmlXPathIntArray;
+    FBaseUri: TLandrixXmlUtf8;
     { the first namespace declaration of an element, -1 if none; the
       declarations of an element are consecutive (FDeclOwners) }
     FDeclFirsts: TLandrixXmlXPathIntArray;
@@ -134,6 +135,14 @@ type
     { The tree of a loaded document, with its DOM nodes (see the unit
       header for the DOM options that change it). }
     procedure LoadFromDocument(Document: TLandrixXmlDocument);
+    { The base URI of the document node (fn:base-uri), '' for none.
+      LoadFromFile sets it to the file URI as Saxon gives it
+      (file:/D:/x/y.xml, file:/home/x/y.xml), every other load resets
+      it; set it after loading for a document of a known origin, and not
+      while an evaluator uses the tree. The URI a document is added with
+      (TLandrixXmlXPathEvaluator.AddDocument) is only the name document()
+      finds it by, not its base URI. }
+    property BaseUri: TLandrixXmlUtf8 read FBaseUri write FBaseUri;
     { the number of nodes, at least 1 (the document node) }
     property Count: Integer read FCount;
     property Kind[Index: Integer]: TLandrixXmlXPathNodeKind read GetKind;
@@ -246,6 +255,7 @@ var
   I: Integer;
 begin
   FCount := 0;
+  FBaseUri := '';
   FKinds := nil;
   FParents := nil;
   FNexts := nil;
@@ -537,6 +547,38 @@ begin
   Finish;
 end;
 
+{ A file name as a file URI (file:/D:/x.xml, file:/home/x.xml), as Saxon
+  gives base-uri(); every byte but those a URI path may contain as they
+  are percent-encoded (spaces, '#', '?', '%', non-ASCII, ...). }
+function FileUri(const FileName: string): TLandrixXmlUtf8;
+var
+  Path, Name, Hex: TLandrixXmlUtf8;
+  I: Integer;
+  B: Byte;
+begin
+  Hex := '0123456789ABCDEF';
+  Name := LandrixXmlStringToUtf8(ExpandFileName(FileName));
+  Path := '';
+  for I := 1 to Length(Name) do
+  begin
+    B := Ord(Name[I]);
+    {$IFDEF MSWINDOWS}
+    if Name[I] = '\' then
+      Path := Path + '/'
+    else
+    {$ENDIF}
+    if AnsiChar(B) in ['A'..'Z', 'a'..'z', '0'..'9', '-', '.', '_', '~', '/', ':', '!', '$', '&', '''',
+      '(', ')', '*', '+', ',', ';', '=', '@'] then
+      Path := Path + Copy(Name, I, 1)
+    else
+      Path := Path + '%' + Copy(Hex, B shr 4 + 1, 1) + Copy(Hex, B and 15 + 1, 1);
+  end;
+  if Copy(Path, 1, 1) = '/' then
+    Result := 'file:' + Path
+  else
+    Result := 'file:/' + Path;
+end;
+
 procedure TLandrixXmlXPathTree.LoadFromFile(const FileName: string);
 var
   Reader: TLandrixXmlReader;
@@ -545,6 +587,7 @@ begin
   try
     Reader.LoadFromFile(FileName);
     LoadFromReader(Reader);
+    FBaseUri := FileUri(FileName);
   finally
     Reader.Free;
   end;

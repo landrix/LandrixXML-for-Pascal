@@ -964,6 +964,90 @@ begin
   end;
 end;
 
+{ base-uri where the Saxon test data cannot show it (they load files):
+  no BaseUri (Saxon gives the same for a document without a system ID,
+  except where java.net.URI differs from RFC 3986: "?q", ".." beyond
+  the root, file:///), and a BaseUri set by the caller. }
+procedure TestBaseUri;
+const
+  Doc = '<r xml:base="rel/x"><a xml:base="b/c"><d xml:base="../e"/><f xml:base="/g"/><h xml:base="#k"/>' +
+    '<i xml:base="?q"/></a><j xml:base="http://e.com/a/b/c/d"><k xml:base="?q=1"/><l xml:base="../../../../up"/>' +
+    '</j><m xml:base="file:///C:/dir/"><n xml:base="sub/"/></m><o2 xml:base="//h.org"><o xml:base="p/x"/></o2>' +
+    '<p2 xml:base="../../e"/><q2 xml:base="../e"/><s2 xml:base="./"/><u2 xml:base="..//e"/>' +
+    '<v2 xml:base="../a:b"><w2 xml:base="#f"/></v2></r>';
+  Cases: array[0..18] of array[0..1] of string = (
+    ('base-uri(/)', ''),
+    ('base-uri(/r)', 'rel/x'),
+    ('base-uri(//a)', 'rel/b/c'),
+    ('base-uri(//d)', 'rel/e'),
+    ('base-uri(//f)', '/g'),
+    ('base-uri(//h)', 'rel/b/c#k'),
+    ('base-uri(//i)', 'rel/b/c?q'),
+    ('base-uri(//a/@xml:base)', 'rel/b/c'),
+    ('base-uri(//k)', 'http://e.com/a/b/c/d?q=1'),
+    ('base-uri(//l)', 'http://e.com/up'),
+    ('base-uri(//n)', 'file:///C:/dir/sub/'),
+    ('count(base-uri(/))', '0'),
+    ('base-uri(//o)', '//h.org/p/x'),
+    ('base-uri(//p2)', '../e'),
+    ('base-uri(//q2)', 'e'),
+    ('base-uri(//s2)', 'rel/'),
+    ('base-uri(//u2)', 'e'),
+    ('base-uri(//v2)', './a:b'),
+    ('base-uri(//w2)', './a:b#f'));
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  I: Integer;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  Expr := nil;
+  try
+    Tree.LoadFromUtf8(U(Doc));
+    CheckEqualsStr('', LandrixXmlUtf8ToString(Tree.BaseUri), 'LoadFromUtf8: no base URI');
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    for I := 0 to High(Cases) do
+    begin
+      Expr.Free;
+      Expr := nil;
+      Expr := TLandrixXmlXPathExpression.Create(U('string(' + Cases[I][0] + ')'), nil);
+      CheckEqualsStr(Cases[I][1], LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), Cases[I][0]);
+    end;
+    Evaluator.Free;
+    Evaluator := nil;
+    { the outermost relative value is normalised }
+    Tree.LoadFromUtf8(U('<r xml:base="./a/../x"><c xml:base="#f"/></r>'));
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('concat(base-uri(/r), '' '', base-uri(//c))'), nil);
+    CheckEqualsStr('x x#f', LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'outermost normalised');
+    Evaluator.Free;
+    Evaluator := nil;
+    Tree.LoadFromUtf8(U(Doc));
+    { a base URI set by the caller; relative values resolve against it }
+    Tree.BaseUri := U('http://h.org/p/q.xml');
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('concat(base-uri(/), '' '', base-uri(//d))'), nil);
+    CheckEqualsStr('http://h.org/p/q.xml http://h.org/p/rel/e',
+      LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0)), 'BaseUri set');
+    Evaluator.Free;
+    Evaluator := nil;
+    Tree.LoadFromFile(DataFolder('baseuri') + 'd.xml');
+    Check(Copy(Tree.BaseUri, 1, 6) = 'file:/', 'LoadFromFile: a file URI');
+    Tree.LoadFromUtf8(U('<r/>'));
+    CheckEqualsStr('', LandrixXmlUtf8ToString(Tree.BaseUri), 'a later load resets the base URI');
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 { The fields of a line separated by tabs. }
 function Fields(const S: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
 var
@@ -1435,6 +1519,7 @@ begin
   RegisterTest('XPathEval.Documents', TestDocuments);
   RegisterTest('XPathEval.DeepEqual', TestDeepEqual);
   RegisterTest('XPathEval.ResolveUri', TestResolveUri);
+  RegisterTest('XPathEval.BaseUri', TestBaseUri);
   RegisterTest('XPathEval.LangAndDocuments', TestLangAndDocuments);
 end;
 

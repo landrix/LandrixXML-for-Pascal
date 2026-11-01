@@ -1320,38 +1320,6 @@ begin
       Result := False;
 end;
 
-{ A file name as a file URI (file:/D:/x.xml, file:/home/x.xml), as Saxon
-  gives base-uri(); every byte but those a URI path may contain as they
-  are percent-encoded (spaces, '#', '?', '%', non-ASCII, ...). }
-function FileUri(const FileName: string): TLandrixXmlUtf8;
-var
-  Path, Name, Hex: TLandrixXmlUtf8;
-  I: Integer;
-  B: Byte;
-begin
-  Hex := '0123456789ABCDEF';
-  Name := LandrixXmlStringToUtf8(ExpandFileName(FileName));
-  Path := '';
-  for I := 1 to Length(Name) do
-  begin
-    B := Ord(Name[I]);
-    {$IFDEF MSWINDOWS}
-    if Name[I] = '\' then
-      Path := Path + '/'
-    else
-    {$ENDIF}
-    if AnsiChar(B) in ['A'..'Z', 'a'..'z', '0'..'9', '-', '.', '_', '~', '/', ':', '!', '$', '&', '''',
-      '(', ')', '*', '+', ',', ';', '=', '@'] then
-      Path := Path + Copy(Name, I, 1)
-    else
-      Path := Path + '%' + Copy(Hex, B shr 4 + 1, 1) + Copy(Hex, B and 15 + 1, 1);
-  end;
-  if Copy(Path, 1, 1) = '/' then
-    Result := 'file:' + Path
-  else
-    Result := 'file:/' + Path;
-end;
-
 procedure TLandrixXmlSchematronValidator.ClearResults;
 begin
   FResults.Clear;
@@ -1523,7 +1491,7 @@ begin
   Tree := TLandrixXmlXPathTree.Create;
   try
     Tree.LoadFromFile(FileName);
-    FDocumentUri := FileUri(FileName);
+    FDocumentUri := Tree.BaseUri;
     Result := ValidateTree(Tree);
   finally
     Tree.Free;

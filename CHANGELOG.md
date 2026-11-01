@@ -186,6 +186,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   as for untyped elements in Saxon); other nodes give the empty sequence.
   The static context has no base URI, so `static-base-uri()` is empty.
   QT3: 6 more cases pass in both profiles.
+- XPath: `base-uri` and `TLandrixXmlXPathTree.BaseUri`, the base URI of
+  the document node. `LoadFromFile` sets it to the file URI as Saxon
+  gives it (`file:/D:/x/y.xml`), the other loads leave it empty, and a
+  caller may set it after loading. An element's `xml:base` is resolved
+  against the base URI of its parent (RFC 3986, as `resolve-uri`); as in
+  Saxon, a value that is no valid URI reference is taken with its white
+  space collapsed (and resolves nothing below it), and an absolute one
+  and a relative one under an invalid or opaque base are taken as they
+  are. The Schematron validator's SVRL `documents` attribute
+  now comes from the tree's `BaseUri` (same value). QT3: 3 more cases
+  pass in both profiles.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
   matcher limited to 10,000,000 steps per call (`xecLimit` beyond, never

@@ -1,0 +1,107 @@
+# starts-with(string(base-uri(/)), 'file:/')
+xs:boolean true
+# ends-with(string(base-uri(/)), '/baseuri/d.xml')
+xs:boolean true
+# base-uri(/) instance of xs:anyURI
+xs:boolean true
+# base-uri(/r) eq base-uri(/)
+xs:boolean true
+# ends-with(string(base-uri(/r/s)), '/baseuri/rel/')
+xs:boolean true
+# ends-with(string(base-uri(/r/s/t)), '/baseuri/rel/u/v')
+xs:boolean true
+# ends-with(string(base-uri(/r/s/t/w)), '/baseuri/rel/u/v')
+xs:boolean true
+# base-uri(/r/x)
+xs:anyURI a b/c
+# substring-after(string(base-uri(/r/y)), '/baseuri/')
+xs:string Ü/x
+# base-uri(//a)
+xs:anyURI http://e.com/a/b/
+# base-uri(//a/@k)
+xs:anyURI http://e.com/a/b/
+# base-uri(//b)
+xs:anyURI http://e.com/a/b/c/d
+# base-uri(//c)
+xs:anyURI http://e.com/a/b/z
+# base-uri(//c/text())
+xs:anyURI http://e.com/a/b/z
+# base-uri(//c/comment())
+xs:anyURI http://e.com/a/b/z
+# base-uri(//c/processing-instruction())
+xs:anyURI http://e.com/a/b/z
+# base-uri(//c/@xml:base)
+xs:anyURI http://e.com/a/b/z
+# for $n in //b/(* except (g, i)) return string(base-uri($n))
+xs:string http://e.com/a/b/z
+xs:string http://e.com/a/b/c/d
+xs:string http://e.com/a/b/c/d
+xs:string http://e.com/a/b/c/d#frag
+xs:string http://e.com/root/x
+xs:string sp/x
+xs:string HTTP://Other.org/p/q
+# base-uri(//l)
+xs:anyURI HTTP://Other.org/p/m%20n/o
+# base-uri(/r/z)
+xs:anyURI file:///C:/dir/
+# for $n in /r/m/descendant-or-self::*[not(self::v)] return concat(name($n), ' ', string(base-uri($n)))
+xs:string m http://e.com/a/b/c/d
+xs:string x a b/c
+xs:string x1 y
+xs:string x2 http://n.org/p
+xs:string x3 a b/c
+xs:string n a%zz
+xs:string n1 y/z
+xs:string o x#a#b
+xs:string p http://e.com/a/b/c/
+xs:string p2 http://e.com/a/b/
+xs:string p3 http://e.com/a/b/c/
+xs:string p4 http://e.com/a/b/c/g?y/./x
+xs:string u http://other.com/p
+xs:string w http://e.com/a/b/c/d#
+xs:string mu urn:isbn:1
+xs:string m1 #f
+xs:string m2 urn:isbn:1
+xs:string m3 x
+xs:string f http://e.com/a#f
+xs:string f2 http://e.com/g
+xs:string e http://e.com
+xs:string e2 http://e.com/g
+xs:string h http://e.com/a?q
+xs:string h1 http://e.com/a?q#f
+xs:string up HTTP://E.com/./a/../b
+xs:string sp http://e.com/s
+xs:string sp1 y
+xs:string t4 /abs
+xs:string u4 y
+xs:string t5 sp/x
+xs:string u5 y
+xs:string u6 sp/x
+xs:string u7 
+xs:string u8 q
+xs:string t6 //
+xs:string u9 x
+xs:string t7 http://
+xs:string u10 x
+xs:string t11 http:
+xs:string u14 
+xs:string t12 http:#f
+xs:string u15 x
+xs:string t13 http://?q
+xs:string u16 http://?q
+xs:string tab a b
+xs:string bs a\x5Cb
+xs:string cap http://e.com/a/b/c/Ü
+# base-uri(())
+# count(base-uri(()))
+xs:integer 0
+# //c/base-uri()
+xs:anyURI http://e.com/a/b/z
+# base-uri(1)
+error XPTY0004
+# base-uri(//b/*)
+error XPTY0004
+# base-uri('x')
+error XPTY0004
+# base-uri(//c) instance of xs:anyURI
+xs:boolean true

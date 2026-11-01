@@ -902,7 +902,9 @@ fn-avg/fn-avgusht2args-3 pass
 fn-avg/fn-avgusht2args-4 pass
 fn-avg/fn-avgusht2args-5 pass
 fn-base-uri/K-BaseURIFunc-1 pass
-fn-base-uri/fn-base-uri-2 wrong-code
+fn-base-uri/K-BaseURIFunc-2 pass
+fn-base-uri/fn-base-uri-2 pass
+fn-base-uri/fn-base-uri-3 pass
 fn-boolean/K-SeqBooleanFunc-1 pass
 fn-boolean/K-SeqBooleanFunc-10 pass
 fn-boolean/K-SeqBooleanFunc-11 pass

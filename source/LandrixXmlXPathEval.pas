@@ -942,7 +942,7 @@ const
 
 const
   ContextFunctions = [xfnString, xfnStringLength, xfnNormalizeSpace, xfnNumber, xfnName, xfnLocalName,
-    xfnNamespaceUri, xfnRoot, xfnNodeName];
+    xfnNamespaceUri, xfnRoot, xfnNodeName, xfnBaseUri];
 
 { What the value of node Index depends on besides the tree and the global
   variables; Free receives the nodes that depend on nothing else but the
