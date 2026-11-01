@@ -165,6 +165,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   tables, `tools/fetch-unicode-tests.py` downloads the Unicode
   conformance file NormalizationTest.txt, which the test runner then
   checks completely.
+- Regular expressions: the flags `s`, `m`, `x` and (Saxon dialect only)
+  `q`, and reluctant quantifiers (`*?`, `+?`, `??`, counted ones), all
+  in the linear-time matcher; `m` follows Saxon (no line start after a
+  final line feed). `LandrixXmlRegexFlagsValid` checks flags per dialect;
+  invalid flags raise `xecRegex`. A single character counted 2147483647
+  or more times never matches (as Saxon finds); quantifier bounds are
+  compared exactly, also with leading zeros. XPath: invalid flags raise FORX0001,
+  limits of the implementation FOER0000 instead of FORX0002. QT3: 42
+  more cases pass in both profiles.
 - XPath: `normalize-unicode` with the four forms (FULLY-NORMALIZED and
   other names raise FOCH0003; the form name is trimmed and compared
   ignoring ASCII case, so unlike Saxon the Kelvin sign U+212A does not

@@ -2242,57 +2242,57 @@ matches	(a*)*b	hex:782E35D9A32B	false
 matches	(a*)*b	hex:C3A9E281B058333579205A09E281B03123	false
 matches	(a*)*b	hex:370D62	true
 matches	(a*)*b	:YC	false
-matches	(a|b)*?c		unsupported
-matches	(a|b)*?c	a	unsupported
-matches	(a|b)*?c	ab	unsupported
-matches	(a|b)*?c	abc	unsupported
-matches	(a|b)*?c	aaa	unsupported
-matches	(a|b)*?c	b	unsupported
-matches	(a|b)*?c	c	unsupported
-matches	(a|b)*?c	12345678	unsupported
-matches	(a|b)*?c	20261021	unsupported
-matches	(a|b)*?c	2026-10-21	unsupported
-matches	(a|b)*?c	DE89370400440532013000	unsupported
-matches	(a|b)*?c	info@landrix.de	unsupported
-matches	(a|b)*?c	a.b@c.d	unsupported
-matches	(a|b)*?c	http://x	unsupported
-matches	(a|b)*?c	+49 30 1234	unsupported
-matches	(a|b)*?c	NL123456789B01	unsupported
-matches	(a|b)*?c	123456789MVA	unsupported
-matches	(a|b)*?c	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	unsupported
-matches	(a|b)*?c	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	unsupported
-matches	(a|b)*?c	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	unsupported
-matches	(a|b)*?c	  20261021  	unsupported
-matches	(a|b)*?c	202610211230	unsupported
-matches	(a|b)*?c	31/12/2026	unsupported
-matches	(a|b)*?c	hex:D9A3D9A4	unsupported
-matches	(a|b)*?c	hex:C3A9C3A9	unsupported
-matches	(a|b)*?c	ABCDEFGHIJKLMNOP	unsupported
-matches	(a|b)*?c	hex:3341092C43	unsupported
-matches	(a|b)*?c	41	unsupported
-matches	(a|b)*?c		unsupported
-matches	(a|b)*?c	7	unsupported
-matches	(a|b)*?c		unsupported
-matches	(a|b)*?c	hex:235AC2B7584137377A3D2B6243	unsupported
-matches	(a|b)*?c		unsupported
-matches	(a|b)*?c	0	unsupported
-matches	(a|b)*?c	hex:D9A3C3A97838360D2F637941CC80393233C2B77A6340E281B040C2BD5FCC80237A35325F36400D782D597C3520C2B72B3A	unsupported
-matches	(a|b)*?c		unsupported
-matches	(a|b)*?c	A	unsupported
-matches	(a|b)*?c	hex:39093159632E62392D3A2030	unsupported
-matches	(a|b)*?c	hex:D9A33DF09F9880	unsupported
-matches	(a|b)*?c	_14cy58y	unsupported
-matches	(a|b)*?c	hex:2C097C	unsupported
-matches	(a|b)*?c	hex:233638395F2CD9A35F	unsupported
-matches	(a|b)*?c	:aa	unsupported
-matches	(a|b)*?c	83	unsupported
-matches	(a|b)*?c	hex:C3A9323D	unsupported
-matches	(a|b)*?c	4z	unsupported
-matches	(a|b)*?c		unsupported
-matches	(a|b)*?c	y_	unsupported
-matches	(a|b)*?c	hex:2BD9A3793434392E207C350DCC80D9A37C362333622C393D5F79400A0AC2B7C2B72B34382F2C6335790A7A2F3A	unsupported
-matches	(a|b)*?c	hex:E281B0303763C2B7	unsupported
-matches	(a|b)*?c		unsupported
+matches	(a|b)*?c		false
+matches	(a|b)*?c	a	false
+matches	(a|b)*?c	ab	false
+matches	(a|b)*?c	abc	true
+matches	(a|b)*?c	aaa	false
+matches	(a|b)*?c	b	false
+matches	(a|b)*?c	c	true
+matches	(a|b)*?c	12345678	false
+matches	(a|b)*?c	20261021	false
+matches	(a|b)*?c	2026-10-21	false
+matches	(a|b)*?c	DE89370400440532013000	false
+matches	(a|b)*?c	info@landrix.de	false
+matches	(a|b)*?c	a.b@c.d	true
+matches	(a|b)*?c	http://x	false
+matches	(a|b)*?c	+49 30 1234	false
+matches	(a|b)*?c	NL123456789B01	false
+matches	(a|b)*?c	123456789MVA	false
+matches	(a|b)*?c	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	false
+matches	(a|b)*?c	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	false
+matches	(a|b)*?c	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	false
+matches	(a|b)*?c	  20261021  	false
+matches	(a|b)*?c	202610211230	false
+matches	(a|b)*?c	31/12/2026	false
+matches	(a|b)*?c	hex:D9A3D9A4	false
+matches	(a|b)*?c	hex:C3A9C3A9	false
+matches	(a|b)*?c	ABCDEFGHIJKLMNOP	false
+matches	(a|b)*?c	hex:3341092C43	false
+matches	(a|b)*?c	41	false
+matches	(a|b)*?c		false
+matches	(a|b)*?c	7	false
+matches	(a|b)*?c		false
+matches	(a|b)*?c	hex:235AC2B7584137377A3D2B6243	false
+matches	(a|b)*?c		false
+matches	(a|b)*?c	0	false
+matches	(a|b)*?c	hex:D9A3C3A97838360D2F637941CC80393233C2B77A6340E281B040C2BD5FCC80237A35325F36400D782D597C3520C2B72B3A	true
+matches	(a|b)*?c		false
+matches	(a|b)*?c	A	false
+matches	(a|b)*?c	hex:39093159632E62392D3A2030	true
+matches	(a|b)*?c	hex:D9A33DF09F9880	false
+matches	(a|b)*?c	_14cy58y	true
+matches	(a|b)*?c	hex:2C097C	false
+matches	(a|b)*?c	hex:233638395F2CD9A35F	false
+matches	(a|b)*?c	:aa	false
+matches	(a|b)*?c	83	false
+matches	(a|b)*?c	hex:C3A9323D	false
+matches	(a|b)*?c	4z	false
+matches	(a|b)*?c		false
+matches	(a|b)*?c	y_	false
+matches	(a|b)*?c	hex:2BD9A3793434392E207C350DCC80D9A37C362333622C393D5F79400A0AC2B7C2B72B34382F2C6335790A7A2F3A	true
+matches	(a|b)*?c	hex:E281B0303763C2B7	true
+matches	(a|b)*?c		false
 matches	x*		true
 matches	x*	a	true
 matches	x*	ab	true

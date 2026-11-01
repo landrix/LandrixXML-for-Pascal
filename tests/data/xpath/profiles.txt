@@ -46,3 +46,4 @@ error(xs:untypedAtomic('a'))	error XPTY0004	error XPTY0117	the same for the erro
 error(())	error XPTY0004	error FOER0000	F&O 2.0 fn:error with one argument takes an xs:QName; XPath 3.1 an xs:QName?
 trace(1)	error XPST0017	xs:integer 1	trace with one argument is XPath 3.0
 doc-available('%gg')	error FODC0005	xs:boolean false	F&O 2.0: doc-available raises FODC0005 for an invalid URI; Saxon returns false
+matches('a.b', 'a.b', 'q')	error FORX0001	xs:boolean true	the flag q (literal pattern) is XPath 3.0

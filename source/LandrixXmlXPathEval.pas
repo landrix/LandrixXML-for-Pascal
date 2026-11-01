@@ -1786,13 +1786,18 @@ begin
       Result := TLandrixXmlRegex(FRegexes[I]);
       Exit;
     end;
+  if not LandrixXmlRegexFlagsValid(Flags, Mode) then
+    Fail('FORX0001', 'invalid regular expression flags ''' + LandrixXmlEscapeForMessage(Flags, 20) + '''');
   try
     Result := TLandrixXmlRegex.Create(Pattern, Mode, Flags);
   except
     on E: ELandrixXmlError do
     begin
+      { a limit of this implementation is no invalid pattern }
       if E.Code = xecUnsupported then
         Fail('FOER0000', 'unsupported regular expression: ' + E.Message);
+      if E.Code = xecLimit then
+        Fail('FOER0000', 'regular expression beyond the limits: ' + E.Message);
       Fail('FORX0002', 'invalid regular expression: ' + E.Message);
       Result := nil;
       Exit;

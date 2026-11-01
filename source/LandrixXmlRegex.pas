@@ -16,7 +16,8 @@
   there, as with Saxon. Matches are leftmost-first, as with a backtracking
   engine such as Saxon's. Compiled programs are limited to about 100000
   instructions and groups and class subtractions to a nesting depth of
-  1000 (ELandrixXmlError with xecLimit).
+  1000 (ELandrixXmlError with xecLimit); a single character counted
+  2147483647 or more times never matches (no string is that long).
 
   Supported: alternation, groups (xrmXPath also non-capturing (?:...)),
   the quantifiers ? * + and counted repetitions (n; n or more; n to m),
@@ -25,11 +26,17 @@
   \s \S \i \I \c \C \d \D \w \W, the category escapes \p and \P with a
   category name such as L or Lu (Unicode 6.2.0, as Saxon); in XPath mode
   ^ and $
-  (start and end of the string). XSD patterns match the whole string, and
-  ^ and $ are ordinary characters there.
+  (start and end of the string), the reluctant quantifiers ?? *? +? and
+  the counted ones followed by ? (the shortest match first), and the flags s ('.' also matches
+  LF and CR), m (^ and $ also at line ends: ^ after every LF that is not
+  the last character, $ before every LF, as Saxon), x (white space
+  removed outside character class expressions before parsing) and, in
+  xrmXPath only, q (every character literal; Replace then takes the
+  replacement literally). XSD patterns match the whole string, take no
+  flags, and ^ and $ are ordinary characters there.
   Not supported (ELandrixXmlError with xecUnsupported, never silently
-  ignored): flags, reluctant quantifiers, back-references, block escapes
-  (\p with IsBasicLatin and the like). Invalid patterns raise xecRegex.
+  ignored): the flag i, back-references, block escapes (\p with
+  IsBasicLatin and the like). Invalid patterns and flags raise xecRegex.
 
   A hyphen in a character class follows XML Schema 1.0 in the modes XSD
   (as Xerces) and XPath 2.0: a literal hyphen only at the start or end of
@@ -39,8 +46,8 @@
   are only allowed before '['. In both modes a range cannot start or end
   with an unescaped hyphen.
 
-  Known differences from Saxon: a group inside a repetition keeps the
-  text of the last non-empty iteration ("(a*)+b" on "aaab" gives "aaa"
+  Known differences from Saxon (and other backtracking engines): a group
+  inside a repetition keeps the text of the last non-empty iteration ("(a*)+b" on "aaab" gives "aaa"
   for group 1, Saxon an empty string), and the category Cs is not
   known (Saxon has no table for it either, and UTF-8 input never
   contains surrogates). }
@@ -90,6 +97,9 @@ type
     FMatchesEmpty: Boolean;
     FSource: TLandrixXmlUtf8;
     FDepth: Integer;
+    FDotAll: Boolean;
+    FMultiLine: Boolean;
+    FLiteral: Boolean;
     procedure Error(const Msg: string);
     procedure Nest;
     procedure Unsupported(const Msg: string);
@@ -106,7 +116,8 @@ type
     function ParseEscape(out CodePoint: Integer): TLandrixXmlRegexSet;
     function ParseCategory(Negated: Boolean): TLandrixXmlRegexSet;
   public
-    { Compiles Pattern. Flags must be empty (no flag is supported yet). }
+    { Compiles Pattern with Flags (see LandrixXmlRegexFlagsValid; xecRegex
+      for invalid flags). }
     constructor Create(const Pattern: TLandrixXmlUtf8; Mode: TLandrixXmlRegexMode;
       const Flags: TLandrixXmlUtf8 = '');
     { XSD mode: True if the whole of S matches. XPath mode: True if the
@@ -116,8 +127,9 @@ type
       Replacement, in which $N stands for group N (the longest number not
       above GroupCount, a single digit if GroupCount is below 10 as with
       Saxon; an unmatched group gives '') and \$ and \\ for $
-      and \. Raises xecRegex if the pattern matches the empty string or
-      the replacement is invalid. }
+      and \ (with the flag q the replacement is literal). Raises xecRegex
+      if the pattern matches the empty string or the replacement is
+      invalid. }
     function Replace(const S, Replacement: TLandrixXmlUtf8): TLandrixXmlUtf8;
     { fn:tokenize: the parts of S between matches (an empty S gives no
       part). Raises xecRegex if S is not empty and the pattern matches the
@@ -130,6 +142,10 @@ type
     property Mode: TLandrixXmlRegexMode read FMode;
     property Source: TLandrixXmlUtf8 read FSource;
   end;
+
+{ True if Flags is valid for Mode: no flag in xrmXsd; s, m, i, x in
+  xrmXPath20; also q in xrmXPath. Letters may repeat. }
+function LandrixXmlRegexFlagsValid(const Flags: TLandrixXmlUtf8; Mode: TLandrixXmlRegexMode): Boolean;
 
 implementation
 
@@ -414,11 +430,13 @@ begin
   Inc(Count, Integer(Length(Src)));
 end;
 
-{ A repeated Min to Max times, Max = Unbounded for no upper limit. The size
-  is known in advance, so an oversized repetition fails before any copy. }
-function Repeated(const A: TLandrixXmlRegexCode; Min, Max: Integer): TLandrixXmlRegexCode;
+{ A repeated Min to Max times, Max = Unbounded for no upper limit;
+  Reluctant prefers fewer repetitions. The size is known in advance, so
+  an oversized repetition fails before any copy. }
+function Repeated(const A: TLandrixXmlRegexCode; Min, Max: Integer;
+  Reluctant: Boolean): TLandrixXmlRegexCode;
 var
-  I, Len, Count, TailEnd: Integer;
+  I, Len, Count, TailEnd, Skip: Integer;
   Total: Int64;
 begin
   Result := nil;
@@ -435,8 +453,12 @@ begin
     AppendCode(Result, Count, A);
   if Max = Unbounded then
   begin
-    { A*, greedy: split, A, jump back to the split }
-    AppendInstr(Result, Count, xroSplit, 1, Len + 2);
+    { A*: split, A, jump back to the split; the split prefers A unless
+      reluctant }
+    if Reluctant then
+      AppendInstr(Result, Count, xroSplit, Len + 2, 1)
+    else
+      AppendInstr(Result, Count, xroSplit, 1, Len + 2);
     AppendCode(Result, Count, A);
     AppendInstr(Result, Count, xroJump, -(Len + 1), 0);
   end
@@ -447,7 +469,11 @@ begin
     TailEnd := Count + (Max - Min) * (Len + 1);
     for I := Min + 1 to Max do
     begin
-      AppendInstr(Result, Count, xroSplit, 1, TailEnd - Count);
+      Skip := TailEnd - Count;
+      if Reluctant then
+        AppendInstr(Result, Count, xroSplit, Skip, 1)
+      else
+        AppendInstr(Result, Count, xroSplit, 1, Skip);
       AppendCode(Result, Count, A);
     end;
   end;
@@ -511,7 +537,8 @@ end;
   order. Depth first with an explicit stack: a recursive walk would need
   stack space in proportion to the program. }
 procedure AddThread(const Code: TLandrixXmlRegexCode; var State: TVmState; var List: TThreadList;
-  StartPC: Integer; const StartCaptures: TLandrixXmlCodePoints; Position, TextLength: Integer);
+  StartPC: Integer; const StartCaptures: TLandrixXmlCodePoints; const Text: TLandrixXmlCodePoints;
+  Position: Integer);
 var
   PC, I: Integer;
   Captures, Copied: TLandrixXmlCodePoints;
@@ -550,10 +577,13 @@ begin
         else
           Push(State, PC + 1, Captures);
       xroStart:
-        if Position = 0 then
+        { A = 1: multi-line, also after an LF that is not the last character }
+        if (Position = 0) or ((Code[PC].A = 1) and (Text[Position - 1] = CharLf) and
+          (Position < Length(Text))) then
           Push(State, PC + 1, Captures);
       xroEnd:
-        if Position = TextLength then
+        { A = 1: multi-line, also before an LF }
+        if (Position = Length(Text)) or ((Code[PC].A = 1) and (Text[Position] = CharLf)) then
           Push(State, PC + 1, Captures);
     else
       { xroSet, xroMatch: wait for the next step }
@@ -592,7 +622,7 @@ begin
     { a new attempt at Position has the lowest priority; none once a
       match is known, because matches are leftmost }
     if (Position = StartPos) or (Search and not Result) then
-      AddThread(R.FCode, State, State.Current, 0, Initial, Position, TextLength);
+      AddThread(R.FCode, State, State.Current, 0, Initial, Text, Position);
     { no thread left: done, unless a search can still start further on }
     if (State.Current.Count = 0) and (Result or not Search) then
       Break;
@@ -612,8 +642,8 @@ begin
       end;
       { xroSet }
       if (Position < TextLength) and SetContains(R.FSets[R.FCode[J].A], Text[Position]) then
-        AddThread(R.FCode, State, State.Next, J + 1, State.Current.Items[I].Captures, Position + 1,
-          TextLength);
+        AddThread(R.FCode, State, State.Next, J + 1, State.Current.Items[I].Captures, Text,
+          Position + 1);
     end;
     if Position >= TextLength then
       Break;
@@ -630,25 +660,106 @@ end;
 { Parser                                                                 }
 { ---------------------------------------------------------------------- }
 
+function LandrixXmlRegexFlagsValid(const Flags: TLandrixXmlUtf8; Mode: TLandrixXmlRegexMode): Boolean;
+var
+  I: Integer;
+begin
+  Result := (Mode <> xrmXsd) or (Flags = '');
+  for I := 1 to Length(Flags) do
+    if not ((Flags[I] in ['s', 'm', 'i', 'x']) or ((Flags[I] = 'q') and (Mode = xrmXPath))) then
+      Result := False;
+end;
+
+{ Pattern without the white space (TAB, LF, CR, SPACE) outside character
+  class expressions, for the flag x, as Saxon strips it before parsing:
+  also between a backslash and the character it escapes. }
+function StripWhiteSpace(const Pattern: TLandrixXmlCodePoints): TLandrixXmlCodePoints;
+var
+  I, N, Depth: Integer;
+
+  function IsSpace(C: Integer): Boolean;
+  begin
+    Result := (C = CharTab) or (C = CharLf) or (C = CharCr) or (C = Ord(' '));
+  end;
+
+begin
+  Result := nil;
+  SetLength(Result, Length(Pattern));
+  N := 0;
+  Depth := 0;
+  I := 0;
+  while I < Length(Pattern) do
+  begin
+    if (Depth = 0) and IsSpace(Pattern[I]) then
+    begin
+      Inc(I);
+      Continue;
+    end;
+    Result[N] := Pattern[I];
+    Inc(N);
+    if Pattern[I] = Ord('\') then
+    begin
+      { the escaped character, never a bracket of a class }
+      Inc(I);
+      while (Depth = 0) and (I < Length(Pattern)) and IsSpace(Pattern[I]) do
+        Inc(I);
+      if I < Length(Pattern) then
+      begin
+        Result[N] := Pattern[I];
+        Inc(N);
+      end;
+    end
+    else if Pattern[I] = Ord('[') then
+      Inc(Depth)
+    else if (Pattern[I] = Ord(']')) and (Depth > 0) then
+      Dec(Depth);
+    Inc(I);
+  end;
+  SetLength(Result, N);
+end;
+
 constructor TLandrixXmlRegex.Create(const Pattern: TLandrixXmlUtf8; Mode: TLandrixXmlRegexMode;
   const Flags: TLandrixXmlUtf8 = '');
 var
   Body: TLandrixXmlRegexCode;
   Empty: TLandrixXmlCodePoints;
   Captures: TLandrixXmlCodePoints;
-  Count: Integer;
+  Count, I: Integer;
   State: TVmState;
 begin
   inherited Create;
   FMode := Mode;
   FSource := Pattern;
-  if Flags <> '' then
-    Unsupported('regular expression flags');
+  if not LandrixXmlRegexFlagsValid(Flags, Mode) then
+    raise ELandrixXmlError.CreateCode(xecRegex, 'Invalid regular expression flags "' +
+      LandrixXmlEscapeForMessage(Flags, 20) + '"');
+  for I := 1 to Length(Flags) do
+    case Flags[I] of
+      's': FDotAll := True;
+      'm': FMultiLine := True;
+      'q': FLiteral := True;
+      'i': Unsupported('the flag i');
+    end;
   FPattern := LandrixXmlUtf8ToCodePoints(Pattern);
-  FPos := 0;
-  Body := ParseRegExp;
-  if not AtEnd then
-    Error('unmatched ")"');
+  Body := nil;
+  if FLiteral then
+  begin
+    { q: every character stands for itself }
+    Count := 0;
+    for I := 0 to Integer(Length(FPattern)) - 1 do
+      AppendCode(Body, Count, Instr(xroSet, AddSet(SetRange(FPattern[I], FPattern[I])), 0));
+    SetLength(Body, Count);
+  end
+  else
+  begin
+    for I := 1 to Length(Flags) do
+      if Flags[I] = 'x' then
+        FPattern := StripWhiteSpace(FPattern);
+    FPos := 0;
+    Body := ParseRegExp;
+    if not AtEnd then
+      Error('unmatched ")"');
+  end;
   { group 0 spans the whole match; an XSD pattern is anchored at the end }
   FCode := nil;
   Count := 0;
@@ -765,28 +876,52 @@ begin
   SetLength(Result, Count);
 end;
 
-{ Reads a number of at most 9 digits; False if there is no digit. }
-function ReadNumber(const P: TLandrixXmlCodePoints; var Position: Integer; out Value: Integer): Boolean;
+{ Reads a decimal number; False if there is no digit. Value is MaxInt
+  for MaxInt and above; Digits are the digits without leading zeros, so
+  that two numbers of any size can be compared (CompareNumbers). }
+function ReadNumber(const P: TLandrixXmlCodePoints; var Position: Integer; out Value: Integer;
+  out Digits: string): Boolean;
 var
-  Digits: Integer;
+  Start: Integer;
 begin
   Value := 0;
-  Digits := 0;
+  Digits := '';
+  Start := Position;
   while (Position < Length(P)) and (P[Position] >= Ord('0')) and (P[Position] <= Ord('9')) do
   begin
-    if Digits < 9 then
+    if (Digits <> '') or (P[Position] <> Ord('0')) then
+      Digits := Digits + Char(P[Position]);
+    if (Value < MaxInt div 10) or ((Value = MaxInt div 10) and (P[Position] - Ord('0') <= MaxInt mod 10)) then
       Value := Value * 10 + (P[Position] - Ord('0'))
     else
-      Value := MaxInt; { far beyond MaxInstructions }
-    Inc(Digits);
+      Value := MaxInt;
     Inc(Position);
   end;
-  Result := Digits > 0;
+  Result := Position > Start;
+end;
+
+{ -1, 0 or 1 as the numbers with the digits A and B (no leading zeros). }
+function CompareNumbers(const A, B: string): Integer;
+begin
+  if Length(A) <> Length(B) then
+  begin
+    if Length(A) < Length(B) then
+      Result := -1
+    else
+      Result := 1;
+  end
+  else if A < B then
+    Result := -1
+  else if A > B then
+    Result := 1
+  else
+    Result := 0;
 end;
 
 function TLandrixXmlRegex.ParseQuantity(out Min, Max: Integer): Boolean;
 var
   C: Integer;
+  MinDigits, MaxDigits: string;
 begin
   Result := True;
   C := Peek;
@@ -810,14 +945,14 @@ begin
   else if C = Ord('{') then
   begin
     Inc(FPos);
-    if not ReadNumber(FPattern, FPos, Min) then
+    if not ReadNumber(FPattern, FPos, Min, MinDigits) then
       Error('number expected in quantifier');
     if Peek = Ord(',') then
     begin
       Inc(FPos);
-      if not ReadNumber(FPattern, FPos, Max) then
+      if not ReadNumber(FPattern, FPos, Max, MaxDigits) then
         Max := Unbounded
-      else if Max < Min then
+      else if CompareNumbers(MaxDigits, MinDigits) < 0 then
         Error('quantifier {n,m} with m < n');
     end
     else
@@ -831,14 +966,13 @@ begin
     Exit;
   end;
   Inc(FPos);
-  if (Min > MaxInstructions) or (Max > MaxInstructions) then
-    raise ELandrixXmlError.CreateCode(xecLimit, 'Regular expression quantifier too large');
 end;
 
 function TLandrixXmlRegex.ParsePiece: TLandrixXmlRegexCode;
 var
   Atom: TLandrixXmlRegexCode;
   Min, Max, Dummy1, Dummy2: Integer;
+  Reluctant: Boolean;
 begin
   Atom := ParseAtom;
   if not ParseQuantity(Min, Max) then
@@ -846,11 +980,21 @@ begin
     Result := Atom;
     Exit;
   end;
-  if (FMode <> xrmXsd) and (Peek = Ord('?')) then
-    Unsupported('reluctant quantifier');
+  { XPath: a '?' after a quantifier makes it reluctant }
+  Reluctant := (FMode <> xrmXsd) and (Peek = Ord('?'));
+  if Reluctant then
+    Inc(FPos);
   if ParseQuantity(Dummy1, Dummy2) then
     Error('quantifier follows a quantifier');
-  Result := Repeated(Atom, Min, Max);
+  { a single character at least MaxInt times: no string this long can
+    be processed (code point arrays and UTF-8 strings hold fewer), so it
+    never matches, as Saxon finds }
+  if (Min = MaxInt) and (Length(Atom) = 1) and (Atom[0].Op = xroSet) then
+    Result := Instr(xroSet, AddSet(nil), 0)
+  else if (Min > MaxInstructions) or (Max > MaxInstructions) then
+    raise ELandrixXmlError.CreateCode(xecLimit, 'Regular expression quantifier too large')
+  else
+    Result := Repeated(Atom, Min, Max, Reluctant);
 end;
 
 function TLandrixXmlRegex.ParseAtom: TLandrixXmlRegexCode;
@@ -895,13 +1039,17 @@ begin
     Ord('.'):
       begin
         Inc(FPos);
+        { every character but LF and CR; with the flag s every character }
         S := nil;
-        SetLength(S, 4);
-        S[0] := CharLf;
-        S[1] := CharLf;
-        S[2] := CharCr;
-        S[3] := CharCr;
-        SetNormalize(S);
+        if not FDotAll then
+        begin
+          SetLength(S, 4);
+          S[0] := CharLf;
+          S[1] := CharLf;
+          S[2] := CharCr;
+          S[3] := CharCr;
+          SetNormalize(S);
+        end;
         Result := Instr(xroSet, AddSet(SetComplement(S)), 0);
       end;
     Ord('\'):
@@ -915,12 +1063,12 @@ begin
     if (FMode <> xrmXsd) and (C = Ord('^')) then
     begin
       Inc(FPos);
-      Result := Instr(xroStart, 0, 0);
+      Result := Instr(xroStart, Ord(FMultiLine), 0);
     end
     else if (FMode <> xrmXsd) and (C = Ord('$')) then
     begin
       Inc(FPos);
-      Result := Instr(xroEnd, 0, 0);
+      Result := Instr(xroEnd, Ord(FMultiLine), 0);
     end
     else
     begin
@@ -1205,9 +1353,9 @@ begin
       LandrixXmlEscapeForMessage(FSource, 60) + '" matches a zero-length string');
   Text := LandrixXmlUtf8ToCodePoints(S);
   Rep := LandrixXmlUtf8ToCodePoints(Replacement);
-  { validate the replacement once }
+  { validate the replacement once; with the flag q it is literal }
   I := 0;
-  while I < Length(Rep) do
+  while not FLiteral and (I < Length(Rep)) do
   begin
     if Rep[I] = Ord('\') then
     begin
@@ -1235,7 +1383,12 @@ begin
       I := 0;
       while I < Length(Rep) do
       begin
-        if Rep[I] = Ord('\') then
+        if FLiteral then
+        begin
+          Buffer.AppendCodePoint(Cardinal(Rep[I]));
+          Inc(I);
+        end
+        else if Rep[I] = Ord('\') then
         begin
           Buffer.AppendCodePoint(Cardinal(Rep[I + 1]));
           Inc(I, 2);

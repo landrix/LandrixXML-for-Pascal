@@ -312,10 +312,10 @@ and the parsers also take a pointer and a length (`...Buf`).
   read back unchanged.
 - The [W3C XPath/XQuery test suite QT3](https://github.com/w3c/qt3tests)
   measures how much of XPath 2.0 the evaluator covers (`tools/run-qt3.py`,
-  pinned suite revision): of 15,149 applicable XPath 2.0 cases 14,854
-  pass (98 %) and 75 more raise an error where one is expected, but
+  pinned suite revision): of 15,149 applicable XPath 2.0 cases 14,896
+  pass (98 %) and 60 more raise an error where one is expected, but
   with another code. The largest group left is regular expression
-  features (`matches`).
+  features (the flag `i`, back-references and block escapes).
   The passing cases are a baseline: the CI fails if one of them stops
   passing. The evaluator has two profiles
   (`TLandrixXmlXPathStaticContext.Profile`): `xppXPath20` (the default)

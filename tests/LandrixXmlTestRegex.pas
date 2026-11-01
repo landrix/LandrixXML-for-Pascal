@@ -281,7 +281,91 @@ begin
   Check(XPathMatches('[0-9-.]', '-'), 'the same in the Saxon dialect');
   CheckError('(?:a)', xrmXPath20, xecRegex, '(?: in XPath 2.0');
   CheckError('(a)\1', xrmXPath20, xecUnsupported, 'a back-reference in XPath 2.0');
-  CheckError('a*?', xrmXPath20, xecUnsupported, 'a reluctant quantifier in XPath 2.0');
+  Check(XPath20Matches('^a+?$', 'aa'), 'a reluctant quantifier in XPath 2.0');
+end;
+
+{ Matches and Replace with flags. }
+function FlagMatches(const Pattern, Flags, S: string; Mode: TLandrixXmlRegexMode): Boolean;
+var
+  R: TLandrixXmlRegex;
+begin
+  R := TLandrixXmlRegex.Create(U(Pattern), Mode, U(Flags));
+  try
+    Result := R.Matches(U(S));
+  finally
+    R.Free;
+  end;
+end;
+
+function FlagReplace(const Pattern, Flags, S, Replacement: string): string;
+var
+  R: TLandrixXmlRegex;
+begin
+  R := TLandrixXmlRegex.Create(U(Pattern), xrmXPath, U(Flags));
+  try
+    Result := N(R.Replace(U(S), U(Replacement)));
+  finally
+    R.Free;
+  end;
+end;
+
+procedure CheckFlagError(const Flags: string; Mode: TLandrixXmlRegexMode; const Msg: string);
+var
+  R: TLandrixXmlRegex;
+begin
+  Check(not LandrixXmlRegexFlagsValid(U(Flags), Mode), Msg + ' (check)');
+  R := nil;
+  try
+    try
+      R := TLandrixXmlRegex.Create(U('a'), Mode, U(Flags));
+      FailNotRaised('ELandrixXmlError for ' + Msg);
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecRegex), Ord(E.Code), Msg);
+    end;
+  finally
+    R.Free;
+  end;
+end;
+
+{ The flags s, m, x, q and the reluctant quantifiers (results as Saxon). }
+procedure TestFlags;
+begin
+  CheckFlagError('s', xrmXsd, 'flags in XSD');
+  CheckFlagError('q', xrmXPath20, 'q in XPath 2.0');
+  CheckFlagError(' ', xrmXPath, 'a space');
+  CheckFlagError('X', xrmXPath, 'an upper-case letter');
+  Check(LandrixXmlRegexFlagsValid(U('ssmx'), xrmXPath20), 'repeated flags');
+  { s }
+  Check(not FlagMatches('a.b', '', 'a'#10'b', xrmXPath), '. without s');
+  Check(FlagMatches('a.b', 's', 'a'#10'b', xrmXPath), '. with s and LF');
+  Check(FlagMatches('a.b', 's', 'a'#13'b', xrmXPath), '. with s and CR');
+  { m }
+  Check(not FlagMatches('^b', '', 'a'#10'b', xrmXPath), '^ without m');
+  Check(FlagMatches('^b', 'm', 'a'#10'b', xrmXPath), '^ after an LF');
+  Check(FlagMatches('a$', 'm', 'a'#10'b', xrmXPath), '$ before an LF');
+  Check(not FlagMatches('^$', 'm', 'a'#10, xrmXPath), 'no line start after the last LF');
+  Check(FlagMatches('^$', 'm', #10, xrmXPath), 'an empty first line');
+  Check(FlagMatches('\n$', 'm', 'a'#10, xrmXPath), '$ at the end after an LF');
+  Check(not FlagMatches('^b', 'm', 'a'#13'b', xrmXPath), 'CR is no line end');
+  { x }
+  Check(FlagMatches('hello world', 'x', 'helloworld', xrmXPath), 'x removes spaces');
+  Check(not FlagMatches('hello[ ]world', 'x', 'helloworld', xrmXPath), 'x keeps spaces in a class');
+  Check(FlagMatches('hello\ sworld', 'x', 'hello world', xrmXPath), 'x between a backslash and its letter');
+  Check(FlagMatches('a\ [b', 'x', 'a[b', xrmXPath), 'an escaped bracket after x');
+  Check(FlagMatches('\p{ L u }', 'x', 'A', xrmXPath), 'x in a category name');
+  Check(FlagMatches('a{ 2 , 3 }', 'x', 'aa', xrmXPath), 'x in a quantifier');
+  { q }
+  Check(FlagMatches('a.b(', 'q', 'xa.b(', xrmXPath), 'q: literal');
+  Check(not FlagMatches('a.b', 'q', 'axb', xrmXPath), 'q: . is a dot');
+  CheckEqualsStr('x$1y', FlagReplace('.', 'q', 'x.y', '$1'), 'q: the replacement is literal');
+  { reluctant }
+  CheckEqualsStr('xa', FlagReplace('a{2,3}?', '', 'aaa', 'x'), '{2,3}?');
+  CheckEqualsStr('xxa', FlagReplace('a{2,3}?', '', 'aaaaa', 'x'), '{2,3}? twice');
+  CheckEqualsStr('*c*bra', FlagReplace('a.*?a', '', 'abracadabra', '*'), '*?');
+  CheckEqualsStr('carted', FlagReplace('^(.*?)d(.*)$', '', 'darted', '$1c$2'), 'groups with *?');
+  CheckEqualsStr('bbbb', FlagReplace('A+?', '', 'AAAA', 'b'), '+?');
+  CheckError('a*?', xrmXsd, xecRegex, 'no reluctant quantifier in XSD');
 end;
 
 procedure TestUnsupported;
@@ -290,7 +374,6 @@ var
 begin
   CheckError('(a)\1', xrmXPath, xecUnsupported, 'back-reference');
   CheckError('\p{IsBasicLatin}', xrmXPath, xecUnsupported, 'block escape');
-  CheckError('a*?', xrmXPath, xecUnsupported, 'reluctant quantifier');
   R := nil;
   try
     try
@@ -419,6 +502,13 @@ begin
   CheckLimit('x{100001}', 'repetition above the limit');
   CheckLimit('x{99999}y{2}', 'repetitions above the limit together');
   CheckLimit('(x{1000}){200}', 'nested repetition above the limit');
+  CheckLimit('(xy){2147483647}', 'a group MaxInt times');
+  Check(XPathMatches('^a{0000000001}$', 'a'), 'leading zeros in a quantifier');
+  Check(XPathMatches('^a{0000000000001,00000000000000002}$', 'aa'), 'leading zeros in both bounds');
+  CheckError('a{99999999999,9999999999}', xrmXPath, xecRegex, 'm < n beyond MaxInt');
+  CheckLimit('a{1000000000}', 'a character 10^9 times');
+  Check(not XPathMatches('a{99999999999999999999}', 'aaa'), 'a character more often than any string is long');
+  Check(not XsdMatches('a{2147483647}', 'a'), 'the same in XSD');
   CheckLimit(StringOfChar('(', 1001) + 'a' + StringOfChar(')', 1001), 'nested groups');
   S := '[a';
   for I := 1 to 1001 do
@@ -489,6 +579,7 @@ begin
   RegisterTest('Regex.XsdDialect', TestXsdDialect);
   RegisterTest('Regex.XPath20Dialect', TestXPath20Dialect);
   RegisterTest('Regex.Unsupported', TestUnsupported);
+  RegisterTest('Regex.Flags', TestFlags);
   RegisterTest('Regex.Properties', TestProperties);
   RegisterTest('Regex.LinearTime', TestLinearTime);
   RegisterTest('Regex.Unicode', TestUnicode);

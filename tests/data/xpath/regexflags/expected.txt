@@ -1,0 +1,216 @@
+# matches(concat('a', codepoints-to-string(10), 'b'), 'a.b', '')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(13), 'b'), 'a.b', '')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(10), 'b'), 'a.b', 's')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(13), 'b'), 'a.b', 's')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10), 'b'), '^$', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(10), 'b'), '^b', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10), 'b'), 'a$', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10), 'b'), '^', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10), 'b'), '$', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10), 'b'), '\n$', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(10), 'b'), '^a$', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10), 'b'), '^\n', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(10)), '^$', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(10)), '^b', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(10)), 'a$', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10)), '^', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10)), '$', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10)), '\n$', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10)), '^a$', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(10)), '^\n', 'm')
+xs:boolean false
+# matches(codepoints-to-string(10), '^$', 'm')
+xs:boolean true
+# matches(codepoints-to-string(10), '^b', 'm')
+xs:boolean false
+# matches(codepoints-to-string(10), 'a$', 'm')
+xs:boolean false
+# matches(codepoints-to-string(10), '^', 'm')
+xs:boolean true
+# matches(codepoints-to-string(10), '$', 'm')
+xs:boolean true
+# matches(codepoints-to-string(10), '\n$', 'm')
+xs:boolean true
+# matches(codepoints-to-string(10), '^a$', 'm')
+xs:boolean false
+# matches(codepoints-to-string(10), '^\n', 'm')
+xs:boolean true
+# matches(concat(codepoints-to-string(10), codepoints-to-string(10)), '^$', 'm')
+xs:boolean true
+# matches(concat(codepoints-to-string(10), codepoints-to-string(10)), '^b', 'm')
+xs:boolean false
+# matches(concat(codepoints-to-string(10), codepoints-to-string(10)), 'a$', 'm')
+xs:boolean false
+# matches(concat(codepoints-to-string(10), codepoints-to-string(10)), '^', 'm')
+xs:boolean true
+# matches(concat(codepoints-to-string(10), codepoints-to-string(10)), '$', 'm')
+xs:boolean true
+# matches(concat(codepoints-to-string(10), codepoints-to-string(10)), '\n$', 'm')
+xs:boolean true
+# matches(concat(codepoints-to-string(10), codepoints-to-string(10)), '^a$', 'm')
+xs:boolean false
+# matches(concat(codepoints-to-string(10), codepoints-to-string(10)), '^\n', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(13), 'b'), '^$', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(13), 'b'), '^b', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(13), 'b'), 'a$', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(13), 'b'), '^', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(13), 'b'), '$', 'm')
+xs:boolean true
+# matches(concat('a', codepoints-to-string(13), 'b'), '\n$', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(13), 'b'), '^a$', 'm')
+xs:boolean false
+# matches(concat('a', codepoints-to-string(13), 'b'), '^\n', 'm')
+xs:boolean false
+# matches('', '^$', 'm')
+xs:boolean true
+# matches('', '^b', 'm')
+xs:boolean false
+# matches('', 'a$', 'm')
+xs:boolean false
+# matches('', '^', 'm')
+xs:boolean true
+# matches('', '$', 'm')
+xs:boolean true
+# matches('', '\n$', 'm')
+xs:boolean false
+# matches('', '^a$', 'm')
+xs:boolean false
+# matches('', '^\n', 'm')
+xs:boolean false
+# matches('ab', '^$', 'm')
+xs:boolean false
+# matches('ab', '^b', 'm')
+xs:boolean false
+# matches('ab', 'a$', 'm')
+xs:boolean false
+# matches('ab', '^', 'm')
+xs:boolean true
+# matches('ab', '$', 'm')
+xs:boolean true
+# matches('ab', '\n$', 'm')
+xs:boolean false
+# matches('ab', '^a$', 'm')
+xs:boolean false
+# matches('ab', '^\n', 'm')
+xs:boolean false
+# matches('helloworld', 'hello world', 'x')
+xs:boolean true
+# matches('helloworld', 'hello[ ]world', 'x')
+xs:boolean false
+# matches('hello world', 'hello[ ]world', 'x')
+xs:boolean true
+# matches('hello world', 'hello\ sworld', 'x')
+xs:boolean true
+# matches('a[b', 'a\ [b', 'x')
+xs:boolean true
+# matches('A', '\p{ L u }', 'x')
+xs:boolean true
+# matches('aa', 'a{ 2 , 3 }', 'x')
+xs:boolean true
+# matches('a', '[a-[ ]b]', 'x')
+error FORX0002
+# matches('ab', 'a\ b', 'x')
+error FORX0002
+# matches('a#comment', 'a # comment', 'x')
+xs:boolean true
+# matches(' ', '[ ]', 'x')
+xs:boolean true
+# matches('x', '  ', 'x')
+xs:boolean true
+# matches('xa.b(', 'a.b(', 'q')
+xs:boolean true
+# matches('axb', 'a.b', 'q')
+xs:boolean false
+# matches('a', 'A', 'q')
+xs:boolean false
+# matches('[', '[', 'q')
+xs:boolean true
+# matches('x', '', 'q')
+xs:boolean true
+# matches('ab', 'a b', 'qx')
+xs:boolean false
+# matches('a.b', 'a.b', 'qs')
+xs:boolean true
+# replace('x.y', '.', '$1', 'q')
+xs:string x$1y
+# replace('a\b', '\', '\\', 'q')
+xs:string a\x5C\x5Cb
+# matches('a', 'a', ' ')
+error FORX0001
+# matches('a', 'a', 'X')
+error FORX0001
+# matches('a', 'a', 'S')
+error FORX0001
+# matches('a', 'a', 'mm')
+xs:boolean true
+# matches('a', 'a', 'smx')
+xs:boolean true
+# matches('a', 'a', 'g')
+error FORX0001
+# matches('a', 'a', '-')
+error FORX0001
+# replace('a', 'a', 'b', 'p')
+error FORX0001
+# tokenize('a b', ' ', 't')
+error FORX0001
+# replace('aaa', 'a{2,3}?', 'x')
+xs:string xa
+# replace('aaaaa', 'a{2,3}?', 'x')
+xs:string xxa
+# replace('abracadabra', 'a.*?a', '*')
+xs:string *c*bra
+# replace('darted', '^(.*?)d(.*)$', '$1c$2')
+xs:string carted
+# replace('AAAA', 'A+?', 'b')
+xs:string bbbb
+# replace('abc', '^.+?(b+)?$', '$1')
+xs:string 
+# replace('aaa', '(a+?)(a*)', '[$1|$2]')
+xs:string [a|aa]
+# replace('ab', 'a??b', 'x')
+xs:string x
+# replace('abac', '(a|b)*?c', 'x')
+xs:string x
+# replace('aaaaa', 'a{2,}?', 'x')
+xs:string xxa
+# replace('aaaaa', 'a{2}?', 'x')
+xs:string xxa
+# replace('abc', 'x*?', 'y')
+error FORX0003
+# tokenize('aXbXc', 'X+?')
+xs:string a
+xs:string b
+xs:string c
+# tokenize(concat('Mary', codepoints-to-string(10), 'Jones'), '^', 'm')
+error FORX0003
+# tokenize(concat('Mary', codepoints-to-string(10), 'Jones'), '$', 'm')
+error FORX0003
+# tokenize(concat('Mary', codepoints-to-string(10), 'Jones'), '^[ ]*$', 'm')
+error FORX0003
+# replace('abc', '^', 'x', 'm')
+error FORX0003
