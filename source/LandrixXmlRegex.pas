@@ -30,13 +30,18 @@
   the counted ones followed by ? (the shortest match first), and the flags s ('.' also matches
   LF and CR), m (^ and $ also at line ends: ^ after every LF that is not
   the last character, $ before every LF, as Saxon), x (white space
-  removed outside character class expressions before parsing) and, in
-  xrmXPath only, q (every character literal; Replace then takes the
-  replacement literally). XSD patterns match the whole string, take no
-  flags, and ^ and $ are ordinary characters there.
+  removed outside character class expressions before parsing), i (a
+  character or range also matches its case variants, those of Saxon
+  (LandrixXmlCaseVariantsData.inc), added before negation and
+  subtraction; \p, \P and the multi-character escapes are unchanged;
+  in xrmXPath, as Saxon, not for a character directly before "-]", "-["
+  or "--[")
+  and, in xrmXPath only, q (every character literal; Replace then takes
+  the replacement literally). XSD patterns match the whole string, take
+  no flags, and ^ and $ are ordinary characters there.
   Not supported (ELandrixXmlError with xecUnsupported, never silently
-  ignored): the flag i, back-references, block escapes (\p with
-  IsBasicLatin and the like). Invalid patterns and flags raise xecRegex.
+  ignored): back-references, block escapes (\p with IsBasicLatin and
+  the like). Invalid patterns and flags raise xecRegex.
 
   A hyphen in a character class follows XML Schema 1.0 in the modes XSD
   (as Xerces) and XPath 2.0: a literal hyphen only at the start or end of
@@ -100,7 +105,9 @@ type
     FDotAll: Boolean;
     FMultiLine: Boolean;
     FLiteral: Boolean;
+    FCaseless: Boolean;
     procedure Error(const Msg: string);
+    function CharSet(Lo, Hi: Integer): TLandrixXmlRegexSet;
     procedure Nest;
     procedure Unsupported(const Msg: string);
     function AtEnd: Boolean;
@@ -148,6 +155,8 @@ type
 function LandrixXmlRegexFlagsValid(const Flags: TLandrixXmlUtf8; Mode: TLandrixXmlRegexMode): Boolean;
 
 implementation
+
+{$I LandrixXmlCaseVariantsData.inc}
 
 const
   MaxCodePoint = $10FFFF;
@@ -377,6 +386,49 @@ begin
     Extra[I] := R[I];
   SetNormalize(Extra);
   Result := SetUnion(SetNameStart, Extra);
+end;
+
+{ The characters Lo .. Hi and their case variants (flag i): the variants
+  of the table keys within the range. }
+function SetWithCaseVariants(Lo, Hi: Integer): TLandrixXmlRegexSet;
+var
+  First, Last, Mid, I, J, N: Integer;
+begin
+  Result := nil;
+  { the first key >= Lo }
+  First := 0;
+  Last := CaseVariantCount;
+  while First < Last do
+  begin
+    Mid := (First + Last) div 2;
+    if CaseVariantKeys[Mid] < Lo then
+      First := Mid + 1
+    else
+      Last := Mid;
+  end;
+  N := 0;
+  I := First;
+  while (I < CaseVariantCount) and (CaseVariantKeys[I] <= Hi) do
+  begin
+    Inc(N, CaseVariantStarts[I + 1] - CaseVariantStarts[I]);
+    Inc(I);
+  end;
+  SetLength(Result, 2 * N + 2);
+  Result[0] := Lo;
+  Result[1] := Hi;
+  N := 2;
+  I := First;
+  while (I < CaseVariantCount) and (CaseVariantKeys[I] <= Hi) do
+  begin
+    for J := CaseVariantStarts[I] to CaseVariantStarts[I + 1] - 1 do
+    begin
+      Result[N] := CaseVariantPool[J];
+      Result[N + 1] := CaseVariantPool[J];
+      Inc(N, 2);
+    end;
+    Inc(I);
+  end;
+  SetNormalize(Result);
 end;
 
 { ---------------------------------------------------------------------- }
@@ -738,7 +790,7 @@ begin
       's': FDotAll := True;
       'm': FMultiLine := True;
       'q': FLiteral := True;
-      'i': Unsupported('the flag i');
+      'i': FCaseless := True;
     end;
   FPattern := LandrixXmlUtf8ToCodePoints(Pattern);
   Body := nil;
@@ -747,7 +799,7 @@ begin
     { q: every character stands for itself }
     Count := 0;
     for I := 0 to Integer(Length(FPattern)) - 1 do
-      AppendCode(Body, Count, Instr(xroSet, AddSet(SetRange(FPattern[I], FPattern[I])), 0));
+      AppendCode(Body, Count, Instr(xroSet, AddSet(CharSet(FPattern[I], FPattern[I])), 0));
     SetLength(Body, Count);
   end
   else
@@ -788,6 +840,15 @@ begin
   Inc(FDepth);
   if FDepth > MaxDepth then
     raise ELandrixXmlError.CreateCode(xecLimit, 'Regular expression nested too deeply');
+end;
+
+{ The characters Lo .. Hi, with their case variants under the flag i. }
+function TLandrixXmlRegex.CharSet(Lo, Hi: Integer): TLandrixXmlRegexSet;
+begin
+  if FCaseless then
+    Result := SetWithCaseVariants(Lo, Hi)
+  else
+    Result := SetRange(Lo, Hi);
 end;
 
 procedure TLandrixXmlRegex.Unsupported(const Msg: string);
@@ -1055,6 +1116,9 @@ begin
     Ord('\'):
       begin
         S := ParseEscape(CodePoint);
+        { a single-character escape is a character (case variants) }
+        if CodePoint >= 0 then
+          S := CharSet(CodePoint, CodePoint);
         Result := Instr(xroSet, AddSet(S), 0);
       end;
     Ord('?'), Ord('*'), Ord('+'), Ord('{'), Ord('}'), Ord(']'), Ord(')'), Ord('|'):
@@ -1073,7 +1137,7 @@ begin
     else
     begin
       Inc(FPos);
-      Result := Instr(xroSet, AddSet(SetRange(C, C)), 0);
+      Result := Instr(xroSet, AddSet(CharSet(C, C)), 0);
     end;
   end;
 end;
@@ -1269,6 +1333,8 @@ begin
     begin
       Part := ParseEscape(CodePoint);
       Lo := CodePoint;
+      if CodePoint >= 0 then
+        Part := CharSet(CodePoint, CodePoint);
       PlainHyphen := False;
     end
     else
@@ -1283,8 +1349,15 @@ begin
       Inc(FPos);
       Lo := C;
       PlainHyphen := C = Ord('-');
-      Part := SetRange(C, C);
+      Part := CharSet(C, C);
     end;
+    { Saxon (xrmXPath): a character directly before "-]", "-[" or "--["
+      gets no case variants; F&O 2.0 (xrmXPath20) gives them to every
+      character }
+    if FCaseless and (FMode = xrmXPath) and (Lo >= 0) and (Peek = Ord('-')) and
+      ((PeekAt(1) = Ord(']')) or (PeekAt(1) = Ord('[')) or
+      ((PeekAt(1) = Ord('-')) and (PeekAt(2) = Ord('[')))) then
+      Part := SetRange(Lo, Lo);
     { XPath, as Saxon: an unescaped hyphen may only be followed by
       another one that starts a subtraction }
     if (FMode = xrmXPath) and PlainHyphen and (Peek = Ord('-')) and (PeekAt(1) <> Ord('[')) then
@@ -1314,7 +1387,7 @@ begin
       end;
       if Hi < Lo then
         Error('range with end before start');
-      Part := SetRange(Lo, Hi);
+      Part := CharSet(Lo, Hi);
     end;
     Result := SetUnion(Result, Part);
     First := False;

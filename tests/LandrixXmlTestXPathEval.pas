@@ -682,15 +682,15 @@ begin
     CheckEquals(0, Count('//a[error() or false()]'), 'error() before or');
     CheckEquals(0, Count('//a[error() and true()]'), 'error() before and');
     CheckEquals(1, Count('//a[if (v = ''x'') then error(QName(''urn:e'', ''E'')) else v = 2]'), 'error(QName) for one a');
-    { what is not supported is not "no match" }
+    { what is beyond the limits is not "no match" }
     Raised := '';
     try
-      Count('//a[matches(v[1], ''[a-z]'', ''i'')]');
+      Count('//a[matches(v[1], ''(ab){100000}'')]');
     except
       on E: ELandrixXmlXPathError do
         Raised := E.XPathCode;
     end;
-    CheckEqualsStr('FOER0000', Raised, 'an unsupported regex flag');
+    CheckEqualsStr('FOER0000', Raised, 'a regular expression beyond the limits');
     Raised := '';
     try
       Count('//a except //a[xs:integer(v[1]) > 0]');

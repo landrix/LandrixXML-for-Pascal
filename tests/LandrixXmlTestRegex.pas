@@ -366,26 +366,20 @@ begin
   CheckEqualsStr('carted', FlagReplace('^(.*?)d(.*)$', '', 'darted', '$1c$2'), 'groups with *?');
   CheckEqualsStr('bbbb', FlagReplace('A+?', '', 'AAAA', 'b'), '+?');
   CheckError('a*?', xrmXsd, xecRegex, 'no reluctant quantifier in XSD');
+  { i (a sample of the table is checked against Saxon in tests/data/xpath/regexcase) }
+  Check(FlagMatches('^ABC$', 'i', 'abc', xrmXPath), 'i: characters');
+  Check(FlagMatches('^[A-Z-[OI]]$', 'i', 'x', xrmXPath), 'i: a range before a subtraction');
+  Check(not FlagMatches('^[A-Z-[OI]]$', 'i', 'o', xrmXPath), 'i: the subtraction with its variants');
+  Check(not FlagMatches('^[^Q]$', 'i', 'q', xrmXPath), 'i: a negated group');
+  Check(not FlagMatches('^\p{Lu}$', 'i', 'm', xrmXPath), 'i: categories unchanged');
+  Check(FlagMatches('A.B', 'iq', 'xa.bx', xrmXPath), 'i with q');
+  Check(FlagMatches('^A{2}$', 'i', 'aA', xrmXPath20), 'i in XPath 2.0');
 end;
 
 procedure TestUnsupported;
-var
-  R: TLandrixXmlRegex;
 begin
   CheckError('(a)\1', xrmXPath, xecUnsupported, 'back-reference');
   CheckError('\p{IsBasicLatin}', xrmXPath, xecUnsupported, 'block escape');
-  R := nil;
-  try
-    try
-      R := TLandrixXmlRegex.Create(U('a'), xrmXPath, U('i'));
-      FailNotRaised('ELandrixXmlError for flags');
-    except
-      on E: ELandrixXmlError do
-        CheckEquals(Ord(xecUnsupported), Ord(E.Code), 'flags');
-    end;
-  finally
-    R.Free;
-  end;
 end;
 
 procedure TestProperties;

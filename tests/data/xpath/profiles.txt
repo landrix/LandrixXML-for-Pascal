@@ -47,3 +47,5 @@ error(())	error XPTY0004	error FOER0000	F&O 2.0 fn:error with one argument takes
 trace(1)	error XPST0017	xs:integer 1	trace with one argument is XPath 3.0
 doc-available('%gg')	error FODC0005	xs:boolean false	F&O 2.0: doc-available raises FODC0005 for an invalid URI; Saxon returns false
 matches('a.b', 'a.b', 'q')	error FORX0001	xs:boolean true	the flag q (literal pattern) is XPath 3.0
+matches('A', '^[a-]$', 'i')	xs:boolean true	xs:boolean false	F&O 2.0: every character of a class gets its case variants; Saxon not a character before -] or -[
+matches('A', '^[a-[x]]$', 'i')	xs:boolean true	xs:boolean false	the same before a subtraction
