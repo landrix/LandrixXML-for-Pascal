@@ -25,7 +25,7 @@
   the content and attributes are taken as written (the target schemas
   are valid for Xerces). Constructs the validator does not support raise
   ELandrixXmlError with xecUnsupported and the file and line, also when
-  they are declared but not used: xs:all, xs:list, xs:notation,
+  they are declared but not used: xs:all, xs:notation,
   substitution groups, abstract elements, the extension of xs:anyType,
   and the built-in types LandrixXmlXsdTypes lacks. Other schema errors
   raise xecSchema. }
@@ -1187,7 +1187,7 @@ function TLoader.BuildSimpleType(Doc: TSchemaDoc; Node: TLandrixXmlNode; const N
   P: TPending): TLandrixXmlXsdSimpleType;
 var
   Child, Sub: TLandrixXmlNode;
-  Base: TLandrixXmlXsdSimpleType;
+  Base, ItemType: TLandrixXmlXsdSimpleType;
   Members: TLandrixXmlXsdSimpleTypeArray;
   Ns, LocalName, Value, Item: TLandrixXmlUtf8;
   I, Start: Integer;
@@ -1271,7 +1271,38 @@ begin
       Result.AnonymousName := AnonymousTypeName(Node);
   end
   else if IsXs(Child, 'list') then
-    Unsupported(Doc, Child, 'xs:list')
+  begin
+    ItemType := nil;
+    if QNameAttr(Doc, Child, 'itemType', Ns, LocalName) then
+      ItemType := SimpleTypeRef(Doc, Child, Ns, LocalName);
+    Sub := Child.FirstChildElement;
+    while IsXs(Sub, 'annotation') do
+      Sub := Sub.NextSiblingElement;
+    if IsXs(Sub, 'simpleType') then
+    begin
+      if ItemType <> nil then
+        Fail(Doc, Sub, 'a list with both an itemType attribute and a local simple type');
+      ItemType := BuildSimpleType(Doc, Sub, '', nil);
+      Sub := Sub.NextSiblingElement;
+    end;
+    if Sub <> nil then
+      Fail(Doc, Sub, 'unexpected element "' + Esc(Sub.NameUtf8) + '" in xs:list');
+    if ItemType = nil then
+      Fail(Doc, Child, 'a list without an item type');
+    if Name <> '' then
+      Ns2 := Doc.TargetNamespace
+    else
+      Ns2 := '';
+    try
+      Result := TLandrixXmlXsdSimpleType.CreateList(Ns2, Name, ItemType);
+    except
+      on E: ELandrixXmlError do
+        Fail(Doc, Child, E.Message);
+    end;
+    FSet.Own(Result);
+    if Name = '' then
+      Result.AnonymousName := AnonymousTypeName(Node);
+  end
   else
     Fail(Doc, Node, 'a simple type needs a restriction or a union');
   if P <> nil then

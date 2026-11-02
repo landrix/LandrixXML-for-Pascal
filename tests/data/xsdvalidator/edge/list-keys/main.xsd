@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="decs"><xs:list itemType="xs:decimal"/></xs:simpleType>
+  <xs:simpleType name="strs"><xs:list itemType="xs:string"/></xs:simpleType>
+  <xs:simpleType name="ints"><xs:list itemType="xs:int"/></xs:simpleType>
+  <xs:simpleType name="intOrStr"><xs:union memberTypes="xs:int xs:string"/></xs:simpleType>
+  <xs:simpleType name="mixed"><xs:list itemType="intOrStr"/></xs:simpleType>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="e" maxOccurs="unbounded">
+          <xs:complexType><xs:attribute name="k" type="decs"/><xs:attribute name="s" type="xs:string"/></xs:complexType>
+        </xs:element>
+        <xs:element name="f" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType><xs:attribute name="r" type="decs"/><xs:attribute name="d" type="xs:decimal"/></xs:complexType>
+        </xs:element>
+        <xs:element name="g" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType><xs:attribute name="s" type="strs"/><xs:attribute name="i" type="ints"/><xs:attribute name="m" type="mixed"/></xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+    <xs:key name="K"><xs:selector xpath="e"/><xs:field xpath="@k"/></xs:key>
+    <xs:keyref name="R" refer="K"><xs:selector xpath="f"/><xs:field xpath="@r"/></xs:keyref>
+    <xs:unique name="U"><xs:selector xpath="f"/><xs:field xpath="@d"/></xs:unique>
+    <xs:keyref name="RS" refer="K"><xs:selector xpath="g"/><xs:field xpath="@s"/></xs:keyref>
+    <xs:keyref name="RI" refer="K"><xs:selector xpath="g"/><xs:field xpath="@i"/></xs:keyref>
+    <xs:keyref name="RM" refer="K"><xs:selector xpath="g"/><xs:field xpath="@m"/></xs:keyref>
+  </xs:element>
+</xs:schema>

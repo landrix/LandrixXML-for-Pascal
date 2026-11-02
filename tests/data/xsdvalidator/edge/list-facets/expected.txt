@@ -1,0 +1,137 @@
+file bad.xml
+error 1 17 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 17 cvc-attribute.3 The value '1 x' of attribute 'a' on element 'r' is not valid with respect to its type, 'ints'.
+error 1 17 cvc-minLength-valid Value '' with length = '0' is not facet-valid with respect to minLength '1' for type 'NMTOKENS'.
+error 1 17 cvc-attribute.3 The value '' of attribute 't' on element 'r' is not valid with respect to its type, 'NMTOKENS'.
+error 1 35 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 35 cvc-type.3.1.3 The value '1 x 3' of element 'ints' is not valid.
+error 1 54 cvc-maxInclusive-valid Value '10' is not facet-valid with respect to maxInclusive '9' for type '#AnonType_small'.
+error 1 54 cvc-type.3.1.3 The value '9 10' of element 'small' is not valid.
+error 1 66 cvc-length-valid Value '5' with length = '1' is not facet-valid with respect to length '2' for type 'two'.
+error 1 66 cvc-type.3.1.3 The value '5' of element 'two' is not valid.
+error 1 81 cvc-minLength-valid Value '' with length = '0' is not facet-valid with respect to minLength '1' for type 'range'.
+error 1 81 cvc-type.3.1.3 The value '' of element 'range' is not valid.
+error 1 103 cvc-maxLength-valid Value '1 2 3 4' with length = '4' is not facet-valid with respect to maxLength '3' for type 'range'.
+error 1 103 cvc-type.3.1.3 The value '1 2 3 4' of element 'range' is not valid.
+error 1 121 cvc-enumeration-valid Value '1 2 3' is not facet-valid with respect to enumeration '[1 2, 3 4]'. It must be a value from the enumeration.
+error 1 121 cvc-type.3.1.3 The value '1 2 3' of element 'enum' is not valid.
+error 1 136 cvc-pattern-valid Value '1 22' is not facet-valid with respect to pattern '\d( \d)*' for type 'pat'.
+error 1 136 cvc-type.3.1.3 The value '1 22' of element 'pat' is not valid.
+error 1 154 cvc-datatype-valid.1.2.3 'x' is not a valid value of union type 'numOrDate'.
+error 1 154 cvc-type.3.1.3 The value '1 x' of element 'mixed' is not valid.
+error 1 175 cvc-minLength-valid Value '' with length = '0' is not facet-valid with respect to minLength '1' for type 'NMTOKENS'.
+error 1 175 cvc-type.3.1.3 The value '' of element 'tok' is not valid.
+error 1 189 cvc-datatype-valid.1.2.1 ',' is not a valid value for 'NMTOKEN'.
+error 1 189 cvc-type.3.1.3 The value 'a ,' of element 'tok' is not valid.
+error 1 207 cvc-elt.5.2.2.2.2 The value '1 3' of element 'fixed' does not match the {value constraint} value '1 2'.
+
+file kinds.xml
+error 1 33 cvc-elt.5.2.2.2.2 The value '01' of element 'kind' does not match the {value constraint} value '1'.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u unknown="1">word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 202 cvc-type.3.1.1 Element 'u' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><u>1 2</u><mixed>1 2024-01-02 3</mixed><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 165 cvc-complex-type.2.4.a Invalid content was found starting with element 'mixed'. One of '{u, tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints unknown="1"/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 60 cvc-type.3.1.1 Element 'ints' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>999999999</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><tok> x  y </tok><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><fixed>01 2</fixed></r>\n
+error 2 125 cvc-complex-type.2.4.a Invalid content was found starting with element 'enum'. One of '{tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>x</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 80 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 80 cvc-type.3.1.3 The value 'x' of element 'two' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><pat>word</pat><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 192 cvc-complex-type.2.4.a Invalid content was found starting with element 'pat'. One of '{u, tok, fixed, kind}' is expected.
+error 2 202 cvc-pattern-valid Value 'word' is not facet-valid with respect to pattern '\d( \d)*' for type 'pat'.
+error 2 202 cvc-type.3.1.3 The value 'word' of element 'pat' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed></fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum unknown="1">1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 120 cvc-type.3.1.1 Element 'enum' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><range>1 2 3</range><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 174 cvc-complex-type.2.4.a Invalid content was found starting with element 'range'. One of '{u, tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><range>1 2 3</range><ints/><small> 9 0 </small><two>5 6</two><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 68 cvc-complex-type.2.4.a Invalid content was found starting with element 'ints'. One of '{range, enum, pat, mixed, u, tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><mixed>1 2024-01-02 3</mixed><pat>1 2</pat><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 168 cvc-complex-type.2.4.a Invalid content was found starting with element 'pat'. One of '{mixed, u, tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>2026-13-01</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 173 cvc-datatype-valid.1.2.3 '2026-13-01' is not a valid value of union type 'numOrDate'.
+error 2 173 cvc-type.3.1.3 The value '2026-13-01' of element 'mixed' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><tok> x  y </tok><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><fixed>01 2</fixed></r>\n
+error 2 106 cvc-complex-type.2.4.a Invalid content was found starting with element 'range'. One of '{tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><u>3 4</u><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 133 cvc-complex-type.2.4.a Invalid content was found starting with element 'pat'. One of '{u, tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><pat>1 2</pat><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 87 cvc-complex-type.2.4.a Invalid content was found starting with element 'two'. One of '{pat, mixed, u, tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><tok> x  y </tok><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><fixed>01 2</fixed></r>\n
+error 2 156 cvc-complex-type.2.4.a Invalid content was found starting with element 'pat'. One of '{tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints unknown="1">1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 41 cvc-type.3.1.1 Element 'ints' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><range>word</range><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 194 cvc-complex-type.2.4.a Invalid content was found starting with element 'range'. One of '{u, tok, fixed, kind}' is expected.
+error 2 206 cvc-datatype-valid.1.2.1 'word' is not a valid value for 'integer'.
+error 2 206 cvc-type.3.1.3 The value 'word' of element 'range' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two unknown="1">5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 85 cvc-type.3.1.1 Element 'two' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints/><ints>1 2 3</ints><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><range>1 2 3</range><small> 9 0 </small><two>5 6</two><enum>1 2</enum><enum>3 4</enum><pat>1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 75 cvc-complex-type.2.4.a Invalid content was found starting with element 'small'. One of '{range, enum, pat, mixed, u, tok, fixed, kind}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r a=" 1  2 " t="a b"><ints>1 2 3</ints><ints/><small> 9 0 </small><two>5 6</two><range>1 2 3</range><enum>1 2</enum><enum>3 4</enum><pat unknown="1">1 2</pat><mixed>1 2024-01-02 3</mixed><u>1 2</u><u>word</u><tok> x  y </tok><fixed>01 2</fixed></r>\n
+error 2 151 cvc-type.3.1.1 Element 'pat' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.

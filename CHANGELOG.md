@@ -68,6 +68,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   each error. Unsupported constructs are rejected at load time
   (`xecUnsupported`), invalid schemas raise the new code `xecSchema`;
   `xsi:type` and `xsi:nil` in documents are reported as unsupported.
+  List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
+  validated as Xerces does: patterns on the whole value, then each item,
+  then the length facets (counting items) and enumeration; IDs and IDREFs
+  in lists count, list values work in identity constraints and fixed
+  values. `TLandrixXmlXsdSimpleType.CreateList`, `ItemType`, the variety
+  `xsvList` and the list items of `TLandrixXmlXsdValue` (`Variety`,
+  `Items` of the new `TLandrixXmlXsdAtomicValue`) give access to them.
   An include, import or redefine whose document cannot be found is
   skipped as XML Schema 1.0 allows and listed in the schema set's
   `Warnings`.
@@ -227,7 +234,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 24,156 of 39,336 applicable XSD 1.0 tests pass, 13,920
+  the CI checks: 34,790 of 39,336 applicable XSD 1.0 tests pass, 3,246
   use constructs that are not supported.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
@@ -484,6 +491,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   one document on Windows and macOS (it was loaded twice and gave
   duplicate declarations). `xs:include` and `xs:import` may contain one
   `xs:annotation` and nothing else.
+- XML Schema: IDREFs without an ID are reported once each and in the
+  order Xerces reports them (it collects them in a hash set), not once
+  per reference.
 - XML Schema: `minOccurs` and `maxOccurs` are read as
   `xs:nonNegativeInteger` of any size (sign, leading zeros); a bound
   beyond the Integer range is out of reach. Before, a value beyond the

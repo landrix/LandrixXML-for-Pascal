@@ -1,0 +1,130 @@
+file bad.xml
+error 1 31 cvc-identity-constraint.4.2.2 Duplicate key value [1.0 2.0] declared for identity constraint "K" of element "r".
+error 1 53 cvc-identity-constraint.4.2.2 Duplicate key value [3.0] declared for identity constraint "K" of element "r".
+error 1 105 cvc-identity-constraint.4.1 Duplicate unique value [1.0] declared for identity constraint "U" of element "r".
+error 1 109 cvc-identity-constraint.4.3 Key 'R' with value '1.0 2.0 3.0' not found for identity constraint of element 'r'.
+
+file empty.xml
+error 1 80 cvc-identity-constraint.4.3 Key 'RM' with value '1 2' not found for identity constraint of element 'r'.
+error 1 80 cvc-identity-constraint.4.3 Key 'RS' with value '' not found for identity constraint of element 'r'.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1" unknown="1"/></r>\n
+error 2 99 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'f'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><f r="1"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="02.00 1"/></r>\n
+error 2 36 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 36 cvc-identity-constraint.4.2.2 Duplicate key value [1.0] declared for identity constraint "K" of element "r".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><e k="1"/><f r="02.00 1"/></r>\n
+error 2 71 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k="">2026-13-01</e><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 60 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1">x</e><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 30 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 81 cvc-identity-constraint.4.3 Key 'R' with value '1.0' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1">  a  b  </e><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 37 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><f k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 38 cvc-complex-type.3.2.2 Attribute 'k' is not allowed to appear in element 'f'.
+error 2 47 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{f, g}' is expected.
+error 2 91 cvc-identity-constraint.4.3 Key 'R' with value '2.0 1.0' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 50 cvc-identity-constraint.4.2.2 Duplicate key value [2.0 1.0] declared for identity constraint "K" of element "r".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k="2001-02-30"/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 57 cvc-datatype-valid.1.2.1 '2001-02-30' is not a valid value for 'decimal'.
+error 2 57 cvc-attribute.3 The value '2001-02-30' of attribute 'k' on element 'e' is not valid with respect to its type, 'decs'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="x"/><f r="02.00 1"/></r>\n
+error 2 71 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'decimal'.
+error 2 71 cvc-attribute.3 The value 'x' of attribute 'r' on element 'f' is not valid with respect to its type, 'decs'.
+error 2 91 cvc-identity-constraint.4.3 Key 'R' with value 'null' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="0"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 89 cvc-identity-constraint.4.3 Key 'R' with value '2.0 1.0' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 79 cvc-identity-constraint.4.3 Key 'R' with value '1.0 2.0' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1">  a  b  </e><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 49 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2001-02-30"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 45 cvc-datatype-valid.1.2.1 '2001-02-30' is not a valid value for 'decimal'.
+error 2 45 cvc-attribute.3 The value '2001-02-30' of attribute 'k' on element 'e' is not valid with respect to its type, 'decs'.
+error 2 98 cvc-identity-constraint.4.3 Key 'R' with value '2.0 1.0' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 56 cvc-identity-constraint.4.2.2 Duplicate key value [] declared for identity constraint "K" of element "r".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1">-1</f><f r="02.00 1"/></r>\n
+error 2 76 cvc-complex-type.2.1 Element 'f' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1">x</e><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 42 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2" unknown="1"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 73 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'f'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f/><f r="1"/><f r="02.00 1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><f r="1.0 2"/><e k=""/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 61 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1" unknown="1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 50 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'e'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="-5"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 90 cvc-identity-constraint.4.3 Key 'R' with value '1.0 2.0' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k="">-1</e><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 52 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r=""/><f r="02.00 1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 30 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "K".
+error 2 83 cvc-identity-constraint.4.3 Key 'R' with value '2.0 1.0' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><f r="02.00 1"/><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/></r>\n
+error 2 20 cvc-complex-type.2.4.a Invalid content was found starting with element 'f'. One of '{e}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="2 1"/><e k="1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 28 cvc-identity-constraint.4.2.2 Duplicate key value [1.0 2.0] declared for identity constraint "K" of element "r".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 42 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "K".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f/><f r="02.00 1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1"/><f r="02.00 1"/></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="x"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="1"/><f r="02.00 1"/></r>\n
+error 2 14 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'decimal'.
+error 2 14 cvc-attribute.3 The value 'x' of attribute 'k' on element 'e' is not valid with respect to its type, 'decs'.
+error 2 89 cvc-identity-constraint.4.3 Key 'R' with value '1.0 2.0' not found for identity constraint of element 'r'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e k="1 2"/><e k="1"/><e k="2 1"/><e k=""/><f r="1.0 2"/><f r="02.00 1"/></r>\n

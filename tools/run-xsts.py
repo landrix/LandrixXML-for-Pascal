@@ -14,8 +14,9 @@ the test set, group and test) with status accepted or stable (or none) and
 an expected validity for XSD 1.0 that is valid or invalid; groups without
 a schema test (the instance names its schema) are excluded. A group with
 several schema documents is loaded through a generated schema document
-that imports (or includes) all of them; the xml: namespace comes from the
-W3C schema xml.xsd (downloaded once, pinned by SHA-256), as from a catalog.
+that imports (or includes) all of them; the xml: and xlink: namespaces
+come from the W3C schemas xml.xsd and xlink.xsd (downloaded once, pinned by
+SHA-256), as from a catalog.
 
 Outcomes per test: pass; fail; unsupported (the loader or the validator
 reports a construct this library does not support, also for the instances
@@ -51,17 +52,22 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 COMMIT = "7bc3365c652a322f3d762021b3879eb92dae7e30"
 URL = "https://codeload.github.com/w3c/xsdtests/tar.gz/" + COMMIT
 SUITE_SHA256 = "c64c3b12e9a3dc2d1ad75d4ac1acd7e097cabb82cc017a7cfaee1b09387b98b2"
-# the schema of the xml: namespace, which tests import from its W3C location; given to
-# the resolver as a catalog entry (the loader never reads the network)
-XML_XSD_URL = "https://www.w3.org/2001/xml.xsd"
-XML_XSD_SHA256 = "61960fb3131e38022caad5360e2f33a3382578ab3c80cd58bd74320ede61b20c"
-XML_NS = "http://www.w3.org/XML/1998/namespace"
 SUITE_DIR = os.path.join(ROOT, "tests", "data", "xsts-suite")
 SUITE = os.path.join(SUITE_DIR, "xsdtests-" + COMMIT)
-XML_XSD = os.path.join(SUITE_DIR, "xml.xsd")
+# the schemas of the xml: and xlink: namespaces, which tests import from their W3C
+# locations; given to the resolver as catalog entries (the loader never reads the
+# network): namespace, URL, SHA-256, local file
+CATALOG = [
+    ("http://www.w3.org/XML/1998/namespace", "https://www.w3.org/2001/xml.xsd",
+     "61960fb3131e38022caad5360e2f33a3382578ab3c80cd58bd74320ede61b20c",
+     os.path.join(SUITE_DIR, "xml.xsd")),
+    ("http://www.w3.org/1999/xlink", "https://www.w3.org/XML/2008/06/xlink.xsd",
+     "c83df86c7fdc16eb9c862b83dfb53fc1b1a4bcafd6e1d1217199e0188b82f24a",
+     os.path.join(SUITE_DIR, "xlink.xsd")),
+]
 WORK = os.path.join(ROOT, "build", "xsts")
 BASELINE = os.path.join(ROOT, "tests", "data", "xsts-baseline.txt")
-HARNESS_VERSION = 1
+HARNESS_VERSION = 2
 
 TS = "{http://www.w3.org/XML/2004/xml-schema-test-suite/}"
 XLINK = "{http://www.w3.org/1999/xlink}href"
@@ -107,16 +113,17 @@ def check_suite():
         digest = hashlib.sha256(f.read()).hexdigest()
     if digest != SUITE_SHA256:
         sys.exit("suite.xml has SHA-256 %s, expected %s" % (digest, SUITE_SHA256))
-    if not os.path.exists(XML_XSD):
-        print("downloading", XML_XSD_URL)
-        data = read_url(XML_XSD_URL)
-        with open(XML_XSD + ".part", "wb") as f:
-            f.write(data)
-        os.replace(XML_XSD + ".part", XML_XSD)
-    with open(XML_XSD, "rb") as f:
-        digest = hashlib.sha256(f.read()).hexdigest()
-    if digest != XML_XSD_SHA256:
-        sys.exit("%s has SHA-256 %s, expected %s (delete it to download it again)" % (XML_XSD, digest, XML_XSD_SHA256))
+    for _ns, url, sha256, path in CATALOG:
+        if not os.path.exists(path):
+            print("downloading", url)
+            data = read_url(url)
+            with open(path + ".part", "wb") as f:
+                f.write(data)
+            os.replace(path + ".part", path)
+        with open(path, "rb") as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+        if digest != sha256:
+            sys.exit("%s has SHA-256 %s, expected %s (delete it to download it again)" % (path, digest, sha256))
 
 
 # --- the tests ---------------------------------------------------------------
@@ -265,8 +272,9 @@ def job_text(groups):
             out.append("schema\t" + wrapper_schema(g))
         else:
             out.append("schema\t" + g.schema_docs[0])
-        if all(target_namespace(d) != XML_NS for d in g.schema_docs):
-            out.append("ns\t%s\t%s" % (XML_NS, XML_XSD))
+        for ns, _url, _sha256, path in CATALOG:
+            if all(target_namespace(d) != ns for d in g.schema_docs):
+                out.append("ns\t%s\t%s" % (ns, path))
         out.append("load")
         for t in g.instances:
             if not t.excluded:

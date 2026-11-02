@@ -27,15 +27,18 @@
   exact decimals, where Xerces uses doubles (only values with more than
   about 15 fraction digits differ).
   A union tries its member types in order (cvc-datatype-valid.1.2.3).
+  A list collapses white space, checks its patterns on the whole value,
+  then each item (separated by spaces) with its item type, then its
+  length facets (counting items) and enumeration.
 
   Built-in types: anySimpleType, string, normalizedString, token,
   language, Name, NCName, ID, IDREF, NMTOKEN, boolean, decimal, integer and
   its twelve derived types, float, double, dateTime, time, date,
   gYearMonth, gYear, gMonthDay, gDay, gMonth, hexBinary, base64Binary,
-  anyURI. Not supported (LandrixXmlXsdBuiltinType returns nil, the schema
-  loader reports xecUnsupported): duration and its subtypes, QName,
-  NOTATION, ENTITY, and the list types IDREFS, ENTITIES, NMTOKENS; also
-  list types defined in schemas and facets on unions.
+  anyURI, and the list types NMTOKENS and IDREFS. Not supported
+  (LandrixXmlXsdBuiltinType returns nil, the schema loader reports
+  xecUnsupported): duration and its subtypes, QName, NOTATION, ENTITY,
+  ENTITIES; also facets on unions.
 
   Order of date and time values as in XML Schema 1.0, 3.2.7.4: a value
   without time zone lies somewhere between +14:00 and -14:00, so it is
@@ -79,7 +82,7 @@ type
     xsfTotalDigits, xsfFractionDigits
   );
 
-  TLandrixXmlXsdVariety = (xsvAtomic, xsvUnion);
+  TLandrixXmlXsdVariety = (xsvAtomic, xsvUnion, xsvList);
 
   { Date and time fields; unused fields are 0 (Year, Month, Day) or 0 for
     the time of a pure date. Second may have a fraction. }
@@ -96,12 +99,33 @@ type
 
   TLandrixXmlXsdSimpleType = class;
 
+  { An item of a list value: the fields of TLandrixXmlXsdValue for an
+    atomic value. }
+  TLandrixXmlXsdAtomicValue = record
+    Primitive: TLandrixXmlXsdPrimitive;
+    Text: TLandrixXmlUtf8;
+    RawText: TLandrixXmlUtf8;
+    MemberType: TLandrixXmlXsdSimpleType;
+    Length: Integer;
+    DecimalValue: TLandrixXmlDecimal;
+    DoubleValue: TLandrixXmlDouble;
+    BooleanValue: Boolean;
+    DateTime: TLandrixXmlXsdDateTime;
+  end;
+
+  TLandrixXmlXsdAtomicValueArray = array of TLandrixXmlXsdAtomicValue;
+
   { A value in the value space of a primitive type. Text is the lexical
     form after white space normalization, RawText the value as given;
     Length is the length counted by the length facets (characters as
     UTF-16 code units like Xerces, or octets for the binary types).
     MemberType is the member type of a union that accepted the value, else
-    the validated type itself. }
+    the validated type itself.
+    Variety is xsvList for a value of a list type: Items holds the items
+    (MemberType: the item type, or the member of a union item type that
+    accepted the item), Text the whole value with collapsed white space,
+    Length the number of items, Primitive is xspAnySimpleType. Otherwise
+    Variety is xsvAtomic and Items is empty. }
   TLandrixXmlXsdValue = record
     Primitive: TLandrixXmlXsdPrimitive;
     Text: TLandrixXmlUtf8;
@@ -112,6 +136,8 @@ type
     DoubleValue: TLandrixXmlDouble;
     BooleanValue: Boolean;
     DateTime: TLandrixXmlXsdDateTime;
+    Variety: TLandrixXmlXsdVariety;
+    Items: TLandrixXmlXsdAtomicValueArray;
   end;
 
   { A failed check: Code is the Xerces code ("cvc-pattern-valid"),
@@ -141,6 +167,7 @@ type
     FLexicalRule: TLandrixXmlXsdLexicalRule;
     FWhiteSpace: TLandrixXmlXsdWhiteSpace;
     FMembers: TLandrixXmlXsdSimpleTypeArray;
+    FItemType: TLandrixXmlXsdSimpleType;
     FBuiltin: Boolean;
     { own facets (not inherited) }
     FLength: Integer;
@@ -163,6 +190,8 @@ type
     function CheckPatterns(const Value: TLandrixXmlXsdValue; const TypeName: string;
       out Error: TLandrixXmlXsdError): Boolean;
     function ParseFacetValue(const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
+    function ValidateList(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
+      out Error: TLandrixXmlXsdError): Boolean;
   public
     { A built-in type; used by the unit itself. }
     constructor CreateBuiltin(const Name: TLandrixXmlUtf8; Base: TLandrixXmlXsdSimpleType;
@@ -174,11 +203,18 @@ type
     { A union of Members (tried in this order). }
     constructor CreateUnion(const Members: array of TLandrixXmlXsdSimpleType;
       const NamespaceUri, Name: TLandrixXmlUtf8);
+    { A list of ItemType values (the parameter order differs from
+      CreateRestriction for C++ Builder). Raises ELandrixXmlError (xecInvalidArgument)
+      if ItemType is a list or a union with a list member
+      (cos-st-restricts.2.1). }
+    constructor CreateList(const NamespaceUri, Name: TLandrixXmlUtf8; ItemType: TLandrixXmlXsdSimpleType);
     destructor Destroy; override;
     { Adds a facet as written in the schema. Several patterns of the same
       type are alternatives. Raises ELandrixXmlError: xecInvalidArgument for
       a facet value that is invalid or not allowed for the base type,
-      xecUnsupported for facets on a union. }
+      xecUnsupported for facets on a union; xecInvalidOperation on a
+      built-in type and on a type made by CreateList (facets of a list go
+      on a restriction of it). }
     procedure AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8);
     { Checks Text (an element or attribute value as written). }
     function Validate(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
@@ -191,6 +227,8 @@ type
     property AnonymousName: TLandrixXmlUtf8 read FAnonymousName write FAnonymousName;
     property Base: TLandrixXmlXsdSimpleType read FBase;
     property Variety: TLandrixXmlXsdVariety read FVariety;
+    { the item type of a list type (also of a restriction of one), else nil }
+    property ItemType: TLandrixXmlXsdSimpleType read FItemType;
     property Primitive: TLandrixXmlXsdPrimitive read FPrimitive;
     property LexicalRule: TLandrixXmlXsdLexicalRule read FLexicalRule;
     property WhiteSpace: TLandrixXmlXsdWhiteSpace read FWhiteSpace;
@@ -1186,10 +1224,87 @@ begin
       end;
 end;
 
+procedure AtomicFromValue(const Value: TLandrixXmlXsdValue; var Item: TLandrixXmlXsdAtomicValue);
+begin
+  Item.Primitive := Value.Primitive;
+  Item.Text := Value.Text;
+  Item.RawText := Value.RawText;
+  Item.MemberType := Value.MemberType;
+  Item.Length := Value.Length;
+  Item.DecimalValue := Value.DecimalValue;
+  Item.DoubleValue := Value.DoubleValue;
+  Item.BooleanValue := Value.BooleanValue;
+  Item.DateTime := Value.DateTime;
+end;
+
+function ValueOfItem(const Item: TLandrixXmlXsdAtomicValue): TLandrixXmlXsdValue;
+begin
+  Result.Primitive := Item.Primitive;
+  Result.Text := Item.Text;
+  Result.RawText := Item.RawText;
+  Result.MemberType := Item.MemberType;
+  Result.Length := Item.Length;
+  Result.DecimalValue := Item.DecimalValue;
+  Result.DoubleValue := Item.DoubleValue;
+  Result.BooleanValue := Item.BooleanValue;
+  Result.DateTime := Item.DateTime;
+  Result.Variety := xsvAtomic;
+  Result.Items := nil;
+end;
+
+{ The kind of a list value as Xerces compares it (ValidatedInfo
+  .isComparable): "U" for a union item type, else "L" and the item
+  type's primitive type, anySimpleType counting as string. }
+function ListKind(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
+var
+  ItemType: TLandrixXmlXsdSimpleType;
+  P: TLandrixXmlXsdPrimitive;
+begin
+  ItemType := nil;
+  if Value.MemberType <> nil then
+    ItemType := Value.MemberType.ItemType;
+  if ItemType = nil then
+    Result := 'L'
+  else if ItemType.Variety = xsvUnion then
+    Result := 'U'
+  else
+  begin
+    P := ItemType.Primitive;
+    if P = xspAnySimpleType then
+      P := xspString;
+    Result := 'L' + LandrixXmlStringToUtf8(IntToStr(Ord(P)));
+  end;
+end;
+
+{ Lists are equal if their kinds and items are; they have no order. }
+function CompareLists(const A, B: TLandrixXmlXsdValue): Integer;
+var
+  I: Integer;
+begin
+  Result := LandrixXmlXsdIncomparable;
+  if (A.Variety <> xsvList) or (B.Variety <> xsvList) or (Length(A.Items) <> Length(B.Items)) or
+    (ListKind(A) <> ListKind(B)) then
+    Exit;
+  for I := 0 to Integer(Length(A.Items)) - 1 do
+  begin
+    if LandrixXmlXsdCompareValues(ValueOfItem(A.Items[I]), ValueOfItem(B.Items[I])) <> 0 then
+      Exit;
+  end;
+  Result := 0;
+end;
+
 function LandrixXmlXsdCompareValues(const A, B: TLandrixXmlXsdValue): Integer;
 begin
   Result := LandrixXmlXsdIncomparable;
-  if A.Primitive <> B.Primitive then
+  if (A.Variety = xsvList) or (B.Variety = xsvList) then
+  begin
+    Result := CompareLists(A, B);
+    Exit;
+  end;
+  { anySimpleType and string values compare as strings (Xerces
+    ValidatedInfo.isComparable) }
+  if (A.Primitive <> B.Primitive) and not ((A.Primitive in [xspAnySimpleType, xspString]) and
+    (B.Primitive in [xspAnySimpleType, xspString])) then
     Exit;
   case A.Primitive of
     xspDecimal:
@@ -1283,6 +1398,7 @@ begin
   FWhiteSpace := Base.FWhiteSpace;
   FLexicalRule := Base.FLexicalRule;
   FMembers := Base.FMembers;
+  FItemType := Base.FItemType;
 end;
 
 constructor TLandrixXmlXsdSimpleType.CreateUnion(const Members: array of TLandrixXmlXsdSimpleType;
@@ -1305,6 +1421,39 @@ begin
       raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Union member type missing');
     FMembers[I] := Members[I];
   end;
+end;
+
+function ContainsList(T: TLandrixXmlXsdSimpleType): Boolean;
+var
+  I: Integer;
+begin
+  Result := T.Variety = xsvList;
+  if T.Variety = xsvUnion then
+    for I := 0 to Integer(Length(T.FMembers)) - 1 do
+      if ContainsList(T.FMembers[I]) then
+      begin
+        Result := True;
+        Exit;
+      end;
+end;
+
+constructor TLandrixXmlXsdSimpleType.CreateList(const NamespaceUri, Name: TLandrixXmlUtf8;
+  ItemType: TLandrixXmlXsdSimpleType);
+begin
+  inherited Create;
+  InitFacets;
+  if ItemType = nil then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'List item type missing');
+  if ContainsList(ItemType) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument,
+      'The item type of a list cannot be a list or a union with a list member (cos-st-restricts.2.1)');
+  FNamespaceUri := NamespaceUri;
+  FName := Name;
+  FBase := LandrixXmlXsdBuiltinType('anySimpleType');
+  FVariety := xsvList;
+  FPrimitive := xspAnySimpleType;
+  FWhiteSpace := xwsCollapse;
+  FItemType := ItemType;
 end;
 
 destructor TLandrixXmlXsdSimpleType.Destroy;
@@ -1398,7 +1547,12 @@ begin
     raise ELandrixXmlError.CreateCode(xecUnsupported, 'Facets on union types are not supported');
   if FBuiltin then
     raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'Built-in types cannot get facets');
-  if not FacetApplies(FPrimitive, Facet) then
+  { the facets of a list belong to a restriction of it (its values are
+    lists, the list type itself derives from anySimpleType) }
+  if (FVariety = xsvList) and (FBase.FVariety <> xsvList) then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'Facets of a list type go on a restriction of it');
+  if (FVariety = xsvList) and not (Facet in [xsfLength, xsfMinLength, xsfMaxLength, xsfPattern,
+    xsfEnumeration, xsfWhiteSpace]) or (FVariety <> xsvList) and not FacetApplies(FPrimitive, Facet) then
     raise ELandrixXmlError.CreateCode(xecInvalidArgument,
       'Facet not allowed for this type (cos-applicable-facets)');
   case Facet of
@@ -1431,7 +1585,8 @@ begin
           Mode := xwsCollapse
         else
           raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Invalid whiteSpace value ' + Quote(Value));
-        if (FPrimitive <> xspString) and (FPrimitive <> xspAnySimpleType) and (Mode <> xwsCollapse) then
+        if ((FVariety = xsvList) or (FPrimitive <> xspString) and (FPrimitive <> xspAnySimpleType)) and
+          (Mode <> xwsCollapse) then
           raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'whiteSpace must be collapse for this type');
         if Mode < FBase.FWhiteSpace then
           raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'whiteSpace cannot be weaker than the base type''s');
@@ -1844,7 +1999,21 @@ begin
 end;
 
 function LandrixXmlXsdValueText(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
+var
+  I: Integer;
 begin
+  if Value.Variety = xsvList then
+  begin
+    { the items' canonical forms, separated by spaces }
+    Result := '';
+    for I := 0 to Integer(Length(Value.Items)) - 1 do
+    begin
+      if I > 0 then
+        Result := Result + ' ';
+      Result := Result + LandrixXmlXsdValueText(ValueOfItem(Value.Items[I]));
+    end;
+    Exit;
+  end;
   Result := ValueTextAs(Value, (Value.MemberType <> nil) and (Value.MemberType.LexicalRule = xslInteger));
 end;
 
@@ -1852,7 +2021,33 @@ function LandrixXmlXsdValueKey(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf
 var
   P: TLandrixXmlXsdPrimitive;
   D: TLandrixXmlXsdDateTime;
+  I: Integer;
+  K: TLandrixXmlUtf8;
+  ItemType: TLandrixXmlXsdSimpleType;
 begin
+  if Value.Variety = xsvList then
+  begin
+    { as Xerces: a list of a union item type ("U") never equals a list of
+      an atomic item type ("L" and the item type's primitive type, which
+      counts also for an empty list); then the number of items and each
+      item's key with its length }
+    ItemType := nil;
+    if Value.MemberType <> nil then
+      ItemType := Value.MemberType.ItemType;
+    if (ItemType <> nil) and (ItemType.Variety = xsvUnion) then
+      Result := 'U'
+    else if ItemType <> nil then
+      Result := 'L' + LandrixXmlStringToUtf8(IntToStr(Ord(ItemType.Primitive))) + '/'
+    else
+      Result := 'L/';
+    Result := Result + LandrixXmlStringToUtf8(IntToStr(Integer(Length(Value.Items))));
+    for I := 0 to Integer(Length(Value.Items)) - 1 do
+    begin
+      K := LandrixXmlXsdValueKey(ValueOfItem(Value.Items[I]));
+      Result := Result + ':' + LandrixXmlStringToUtf8(IntToStr(Integer(Length(K)))) + ':' + K;
+    end;
+    Exit;
+  end;
   P := ValuePrimitive(Value);
   case P of
     xspDecimal:
@@ -2102,6 +2297,55 @@ begin
     Result := LandrixXmlUtf8ToString(T.FName);
 end;
 
+{ As Xerces: the patterns on the whole value, each item, then the facets
+  of the list. }
+function TLandrixXmlXsdSimpleType.ValidateList(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
+  out Error: TLandrixXmlXsdError): Boolean;
+var
+  Normalized, Token: TLandrixXmlUtf8;
+  T: TLandrixXmlXsdSimpleType;
+  Item: TLandrixXmlXsdValue;
+  I, Start, Count: Integer;
+  TypeName: string;
+begin
+  Result := False;
+  Normalized := LandrixXmlXsdNormalizeWhiteSpace(Text, xwsCollapse);
+  TypeName := DisplayName;
+  Value.Primitive := xspAnySimpleType;
+  Value.Text := Normalized;
+  Value.RawText := Text;
+  Value.MemberType := Self;
+  Value.Length := 0;
+  Value.Variety := xsvList;
+  Value.Items := nil;
+  T := Self;
+  while T <> nil do
+  begin
+    if not T.CheckPatterns(Value, TypeName, Error) then
+      Exit;
+    T := T.FBase;
+  end;
+  Count := 0;
+  I := 1;
+  while I <= Length(Normalized) do
+  begin
+    Start := I;
+    while (I <= Length(Normalized)) and (Normalized[I] <> ' ') do
+      Inc(I);
+    Token := Copy(Normalized, Start, I - Start);
+    Inc(I);
+    if not FItemType.Validate(Token, Item, Error) then
+      Exit;
+    if Count = Length(Value.Items) then
+      SetLength(Value.Items, 2 * Count + 4);
+    AtomicFromValue(Item, Value.Items[Count]);
+    Inc(Count);
+  end;
+  SetLength(Value.Items, Count);
+  Value.Length := Count;
+  Result := CheckFacets(Value, Error);
+end;
+
 function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
   out Error: TLandrixXmlXsdError): Boolean;
 var
@@ -2115,6 +2359,13 @@ begin
   Result := False;
   Error.Code := '';
   Error.Message := '';
+  Value.Variety := xsvAtomic;
+  Value.Items := nil;
+  if FVariety = xsvList then
+  begin
+    Result := ValidateList(Text, Value, Error);
+    Exit;
+  end;
   if FVariety = xsvUnion then
   begin
     for I := 0 to Integer(Length(FMembers)) - 1 do
@@ -2219,6 +2470,17 @@ begin
   end;
 end;
 
+{ A built-in list type: at least one item. }
+procedure AddList(const Name, ItemName: TLandrixXmlUtf8);
+var
+  T: TLandrixXmlXsdSimpleType;
+begin
+  T := TLandrixXmlXsdSimpleType.CreateList(LandrixXmlXsdNamespace, Name, Find(ItemName));
+  T.FBuiltin := True;
+  T.FMinLength := 1;
+  BuiltinTypes.Add(T);
+end;
+
 procedure CreateBuiltinTypes;
 begin
   BuiltinTypes := TObjectList.Create(True);
@@ -2260,6 +2522,8 @@ begin
   Add('hexBinary', 'anySimpleType', xspHexBinary, xwsCollapse, xslNone);
   Add('base64Binary', 'anySimpleType', xspBase64Binary, xwsCollapse, xslNone);
   Add('anyURI', 'anySimpleType', xspAnyURI, xwsCollapse, xslNone);
+  AddList('NMTOKENS', 'NMTOKEN');
+  AddList('IDREFS', 'IDREF');
 end;
 
 function LandrixXmlXsdBuiltinType(const LocalName: TLandrixXmlUtf8): TLandrixXmlXsdSimpleType;

@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="ints"><xs:list itemType="xs:int"/></xs:simpleType>
+  <xs:simpleType name="small">
+    <xs:list><xs:simpleType><xs:restriction base="xs:integer"><xs:maxInclusive value="9"/></xs:restriction></xs:simpleType></xs:list>
+  </xs:simpleType>
+  <xs:simpleType name="two"><xs:restriction base="ints"><xs:length value="2"/></xs:restriction></xs:simpleType>
+  <xs:simpleType name="range"><xs:restriction base="ints"><xs:minLength value="1"/><xs:maxLength value="3"/></xs:restriction></xs:simpleType>
+  <xs:simpleType name="enum">
+    <xs:restriction base="ints"><xs:enumeration value="1 2"/><xs:enumeration value=" 03  4 "/></xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="pat"><xs:restriction base="ints"><xs:pattern value="\d( \d)*"/></xs:restriction></xs:simpleType>
+  <xs:simpleType name="numOrDate"><xs:union memberTypes="xs:int xs:date"/></xs:simpleType>
+  <xs:simpleType name="mixed"><xs:list itemType="numOrDate"/></xs:simpleType>
+  <xs:simpleType name="intsOrWord"><xs:union memberTypes="ints xs:token"/></xs:simpleType>
+  <xs:simpleType name="one"><xs:restriction base="ints"><xs:pattern value="1"/></xs:restriction></xs:simpleType>
+  <xs:simpleType name="oneOrMixed"><xs:union memberTypes="one mixed"/></xs:simpleType>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="ints" type="ints" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="small" type="small" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="two" type="two" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="range" type="range" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="enum" type="enum" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="pat" type="pat" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="mixed" type="mixed" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="u" type="intsOrWord" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="tok" type="xs:NMTOKENS" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="fixed" type="ints" fixed="1 2" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="kind" type="oneOrMixed" fixed="1" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="a" type="ints"/>
+      <xs:attribute name="t" type="xs:NMTOKENS"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

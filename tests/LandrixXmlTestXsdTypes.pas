@@ -322,6 +322,92 @@ begin
   end;
 end;
 
+{ list types: items, their member types, length facets, comparison, keys }
+procedure TestLists;
+var
+  L, L2, L3, R, UL: TLandrixXmlXsdSimpleType;
+  V, W: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+begin
+  L := TLandrixXmlXsdSimpleType.CreateList('', U('decs'), LandrixXmlXsdBuiltinType('decimal'));
+  R := nil;
+  UL := nil;
+  try
+    Check(L.Variety = xsvList, 'variety');
+    Check(L.ItemType = LandrixXmlXsdBuiltinType('decimal'), 'item type');
+    Check(L.Validate(U(' 1.50  2 '), V, Error), 'a list of decimals');
+    Check(V.Variety = xsvList, 'list value');
+    CheckEquals(2, V.Length, 'length = items');
+    CheckEquals(2, Integer(Length(V.Items)), 'two items');
+    CheckEqualsUtf8(U('1.50 2'), V.Text, 'collapsed text');
+    Check(V.Items[0].MemberType = LandrixXmlXsdBuiltinType('decimal'), 'item member type');
+    CheckEqualsUtf8(U('1.5 2.0'), LandrixXmlXsdValueText(V), 'canonical text');
+    Check(L.Validate(U('1.5 2.0'), W, Error), 'the same list');
+    CheckEquals(0, LandrixXmlXsdCompareValues(V, W), 'equal lists');
+    CheckEqualsUtf8(LandrixXmlXsdValueKey(V), LandrixXmlXsdValueKey(W), 'equal keys');
+    Check(L.Validate(U('1.5'), W, Error), 'one item');
+    CheckEquals(LandrixXmlXsdIncomparable, LandrixXmlXsdCompareValues(V, W), 'different lengths');
+    Check(LandrixXmlXsdValueKey(W) <> LandrixXmlXsdValueKey(Val('decimal', '1.5')), 'a list key is not an item key');
+    Check(L.Validate(U(''), W, Error), 'an empty list');
+    CheckEquals(0, W.Length, 'no items');
+    Check(not L.Validate(U('1 x'), W, Error), 'a bad item');
+    CheckEqualsStr('cvc-datatype-valid.1.2.1', Error.Code, 'the item''s error');
+    try
+      L.AddFacet(xsfEnumeration, U('1 2'));
+      FailNotRaised('ELandrixXmlError for a facet on the list type itself');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidOperation), Ord(E.Code), 'a facet on the list type itself');
+    end;
+    R := TLandrixXmlXsdSimpleType.CreateRestriction(L, '', U('two'));
+    R.AddFacet(xsfLength, U('2'));
+    Check(R.ItemType = L.ItemType, 'a restriction keeps the item type');
+    Check(not R.Validate(U('1'), W, Error), 'length 2');
+    CheckEqualsStr('cvc-length-valid', Error.Code, 'length facet');
+    try
+      R.AddFacet(xsfMaxInclusive, U('3'));
+      FailNotRaised('ELandrixXmlError for maxInclusive on a list');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'maxInclusive on a list');
+    end;
+    { anySimpleType and string items compare as strings, as in Xerces }
+    L2 := TLandrixXmlXsdSimpleType.CreateList('', U('any'), LandrixXmlXsdBuiltinType('anySimpleType'));
+    L3 := TLandrixXmlXsdSimpleType.CreateList('', U('str'), LandrixXmlXsdBuiltinType('string'));
+    try
+      Check(L2.Validate(U('a b'), V, Error), 'a list of anySimpleType');
+      Check(L3.Validate(U('a b'), W, Error), 'a list of string');
+      CheckEquals(0, LandrixXmlXsdCompareValues(V, W), 'anySimpleType and string lists');
+    finally
+      L3.Free;
+      L2.Free;
+    end;
+    CheckEquals(0, LandrixXmlXsdCompareValues(Val('anySimpleType', 'a'), Val('string', 'a')),
+      'anySimpleType and string values');
+    Check(LandrixXmlXsdBuiltinType('NMTOKENS').Variety = xsvList, 'NMTOKENS');
+    Check(not LandrixXmlXsdBuiltinType('IDREFS').Validate(U(' '), W, Error), 'IDREFS needs an item');
+    CheckEqualsStr('cvc-minLength-valid', Error.Code, 'IDREFS minLength');
+    Check(LandrixXmlXsdBuiltinType('ENTITIES') = nil, 'ENTITIES is not supported');
+    { a list of lists, or of a union with a list member }
+    UL := TLandrixXmlXsdSimpleType.CreateUnion([LandrixXmlXsdBuiltinType('int'), L], '', U('ul'));
+    try
+      L2 := TLandrixXmlXsdSimpleType.CreateList('', U('bad'), UL);
+      L2.Free;
+      FailNotRaised('ELandrixXmlError for a list of a union with a list');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'list of a union with a list');
+    end;
+    Check(UL.Validate(U('1 2'), W, Error), 'a union with a list member');
+    Check(W.MemberType = L, 'the list member');
+    Check(W.Variety = xsvList, 'a list value');
+  finally
+    UL.Free;
+    R.Free;
+    L.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XsdTypes.GeneratedData', TestGeneratedData);
@@ -330,6 +416,7 @@ begin
   RegisterTest('XsdTypes.UnionFacets', TestUnionFacets);
   RegisterTest('XsdTypes.CompareValues', TestCompareValues);
   RegisterTest('XsdTypes.ValueFields', TestValueFields);
+  RegisterTest('XsdTypes.Lists', TestLists);
 end;
 
 end.

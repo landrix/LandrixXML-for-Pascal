@@ -180,6 +180,8 @@ type
     procedure CheckAttributes(var F: TLandrixXmlXsdFrame; Line, Column: Integer);
     procedure AddDefaultAttributes(T: TLandrixXmlXsdComplexType);
     function CheckIdValue(T: TLandrixXmlXsdSimpleType; const Value: TLandrixXmlXsdValue; Line, Column: Integer): Boolean;
+    function CheckIdItem(Member: TLandrixXmlXsdSimpleType; const Text: TLandrixXmlUtf8;
+      Line, Column: Integer): Boolean;
     function NewState: TLandrixXmlXsdContentState;
     procedure IdcError(const Code, Message: string; C: TLandrixXmlXsdIdentityConstraint);
     function StoreFor(C: TLandrixXmlXsdIdentityConstraint; Depth: Integer): TObject;
@@ -1144,16 +1146,35 @@ function TLandrixXmlXsdValidator.CheckIdValue(T: TLandrixXmlXsdSimpleType;
   const Value: TLandrixXmlXsdValue; Line, Column: Integer): Boolean;
 var
   Member: TLandrixXmlXsdSimpleType;
+  I: Integer;
 begin
-  Result := True;
+  if Value.Variety = xsvList then
+  begin
+    { as Xerces: the items from the last one, up to a repeated ID }
+    Result := True;
+    for I := Integer(Length(Value.Items)) - 1 downto 0 do
+      if not CheckIdItem(Value.Items[I].MemberType, Value.Items[I].Text, Line, Column) then
+      begin
+        Result := False;
+        Exit;
+      end;
+    Exit;
+  end;
   Member := Value.MemberType;
   if Member = nil then
     Member := T;
+  Result := CheckIdItem(Member, Value.Text, Line, Column);
+end;
+
+function TLandrixXmlXsdValidator.CheckIdItem(Member: TLandrixXmlXsdSimpleType; const Text: TLandrixXmlUtf8;
+  Line, Column: Integer): Boolean;
+begin
+  Result := True;
   if Member.IsDerivedFrom(FIdType) then
   begin
-    if not FIds.Add('', Value.Text, Member) then
+    if not FIds.Add('', Text, Member) then
     begin
-      AddError('cvc-id.2', 'There are multiple occurrences of ID value ' + Q(Value.Text) + '.', Line, Column,
+      AddError('cvc-id.2', 'There are multiple occurrences of ID value ' + Q(Text) + '.', Line, Column,
         CurrentPath, '', 0, nil);
       Result := False;
     end;
@@ -1162,7 +1183,7 @@ begin
   begin
     if FIdRefCount = Length(FIdRefs) then
       SetLength(FIdRefs, 2 * FIdRefCount + 8);
-    FIdRefs[FIdRefCount] := Value.Text;
+    FIdRefs[FIdRefCount] := Text;
     Inc(FIdRefCount);
   end;
 end;
@@ -1609,15 +1630,130 @@ begin
   Dec(FDepth);
 end;
 
+{ Java's String.hashCode of S over UTF-16 code units, spread as
+  java.util.HashMap does (32 bits, unsigned). }
+function JavaHash(const S: TLandrixXmlUtf8): Int64;
+var
+  H: Int64;
+  P, N: Integer;
+  C: Cardinal;
+begin
+  H := 0;
+  P := 1;
+  while P <= Length(S) do
+  begin
+    N := LandrixXmlDecodeUtf8(PAnsiChar(@S[P]), Length(S) - P + 1, C);
+    if N = 0 then
+    begin
+      C := Ord(S[P]);
+      N := 1;
+    end;
+    if C >= $10000 then
+    begin
+      H := (H * 31 + $D800 + ((C - $10000) shr 10)) and $FFFFFFFF;
+      H := (H * 31 + $DC00 + ((C - $10000) and $3FF)) and $FFFFFFFF;
+    end
+    else
+      H := (H * 31 + C) and $FFFFFFFF;
+    Inc(P, N);
+  end;
+  Result := H xor (H shr 16);
+end;
+
+{ Sorts unique keys ascending (shell sort). }
+procedure SortKeys(var Keys: array of Int64);
+var
+  Gap, I, J: Integer;
+  K: Int64;
+begin
+  Gap := 1;
+  while Gap < Integer(Length(Keys)) div 3 do
+    Gap := 3 * Gap + 1;
+  while Gap > 0 do
+  begin
+    for I := Gap to Integer(Length(Keys)) - 1 do
+    begin
+      K := Keys[I];
+      J := I;
+      while (J >= Gap) and (Keys[J - Gap] > K) do
+      begin
+        Keys[J] := Keys[J - Gap];
+        Dec(J, Gap);
+      end;
+      Keys[J] := K;
+    end;
+    Gap := Gap div 3;
+  end;
+end;
+
+{ Xerces collects the IDREFs without an ID in a java.util.HashSet and
+  reports them in its order: by bucket, within a bucket in the order of
+  their first reference. The table starts with 16 buckets and doubles
+  when it holds more than three quarters of its size, or when a ninth
+  entry lands in one bucket while it has fewer than 64 buckets (with 64
+  or more, Java turns such a bucket into a tree, whose order is not
+  reproduced here). }
 procedure TLandrixXmlXsdValidator.EndDocument(Line, Column: Integer);
 var
-  I: Integer;
+  I, J, Count, Capacity, B: Integer;
+  Seen: TLandrixXmlXsdNameMap;
+  Missing: TLandrixXmlUtf8Array;
+  Keys, Hashes: array of Int64;
+  Sizes: array of Integer;
 begin
   if Stopped then
     Exit;
-  for I := 0 to FIdRefCount - 1 do
-    if FIds.Find('', FIdRefs[I]) = nil then
-      AddError('cvc-id.1', 'There is no ID/IDREF binding for IDREF ' + Q(FIdRefs[I]) + '.', Line, Column, '', '', 0, nil);
+  Missing := nil;
+  Keys := nil;
+  Hashes := nil;
+  Sizes := nil;
+  Count := 0;
+  Seen := TLandrixXmlXsdNameMap.Create;
+  try
+    for I := 0 to FIdRefCount - 1 do
+      if (FIds.Find('', FIdRefs[I]) = nil) and Seen.Add('', FIdRefs[I], Self) then
+      begin
+        if Count = Length(Missing) then
+          SetLength(Missing, 2 * Count + 8);
+        Missing[Count] := FIdRefs[I];
+        Inc(Count);
+      end;
+  finally
+    Seen.Free;
+  end;
+  if Count = 0 then
+    Exit;
+  SetLength(Hashes, Count);
+  for I := 0 to Count - 1 do
+    Hashes[I] := JavaHash(Missing[I]);
+  { insert them as java.util.HashMap.putVal does }
+  Capacity := 16;
+  SetLength(Sizes, Capacity);
+  for I := 0 to Count - 1 do
+  begin
+    B := Integer(Hashes[I] and (Capacity - 1));
+    Inc(Sizes[B]);
+    if ((Sizes[B] > 8) and (Capacity < 64)) or (I + 1 > Capacity div 4 * 3) then
+    begin
+      { a full bucket (treeifyBin resizes) and the size threshold each
+        double the table; both can happen for one entry }
+      if (Sizes[B] > 8) and (Capacity < 64) then
+        Capacity := Capacity * 2;
+      if I + 1 > Capacity div 4 * 3 then
+        Capacity := Capacity * 2;
+      Sizes := nil;
+      SetLength(Sizes, Capacity);
+      for J := 0 to I do
+        Inc(Sizes[Integer(Hashes[J] and (Capacity - 1))]);
+    end;
+  end;
+  SetLength(Keys, Count);
+  for I := 0 to Count - 1 do
+    Keys[I] := (Hashes[I] and (Capacity - 1)) * Count + I;
+  SortKeys(Keys);
+  for I := 0 to Count - 1 do
+    AddError('cvc-id.1', 'There is no ID/IDREF binding for IDREF ' + Q(Missing[Integer(Keys[I] mod Count)]) + '.', Line,
+      Column, '', '', 0, nil);
 end;
 
 { --- adapters ---------------------------------------------------------- }

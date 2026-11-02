@@ -1,0 +1,147 @@
+file bad.xml
+error 1 44 cvc-minLength-valid Value '' with length = '0' is not facet-valid with respect to minLength '1' for type 'IDREFS'.
+error 1 44 cvc-attribute.3 The value '' of attribute 'refs' on element 'e' is not valid with respect to its type, 'IDREFS'.
+error 1 70 cvc-id.2 There are multiple occurrences of ID value 'a'.
+error 1 70 cvc-attribute.3 The value 'b a' of attribute 'ids' on element 'g' is not valid with respect to its type, 'idlist'.
+error 1 90 cvc-id.2 There are multiple occurrences of ID value 'c'.
+error 1 90 cvc-attribute.3 The value 'c d c e c' of attribute 'ids' on element 'g' is not valid with respect to its type, 'idlist'.
+error 1 119 cvc-datatype-valid.1.2.1 '1a' is not a valid value for 'NCName'.
+error 1 119 cvc-type.3.1.3 The value '1a' of element 'refs' is not valid.
+error 1 123 cvc-id.1 There is no ID/IDREF binding for IDREF 'q'.
+error 1 123 cvc-id.1 There is no ID/IDREF binding for IDREF 'b'.
+error 1 123 cvc-id.1 There is no ID/IDREF binding for IDREF 'x'.
+error 1 123 cvc-id.1 There is no ID/IDREF binding for IDREF 'y'.
+error 1 123 cvc-id.1 There is no ID/IDREF binding for IDREF 'z'.
+
+file collide.xml
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i207'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i119'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i108'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i91'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i80'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i191'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i180'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i19'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'i9'.
+error 1 82 cvc-id.1 There is no ID/IDREF binding for IDREF 'x'.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 87 cvc-id.1 There is no ID/IDREF binding for IDREF 'b'.
+error 2 87 cvc-id.1 There is no ID/IDREF binding for IDREF 'c'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="0"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c">1.005</g><g ids="d"/><refs>a  c</refs></r>\n
+error 2 72 cvc-complex-type.2.1 Element 'g' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u=""/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 37 cvc-datatype-valid.1.2.3 '' is not a valid value of union type 'refOrRefs'.
+error 2 37 cvc-attribute.3 The value '' of attribute 'u' on element 'e' is not valid with respect to its type, 'refOrRefs'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g/><refs>a  c</refs></r>\n
+error 2 89 cvc-id.1 There is no ID/IDREF binding for IDREF 'd'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><g id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 28 cvc-complex-type.3.2.2 Attribute 'id' is not allowed to appear in element 'g'.
+error 2 28 cvc-complex-type.3.2.2 Attribute 'refs' is not allowed to appear in element 'g'.
+error 2 40 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{g, refs}' is expected.
+error 2 97 cvc-id.1 There is no ID/IDREF binding for IDREF 'a'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d">true</e><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 47 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs unknown="1">a  c</refs></r>\n
+error 2 94 cvc-type.3.1.1 Element 'refs' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d">  a  b  </e><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 51 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 73 cvc-id.1 There is no ID/IDREF binding for IDREF 'a'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d" unknown="1"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 52 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'e'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><refs>a  c</refs></r>\n
+error 2 85 cvc-id.1 There is no ID/IDREF binding for IDREF 'd'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="2001-02-30"/><refs>a  c</refs></r>\n
+error 2 85 cvc-datatype-valid.1.2.1 '2001-02-30' is not a valid value for 'NCName'.
+error 2 85 cvc-attribute.3 The value '2001-02-30' of attribute 'ids' on element 'g' is not valid with respect to its type, 'idlist'.
+error 2 106 cvc-id.1 There is no ID/IDREF binding for IDREF 'd'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids=""/><refs>a  c</refs></r>\n
+error 2 96 cvc-id.1 There is no ID/IDREF binding for IDREF 'd'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c" unknown="1"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 76 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'g'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"></g><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="d"/><g ids="b c"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 78 cvc-id.2 There are multiple occurrences of ID value 'c'.
+error 2 78 cvc-attribute.3 The value 'b c' of attribute 'ids' on element 'g' is not valid with respect to its type, 'idlist'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7">x</e><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 54 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><g ids="b c"/><g ids="d"/><e u="7"/><refs>a  c</refs></r>\n
+error 2 76 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{g, refs}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 90 cvc-id.1 There is no ID/IDREF binding for IDREF 'a'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><refs>a  c</refs><g ids="b c"/><g ids="d"/></r>\n
+error 2 81 cvc-complex-type.2.4.a Invalid content was found starting with element 'g'. One of '{refs}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><e>a  c</e></r>\n
+error 2 79 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{g, refs}' is expected.
+error 2 87 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e u="c d"/><e id="a" refs="a b d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 83 cvc-id.1 There is no ID/IDREF binding for IDREF 'b'.
+error 2 83 cvc-id.1 There is no ID/IDREF binding for IDREF 'c'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7" unknown="1"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 62 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'e'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d" unknown="1"/><refs>a  c</refs></r>\n
+error 2 88 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'g'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d">x</e><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 44 cvc-complex-type.2.1 Element 'e' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><e/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="-5"/><e u="c d"/><e u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 25 cvc-datatype-valid.1.2.1 '-5' is not a valid value for 'NCName'.
+error 2 25 cvc-attribute.3 The value '-5' of attribute 'refs' on element 'e' is not valid with respect to its type, 'IDREFS'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><g ids="d"/><e u="c d"/><e u="7"/><g ids="b c"/><refs>a  c</refs></r>\n
+error 2 52 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{g, refs}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="7"/><g ids="b c"/><e u="c d"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 64 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{g, refs}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<r><e id="a" refs="a b d"/><e u="c d"/><g u="7"/><g ids="b c"/><g ids="d"/><refs>a  c</refs></r>\n
+error 2 50 cvc-complex-type.3.2.2 Attribute 'u' is not allowed to appear in element 'g'.

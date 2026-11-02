@@ -337,11 +337,11 @@ and the parsers also take a pointer and a length (`...Buf`).
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 24,156
-  pass and 13,920 use a construct this library does not support (above
-  all `xs:list`, `xs:duration`, `xs:all`, union facets, `xs:QName`,
-  `xs:NOTATION`, `xsi:type`); they are reported as unsupported, never
-  accepted silently. Of the 1,257 failures 1,220 are invalid schemas that
+  load or be rejected, documents that must be valid or invalid) 34,790
+  pass and 3,246 use a construct this library does not support (above
+  all `xs:duration`, `xs:QName`, `xs:all`, union facets, substitution
+  groups, `xs:NOTATION`, `xsi:type`); they are reported as unsupported,
+  never accepted silently. Of the 1,297 failures 1,255 are invalid schemas that
   load, as the loader does not prove derivations and other schema
   component constraints; 3 more stop at the resource limit of the
   content model check. The passing tests are a baseline for the CI.
