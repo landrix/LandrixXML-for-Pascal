@@ -1,0 +1,5 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Record" type="Type2"/>
+  <xs:complexType name="Type1"><xs:simpleContent><xs:extension base="xs:int"><xs:attribute name="Field1"/></xs:extension></xs:simpleContent></xs:complexType>
+  <xs:complexType name="Type2"><xs:complexContent><xs:extension base="Type1"><xs:attribute name="Field2"/></xs:extension></xs:complexContent></xs:complexType>
+</xs:schema>

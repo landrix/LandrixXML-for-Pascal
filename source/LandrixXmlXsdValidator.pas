@@ -1188,8 +1188,13 @@ var
   Present: Boolean;
   Wildcard: TLandrixXmlXsdWildcard;
   Valid: Boolean;
+  WildId, UseId: TLandrixXmlUtf8;
 begin
   T := F.ComplexType;
+  { the first attribute matched by the wildcard whose type is ID: a second
+    one (cvc-complex-type.5.1) or an ID among the attribute uses
+    (cvc-complex-type.5.2) is an error, checked as Xerces does }
+  WildId := '';
   for I := 0 to FAttrCount - 1 do
   begin
     if IsXsiBuiltin(FAttrs[I]) then
@@ -1225,6 +1230,15 @@ begin
           Q(F.Name) + '.', Line, Column, Wildcard);
       Continue;
     end;
+    if (Use = nil) and Decl.SimpleType.IsDerivedFrom(FIdType) then
+    begin
+      if WildId <> '' then
+        Report('cvc-complex-type.5.1', 'In element ' + Q(F.Name) + ', attribute ' + Q(Decl.Name) +
+          ' is a Wild ID. But there is already a Wild ID ' + Q(WildId) + '. There can be only one.', Line, Column,
+          Decl)
+      else
+        WildId := Decl.Name;
+    end;
     Valid := Decl.SimpleType.Validate(FAttrs[I].Value, Value, Error);
     if not Valid then
       Report(Error.Code, Error.Message, Line, Column, Decl)
@@ -1253,6 +1267,17 @@ begin
   end;
   if T = nil then
     Exit;
+  if WildId <> '' then
+  begin
+    UseId := '';
+    for I := 0 to T.AttributeCount - 1 do
+      if (UseId = '') and T.Attributes[I].Decl.SimpleType.IsDerivedFrom(FIdType) then
+        UseId := T.Attributes[I].Decl.Name;
+    if UseId <> '' then
+      Report('cvc-complex-type.5.2', 'In element ' + Q(F.Name) + ', attribute ' + Q(WildId) +
+        ' is a Wild ID. But there is already an attribute ' + Q(UseId) + ' derived from ID among the ' +
+        '{attribute uses}.', Line, Column, T);
+  end;
   for I := 0 to T.AttributeCount - 1 do
   begin
     Use := T.Attributes[I];

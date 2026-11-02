@@ -225,6 +225,8 @@ type
     Original: TPending;
     Component: TObject;
     State: TPendingState;
+    { a group being resolved: the element depth it started at }
+    ResolveDepth: Integer;
   end;
 
   { An attribute use being collected, or a prohibition. }
@@ -258,6 +260,9 @@ type
     FFixups: TObjectList;
     FSkippedImports: TStringList;
     FCurrent: TPending;
+    { the element declarations whose types are being built: a group
+      reference is circular only within the same element }
+    FElementDepth: Integer;
     procedure Fail(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Msg: string);
     procedure Unsupported(Doc: TSchemaDoc; Node: TLandrixXmlNode; const What: string);
     function LoadDom(const FileName: string): TLandrixXmlDocument;
@@ -849,30 +854,36 @@ begin
     if FMaps[pkElement].Find(P.NamespaceUri, P.Name) = P then
       FSet.Elements.Put(D.NamespaceUri, D.Name, D);
   end;
-  { the type }
-  if Attr(Node, 'type', Value) then
-  begin
-    ResolveTypeRef(Doc, Node, 'type', Simple, Complex, TypePending);
-    D.SimpleType := Simple;
-    D.ComplexType := Complex;
-  end;
-  Child := Node.FirstChildElement;
-  while Child <> nil do
-  begin
-    if IsXs(Child, 'complexType') or IsXs(Child, 'simpleType') then
+  { the type: a group referenced again inside it is not circular (the
+    element ends the recursion, it is declared already) }
+  Inc(FElementDepth);
+  try
+    if Attr(Node, 'type', Value) then
     begin
-      if (D.SimpleType <> nil) or (D.ComplexType <> nil) then
-        Fail(Doc, Child, 'element ' + Esc(Name) + ' has both a type attribute and a local type');
-      if IsXs(Child, 'complexType') then
-        D.ComplexType := BuildComplexType(Doc, Child)
-      else
-        D.SimpleType := BuildSimpleType(Doc, Child, '', nil);
-    end
-    else if IsXs(Child, 'unique') or IsXs(Child, 'key') or IsXs(Child, 'keyref') then
-      D.AddConstraint(BuildIdentity(Doc, Child))
-    else if not IsXs(Child, 'annotation') then
-      Fail(Doc, Child, 'unexpected element "' + Esc(Child.NameUtf8) + '" in element ' + Esc(Name));
-    Child := Child.NextSiblingElement;
+      ResolveTypeRef(Doc, Node, 'type', Simple, Complex, TypePending);
+      D.SimpleType := Simple;
+      D.ComplexType := Complex;
+    end;
+    Child := Node.FirstChildElement;
+    while Child <> nil do
+    begin
+      if IsXs(Child, 'complexType') or IsXs(Child, 'simpleType') then
+      begin
+        if (D.SimpleType <> nil) or (D.ComplexType <> nil) then
+          Fail(Doc, Child, 'element ' + Esc(Name) + ' has both a type attribute and a local type');
+        if IsXs(Child, 'complexType') then
+          D.ComplexType := BuildComplexType(Doc, Child)
+        else
+          D.SimpleType := BuildSimpleType(Doc, Child, '', nil);
+      end
+      else if IsXs(Child, 'unique') or IsXs(Child, 'key') or IsXs(Child, 'keyref') then
+        D.AddConstraint(BuildIdentity(Doc, Child))
+      else if not IsXs(Child, 'annotation') then
+        Fail(Doc, Child, 'unexpected element "' + Esc(Child.NameUtf8) + '" in element ' + Esc(Name));
+      Child := Child.NextSiblingElement;
+    end;
+  finally
+    Dec(FElementDepth);
   end;
   if (D.SimpleType = nil) and (D.ComplexType = nil) then
     D.ComplexType := FSet.AnyType;
@@ -1630,6 +1641,8 @@ var
   D: TLandrixXmlXsdElementDecl;
   W: TLandrixXmlXsdWildcard;
   Inner: TLandrixXmlNode;
+  OldState: TPendingState;
+  OldDepth: Integer;
 begin
   Result := nil;
   ParseOccurs(Self, Doc, Node, MinOccurs, MaxOccurs);
@@ -1665,7 +1678,7 @@ begin
       P := FindPending(pkGroup, Ns, LocalName);
     if P = nil then
       Fail(Doc, Node, MissingText('group', Ns, LocalName));
-    if P.State = psResolving then
+    if (P.State = psResolving) and (P.ResolveDepth = FElementDepth) then
       Fail(Doc, Node, 'circular group reference ' + QualifiedText(Ns, LocalName));
     Inner := P.Node.FirstChildElement;
     while IsXs(Inner, 'annotation') do
@@ -1674,11 +1687,19 @@ begin
       Fail(P.Doc, P.Node, 'an empty group definition');
     Saved := FCurrent;
     FCurrent := P;
+    OldState := P.State;
+    OldDepth := P.ResolveDepth;
     P.State := psResolving;
+    P.ResolveDepth := FElementDepth;
     try
       Result := BuildCompositor(P.Doc, Inner, MinOccurs, MaxOccurs);
     finally
-      P.State := psDone;
+      { a reference inside an element of the group: the outer one goes on }
+      if OldState = psResolving then
+        P.State := psResolving
+      else
+        P.State := psDone;
+      P.ResolveDepth := OldDepth;
       FCurrent := Saved;
     end;
     if MaxOccurs = 0 then
@@ -1825,7 +1846,7 @@ var
   Ns, LocalName, Value: TLandrixXmlUtf8;
   P, Saved: TPending;
   W, GroupWildcard: TLandrixXmlXsdWildcard;
-  I: Integer;
+  I, Before: Integer;
 begin
   Child := Parent.FirstChildElement;
   while Child <> nil do
@@ -1887,9 +1908,12 @@ begin
         else if Value <> 'optional' then
           Fail(Doc, Child, 'invalid use "' + Esc(Value) + '"');
       end;
+      { a prohibited use in an attribute group is dropped later, so it is
+        no duplicate }
       for I := 0 to Integer(Items.Count) - 2 do
         if (TAttributeItem(Items[I]).Decl.Name = Item.Decl.Name) and
-          (TAttributeItem(Items[I]).Decl.NamespaceUri = Item.Decl.NamespaceUri) then
+          (TAttributeItem(Items[I]).Decl.NamespaceUri = Item.Decl.NamespaceUri) and
+          not (IsXs(Parent, 'attributeGroup') and (Item.Prohibited or TAttributeItem(Items[I]).Prohibited)) then
           Fail(Doc, Child, 'duplicate attribute ' + QualifiedText(Item.Decl.NamespaceUri, Item.Decl.Name));
     end
     else if IsXs(Child, 'attributeGroup') then
@@ -1908,12 +1932,19 @@ begin
       FCurrent := P;
       P.State := psResolving;
       GroupWildcard := nil;
+      Before := Integer(Items.Count);
       try
         CollectAttributes(P.Doc, P.Node, Items, GroupWildcard);
       finally
         P.State := psDone;
         FCurrent := Saved;
       end;
+      { an attribute group has no prohibited attribute uses (XML Schema 1.0,
+        3.6.2; Xerces drops them too): they neither remove an attribute
+        of the base type nor stand for one }
+      for I := Integer(Items.Count) - 1 downto Before do
+        if TAttributeItem(Items[I]).Prohibited then
+          Items.Delete(I);
       { the wildcards of the groups and the own one are intersected }
       if Wildcard = nil then
         Wildcard := GroupWildcard
@@ -2105,10 +2136,17 @@ begin
   else
   begin
     Particle := EffectiveParticle(Doc, Node);
-    if Particle = nil then
+    if (Particle = nil) and IsExtension and (BaseType <> nil) and (BaseType.ContentType = xctSimple) then
     begin
-      if IsExtension and (BaseType <> nil) and (BaseType.ContentType in [xctSimple]) then
-        Fail(Doc, Derivation, 'complex content cannot extend simple content');
+      { an extension without particles keeps the base's simple content
+        (Xerces); a mixed one is an error (cos-ct-extends.1.4.3.2.2.1.b) }
+      if Mixed then
+        Fail(Doc, Derivation, 'complex content cannot extend simple content as mixed content');
+      T.ContentType := xctSimple;
+      T.SimpleType := BaseType.SimpleType;
+    end
+    else if Particle = nil then
+    begin
       if Mixed then
       begin
         { text only: an empty model rejects every child (2.4.d) }
@@ -2209,12 +2247,32 @@ end;
 
 { --- identity constraints ------------------------------------------------- }
 
+{ True if S begins with the axis name Axis and "::", with white space
+  allowed before the "::" (between the tokens of the XPath subset); Rest is
+  the text after it, trimmed. }
+function AxisStep(const S, Axis: TLandrixXmlUtf8; out Rest: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  Rest := '';
+  if Copy(S, 1, Length(Axis)) <> Axis then
+    Exit;
+  I := Length(Axis) + 1;
+  while (I <= Length(S)) and ((S[I] = ' ') or (S[I] = #9) or (S[I] = #10) or (S[I] = #13)) do
+    Inc(I);
+  if Copy(S, I, 2) <> '::' then
+    Exit;
+  Rest := Trimmed(Copy(S, I + 2, MaxInt));
+  Result := True;
+end;
+
 function TLoader.ParsePaths(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Expr: TLandrixXmlUtf8;
   IsField: Boolean): TLandrixXmlXsdPaths;
 var
   Parts: TLandrixXmlUtf8Array;
   I, J, K, N, Start: Integer;
-  Part, StepText, Prefix: TLandrixXmlUtf8;
+  Part, StepText, Prefix, Rest: TLandrixXmlUtf8;
   Path: TLandrixXmlXsdPath;
   Step: TLandrixXmlXsdPathStep;
   Steps: TLandrixXmlUtf8Array;
@@ -2275,14 +2333,14 @@ begin
         Step.IsAttribute := True;
         StepText := Trimmed(Copy(StepText, 2, MaxInt));
       end
-      else if Copy(StepText, 1, 11) = 'attribute::' then
+      else if AxisStep(StepText, 'attribute', Rest) then
       begin
         Step.IsAttribute := True;
-        StepText := Trimmed(Copy(StepText, 12, MaxInt));
+        StepText := Rest;
       end
-      else if Copy(StepText, 1, 7) = 'child::' then
-        StepText := Trimmed(Copy(StepText, 8, MaxInt));
-      if Step.IsAttribute and (not IsField or (J <> High(Steps))) then
+      else if AxisStep(StepText, 'child', Rest) then
+        StepText := Rest;
+      if (StepText = '') or (Step.IsAttribute and (not IsField or (J <> High(Steps)))) then
         Bad;
       Step.Text := StepText;
       if StepText = '*' then

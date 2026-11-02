@@ -224,7 +224,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 24,140 of 39,336 applicable XSD 1.0 tests pass, 13,903
+  the CI checks: 24,144 of 39,336 applicable XSD 1.0 tests pass, 13,916
   use constructs that are not supported.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
@@ -461,6 +461,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   optionally checks them against Saxon.
 
 ### Fixed
+- XML Schema (found with the W3C XML Schema Test Suite, checked against
+  Xerces): `use="prohibited"` in an attribute group is ignored, as XML
+  Schema 1.0 drops prohibited attribute uses from attribute groups (it
+  removed an attribute of the base type); two attributes of an ID type
+  matched by an attribute wildcard, or one besides an ID attribute use, are
+  reported (`cvc-complex-type.5.1`, `5.2`); identity-constraint paths may
+  have white space before `::` (`child ::x`); a group that refers to
+  itself inside an element declaration of its own is no longer a circular
+  reference; a complex-content extension without particles of a type with
+  simple content keeps that simple content (it was rejected).
 - XML Schema: `minOccurs` and `maxOccurs` are read as
   `xs:nonNegativeInteger` of any size (sign, leading zeros); a bound
   beyond the Integer range is out of reach. Before, a value beyond the

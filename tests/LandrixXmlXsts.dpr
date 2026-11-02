@@ -21,8 +21,8 @@
   unsupported, unicode, encoding, syntax, namespace, char, limit or the
   number of another error code) or "schema exception CLASS MESSAGE";
   per instance "instance NAME valid", "instance NAME invalid CODE
-  MESSAGE" (the first validation error; CODE as Xerces, or
-  "unsupported"), "instance NAME error CODE MESSAGE" or "instance NAME
+  MESSAGE" (the first validation error, or the first "unsupported" one
+  if there is one; CODE as Xerces, or "unsupported"), "instance NAME error CODE MESSAGE" or "instance NAME
   exception CLASS MESSAGE"; "done" after the group. Instances of a group
   whose schema did not load are not run. Every line is written at once,
   so a crash leaves the groups before it complete. The job file is read
@@ -100,6 +100,7 @@ end;
 procedure RunInstance(Schema: TLandrixXmlXsdSchemaSet; const Name, FileName: string);
 var
   Validator: TLandrixXmlXsdValidator;
+  I, First: Integer;
 begin
   Validator := TLandrixXmlXsdValidator.Create(Schema);
   try
@@ -107,8 +108,16 @@ begin
       if Validator.ValidateFile(FileName) then
         Put('instance'#9 + Name + #9'valid')
       else
-        Put('instance'#9 + Name + #9'invalid'#9 + Validator.Errors[0].Code + #9 +
-          OneLine(Validator.Errors[0].Message));
+      begin
+        { an unsupported construct makes the other errors uncertain (an
+          undeclared element with xsi:type, for one): it is reported first }
+        First := 0;
+        for I := Validator.ErrorCount - 1 downto 0 do
+          if Validator.Errors[I].Code = 'unsupported' then
+            First := I;
+        Put('instance'#9 + Name + #9'invalid'#9 + Validator.Errors[First].Code + #9 +
+          OneLine(Validator.Errors[First].Message));
+      end;
     except
       on E: ELandrixXmlError do
         Put('instance'#9 + Name + #9'error'#9 + CodeName(E.Code) + #9 + OneLine(E.Message));

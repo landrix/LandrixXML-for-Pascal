@@ -1,0 +1,2 @@
+file a.xml
+error 1 48 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "u" of element "r".

@@ -1,0 +1,4 @@
+file a.xml
+error 1 34 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 34 cvc-type.3.1.3 The value 'x' of element 'a' is not valid.
+error 1 38 cvc-complex-type.2.4.a Invalid content was found starting with element 'b'. One of '{n}' is expected.

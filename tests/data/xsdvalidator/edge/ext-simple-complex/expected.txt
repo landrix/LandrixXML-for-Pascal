@@ -1,0 +1,14 @@
+file a.xml
+
+file b.xml
+error 1 19 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 19 cvc-complex-type.2.2 Element 'Record' must have no element [children], and the value must be valid.
+
+file c.xml
+error 1 22 cvc-complex-type.2.2 Element 'Record' must have no element [children], and the value must be valid.
+error 1 22 cvc-datatype-valid.1.2.1 '' is not a valid value for 'integer'.
+error 1 22 cvc-complex-type.2.2 Element 'Record' must have no element [children], and the value must be valid.
+
+file d.xml
+error 1 10 cvc-datatype-valid.1.2.1 '' is not a valid value for 'integer'.
+error 1 10 cvc-complex-type.2.2 Element 'Record' must have no element [children], and the value must be valid.
