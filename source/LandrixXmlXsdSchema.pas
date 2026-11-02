@@ -225,6 +225,7 @@ type
     FSimpleTypes: TLandrixXmlXsdNameMap;
     FAnyType: TLandrixXmlXsdComplexType;
     FFiles: TStringList;
+    FWarnings: TStringList;
     FEntryFile: string;
   public
     constructor Create;
@@ -246,6 +247,9 @@ type
     property AnyType: TLandrixXmlXsdComplexType read FAnyType;
     { the schema documents that were read, entry document first }
     property Files: TStringList read FFiles;
+    { one line per include, redefine or import (with a schemaLocation
+      attribute) whose document could not be found and was skipped }
+    property Warnings: TStringList read FWarnings;
     property EntryFile: string read FEntryFile write FEntryFile;
   end;
 
@@ -480,6 +484,7 @@ begin
   FComplexTypes := TLandrixXmlXsdNameMap.Create;
   FSimpleTypes := TLandrixXmlXsdNameMap.Create;
   FFiles := TStringList.Create;
+  FWarnings := TStringList.Create;
   { xs:anyType }
   None := nil;
   FAnyType := TLandrixXmlXsdComplexType.Create;
@@ -506,6 +511,7 @@ begin
   FComplexTypes.Free;
   FSimpleTypes.Free;
   FFiles.Free;
+  FWarnings.Free;
   FOwned.Free;
   inherited Destroy;
 end;

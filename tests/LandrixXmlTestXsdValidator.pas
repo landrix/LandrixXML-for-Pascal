@@ -494,6 +494,115 @@ begin
   end;
 end;
 
+{ an include, import or redefine whose document cannot be found is
+  skipped with a warning (XML Schema 1.0 4.2.1, as Xerces) }
+procedure CheckSkipped(const Body, Expected: string; WarningCount: Integer);
+var
+  FileName: string;
+  S: TLandrixXmlXsdSchemaSet;
+begin
+  FileName := TempSchema(Body);
+  S := nil;
+  try
+    S := LandrixXmlXsdLoadSchema(FileName);
+    CheckEquals(WarningCount, Integer(S.Warnings.Count), Expected + ': warnings');
+    if WarningCount > 0 then
+    begin
+      Check(Pos(Expected, S.Warnings[0]) > 0, Expected + ': ' + S.Warnings[0]);
+      Check(Pos(ExtractFileName(FileName), S.Warnings[0]) > 0, Expected + ': the warning names the file');
+    end;
+  finally
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
+procedure WriteTestFile(const FileName, Content: string);
+var
+  F: TFileStream;
+  S: TLandrixXmlUtf8;
+begin
+  S := U(Content);
+  F := TFileStream.Create(FileName, fmCreate);
+  try
+    F.WriteBuffer(S[1], Length(S));
+  finally
+    F.Free;
+  end;
+end;
+
+procedure TestUnresolved;
+var
+  FileName: string;
+  S: TLandrixXmlXsdSchemaSet;
+begin
+  CheckSkipped('<xs:include schemaLocation="missing-include.xsd"/><xs:element name="r"/>',
+    'the include of "missing-include.xsd"', 1);
+  CheckSkipped('<xs:include schemaLocation="http://example.org/x.xsd"/><xs:element name="r"/>',
+    'the include of "http://example.org/x.xsd"', 1);
+  CheckSkipped('<xs:redefine schemaLocation="missing-redefine.xsd"><xs:annotation/></xs:redefine>' +
+    '<xs:element name="r"/>', 'the redefine of "missing-redefine.xsd"', 1);
+  CheckSkipped('<xs:import namespace="urn:x" schemaLocation="missing-import.xsd"/><xs:element name="r"/>',
+    'the import of urn:x (missing-import.xsd', 1);
+  { an import without schemaLocation is resolved by the catalog or not at all }
+  CheckSkipped('<xs:import namespace="urn:x"/><xs:element name="r"/>', '', 0);
+  CheckSkipped('<xs:import namespace="urn:x" schemaLocation=""/><xs:element name="r"/>',
+    'the import of urn:x (, ', 1);
+  { a redefine that redefines something must resolve (4.2.2) }
+  CheckLoadError('<xs:redefine schemaLocation="missing-redefine.xsd"><xs:simpleType name="t">' +
+    '<xs:restriction base="t"/></xs:simpleType></xs:redefine>', xecSchema, 'redefine with content');
+  CheckLoadError('<xs:include schemaLocation="missing-include.xsd"><xs:annotation/><xs:annotation/>' +
+    '</xs:include>', xecSchema, 'two annotations in xs:include');
+  CheckLoadError('<xs:import namespace="urn:x"><xs:element name="e"/></xs:import>', xecSchema,
+    'an element in xs:import');
+  { a reference into a skipped include names it }
+  FileName := TempSchema('<xs:include schemaLocation="missing-include.xsd"/><xs:element name="r" type="t"/>');
+  S := nil;
+  try
+    try
+      S := LandrixXmlXsdLoadSchema(FileName);
+      FailNotRaised('ELandrixXmlError for a type of a skipped include');
+    except
+      on E: ELandrixXmlError do
+      begin
+        CheckEquals(Ord(xecSchema), Ord(E.Code), E.Message);
+        Check(Pos('the include of "missing-include.xsd"', E.Message) > 0, 'names the include: ' + E.Message);
+      end;
+    end;
+  finally
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
+{$IFDEF MSWINDOWS}
+{ the same document under a differently cased name (XSTS schZ012) is one
+  document on Windows (Linux decides by the mounted file system) }
+procedure TestFileCase;
+var
+  A, B: string;
+  S: TLandrixXmlXsdSchemaSet;
+begin
+  A := ExtractFilePath(ParamStr(0)) + 'xsdcase-a.xsd';
+  B := ExtractFilePath(ParamStr(0)) + 'xsdcase-b.xsd';
+  WriteTestFile(A, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:a">' +
+    '<xs:import schemaLocation="xsdcase-b.xsd"/><xs:element name="root"/></xs:schema>');
+  WriteTestFile(B, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">' +
+    '<xs:import namespace="urn:a" schemaLocation="XSDCASE-A.xsd"/><xs:element name="b"/></xs:schema>');
+  S := nil;
+  try
+    S := LandrixXmlXsdLoadSchema(A);
+    Check(S.FindElement('urn:a', 'root') <> nil, 'root');
+    CheckEquals(2, Integer(S.Files.Count), 'two documents');
+    CheckEquals(0, Integer(S.Warnings.Count), 'no warning');
+  finally
+    S.Free;
+    DeleteFile(A);
+    DeleteFile(B);
+  end;
+end;
+{$ENDIF}
+
 procedure Register;
 begin
   RegisterTest('XsdValidator.Basics', TestBasics);
@@ -506,6 +615,10 @@ begin
   RegisterTest('XsdValidator.KeyRefOutOfScope', TestKeyRefOutOfScope);
   RegisterTest('XsdValidator.LoadErrors', TestLoadErrors);
   RegisterTest('XsdValidator.LargeOccurs', TestLargeOccurs);
+  RegisterTest('XsdValidator.Unresolved', TestUnresolved);
+  {$IFDEF MSWINDOWS}
+  RegisterTest('XsdValidator.FileCase', TestFileCase);
+  {$ENDIF}
   RegisterTest('XsdValidator.Api', TestApi);
 end;
 

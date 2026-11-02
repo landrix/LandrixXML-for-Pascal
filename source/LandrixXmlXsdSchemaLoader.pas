@@ -13,9 +13,13 @@
 
   Schema locations are resolved by a TLandrixXmlXsdResolver: an explicit
   catalog first, then the location relative to the including document.
-  There is no network access and no search by file name; an import that
-  cannot be resolved is skipped (as Xerces does when it cannot fetch it),
-  so a reference into it fails with a message naming the import.
+  There is no network access and no search by file name. An include,
+  import or redefine whose document cannot be found is skipped (XML
+  Schema 1.0 4.2.1; Xerces warns) and listed in the schema set's
+  Warnings; a reference into it fails with a message naming it. A
+  redefine with content other than annotations must resolve (4.2.2).
+  Documents are identified by file name, compared case-insensitively on
+  Windows and macOS.
 
   The derivation of a restricted type is not checked against its base:
   the content and attributes are taken as written (the target schemas
@@ -258,7 +262,8 @@ type
     FLocalCache: TLandrixXmlXsdNameMap;
     FIdentity: TLandrixXmlXsdNameMap;
     FFixups: TObjectList;
-    FSkippedImports: TStringList;
+    { the skipped documents: namespace, tab, description }
+    FSkipped: TStringList;
     FCurrent: TPending;
     { the element declarations whose types are being built: a group
       reference is circular only within the same element }
@@ -266,6 +271,9 @@ type
     procedure Fail(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Msg: string);
     procedure Unsupported(Doc: TSchemaDoc; Node: TLandrixXmlNode; const What: string);
     function LoadDom(const FileName: string): TLandrixXmlDocument;
+    procedure Skip(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Kind: string;
+      const NamespaceUri, Location: TLandrixXmlUtf8; Warn: Boolean);
+    procedure CheckDirective(Doc: TSchemaDoc; Node: TLandrixXmlNode);
     function LoadDocument(const FileName: string; Including: TSchemaDoc; IsImport: Boolean;
       const ImportNamespace: TLandrixXmlUtf8; Node: TLandrixXmlNode): TSchemaDoc;
     procedure Collect(Doc: TSchemaDoc; Node: TLandrixXmlNode; Kind: TPendingKind);
@@ -418,7 +426,7 @@ begin
   FLocalCache := TLandrixXmlXsdNameMap.Create;
   FIdentity := TLandrixXmlXsdNameMap.Create;
   FFixups := TObjectList.Create(True);
-  FSkippedImports := TStringList.Create;
+  FSkipped := TStringList.Create;
 end;
 
 destructor TLoader.Destroy;
@@ -437,7 +445,7 @@ begin
   FLocalCache.Free;
   FIdentity.Free;
   FFixups.Free;
-  FSkippedImports.Free;
+  FSkipped.Free;
   FSet.Free;
   inherited Destroy;
 end;
@@ -467,11 +475,89 @@ begin
   raise ELandrixXmlError.CreateCode(xecUnsupported, 'XML Schema: not supported: ' + What + ' in ' + Where);
 end;
 
+{ the identity of a schema document's file: case-insensitive where the
+  file system usually is (ASCII case folding) }
+function FileIdentity(const FileName: string): string;
+begin
+  {$IFDEF MSWINDOWS}
+  Result := LowerCase(FileName);
+  {$ELSE}
+  {$IFDEF DARWIN}
+  Result := LowerCase(FileName);
+  {$ELSE}
+  {$IFDEF MACOS}
+  Result := LowerCase(FileName);
+  {$ELSE}
+  Result := FileName;
+  {$ENDIF}
+  {$ENDIF}
+  {$ENDIF}
+end;
+
+{ the file a resolver returned, or '' when it does not exist (a catalog
+  entry may name a missing file) }
+function ExistingFile(const FileName: string): string;
+begin
+  Result := FileName;
+  if (Result <> '') and not FileExists(Result) then
+    Result := '';
+end;
+
+{ a redefine that redefines something: it must resolve (4.2.2) }
+function HasRedefinitions(Redefine: TLandrixXmlNode): Boolean;
+var
+  Child: TLandrixXmlNode;
+begin
+  Result := False;
+  Child := Redefine.FirstChildElement;
+  while Child <> nil do
+  begin
+    if not IsXs(Child, 'annotation') then
+    begin
+      Result := True;
+      Exit;
+    end;
+    Child := Child.NextSiblingElement;
+  end;
+end;
+
+procedure TLoader.Skip(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Kind: string;
+  const NamespaceUri, Location: TLandrixXmlUtf8; Warn: Boolean);
+var
+  Text: string;
+begin
+  if Kind = 'import' then
+    Text := 'the import of ' + Esc(NamespaceUri) + ' (' + Esc(Location) + ', '
+  else
+    Text := 'the ' + Kind + ' of "' + Esc(Location) + '" (';
+  Text := Text + Doc.FileName + ':' + IntToStr(Node.Line) + ')';
+  FSkipped.Add(Esc(NamespaceUri) + #9 + Text);
+  if Warn then
+    FSet.Warnings.Add(Text + ' could not be resolved and was skipped');
+end;
+
+{ xs:include and xs:import contain at most one xs:annotation }
+procedure TLoader.CheckDirective(Doc: TSchemaDoc; Node: TLandrixXmlNode);
+var
+  Child: TLandrixXmlNode;
+  Seen: Boolean;
+begin
+  Seen := False;
+  Child := Node.FirstChildElement;
+  while Child <> nil do
+  begin
+    if not IsXs(Child, 'annotation') or Seen then
+      Fail(Doc, Child, 'unexpected element "' + Esc(Child.NameUtf8) + '" in xs:' + Esc(Node.LocalNameUtf8));
+    Seen := True;
+    Child := Child.NextSiblingElement;
+  end;
+end;
+
 function TLoader.LoadDom(const FileName: string): TLandrixXmlDocument;
 var
   I: Integer;
 begin
-  I := FDomFiles.IndexOf(FileName);
+  I := FDomFiles.IndexOf(FileIdentity(FileName));
   if I >= 0 then
   begin
     Result := TLandrixXmlDocument(FDomFiles.Objects[I]);
@@ -492,7 +578,7 @@ begin
       raise;
     end;
   end;
-  FDomFiles.AddObject(FileName, Result);
+  FDomFiles.AddObject(FileIdentity(FileName), Result);
 end;
 
 function TLoader.Load(const FileName: string): TLandrixXmlXsdSchemaSet;
@@ -516,7 +602,7 @@ var
   Dom: TLandrixXmlDocument;
   Root, Child: TLandrixXmlNode;
   Tns, Effective, Value, Location, Ns: TLandrixXmlUtf8;
-  HasTns, HasNs: Boolean;
+  HasTns, HasNs, HasLocation: Boolean;
   Key: TLandrixXmlUtf8;
   Name: TLandrixXmlUtf8;
   Target: string;
@@ -544,7 +630,7 @@ begin
       Fail(Including, Node, 'the included document ' + FileName + ' has another target namespace');
     Effective := Including.TargetNamespace;
   end;
-  Key := Effective + #9 + LandrixXmlStringToUtf8(FileName);
+  Key := Effective + #9 + LandrixXmlStringToUtf8(FileIdentity(FileName));
   Result := TSchemaDoc(FDocMap.Find('', Key));
   if Result <> nil then
     Exit;
@@ -567,24 +653,27 @@ begin
     Name := Child.LocalNameUtf8;
     if Name = 'include' then
     begin
+      CheckDirective(Result, Child);
       if not AttrTrimmed(Child, 'schemaLocation', Location) then
         Fail(Result, Child, 'include without schemaLocation');
-      Target := FResolver.Resolve(Result.FileName, Location, '', False);
+      Target := ExistingFile(FResolver.Resolve(Result.FileName, Location, '', False));
       if Target = '' then
-        Fail(Result, Child, 'cannot resolve the include of "' + Esc(Location) + '"');
-      LoadDocument(Target, Result, False, '', Child);
+        Skip(Result, Child, 'include', Result.TargetNamespace, Location, True)
+      else
+        LoadDocument(Target, Result, False, '', Child);
     end
     else if Name = 'import' then
     begin
+      CheckDirective(Result, Child);
       HasNs := AttrTrimmed(Child, 'namespace', Ns);
       if not HasNs then
         Ns := '';
-      if not AttrTrimmed(Child, 'schemaLocation', Location) then
+      HasLocation := AttrTrimmed(Child, 'schemaLocation', Location);
+      if not HasLocation then
         Location := '';
-      Target := FResolver.Resolve(Result.FileName, Location, Ns, True);
+      Target := ExistingFile(FResolver.Resolve(Result.FileName, Location, Ns, True));
       if Target = '' then
-        FSkippedImports.Add(Esc(Ns) + ' (' + Esc(Location) + ', ' + Result.FileName + ':' +
-          IntToStr(Child.Line) + ')')
+        Skip(Result, Child, 'import', Ns, Location, HasLocation)
       else
         LoadDocument(Target, Result, True, Ns, Child);
     end
@@ -592,12 +681,17 @@ begin
     begin
       if not AttrTrimmed(Child, 'schemaLocation', Location) then
         Fail(Result, Child, 'redefine without schemaLocation');
-      Target := FResolver.Resolve(Result.FileName, Location, '', False);
-      if Target = '' then
-        Fail(Result, Child, 'cannot resolve the redefine of "' + Esc(Location) + '"');
-      Redefined := LoadDocument(Target, Result, False, '', Child);
-      if Redefined <> nil then
-        ApplyRedefine(Result, Child);
+      Target := ExistingFile(FResolver.Resolve(Result.FileName, Location, '', False));
+      if Target <> '' then
+      begin
+        Redefined := LoadDocument(Target, Result, False, '', Child);
+        if Redefined <> nil then
+          ApplyRedefine(Result, Child);
+      end
+      else if HasRedefinitions(Child) then
+        Fail(Result, Child, 'cannot resolve the redefine of "' + Esc(Location) + '"')
+      else
+        Skip(Result, Child, 'redefine', Result.TargetNamespace, Location, True);
     end
     else if Name = 'annotation' then
       { ignored }
@@ -765,10 +859,10 @@ var
   I: Integer;
 begin
   Result := 'cannot find the ' + What + ' ' + QualifiedText(NamespaceUri, LocalName);
-  for I := 0 to Integer(FSkippedImports.Count) - 1 do
-    if Pos(Esc(NamespaceUri) + ' (', FSkippedImports[I]) = 1 then
+  for I := 0 to Integer(FSkipped.Count) - 1 do
+    if Pos(Esc(NamespaceUri) + #9, FSkipped[I]) = 1 then
     begin
-      Result := Result + ' (the import of ' + FSkippedImports[I] +
+      Result := Result + ' (' + Copy(FSkipped[I], Length(Esc(NamespaceUri)) + 2, MaxInt) +
         ' could not be resolved; add it to the resolver)';
       Break;
     end;

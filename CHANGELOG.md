@@ -68,6 +68,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   each error. Unsupported constructs are rejected at load time
   (`xecUnsupported`), invalid schemas raise the new code `xecSchema`;
   `xsi:type` and `xsi:nil` in documents are reported as unsupported.
+  An include, import or redefine whose document cannot be found is
+  skipped as XML Schema 1.0 allows and listed in the schema set's
+  `Warnings`.
   Elements without a declaration are assessed laxly with `anyType`;
   identity constraints follow Xerces' value tables and XPath matching,
   a keyref outside the scope of its key is reported as
@@ -224,7 +227,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 24,144 of 39,336 applicable XSD 1.0 tests pass, 13,916
+  the CI checks: 24,156 of 39,336 applicable XSD 1.0 tests pass, 13,920
   use constructs that are not supported.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
@@ -471,6 +474,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   itself inside an element declaration of its own is no longer a circular
   reference; a complex-content extension without particles of a type with
   simple content keeps that simple content (it was rejected).
+- XML Schema: an include or a redefine of nothing but annotations whose
+  document cannot be found (a missing file, an http location, a catalog
+  entry naming a missing file) is skipped as XML Schema 1.0 allows and as
+  Xerces does, instead of failing; a redefine that redefines components
+  still has to resolve. Skipped documents are listed in the new
+  `TLandrixXmlXsdSchemaSet.Warnings` and named when a reference into them
+  fails. The same schema document under a differently cased file name is
+  one document on Windows and macOS (it was loaded twice and gave
+  duplicate declarations). `xs:include` and `xs:import` may contain one
+  `xs:annotation` and nothing else.
 - XML Schema: `minOccurs` and `maxOccurs` are read as
   `xs:nonNegativeInteger` of any size (sign, leading zeros); a bound
   beyond the Integer range is out of reach. Before, a value beyond the
