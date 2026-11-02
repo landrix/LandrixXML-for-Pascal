@@ -302,6 +302,56 @@ and the parsers also take a pointer and a length (`...Buf`).
   between the spans is dropped. The default keeps everything. In indented
   files it removes about half of the nodes and a quarter of the memory.
 
+### XML Schema: Xerces, not the letter of the specification
+
+For the constructs it supports (the others are rejected as unsupported,
+see the W3C XML Schema Test Suite below), the XML Schema validator aims at
+the results of Xerces in the Java runtime, the validator behind the KoSIT
+and Mustang validators: the same verdicts, error codes, messages and
+order. Where Xerces departs from XML Schema 1.0 or from the expectations
+of the W3C XML Schema Test Suite, LandrixXml follows Xerces on purpose,
+so that a document gets the same verdict as with the official
+validators. A profile that follows the specification instead may be
+added as an option later; there is none yet. The known cases (with the
+test suite's names):
+
+- Name characters of `Name`, `NCName`, `ID`, `IDREF` and `NMTOKEN` are
+  those of XML 1.0 Fourth Edition, as in Xerces; the suite's XML 1.1 /
+  Fifth Edition tests expect the newer ones (`xv002`, `xv004`, `xv009`).
+- `gMonth` also accepts the form `--MM--` of XML Schema 1.0 before its
+  errata (`gMonth_pattern001_1274`).
+- An `IDREF`/`IDREFS` attribute value supplied by a default or fixed
+  value of the schema is not checked as a reference, and a key field that
+  selects an attribute matched by a lax or skip wildcard is accepted
+  (`idZ012`, `idZ015`).
+- An element whose content model is an empty `xs:choice` may be empty
+  (`complex022`).
+- A prohibited attribute use with a fixed value (`use="prohibited"
+  fixed="37"`) does not allow the attribute, unless an attribute wildcard
+  does; the suite expects the attribute with that value to be valid under
+  XML Schema 1.0 (`attP031`).
+- The regular expression forms `\p{IsHighSurrogates}`,
+  `\p{IsLowSurrogates}` and `[a-z--[b-z]]` are errors (`reF56`, `reM77`,
+  `reN75`, `HighSurrogates`).
+- A missing type (also the item type of a list) is an error when the
+  schema is loaded, also if nothing uses it; the suite expects the error
+  only when the type is needed (`missing001`, `missing006`).
+- The XSD 1.1 version attributes (`vc:minVersion` and the like) are not
+  evaluated (`vc002`).
+- `xsi:schemaLocation` and `xsi:noNamespaceSchemaLocation` hints in
+  documents are never read: the schema is the one given to the loader, as
+  with a preloaded schema in Xerces (the setup of the KoSIT validator), so
+  tests that rely on hints fail (`schA1`, `ctL021`, `attgD034`,
+  `particlesB013`, ElemDecl `targetNS00101m1_p`).
+
+Differences from Xerces, also on purpose:
+
+- Every `xs:import` of a namespace is loaded; Xerces loads only the first
+  one.
+- The loader does not prove derivations and other schema component
+  constraints: invalid schemas that Xerces rejects may load (the target
+  schemas are valid for Xerces).
+
 ## Conformance and tests
 
 - The [W3C XML conformance test suite](https://www.w3.org/XML/Test/) is
