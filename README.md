@@ -331,8 +331,20 @@ and the parsers also take a pointer and a length (`...Buf`).
   error codes and positions is the KoSIT validator's, and fired rules,
   failed asserts, reports, messages and locations match Saxon with the
   validator's XSLT line by line, for all 86 invoices. All of them are
-  schema-valid, so schema errors are not exercised here. The full KoSIT
+  schema-valid, so schema errors are not exercised here; the W3C XML
+  Schema Test Suite below covers them. The full KoSIT
   report (assessment, custom levels) is not part of this library.
+- The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
+  (`tools/run-xsts.py`, pinned revision) checks the XML Schema
+  validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
+  load or be rejected, documents that must be valid or invalid) 24,140
+  pass and 13,903 use a construct this library does not support (above
+  all `xs:list`, `xs:duration`, `xs:all`, union facets, `xs:QName`,
+  `xs:NOTATION`, `xsi:type`); they are reported as unsupported, never
+  accepted silently. Of the 1,290 failures 1,225 are invalid schemas that
+  load, as the loader does not prove derivations and other schema
+  component constraints; 3 more stop at the resource limit of the
+  content model check. The passing tests are a baseline for the CI.
 - About 135 test cases with more than 9000 checks, including generated
   conversion cases with Python's `decimal` module as an independent oracle.
 - Real-world XRechnung, ZUGFeRD and GAEB files (kept locally, not in the

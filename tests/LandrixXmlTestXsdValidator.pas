@@ -355,6 +355,18 @@ begin
     xecSchema, 'facet not applicable');
   CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence><xs:element name="a" maxOccurs="0"/></xs:sequence>' +
     '</xs:complexType></xs:element>', xecSchema, 'minOccurs above maxOccurs');
+  CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence><xs:element name="a" maxOccurs="$10"/>' +
+    '</xs:sequence></xs:complexType></xs:element>', xecSchema, 'maxOccurs in hexadecimal');
+  CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence><xs:element name="a" minOccurs="-1"/>' +
+    '</xs:sequence></xs:complexType></xs:element>', xecSchema, 'negative minOccurs');
+  CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence><xs:element name="a" minOccurs="+"/>' +
+    '</xs:sequence></xs:complexType></xs:element>', xecSchema, 'sign without digits');
+  CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence><xs:element name="a" minOccurs="99999999999" ' +
+    'maxOccurs="99999999998"/></xs:sequence></xs:complexType></xs:element>', xecSchema,
+    'minOccurs above maxOccurs beyond Integer');
+  CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence><xs:element name="a" ' +
+    'minOccurs="99999999999999999999" maxOccurs="099999999999999999998"/></xs:sequence></xs:complexType>' +
+    '</xs:element>', xecSchema, 'minOccurs above maxOccurs beyond Int64');
   { with a target namespace the union of ##other and ##local is not
     expressible in XML Schema 1.0 }
   CheckLoadError('<xs:complexType name="b"><xs:anyAttribute namespace="##other"/></xs:complexType>' +
@@ -453,6 +465,35 @@ begin
   end;
 end;
 
+{ minOccurs and maxOccurs as xs:nonNegativeInteger: a sign, leading zeros
+  and values beyond Integer (an upper bound there is out of reach) }
+procedure TestLargeOccurs;
+var
+  FileName: string;
+  S: TLandrixXmlXsdSchemaSet;
+  V: TLandrixXmlXsdValidator;
+  Reader: TLandrixXmlReader;
+begin
+  FileName := TempSchema('<xs:element name="r"><xs:complexType><xs:sequence>' +
+    '<xs:element name="a" minOccurs="+002" maxOccurs="12678967543234"/>' +
+    '<xs:element name="b" minOccurs="-0" maxOccurs="99999999999999999999999"/>' +
+    '</xs:sequence></xs:complexType></xs:element>');
+  S := LandrixXmlXsdLoadSchema(FileName);
+  V := TLandrixXmlXsdValidator.Create(S);
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromUtf8(U('<r><a/><a/><a/><b/></r>'));
+    Check(V.ValidateReader(Reader), 'three a, one b');
+    Reader.LoadFromUtf8(U('<r><a/></r>'));
+    Check(not V.ValidateReader(Reader), 'one a is below minOccurs="+002"');
+  finally
+    Reader.Free;
+    V.Free;
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XsdValidator.Basics', TestBasics);
@@ -464,6 +505,7 @@ begin
   RegisterTest('XsdValidator.EdgeCases', TestEdgeCases);
   RegisterTest('XsdValidator.KeyRefOutOfScope', TestKeyRefOutOfScope);
   RegisterTest('XsdValidator.LoadErrors', TestLoadErrors);
+  RegisterTest('XsdValidator.LargeOccurs', TestLargeOccurs);
   RegisterTest('XsdValidator.Api', TestApi);
 end;
 

@@ -1492,24 +1492,98 @@ begin
   Result.ProcessContents := A.ProcessContents;
 end;
 
+{ An xs:nonNegativeInteger of any size (an optional sign, digits; "-0" is
+  0): Digits are its digits without leading zeros ('' for 0). False if
+  the text is no such number. }
+function ParseNonNegative(const Value: TLandrixXmlUtf8; out Digits: TLandrixXmlUtf8): Boolean;
+var
+  I, First: Integer;
+  Negative: Boolean;
+begin
+  Digits := '';
+  Result := False;
+  First := 1;
+  Negative := False;
+  if (Value <> '') and ((Value[1] = '+') or (Value[1] = '-')) then
+  begin
+    Negative := Value[1] = '-';
+    First := 2;
+  end;
+  if First > Length(Value) then
+    Exit;
+  for I := First to Length(Value) do
+    if (Value[I] < '0') or (Value[I] > '9') then
+      Exit;
+  while (First <= Length(Value)) and (Value[First] = '0') do
+    Inc(First);
+  Digits := Copy(Value, First, Length(Value) - First + 1);
+  Result := not Negative or (Digits = '');
+end;
+
+{ -1, 0 or 1 as the number with the digits A is below, equal to or above B
+  (both without leading zeros) }
+function CompareDigits(const A, B: TLandrixXmlUtf8): Integer;
+begin
+  if Length(A) <> Length(B) then
+  begin
+    if Length(A) < Length(B) then
+      Result := -1
+    else
+      Result := 1;
+  end
+  else if A < B then
+    Result := -1
+  else if A > B then
+    Result := 1
+  else
+    Result := 0;
+end;
+
+{ the number with these digits; beyond High(Integer) High(Integer), as
+  more occurrences cannot be met in a document and such a bound stays out
+  of reach }
+function DigitsToOccurs(const Digits: TLandrixXmlUtf8): Integer;
+var
+  I: Integer;
+  N: Int64;
+begin
+  N := 0;
+  if Length(Digits) > 10 then
+    N := High(Integer)
+  else
+    for I := 1 to Length(Digits) do
+      N := N * 10 + (Ord(Digits[I]) - Ord('0'));
+  if N > High(Integer) then
+    N := High(Integer);
+  Result := Integer(N);
+end;
+
 procedure ParseOccurs(Loader: TLoader; Doc: TSchemaDoc; Node: TLandrixXmlNode;
   out MinOccurs, MaxOccurs: Integer);
 var
-  Value: TLandrixXmlUtf8;
+  Value, MinDigits, MaxDigits: TLandrixXmlUtf8;
+  Valid, Unbounded: Boolean;
 begin
-  MinOccurs := 1;
-  MaxOccurs := 1;
+  MinDigits := '1';
+  MaxDigits := '1';
+  Unbounded := False;
+  Valid := True;
   if AttrTrimmed(Node, 'minOccurs', Value) then
-    MinOccurs := StrToIntDef(LandrixXmlUtf8ToString(Value), -1);
+    Valid := ParseNonNegative(Value, MinDigits);
   if AttrTrimmed(Node, 'maxOccurs', Value) then
   begin
     if Value = 'unbounded' then
-      MaxOccurs := LandrixXmlXsdUnbounded
+      Unbounded := True
     else
-      MaxOccurs := StrToIntDef(LandrixXmlUtf8ToString(Value), -2);
+      Valid := ParseNonNegative(Value, MaxDigits) and Valid;
   end;
-  if (MinOccurs < 0) or (MaxOccurs < -1) or ((MaxOccurs >= 0) and (MaxOccurs < MinOccurs)) then
+  if not Valid or (not Unbounded and (CompareDigits(MaxDigits, MinDigits) < 0)) then
     Loader.Fail(Doc, Node, 'invalid minOccurs or maxOccurs');
+  MinOccurs := DigitsToOccurs(MinDigits);
+  if Unbounded then
+    MaxOccurs := LandrixXmlXsdUnbounded
+  else
+    MaxOccurs := DigitsToOccurs(MaxDigits);
 end;
 
 function TLoader.BuildCompositor(Doc: TSchemaDoc; Node: TLandrixXmlNode; MinOccurs,

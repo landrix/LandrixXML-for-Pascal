@@ -221,6 +221,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   no value has this abstract type. The QT3 driver checks an `assert-type`
   it cannot read itself with `instance of` in the helper. QT3: 8 more
   cases pass in both profiles.
+- `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
+  Test Suite (pinned revision, downloaded on first use) against the XML
+  Schema loader and validator, with a baseline of the passing tests that
+  the CI checks: 24,140 of 39,336 applicable XSD 1.0 tests pass, 13,903
+  use constructs that are not supported.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
   matcher limited to 10,000,000 steps per call (`xecLimit` beyond, never
@@ -456,6 +461,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   optionally checks them against Saxon.
 
 ### Fixed
+- XML Schema: `minOccurs` and `maxOccurs` are read as
+  `xs:nonNegativeInteger` of any size (sign, leading zeros); a bound
+  beyond the Integer range is out of reach. Before, a value beyond the
+  Integer range was rejected by Delphi and taken differently by Free
+  Pascal, and hexadecimal values such as `$10` were accepted.
 - XPath: a precision beyond the Integer range in `round` and
   `round-half-to-even` keeps every digit or none, as a large one in the
   range does; before, it raised FOAR0002. A decimal is rounded at a
