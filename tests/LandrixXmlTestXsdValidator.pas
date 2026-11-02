@@ -605,6 +605,93 @@ begin
 end;
 {$ENDIF}
 
+{ the schema for schemas: the constraint code Xerces reports and the
+  position of the offending element }
+procedure CheckSchemaRule(const Body, ConstraintCode: string; Line: Integer; const Name: string);
+var
+  FileName: string;
+  S: TLandrixXmlXsdSchemaSet;
+begin
+  FileName := TempSchema(Body);
+  S := nil;
+  try
+    try
+      S := LandrixXmlXsdLoadSchema(FileName);
+      FailNotRaised('ELandrixXmlXsdSchemaError for ' + Name);
+    except
+      on E: ELandrixXmlXsdSchemaError do
+      begin
+        CheckEquals(Ord(xecSchema), Ord(E.Code), Name + ': ' + E.Message);
+        CheckEqualsStr(ConstraintCode, E.ConstraintCode, Name + ': ' + E.Message);
+        CheckEqualsStr(ExpandFileName(FileName), E.SchemaFile, Name + ': schema file');
+        CheckEquals(Line, E.Line, Name + ': line');
+        Check(E.Column > 0, Name + ': column');
+      end;
+    end;
+  finally
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
+procedure TestSchemaRules;
+var
+  FileName: string;
+  S: TLandrixXmlXsdSchemaSet;
+begin
+  CheckSchemaRule('<xs:element name="r" maxOccur="2"/>', 's4s-att-not-allowed', 1, 'unknown attribute');
+  CheckSchemaRule('<xs:element name="r" xs:type="xs:int"/>', 's4s-att-not-allowed', 1,
+    'attribute in the XML Schema namespace');
+  CheckSchemaRule('<xs:element name="1r"/>', 's4s-att-invalid-value', 1, 'name not an NCName');
+  CheckSchemaRule('<xs:element name="r" nillable="yes"/>', 's4s-att-invalid-value', 1, 'boolean');
+  CheckSchemaRule('<xs:complexType name="t" block="all"/>', 's4s-att-invalid-value', 1, 'derivation set');
+  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:sequence><xs:any namespace="##others"/>' +
+    '</xs:sequence></xs:complexType></xs:element>', 's4s-att-invalid-value', 1, 'namespace list');
+  CheckSchemaRule('<xs:element name="a" id="x"/><xs:element name="b" id="x"/>', 's4s-att-invalid-value', 1,
+    'duplicate id');
+  CheckSchemaRule('<xs:element/>', 's4s-att-must-appear', 1, 'top-level element without name');
+  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:sequence><xs:element ref="r" name="x"/>' +
+    '</xs:sequence></xs:complexType></xs:element>', 's4s-att-not-allowed', 1, 'name besides ref');
+  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:attribute name="a"/><xs:sequence/>' +
+    '</xs:complexType></xs:element>', 's4s-elt-must-match.1', 1, 'particle after an attribute');
+  CheckSchemaRule('<xs:element name="r"><xs:annotation/><xs:annotation/></xs:element>', 's4s-elt-must-match.1', 1,
+    'two annotations');
+  CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:int"><xs:sequence/></xs:restriction>' +
+    '</xs:simpleType>', 's4s-elt-invalid-content.1', 1, 'a particle in a simple type');
+  CheckSchemaRule('<xs:element name="r"/>' + #10 + '<xs:group name="g"/>', 's4s-elt-must-match.1', 2,
+    'a group without a compositor');
+  CheckSchemaRule('<xs:element name="r">text</xs:element>', 's4s-elt-character', 1, 'character data');
+  CheckSchemaRule('<xs:element name="r"><xs:annotation><xs:documentation xml:lang="">x</xs:documentation>' +
+    '</xs:annotation></xs:element>', 's4s-att-invalid-value', 1, 'empty xml:lang');
+  CheckSchemaRule('<xs:element name="r" type="xs: string"/>', 's4s-att-invalid-value', 1, 'space in a QName');
+  CheckSchemaRule('<xs:element name="r"><xs:key name="k"><xs:selector xpath="a"/><xs:field xpath="@b"/></xs:key>' +
+    '<xs:keyref name="kr" refer="missing"><xs:selector xpath="a"/><xs:field xpath="@b"/></xs:keyref></xs:element>',
+    'src-resolve', 1, 'keyref to no key');
+  { valid forms the rules must accept }
+  FileName := TempSchema('<xs:annotation><xs:documentation xml:lang="de">x</xs:documentation></xs:annotation>' +
+    '<xs:element name="r" id="e1"><xs:complexType mixed="true"><xs:sequence minOccurs="0" maxOccurs="unbounded">' +
+    '<xs:element ref="r" minOccurs="0"/><xs:any namespace="urn:y  urn:z" processContents="lax"/>' +
+    '</xs:sequence><xs:attribute name="a" form="qualified" ' +
+    'use="required"><xs:simpleType><xs:restriction base="xs:string"><xs:maxLength value=" 5 " fixed="true"/>' +
+    '<xs:enumeration value="x"/></xs:restriction></xs:simpleType></xs:attribute><xs:anyAttribute ' +
+    'namespace="##any" processContents="skip"/></xs:complexType></xs:element>' +
+    '<xs:group name="g"><xs:annotation/><xs:sequence><xs:element name="x"/></xs:sequence></xs:group>' +
+    '<xs:simpleType name="u" final="#all"><xs:union memberTypes="xs:int  xs:date"><xs:simpleType>' +
+    '<xs:list itemType="xs:token"/></xs:simpleType></xs:union></xs:simpleType>' +
+    '<xs:complexType name="t" block="extension restriction" final="#all"><xs:simpleContent>' +
+    '<xs:extension base="xs:int"><xs:attribute name="b" type="xs:int" default="1"/></xs:extension>' +
+    '</xs:simpleContent></xs:complexType>', ' xmlns:t="urn:x" elementFormDefault="qualified" ' +
+    'blockDefault="substitution" finalDefault="list union" xml:lang="en" version="1.0"');
+  S := nil;
+  try
+    S := LandrixXmlXsdLoadSchema(FileName);
+    Check(S.FindElement('', 'r') <> nil, 'valid forms load');
+  finally
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XsdValidator.Basics', TestBasics);
@@ -618,6 +705,7 @@ begin
   RegisterTest('XsdValidator.LoadErrors', TestLoadErrors);
   RegisterTest('XsdValidator.LargeOccurs', TestLargeOccurs);
   RegisterTest('XsdValidator.Unresolved', TestUnresolved);
+  RegisterTest('XsdValidator.SchemaRules', TestSchemaRules);
   {$IFDEF MSWINDOWS}
   RegisterTest('XsdValidator.FileCase', TestFileCase);
   {$ENDIF}

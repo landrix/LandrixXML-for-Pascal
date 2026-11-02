@@ -317,7 +317,8 @@ test suite's names):
 
 - Name characters of `Name`, `NCName`, `ID`, `IDREF` and `NMTOKEN` are
   those of XML 1.0 Fourth Edition, as in Xerces; the suite's XML 1.1 /
-  Fifth Edition tests expect the newer ones (`xv002`, `xv004`, `xv009`).
+  Fifth Edition tests expect the newer ones (`xv001`, `xv002`, `xv004`,
+  `xv009`).
 - `gMonth` also accepts the form `--MM--` of XML Schema 1.0 before its
   errata (`gMonth_pattern001_1274`).
 - An `IDREF`/`IDREFS` attribute value supplied by a default or fixed
@@ -337,7 +338,10 @@ test suite's names):
   schema is loaded, also if nothing uses it; the suite expects the error
   only when the type is needed (`missing001`, `missing006`).
 - The XSD 1.1 version attributes (`vc:minVersion` and the like) are not
-  evaluated (`vc002`).
+  evaluated, so XSD 1.1 constructs they would exclude are errors (`vc001`,
+  `vc002`, `vc024`).
+- The XSD 1.1 wildcard attributes `notNamespace` and `notQName` are errors
+  (`s3_10_1ii08`, `s3_10_6ii01`, `s3_10_6ii02`, `s3_10_6ii04`).
 - `xsi:schemaLocation` and `xsi:noNamespaceSchemaLocation` hints in
   documents are never read: the schema is the one given to the loader, as
   with a preloaded schema in Xerces (the setup of the KoSIT validator), so
@@ -348,9 +352,11 @@ Differences from Xerces, also on purpose:
 
 - Every `xs:import` of a namespace is loaded; Xerces loads only the first
   one.
-- The loader does not prove derivations and other schema component
-  constraints: invalid schemas that Xerces rejects may load (the target
-  schemas are valid for Xerces).
+- The loader checks each schema document against the schema for schemas
+  (attributes, their values, children and their order), but does not
+  prove derivations and other schema component constraints yet: invalid
+  schemas that Xerces rejects may load (the target schemas are valid for
+  Xerces).
 
 ## Conformance and tests
 
@@ -387,13 +393,14 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 34,790
-  pass and 3,246 use a construct this library does not support (above
+  load or be rejected, documents that must be valid or invalid) 35,648
+  pass and 3,035 use a construct this library does not support (above
   all `xs:duration`, `xs:QName`, `xs:all`, union facets, substitution
   groups, `xs:NOTATION`, `xsi:type`); they are reported as unsupported,
-  never accepted silently. Of the 1,297 failures 1,255 are invalid schemas that
-  load, as the loader does not prove derivations and other schema
-  component constraints; 3 more stop at the resource limit of the
+  never accepted silently. Of the 650 failures 593 are invalid schemas that
+  load, as the loader checks the schema documents against the schema for
+  schemas but does not prove derivations and other schema component
+  constraints; 3 more stop at the resource limit of the
   content model check. The passing tests are a baseline for the CI.
 - About 135 test cases with more than 9000 checks, including generated
   conversion cases with Python's `decimal` module as an independent oracle.

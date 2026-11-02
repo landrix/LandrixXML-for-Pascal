@@ -68,6 +68,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   each error. Unsupported constructs are rejected at load time
   (`xecUnsupported`), invalid schemas raise the new code `xecSchema`;
   `xsi:type` and `xsi:nil` in documents are reported as unsupported.
+  Each schema document is checked against the rules of the schema for
+  schemas (the attributes of each schema element and their value types,
+  its children and their order, no character data outside annotations,
+  no id twice); invalid schemas raise the new
+  `ELandrixXmlXsdSchemaError` (a `ELandrixXmlError` with `Code` xecSchema)
+  with `ConstraintCode` (the code Xerces reports, e.g.
+  `s4s-att-not-allowed`), `SchemaFile` and the position in `Line` and
+  `Column`.
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs
@@ -234,7 +242,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 34,790 of 39,336 applicable XSD 1.0 tests pass, 3,246
+  the CI checks: 35,648 of 39,336 applicable XSD 1.0 tests pass, 3,035
   use constructs that are not supported.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking

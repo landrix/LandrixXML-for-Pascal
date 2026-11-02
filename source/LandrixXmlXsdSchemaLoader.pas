@@ -21,6 +21,11 @@
   Documents are identified by file name, compared case-insensitively on
   Windows and macOS.
 
+  Each schema document is first checked against the rules of the schema
+  for schemas (LandrixXmlXsdSchemaCheck.inc): allowed attributes and their
+  value types, allowed children and their order, no character data
+  outside annotations.
+
   The derivation of a restricted type is not checked against its base:
   the content and attributes are taken as written (the target schemas
   are valid for Xerces). Constructs the validator does not support raise
@@ -47,6 +52,21 @@ uses
   LandrixXmlXsdSchema;
 
 type
+  { An invalid schema document or schema component (Code is xecSchema).
+    ConstraintCode is the code Xerces reports for the same problem, e.g.
+    's4s-att-not-allowed' ('' where there is none); SchemaFile is the
+    schema document, Line and Column the position of the element (0 if
+    unknown). }
+  ELandrixXmlXsdSchemaError = class(ELandrixXmlError)
+  private
+    FConstraintCode: string;
+    FSchemaFile: string;
+  public
+    constructor CreateSchema(const AConstraintCode, Msg, ASchemaFile: string; ALine, AColumn: Integer);
+    property ConstraintCode: string read FConstraintCode;
+    property SchemaFile: string read FSchemaFile;
+  end;
+
   TLandrixXmlXsdResolver = class
   private
     FNamespaces: TLandrixXmlUtf8Array;
@@ -75,6 +95,18 @@ function LandrixXmlXsdLoadSchema(const FileName: string;
   Resolver: TLandrixXmlXsdResolver = nil): TLandrixXmlXsdSchemaSet;
 
 implementation
+
+{ ---------------------------------------------------------------------- }
+{ ELandrixXmlXsdSchemaError                                              }
+{ ---------------------------------------------------------------------- }
+
+constructor ELandrixXmlXsdSchemaError.CreateSchema(const AConstraintCode, Msg, ASchemaFile: string;
+  ALine, AColumn: Integer);
+begin
+  inherited CreateAt(xecSchema, Msg, ALine, AColumn, -1);
+  FConstraintCode := AConstraintCode;
+  FSchemaFile := ASchemaFile;
+end;
 
 { ---------------------------------------------------------------------- }
 { TLandrixXmlXsdResolver                                                 }
@@ -248,6 +280,7 @@ type
     Name: TLandrixXmlUtf8;
     FileName: string;
     Line: Integer;
+    Column: Integer;
   end;
 
   TLoader = class
@@ -264,6 +297,8 @@ type
     FFixups: TObjectList;
     { the skipped documents: namespace, tab, description }
     FSkipped: TStringList;
+    { the documents checked against the schema for schemas }
+    FCheckedFiles: TStringList;
     FCurrent: TPending;
     { the element declarations whose types are being built: a group
       reference is circular only within the same element }
@@ -274,6 +309,10 @@ type
     procedure Skip(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Kind: string;
       const NamespaceUri, Location: TLandrixXmlUtf8; Warn: Boolean);
     procedure CheckDirective(Doc: TSchemaDoc; Node: TLandrixXmlNode);
+    procedure FailCheck(const FileName: string; Node: TLandrixXmlNode; const Code, Msg: string);
+    procedure CheckSchemaNode(const FileName: string; Node: TLandrixXmlNode; const AKind: TLandrixXmlUtf8;
+      Ids: TLandrixXmlXsdNameMap);
+    procedure CheckSchemaDocument(const FileName: string; Root: TLandrixXmlNode);
     function LoadDocument(const FileName: string; Including: TSchemaDoc; IsImport: Boolean;
       const ImportNamespace: TLandrixXmlUtf8; Node: TLandrixXmlNode): TSchemaDoc;
     procedure Collect(Doc: TSchemaDoc; Node: TLandrixXmlNode; Kind: TPendingKind);
@@ -427,6 +466,8 @@ begin
   FIdentity := TLandrixXmlXsdNameMap.Create;
   FFixups := TObjectList.Create(True);
   FSkipped := TStringList.Create;
+  FCheckedFiles := TStringList.Create;
+  FCheckedFiles.CaseSensitive := True;
 end;
 
 destructor TLoader.Destroy;
@@ -446,23 +487,31 @@ begin
   FIdentity.Free;
   FFixups.Free;
   FSkipped.Free;
+  FCheckedFiles.Free;
   FSet.Free;
   inherited Destroy;
 end;
 
 procedure TLoader.Fail(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Msg: string);
 var
-  Where: string;
+  FileName, Where: string;
+  Line, Column: Integer;
 begin
+  FileName := '';
   Where := '';
   if Doc <> nil then
   begin
-    Where := Doc.FileName;
-    if (Node <> nil) and (Node.Line > 0) then
-      Where := Where + ':' + IntToStr(Node.Line);
-    Where := ' in ' + Where;
+    FileName := Doc.FileName;
+    Where := ' in ' + FileName;
   end;
-  raise ELandrixXmlError.CreateCode(xecSchema, 'XML Schema: ' + Msg + Where);
+  Line := 0;
+  Column := 0;
+  if (Doc <> nil) and (Node <> nil) then
+  begin
+    Line := Node.Line;
+    Column := Node.Column;
+  end;
+  raise ELandrixXmlXsdSchemaError.CreateSchema('', 'XML Schema: ' + Msg + Where, FileName, Line, Column);
 end;
 
 procedure TLoader.Unsupported(Doc: TSchemaDoc; Node: TLandrixXmlNode; const What: string);
@@ -581,6 +630,8 @@ begin
   FDomFiles.AddObject(FileIdentity(FileName), Result);
 end;
 
+{$I LandrixXmlXsdSchemaCheck.inc}
+
 function TLoader.Load(const FileName: string): TLandrixXmlXsdSchemaSet;
 var
   Path: string;
@@ -588,7 +639,7 @@ begin
   FSet := TLandrixXmlXsdSchemaSet.Create;
   Path := ExpandFileName(FileName);
   if not FileExists(Path) then
-    raise ELandrixXmlError.CreateCode(xecSchema, 'XML Schema document not found: ' + FileName);
+    raise ELandrixXmlXsdSchemaError.CreateSchema('', 'XML Schema document not found: ' + FileName, Path, 0, 0);
   FSet.EntryFile := Path;
   LoadDocument(Path, nil, False, '', nil);
   ResolveAll;
@@ -612,6 +663,7 @@ begin
   Root := Dom.Root;
   if not IsXs(Root, 'schema') then
     Fail(Including, Node, FileName + ' is not an XML Schema document');
+  CheckSchemaDocument(FileName, Root);
   HasTns := Attr(Root, 'targetNamespace', Tns);
   if not HasTns then
     Tns := '';
@@ -2566,6 +2618,7 @@ begin
     Fixup.Name := LocalName;
     Fixup.FileName := Doc.FileName;
     Fixup.Line := Node.Line;
+    Fixup.Column := Node.Column;
   end;
   Result := C;
 end;
@@ -2629,13 +2682,13 @@ begin
     Fixup := TKeyRefFixup(FFixups[I]);
     Refer := TLandrixXmlXsdIdentityConstraint(FIdentity.Find(Fixup.NamespaceUri, Fixup.Name));
     if (Refer = nil) or (Refer.Kind = xikKeyRef) then
-      raise ELandrixXmlError.CreateCode(xecSchema, 'XML Schema: the keyref ' +
+      raise ELandrixXmlXsdSchemaError.CreateSchema('src-resolve', 'XML Schema: the keyref ' +
         QualifiedText(Fixup.Constraint.NamespaceUri, Fixup.Constraint.Name) + ' refers to no key ' +
-        QualifiedText(Fixup.NamespaceUri, Fixup.Name) + ' in ' + Fixup.FileName + ':' + IntToStr(Fixup.Line));
+        QualifiedText(Fixup.NamespaceUri, Fixup.Name) + ' in ' + Fixup.FileName, Fixup.FileName, Fixup.Line, Fixup.Column);
     if Length(Refer.Fields) <> Length(Fixup.Constraint.Fields) then
-      raise ELandrixXmlError.CreateCode(xecSchema, 'XML Schema: the keyref ' +
+      raise ELandrixXmlXsdSchemaError.CreateSchema('c-props-correct.2', 'XML Schema: the keyref ' +
         QualifiedText(Fixup.Constraint.NamespaceUri, Fixup.Constraint.Name) +
-        ' has another number of fields than its key in ' + Fixup.FileName + ':' + IntToStr(Fixup.Line));
+        ' has another number of fields than its key in ' + Fixup.FileName, Fixup.FileName, Fixup.Line, Fixup.Column);
     Fixup.Constraint.Refer := Refer;
   end;
 end;
