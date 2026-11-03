@@ -673,6 +673,12 @@ begin
   CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:string"><xs:maxLength value="3" ' +
     'fixed="true"/></xs:restriction></xs:simpleType>' + #10 + '<xs:simpleType name="t"><xs:restriction base="s">' +
     '<xs:maxLength value="2"/></xs:restriction></xs:simpleType>', 'FixedFacetValue', 2, 'fixed facet');
+  CheckSchemaRule('<xs:element name="r"/>' + #10 + '<xs:complexType name="t"><xs:sequence>' +
+    '<xs:element name="a" minOccurs="0"/><xs:element name="a"/></xs:sequence></xs:complexType>',
+    'cos-nonambig', 2, 'ambiguous content model');
+  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:choice><xs:any namespace="##any"/>' +
+    '<xs:element ref="r"/></xs:choice></xs:complexType></xs:element>', 'cos-nonambig', 1,
+    'a wildcard competing with an element');
   { valid forms the rules must accept }
   FileName := TempSchema('<xs:annotation><xs:documentation xml:lang="de">x</xs:documentation></xs:annotation>' +
     '<xs:element name="r" id="e1"><xs:complexType mixed="true"><xs:sequence minOccurs="0" maxOccurs="unbounded">' +

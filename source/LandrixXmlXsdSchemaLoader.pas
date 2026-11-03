@@ -2237,7 +2237,7 @@ var
   BaseSimple, Simple: TLandrixXmlXsdSimpleType;
   Items: TObjectList;
   Wildcard: TLandrixXmlXsdWildcard;
-  Particle: TLandrixXmlXsdParticle;
+  Particle, First, Second: TLandrixXmlXsdParticle;
   I, J: Integer;
   Item: TAttributeItem;
   Use: TLandrixXmlXsdAttributeUse;
@@ -2369,6 +2369,10 @@ begin
         Fail(Doc, Node, 'a content model must be a model group');
       end;
       T.Model := TLandrixXmlXsdContentModel.Create(Particle);
+      if T.Model.FindAmbiguity(First, Second) then
+        FailCheck(Doc.FileName, Node, 'cos-nonambig', Esc(First.Display) + ' and ' +
+          Esc(Second.Display) + ' make the content model ambiguous (Unique Particle ' +
+          'Attribution)');
     end;
   end;
   { attributes }

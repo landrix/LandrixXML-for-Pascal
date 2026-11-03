@@ -344,6 +344,11 @@ both the mark and an entry here):
   `vc002`, `vc024`).
 - The XSD 1.1 wildcard attributes `notNamespace` and `notQName` are errors
   (`s3_10_1ii08`, `s3_10_6ii01`, `s3_10_6ii02`, `s3_10_6ii04`).
+- Unique Particle Attribution is checked on the content model as Xerces
+  rewrites it: where its validator counts the bounds of an element, the
+  element stands for any number of repetitions, so for example a sequence
+  of `a` (exactly twice), `a` and a repeated choice is ambiguous, though
+  XML Schema 1.0 allows it.
 - A restriction that has or inherits a `length` may give `minLength` or
   `maxLength` only if its base type has the same one; the errata of XML
   Schema 1.0 allow more (`errF001`).
@@ -360,7 +365,8 @@ Differences from Xerces, also on purpose:
 - The loader checks each schema document against the schema for schemas
   (attributes, their values, children and their order) and the facets of
   each simple type against each other and against its base type (as
-  Xerces, also fixed facets), but does not prove derivations and other
+  Xerces, also fixed facets) and Unique Particle Attribution of content
+  models, but does not prove derivations and other
   schema component constraints yet: invalid schemas that Xerces rejects
   may load (the target schemas are valid for Xerces).
 
@@ -399,13 +405,14 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 35,810
+  load or be rejected, documents that must be valid or invalid) 35,839
   pass and 3,035 use a construct this library does not support (above
   all `xs:duration`, `xs:QName`, `xs:all`, union facets, substitution
   groups, `xs:NOTATION`, `xsi:type`); they are reported as unsupported,
-  never accepted silently. Of the 488 failures 430 are invalid schemas that
+  never accepted silently. Of the 459 failures 401 are invalid schemas that
   load, as the loader checks the schema documents against the schema for
-  schemas and the facets of simple types, but does not prove derivations
+  schemas, the facets of simple types and Unique Particle Attribution,
+  but does not prove derivations
   and other schema component constraints; 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline
   for the CI.

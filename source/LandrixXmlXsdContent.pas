@@ -11,7 +11,7 @@
   The checker interprets the particle tree directly with a stack of frames
   (particle, occurrence count, current child) and decides each child by one
   element of lookahead, which the Unique Particle Attribution rule of the
-  schema makes unambiguous (it is assumed, not checked). It follows the
+  schema makes unambiguous (FindAmbiguity checks it). It follows the
   validator built into the Java runtime (Xerces) in what it reports and
   where:
   - The expected elements are listed in the order of their particles in
@@ -151,6 +151,12 @@ type
       lists and counts them: all leaves, in document order }
     property TermCount: Integer read GetTermCount;
     property Terms[Index: Integer]: TLandrixXmlXsdParticle read GetTerm;
+    { Xerces' check of Unique Particle Attribution (cos-nonambig): True
+      if two different particles can take the same child in one state of
+      the model as Xerces builds it for the check (see the
+      implementation); First and Second are the two, in Xerces' order. A
+      model too large for the check counts as unambiguous. }
+    function FindAmbiguity(out First, Second: TLandrixXmlXsdParticle): Boolean;
     { True if occurrence bounds are checked with the occurrence codes }
     property RepeatingMode: Boolean read FRepeatingMode;
   end;
@@ -735,6 +741,736 @@ end;
 function TLandrixXmlXsdContentModel.GetTerm(Index: Integer): TLandrixXmlXsdParticle;
 begin
   Result := TLandrixXmlXsdParticle(FTerms[Index]);
+end;
+
+{ ---------------------------------------------------------------------- }
+{ Unique Particle Attribution                                            }
+{ ---------------------------------------------------------------------- }
+
+{ The check follows Xerces (CMBuilder, XSDFACM): the model is rewritten
+  into a syntax tree of leaves (one position per leaf, copies keep the
+  particle) and the operators ?, *, +, sequence and choice, the
+  deterministic automaton of its positions is built, and two different
+  particles that can take the same child in one state are ambiguous.
+  Xerces shortens the bounds for the check (above 1 to at most 2) and
+  turns an element or wildcard with other bounds into * or + where its
+  validator counts them. So a sequence of a with minOccurs and maxOccurs
+  2, a again and a repeated choice is ambiguous for Xerces, though not
+  under XML Schema 1.0 (without the choice the model is compact and its
+  counting state tells the two apart). }
+
+const
+  UpaMaxStates = 20000;
+  UpaMaxNodes = 20000;
+  { the sets of positions take Positions * Positions / 8 bytes }
+  UpaMaxPositions = 4096;
+  UpaBuckets = 4096;
+
+type
+  TUpaKind = (ukLeaf, ukSequence, ukChoice, ukOptional, ukStar, ukPlus);
+  { a set of positions, 32 per word }
+  TUpaSet = array of Cardinal;
+
+  TUpaNode = class
+  public
+    Kind: TUpaKind;
+    Left: TUpaNode;
+    Right: TUpaNode;
+    Particle: TLandrixXmlXsdParticle;
+    { the particle's number (shared by copies), -1 for the end }
+    Id: Integer;
+    Pos: Integer;
+    { a leaf of Xerces' compact model with other bounds than ?, *, + }
+    Repeating: Boolean;
+    RepeatMin: Integer;
+    RepeatMax: Integer;
+    Nullable: Boolean;
+    First: TUpaSet;
+    Last: TUpaSet;
+  end;
+
+  { the model is too large for the check }
+  EUpaLimit = class(Exception);
+
+  TUpaState = class
+  public
+    Index: Integer;
+    Bits: TUpaSet;
+    Trans: array of Integer;
+  end;
+
+  TUpaBuilder = class
+  public
+    Nodes: TObjectList;
+    Leaves: TList;
+    ParticleCount: Integer;
+    constructor Create;
+    destructor Destroy; override;
+    function NewLeaf(P: TLandrixXmlXsdParticle; Id: Integer): TUpaNode;
+    function NewOp(Kind: TUpaKind; L, R: TUpaNode): TUpaNode;
+    function CopyNode(N: TUpaNode): TUpaNode;
+    function MultiNodes(N: TUpaNode; Num: Integer; CopyFirst: Boolean): TUpaNode;
+    function Expand(N: TUpaNode; MinO, MaxO: Integer; Optimize: Boolean): TUpaNode;
+    function Build(P: TLandrixXmlXsdParticle; Optimize: Boolean): TUpaNode;
+    function BuildCompact(P: TLandrixXmlXsdParticle): TUpaNode;
+    function BuildCompactLeaf(P: TLandrixXmlXsdParticle; MinO, MaxO: Integer): TUpaNode;
+  end;
+
+constructor TUpaBuilder.Create;
+begin
+  inherited Create;
+  Nodes := TObjectList.Create(True);
+  Leaves := TList.Create;
+end;
+
+destructor TUpaBuilder.Destroy;
+begin
+  Leaves.Free;
+  Nodes.Free;
+  inherited Destroy;
+end;
+
+function TUpaBuilder.NewLeaf(P: TLandrixXmlXsdParticle; Id: Integer): TUpaNode;
+begin
+  if (Integer(Nodes.Count) >= UpaMaxNodes) or (Integer(Leaves.Count) >= UpaMaxPositions) then
+    raise EUpaLimit.Create('content model too large');
+  Result := TUpaNode.Create;
+  Nodes.Add(Result);
+  Result.Kind := ukLeaf;
+  Result.Particle := P;
+  Result.Id := Id;
+  Result.Pos := Integer(Leaves.Count);
+  Leaves.Add(Result);
+end;
+
+function TUpaBuilder.NewOp(Kind: TUpaKind; L, R: TUpaNode): TUpaNode;
+begin
+  if Integer(Nodes.Count) >= UpaMaxNodes then
+    raise EUpaLimit.Create('content model too large');
+  Result := TUpaNode.Create;
+  Nodes.Add(Result);
+  Result.Kind := Kind;
+  Result.Left := L;
+  Result.Right := R;
+  Result.Id := -1;
+  Result.Pos := -1;
+end;
+
+function TUpaBuilder.CopyNode(N: TUpaNode): TUpaNode;
+begin
+  if N.Kind = ukLeaf then
+  begin
+    Result := NewLeaf(N.Particle, N.Id);
+    Result.Repeating := N.Repeating;
+    Result.RepeatMin := N.RepeatMin;
+    Result.RepeatMax := N.RepeatMax;
+  end
+  else if N.Kind in [ukSequence, ukChoice] then
+    Result := NewOp(N.Kind, CopyNode(N.Left), CopyNode(N.Right))
+  else
+    Result := NewOp(N.Kind, CopyNode(N.Left), nil);
+end;
+
+function TUpaBuilder.MultiNodes(N: TUpaNode; Num: Integer; CopyFirst: Boolean): TUpaNode;
+var
+  Half: Integer;
+begin
+  if Num = 0 then
+    Result := nil
+  else if Num = 1 then
+  begin
+    if CopyFirst then
+      Result := CopyNode(N)
+    else
+      Result := N;
+  end
+  else
+  begin
+    Half := Num div 2;
+    Result := NewOp(ukSequence, MultiNodes(N, Half, CopyFirst), MultiNodes(N, Num - Half, True));
+  end;
+end;
+
+{ Xerces' expandContentModel }
+function TUpaBuilder.Expand(N: TUpaNode; MinO, MaxO: Integer; Optimize: Boolean): TUpaNode;
+var
+  Opt: TUpaNode;
+begin
+  if (MinO = 1) and (MaxO = 1) then
+    Result := N
+  else if (MinO = 0) and (MaxO = 1) then
+    Result := NewOp(ukOptional, N, nil)
+  else if (MinO = 0) and (MaxO = LandrixXmlXsdUnbounded) then
+    Result := NewOp(ukStar, N, nil)
+  else if (MinO = 1) and (MaxO = LandrixXmlXsdUnbounded) then
+    Result := NewOp(ukPlus, N, nil)
+  else if (N.Kind = ukLeaf) and ((Optimize and (N.Particle.Kind = xpkElement)) or
+    (N.Particle.Kind = xpkWildcard)) then
+  begin
+    { counted by the validator: * or + for the automaton }
+    if MinO = 0 then
+      Result := NewOp(ukStar, N, nil)
+    else
+      Result := NewOp(ukPlus, N, nil);
+  end
+  else if MaxO = LandrixXmlXsdUnbounded then
+    Result := NewOp(ukSequence, MultiNodes(N, MinO - 1, True), NewOp(ukPlus, N, nil))
+  else
+  begin
+    Result := nil;
+    if MinO > 0 then
+      Result := MultiNodes(N, MinO, False);
+    if MaxO > MinO then
+    begin
+      Opt := NewOp(ukOptional, N, nil);
+      if Result = nil then
+        Result := MultiNodes(Opt, MaxO - MinO, False)
+      else
+        Result := NewOp(ukSequence, Result, MultiNodes(Opt, MaxO - MinO, True));
+    end;
+  end;
+end;
+
+{ Xerces never sees particles that cannot occur (the loader drops them;
+  models built through the API may have them) }
+function OccurringCount(P: TLandrixXmlXsdParticle): Integer;
+var
+  I: Integer;
+begin
+  Result := 0;
+  for I := 0 to P.ChildCount - 1 do
+    if P.Children[I].MaxOccurs <> 0 then
+      Inc(Result);
+end;
+
+function FirstOccurring(P: TLandrixXmlXsdParticle): TLandrixXmlXsdParticle;
+var
+  I: Integer;
+begin
+  for I := 0 to P.ChildCount - 1 do
+  begin
+    Result := P.Children[I];
+    if Result.MaxOccurs <> 0 then
+      Exit;
+  end;
+  Result := nil;
+end;
+
+{ Xerces' useRepeatingLeafNodes }
+function UpaRepeatingLeaves(P: TLandrixXmlXsdParticle): Boolean;
+var
+  I: Integer;
+  Child: TLandrixXmlXsdParticle;
+begin
+  Result := True;
+  if P.IsLeaf or (P.MaxOccurs = 0) then
+    Exit;
+  if (P.MinOccurs <> 1) or (P.MaxOccurs <> 1) then
+  begin
+    if OccurringCount(P) = 1 then
+    begin
+      Child := FirstOccurring(P);
+      Result := Child.IsLeaf and (Child.MinOccurs = 1) and (Child.MaxOccurs = 1);
+    end
+    else
+      Result := OccurringCount(P) = 0;
+    Exit;
+  end;
+  for I := 0 to P.ChildCount - 1 do
+    if not UpaRepeatingLeaves(P.Children[I]) then
+    begin
+      Result := False;
+      Exit;
+    end;
+end;
+
+{ Xerces' buildSyntaxTree for the check (forUPA): bounds above 1 become
+  at most 2 }
+function TUpaBuilder.Build(P: TLandrixXmlXsdParticle; Optimize: Boolean): TUpaNode;
+var
+  MinO, MaxO, I: Integer;
+  Temp: TUpaNode;
+  TwoChildren, ChildOptimize: Boolean;
+begin
+  Result := nil;
+  { Xerces drops particles that cannot occur }
+  if P.MaxOccurs = 0 then
+    Exit;
+  MinO := P.MinOccurs;
+  MaxO := P.MaxOccurs;
+  if MinO > 1 then
+  begin
+    if (MaxO > MinO) or (MaxO = LandrixXmlXsdUnbounded) then
+      MinO := 1
+    else
+      MinO := 2;
+  end;
+  if MaxO > 1 then
+    MaxO := 2;
+  if P.IsLeaf then
+  begin
+    Result := NewLeaf(P, ParticleCount);
+    Inc(ParticleCount);
+    Result := Expand(Result, MinO, MaxO, Optimize);
+    Exit;
+  end;
+  Result := nil;
+  TwoChildren := False;
+  ChildOptimize := Optimize and (MinO = 1) and (MaxO = 1) and ((P.Kind = xpkSequence) or (OccurringCount(P) = 1));
+  for I := 0 to P.ChildCount - 1 do
+  begin
+    Temp := Build(P.Children[I], ChildOptimize);
+    if Temp <> nil then
+    begin
+      if Result = nil then
+        Result := Temp
+      else
+      begin
+        if P.Kind = xpkSequence then
+          Result := NewOp(ukSequence, Result, Temp)
+        else
+          Result := NewOp(ukChoice, Result, Temp);
+        TwoChildren := True;
+      end;
+    end;
+  end;
+  if Result <> nil then
+  begin
+    if (P.Kind = xpkChoice) and not TwoChildren and (OccurringCount(P) > 1) then
+      Result := NewOp(ukOptional, Result, nil);
+    Result := Expand(Result, MinO, MaxO, False);
+  end;
+end;
+
+{ Xerces' buildCompactSyntaxTree2: an element or wildcard with other
+  bounds than ?, *, + is a repeating leaf under * or + }
+function TUpaBuilder.BuildCompactLeaf(P: TLandrixXmlXsdParticle; MinO, MaxO: Integer): TUpaNode;
+begin
+  Result := NewLeaf(P, ParticleCount);
+  Inc(ParticleCount);
+  if (MinO = 1) and (MaxO = 1) then
+    Exit;
+  if (MinO = 0) and (MaxO = 1) then
+    Result := NewOp(ukOptional, Result, nil)
+  else if (MinO = 0) and (MaxO = LandrixXmlXsdUnbounded) then
+    Result := NewOp(ukStar, Result, nil)
+  else if (MinO = 1) and (MaxO = LandrixXmlXsdUnbounded) then
+    Result := NewOp(ukPlus, Result, nil)
+  else
+  begin
+    Result.Repeating := True;
+    Result.RepeatMin := MinO;
+    Result.RepeatMax := MaxO;
+    if MinO = 0 then
+      Result := NewOp(ukStar, Result, nil)
+    else
+      Result := NewOp(ukPlus, Result, nil);
+  end;
+end;
+
+{ Xerces' buildCompactSyntaxTree (the model passed UsesRepeatingLeaves) }
+function TUpaBuilder.BuildCompact(P: TLandrixXmlXsdParticle): TUpaNode;
+var
+  I, Count: Integer;
+  Temp: TUpaNode;
+begin
+  Result := nil;
+  if P.MaxOccurs = 0 then
+    Exit;
+  if P.IsLeaf then
+  begin
+    Result := BuildCompactLeaf(P, P.MinOccurs, P.MaxOccurs);
+    Exit;
+  end;
+  if (OccurringCount(P) = 1) and ((P.MinOccurs <> 1) or (P.MaxOccurs <> 1)) then
+  begin
+    Result := BuildCompactLeaf(FirstOccurring(P), P.MinOccurs, P.MaxOccurs);
+    Exit;
+  end;
+  Result := nil;
+  Count := 0;
+  for I := 0 to P.ChildCount - 1 do
+  begin
+    Temp := BuildCompact(P.Children[I]);
+    if Temp <> nil then
+    begin
+      Inc(Count);
+      if Result = nil then
+        Result := Temp
+      else if P.Kind = xpkSequence then
+        Result := NewOp(ukSequence, Result, Temp)
+      else
+        Result := NewOp(ukChoice, Result, Temp);
+    end;
+  end;
+  if (Result <> nil) and (P.Kind = xpkChoice) and (Count < OccurringCount(P)) then
+    Result := NewOp(ukOptional, Result, nil);
+end;
+
+procedure UnionInto(var Target: TUpaSet; const Source: TUpaSet);
+var
+  I: Integer;
+begin
+  for I := 0 to Integer(Length(Source)) - 1 do
+    Target[I] := Target[I] or Source[I];
+end;
+
+function EmptySet(Size: Integer): TUpaSet;
+var
+  I: Integer;
+begin
+  Result := nil;
+  SetLength(Result, (Size + 31) div 32);
+  for I := 0 to Integer(Length(Result)) - 1 do
+    Result[I] := 0;
+end;
+
+function HasPos(const S: TUpaSet; Pos: Integer): Boolean;
+begin
+  Result := (S[Pos div 32] and (Cardinal(1) shl (Pos mod 32))) <> 0;
+end;
+
+procedure AddPos(var S: TUpaSet; Pos: Integer);
+begin
+  S[Pos div 32] := S[Pos div 32] or (Cardinal(1) shl (Pos mod 32));
+end;
+
+function SameSet(const A, B: TUpaSet): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to Integer(Length(A)) - 1 do
+    if A[I] <> B[I] then
+      Exit;
+  Result := True;
+end;
+
+function SetHash(const S: TUpaSet): Integer;
+var
+  I: Integer;
+  H: Cardinal;
+begin
+  H := 0;
+  for I := 0 to Integer(Length(S)) - 1 do
+    H := ((H shl 5) or (H shr 27)) xor S[I];
+  Result := Integer(H mod UpaBuckets);
+end;
+
+{ Nullable, first and last positions; Follow gets the follow positions. }
+procedure ComputePositions(N: TUpaNode; Size: Integer; var Follow: array of TUpaSet);
+var
+  I: Integer;
+begin
+  N.First := EmptySet(Size);
+  N.Last := EmptySet(Size);
+  if N.Kind = ukLeaf then
+  begin
+    N.Nullable := False;
+    AddPos(N.First, N.Pos);
+    AddPos(N.Last, N.Pos);
+    Exit;
+  end;
+  ComputePositions(N.Left, Size, Follow);
+  if N.Right <> nil then
+    ComputePositions(N.Right, Size, Follow);
+  case N.Kind of
+    ukSequence:
+      begin
+        N.Nullable := N.Left.Nullable and N.Right.Nullable;
+        UnionInto(N.First, N.Left.First);
+        if N.Left.Nullable then
+          UnionInto(N.First, N.Right.First);
+        UnionInto(N.Last, N.Right.Last);
+        if N.Right.Nullable then
+          UnionInto(N.Last, N.Left.Last);
+        for I := 0 to Size - 1 do
+          if HasPos(N.Left.Last, I) then
+            UnionInto(Follow[I], N.Right.First);
+      end;
+    ukChoice:
+      begin
+        N.Nullable := N.Left.Nullable or N.Right.Nullable;
+        UnionInto(N.First, N.Left.First);
+        UnionInto(N.First, N.Right.First);
+        UnionInto(N.Last, N.Left.Last);
+        UnionInto(N.Last, N.Right.Last);
+      end;
+  else
+    begin
+      N.Nullable := (N.Kind <> ukPlus) or N.Left.Nullable;
+      UnionInto(N.First, N.Left.First);
+      UnionInto(N.Last, N.Left.Last);
+      if N.Kind <> ukOptional then
+        for I := 0 to Size - 1 do
+          if HasPos(N.Left.Last, I) then
+            UnionInto(Follow[I], N.Left.First);
+    end;
+  end;
+end;
+
+{ True if some namespace is allowed by both wildcards: one of those they
+  name, no namespace, or one they do not name }
+function WildcardsOverlap(A, B: TLandrixXmlXsdParticle): Boolean;
+var
+  Candidates: TLandrixXmlUtf8Array;
+  Fresh: TLandrixXmlUtf8;
+  I, Count: Integer;
+begin
+  Candidates := nil;
+  SetLength(Candidates, Length(A.Namespaces) + Length(B.Namespaces) + 1);
+  Candidates[0] := '';
+  Count := 1;
+  for I := 0 to Integer(Length(A.Namespaces)) - 1 do
+  begin
+    Candidates[Count] := A.Namespaces[I];
+    Inc(Count);
+  end;
+  for I := 0 to Integer(Length(B.Namespaces)) - 1 do
+  begin
+    Candidates[Count] := B.Namespaces[I];
+    Inc(Count);
+  end;
+  { a namespace neither names: longer than all of them }
+  Fresh := '#';
+  for I := 0 to Count - 1 do
+    while Length(Fresh) <= Length(Candidates[I]) do
+      Fresh := Fresh + '#';
+  Result := A.Matches(Fresh, '') and B.Matches(Fresh, '');
+  for I := 0 to Count - 1 do
+    if not Result then
+      Result := A.Matches(Candidates[I], '') and B.Matches(Candidates[I], '');
+end;
+
+{ Xerces' overlapUPA (no substitution groups here) }
+function ParticlesOverlap(A, B: TLandrixXmlXsdParticle): Boolean;
+begin
+  if (A.Kind = xpkElement) and (B.Kind = xpkElement) then
+    Result := (A.LocalName = B.LocalName) and (A.NamespaceUri = B.NamespaceUri)
+  else if A.Kind = xpkElement then
+    Result := B.Matches(A.NamespaceUri, A.LocalName)
+  else if B.Kind = xpkElement then
+    Result := A.Matches(B.NamespaceUri, B.LocalName)
+  else
+    Result := WildcardsOverlap(A, B);
+end;
+
+function TLandrixXmlXsdContentModel.FindAmbiguity(out First, Second: TLandrixXmlXsdParticle): Boolean;
+var
+  B: TUpaBuilder;
+  Tree, Root, Leaf: TUpaNode;
+  Size, ElemCount, PairCount, I, J, E, Index, Cur: Integer;
+  Follow: array of TUpaSet;
+  ElemOf, IdToElem, Counting, PairFirst, PairSecond: array of Integer;
+  PairState: array of ShortInt;
+  ElemLeaf: array of TUpaNode;
+  States: TObjectList;
+  State, Next: TUpaState;
+  Buckets: array of TList;
+  Bucket: TList;
+  NextSets: array of TUpaSet;
+  AnyRepeating, Clash: Boolean;
+begin
+  Result := False;
+  First := nil;
+  Second := nil;
+  if FRoot = nil then
+    Exit;
+  { without two overlapping particles there is nothing to decide (the
+    usual case); the tree is not even built }
+  Clash := False;
+  for I := 0 to Integer(FLeaves.Count) - 1 do
+    for J := I + 1 to Integer(FLeaves.Count) - 1 do
+      if not Clash and (TLandrixXmlXsdParticle(FLeaves[I]).MaxOccurs <> 0) and
+        (TLandrixXmlXsdParticle(FLeaves[J]).MaxOccurs <> 0) then
+        Clash := ParticlesOverlap(TLandrixXmlXsdParticle(FLeaves[I]), TLandrixXmlXsdParticle(FLeaves[J]));
+  if not Clash then
+    Exit;
+  States := nil;
+  Buckets := nil;
+  B := TUpaBuilder.Create;
+  try
+    try
+      if UpaRepeatingLeaves(FRoot) then
+        Tree := B.BuildCompact(FRoot)
+      else
+        Tree := B.Build(FRoot, True);
+      if Tree = nil then
+        Exit;
+      Root := B.NewOp(ukSequence, Tree, B.NewLeaf(nil, -1));
+    except
+      on EUpaLimit do
+        { too large to check: taken as unambiguous }
+        Exit;
+    end;
+    Size := Integer(B.Leaves.Count);
+    { one entry per particle, in the order of their first positions }
+    ElemOf := nil;
+    IdToElem := nil;
+    ElemLeaf := nil;
+    SetLength(ElemOf, Size);
+    SetLength(IdToElem, B.ParticleCount);
+    SetLength(ElemLeaf, Size);
+    for I := 0 to B.ParticleCount - 1 do
+      IdToElem[I] := -1;
+    ElemCount := 0;
+    AnyRepeating := False;
+    for I := 0 to Size - 1 do
+    begin
+      Leaf := TUpaNode(B.Leaves[I]);
+      ElemOf[I] := -1;
+      if Leaf.Id < 0 then
+        Continue;
+      if IdToElem[Leaf.Id] < 0 then
+      begin
+        IdToElem[Leaf.Id] := ElemCount;
+        ElemLeaf[ElemCount] := Leaf;
+        if Leaf.Repeating then
+          AnyRepeating := True;
+        Inc(ElemCount);
+      end;
+      ElemOf[I] := IdToElem[Leaf.Id];
+    end;
+    { the pairs that could conflict, in Xerces' order; without any the
+      model is unambiguous (the usual case) }
+    PairFirst := nil;
+    PairSecond := nil;
+    PairState := nil;
+    PairCount := 0;
+    for I := 0 to ElemCount - 1 do
+      for J := I + 1 to ElemCount - 1 do
+        if ParticlesOverlap(ElemLeaf[I].Particle, ElemLeaf[J].Particle) then
+        begin
+          if PairCount = Integer(Length(PairFirst)) then
+          begin
+            SetLength(PairFirst, 2 * PairCount + 8);
+            SetLength(PairSecond, 2 * PairCount + 8);
+            SetLength(PairState, 2 * PairCount + 8);
+          end;
+          PairFirst[PairCount] := I;
+          PairSecond[PairCount] := J;
+          PairState[PairCount] := 0;
+          Inc(PairCount);
+        end;
+    if PairCount = 0 then
+      Exit;
+    Follow := nil;
+    SetLength(Follow, Size);
+    for I := 0 to Size - 1 do
+      Follow[I] := EmptySet(Size);
+    ComputePositions(Root, Size, Follow);
+    { the automaton; a state is the set of positions that may come next }
+    SetLength(Buckets, UpaBuckets);
+    for I := 0 to UpaBuckets - 1 do
+      Buckets[I] := nil;
+    NextSets := nil;
+    SetLength(NextSets, ElemCount);
+    States := TObjectList.Create(True);
+    State := TUpaState.Create;
+    State.Index := 0;
+    State.Bits := Root.First;
+    States.Add(State);
+    Index := SetHash(State.Bits);
+    Buckets[Index] := TList.Create;
+    Buckets[Index].Add(State);
+    Cur := 0;
+    while Cur < Integer(States.Count) do
+    begin
+      State := TUpaState(States[Cur]);
+      SetLength(State.Trans, ElemCount);
+      { the next sets of all particles in one pass over the positions }
+      for E := 0 to ElemCount - 1 do
+        NextSets[E] := nil;
+      for I := 0 to Size - 1 do
+        if (ElemOf[I] >= 0) and HasPos(State.Bits, I) then
+        begin
+          E := ElemOf[I];
+          if NextSets[E] = nil then
+            NextSets[E] := EmptySet(Size);
+          UnionInto(NextSets[E], Follow[I]);
+        end;
+      for E := 0 to ElemCount - 1 do
+      begin
+        State.Trans[E] := -1;
+        if NextSets[E] = nil then
+          Continue;
+        Index := SetHash(NextSets[E]);
+        Bucket := Buckets[Index];
+        if Bucket = nil then
+        begin
+          Bucket := TList.Create;
+          Buckets[Index] := Bucket;
+        end;
+        Next := nil;
+        for J := 0 to Integer(Bucket.Count) - 1 do
+          if SameSet(TUpaState(Bucket[J]).Bits, NextSets[E]) then
+          begin
+            Next := TUpaState(Bucket[J]);
+            Break;
+          end;
+        if Next = nil then
+        begin
+          { too large to check: taken as unambiguous }
+          if Integer(States.Count) >= UpaMaxStates then
+            Exit;
+          Next := TUpaState.Create;
+          Next.Index := Integer(States.Count);
+          Next.Bits := NextSets[E];
+          States.Add(Next);
+          Bucket.Add(Next);
+        end;
+        State.Trans[E] := Next.Index;
+      end;
+      Inc(Cur);
+    end;
+    { counting states: the first self-loop is on a repeating leaf }
+    Counting := nil;
+    SetLength(Counting, Integer(States.Count));
+    for I := 0 to Integer(States.Count) - 1 do
+    begin
+      State := TUpaState(States[I]);
+      Counting[I] := -1;
+      if AnyRepeating then
+        for E := 0 to ElemCount - 1 do
+          if State.Trans[E] = I then
+          begin
+            if ElemLeaf[E].Repeating then
+              Counting[I] := E;
+            Break;
+          end;
+    end;
+    { the first state in which both particles of a pair can come decides }
+    for I := 0 to Integer(States.Count) - 1 do
+    begin
+      State := TUpaState(States[I]);
+      for J := 0 to PairCount - 1 do
+        if (PairState[J] = 0) and (State.Trans[PairFirst[J]] <> -1) and (State.Trans[PairSecond[J]] <> -1) then
+        begin
+          { a counting state with a fixed count: the count tells looping
+            and leaving apart }
+          Clash := not ((Counting[I] >= 0) and
+            ((State.Trans[PairFirst[J]] = I) xor (State.Trans[PairSecond[J]] = I)) and
+            (ElemLeaf[Counting[I]].RepeatMin = ElemLeaf[Counting[I]].RepeatMax));
+          if Clash then
+            PairState[J] := 1
+          else
+            PairState[J] := -1;
+        end;
+    end;
+    for J := 0 to PairCount - 1 do
+      if PairState[J] = 1 then
+      begin
+        First := ElemLeaf[PairFirst[J]].Particle;
+        Second := ElemLeaf[PairSecond[J]].Particle;
+        Result := True;
+        Exit;
+      end;
+  finally
+    for I := 0 to Integer(Length(Buckets)) - 1 do
+      Buckets[I].Free;
+    States.Free;
+    B.Free;
+  end;
 end;
 
 { ---------------------------------------------------------------------- }

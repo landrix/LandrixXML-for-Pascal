@@ -62,8 +62,8 @@ begin
 end;
 
 { Model notation of the generator: S(...) sequence, C(...) choice, a
-  letter an element, an optional suffix gives min and max in braces (max
-  u for unbounded). }
+  letter an element, "*" a ##any wildcard, an optional suffix gives min
+  and max in braces (max u for unbounded). }
 function ParseBounds(const S: string; var I: Integer; out MinOccurs, MaxOccurs: Integer): Boolean;
 var
   Start: Integer;
@@ -124,6 +124,11 @@ begin
   Name := S[I];
   Inc(I);
   ParseBounds(S, I, MinOccurs, MaxOccurs);
+  if Name = '*' then
+  begin
+    Result := TLandrixXmlXsdParticle.CreateWildcard(xncAny, nil, nil, MinOccurs, MaxOccurs);
+    Exit;
+  end;
   { local declarations: each element particle is its own declaration }
   Result := TLandrixXmlXsdParticle.CreateElement('', U(Name), nil, MinOccurs, MaxOccurs);
 end;
@@ -356,6 +361,159 @@ begin
   end;
 end;
 
+{ tests/data/xsdcontent/upa.txt: random models and the verdict of Xerces'
+  Unique Particle Attribution check (tools/gen-xsdcontent-testdata.py
+  --upa) }
+procedure TestUniqueParticleAttribution;
+var
+  L: TStringList;
+  K, MismatchCount, Ambiguous: Integer;
+  Fields: TFields;
+  Model: TLandrixXmlXsdContentModel;
+  First, Second: TLandrixXmlXsdParticle;
+  Got, Mismatches: string;
+begin
+  Fields := nil;
+  Mismatches := '';
+  MismatchCount := 0;
+  Ambiguous := 0;
+  L := TStringList.Create;
+  try
+    L.LoadFromFile(DataFile('upa.txt'));
+    Check(L.Count > 1000, 'UPA cases present');
+    for K := 0 to L.Count - 1 do
+    begin
+      Fields := Split(L[K], #9);
+      Model := ParseModel(Fields[0]);
+      try
+        if Model.FindAmbiguity(First, Second) then
+          Got := 'cos-nonambig:' + LandrixXmlUtf8ToString(First.Display) + '|' +
+            LandrixXmlUtf8ToString(Second.Display)
+        else
+          Got := 'ok';
+      finally
+        Model.Free;
+      end;
+      if Got <> 'ok' then
+        Inc(Ambiguous);
+      if Got <> Fields[1] then
+      begin
+        Inc(MismatchCount);
+        if MismatchCount <= 25 then
+          Mismatches := Mismatches + #10 + '  line ' + IntToStr(K + 1) + ': ' + L[K] + #10 +
+            '    got ' + Got;
+      end;
+    end;
+    Check(Ambiguous > 100, 'ambiguous models among the cases');
+    { as Xerces: counted bounds outside the compact model }
+    Model := ParseModel('S(a{2,2} a C(b c){0,2})');
+    try
+      Check(Model.FindAmbiguity(First, Second), 'counted a before a is ambiguous for Xerces');
+    finally
+      Model.Free;
+    end;
+    Model := ParseModel('S(a{2,2} a)');
+    try
+      Check(not Model.FindAmbiguity(First, Second), 'the compact model counts a{2,2} before a');
+    finally
+      Model.Free;
+    end;
+    Check(MismatchCount = 0, IntToStr(MismatchCount) + ' differences from Xerces:' + Mismatches);
+  finally
+    L.Free;
+  end;
+end;
+
+{ Root: a choice of A and B; True if Xerces' UPA check finds them
+  competing }
+function Competing(A, B: TLandrixXmlXsdParticle): Boolean;
+var
+  Root: TLandrixXmlXsdParticle;
+  Model: TLandrixXmlXsdContentModel;
+  First, Second: TLandrixXmlXsdParticle;
+begin
+  Root := TLandrixXmlXsdParticle.CreateGroup(xpkChoice, 1, 1);
+  Root.Add(A);
+  Root.Add(B);
+  Model := TLandrixXmlXsdContentModel.Create(Root);
+  try
+    Result := Model.FindAmbiguity(First, Second);
+  finally
+    Model.Free;
+  end;
+end;
+
+function Names(const A, B: string): TLandrixXmlUtf8Array;
+begin
+  Result := nil;
+  if B = '-' then
+    SetLength(Result, 1)
+  else
+    SetLength(Result, 2);
+  Result[0] := U(A);
+  if B <> '-' then
+    Result[1] := U(B);
+end;
+
+procedure TestWildcardOverlap;
+var
+  Model: TLandrixXmlXsdContentModel;
+  First, Second: TLandrixXmlXsdParticle;
+begin
+  Check(not Competing(TLandrixXmlXsdParticle.CreateWildcard(xncNot, Names('urn:t', '-'), nil, 1, 1),
+    TLandrixXmlXsdParticle.CreateWildcard(xncList, Names('', '-'), nil, 1, 1)), '##other and ##local');
+  Check(not Competing(TLandrixXmlXsdParticle.CreateWildcard(xncNot, Names('urn:t', '-'), nil, 1, 1),
+    TLandrixXmlXsdParticle.CreateWildcard(xncList, Names('urn:t', ''), nil, 1, 1)),
+    '##other and ##targetNamespace ##local');
+  Check(Competing(TLandrixXmlXsdParticle.CreateWildcard(xncNot, Names('urn:t', '-'), nil, 1, 1),
+    TLandrixXmlXsdParticle.CreateWildcard(xncList, Names('urn:t', 'urn:x'), nil, 1, 1)),
+    '##other and a list with another namespace');
+  Check(Competing(TLandrixXmlXsdParticle.CreateWildcard(xncNot, Names('urn:t', '-'), nil, 1, 1),
+    TLandrixXmlXsdParticle.CreateWildcard(xncNot, Names('urn:x', '-'), nil, 1, 1)), 'two ##other');
+  Check(not Competing(TLandrixXmlXsdParticle.CreateWildcard(xncList, Names('urn:a', '-'), nil, 1, 1),
+    TLandrixXmlXsdParticle.CreateWildcard(xncList, Names('urn:b', ''), nil, 1, 1)), 'disjoint lists');
+  Check(Competing(TLandrixXmlXsdParticle.CreateWildcard(xncList, Names('urn:a', '-'), nil, 1, 1),
+    TLandrixXmlXsdParticle.CreateElement(U('urn:a'), U('e'), nil, 1, 1)), 'list and an element in it');
+  Check(not Competing(TLandrixXmlXsdParticle.CreateWildcard(xncNot, Names('', '-'), nil, 1, 1),
+    TLandrixXmlXsdParticle.CreateElement('', U('e'), nil, 1, 1)), '##other without target and a local element');
+  Check(not Competing(TLandrixXmlXsdParticle.CreateElement(U('urn:a'), U('e'), nil, 1, 1),
+    TLandrixXmlXsdParticle.CreateElement('', U('e'), nil, 1, 1)), 'same local name in other namespaces');
+  Check(not Competing(TLandrixXmlXsdParticle.CreateElement('', U('a'), nil, 0, 0),
+    TLandrixXmlXsdParticle.CreateElement('', U('a'), nil, 1, 1)), 'a particle that cannot occur');
+  Model := ParseModel('S(C(a{0,0} b) b)');
+  try
+    Check(not Model.FindAmbiguity(First, Second), 'a choice whose other particle cannot occur');
+  finally
+    Model.Free;
+  end;
+end;
+
+{ 14 nested sequences 1..2 around an ambiguous pair: too many positions
+  to check, taken as unambiguous instead of exhausting memory }
+procedure TestUpaLimit;
+var
+  Model: TLandrixXmlXsdContentModel;
+  P, Group: TLandrixXmlXsdParticle;
+  First, Second: TLandrixXmlXsdParticle;
+  I: Integer;
+begin
+  P := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 2);
+  P.Add(TLandrixXmlXsdParticle.CreateElement('', U('a'), nil, 0, 1));
+  P.Add(TLandrixXmlXsdParticle.CreateElement('', U('a'), nil, 1, 1));
+  for I := 1 to 14 do
+  begin
+    Group := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 2);
+    Group.Add(P);
+    P := Group;
+  end;
+  Model := TLandrixXmlXsdContentModel.Create(P);
+  try
+    Check(not Model.FindAmbiguity(First, Second), 'too large: no verdict');
+  finally
+    Model.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XsdContent.GeneratedData', TestGeneratedData);
@@ -363,6 +521,9 @@ begin
   RegisterTest('XsdContent.SameDeclarationTwice', TestSameDeclarationTwice);
   RegisterTest('XsdContent.FailureRecovery', TestFailureRecovery);
   RegisterTest('XsdContent.Wildcards', TestWildcards);
+  RegisterTest('XsdContent.UniqueParticleAttribution', TestUniqueParticleAttribution);
+  RegisterTest('XsdContent.WildcardOverlap', TestWildcardOverlap);
+  RegisterTest('XsdContent.UpaLimit', TestUpaLimit);
 end;
 
 end.

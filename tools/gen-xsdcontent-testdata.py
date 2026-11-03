@@ -24,12 +24,21 @@ results means the JDK's validator threw (it does for a counted maxOccurs
 that is exceeded; later Java versions report cvc-complex-type.2.4.d with
 "No child element '{a}'", as the library does).
 
-The file is committed; rerun this script only when the set changes.
+With --upa N it writes tests/data/xsdcontent/upa.txt instead: N random
+models over fewer names, also with ##any wildcards ("*" in the notation),
+and the verdict of the JDK's Unique Particle Attribution check, one line
+per model:
+  model  verdict
+verdict is "ok" or "cos-nonambig:X|Y" with the two particles Xerces names
+(a name or WC[##any]). Models rejected for another reason are skipped.
+
+The files are committed; rerun this script only when the set changes.
 """
 
 import argparse
 import os
 import random
+import re
 import subprocess
 import sys
 import tempfile
@@ -59,6 +68,8 @@ def bounds_text(b):
 def notation(p):
     if p[0] == "e":
         return p[1] + bounds_text(p[2])
+    if p[0] == "w":
+        return "*" + bounds_text(p[2])
     return p[0] + "(" + " ".join(notation(c) for c in p[1]) + ")" + bounds_text(p[2])
 
 
@@ -75,6 +86,8 @@ def schema_xml(p):
     def emit(q):
         if q[0] == "e":
             return '<xs:element name="%s"%s/>' % (q[1], occurs_attrs(q[2]))
+        if q[0] == "w":
+            return '<xs:any processContents="skip"%s/>' % occurs_attrs(q[2])
         tag = "xs:sequence" if q[0] == "S" else "xs:choice"
         return "<%s%s>%s</%s>" % (tag, occurs_attrs(q[2]), "".join(emit(c) for c in q[1]), tag)
     return ('<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="r">'
@@ -142,6 +155,57 @@ def run_model(java, classes, tmp, p, instances):
     return [results[f] for f in files]
 
 
+UPA_NAMES = "abc"
+
+
+def rand_upa_particle(rng, depth):
+    if depth >= 3 or (depth > 0 and rng.random() < 0.5):
+        if rng.random() < 0.1:
+            return ("w", None, rng.choice(BOUNDS))
+        return ("e", rng.choice(UPA_NAMES), rng.choice(BOUNDS))
+    kind = rng.choice("SC")
+    children = [rand_upa_particle(rng, depth + 1) for _ in range(rng.randint(1, 3))]
+    bounds = (1, 1) if depth == 0 and rng.random() < 0.6 else rng.choice(BOUNDS)
+    return (kind, children, bounds)
+
+
+def upa_verdict(java, classes, tmp, p):
+    xsd = os.path.join(tmp, "s.xsd")
+    with open(xsd, "w", encoding="utf-8") as f:
+        f.write(schema_xml(p))
+    doc = os.path.join(tmp, "d.xml")
+    with open(doc, "w", encoding="utf-8") as f:
+        f.write("<r/>")
+    out = subprocess.run([java, "-cp", classes, "XsdOracle", xsd, doc],
+                         capture_output=True, encoding="utf-8")
+    if out.returncode == 0:
+        return "ok"
+    m = re.search(r"cos-nonambig: (.*?) and (.*?) \(or elements", out.stderr)
+    if out.returncode == 2 and m:
+        return "cos-nonambig:%s|%s" % (m.group(1), m.group(2))
+    return None
+
+
+def main_upa(args):
+    rng = random.Random(args.seed + 1000)
+    rows = []
+    seen = set()
+    with tempfile.TemporaryDirectory() as tmp:
+        while len(rows) < args.upa:
+            p = rand_upa_particle(rng, 0)
+            text = notation(p)
+            if text in seen:
+                continue
+            seen.add(text)
+            verdict = upa_verdict(args.java, args.classes, tmp, p)
+            if verdict is not None:
+                rows.append(text + "\t" + verdict)
+    os.makedirs(args.out, exist_ok=True)
+    with open(os.path.join(args.out, "upa.txt"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(rows) + "\n")
+    print("%d models, %d ambiguous" % (len(rows), sum(1 for r in rows if "\tcos-" in r)))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--java", required=True)
@@ -149,7 +213,11 @@ def main():
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--models", type=int, default=1500)
     ap.add_argument("--out", default=OUT, help="output directory (default tests/data/xsdcontent)")
+    ap.add_argument("--upa", type=int, default=0, help="write upa.txt with this many models")
     args = ap.parse_args()
+    if args.upa:
+        main_upa(args)
+        return
     rng = random.Random(args.seed)
     rows = []
     kept = 0

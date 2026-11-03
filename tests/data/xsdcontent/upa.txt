@@ -1,0 +1,1200 @@
+S(S(S(c{1,3} a) C(c{0,1} c *){2,3} S(a{1,3} *{0,2})){1,3})	cos-nonambig:c|WC[##any]
+S(b{0,1} S(c a{0,2} S(a{3,3}){0,2}){0,3} b)	cos-nonambig:b|b
+S(b{0,1} S(a{3,3}){0,2} c{1,u})	ok
+C(C(c{1,u} S(a b{0,u})) *){0,1}	cos-nonambig:c|WC[##any]
+S(C(S(*{1,u} c) c{2,u} b{0,1}){0,u})	cos-nonambig:WC[##any]|c
+S(b{2,u} a{0,3})	ok
+S(C(C(a{0,1} b){0,1} a C(b{0,2} *){0,u}){3,3}){2,u}	cos-nonambig:a|a
+S(a{3,3} b{0,2})	ok
+S(b{0,1} c{0,1} c{2,u})	cos-nonambig:c|c
+C(C(S(c){0,2}){0,1} S(S(a){0,3} S(c c{3,3} c{1,3}){1,3} a){0,3} a{1,u})	cos-nonambig:c|c
+C(* a{2,u} S(C(a{0,1} c{0,1} c{2,u}) C(b c{0,u} b{0,u}){0,u}))	cos-nonambig:WC[##any]|a
+C(S(c{0,3} S(c){2,u} c{0,3}){2,3} C(C(a{1,3} a{3,3} b{2,u}){1,u} S(a a{3,3} b){0,3}){3,3})	cos-nonambig:c|c
+S(a b)	ok
+C(a C(C(b{2,u})){2,u} c)	ok
+S(b)	ok
+S(C(c){0,3} S(c S(* b{2,u} b{3,3}){2,3} b{0,u}){3,3})	cos-nonambig:c|c
+S(S(C(c{0,1} a a{0,2}){0,1} c) S(b{0,u}){0,1} c)	cos-nonambig:c|c
+S(C(C(b){0,1} S(b{3,3}){0,u} S(a b{3,3}){0,1}){2,3})	cos-nonambig:b|b
+C(C(C(a{0,1})){0,2}){0,3}	ok
+C(S(C(c b{0,1} c{0,2})){1,3} a{2,u} C(c{0,3} S(c{1,u}){0,1} C(b b b{0,1}){0,2}){2,u}){0,2}	cos-nonambig:c|c
+S(S(a{0,1}) S(b C(a{0,1} a{3,3}){0,1} *{0,1}){3,3})	cos-nonambig:b|WC[##any]
+S(a{2,u} S(a{1,3} C(a b{1,u}){2,u}){0,2} a{0,1})	cos-nonambig:a|a
+S(b{0,1} b{0,1} S(a a{0,1} S(a{0,2} c{2,u} c{0,1})))	cos-nonambig:b|b
+C(c{1,u} C(b){0,3})	ok
+C(c{2,u})	ok
+S(C(C(b{2,u}){0,3} C(c c) C(c{0,2}){0,2}){0,3})	cos-nonambig:c|c
+C(C(b{0,3}){0,1} c)	ok
+C(a c{1,3}){1,3}	ok
+S(C(C(c{0,u} b{1,u})){0,1})	ok
+C(S(S(a{3,3} c{0,u} a)){0,1})	ok
+S(b c)	ok
+S(C(a{0,1} c{0,1}) S(b{2,u} S(b{0,u} c c{3,3}){2,u}){1,u} C(S(b a{0,1} b{0,1}){1,u}){3,3}){0,1}	cos-nonambig:b|b
+S(c{0,1})	ok
+C(* S(a{0,1} S(b c{0,1} a{1,u}){2,u}){3,3} a)	cos-nonambig:WC[##any]|a
+S(c C(a{0,2} C(b{3,3} a{0,2}) C(a)) S(S(b{2,u} c{2,u} b){0,1} a{0,3} b))	cos-nonambig:a|a
+S(a{0,u} S(C(c c{0,2})){0,2} *){2,u}	cos-nonambig:a|WC[##any]
+S(a c{1,u} S(S(a{0,2} c){1,u} S(b){0,3} *{1,3}){0,2})	cos-nonambig:c|c
+C(c S(*{0,3}))	cos-nonambig:c|WC[##any]
+C(S(b{1,u} C(a{0,u} b{0,3} a{3,3})){1,3})	cos-nonambig:b|b
+C(a)	ok
+C(b{0,1} C(S(c{0,1}) C(b a{0,1}) S(b{0,2}){1,3}){0,u} c){2,3}	cos-nonambig:b|b
+S(b{0,u} a{1,u})	ok
+S(S(b S(c a{0,1})) b{2,3})	ok
+S(*{0,3})	ok
+S(b{0,1})	ok
+C(b{3,3})	ok
+S(a b c){0,1}	ok
+C(*)	ok
+C(*{1,u} C(S(c{0,1} a{0,3}){0,2} C(* b *{0,u}) C(*{0,1})){1,3} c)	cos-nonambig:WC[##any]|c
+C(C(c b){0,1} C(b{0,1} C(a{0,1})) *)	cos-nonambig:c|WC[##any]
+S(C(C(b{0,1}) C(c{0,1} a b{2,u}){0,1} *))	cos-nonambig:b|b
+S(C(C(b){0,1} c{0,u} S(b{0,1}){0,u}){0,2}){2,3}	cos-nonambig:b|b
+S(b{1,3})	ok
+S(C(S(b){3,3} S(b b)){0,1} a C(a{0,2} b{0,3} C(c b){2,3}){0,3})	cos-nonambig:b|b
+S(S(c) S(b{1,3} S(b{1,3}){2,u}){1,u})	cos-nonambig:b|b
+S(S(a{0,u} a) S(C(b{0,u}){0,1}){0,u} C(S(*) c{0,2}){2,u})	cos-nonambig:a|a
+C(C(C(b c{1,3} c{0,1}){0,1} c{2,3}){1,3} a b{0,2})	cos-nonambig:b|b
+S(c{0,3} c C(C(c{2,u} *{1,u}){0,3}))	cos-nonambig:c|c
+C(C(c) C(C(c{2,u} c{0,1} a{1,u}){0,1} b))	cos-nonambig:c|c
+S(a{0,2} a S(S(* b{1,3}){0,3}){0,1})	cos-nonambig:a|a
+S(c{3,3}){0,1}	ok
+C(S(C(a c{0,1} b){1,u}))	ok
+C(S(c{0,1} b){0,1} b{1,u}){0,u}	cos-nonambig:b|b
+C(a{1,u})	ok
+C(S(S(b{1,3} a{0,u}){0,2}) a{0,1})	ok
+C(C(C(b{3,3} c{0,3} c{3,3}){0,1}){1,u} *)	cos-nonambig:b|WC[##any]
+C(C(b){0,1})	ok
+S(b{0,3} S(a C(a{0,3} a){0,3}))	cos-nonambig:a|a
+S(S(C(a{3,3} *{1,3}){2,u}){2,3} a{3,3} S(c{1,3} *){0,1})	cos-nonambig:a|WC[##any]
+C(c{1,u} c{2,3}){0,1}	cos-nonambig:c|c
+S(S(c{1,3} S(a{1,3}) S(c)){0,u} S(C(c{1,3} b a) C(a){1,3} c){3,3}){3,3}	cos-nonambig:c|c
+C(S(C(a{0,u} a){0,1} S(c{0,1}) c{0,u}))	cos-nonambig:a|a
+C(C(b b){0,1})	cos-nonambig:b|b
+C(C(C(*{0,1} b{3,3}) C(a b{0,3}){0,u} S(b{0,1} a{1,u}){1,u}){1,3})	cos-nonambig:WC[##any]|b
+S(a{0,2}){1,u}	ok
+S(S(*{1,3}))	ok
+S(b{2,3} *{0,1} C(S(b){0,1})){0,2}	cos-nonambig:b|WC[##any]
+S(C(a) S(*{1,3} S(a a{2,3} a{0,1}){1,u} c{2,3}){0,2})	cos-nonambig:WC[##any]|a
+C(C(C(a){0,3} C(b{0,1}) S(*{1,3} b{1,3} c{3,3})){0,1} b c{0,1}){2,u}	cos-nonambig:a|WC[##any]
+S(S(C(c b{1,3})) a{3,3})	ok
+S(a{0,2}){0,1}	ok
+C(*{0,3})	ok
+S(S(C(b{0,2} *){0,1} C(c a{3,3} *){1,u}){0,3} c S(c){1,u}){0,3}	cos-nonambig:b|WC[##any]
+S(*{0,1} C(C(a){2,3}){0,2} c)	cos-nonambig:WC[##any]|a
+S(a b{1,u} c)	ok
+C(S(a b) C(b S(c{0,2} a{1,3} a{0,u}){0,1} S(b{0,1}){0,1}){0,1} C(b{3,3} a C(c{0,1}){0,u}){0,3}){0,u}	cos-nonambig:a|a
+C(S(b{0,2}) c{3,3} a)	ok
+S(S(C(b{3,3} c{2,3}){2,u} S(*{0,2}) C(b *{0,3}){0,3}){3,3}){0,1}	cos-nonambig:b|WC[##any]
+S(c a b{2,u})	ok
+S(c){0,u}	ok
+S(C(C(c{0,u} b{2,3}){2,u} c{0,1} c{0,2}){2,u} a{2,u})	cos-nonambig:c|c
+C(c{1,3})	ok
+C(S(S(b) b){1,3}){2,u}	ok
+S(C(c{3,3} b) a{2,u})	ok
+C(*{0,2})	ok
+C(C(S(b{0,u} b{0,3}){1,u} C(c{0,3} a){2,3}))	cos-nonambig:b|b
+S(S(C(c){0,u} S(b){2,3} *{2,u}){1,u}){0,1}	cos-nonambig:c|WC[##any]
+C(a{0,1} c S(S(b c) C(*{0,1}){0,1})){0,1}	ok
+S(b{3,3}){0,1}	ok
+C(b b{0,1})	cos-nonambig:b|b
+S(a{0,1})	ok
+C(a{2,u} c{0,1} c{3,3})	cos-nonambig:c|c
+C(b{2,u})	ok
+S(C(a{1,3} a){0,2})	cos-nonambig:a|a
+C(a c{0,1}){0,1}	ok
+C(C(C(b{2,u} a{0,1}){0,2} c){1,u} a{3,3}){0,1}	cos-nonambig:a|a
+S(b{0,u} b{1,u} c{0,1})	cos-nonambig:b|b
+S(c{1,3} C(S(c{0,u} c{2,3}) S(b){0,3} S(c{0,2} b{0,1}){0,1}){0,2} *)	cos-nonambig:c|c
+S(C(a){1,3} S(*{2,3}))	cos-nonambig:a|WC[##any]
+S(b S(S(*{2,3} *{0,u}){0,2} S(b c{0,3}){1,3}))	cos-nonambig:WC[##any]|WC[##any]
+C(a{3,3}){0,1}	ok
+C(C(b){3,3} S(b{0,1}){1,u})	cos-nonambig:b|b
+S(b c{1,3})	ok
+S(C(* *{0,1}){0,1} a{0,3}){1,3}	cos-nonambig:WC[##any]|WC[##any]
+C(*{0,3} C(b C(a{1,3} a b{1,u}) a){1,3} a{0,1})	cos-nonambig:WC[##any]|b
+S(a{1,3}){0,1}	ok
+C(c c a{1,u})	cos-nonambig:c|c
+C(S(a{0,1} a{0,3} S(b{0,1} b{0,1} b{1,u})))	cos-nonambig:a|a
+C(C(*{0,3} c{0,u}){0,1} c{0,2} c{3,3})	cos-nonambig:WC[##any]|c
+C(S(C(c{3,3} a *{3,3}){1,3}){0,1} C(C(b{0,u} c{2,3} c) S(a){0,2} S(c{0,u}){1,3}){0,1})	cos-nonambig:c|WC[##any]
+S(C(S(*{0,1}){0,3} S(a{1,3} b){2,u}){2,u})	cos-nonambig:WC[##any]|a
+C(c{0,u} C(C(a a{2,u} *{0,3}){2,3}){0,1})	cos-nonambig:c|WC[##any]
+C(S(C(a b{2,3} a{1,u}){0,1} c b{1,3}){0,u} b{3,3} C(S(a c c){2,u} a{0,3}){0,u})	cos-nonambig:a|a
+S(C(*{2,u}) S(S(c{2,3}){0,2} b)){1,u}	cos-nonambig:WC[##any]|c
+S(c{0,u} C(a{0,1} S(c c{1,u} *{0,3}){0,1}){0,u})	cos-nonambig:c|c
+S(S(S(b) S(a c{1,u}){0,u} a{1,3}){0,1} * S(a S(b){1,u}){0,1}){0,u}	cos-nonambig:b|WC[##any]
+S(a{1,u} C(S(c b{1,u} *{2,u}) *{0,1} C(b{0,1} a{2,3}){2,u}))	cos-nonambig:a|WC[##any]
+C(*{1,3} c c)	cos-nonambig:WC[##any]|c
+C(S(a c{0,2}){1,3} b b{0,1})	cos-nonambig:b|b
+C(S(C(a{0,1} b a{2,u})){3,3} S(b){0,1})	cos-nonambig:a|a
+C(a{2,3} c a{2,u})	cos-nonambig:a|a
+C(a{0,1} S(*{0,1}){2,u})	cos-nonambig:a|WC[##any]
+S(S(S(*) C(c{0,1} c{1,u}){0,u}))	cos-nonambig:c|c
+C(C(C(c{3,3})) a{3,3})	ok
+C(S(a a{0,1}){1,u}){1,u}	cos-nonambig:a|a
+C(C(C(b{1,3}){2,u})){0,1}	ok
+S(C(b{2,3} C(c b{1,3}) b{0,3}){2,3} a{0,u} S(b{0,1} S(c{2,3} a{3,3}){2,3}){0,u})	cos-nonambig:b|b
+S(a{0,1} S(c{2,3}){0,3}){0,1}	ok
+S(c{1,u})	ok
+C(C(b{0,1}) C(C(c{0,1}){3,3}){0,1} b{0,1})	cos-nonambig:b|b
+S(b{1,u})	ok
+C(b{1,u})	ok
+C(a c{0,u})	ok
+C(S(C(a{2,u} a{0,2}) S(c b){0,2}){0,1} C(c{0,2} S(b{0,2} b a){0,3} S(b{0,1} c{0,2} c{0,3})) a){3,3}	cos-nonambig:a|a
+C(b{1,u} C(C(*){0,1} c{0,3}) c{0,3})	cos-nonambig:b|WC[##any]
+C(S(c{1,3} c{0,2}) b)	cos-nonambig:c|c
+S(* b a)	ok
+C(C(a)){3,3}	ok
+S(a{0,3} S(S(*{0,1})){0,3} C(c{0,1} S(b{0,1} a{3,3})){0,1}){1,3}	cos-nonambig:a|WC[##any]
+S(b{3,3} C(S(c{2,3} b{0,1})){0,2})	ok
+S(C(S(b{0,1} b{0,u})){0,3} a{0,1})	cos-nonambig:b|b
+S(c a{0,1})	ok
+S(S(b S(b{3,3}) S(a)){1,3}){1,u}	ok
+S(C(b{0,2}) a)	ok
+S(S(C(a{0,1} a{0,1}){2,3} S(a{2,3}) S(c{2,u} * a)) a S(c b{2,3} c{0,3}){0,1})	cos-nonambig:a|a
+S(*{0,1} C(C(c{2,3} c{3,3} b{1,u})){0,1} C(S(b{0,1} * c{2,u}){0,u} C(c){0,3} C(a{2,u}){0,1}))	cos-nonambig:WC[##any]|c
+C(C(c c{1,3} c{0,2}))	cos-nonambig:c|c
+S(b{3,3})	ok
+S(c C(c){0,1} C(C(c{0,1} *{0,3} a){2,u} b{0,1} C(a{0,3}){0,3}))	cos-nonambig:c|c
+C(C(b{1,u} a{2,3} C(b{0,1} c{0,1} c{0,2})){0,1} c{1,u}){0,1}	cos-nonambig:b|b
+C(b{2,u} S(C(a){2,u}){1,3} C(b S(b{2,u} b{1,u} *{0,1})){1,3}){0,3}	cos-nonambig:b|b
+S(S(b{1,3}){3,3} c{0,2}){0,1}	ok
+S(c{0,2}){0,u}	ok
+C(b S(S(a{0,u} a{2,u} a){0,2} C(b{1,u}){0,3}){0,2} a{0,1})	cos-nonambig:b|b
+C(a{0,1} C(C(a a{0,u})){0,1} S(S(a{2,3} a{2,3}){1,3} c{3,3}){0,u})	cos-nonambig:a|a
+C(C(C(*{3,3}){0,1}){0,u} a{1,u})	cos-nonambig:WC[##any]|a
+S(b{0,1} C(c) *{3,3}){0,2}	cos-nonambig:b|WC[##any]
+C(* C(C(a) c) S(C(*{0,1} a)){0,1})	cos-nonambig:WC[##any]|a
+C(S(S(b{1,3}){0,1} C(a{1,u}) b){1,u} a a)	cos-nonambig:a|a
+S(S(S(c *{2,3} *{1,u}) b) a)	cos-nonambig:WC[##any]|WC[##any]
+S(S(a{0,1} S(c{0,1} c c{1,3})) a)	cos-nonambig:c|c
+C(C(S(b b) c b){1,3} b a){0,1}	cos-nonambig:b|b
+S(C(c{0,1} S(c{0,u} b{1,u}){1,u} b{0,u}){2,3} C(a{2,3})){0,2}	cos-nonambig:c|c
+C(b{0,1})	ok
+C(b{2,3})	ok
+S(*{0,1} S(*{0,3} C(a c{1,u} c{0,u}) C(a)){0,2}){3,3}	cos-nonambig:WC[##any]|WC[##any]
+C(C(S(a{0,2} b{3,3} *){0,2}){0,1} b C(C(c){0,1}){0,1}){0,2}	cos-nonambig:b|b
+S(C(C(b{1,3} c) * C(*{0,1} b)))	cos-nonambig:b|WC[##any]
+C(S(* C(b{1,3} b{0,1} a{0,1}){2,3}) C(S(c{1,3} b{2,3}) b{0,1} C(a{0,3} b){1,3}){1,u})	cos-nonambig:WC[##any]|c
+S(C(C(c{0,2}) * a{0,1}){0,1} S(C(a{2,3} c){0,3})){2,3}	cos-nonambig:c|WC[##any]
+S(a{0,2} C(a{0,2} S(c{0,1}) S(a c){0,1}))	cos-nonambig:a|a
+C(a{3,3} c c{1,u})	cos-nonambig:c|c
+S(c)	ok
+C(b)	ok
+C(S(b){0,2} b)	cos-nonambig:b|b
+S(c{2,u} S(a){0,1}){1,3}	ok
+S(S(c{0,u} c{1,3}){2,3} S(b{3,3} S(b c{3,3}){0,1}){1,3})	cos-nonambig:c|c
+S(c{0,1} S(S(c{0,u}){0,1} C(a{1,3}))){0,u}	cos-nonambig:c|c
+S(a C(b{1,3} b{0,1} c{2,3}){1,u})	cos-nonambig:b|b
+C(b{2,3} S(a{0,u} C(b c{2,3} c{0,1}){2,u} S(c{2,3} a{1,u}){0,1}){0,u} S(c{0,1} *{2,3}){2,u})	cos-nonambig:b|b
+C(c{0,1})	ok
+S(C(b{3,3} S(b)){0,2} b{0,3} S(b c b{3,3}){0,u})	cos-nonambig:b|b
+S(b C(c{0,1} c{3,3}))	cos-nonambig:c|c
+S(* S(c{0,u} S(b a{0,2}){0,1} C(a{0,2}){0,u}){0,1})	cos-nonambig:a|a
+C(S(S(b{1,3} a) C(c)))	ok
+C(S(S(b{3,3} *{0,u}){0,1}){0,u} C(S(b c{2,3} a{0,1}){2,3} C(c{0,2} c b{3,3}){0,1}))	cos-nonambig:b|WC[##any]
+C(c a b)	ok
+S(C(S(c{1,u}) C(a{0,3})))	ok
+S(a{0,3})	ok
+S(C(*{0,3} a{0,1}){3,3} S(a{1,3} S(c{0,1} a){1,3} C(a{0,1}){0,u}))	cos-nonambig:WC[##any]|a
+C(*){2,3}	ok
+S(c{0,u} S(a C(a{0,2} a{0,1}){0,1} S(b{2,3} b{0,2})) C(C(b a{0,3}){0,1} b{2,u} b){2,u}){3,3}	cos-nonambig:a|a
+S(C(c a{2,3})){2,3}	ok
+S(b S(c{0,1} c)){0,3}	cos-nonambig:c|c
+C(S(C(*{1,3}){0,2}){0,1})	ok
+S(a{2,u} a{0,2})	cos-nonambig:a|a
+C(b{3,3} c C(c b{0,1} c))	cos-nonambig:b|b
+C(c{1,u} C(C(a{1,3} c{3,3}) c{1,3} *{0,3}){2,u} C(C(b{0,3} c) b{2,u} b){0,u}){0,1}	cos-nonambig:c|c
+S(C(C(a{3,3})){0,3} a{0,1})	cos-nonambig:a|a
+C(c S(c{0,3} *){0,1})	cos-nonambig:c|c
+C(C(S(a{0,1} b{3,3}) C(a{2,3} c{2,u}){2,u}){0,1} c C(b{1,3} C(a{3,3} a{3,3}){1,3}){0,u}){3,3}	cos-nonambig:a|a
+C(b{0,2}){2,u}	ok
+C(c{1,3} c{0,1})	cos-nonambig:c|c
+S(*)	ok
+C(C(a b{0,3}){2,u} a{0,1} c){0,2}	cos-nonambig:a|a
+S(C(b{0,1} *{0,2}) S(* S(c)){3,3})	cos-nonambig:b|WC[##any]
+S(C(C(b c{1,u} a){0,u}){0,3} C(S(b{0,u} c{2,3}){0,1} S(a){0,u} a) C(c{3,3}){0,1})	cos-nonambig:b|b
+C(C(c{0,1}) a{1,u})	ok
+S(a{0,2} b c)	ok
+S(b S(C(c a{0,2} c{0,1}) S(b a) S(c{2,3} c{3,3}){0,u}){0,u} C(C(a{0,1} a{0,3} c{3,3}){2,3}))	cos-nonambig:c|c
+C(S(*{1,3}) c{0,3})	cos-nonambig:WC[##any]|c
+S(b{0,1} S(S(b{0,2}){0,1} S(a{1,3} c{3,3}){0,1}){2,3}){1,3}	cos-nonambig:b|b
+S(a{0,1} S(a C(b{0,1}){0,3} a{0,1}){0,1}){0,3}	cos-nonambig:a|a
+C(S(C(c{0,3}){2,u}){1,3} a a)	cos-nonambig:a|a
+S(c{0,1} C(C(* c){0,u} C(a b{0,3} a{0,1}) S(*{3,3}){2,3}) c{1,3})	cos-nonambig:c|WC[##any]
+S(C(c){1,u} a b)	ok
+S(C(C(a{3,3} b){1,u}) C(c){0,3})	ok
+C(a{0,1} a c)	cos-nonambig:a|a
+S(C(C(c{1,u} a){1,u} a{0,1} S(a{2,3} b{0,3}){2,3}){2,u} C(S(b c){0,3}){3,3})	cos-nonambig:a|a
+S(b{0,2} c{0,1})	ok
+C(b{0,1}){2,u}	ok
+S(c{0,2} S(S(c){2,u} c{0,2} *){0,1}){1,u}	cos-nonambig:c|c
+S(C(c{0,1} C(b c c{1,u}){0,1}){0,1} c)	cos-nonambig:c|c
+S(S(S(a{2,3} a{2,3} a) C(b{0,1} b b) a){0,3})	cos-nonambig:a|a
+S(c{2,3} S(b a{0,1}){0,1} S(c{0,2} C(a{0,1})){0,1})	cos-nonambig:c|c
+S(a{0,1} c{1,u} c{0,u}){0,1}	cos-nonambig:c|c
+C(c a{2,u} *{3,3}){2,3}	cos-nonambig:c|WC[##any]
+C(a S(c{0,2}) c)	cos-nonambig:c|c
+C(S(S(b a{1,3}){0,3}) a a{2,3})	cos-nonambig:a|a
+S(a *)	ok
+C(S(C(b{0,1} a a{0,u})){0,2} a)	cos-nonambig:a|a
+C(b a{0,3} a){0,1}	cos-nonambig:a|a
+C(S(a{0,1}){0,1} c{0,3})	ok
+S(S(S(c{2,3} a{0,u} c{1,u}) S(*{0,1} *{2,u} b{0,1}) b) S(S(* b{0,1} c{0,u}){3,3} S(b b{1,3} c{0,1}){0,3} c{1,3}){0,1})	cos-nonambig:c|c
+C(C(S(b{0,1} *{3,3}){2,u}) C(C(b a{0,1} b){2,u}) S(c b C(c c{0,1}){3,3}))	cos-nonambig:b|WC[##any]
+C(c c S(C(b{0,1} *{0,1}) b){0,1}){1,3}	cos-nonambig:c|c
+S(a)	ok
+C(a C(C(a c{0,3}) C(c{1,3} c{0,u} c{0,2}){1,u} S(* a{0,1}){2,3}){0,1} b{2,3})	cos-nonambig:a|a
+S(c C(*{0,3} *{0,u} a{3,3}) a)	cos-nonambig:WC[##any]|WC[##any]
+C(S(b{0,2} a{0,1}){2,3} a{1,3}){0,3}	cos-nonambig:a|a
+C(a{1,u} a{0,2} C(S(c{1,u} c{2,3}){2,u}))	cos-nonambig:a|a
+S(c{0,2} a C(b{0,1} C(a{0,1} a{1,u})){0,1})	cos-nonambig:a|a
+S(C(S(c)){0,u} c S(c S(* a{0,3}){0,2}){3,3}){2,u}	cos-nonambig:c|c
+S(a{1,3} S(a{0,2} C(b{3,3} *){3,3}) S(c{0,1}){0,u})	cos-nonambig:a|a
+C(c C(S(*{0,u}){0,2} a *) *{2,u}){0,1}	cos-nonambig:c|WC[##any]
+S(b{0,1} c{0,1})	ok
+S(C(c{0,1}) C(b{0,u} S(b{0,2} b{1,3}){2,u}){1,3} S(C(b{0,1}){0,2} C(a{3,3}){2,u}){0,1}){0,2}	cos-nonambig:b|b
+S(C(C(c{0,1} b{3,3} b{0,1})){0,1} *{2,u} *)	cos-nonambig:c|WC[##any]
+C(c{0,2} a{2,u} c)	cos-nonambig:c|c
+C(C(a C(b *) S(a c{3,3} b{1,u}))){1,u}	cos-nonambig:a|WC[##any]
+C(c C(S(*{3,3})) S(S(b{0,2} b{1,u}) S(b b{0,2} b{0,1}){0,1}){0,1}){2,3}	cos-nonambig:c|WC[##any]
+S(C(a a) b C(C(a{0,1}){0,u} S(a){2,u} b{0,3}){2,u})	cos-nonambig:a|a
+C(b a{2,u} a{1,3})	cos-nonambig:a|a
+S(a){3,3}	ok
+C(C(C(c a{0,u}){3,3} C(b{1,u} a b){0,3}){0,1} C(C(c a{0,2}) C(a{0,3}){0,2}){0,u})	cos-nonambig:c|c
+C(a{3,3}){2,3}	ok
+C(c{0,u} C(c{2,u} C(c{0,u})){2,u})	cos-nonambig:c|c
+S(S(*{0,u} C(a{0,1} b{0,1} a)) S(S(c{0,u} a){2,3}){0,1})	cos-nonambig:WC[##any]|a
+C(a C(C(* c{3,3}){0,u})){0,u}	cos-nonambig:a|WC[##any]
+S(c{0,1} c)	cos-nonambig:c|c
+C(a){1,3}	ok
+C(*{0,3} c{0,1} a{0,1})	cos-nonambig:WC[##any]|c
+S(a{3,3} C(b{2,u} C(b{3,3} b{0,1} c{0,3}){1,3}){1,3}){0,1}	cos-nonambig:b|b
+S(c{0,3} S(C(a{0,1} c{2,u} a{0,1}){2,u} C(c a){0,u} a{0,1}) S(C(c{0,2} a{0,1}){0,1} C(c{0,u} b{0,1}){0,u}){0,1})	cos-nonambig:c|c
+S(C(S(a{0,1}){1,u} C(* c{0,1} c{0,2}){2,u} a{1,3}))	cos-nonambig:a|WC[##any]
+C(b{3,3} a{0,1})	ok
+C(C(c{2,u} S(a{1,u})){0,1})	ok
+S(C(S(a{2,u} *{0,3}){0,3} S(a{0,1} b b{2,u}){2,u}){1,3} c{1,3}){1,3}	cos-nonambig:a|WC[##any]
+C(b{2,u}){0,2}	ok
+C(C(c{0,1}){1,u})	ok
+C(a{2,u}){0,1}	ok
+S(a C(b a c{0,2}){0,3})	ok
+C(C(a b{2,u} c{0,u}) a)	cos-nonambig:a|a
+S(a{2,3})	ok
+C(b S(*{0,u} c{0,1}) b{1,u}){2,u}	cos-nonambig:b|WC[##any]
+S(S(S(b{2,u} c{1,3} c{1,3}){3,3}) S(*) c{1,u})	cos-nonambig:c|c
+C(C(S(a{0,1} a{0,2})){0,u} S(C(a{2,3} b{2,3}){0,3} C(b{0,1} b){0,1} S(*{2,u})))	cos-nonambig:a|a
+S(c{0,1} a{0,3})	ok
+C(C(S(b{0,1} *{2,u} b){0,u} b{0,u} S(c{1,3} b{0,1} *){3,3}) a{2,u} S(a{2,u} S(c *){2,u}){0,1})	cos-nonambig:b|WC[##any]
+C(C(b{0,1} a S(b{3,3} c{2,u}){2,3}){2,3} c a{0,2})	cos-nonambig:b|b
+S(C(c{0,u} C(b{0,1} a a{2,3}) *{0,1}){0,3})	cos-nonambig:c|WC[##any]
+C(C(C(c{1,3}){0,1} S(b){0,1}){0,1} a{0,1})	ok
+C(C(C(a{1,3} a)) c)	cos-nonambig:a|a
+S(C(S(c b a{0,1}){1,3} b{0,1} S(c{1,3} a)){0,3} a S(c a))	cos-nonambig:c|c
+C(c{2,3})	ok
+C(S(*{2,3} a{2,3} S(c)))	cos-nonambig:WC[##any]|a
+S(C(S(b{2,3} c a){0,1} a{0,1}){0,1}){0,1}	ok
+C(a{0,1} S(b c{0,1} a{0,2}){0,3} S(S(b b{3,3}){0,1}))	cos-nonambig:b|b
+S(S(c{2,u} *{2,3} S(b{1,u} *{1,u}){0,1}))	cos-nonambig:c|WC[##any]
+S(S(C(a){2,3} a){1,u})	cos-nonambig:a|a
+C(S(b{0,1} C(a{0,u} a b){0,1} b{2,u}){0,3} S(c{0,2} a{0,1}){3,3})	cos-nonambig:b|b
+S(C(S(c{3,3} c c) S(c a a{1,u}) *))	cos-nonambig:c|c
+C(a c{2,u} b{2,3})	ok
+S(S(c{0,1}){1,3} a{0,3} b)	ok
+S(a){0,2}	ok
+S(c{0,1} S(C(c{0,u} * c{0,1}){1,3} C(b{2,u} c a{0,u}) C(b{0,2}){2,u}){1,u}){0,3}	cos-nonambig:c|c
+C(S(c C(a{1,3}){1,u}){0,1} a{0,1})	ok
+C(C(c) C(S(b a{1,u} b{0,3}){2,u} b{1,u}) C(S(a{0,3}) a{0,1}))	cos-nonambig:b|b
+S(C(S(b{0,2} b{0,1} b) C(b{0,3})){0,3} a{0,1})	cos-nonambig:b|b
+S(c{0,2})	ok
+C(c{0,3} b{0,1}){1,3}	ok
+S(b{3,3} C(C(b{0,u}){0,u} b{0,u}))	cos-nonambig:b|b
+C(S(S(a{3,3} a *{2,3}){0,2} * C(a{2,u} c{2,3} c{3,3})) c{2,3} c{0,1})	cos-nonambig:a|WC[##any]
+C(S(S(a{0,1} c){0,2} * a{1,3}))	cos-nonambig:a|WC[##any]
+C(C(a a{0,1}){0,1})	cos-nonambig:a|a
+S(C(S(b)){0,1} a)	ok
+S(S(c){1,u})	ok
+S(a{1,u} b{1,3} S(C(b{0,1}) b{1,3}))	cos-nonambig:b|b
+S(S(S(a{0,3} *{0,2} c{1,u}){2,3} S(b b{3,3}) c{0,3}))	cos-nonambig:a|WC[##any]
+C(a{0,3} C(a{0,3}){3,3} C(a{1,3}){2,3})	cos-nonambig:a|a
+C(C(C(a){0,1} a{0,3}) S(a{2,u} *{0,3} c){2,u})	cos-nonambig:a|a
+S(c c{0,2} c{0,2})	cos-nonambig:c|c
+C(S(b{1,u}){0,3} C(* C(*{2,3})) b){0,1}	cos-nonambig:b|WC[##any]
+C(b C(a)){1,u}	ok
+S(C(a{1,u} c b{2,3}){0,3} c{0,1})	cos-nonambig:c|c
+C(a{1,3} C(S(a{0,1} *{2,3} c{0,u})) S(b{2,u} C(a{2,u}){3,3} a{0,2}){1,3}){2,3}	cos-nonambig:a|a
+C(S(a S(c){0,1} C(a{1,u})){3,3} c a){0,3}	cos-nonambig:a|a
+S(b{0,u} S(S(c{0,1} a{0,u} b){0,u} S(a{2,3}) c{0,1}))	cos-nonambig:b|b
+C(S(c{2,u} S(* a{1,3} a{0,1}){0,3} a))	cos-nonambig:c|WC[##any]
+C(S(S(a)){0,1} a{0,2}){0,1}	cos-nonambig:a|a
+C(b{2,u}){0,u}	ok
+S(a C(c C(a{1,u} c{0,2}){0,3} S(c){0,1}){2,u})	cos-nonambig:c|c
+S(c{0,1}){1,u}	ok
+C(a{0,u} S(C(*{1,u}) *){1,u})	cos-nonambig:a|WC[##any]
+C(a c{0,3})	ok
+C(b{0,3} c{0,u}){0,1}	ok
+C(c{0,1} c S(S(c){0,1} c{0,2})){0,2}	cos-nonambig:c|c
+C(C(a{0,u} C(a{0,1} c){2,u}){1,u})	cos-nonambig:a|a
+C(a{1,3} *{2,u}){2,3}	cos-nonambig:a|WC[##any]
+S(b{3,3} C(a{0,2} c{1,3})){0,3}	ok
+C(c{0,3} a{3,3} S(a){0,2})	cos-nonambig:a|a
+S(c{0,1} C(S(c{0,1} c{3,3} a{2,3}){1,3} S(c{0,2} b){0,1}) c)	cos-nonambig:c|c
+C(C(c{2,u} C(b{3,3} c{2,u}){0,1}){0,3}){0,1}	cos-nonambig:c|c
+C(C(c{3,3} *){0,1} C(a{2,3}){0,1} C(C(a a{0,3}){0,3}){3,3})	cos-nonambig:c|WC[##any]
+S(S(C(c{0,u} a{2,u} a{0,1})){0,1} a{2,3} a{0,3})	cos-nonambig:a|a
+C(a{0,u} C(C(b{0,2} *{1,u}){0,3} S(c{2,u} b{1,u}) c{1,u}){0,1})	cos-nonambig:a|WC[##any]
+C(b c)	ok
+S(S(a) a{2,3} S(C(*{0,1}){0,2} b{1,3}){2,u})	cos-nonambig:a|WC[##any]
+S(*{3,3})	ok
+C(S(b{0,2}){3,3} S(C(a{2,3}){2,3}))	ok
+C(c{3,3} S(S(*{0,u} c{1,u}){0,1}){0,1} a{0,1}){0,u}	cos-nonambig:c|WC[##any]
+S(S(C(c{1,3} b{0,3} b){0,3} b b{0,1}) C(S(c{2,u} a{0,2}){3,3} b{0,3})){2,u}	cos-nonambig:c|c
+C(a{1,3})	ok
+S(a{1,u})	ok
+S(S(S(b{2,3} b{0,1} b)) C(C(c{2,3} b{0,1}) C(a{1,u} *{0,1} a{0,2})) S(c))	cos-nonambig:b|b
+S(S(S(b{3,3} a{3,3}){0,3} C(* c{0,2}) a))	cos-nonambig:b|WC[##any]
+S(S(C(a{0,1} b{0,u} b{0,1}){0,u}) b{1,u} C(b C(* c{0,1} a{0,u}) S(c){0,3}){0,u})	cos-nonambig:b|b
+C(C(C(b{0,1} b{1,u} b{0,2}){0,u} b c) S(c{0,3}))	cos-nonambig:b|b
+S(C(a{1,3})){0,1}	ok
+C(S(c b C(c{0,u} c{0,3})){0,1} c)	cos-nonambig:c|c
+C(C(a{2,3} C(*{0,3}){0,1} S(a){2,3}){3,3} *{0,3})	cos-nonambig:a|WC[##any]
+S(C(* c c{2,3}){1,u})	cos-nonambig:WC[##any]|c
+C(c{3,3} *{0,2} c{0,3})	cos-nonambig:c|WC[##any]
+C(S(c{2,3} b{3,3} c{1,u}){0,u} a{0,u} C(a{0,1}){0,3})	cos-nonambig:c|c
+S(C(C(*{3,3} c){1,3}){0,1} C(c{0,2}){0,1})	cos-nonambig:WC[##any]|c
+C(S(b) b){0,1}	cos-nonambig:b|b
+C(a{1,3} S(b S(a c{1,3}){0,1}){0,2} C(a{0,3} b S(a)){0,3})	cos-nonambig:a|a
+C(C(S(b a{2,u} c) C(*{0,1}){1,u} c{0,1}){0,2})	cos-nonambig:b|WC[##any]
+S(S(c{2,u} a{1,3} *) b)	cos-nonambig:a|WC[##any]
+C(S(a) *{0,1} b{0,u})	cos-nonambig:a|WC[##any]
+S(a b){2,3}	ok
+S(C(b{0,3}){0,1} C(S(c{0,1} b{0,u}){2,u} c S(b){0,1}){0,1})	cos-nonambig:b|b
+S(b{0,1} C(C(*{0,1} * b{2,u}) c{2,u}){0,3})	cos-nonambig:b|WC[##any]
+C(C(S(c{0,1}){1,u} c{2,3}) c{0,1})	cos-nonambig:c|c
+C(S(b a C(b{1,3} c{0,1} *){0,1}) S(a) C(C(*{0,3}) b{0,1}){0,3})	cos-nonambig:b|WC[##any]
+C(C(a c{2,u} S(c{0,3} c{2,3} b{1,u}){0,2}) c{0,1} S(C(a{0,1}){0,1}){1,u}){0,u}	cos-nonambig:a|a
+C(S(c a{1,3}))	ok
+S(a{3,3} a)	ok
+C(C(b{0,u} c{1,u} a{0,3}) S(C(b{0,3}) a{0,1} c{0,1}) c{0,1}){0,u}	cos-nonambig:b|b
+S(a{3,3})	ok
+C(b{1,3} a){1,u}	ok
+S(a{2,u} a{2,3} S(S(c b)){0,1})	cos-nonambig:a|a
+C(S(C(b{2,u} c{3,3}){0,u} b{0,3} c){0,3})	cos-nonambig:b|b
+C(C(C(b{0,1} b){1,3}){0,u} b)	cos-nonambig:b|b
+C(C(S(c b) C(c{0,3} c{2,3}) c) C(a C(a{3,3} *{0,1}){0,u} S(a{1,3} a{1,3})){1,3})	cos-nonambig:c|c
+C(C(b a{0,u}) a){0,u}	cos-nonambig:a|a
+C(C(S(b{0,2} a{0,u} *{0,1}){3,3}){0,1})	cos-nonambig:b|WC[##any]
+S(b S(C(c{0,u} b)){1,3} S(a{0,1}))	ok
+C(S(S(c){0,1} S(c{0,3} *){0,2}){1,u} b{0,1}){0,1}	cos-nonambig:c|c
+C(S(c{2,u} C(b{0,1} a{1,3} b{0,1}){0,u} a){0,u} S(C(a{3,3} b{0,1}){0,1} a))	cos-nonambig:b|b
+C(C(C(a b{0,u}){1,u} S(a a{2,3} b) b{2,3}))	cos-nonambig:a|a
+C(a C(S(a{0,1}) c{1,u}){1,3})	cos-nonambig:a|a
+C(a{1,3} C(C(b{0,1}) C(c){3,3} b){2,u})	cos-nonambig:b|b
+S(S(S(* c c{2,u}){0,2} C(b{0,1} a{0,u} b){2,3}){0,u})	cos-nonambig:WC[##any]|c
+S(S(S(b{2,3}){0,2} S(b{3,3} c{2,3} c{1,u}){0,1}){0,1})	cos-nonambig:b|b
+S(a{0,1} S(C(b{0,1} b{0,3} a){2,3} c *) S(S(c{2,u}) c{2,u}))	cos-nonambig:a|a
+C(C(c){2,3} b{0,2})	ok
+C(S(b{0,2} *{0,1} b){0,1})	cos-nonambig:b|WC[##any]
+C(S(c C(c a{1,u} c{0,3}) a{0,1}) C(a{2,3} a{2,u} a{0,2}) c{1,3}){1,u}	cos-nonambig:c|c
+C(C(C(b c{1,3} a{0,2}){0,1} S(c) *{0,1}){0,1} C(S(a{0,3} b{0,1} c{0,2})){2,3} a{1,u})	cos-nonambig:b|WC[##any]
+C(c{2,3} S(C(c{0,3} c{0,u}){1,u} S(a{0,1} b{0,2}){0,1}){0,3})	cos-nonambig:c|c
+C(S(S(a){0,u} a{0,1} S(a{0,u} a c)))	cos-nonambig:a|a
+S(C(a{0,1}))	ok
+C(C(S(a{1,3} a){0,1} c){0,1})	cos-nonambig:a|a
+S(a a{0,1})	ok
+C(c{1,u} c{0,3})	cos-nonambig:c|c
+C(c C(a{0,1} a{0,1} b{2,3}) S(C(*{0,u} c{2,u} c{1,3}){0,u} C(c{0,1}){3,3} a{2,u}){3,3}){0,3}	cos-nonambig:c|WC[##any]
+S(c{0,1} C(a a) S(a{1,3}){0,1})	cos-nonambig:a|a
+S(a{1,u} b{0,1})	ok
+S(S(S(c a{3,3} b){0,1} S(c{0,u} c{0,u} *{3,3}) b{0,2}){2,u} S(b))	cos-nonambig:c|c
+C(c{2,3}){2,u}	ok
+S(b b{0,2} C(C(a{2,3} c a) a))	cos-nonambig:a|a
+C(a{0,3} *{0,1} a)	cos-nonambig:a|WC[##any]
+S(b{3,3}){2,3}	ok
+C(S(c){0,u})	ok
+C(S(S(a{2,3}){0,3} b{0,2}){0,1})	ok
+C(S(c) c{0,3})	cos-nonambig:c|c
+S(b{0,2} S(a{0,1}){2,3})	ok
+C(c{1,3} c{2,3}){0,3}	cos-nonambig:c|c
+C(C(C(b{0,3} b a{0,1})) S(a){2,3} S(S(b{0,2} c)))	cos-nonambig:b|b
+C(a S(C(b{0,1}){2,3} c){3,3})	ok
+S(c{0,1}){0,2}	ok
+S(C(C(a{2,u} *{0,u}){0,3})){0,2}	cos-nonambig:a|WC[##any]
+C(c a{0,u} S(c{1,u} b{2,u}){0,1})	cos-nonambig:c|c
+S(a{3,3} b{0,3} a{0,1})	ok
+C(c C(S(a{2,u} a) S(c{3,3}) S(c{2,u})){0,3} C(c{2,u}){0,1})	cos-nonambig:c|c
+C(a{3,3})	ok
+C(b{0,3} S(C(c b{2,3} c{0,3}) C(b{2,u} b{2,u}){0,u} a{0,2}){0,1} c{1,3})	cos-nonambig:b|b
+S(c{1,u}){2,3}	ok
+S(S(S(c{2,3} b{0,2} b) C(b)))	cos-nonambig:b|b
+C(S(a{0,1} C(b{1,3} b{2,u} a)){1,3})	cos-nonambig:a|a
+C(S(c{1,u} C(a{3,3} * a)) b)	cos-nonambig:c|WC[##any]
+C(*{2,u} C(S(a{0,1}){0,1} S(a{0,1}) b{0,2}){0,u} a)	cos-nonambig:WC[##any]|a
+C(S(b S(c{1,u} c){2,3} *{2,3}) a{0,1})	cos-nonambig:c|c
+C(C(S(c a{0,1}){0,u} c{0,1}){2,3} b{1,3})	cos-nonambig:c|c
+C(b{0,1} c{1,3} S(a{2,3} b{2,u} S(a{1,3}){1,u}))	ok
+C(c{2,3} C(C(c c a{2,3}){0,3} S(b)){1,u}){0,2}	cos-nonambig:c|c
+C(C(C(a{0,2} a){0,1} c{0,2}){0,1} S(S(b a a) S(a b{0,3}){0,u} c{0,1}){1,3} S(C(b{3,3} a *{2,3}) *){1,3}){2,3}	cos-nonambig:a|a
+S(c b{0,3})	ok
+C(S(C(c{0,u} a{2,3})){2,3} c{0,u})	cos-nonambig:c|c
+S(c{3,3} a{0,2} c)	ok
+C(S(c a){1,3} C(b S(b{1,u}){1,u} C(*{0,1}){2,u}){0,u} S(b C(b{0,u} b{0,3}){0,3} C(c{3,3} c{2,u}){2,u}))	cos-nonambig:c|WC[##any]
+S(C(C(*{0,u} c{3,3} b{1,u}){2,u}){0,2} S(S(* a a{0,u}){0,u} b{2,3} *) a)	cos-nonambig:WC[##any]|c
+C(a{3,3} S(S(a c){0,1} C(a c{0,1}) C(c{3,3})){0,3})	cos-nonambig:a|a
+S(C(S(b{2,3}) a C(a{0,u}){0,u}) c{0,3})	cos-nonambig:a|a
+S(C(*{2,u} C(b{2,u} *){0,1} C(b b{1,3} c{0,1}){0,2}){0,u} S(C(a{3,3}){1,3} S(a{1,3} b){2,3} b{1,3}){0,1} c)	cos-nonambig:WC[##any]|b
+C(c S(S(a{0,1} a *{0,1}){0,3} b) a{0,3})	cos-nonambig:a|a
+C(c a{0,1} S(c{0,1} S(a a{0,3} c{0,u}) S(b{1,u} c{0,1})){1,3}){1,3}	cos-nonambig:c|c
+S(b{0,1} C(S(b c{1,3} c{0,3}){0,3} S(* a a{0,1}){0,3}))	cos-nonambig:b|b
+C(b b{0,1} *{2,u}){0,1}	cos-nonambig:b|b
+C(*{0,1}){1,3}	ok
+C(b b)	cos-nonambig:b|b
+C(b{3,3} S(S(c){3,3} C(c c{0,3} c) S(a{2,u})){0,3} C(b{0,u} S(c a{0,3} b{0,1}){0,2}){0,2})	cos-nonambig:b|b
+C(b{1,u} C(S(b b){1,u} S(a{2,u} b) S(*{2,u} c{0,u}){0,1}){0,2} C(C(b) C(c{0,3} *){0,u} S(a{0,u}){0,2}))	cos-nonambig:b|b
+C(a S(c{1,3}){3,3} b{1,u})	ok
+S(S(S(b{0,3} c{0,3}){2,u} b){2,u} S(*{3,3} S(c{2,u} b{0,1} c{0,2}){3,3} *{2,3}){0,u}){1,3}	cos-nonambig:b|b
+C(C(b{0,1}){0,u} C(C(c{2,3} b b{0,3}){0,2} a{0,1} C(*{0,u} a{0,1} a)) C(S(c{1,3} a){0,1} c{0,1}))	cos-nonambig:b|b
+C(S(a{0,1} b{0,1}){3,3} C(b a{3,3} S(c{0,2}){0,u}))	cos-nonambig:a|a
+C(C(C(a{1,3} c{0,2}){2,3} a{0,3} a{3,3}){0,1}){0,2}	cos-nonambig:a|a
+C(S(b S(b){0,2}))	ok
+S(b S(C(c)) c{0,u})	ok
+S(b{2,u} * S(S(*{0,3} c{1,3}){0,1} * C(c{1,u} c){2,3}){0,2}){3,3}	cos-nonambig:b|WC[##any]
+C(c{0,3})	ok
+S(C(S(a{0,u} a{0,1}){0,1} C(a{0,1} b{3,3})) c{0,2} C(a S(a a a)))	cos-nonambig:a|a
+S(b{3,3} S(c S(a{0,2} a{3,3} a{0,2}){0,1} C(b{1,u} *{2,3})){1,u} b)	cos-nonambig:c|WC[##any]
+C(b){0,1}	ok
+S(S(c{2,3} a C(b{0,1} b{0,u}){2,u}){0,3})	cos-nonambig:b|b
+S(b{1,u} a S(C(c{0,u} a *) a{2,u} S(c b{0,1})){0,1})	cos-nonambig:c|WC[##any]
+S(C(c{1,3} *{1,u}) S(b c){1,u})	cos-nonambig:c|WC[##any]
+S(a C(C(b{2,3} a){0,1} c C(a){0,1}))	cos-nonambig:a|a
+C(*{0,u} c{0,3} c{0,u})	cos-nonambig:WC[##any]|c
+C(a{0,1} C(b)){0,1}	ok
+C(a c){1,3}	ok
+S(C(c{3,3} c{0,1}){0,1} c{0,1} c)	cos-nonambig:c|c
+S(S(b{0,1} c{0,1}){0,1} a{2,3}){2,3}	ok
+C(S(S(a{0,3} a){1,3} b{0,u} S(*{0,1}){0,1}){0,u} C(b{1,u} C(c{2,u} b{3,3}){3,3} a){2,3})	cos-nonambig:a|a
+C(S(b S(b{1,3}){0,2} C(c{0,3})){3,3}){0,1}	cos-nonambig:b|b
+C(c)	ok
+C(S(S(* b{2,u})){1,3} c{0,2} b{0,1})	cos-nonambig:WC[##any]|b
+C(C(b a){0,1} *{1,u})	cos-nonambig:b|WC[##any]
+C(a{0,u})	ok
+S(*{2,u})	ok
+C(S(S(c{2,3} a c) S(c{0,3}){0,1}){1,3})	cos-nonambig:c|c
+C(C(C(b{2,u} c b{0,u})){0,1} c{2,3})	cos-nonambig:b|b
+C(C(C(b{0,2}){1,u}){0,3} S(S(* b a) a{3,3} S(b{0,u} c{0,1})) c)	cos-nonambig:b|WC[##any]
+C(C(S(b{0,2} c{2,u}){1,3} C(b{0,1}) S(c{0,2} b{2,3}){0,1}){0,1}){0,2}	cos-nonambig:b|b
+S(C(C(c) C(a{0,1} c{0,2}){0,1}){0,1})	cos-nonambig:c|c
+S(S(b){0,3})	ok
+S(S(a{0,u} S(a{0,2} * b{1,u}){0,3} c) C(c c){3,3} C(c a S(b{1,u}){0,2}){3,3})	cos-nonambig:a|a
+S(b{0,1} S(c b{0,2} b{0,3}))	cos-nonambig:b|b
+S(a{2,u} a{0,1} c{0,3})	cos-nonambig:a|a
+C(S(C(c{1,3} *){0,1}){1,u} C(a b{0,2}))	cos-nonambig:c|WC[##any]
+C(S(b{1,3} c{2,3} b{2,3}){0,u} S(S(a){0,1}){0,1})	cos-nonambig:b|b
+S(b S(S(a{2,u} b{0,u} b){0,u}){1,u})	cos-nonambig:b|b
+C(b S(c{0,2} b{2,u}){2,3} *{0,1})	cos-nonambig:b|b
+S(C(S(a *){1,3} S(b c{0,1}){0,2} S(*{0,1} a{0,1} c{0,u}){0,3}) c{0,2}){2,u}	cos-nonambig:a|WC[##any]
+S(C(c{0,u} b S(b{0,3} a c){0,1}) b{0,2} c{2,3})	cos-nonambig:c|c
+S(b{0,1} C(c{0,1} b{0,3}){3,3})	cos-nonambig:b|b
+C(S(S(a * a{0,3}){0,2} *{2,u}) S(c{1,3} C(c{3,3} a{0,2}){0,1}){1,u} C(C(a){2,u} C(c{2,3}){1,3}){0,3})	cos-nonambig:a|a
+S(b{0,u} *{0,1} C(b C(* b){3,3}){0,1})	cos-nonambig:b|WC[##any]
+S(C(C(c{2,3} a{0,2}){0,u}){0,u} C(c{1,u}){2,u} b)	cos-nonambig:c|c
+S(S(a){0,1}){0,2}	ok
+C(c{3,3} S(S(a b)){0,1} *){1,3}	cos-nonambig:c|WC[##any]
+S(c a{2,3})	ok
+S(S(C(a a){1,u} b{1,3}){2,3} C(a{0,2} a{0,u} C(b{0,1} c){0,1}))	cos-nonambig:a|a
+S(S(S(c{0,1} c{0,2} c{2,u}){0,1}){0,1} c){0,1}	cos-nonambig:c|c
+S(c{0,3})	ok
+S(a{0,2})	ok
+S(S(C(a *{0,1} b{1,3}){2,3}){2,3})	cos-nonambig:a|WC[##any]
+S(S(b) b{0,1})	ok
+S(b{0,1} C(*{0,1} *{2,u})){1,u}	cos-nonambig:b|WC[##any]
+C(a{1,u} a{2,u} C(b{0,1}){1,u})	cos-nonambig:a|a
+S(C(a S(a{1,u} c a){0,2} S(*{0,3}){0,1}){2,u} C(C(a{0,1} a *{1,3}){0,2} C(b a){0,u} a{2,u}){1,3} b)	cos-nonambig:a|a
+C(S(c{0,u}){0,3})	ok
+S(c{0,u}){0,1}	ok
+C(a c){0,1}	ok
+S(c C(c{0,1} S(c{0,1} c)){1,3} c)	cos-nonambig:c|c
+S(b{1,3} C(c{0,1}){2,u}){3,3}	ok
+C(*{0,1})	ok
+S(*{0,u} S(C(a c{3,3} c{0,1}){1,3}){1,u} C(a{2,3} S(b)){3,3})	cos-nonambig:WC[##any]|a
+S(S(a{1,3} b a){0,1} S(a C(*{1,u} a{0,3}){0,1} a){0,1})	cos-nonambig:a|a
+S(C(*{0,1}){0,1})	ok
+S(C(S(c{2,u} a c{0,1}){0,u})){0,3}	cos-nonambig:c|c
+S(c S(b{1,u} C(c{1,3} c{0,1}){0,2}){0,1})	cos-nonambig:c|c
+S(S(c c S(a c{0,1})){0,1})	ok
+C(C(S(c{0,3} b{0,1} b{0,1}){0,u}){0,1} a){0,1}	cos-nonambig:b|b
+C(c{0,u} S(S(c{0,3} b{0,1}){0,2}){3,3})	cos-nonambig:c|c
+C(* S(C(c{0,1} b{2,u}){3,3} S(c{3,3} c b{2,3}){1,3} a))	cos-nonambig:WC[##any]|c
+C(S(S(c c b{0,1}){3,3}){1,u} S(a{0,2} c C(b{0,2} c{0,1} c{2,3})){0,1} C(C(a a{0,3}) b{0,3} c){2,3})	cos-nonambig:c|c
+S(S(a{2,u}){1,u} S(c S(b{3,3}){1,u}) c{2,3})	ok
+C(c{0,1} S(b{1,3} *{1,u}))	cos-nonambig:b|WC[##any]
+S(S(c{1,u} a{1,u}) b{1,3})	ok
+C(S(C(*{0,3} b{2,u} b{0,1}){0,1} S(c{0,u} b{2,u}){3,3}){0,1} c)	cos-nonambig:WC[##any]|b
+S(c{0,u})	ok
+S(C(c S(c{0,2} c{1,u}){0,1} b){2,3})	cos-nonambig:c|c
+C(S(c{1,u} c C(b{3,3} a{1,u})){0,1} S(a{0,2}))	cos-nonambig:c|c
+S(*{0,1} c){0,2}	cos-nonambig:WC[##any]|c
+C(a c{0,1})	ok
+C(C(c{0,3}){0,1} C(S(b{0,1} *){0,1} C(a{0,u}) b){0,u} *{0,3}){0,1}	cos-nonambig:c|WC[##any]
+S(c S(a{3,3} b S(b{0,1} c c{0,3}){0,u}){0,1}){0,1}	cos-nonambig:c|c
+C(C(S(b{0,u} a{2,u}){0,2} C(a{0,u}){2,3}){0,u} C(C(b b *{0,u}){0,1}){0,3})	cos-nonambig:b|b
+S(* c{3,3})	ok
+C(b b{0,1} S(b{0,1} C(*{0,2}){0,1} C(a){0,u}))	cos-nonambig:b|b
+C(b{2,u} c{0,1}){0,2}	ok
+S(S(C(a{3,3}){0,u}){0,1} S(C(c b){2,3} C(b{2,3} b{0,3}){0,3} a){3,3} S(S(b{2,u} a{1,u} b{3,3}) C(b{0,1}))){3,3}	cos-nonambig:b|b
+S(C(a{1,3}) C(c{3,3} a{0,2}){2,u} C(b{0,1} a{0,1}){2,3})	cos-nonambig:a|a
+S(b b{1,3})	ok
+C(S(c{0,1} C(b{1,u} c{0,1}) S(b{2,3} * b){2,3}))	cos-nonambig:c|c
+C(S(a S(c{1,u} b{0,1} c{2,u})){0,u} a{0,2} C(b){1,u})	cos-nonambig:a|a
+S(S(a c{2,3}){0,1} b)	ok
+S(c{0,2} C(c{3,3} a){0,u} b{1,u})	cos-nonambig:c|c
+C(c{0,u} *{2,3})	cos-nonambig:c|WC[##any]
+C(S(*{0,1}){0,1}){0,1}	ok
+C(C(c S(b{0,1} c{1,u} c{0,1}){1,u})){0,2}	cos-nonambig:c|c
+S(S(b{1,3}){2,3} a{2,u}){0,1}	ok
+C(S(b C(b){1,3}){0,3})	cos-nonambig:b|b
+C(C(* S(c{0,2} c{0,u}){1,3}) *{1,3})	cos-nonambig:WC[##any]|c
+S(b{0,2} C(C(c{0,2} b{2,u} c{3,3}){3,3} *{0,1} S(c{2,u}){0,u})){0,1}	cos-nonambig:b|b
+C(C(c S(*{0,u}){3,3} c){0,1}){0,1}	cos-nonambig:c|WC[##any]
+S(c{3,3} c{2,3} c{0,u})	cos-nonambig:c|c
+S(c{0,u} C(a c S(c{0,1} c{2,u} b{3,3}){0,1}){0,3} S(b{2,3} C(b{3,3} a{3,3} a)))	cos-nonambig:c|c
+S(a{0,1} a{0,1} C(C(c b) C(c c{1,u}) S(a{2,3} a{0,1} c{0,3}){3,3}){0,2})	cos-nonambig:a|a
+C(C(S(c b{2,3} *{0,3}){1,u} C(a){1,3} C(c{0,3} a){0,u}))	cos-nonambig:c|WC[##any]
+C(S(a S(b{0,3}){0,2}){3,3} a{0,1})	cos-nonambig:a|a
+C(a b{1,u} b)	cos-nonambig:b|b
+S(b{1,u} S(a{0,1} S(c b{1,u} a)){2,3} S(C(b{0,1} a) C(b{1,u} c))){0,2}	cos-nonambig:b|b
+S(S(b{2,u} *{0,2} b{0,2}))	cos-nonambig:b|WC[##any]
+S(b{0,1} S(S(* *) a C(c{0,2}){1,3}){1,3} c)	cos-nonambig:b|WC[##any]
+S(C(C(a){1,u} * C(c{0,u})))	cos-nonambig:a|WC[##any]
+C(C(*{3,3}){2,u}){1,u}	ok
+C(C(C(c a{0,3}){0,u} a{0,2})){0,3}	cos-nonambig:a|a
+S(S(S(a{2,u}){0,1}){0,3})	ok
+C(C(S(a b){0,u}) c)	ok
+S(a{0,1} c{0,3})	ok
+C(b S(a{1,3} b)){2,3}	ok
+C(a{0,u} b{0,u}){3,3}	ok
+C(C(a C(c{1,u}){0,3} S(a{1,3} a b{0,1}){0,3}){0,1})	cos-nonambig:a|a
+S(b{2,u} C(b{0,1} C(c c{2,u} c){0,1} S(b{0,1} a a{0,2})){0,1})	cos-nonambig:b|b
+S(b C(c{0,1}){0,u})	ok
+S(C(C(c c{0,1})){0,3} a)	cos-nonambig:c|c
+S(C(S(b{0,2}){3,3} a{0,1} S(b b{3,3})) C(S(c a{0,1})) a)	cos-nonambig:b|b
+C(C(C(c)){0,1} a{3,3} S(c{0,3} a{0,3} b{0,3}){1,3}){2,3}	cos-nonambig:c|c
+C(a{0,2} C(C(c{0,2} c){3,3}){0,1} C(S(b{1,3})))	cos-nonambig:c|c
+S(C(S(a c{3,3} b{1,u})) S(S(b{1,3}) c{0,1} S(b *{0,u})){0,u})	cos-nonambig:b|b
+S(C(C(c{3,3}) b){2,3} c)	cos-nonambig:c|c
+S(c{0,3} b{2,u} b{0,u})	cos-nonambig:b|b
+C(S(C(a{2,3} c{3,3} b{2,3}){0,u} S(c)){0,u}){2,3}	cos-nonambig:c|c
+S(S(S(b){0,1}){0,1})	ok
+S(a){0,u}	ok
+C(C(S(a){1,3}){2,3} C(b{1,u}){1,u} c)	ok
+S(b C(S(c{2,3}))){0,2}	ok
+C(a{0,1} c{0,1}){0,1}	ok
+C(S(b{0,u}))	ok
+S(C(S(a a{0,1}){3,3} c S(b)) b{2,3})	cos-nonambig:a|a
+C(c{0,u}){0,u}	ok
+C(b C(C(c{0,1} b{0,u}){1,u} S(c{0,1} b a{0,3}){0,1}) S(C(*{3,3} b b){1,3} a{3,3}){3,3}){1,u}	cos-nonambig:b|b
+C(a{0,1} C(a{3,3} a){1,u})	cos-nonambig:a|a
+S(S(b{0,1} *{1,3} *{2,3}){2,u} b a)	cos-nonambig:b|WC[##any]
+S(S(S(b{0,u}) C(a{0,2} b{2,u} a))){1,3}	cos-nonambig:b|b
+C(C(a c S(b b{1,3} c){1,3}) C(b{0,u} a{0,u}))	cos-nonambig:a|a
+C(C(C(a a){2,3}){0,2})	cos-nonambig:a|a
+C(C(a{2,u} S(a{0,2} a b{1,u}){0,3} c{0,2}) c{2,u}){0,1}	cos-nonambig:a|a
+S(C(c{3,3}){0,1} C(b S(b{0,1}){0,1} C(c{0,1}){0,1}){2,u} a)	cos-nonambig:c|c
+S(a S(a C(b{0,u}){1,u} c){0,1} C(S(a a{1,u} a))){1,3}	cos-nonambig:a|a
+S(b{0,u} *{0,2}){3,3}	cos-nonambig:b|WC[##any]
+S(c b{3,3} S(a{0,3} C(b{1,u}) C(c){0,u}){1,3})	cos-nonambig:b|b
+S(a a a{2,3})	ok
+S(S(b{0,u} C(a{0,1} b{0,3} b{1,3}){0,1}) a)	cos-nonambig:b|b
+C(C(b)){0,2}	ok
+S(S(a{0,3}) c{3,3} b)	ok
+S(b{2,3}){0,1}	ok
+S(a S(* a{0,1} C(a{3,3}){0,u}))	cos-nonambig:a|a
+C(a{1,3} b{0,1} c{0,3})	ok
+C(b b{0,1} b{2,3})	cos-nonambig:b|b
+C(S(*){0,1} S(S(c{0,u} c) c b{1,3}){0,1})	cos-nonambig:WC[##any]|c
+C(C(b c{0,1} C(c a){0,u}))	cos-nonambig:c|c
+C(S(S(b{2,3} c{0,3} c{1,u}){0,3} a{0,2}){1,u} b a{0,2})	cos-nonambig:b|b
+S(b{0,1}){2,u}	ok
+S(C(C(*{0,1} c{1,u}){0,1} S(b){0,2} C(c{0,1} b *)){2,u} a S(S(c{0,u} a{1,u}){1,u} S(c{2,u}){0,u} c){3,3})	cos-nonambig:WC[##any]|c
+C(c{0,2} C(S(a{1,3} b) S(b{0,u} b)){0,3})	cos-nonambig:b|b
+C(c b{1,u} C(C(a{2,u})){2,3})	ok
+C(S(c{2,3}){2,3} * a{0,2})	cos-nonambig:c|WC[##any]
+S(c{0,1}){0,u}	ok
+C(S(c{0,1}){2,3} b C(a{0,1}))	ok
+S(S(*{2,3} S(*{0,1} a){2,u} b{2,u}){0,1} S(C(a b{0,1}){0,1} c{0,3} a){0,3} c{0,2})	cos-nonambig:WC[##any]|WC[##any]
+S(c{2,u} S(C(c{2,u} b{0,u}){0,1} C(c b{2,3} a){1,u}){0,u} S(a S(a{2,u}) C(c{0,3}){0,1}){0,u})	cos-nonambig:c|c
+C(C(b){0,3} C(S(*{1,u} c a{1,u})){2,u} a{0,1})	cos-nonambig:b|WC[##any]
+S(S(*{2,3}){0,2} b)	cos-nonambig:WC[##any]|b
+S(S(S(*{0,1} a{3,3} b) a{0,1}){3,3})	cos-nonambig:WC[##any]|a
+S(c S(C(c{2,3}){0,1} c{3,3} C(b{0,1})))	cos-nonambig:c|c
+C(*{2,u} S(b{0,3} b) b){0,2}	cos-nonambig:WC[##any]|b
+S(S(c{0,2} S(b c{2,u} a{0,1}){1,u}){1,3} C(C(c{1,3} b c{1,u}){2,u} C(b b{3,3} b{0,1}) a{0,1})){0,u}	cos-nonambig:c|c
+S(S(a{0,1} C(a)))	cos-nonambig:a|a
+C(S(S(c c){0,3} S(b{0,2} a{0,1} *{0,1}){1,3}){1,u})	cos-nonambig:c|WC[##any]
+C(S(c C(c{0,u} b){0,3}){2,u} S(a){1,u})	cos-nonambig:c|c
+S(C(C(b{0,2} b{1,3}){0,3} S(c c{1,3}) C(a a{2,3}){0,2})){0,1}	cos-nonambig:b|b
+C(C(S(c{2,3} a{2,u}){2,u} b{2,3}){1,3}){0,3}	ok
+C(c{0,u} S(C(*{0,2} b{1,3}){0,u} c){0,3})	cos-nonambig:c|WC[##any]
+C(S(C(a{3,3}){0,1} S(c{0,u} a){0,u} C(b{0,1})){0,1}){3,3}	cos-nonambig:a|a
+C(S(c{1,3} C(c{0,1} b)) c{1,3} S(S(c{0,u} b{3,3} c){2,3} S(b{0,1} c{0,1})){2,u})	cos-nonambig:c|c
+S(C(*{1,u}){3,3})	ok
+S(c b{0,u} C(c){0,u})	ok
+C(S(a{1,3}){0,1} C(C(c b) b))	cos-nonambig:b|b
+S(C(a b a) S(S(a{3,3}) S(a{1,u} a) c))	cos-nonambig:a|a
+C(C(C(c) b{3,3}){0,3}){1,3}	ok
+S(C(a){0,1} a{1,u} a{3,3})	cos-nonambig:a|a
+S(c c{0,1} C(C(a a{1,3}){0,3} S(a{2,3}){3,3} C(b{1,3})))	cos-nonambig:a|a
+C(S(C(b b{0,1} b){1,u} b{1,3}){1,3})	cos-nonambig:b|b
+S(b b)	ok
+C(S(c{0,1} S(b c{0,1} c{3,3}){1,u} b{0,2})){0,3}	cos-nonambig:b|b
+C(c{0,u} S(C(c{1,3} a{2,3}) C(c{0,2} c *{0,2}){1,u}){2,3})	cos-nonambig:c|c
+C(a{2,3} a b{2,u})	cos-nonambig:a|a
+S(a{2,u}){1,u}	ok
+S(S(a c{0,3}) S(C(a) b){0,3} c){3,3}	cos-nonambig:c|c
+S(S(c) S(c{2,3} a{2,u}){0,2} S(S(b{0,2} c) b{0,2}){0,2}){0,1}	cos-nonambig:c|c
+S(S(S(b{0,1} * a){0,1} b{0,3}){0,1} b{0,2} S(a{2,3} C(b{0,u} c{0,3} a){2,3} S(b{0,1} a b{0,1}){0,u}){0,u})	cos-nonambig:b|WC[##any]
+S(S(c{0,u}){0,1} b{0,2} a{0,1})	ok
+S(S(*{3,3}) c{0,2} c{3,3})	cos-nonambig:c|c
+C(c{0,1} C(b){0,1})	ok
+C(C(C(c a{2,u}) *){3,3} C(C(c{1,3}){1,u}))	cos-nonambig:c|WC[##any]
+C(C(b b{2,3}) b{0,1} S(c))	cos-nonambig:b|b
+S(C(S(c a{1,u} a{1,u}){3,3}))	cos-nonambig:a|a
+S(S(S(a{3,3} c b{0,3}){1,3} C(b{0,1} b{0,1}){0,2} S(b{0,1} b){0,1}){3,3} b{2,u} b{0,1})	cos-nonambig:b|b
+C(C(S(b{2,3} c{0,1})){0,1} S(a){0,3} C(S(b a{2,3}){0,2} S(c{0,1}) c{3,3}){0,1})	cos-nonambig:b|b
+S(S(c){0,2} S(c{0,1} C(a{0,u} a{0,2}) C(b{0,1}){0,1}){0,2} *){0,1}	cos-nonambig:c|c
+S(S(S(a{0,1} a{2,u}) a){2,3} *{0,u} C(b{3,3}){1,3})	cos-nonambig:a|a
+C(C(S(b){1,3} S(b a{2,u} b{0,1}){0,3}) S(*{2,3} S(c *){2,3}){0,1} S(S(a b) C(b c{0,2})){1,3})	cos-nonambig:b|b
+S(C(C(a{0,3}){0,1} S(a c{0,1}){3,3} C(b{0,1}){3,3}){1,3}){0,1}	cos-nonambig:a|a
+S(C(b S(b){0,1}){0,1} C(*{0,1}))	cos-nonambig:b|b
+S(b{2,3})	ok
+S(b{3,3} S(a C(*{0,u} c{2,3}){1,3}){0,3}){2,u}	cos-nonambig:b|WC[##any]
+C(S(C(a{0,u} a{0,1} c{0,1}) a{2,3}) c{0,u} C(c{0,3} c{1,u} b{0,1})){0,u}	cos-nonambig:a|a
+C(S(c{2,u})){0,1}	ok
+C(C(S(c{0,u} b{2,3}){1,u}){0,2} C(b{2,3} C(c{3,3}){2,u} c){0,3})	cos-nonambig:c|c
+S(*{1,3})	ok
+S(S(S(b c{0,3}) c{1,3}){2,u} c{0,2})	cos-nonambig:c|c
+S(C(S(c{1,u} c{0,u}){0,1} S(a{2,u} b{0,u})) C(S(c b{0,1})) c{0,3})	cos-nonambig:c|c
+S(b{0,3})	ok
+S(C(c{0,3} C(a{3,3} b{0,1} a)) a{0,1} *)	cos-nonambig:c|WC[##any]
+C(a{0,1} S(S(a{0,1} c){0,1})){0,1}	cos-nonambig:a|a
+S(C(a{0,u} c{3,3} b){0,1} c{0,1} b{1,3}){0,2}	cos-nonambig:c|c
+S(b a)	ok
+C(C(*{2,u} b{2,3}) S(c{2,u} S(a{1,u} a){0,1}){0,1} S(S(a){0,2} c){0,1})	cos-nonambig:WC[##any]|b
+C(a c{0,2})	ok
+S(S(a{2,3} b{1,u}) S(*{1,u} *{0,u} b){0,u})	cos-nonambig:b|WC[##any]
+C(b c{0,1} C(C(c{0,1} *{0,2}){0,3} a{1,u}))	cos-nonambig:b|WC[##any]
+S(S(S(b{2,u} b{0,1} b{2,3}){2,3} S(b{0,u}){0,1} a{2,3}) a{1,3}){0,u}	cos-nonambig:b|b
+S(a{1,3} b{2,u})	ok
+S(c{0,3} S(C(*{0,1} a{0,1}){0,1}){1,u} c{0,2}){2,3}	cos-nonambig:c|WC[##any]
+C(S(c{0,1} a){1,3} a{0,1} S(C(a{0,1} b{1,3}) c b{0,3}){0,3})	cos-nonambig:c|c
+S(S(a C(b{2,3} c{1,3} b{1,3}){0,1} a{3,3}) S(b{0,1} C(a{2,3}){0,1}){0,2}){0,1}	cos-nonambig:b|b
+C(b{0,3}){0,1}	ok
+S(S(C(b{1,3}){0,1} a{0,1}) b{1,3})	cos-nonambig:b|b
+S(c C(S(a{0,u} c{0,1}){0,1} b a){0,1} C(S(b{0,1} c{0,1})){1,u})	cos-nonambig:a|a
+S(c a{0,1} S(C(a c{1,u} a){0,3}){0,1})	cos-nonambig:a|a
+C(C(S(a{2,3} a{1,u}){1,3}){0,1})	cos-nonambig:a|a
+S(*{3,3} S(*{1,u} c C(b{0,2}){0,2}))	cos-nonambig:WC[##any]|WC[##any]
+C(a C(S(a){1,3} b b) C(b{1,3} S(a b{0,2} b){0,u}){0,2})	cos-nonambig:a|a
+S(C(b a{2,3} c{0,u}){0,1} c{3,3} S(c{3,3} C(c b{0,1} b{2,u}){0,1}))	cos-nonambig:c|c
+S(* b{0,1})	ok
+S(*{0,2} S(S(*{2,3}) c{0,1}){2,3})	cos-nonambig:WC[##any]|WC[##any]
+C(C(S(c{2,3}) S(a{0,1}){2,3}){0,1})	ok
+C(S(S(b b{0,3}){0,1}){0,2} c{0,u} b)	cos-nonambig:b|b
+C(C(C(*{0,1} a{2,3}){0,1}) C(c c{0,1}) S(*{2,u}){1,3})	cos-nonambig:WC[##any]|a
+S(*{0,1}){0,u}	ok
+S(S(S(b{0,2} a){0,1} c{2,3} S(*{0,u}){2,u}){2,3})	cos-nonambig:b|WC[##any]
+S(C(c{1,u}){0,1} c{0,2} S(C(b{0,1} b{1,u}){0,2} b{1,3}){0,3}){0,3}	cos-nonambig:c|c
+C(S(a{2,u}){0,1})	ok
+C(c{0,1} S(S(a{0,3} c *){3,3} c c))	cos-nonambig:c|c
+C(b C(c c){0,1} a{0,3})	cos-nonambig:c|c
+C(S(S(a{0,2} a c{1,3}){1,3}){0,2} C(a{2,3} C(b b{2,u} a{0,2}){0,3} *{0,1}){2,3} b)	cos-nonambig:a|a
+C(C(C(*{3,3} b{1,3}){0,1}) b b{0,3}){0,1}	cos-nonambig:WC[##any]|b
+C(b c C(c{0,u} a{0,3}){3,3})	cos-nonambig:c|c
+C(*{1,3} b){0,u}	cos-nonambig:WC[##any]|b
+S(*{0,1} C(S(a{2,3} c{1,3}) S(a{2,3} c{1,u} a{0,1})){2,3})	cos-nonambig:WC[##any]|a
+C(b{0,2} c a{0,2})	ok
+S(S(S(b{1,u} c{0,1}){1,u} a{1,3} b{0,1}){3,3} C(c{3,3} C(b{2,u} b b){3,3} *){1,3})	cos-nonambig:b|b
+S(C(a{0,2} b{2,u} C(b{0,2} c{0,3} b{2,3}){1,3}){0,1} a S(*))	cos-nonambig:a|a
+S(S(C(b{3,3} b) c{0,u} S(b b{0,u})){1,3} S(c{2,u} C(b{1,3}){1,u}))	cos-nonambig:b|b
+S(b{1,u} S(S(c{0,1} a *{2,u}) a{2,3} a{1,3}){0,1} S(a S(a c c){1,3} *)){0,3}	cos-nonambig:a|a
+C(c{0,u} C(b{0,2} a{1,u} a{0,1}){0,3} b{3,3}){1,u}	cos-nonambig:b|b
+S(S(a{0,2} a{1,u} C(a{2,u} a{0,3}){0,1}){2,u} S(c{0,1}){2,3} a){2,u}	cos-nonambig:a|a
+C(S(b a{1,3}){0,3}){0,1}	ok
+C(b{0,3}){3,3}	ok
+C(S(S(b{3,3})){1,3} S(C(a{2,u}){0,2} *{2,u} a) a{1,3})	cos-nonambig:b|WC[##any]
+C(*{1,u})	ok
+C(S(S(b a{0,1}){0,1}){0,3} C(a C(a{0,1}){2,u}){0,2})	cos-nonambig:a|a
+S(C(S(c{1,3} a{0,u}){0,2}))	ok
+S(*{0,2} C(a c *{2,3}){0,2} S(C(b{0,1} a{0,2} *{0,3}){2,u} a c{1,3}){0,3})	cos-nonambig:WC[##any]|a
+C(c S(a{3,3} a{0,1} a){0,u} b)	cos-nonambig:a|a
+C(S(S(a{1,u} a){0,1}) C(a{2,u} S(b{0,3} b){3,3} C(a){0,1}))	cos-nonambig:a|a
+S(* C(C(a{2,u} b{0,u} a{2,u}){0,3} c S(c{1,u} a{0,3} c{1,u}){3,3}) S(a c{1,u} b))	cos-nonambig:a|a
+S(a{0,1} c)	ok
+C(a{0,3})	ok
+S(S(c{0,2} C(c) c) b{0,u} S(S(b{0,1} c b{0,1}) C(a{0,u} c{0,u} c{1,u}){0,u}){0,1})	cos-nonambig:c|c
+S(c{0,2}){1,u}	ok
+S(S(c{0,1} c) a{0,u})	cos-nonambig:c|c
+S(a{1,3} S(c{3,3} *{0,u} a{0,u}))	cos-nonambig:WC[##any]|a
+S(S(S(c a) a S(a{1,3} a{0,1} c{3,3})){3,3} b b{1,u})	cos-nonambig:a|a
+C(a{1,3} S(C(b b c{0,u}){0,1} S(c{0,3} a b{0,2}){2,u}) S(S(b{0,2} b{0,1}){0,2} S(c c{1,3}){0,1}))	cos-nonambig:a|a
+C(a{1,u} S(b{1,u}){2,u} c)	ok
+S(a{0,1} C(S(*)))	cos-nonambig:a|WC[##any]
+S(a{1,u} a b){2,3}	cos-nonambig:a|a
+S(a S(C(c{0,u} c{0,3}){1,u}){1,u})	cos-nonambig:c|c
+S(b a{0,1})	ok
+C(b{0,1}){0,2}	ok
+S(C(b{3,3}))	ok
+S(a c{2,u})	ok
+C(C(S(a{0,2} c{0,u} b{2,3}) *{0,3} S(c{0,1} *{0,1} b{0,1}){1,u}){1,u} S(*{0,3} C(c{1,3} *{1,3} c) b{0,3}){3,3}){2,u}	cos-nonambig:a|WC[##any]
+C(C(a{0,2}){0,1})	ok
+S(c{3,3})	ok
+C(S(C(c{0,1} a) c{1,3} a) c){0,1}	cos-nonambig:c|c
+S(C(c{0,3} a{0,2}){3,3} b{1,u})	ok
+C(a{3,3} b)	ok
+C(S(S(c{0,3} a) C(a a{2,u}){0,u} b{1,3}){1,u} S(c{1,3}){0,u})	cos-nonambig:c|c
+C(S(C(c{0,u} c){2,u}) C(c{3,3} c{0,1} S(b{1,3} a{0,1} b){0,u}){1,3})	cos-nonambig:c|c
+C(C(S(a{0,2} c{0,1} a){2,u} c{0,1}){1,u})	cos-nonambig:a|a
+C(a{0,1} a{0,1}){0,1}	cos-nonambig:a|a
+C(C(*{0,1} S(a{0,u} b c{0,1}) b{0,2}))	cos-nonambig:WC[##any]|a
+C(C(b{1,3} a{0,1}) c{1,u} b{0,1})	cos-nonambig:b|b
+C(a{2,u}){1,3}	ok
+C(a{0,u} S(S(c{0,3} *{1,3})){0,1}){0,1}	cos-nonambig:a|WC[##any]
+S(c C(a{0,2} c C(c{0,u}){1,u}){1,u}){0,1}	cos-nonambig:c|c
+C(C(S(a{0,u} a{3,3} c{0,1}) S(*{1,u}){3,3}){3,3} * S(S(*{1,3} a{0,3}){1,u} C(b{1,3} b{0,2}) S(a{0,3} b{2,3}){3,3}){3,3})	cos-nonambig:a|a
+S(b c{0,1} b{0,u})	ok
+C(a{0,1} C(S(b{0,2} b{0,2}) c){1,3} b{1,3})	cos-nonambig:b|b
+S(a c{0,u})	ok
+S(b{0,1} b a{1,3})	cos-nonambig:b|b
+S(C(c c{1,3}){0,2} C(a C(c{3,3} a{1,3} a){0,u} b{0,u}){1,3} a{0,u})	cos-nonambig:c|c
+C(S(c{2,3}){0,1} S(S(c){2,u}){2,u})	cos-nonambig:c|c
+S(a c S(a){0,u})	ok
+S(c *{0,1} c)	cos-nonambig:WC[##any]|c
+S(a{0,2} C(C(*{3,3} c{3,3} c{2,3}){0,2} C(a b{0,u} c) C(a{0,1}){0,1}){2,u}){3,3}	cos-nonambig:a|WC[##any]
+C(S(b{1,3} b{0,1}){0,u} C(S(c{3,3} c{0,1} c){0,2} a) S(C(c{0,2}) b{3,3}){1,3})	cos-nonambig:b|b
+S(C(S(a{3,3} b{0,1} c{3,3}){0,2}) C(b a){0,1})	cos-nonambig:a|a
+C(b{0,u})	ok
+S(a{0,1} S(S(c{0,3}){3,3} a{0,1}){0,1} a){0,3}	cos-nonambig:a|a
+S(b{3,3} S(C(b{0,1} c{0,1} *{0,2}) C(*{0,2} a c{0,1})))	cos-nonambig:b|WC[##any]
+C(C(c{1,3}))	ok
+C(a S(C(b{0,2} *)){2,u})	cos-nonambig:a|WC[##any]
+C(C(S(b{1,3}) S(c{3,3}) b{2,u}){2,u} S(c{0,1} c{2,u} C(c{1,u})){0,1})	cos-nonambig:b|b
+C(a a{2,u}){0,2}	cos-nonambig:a|a
+S(C(c{0,1} c{0,u}) c)	cos-nonambig:c|c
+C(S(a C(b){0,2} C(* c{0,1} c){3,3}))	cos-nonambig:b|WC[##any]
+S(S(S(a{3,3} c){1,u}){2,3} S(S(c b c{1,u}){0,1} S(b{2,3} b{1,3} b){0,2}){0,2} C(b{0,3} a){2,u})	cos-nonambig:a|a
+S(a{3,3} S(b) C(C(b{0,2} b){2,u} S(c{0,2} a{1,3}){3,3} C(a{3,3} a{1,u} b{0,u}){1,3}))	cos-nonambig:b|b
+C(b{2,3} *{0,2} b)	cos-nonambig:b|WC[##any]
+S(S(S(c{0,3} a{2,3}) b)){2,3}	ok
+C(S(S(b{0,2} b a{0,1})){0,2})	cos-nonambig:b|b
+S(*){2,u}	ok
+C(c{0,1} C(a{1,u}) C(c){2,u})	cos-nonambig:c|c
+C(C(c C(b{2,3} a) C(b{1,u} c{0,1} c{3,3})))	cos-nonambig:c|c
+S(S(a{1,u} a a))	cos-nonambig:a|a
+C(S(C(*{0,1}){1,u} a{2,u} S(c a{0,1} c{2,3}){0,u}){1,3} S(C(a{0,3} *{0,1} *{0,1})){0,2})	cos-nonambig:WC[##any]|a
+C(S(b{3,3} C(a){0,1} S(a{0,1}){0,3}){0,u} a{3,3} a{0,u}){0,1}	cos-nonambig:a|a
+S(S(C(b{2,3})) c{1,3} S(C(b c a{0,u}){2,u} c a{2,u}))	cos-nonambig:c|c
+S(b{0,1} *{1,3})	cos-nonambig:b|WC[##any]
+C(b{1,u} b{1,u})	cos-nonambig:b|b
+S(C(a{1,u} S(*{0,1} *) b{0,2}) S(a) S(S(* b a{3,3}){1,u} C(c a *){1,3}))	cos-nonambig:a|WC[##any]
+S(a C(a C(c{0,2}){0,u}))	ok
+S(S(S(a{3,3} c{0,1}){0,3} b{0,3} a){0,3})	cos-nonambig:a|a
+S(c{2,u} S(S(a a{0,1} b) S(a{2,u} b){2,3}){0,u})	cos-nonambig:a|a
+S(C(a){0,1} C(*{0,1} b{1,3} a{0,1}){2,3})	cos-nonambig:a|WC[##any]
+C(S(C(c{3,3} a){0,3} b{2,u}){0,1})	ok
+S(b{1,3} C(S(a{0,1}){0,1} c){0,1} C(S(a a){0,3} a C(b{0,1}){2,3}))	cos-nonambig:b|b
+S(b{0,3} a S(c{0,2}){1,u}){0,2}	ok
+C(S(b{2,3} b{0,2}) S(C(b a) C(b{1,u} b{1,u} b{0,1}){0,3}) S(S(*) a)){0,1}	cos-nonambig:b|b
+C(a){0,u}	ok
+C(S(c{0,1} b a{3,3}){3,3})	ok
+C(a{0,1} C(S(* a{0,1}){3,3}){0,1} a{0,3}){3,3}	cos-nonambig:a|WC[##any]
+S(b{0,1} S(C(*{0,1} c{0,u} *{3,3}){0,2} S(*{0,1} c{3,3} b) C(b a{1,u} c{3,3}){0,1}){2,3} b{0,1})	cos-nonambig:b|WC[##any]
+S(a C(c{0,3} c){0,3} b{3,3})	cos-nonambig:c|c
+C(C(b S(b{2,3}) S(b{1,u})) c{1,u} S(b C(b b{1,u} c){0,3} c){0,1}){2,u}	cos-nonambig:b|b
+C(S(b C(b{0,1} b{0,3} c{0,1}){1,u}){0,u} S(b{0,2}){0,1} a{0,3}){3,3}	cos-nonambig:b|b
+S(S(S(c c{0,1} c{0,1}){0,1}))	cos-nonambig:c|c
+S(C(a{3,3} a){2,u} a{0,u})	cos-nonambig:a|a
+C(S(a{2,u} S(b{1,3}) a{2,u}){2,3})	cos-nonambig:a|a
+S(b{0,u} S(S(a{0,1} b{1,3}){2,u}) C(S(c{0,1}){0,3} c{2,3}){0,1}){0,1}	cos-nonambig:b|b
+S(a S(b S(b{2,3} c{3,3} b{0,1}){0,1}){0,u} b{1,3}){2,3}	cos-nonambig:b|b
+C(C(b S(a a{0,2})))	ok
+C(C(c{3,3} C(b){2,u} c{2,u}){0,1} C(C(a{0,2}){0,3}) S(a{0,u})){0,u}	cos-nonambig:c|c
+C(S(b){1,u})	ok
+S(a{2,3}){0,1}	ok
+C(S(b c{3,3} S(a b{0,2}){0,1}){0,2} b{2,3} S(C(b{1,3}){0,u} b{0,1}){1,3}){0,3}	cos-nonambig:b|b
+S(C(b{1,3} *{0,2} S(c{1,3})){2,3} b{1,3} C(S(a{2,3} a{0,2}))){1,u}	cos-nonambig:b|WC[##any]
+S(C(c{0,2}) S(S(b{0,1} *{2,3}){1,u} b *) C(C(b{1,3}) b{0,3}))	cos-nonambig:c|WC[##any]
+S(S(* S(c{0,2} c a){0,u} S(* a)))	cos-nonambig:c|c
+C(b S(*{0,3}){0,2} b{3,3}){2,u}	cos-nonambig:b|WC[##any]
+S(S(C(*{0,u} c c{3,3}){0,3}){0,1} a{2,u}){1,3}	cos-nonambig:WC[##any]|c
+C(a{2,u} a){0,1}	cos-nonambig:a|a
+S(c{0,u} b{0,u}){0,2}	ok
+S(S(S(b{1,3} b{1,3} c){0,1} C(a{0,2} a)){0,1} c{0,3})	cos-nonambig:b|b
+C(S(a{0,u}) c)	ok
+S(c c{0,1})	ok
+S(S(S(c{0,2}) c{0,u}){0,2} b{0,1}){1,u}	cos-nonambig:c|c
+C(a{0,1}){0,2}	ok
+C(a{3,3} c)	ok
+C(c{0,u} b{0,2})	ok
+C(b{3,3} a)	ok
+C(c{3,3})	ok
+C(S(S(a{2,3}){1,u} a{3,3} C(a{0,1}){0,2}) S(C(b c b{3,3}){2,u} S(a{0,3} c{0,3}){2,u} a) S(*{0,1}){3,3})	cos-nonambig:a|a
+S(a{0,1} C(C(c{0,1} b{0,2} c{3,3}) C(a *){0,u} C(*{2,u}){0,3})){3,3}	cos-nonambig:a|a
+C(b c{0,3})	ok
+S(* S(S(c{0,u} *{2,3} a{1,3}){0,1} c b{0,3}){0,2} a)	cos-nonambig:c|WC[##any]
+C(c{1,3} S(S(b{0,3} *{1,u} b{0,2}) C(b{0,1} b b{0,1}){3,3} C(b{0,1} c c{0,1}){3,3}){0,u})	cos-nonambig:c|WC[##any]
+S(S(S(c a{0,2} c) C(a *{0,1}){0,1} S(a{1,u}){1,u}){1,u} b{0,1} c)	cos-nonambig:c|c
+C(b{0,u} C(S(c b c{2,u}){2,u} *))	cos-nonambig:b|WC[##any]
+S(* C(C(a{0,u} b){0,3} b{0,2} C(b{3,3} a)){2,3} C(b){2,u})	cos-nonambig:a|a
+S(S(C(a{0,1})){0,3} C(C(b) C(*){3,3}) b{2,u})	cos-nonambig:a|WC[##any]
+S(S(S(a{1,u} c{2,u}){0,u} S(a{0,3} b{3,3} b{2,3}){0,3}){0,1} b{2,u})	cos-nonambig:a|a
+C(a S(S(c *{1,u}){0,1}){0,2} C(b{0,1} a{0,1}){0,3}){2,u}	cos-nonambig:a|WC[##any]
+C(c C(c{0,2} S(b{1,3} b{0,1} c{2,3}){0,1} c{0,3}){0,u} b{0,1})	cos-nonambig:c|c
+C(a *{0,2}){1,3}	cos-nonambig:a|WC[##any]
+S(S(C(b{1,3}){1,u} C(a b{0,u} b{2,3}){0,1}){0,1} S(* C(*{0,1} a{0,1}) S(a{0,3} b{0,1} c{0,1})) S(C(a)))	cos-nonambig:b|b
+C(C(C(c{2,3}){1,3} C(b{2,3} c) C(c{0,u}){0,1}){1,u}){1,u}	cos-nonambig:c|c
+C(C(S(*{3,3}) c{1,3} a){0,1} b{2,u})	cos-nonambig:WC[##any]|c
+C(S(b C(c{0,1} c a{0,1}){0,u}) C(S(a{0,2} c b{1,u}) a{0,u} C(c{2,u})))	cos-nonambig:c|c
+S(b{2,3} S(S(b{0,u} c{0,3} *){0,1} b{0,1} a){0,u} a{0,u}){0,1}	cos-nonambig:b|b
+C(c{1,u} a{3,3} b{0,1})	ok
+S(C(b){2,3})	ok
+C(c{0,3} C(C(c{1,u} b){0,1}){0,1})	cos-nonambig:c|c
+C(*{3,3} b{0,1} C(c C(c{0,1}){0,3} c{0,u}){0,1})	cos-nonambig:WC[##any]|b
+S(* C(S(a{1,3} b{0,1} c{0,2}){3,3} S(a a{3,3} *{0,1}){0,1} S(b{3,3} b{2,u})) a{1,u})	cos-nonambig:a|a
+C(b{0,2} S(a{1,u} C(* b{0,1} *){1,u} C(a b{0,1}){0,3}){0,2}){0,1}	cos-nonambig:a|WC[##any]
+S(C(b C(b b{2,3} a{2,3}){3,3} b{0,2}){2,u})	cos-nonambig:b|b
+S(S(C(c{3,3} *{1,3} c{0,2}){0,2} b){3,3})	cos-nonambig:c|WC[##any]
+S(S(C(c{0,3})){1,3} c{0,u} S(a{0,1} a C(c c{0,1} c{0,3})){2,3})	cos-nonambig:c|c
+C(S(c{0,2}) S(S(a c c){0,u} b{2,u} a{0,1}) a)	cos-nonambig:a|a
+S(C(S(b a{0,3} c{0,1}){1,u} b) S(C(*)){0,1} C(c{0,u} S(*{1,u} c{0,3} c{1,3}){0,1} C(*{0,1} b{2,3}){0,3}))	cos-nonambig:b|b
+S(a{0,1} c c){0,1}	ok
+S(S(C(c{2,3} b{3,3} c){0,2}){0,1})	cos-nonambig:c|c
+S(C(C(a){0,1}){0,1})	ok
+C(S(C(c{2,u} a{2,u})) a{0,3} C(C(c) *{2,u} C(b c{0,1}))){0,2}	cos-nonambig:c|c
+S(a{2,3} b{0,1} *{2,u})	cos-nonambig:a|WC[##any]
+C(b{0,1} C(S(b{1,3} c{0,1} c) C(b{2,u} a{0,1}){3,3} C(c{0,3} c a){0,3})){1,3}	cos-nonambig:b|b
+C(C(a{0,1} S(c b c{0,1}){3,3}){1,u} a{3,3}){0,1}	cos-nonambig:a|a
+C(S(b))	ok
+C(S(a S(b{2,3}){0,2}) c{1,3} C(c{0,1}))	cos-nonambig:c|c
+S(S(c{0,2} b{0,3} c) C(C(b a c){2,u}) b{2,3}){0,u}	cos-nonambig:c|c
+S(a a{2,3})	ok
+S(C(S(c{0,1} b c){0,1} a){1,3} C(S(c){1,3} C(c{0,3}) b{1,3}){2,3} S(b a{3,3}){1,3})	cos-nonambig:c|c
+S(a{0,1} c{0,u})	ok
+C(b{0,u} C(S(c{2,u} b{0,1}){0,2} a{1,u} c{0,1}))	cos-nonambig:c|c
+S(c{2,u} C(C(c{1,3} * a{0,1}) * a{1,3}) C(*{0,1} c{0,1}))	cos-nonambig:c|c
+S(C(C(b{0,u} b *)){0,u} c{0,1} *)	cos-nonambig:b|b
+S(C(c{1,u} c{1,u}){2,3} b{2,u} b{0,3})	cos-nonambig:c|c
+C(c){3,3}	ok
+C(b{1,u} *{3,3} C(S(*{3,3} b){2,3} S(a{2,3} b{1,u} b){0,1}){0,1})	cos-nonambig:b|WC[##any]
+C(a b{0,1}){0,u}	ok
+S(S(c{2,3}))	ok
+C(a{2,u} a{0,3} C(c{2,u}))	cos-nonambig:a|a
+S(S(C(a{0,1} c{3,3}){0,u} C(c a{1,u}) C(b{3,3}){0,3}){1,u} a C(S(b{0,1} c{2,3} b){0,1} C(c c{0,1} a{1,u}){0,2} C(b{1,u} a{0,1})))	cos-nonambig:a|a
+C(C(*{0,u} S(b{2,3} a{1,3} c{1,u}){0,3}){0,u} C(S(a{0,3} b{0,1} c) b{0,1}){2,u} S(C(a{0,1} c{0,3} a{0,3}){1,3} a c{0,1}))	cos-nonambig:WC[##any]|b
+C(b{0,1} c{1,u} b)	cos-nonambig:b|b
+S(c C(b{2,3}){2,u} a{2,3})	ok
+C(c{0,u} C(S(a a{2,3} c{0,3}) S(b{0,u} c{2,3})){2,3})	cos-nonambig:c|c
+C(S(a{0,u} a{0,1}) C(C(a{0,1} c{0,3} b{0,u}){2,u} S(c) b{0,u}))	cos-nonambig:a|a
+C(S(b{3,3}){0,u}){0,2}	ok
+C(b *{2,u}){1,u}	cos-nonambig:b|WC[##any]
+S(S(C(a{2,3} c{0,2}){1,3} c C(a)){0,1})	cos-nonambig:c|c
+S(S(S(b a c{2,3}) *{0,1}))	cos-nonambig:c|WC[##any]
+S(S(a{3,3} S(b c){1,3} a{2,3}) a{0,3} a){0,1}	cos-nonambig:a|a
+S(a{2,3} c)	ok
+C(c C(b S(b){2,u}))	cos-nonambig:b|b
+S(b C(a S(b *{1,3} b){1,u}){0,1} b{1,u})	cos-nonambig:b|b
+S(S(C(a c{1,u}){0,3} C(a{0,1}){0,1} S(a b{3,3}){0,1}){1,u} S(S(c c) C(c c){3,3} a{0,1}){2,3} c{3,3})	cos-nonambig:a|a
+C(C(c c{3,3}){0,1} c c{0,u})	cos-nonambig:c|c
+S(C(C(c c){3,3}){0,1})	cos-nonambig:c|c
+S(C(a a{0,2}) a{0,1})	cos-nonambig:a|a
+S(S(a{3,3} c{0,3} C(a{3,3} c a{0,u}){0,2}) *)	cos-nonambig:a|a
+S(c{0,3} *{2,u} C(*{0,u} b{3,3} c{3,3}){0,1})	cos-nonambig:c|WC[##any]
+S(C(C(c{0,3} b{0,u}){0,2}){3,3} a{0,u} S(b{1,u} c{2,u} C(b *{0,2})))	cos-nonambig:b|b
+C(a{0,u} c)	ok
+C(c a{2,3} b{3,3})	ok
+S(b{1,3} C(*))	cos-nonambig:b|WC[##any]
+S(S(C(c{2,3} b){0,2} S(b){0,1} c) *){1,3}	cos-nonambig:c|c
+C(S(c{1,u} a) a{2,u} C(C(b{0,1} c{3,3} *{2,3}){0,3} b c{0,1}){3,3})	cos-nonambig:c|c
+S(C(S(b{0,1} b a{0,3}){2,u} b{1,3}){0,1} c{0,3})	cos-nonambig:b|b
+S(a{0,1} c{1,3} a{1,3}){0,u}	cos-nonambig:a|a
+C(S(c{2,3} C(c c{3,3}) b) a{0,1} C(b{0,1} S(c{1,u} c{0,1})))	cos-nonambig:c|c
+C(S(S(a c{0,1} b){1,3} a{3,3}) S(*){0,3}){0,1}	cos-nonambig:a|a
+C(S(a{2,u} C(b{1,3} a{0,1}){0,1}){1,3})	cos-nonambig:a|a
+S(c b{0,2})	ok
+C(S(S(*) c){3,3} a)	cos-nonambig:WC[##any]|a
+C(b{1,u} b{3,3})	cos-nonambig:b|b
+C(c{0,2})	ok
+S(a){1,u}	ok
+C(C(C(a{0,1} b{0,1}) c{2,u} S(c{0,2}){1,3}){0,1})	cos-nonambig:c|c
+C(*{0,1} c b{1,u}){0,2}	cos-nonambig:WC[##any]|c
+S(S(C(c c){1,u}){2,3} a{0,1} c{0,1}){2,3}	cos-nonambig:c|c
+S(*{2,3} C(S(a{3,3}){0,u} S(b{2,3} a{1,3}){0,1} C(a{0,1})) S(b{0,1}))	cos-nonambig:WC[##any]|a
+C(a{0,1} C(C(a{0,3} c{2,u} b) b) C(C(c a{2,u} a{1,u}) c){3,3}){1,3}	cos-nonambig:a|a
+S(b{1,u}){3,3}	ok
+S(C(c S(c b{0,2}){0,2} C(a{0,1}){0,1}){0,u} S(S(a{2,3}){3,3}){0,1} S(C(a{0,1}) C(b b{0,1} c)))	cos-nonambig:c|c
+C(S(a{0,3} C(c{0,1} b c) C(b){0,u}) S(b){3,3})	cos-nonambig:c|c
+S(a{0,u} C(b{1,3} c a{3,3}){0,1}){0,1}	cos-nonambig:a|a
+S(S(S(c){1,u} C(* c)){2,3} S(b{0,u} a{3,3} b{1,u}){3,3})	cos-nonambig:c|WC[##any]
+C(a b S(C(c{0,1}){0,1} b))	cos-nonambig:b|b
+C(S(b{0,u} C(b{1,u}){2,3}) S(C(b{0,1}){3,3}){0,u}){0,2}	cos-nonambig:b|b
+C(*{0,1} b{1,u})	cos-nonambig:WC[##any]|b
+C(C(C(b{0,1} c{1,3}) a S(a{3,3}){2,u}))	cos-nonambig:a|a
+C(c{3,3} C(C(a{0,3}) a{0,u} c{2,3}))	cos-nonambig:c|c
+C(c{1,u} b)	ok
+C(S(C(b{2,u}){0,3} C(*){0,u}){0,2})	cos-nonambig:b|WC[##any]
+C(S(C(c{1,3} *{2,u} b{0,1}){0,1} c) S(a{2,u} a S(a{0,1} a{0,2} a)) C(c c{1,u}){2,3})	cos-nonambig:c|WC[##any]
+C(C(a{0,u} S(*{0,1} b{3,3} b)){0,1})	cos-nonambig:a|WC[##any]
+S(C(C(a b{3,3}){0,1}){0,1})	ok
+S(b{1,3} S(b{0,3}))	cos-nonambig:b|b
+C(C(c{3,3} S(b{0,3} *{1,3} *)) c{0,1})	cos-nonambig:c|WC[##any]
+S(C(c{0,1}) c{0,3} C(c S(c c){1,3}))	cos-nonambig:c|c
+S(c{3,3} S(C(*) C(c *{0,2} *{0,1})))	cos-nonambig:c|WC[##any]
+S(S(C(c){1,u} b{0,3} S(c{0,2}){2,u}){0,2} a c{2,3})	cos-nonambig:c|c
+S(C(S(c{1,3}){0,3} C(c{2,3} c){0,1}){0,1} C(a{0,1} S(b{0,1} a{2,3} c{0,1}) *{0,3}) c{0,3})	cos-nonambig:c|c
+S(C(C(c a{0,3}){2,3}){0,1} C(b{0,1} C(c{2,3} b{0,u}){3,3} C(c c{3,3}){0,1}){0,1} a)	cos-nonambig:c|c
+C(S(b{1,3}){0,u} c)	ok
+C(S(*{0,1} S(b a{0,1} b){2,3}) C(C(b) b){1,u})	cos-nonambig:WC[##any]|b
+C(C(a{3,3}){0,1} S(S(c{1,u} b{1,u} a{0,1}){0,u}){2,u})	ok
+S(C(*) C(S(b{0,1}) c{0,1}) b)	cos-nonambig:b|b
+C(C(C(b{2,u}){0,1} c{1,3} C(c b c){2,3}){0,1} S(S(*{0,1} c{1,3} a{0,3}))){1,u}	cos-nonambig:b|b
+C(S(C(b{1,3} c{2,u}) C(a{0,3} b){1,3} c{1,3}){1,3}){1,u}	cos-nonambig:b|b
+C(S(c C(b b){0,3}) S(a{0,u} * a){1,u} b)	cos-nonambig:c|WC[##any]
+S(c c{0,2} C(S(a a{2,u}){0,3}))	cos-nonambig:a|a
+S(S(S(b{0,u} b a{1,u}) S(c{2,u} a{2,u} c{0,1}){0,1} S(b{0,3} c{2,u}){3,3}) b{3,3} b)	cos-nonambig:b|b
+S(a{0,1} S(C(c c{1,u} c{3,3}){0,u} S(c){1,3})){1,u}	cos-nonambig:c|c
+S(S(S(c{0,1}){0,1}){0,1})	ok
+S(a{3,3} S(a{1,3} a{2,u}) *{0,3})	cos-nonambig:a|a
+C(c{2,u} a{0,u} a)	cos-nonambig:a|a
+C(S(c{0,1}){1,3} b{0,1} S(a{3,3} c{1,3} b{0,1}){0,3})	ok
+C(S(C(a{0,2}) C(c{3,3} b){0,u}))	ok
+S(c C(S(b{1,u} c{0,1})){0,1} *){3,3}	cos-nonambig:b|WC[##any]
+C(C(S(b b){0,2} b{2,3}){3,3} c{0,1} C(S(c{0,1} *){2,u}){0,1})	cos-nonambig:b|b
+C(C(a{1,3}){0,1} C(C(a{2,u} b a)){0,1} S(b{1,u}))	cos-nonambig:a|a
+S(S(a C(c{0,1} b b{0,1}){3,3}){3,3})	cos-nonambig:b|b
+C(*{3,3})	ok
+C(c{2,3}){3,3}	ok
+C(S(c){0,2})	ok
+S(C(c{0,u} S(*{0,3}){2,3}){0,3})	cos-nonambig:c|WC[##any]
+C(S(c{0,u}) a){2,u}	ok
+C(S(a{0,1} C(a{0,3} a{1,u} c{0,1}){2,u} S(*{1,3} b b{0,1})){0,1} S(*{0,u} S(b{0,1}){0,3}){2,u} C(*))	cos-nonambig:a|a
+S(C(C(b{0,u}){0,1} S(b{0,1} c{0,3} a){2,u} b{1,3}) S(C(c{1,3}){2,3}){0,u})	cos-nonambig:b|b
+C(a C(c{2,3}))	ok
+S(a{0,u} S(C(c c{0,u} a){2,3} a{2,3} b{0,1})){2,u}	cos-nonambig:a|a
+C(C(a{2,u} C(b a){2,3}) S(S(c{2,u}){0,1} c b{1,u}))	cos-nonambig:a|a
+C(b{1,3}){0,1}	ok
+C(a c S(S(b) S(* a{0,2} b))){0,u}	ok
+S(b b{0,1} b)	cos-nonambig:b|b
+S(C(C(a{2,u} c{0,1} b{1,3}){3,3} C(a a{2,3}) a){0,3} S(C(a *{3,3}){1,3} c{2,u} a){0,3}){3,3}	cos-nonambig:a|a
+C(C(c{1,u} S(*{3,3} b){0,u}))	cos-nonambig:c|WC[##any]
+C(S(S(a{0,3} a)){0,1} c{2,u} S(b{1,u}))	cos-nonambig:a|a
+S(C(C(c{2,3} b{0,2} c{0,3}){0,2} b a{0,u}))	cos-nonambig:c|c
+C(C(S(b b){2,3} S(a{1,3} c a) c) a{1,3})	cos-nonambig:a|a
+S(a{2,u} b)	ok
+C(a C(S(b{0,1}){0,1}){2,u} c{2,3})	ok
+C(C(a{0,u}) b{3,3})	ok
+C(C(S(* a{2,3}){0,1}){2,3})	cos-nonambig:WC[##any]|a
+S(S(S(c{2,3} c{0,2} b)){2,u} S(C(*{0,u} b{2,u} c{0,1}){0,1}))	cos-nonambig:c|c
+C(c{0,2} C(c c{0,3} a{2,3}) b{0,3}){1,3}	cos-nonambig:c|c
+C(C(C(c{0,u} b{0,1})))	ok
+S(C(a{0,2} C(c a{0,1})) S(a{1,u} c{2,3} b))	cos-nonambig:a|a
+C(b{0,u} c{1,3})	ok
+C(a{2,u} S(b C(b{1,u} c{3,3}){2,u} S(b{1,3} a{2,3} a)))	cos-nonambig:b|b
+C(c a{0,2} *{0,u})	cos-nonambig:c|WC[##any]
+C(S(a{0,1} S(a{0,3}){1,3}) C(b{1,3} b{0,1}){0,2} C(b{0,1} C(c{3,3}){3,3} b{0,3}){0,1})	cos-nonambig:a|a
+C(c{2,u} C(c b{1,3}) S(C(a){1,u}))	cos-nonambig:c|c
+C(S(S(c{0,1} b{1,3} *{1,u}){0,1}){3,3} c{0,1} c{0,u}){2,u}	cos-nonambig:c|WC[##any]
+S(S(C(c{0,3} *{0,2}){0,u} C(a{1,u})){3,3} S(a) S(b{2,u} S(b{0,2}){2,3} b{1,u}){2,u})	cos-nonambig:c|WC[##any]
+S(*{2,u} C(C(b{1,3} a{2,3} b{0,2}){0,2} S(b{0,2}){2,u} a{1,3}))	cos-nonambig:WC[##any]|b
+S(C(* S(*{3,3} c{0,1})) S(* a{1,u}){1,u})	cos-nonambig:WC[##any]|WC[##any]
+C(a a C(a{2,3} a C(b{0,1} b{1,u}){0,u}){1,3})	cos-nonambig:a|a
+C(c b{3,3})	ok
+S(b{0,3} C(C(a{2,u} c){2,3}))	ok
+C(b{2,3} S(a b{0,2} c{2,3}))	ok
+C(C(*{3,3}) a{0,1} c)	cos-nonambig:WC[##any]|a
+C(S(b{0,1} b{0,1}){0,3} S(C(*{0,1} *{0,1}){2,3}){0,u} a{0,3}){0,u}	cos-nonambig:b|b
+C(S(*{0,1} C(*{0,1}){0,1}){2,3} a{0,2} C(c c))	cos-nonambig:WC[##any]|WC[##any]
+C(C(b{1,u}){0,1} C(c{0,u}) C(C(b){0,1}){0,1}){0,1}	cos-nonambig:b|b
+C(a b{1,3} C(C(b{3,3} c{2,3} b{2,u}){2,3}))	cos-nonambig:b|b
+C(* S(C(c{3,3}){0,u}))	cos-nonambig:WC[##any]|c
+S(S(C(b{1,u}){0,2}) a b{2,u}){3,3}	cos-nonambig:b|b
+S(a{0,2} C(S(a{1,u} a){0,2} b{0,2} C(b{2,3} b{2,u} a{1,3}))){0,3}	cos-nonambig:a|a
+C(b *{2,3} C(S(a{0,1} * b{0,1})){1,u})	cos-nonambig:b|WC[##any]
+C(C(S(b{1,u} a{2,u}){0,1} C(c{2,3} c{0,2}){2,u} C(b{1,3} c a)){0,1} a b{0,1})	cos-nonambig:b|b
+S(b{0,1} S(c{0,2} S(b b{1,3}){3,3}) C(C(b){0,u} C(a a)){1,u})	cos-nonambig:b|b
+S(S(C(a{0,u} a)))	cos-nonambig:a|a
+C(a{0,1} C(S(c{0,1} a{0,2}){0,2} C(c{1,u}) S(a{0,2} c c{1,3})){1,3} a)	cos-nonambig:a|a
+S(c{0,3}){3,3}	ok
+S(c{3,3} C(a C(b{0,u} c{2,u}) C(b{1,u}){1,u}){0,1}){2,3}	cos-nonambig:c|c
+C(S(C(c{0,1} b{0,1} c{1,3}) S(a{1,3} b{1,3} a){0,u} a) a{2,u} C(C(c{3,3}){3,3}){3,3})	cos-nonambig:c|c
+C(C(S(c{0,1}){2,u} a){2,3} c{2,3})	cos-nonambig:c|c
+S(a{3,3} c{1,u})	ok
+S(S(C(c){3,3} c{1,3} S(b b{0,u})) a{0,1} b)	cos-nonambig:b|b
+C(b a{0,1})	ok
+C(C(C(c{1,u} c{2,3}) *{1,3})){0,1}	cos-nonambig:c|c
+S(C(S(c{0,1} b b{0,1}) C(a{0,3}) C(*){0,2}){0,3} a C(b{2,3} C(*{0,3}){0,1}){2,u}){0,1}	cos-nonambig:c|WC[##any]
+C(C(*{0,2}) S(S(a{0,1}){0,2}){0,3})	cos-nonambig:WC[##any]|a
+S(S(S(b b{2,u} a{0,3}){2,u}){1,u} a{0,1} b)	cos-nonambig:b|b
+S(S(c{2,3} b) S(b{0,1} S(b b) b{3,3}){2,u})	cos-nonambig:b|b
+S(S(S(c{0,3}) b{0,u} S(*{0,3})) a{0,1})	cos-nonambig:c|WC[##any]
+C(C(*{0,1}))	ok
+C(S(*{0,1} c{0,1} b{1,3}){0,3})	cos-nonambig:WC[##any]|c
+C(b{3,3} b{2,u}){1,u}	cos-nonambig:b|b
+S(C(b{3,3} b{0,2} C(c{1,3} c{1,3}){1,3}) S(C(b{0,1}){0,u} c{1,3} C(a{0,1}){0,1}))	cos-nonambig:b|b
+C(S(a{0,1} b{2,3} S(*{2,u} b{0,2}){1,3}){0,1}){1,u}	cos-nonambig:a|WC[##any]
+C(a){0,2}	ok
+C(b S(C(a){0,1} C(c c{1,3}) C(a c *{2,u})) C(c{0,1} c S(a{0,3} b){0,2}){1,u})	cos-nonambig:b|b
+C(C(a){0,u} C(c S(b{2,u} b{0,2}))){0,1}	cos-nonambig:b|b
+S(S(a{0,1} a{1,3}){1,u} S(c S(c{0,1} b{1,3}) C(a){2,u}) b)	cos-nonambig:a|a
+S(S(a{1,u} c{2,u} b{0,1}){2,u})	ok
+S(S(S(a{2,3} b{0,1} c{3,3}){0,1} C(c{1,3}){0,u} a{0,3}){0,3} S(C(b b{0,2} c{0,2}){0,2} a{0,1} S(c{0,1} a){2,u}){0,1}){3,3}	cos-nonambig:a|a
+C(b{0,2} S(c{0,2} S(b{0,1}){0,u} c{3,3}){0,3})	cos-nonambig:b|b
+S(*{3,3} b a{1,u})	ok
+S(S(C(c{0,u} * b{1,3}){0,1} a b{0,2}){3,3} S(b S(*{3,3}){2,3} C(c{1,3} b{0,1} a{0,1})))	cos-nonambig:c|WC[##any]
+C(S(c{1,u} a){0,3})	ok
+C(a{0,u} S(c{0,2}){0,1} c{0,3})	cos-nonambig:c|c
+C(S(S(a) b){2,3} a{2,3} c)	cos-nonambig:a|a
+S(S(c{2,u} S(b c{2,3}) c{0,1}))	cos-nonambig:c|c
+S(C(a{0,1} S(c{2,u} a{0,1} c{0,u}) C(a *)) b)	cos-nonambig:a|a
+S(c c{1,u} b{0,u})	ok
+C(C(a) S(C(a a){0,3} C(b *{0,u} c){0,1}){2,u} a{3,3})	cos-nonambig:a|a
+S(b{1,u} a{1,u} c{0,1})	ok
+C(c a{0,1})	ok
+C(c{2,u} S(S(b{2,u}){2,3}))	ok
+C(a{0,u} C(b{0,1} a{0,1} C(b{2,u}){2,u}){0,3} C(a{0,2} C(b c{0,2}))){1,u}	cos-nonambig:a|a
+C(C(b{3,3} S(b{2,3} b{2,3}) S(a{0,1}){1,u}) c)	cos-nonambig:b|b
+S(S(b{0,3}){0,3} a{3,3})	ok
+S(C(c{2,3}){2,3})	ok
+C(C(C(b){1,3}){0,1} S(a{0,3}){2,u} S(C(b{1,u}){1,3}){0,1}){3,3}	cos-nonambig:b|b
+C(b{0,1} C(b{2,3} a S(c){2,u}){0,u})	cos-nonambig:b|b
+C(a{2,3} c{0,1} S(C(a{3,3}) C(b{2,3} b)){1,3})	cos-nonambig:a|a
+C(a C(a){2,u})	cos-nonambig:a|a
+S(S(S(c{1,u} a a{2,u}) C(b)) b{0,2})	ok
+C(S(C(c a){2,3}){1,3} b{3,3}){0,u}	ok
+S(C(b){0,1} C(S(a{0,1} b{3,3} a) a b{0,1}){0,3} b{1,3})	cos-nonambig:b|b
+C(S(* C(c{0,1})){0,2} C(a{1,3} a{1,3} b{2,3}){3,3} a)	cos-nonambig:WC[##any]|c
+S(c a{0,1} C(* C(*{2,3} *{1,3})){0,u})	cos-nonambig:a|WC[##any]
+C(S(c *{0,3} C(b b{1,u} b{0,2})){0,1} S(b){0,u})	cos-nonambig:WC[##any]|b
+C(c{2,u} C(C(b{1,u} b{0,2}){0,1}) C(a S(c{0,3} a{3,3}){0,3} a){1,u})	cos-nonambig:c|c
+C(S(c){2,u} C(C(a{0,3} c{0,1} c{0,3}){2,3}))	cos-nonambig:c|c
+C(c{0,1}){0,u}	ok
+S(c{0,u} a{0,2} b)	ok
+S(S(S(b b{0,u} c{2,3}) C(* a{0,u}) C(a{1,3} c){1,3}) a{3,3} c{2,3})	cos-nonambig:c|WC[##any]
+C(C(C(a{0,u} c{3,3}){0,1} b{3,3} S(a b){3,3}){0,1} b{0,1}){2,u}	cos-nonambig:a|a
+S(C(b a c{2,3}){0,1})	ok
+S(S(C(c) C(b{1,3} b a{0,1}) S(a b{2,3})){3,3} S(S(c{3,3}){3,3}))	cos-nonambig:b|b
+C(C(b a)){0,3}	ok
+C(b{0,3} C(b{0,2} *){0,1}){1,u}	cos-nonambig:b|b
+S(b{0,2} C(C(a c a{0,1}){1,3} b{2,u} S(c{0,u} b){3,3}){0,1})	cos-nonambig:b|b
+C(C(c{0,3} b{0,1} c){3,3})	cos-nonambig:c|c
+S(C(C(a{0,3}){0,3} C(c{0,u} a{0,3}) c){0,1} b{0,3})	cos-nonambig:a|a
+C(a{0,1}){1,u}	ok
+C(c{0,3} c C(b){1,u})	cos-nonambig:c|c
+S(C(S(b * *{3,3}) a{0,1} c{3,3}){0,3} b C(a{1,3} b{1,3} C(*{1,3} c{0,1})){3,3})	cos-nonambig:b|WC[##any]
+S(b b){1,3}	ok
+S(c{0,3} S(b{0,1}){0,2} S(a{2,u} *{0,3} C(a b{0,2} a{3,3})){0,3})	cos-nonambig:a|WC[##any]
+C(S(C(a{0,1} c{0,1}){0,u}){3,3})	ok
+C(C(a c b){0,1} b{0,1})	cos-nonambig:b|b
+S(S(a) C(C(c){1,3}) c){1,3}	cos-nonambig:c|c
+C(c{1,u})	ok
+C(C(c){0,1} C(a{0,u} a{2,u} S(*)){2,3})	cos-nonambig:c|WC[##any]
+C(C(a S(c{0,2}){0,1} C(b{2,3} b c{2,u}){2,3}) a{0,1} C(C(a){0,1} S(a a){3,3}){0,u}){0,3}	cos-nonambig:a|a
+S(S(S(c{0,2}) b C(a{0,u} a{2,u}){0,1}) C(S(c) S(a{1,u} c{0,2} b{0,2}){2,u} C(a a{0,1} b{3,3})){0,3})	cos-nonambig:a|a
+S(S(c C(a c{3,3} c) S(c b{0,u})){0,3} S(S(*{0,3} c{3,3}){1,u} b) b{2,u}){2,u}	cos-nonambig:c|WC[##any]
+S(S(C(b c c{3,3}) b{0,1}){0,3} C(b S(c) b{0,2}){0,3})	cos-nonambig:b|b
+S(a{2,3} *){0,u}	cos-nonambig:a|WC[##any]
+S(*{0,2})	ok
+S(a{0,1} c{0,1} C(*{1,3} S(a{1,u}){0,2}){0,3})	cos-nonambig:a|WC[##any]
+S(C(S(c b) C(c b a){1,u}){0,u} S(C(b a{2,u}){0,2}){2,u} b{0,1}){0,2}	cos-nonambig:c|c
+C(S(C(a b{0,1}){0,1} b{0,1}){1,u}){0,1}	cos-nonambig:b|b
+S(C(* C(c a{0,1} b{0,3}) a{0,u}){0,3} c)	cos-nonambig:WC[##any]|c
+C(S(S(c{0,1}) S(c c{2,3} a{1,u}){1,3} C(b{1,3} c a{2,u}){0,3}){2,3} C(C(c){0,2} C(b)){0,3})	cos-nonambig:c|c
+C(C(c{1,3} c{0,3} C(b{2,u})){0,u})	cos-nonambig:c|c
+C(C(S(b){1,3} S(*{1,3}) C(b a{0,u} a{1,3}){0,1}){3,3} *{0,u}){2,3}	cos-nonambig:b|WC[##any]
+C(a{0,1})	ok
+C(C(S(a{0,1} *{1,3} a{0,2}){2,3}))	cos-nonambig:a|WC[##any]
+S(C(S(b{0,2}))){0,1}	ok
+C(*{1,u} S(a *{0,u}){0,2} b)	cos-nonambig:WC[##any]|a
+S(b{0,1} *{1,3} S(c{0,1}))	cos-nonambig:b|WC[##any]
+S(a{0,1} C(S(* a){2,u}) *{0,2})	cos-nonambig:a|WC[##any]
+S(C(C(a{1,3} b{1,3}){0,2} S(a{2,u}){0,3} c{0,u}) *){0,1}	cos-nonambig:a|a
+C(C(a{2,3} a{0,2} C(*{2,3} b{0,u} c{0,2}){0,1}){0,1} C(a{0,1} a){1,u} S(b))	cos-nonambig:a|a
+S(b{3,3} S(S(c{1,u} b){0,1}){0,u})	ok
+S(S(S(c a){1,3} c S(* b{0,1}){0,1}) C(C(b{3,3} b{0,2}){3,3} b{3,3}){0,3})	cos-nonambig:c|c
+S(S(c{3,3}){1,3} S(a{3,3} C(b) b{0,3}) a{3,3}){0,u}	ok
+C(C(S(*)){0,3} C(C(*){2,u}) c{1,3})	cos-nonambig:WC[##any]|WC[##any]
+S(b{2,u})	ok
+C(b{2,u} c{1,3} c)	cos-nonambig:c|c
+S(C(S(b a){0,3} S(a c{3,3} c{0,1})))	ok
+S(b{2,3} c{3,3} C(c{2,3} C(b{0,1} c{0,1}) a{3,3}))	cos-nonambig:c|c
+C(S(S(a{1,u} a{0,1}){0,1} b{0,1} b{0,u}) S(b C(c){3,3} b{2,u}){2,u} C(a{1,3} C(b{0,1} a{1,u} a){0,2}))	cos-nonambig:a|a
+C(C(*))	ok
+S(S(S(b{0,2} a b){0,1} a{0,1}){3,3} S(a c{0,1} b{1,3}){0,u}){1,u}	cos-nonambig:b|b
+C(S(C(c a) C(c{0,2}) S(b){0,1}){0,2})	cos-nonambig:c|c
+S(b{0,1} a{1,u})	ok
+S(* C(c{0,1} b{0,u} C(c{0,u} b{0,2}){2,3}){1,3} b{3,3})	cos-nonambig:c|c
+S(S(c) S(b{1,u}))	ok
+C(C(*{0,3} C(a{2,3}){1,3} c{0,1}) C(C(b{0,3}) C(b{2,u} a{0,1}){0,1} C(a){0,u}){0,2})	cos-nonambig:WC[##any]|a
+C(S(c{0,1} S(c{0,1} b){2,3}) a *{0,1}){0,2}	cos-nonambig:c|c
+S(S(S(c b{0,1} a{1,3}){1,3}){0,1})	ok
+C(C(c{0,u}) C(b{0,1}))	ok
+C(C(C(c{0,2}){2,u} *{2,u} S(a{3,3}){0,1}){0,1})	cos-nonambig:c|WC[##any]
+S(c{0,1} C(C(a{2,u} c{3,3}){0,1} c{0,1} a){1,3})	cos-nonambig:c|c
+S(c{0,1} S(S(c{0,3} a) C(a)){1,u} *{0,1})	cos-nonambig:c|c
+S(S(C(a c{0,2})){1,u} c{0,u} C(a{0,1}){0,3})	cos-nonambig:a|a
+C(b{0,3}){1,3}	ok
+C(a{2,3})	ok
+C(S(a))	ok
+S(*{0,1})	ok
+C(b{1,3}){3,3}	ok
+C(b{0,1} b)	cos-nonambig:b|b
+C(c{1,u} C(b{1,u}){1,u} S(S(b{0,3} b{0,3}){2,3} C(a{0,3} b) c{0,1}))	cos-nonambig:c|c
+S(S(b a{3,3})){0,u}	ok
+C(C(*{0,1} S(a b{0,1}){2,u}){0,1}){3,3}	cos-nonambig:WC[##any]|a
+S(S(S(a *{0,1} a{1,3}) S(b{0,u}){0,u} a)){0,1}	cos-nonambig:WC[##any]|a
+S(S(*){0,3})	ok
+S(C(S(b{0,1} b{0,1} a{0,1}){0,3} S(c{0,2} b{2,3}){2,3}){0,u} C(S(b{0,u}){2,3}){0,3})	cos-nonambig:b|b
+S(S(c{1,3} C(*{0,1} c *){2,3}){1,u}){1,3}	cos-nonambig:c|WC[##any]
+S(a a{0,3} S(b{1,u} C(c c){0,1} b){0,1}){1,3}	cos-nonambig:a|a
+S(a{0,u} b S(*{0,2} c{0,1}){3,3})	cos-nonambig:WC[##any]|c
+C(C(c S(a{1,3} b{0,3}){1,u}){0,1} c{2,3}){1,3}	cos-nonambig:c|c
+S(S(c S(a{0,1}){0,2} S(* c{0,3}){2,u}) S(C(c{0,1} b{0,3}){1,3} b{3,3} c{0,3}){0,1})	cos-nonambig:a|WC[##any]
+S(S(b C(*{1,u}){2,3} C(c{0,1} a a{2,u}){0,3}) b{2,3} b{0,3})	cos-nonambig:WC[##any]|c
+C(*{2,u})	ok
+C(c C(* C(c{2,u}){1,3}) b{2,3}){0,1}	cos-nonambig:c|WC[##any]
+S(a){0,1}	ok
+S(S(c){1,u} C(a{1,u} b) a){0,1}	cos-nonambig:a|a
+C(S(C(c{0,u}){0,3}) a{1,3} *{3,3}){0,1}	cos-nonambig:c|WC[##any]
+S(a{2,u}){1,3}	ok
+S(S(c{0,2} c{1,3} C(a{0,2}){0,3}){1,u})	cos-nonambig:c|c
+S(b{3,3} b *){1,u}	ok
+S(*{1,u})	ok
+S(*{0,1} S(C(c{2,3} a c{2,u}){3,3}) C(a{3,3} S(c b{3,3} b){0,3} b{0,1}){0,1}){1,3}	cos-nonambig:WC[##any]|c
+C(S(S(a c){0,1} C(a{2,3} c) S(a){0,3}))	cos-nonambig:a|a
+S(b{0,1} a{0,1})	ok
+C(b S(c{0,1}))	ok
+C(C(C(c{1,u} c){0,1}){2,u})	cos-nonambig:c|c
+C(c{0,1} S(*{0,1} b a{0,1}){2,3}){2,3}	cos-nonambig:c|WC[##any]
+C(C(S(a){2,u} a{0,1} S(c{0,1}){0,u}) S(c{0,u} C(a{0,u} a)))	cos-nonambig:a|a
+C(b C(S(a{0,1} b *){1,3}){2,u})	cos-nonambig:b|b
+C(c{0,1} C(c{2,u}){2,3}){2,3}	cos-nonambig:c|c
+C(*{2,3} a){0,u}	cos-nonambig:WC[##any]|a
+S(C(C(a{1,u}){0,u} C(a{0,1} b{2,u}){2,u})){2,3}	cos-nonambig:a|a
+S(S(S(a){0,1} S(a{0,1} b{0,1}){0,2}){0,3} C(S(c{2,3} a{3,3}){1,3} c{2,u}) C(a{0,1}){0,1})	cos-nonambig:a|a
+S(*{3,3} C(b))	ok
+S(S(a C(b{2,u} c{0,3} c{0,1}) c{0,1}) C(c{0,1} a))	cos-nonambig:c|c
+C(b{0,1} *)	cos-nonambig:b|WC[##any]
+C(S(C(a{0,1} b{1,3} *){0,1} b{0,2}){0,3} c{1,u} c{0,1})	cos-nonambig:a|WC[##any]
+S(S(c) b)	ok
+S(S(b a{0,2}))	ok
+S(S(C(c{3,3}){0,1})){0,1}	ok
+S(b{1,3} S(*{0,2} c{0,1}){0,1})	cos-nonambig:b|WC[##any]
+S(b a{0,3} a{0,2}){0,2}	cos-nonambig:a|a
+C(S(b{0,1} S(b{3,3} b c{2,u}){0,1} C(c c){0,2})){0,1}	cos-nonambig:b|b
+S(C(C(b{1,3}) S(c{2,3})){0,2})	ok
+S(S(c a{3,3} S(b b)) *{0,1} b{2,u})	cos-nonambig:WC[##any]|b
+C(c{0,u} S(S(b){0,1} C(c{1,3}){2,u}){2,3} c{0,3}){1,u}	cos-nonambig:c|c
+C(C(C(b{1,u} c{2,u}) S(a{0,1} a{1,3} c{0,u}){0,u} b{0,2}){0,u})	cos-nonambig:b|b
+S(b{1,u} a{1,u} C(c{1,u} C(c c{1,3}){0,1}){0,1}){0,2}	cos-nonambig:c|c
+C(S(C(c{0,3} a{0,2} b){0,1} b) S(b{1,u} C(* b{3,3} b){0,1} b){1,3} a)	cos-nonambig:a|a
+S(a{2,u} C(C(c{0,3}){1,u} S(*{2,u}){2,u} c{0,1}) S(S(a b){2,3}){0,1}){0,3}	cos-nonambig:a|WC[##any]
+C(a{2,u})	ok
