@@ -256,6 +256,166 @@ begin
   CheckFacetError(Str, xsfMaxLength, '-1', xecInvalidArgument, 'negative length');
   CheckFacetError(Str, xsfWhiteSpace, 'preserve', xecInvalidArgument, 'weaker whiteSpace');
   CheckFacetError(Str, xsfPattern, '[a', xecRegex, 'invalid pattern');
+  CheckFacetError(LandrixXmlXsdBuiltinType('anySimpleType'), xsfMinLength, '1', xecInvalidArgument,
+    'a facet on anySimpleType');
+end;
+
+{ Facets as "name=value" ("!" before the name for a fixed facet),
+  separated by ";". }
+procedure AddFacetList(Target: TLandrixXmlXsdSimpleType; const List: string);
+var
+  Fields: TStringList;
+  I, P: Integer;
+  Field: string;
+  Fixed: Boolean;
+begin
+  Fields := TStringList.Create;
+  try
+    Fields.Text := StringReplace(List, ';', #10, [rfReplaceAll]);
+    for I := 0 to Integer(Fields.Count) - 1 do
+    begin
+      Field := Fields[I];
+      Fixed := (Field <> '') and (Field[1] = '!');
+      if Fixed then
+        Delete(Field, 1, 1);
+      P := Pos('=', Field);
+      Target.AddFacet(FacetOf(Copy(Field, 1, P - 1)), U(Copy(Field, P + 1, MaxInt)), Fixed);
+    end;
+  finally
+    Fields.Free;
+  end;
+end;
+
+{ A chain of restrictions of the built-in BaseName, one for each part of
+  BaseFacets separated by "|" (see AddFacetList), then a restriction with
+  Facets; Code is the constraint code expected for the last facet of
+  Facets, '' if all facets are accepted. }
+procedure CheckConsistency(const BaseName, BaseFacets, Facets, Code, Name: string);
+var
+  Types: TObjectList;
+  Base, T: TLandrixXmlXsdSimpleType;
+  Rest, Last: string;
+  P: Integer;
+begin
+  Types := TObjectList.Create(True);
+  try
+    Base := LandrixXmlXsdBuiltinType(U(BaseName));
+    Rest := BaseFacets + '|';
+    while Rest <> '' do
+    begin
+      P := Pos('|', Rest);
+      T := TLandrixXmlXsdSimpleType.CreateRestriction(Base, '', U('b'));
+      Types.Add(T);
+      AddFacetList(T, Copy(Rest, 1, P - 1));
+      Delete(Rest, 1, P);
+      Base := T;
+    end;
+    T := TLandrixXmlXsdSimpleType.CreateRestriction(Base, '', U('t'));
+    Types.Add(T);
+    { the facets before the last one must be accepted }
+    Last := Facets;
+    P := Pos(';', Last);
+    while P > 0 do
+    begin
+      AddFacetList(T, Copy(Last, 1, P - 1));
+      Delete(Last, 1, P);
+      P := Pos(';', Last);
+    end;
+    try
+      AddFacetList(T, Last);
+      CheckEqualsStr(Code, '', Name);
+    except
+      on E: ELandrixXmlError do
+      begin
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), Name + ': ' + E.Message);
+        Check((Code <> '') and (Copy(E.Message, Integer(Length(E.Message)) - Integer(Length(Code)) - 1, MaxInt) =
+          '(' + Code + ')'), Name + ': ' + E.Message);
+      end;
+    end;
+  finally
+    Types.Free;
+  end;
+end;
+
+procedure TestFacetConsistency;
+begin
+  CheckConsistency('string', '', 'minLength=3;maxLength=2', 'minLength-less-than-equal-to-maxLength',
+    'minLength above maxLength');
+  CheckConsistency('string', 'maxLength=5', 'maxLength=6', 'maxLength-valid-restriction', 'wider maxLength');
+  CheckConsistency('string', 'maxLength=5', 'minLength=6', 'minLength-less-than-equal-to-maxLength',
+    'minLength above the base maxLength');
+  CheckConsistency('string', 'minLength=2', 'minLength=1', 'minLength-valid-restriction', 'smaller minLength');
+  CheckConsistency('string', '!minLength=2', 'minLength=3', 'FixedFacetValue', 'fixed minLength');
+  CheckConsistency('string', 'minLength=2', 'length=3;minLength=2', '', 'length with the base minLength');
+  CheckConsistency('string', '', 'length=3;maxLength=4', 'length-minLength-maxLength.2.2.a',
+    'maxLength beside length');
+  CheckConsistency('string', 'length=3', 'length=4', 'length-valid-restriction', 'other length');
+  CheckConsistency('string', 'maxLength=2', 'length=3', 'length-minLength-maxLength.2.1',
+    'length above the base maxLength');
+  CheckConsistency('string', '', 'minLength=2;minLength=3', 'src-single-facet-value', 'minLength twice');
+  CheckConsistency('decimal', '', 'minInclusive=5;maxInclusive=4', 'minInclusive-less-than-equal-to-maxInclusive',
+    'empty inclusive range');
+  CheckConsistency('decimal', '', 'minInclusive=4;maxInclusive=4', '', 'one value');
+  CheckConsistency('decimal', '', 'maxExclusive=4;minInclusive=4', 'minInclusive-less-than-maxExclusive',
+    'minInclusive at maxExclusive');
+  CheckConsistency('decimal', '', 'maxInclusive=4;minExclusive=4', 'minExclusive-less-than-maxInclusive',
+    'minExclusive at maxInclusive');
+  CheckConsistency('decimal', '', 'minExclusive=5;maxExclusive=4',
+    'minExclusive-less-than-equal-to-maxExclusive', 'empty exclusive range');
+  CheckConsistency('decimal', '', 'maxInclusive=4;maxExclusive=5', 'maxInclusive-maxExclusive',
+    'both upper bounds');
+  CheckConsistency('decimal', '', 'minInclusive=4;minExclusive=3', 'minInclusive-minExclusive',
+    'both lower bounds');
+  CheckConsistency('decimal', 'maxInclusive=10', 'maxInclusive=11', 'cvc-maxInclusive-valid',
+    'bound outside the base type');
+  CheckConsistency('decimal', 'maxExclusive=10', 'maxExclusive=10', '', 'the base maxExclusive repeated');
+  CheckConsistency('decimal', 'minExclusive=1', 'minExclusive=1', '', 'the base minExclusive repeated');
+  CheckConsistency('decimal', '!maxInclusive=10', 'maxInclusive=9', 'FixedFacetValue', 'fixed maxInclusive');
+  CheckConsistency('decimal', '!maxInclusive=10', 'maxInclusive=10.0', '', 'fixed maxInclusive repeated');
+  CheckConsistency('decimal', '!maxInclusive=10', 'maxInclusive=11', 'FixedFacetValue',
+    'fixed maxInclusive before the base bound');
+  CheckConsistency('decimal', 'pattern=[0-9]+;maxExclusive=10', 'maxExclusive=10.0', 'cvc-pattern-valid',
+    'repeated maxExclusive against the base pattern');
+  CheckConsistency('decimal', '', 'totalDigits=2;fractionDigits=3', 'fractionDigits-totalDigits',
+    'fractionDigits above totalDigits');
+  CheckConsistency('decimal', 'totalDigits=4', 'totalDigits=5', 'totalDigits-valid-restriction',
+    'wider totalDigits');
+  CheckConsistency('decimal', 'fractionDigits=2', 'fractionDigits=3', 'fractionDigits-valid-restriction',
+    'wider fractionDigits');
+  CheckConsistency('decimal', '!totalDigits=4', 'totalDigits=3', 'FixedFacetValue', 'fixed totalDigits');
+  CheckConsistency('integer', '', 'fractionDigits=1', 'FixedFacetValue', 'fractionDigits on an integer');
+  CheckConsistency('integer', '', 'fractionDigits=0', '', 'fractionDigits 0 on an integer');
+  CheckConsistency('string', '!whiteSpace=replace', 'whiteSpace=collapse', 'FixedFacetValue', 'fixed whiteSpace');
+  CheckConsistency('string', 'whiteSpace=replace', 'whiteSpace=preserve', 'whiteSpace-valid-restriction.2',
+    'whiteSpace preserve after replace');
+  CheckConsistency('string', '', 'enumeration=a;enumeration=b', '', 'enumerations');
+  CheckConsistency('string', '!maxLength=5|maxLength=5', 'maxLength=4', 'FixedFacetValue',
+    'fixed maxLength inherited');
+  CheckConsistency('decimal', '!maxInclusive=10|maxExclusive=9', 'maxInclusive=5', '',
+    'a fixed maxInclusive hidden by a maxExclusive');
+  CheckConsistency('decimal', '!minInclusive=1|minExclusive=2', 'minInclusive=5', '',
+    'a fixed minInclusive hidden by a minExclusive');
+  CheckConsistency('decimal', 'maxExclusive=10|totalDigits=5', 'maxExclusive=10', '',
+    'an inherited maxExclusive repeated');
+  CheckConsistency('decimal', '!maxExclusive=10', 'maxExclusive=9', 'FixedFacetValue', 'fixed maxExclusive');
+  CheckConsistency('decimal', 'totalDigits=3', 'fractionDigits=4', 'fractionDigits-totalDigits',
+    'fractionDigits above the base totalDigits');
+  CheckConsistency('decimal', '', 'whiteSpace=replace', 'FixedFacetValue', 'whiteSpace on a decimal');
+  CheckConsistency('string', 'whiteSpace=collapse', 'whiteSpace=replace', 'whiteSpace-valid-restriction.1',
+    'whiteSpace replace after collapse');
+  CheckConsistency('NMTOKENS', '', 'length=3', '', 'length of a list');
+  CheckConsistency('string', 'length=3', 'length=3', '', 'the base length repeated');
+  CheckConsistency('string', 'maxLength=3', 'maxLength=3', '', 'the base maxLength repeated');
+  CheckConsistency('decimal', 'totalDigits=3', 'totalDigits=3', '', 'the base totalDigits repeated');
+  CheckConsistency('string', 'length=3', 'minLength=3', 'length-minLength-maxLength.1.2.a',
+    'minLength after a base length');
+  CheckConsistency('string', '!whiteSpace=replace|minLength=1', 'whiteSpace=collapse', 'FixedFacetValue',
+    'fixed whiteSpace inherited');
+  CheckConsistency('double', '', 'minInclusive=NaN;maxInclusive=NaN', '', 'NaN bounds');
+  CheckConsistency('date', '', 'minInclusive=2000-01-01;maxInclusive=2000-01-01Z',
+    'minInclusive-less-than-equal-to-maxInclusive', 'indeterminate date bounds');
+  CheckConsistency('NMTOKENS', 'maxLength=2', 'length=3', 'length-minLength-maxLength.2.1',
+    'length of a list above the base maxLength');
 end;
 
 procedure TestUnionFacets;
@@ -413,6 +573,7 @@ begin
   RegisterTest('XsdTypes.GeneratedData', TestGeneratedData);
   RegisterTest('XsdTypes.WhiteSpace', TestWhiteSpace);
   RegisterTest('XsdTypes.FacetRules', TestFacetRules);
+  RegisterTest('XsdTypes.FacetConsistency', TestFacetConsistency);
   RegisterTest('XsdTypes.UnionFacets', TestUnionFacets);
   RegisterTest('XsdTypes.CompareValues', TestCompareValues);
   RegisterTest('XsdTypes.ValueFields', TestValueFields);

@@ -1366,6 +1366,23 @@ begin
   end;
 end;
 
+{ The Xerces code at the end of a message of the type unit ("... (code)"),
+  '' if there is none. }
+function ConstraintCodeOf(const Msg: string): string;
+var
+  I: Integer;
+begin
+  Result := '';
+  I := Integer(Length(Msg));
+  if (I = 0) or (Msg[I] <> ')') then
+    Exit;
+  Dec(I);
+  while (I > 0) and (Msg[I] <> '(') and (Msg[I] <> ' ') do
+    Dec(I);
+  if (I > 0) and (Msg[I] = '(') then
+    Result := Copy(Msg, I + 1, Integer(Length(Msg)) - I - 1);
+end;
+
 procedure TLoader.AddFacets(Doc: TSchemaDoc; Restriction: TLandrixXmlNode; T: TLandrixXmlXsdSimpleType);
 var
   Child: TLandrixXmlNode;
@@ -1409,14 +1426,16 @@ begin
     if not Attr(Child, 'value', Value) then
       Fail(Doc, Child, 'facet ' + Esc(LocalName) + ' without a value');
     try
-      T.AddFacet(Facet, Value);
+      T.AddFacet(Facet, Value, BoolAttr(Child, 'fixed'));
     except
       on E: ELandrixXmlError do
       begin
         if E.Code = xecUnsupported then
           Unsupported(Doc, Child, E.Message)
+        else if E.Code = xecInvalidArgument then
+          FailCheck(Doc.FileName, Child, ConstraintCodeOf(E.Message), E.Message)
         else
-          Fail(Doc, Child, E.Message);
+          FailCheck(Doc.FileName, Child, '', E.Message);
       end;
     end;
     Child := Child.NextSiblingElement;

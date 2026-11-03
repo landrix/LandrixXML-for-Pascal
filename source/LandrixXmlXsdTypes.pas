@@ -182,15 +182,27 @@ type
     FMaxExclusive: TLandrixXmlXsdBound;
     FTotalDigits: Integer;
     FFractionDigits: Integer;
+    { the facets given on this type (patterns and enumeration not counted)
+      and those of them that are fixed }
+    FDefined: set of TLandrixXmlXsdFacet;
+    FFixed: set of TLandrixXmlXsdFacet;
     procedure InitFacets;
+    function BaseCount(Facet: TLandrixXmlXsdFacet): Integer;
+    function BaseFixed(Facet: TLandrixXmlXsdFacet): Boolean;
+    procedure BaseBounds(Upper: Boolean; out Inclusive, Exclusive: TLandrixXmlXsdBound);
+    procedure CheckFixedBound(Facet: TLandrixXmlXsdFacet; const Bound, BaseBound: TLandrixXmlXsdBound);
+    procedure CheckFacetConsistency;
     function CheckFacets(const Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
     function ValidatorName: string;
     function HasPatterns: Boolean;
     function IsTrimmedType: Boolean;
     function CheckPatterns(const Value: TLandrixXmlXsdValue; const TypeName: string;
       out Error: TLandrixXmlXsdError): Boolean;
-    function ParseFacetValue(const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
+    function ParseFacetValue(const Text: TLandrixXmlUtf8; const Code: string): TLandrixXmlXsdValue;
+    function ParseBound(Facet: TLandrixXmlXsdFacet; const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
     function ValidateList(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
+      out Error: TLandrixXmlXsdError): Boolean;
+    function ValidateLexical(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
       out Error: TLandrixXmlXsdError): Boolean;
   public
     { A built-in type; used by the unit itself. }
@@ -209,13 +221,18 @@ type
       (cos-st-restricts.2.1). }
     constructor CreateList(const NamespaceUri, Name: TLandrixXmlUtf8; ItemType: TLandrixXmlXsdSimpleType);
     destructor Destroy; override;
-    { Adds a facet as written in the schema. Several patterns of the same
-      type are alternatives. Raises ELandrixXmlError: xecInvalidArgument for
-      a facet value that is invalid or not allowed for the base type,
-      xecUnsupported for facets on a union; xecInvalidOperation on a
-      built-in type and on a type made by CreateList (facets of a list go
-      on a restriction of it). }
-    procedure AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8);
+    { Adds a facet as written in the schema; Fixed is its fixed attribute.
+      Several patterns of the same type are alternatives. Raises
+      ELandrixXmlError: xecInvalidArgument for a facet value that is
+      invalid, not allowed for the base type or inconsistent with the
+      facets given so far or with those of the base type (as Xerces checks
+      them; the message of a failed check ends with the Xerces code in
+      parentheses, e.g. "(minLength-less-than-equal-to-maxLength)"),
+      xecUnsupported for
+      facets on a union; xecInvalidOperation on a built-in type and on a
+      type made by CreateList (facets of a list go on a restriction of
+      it). }
+    procedure AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8; Fixed: Boolean = False);
     { Checks Text (an element or attribute value as written). }
     function Validate(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
       out Error: TLandrixXmlXsdError): Boolean;
@@ -1365,6 +1382,8 @@ begin
   ClearBound(FMaxExclusive);
   FTotalDigits := -1;
   FFractionDigits := -1;
+  FDefined := [];
+  FFixed := [];
 end;
 
 constructor TLandrixXmlXsdSimpleType.CreateBuiltin(const Name: TLandrixXmlUtf8; Base: TLandrixXmlXsdSimpleType;
@@ -1510,21 +1529,323 @@ begin
   Result := Integer(V);
 end;
 
-function TLandrixXmlXsdSimpleType.ParseFacetValue(const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
+procedure InvalidFacetValue(const Text: TLandrixXmlUtf8; const Error: TLandrixXmlXsdError);
+begin
+  raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Facet value ' + Quote(Text) +
+    ' is not valid for the base type: ' + Error.Message + ' (' + Error.Code + ')');
+end;
+
+{ Code is the constraint code to report, '' for the code of the failed
+  check of the base type. }
+function TLandrixXmlXsdSimpleType.ParseFacetValue(const Text: TLandrixXmlUtf8;
+  const Code: string): TLandrixXmlXsdValue;
 var
   Error: TLandrixXmlXsdError;
 begin
   { a facet value must be valid for the base type }
   if not FBase.Validate(Text, Result, Error) then
-    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Facet value ' + Quote(Text) +
-      ' is not valid for the base type: ' + Error.Message);
+  begin
+    if Code <> '' then
+      Error.Code := Code;
+    InvalidFacetValue(Text, Error);
+  end;
+end;
+
+procedure FacetError(const Code, Msg: string);
+begin
+  raise ELandrixXmlError.CreateCode(xecInvalidArgument, Msg + ' (' + Code + ')');
+end;
+
+{ The count facet (length, minLength, maxLength, totalDigits,
+  fractionDigits) in effect for the base type, -1 if there is none. }
+function TLandrixXmlXsdSimpleType.BaseCount(Facet: TLandrixXmlXsdFacet): Integer;
+var
+  T: TLandrixXmlXsdSimpleType;
+begin
+  Result := -1;
+  T := FBase;
+  while (T <> nil) and (Result < 0) do
+  begin
+    case Facet of
+      xsfLength: Result := T.FLength;
+      xsfMinLength: Result := T.FMinLength;
+      xsfMaxLength: Result := T.FMaxLength;
+      xsfTotalDigits: Result := T.FTotalDigits;
+      xsfFractionDigits: Result := T.FFractionDigits;
+    else
+      Result := -1;
+    end;
+    T := T.FBase;
+  end;
+end;
+
+{ True if a base type fixed the facet (fixed facets are inherited). }
+function TLandrixXmlXsdSimpleType.BaseFixed(Facet: TLandrixXmlXsdFacet): Boolean;
+var
+  T: TLandrixXmlXsdSimpleType;
+begin
+  Result := False;
+  T := FBase;
+  while (T <> nil) and not Result do
+  begin
+    Result := Facet in T.FFixed;
+    T := T.FBase;
+  end;
+end;
+
+{ The upper (or lower) bounds in effect for the base type: as in Xerces, a
+  type that gives one of the two hides both of its base types. }
+procedure TLandrixXmlXsdSimpleType.BaseBounds(Upper: Boolean; out Inclusive, Exclusive: TLandrixXmlXsdBound);
+var
+  T: TLandrixXmlXsdSimpleType;
+begin
+  Inclusive.Present := False;
+  Exclusive.Present := False;
+  T := FBase;
+  while T <> nil do
+  begin
+    if Upper and (T.FMaxInclusive.Present or T.FMaxExclusive.Present) then
+    begin
+      Inclusive := T.FMaxInclusive;
+      Exclusive := T.FMaxExclusive;
+      Exit;
+    end;
+    if not Upper and (T.FMinInclusive.Present or T.FMinExclusive.Present) then
+    begin
+      Inclusive := T.FMinInclusive;
+      Exclusive := T.FMinExclusive;
+      Exit;
+    end;
+    T := T.FBase;
+  end;
+end;
+
+{ A bound facet value, in the order of Xerces: the lexical form for the
+  base type (with its patterns), a fixed bound of the base type, then the
+  other facets of the base type, except that an exclusive bound may
+  repeat the one of the base type (Xerces skips that check then). }
+function TLandrixXmlXsdSimpleType.ParseBound(Facet: TLandrixXmlXsdFacet;
+  const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
+var
+  Inclusive, Exclusive, Bound: TLandrixXmlXsdBound;
+  Error: TLandrixXmlXsdError;
+begin
+  if not FBase.ValidateLexical(Text, Result, Error) then
+    InvalidFacetValue(Text, Error);
+  BaseBounds(Facet in [xsfMaxInclusive, xsfMaxExclusive], Inclusive, Exclusive);
+  Bound.Present := True;
+  Bound.Value := Result;
+  if Facet in [xsfMaxInclusive, xsfMinInclusive] then
+    CheckFixedBound(Facet, Bound, Inclusive)
+  else
+  begin
+    CheckFixedBound(Facet, Bound, Exclusive);
+    if Exclusive.Present and (LandrixXmlXsdCompareValues(Result, Exclusive.Value) = 0) then
+      Exit;
+  end;
+  if not FBase.CheckFacets(Result, Error) then
+    InvalidFacetValue(Text, Error);
+end;
+
+function FacetName(Facet: TLandrixXmlXsdFacet): string;
+begin
+  case Facet of
+    xsfLength: Result := 'length';
+    xsfMinLength: Result := 'minLength';
+    xsfMaxLength: Result := 'maxLength';
+    xsfPattern: Result := 'pattern';
+    xsfEnumeration: Result := 'enumeration';
+    xsfWhiteSpace: Result := 'whiteSpace';
+    xsfMaxInclusive: Result := 'maxInclusive';
+    xsfMaxExclusive: Result := 'maxExclusive';
+    xsfMinInclusive: Result := 'minInclusive';
+    xsfMinExclusive: Result := 'minExclusive';
+    xsfTotalDigits: Result := 'totalDigits';
+  else
+    Result := 'fractionDigits';
+  end;
+end;
+
+procedure TLandrixXmlXsdSimpleType.CheckFixedBound(Facet: TLandrixXmlXsdFacet;
+  const Bound, BaseBound: TLandrixXmlXsdBound);
+begin
+  if Bound.Present and BaseBound.Present and BaseFixed(Facet) and
+    (LandrixXmlXsdCompareValues(Bound.Value, BaseBound.Value) <> 0) then
+    FacetError('FixedFacetValue', 'The ' + FacetName(Facet) + ' ' + Quote(Bound.Value.Text) +
+      ' differs from the fixed value ' + Quote(BaseBound.Value.Text) + ' of the base type');
+end;
+
+function CountText(const Facet: string; Value: Integer): string;
+begin
+  Result := Facet + ' ''' + IntToStr(Value) + '''';
+end;
+
+{ The checks of Xerces' applyFacets between the facets of this type and
+  against those of the base type, in its order. They run after each added
+  facet, so a conflict is found as soon as both facets are there. }
+procedure TLandrixXmlXsdSimpleType.CheckFacetConsistency;
+var
+  C, BaseLength, BaseMin, BaseMax, BaseTotal, BaseFraction: Integer;
+begin
+  { between the facets of this type }
+  if (FMinLength >= 0) and (FMaxLength >= 0) and (FMinLength > FMaxLength) then
+    FacetError('minLength-less-than-equal-to-maxLength', 'The ' + CountText('minLength', FMinLength) +
+      ' is greater than the ' + CountText('maxLength', FMaxLength));
+  if FMaxInclusive.Present and FMaxExclusive.Present then
+    FacetError('maxInclusive-maxExclusive', 'maxInclusive and maxExclusive cannot both be given');
+  if FMinInclusive.Present and FMinExclusive.Present then
+    FacetError('minInclusive-minExclusive', 'minInclusive and minExclusive cannot both be given');
+  if FMinInclusive.Present and FMaxInclusive.Present then
+  begin
+    C := LandrixXmlXsdCompareValues(FMinInclusive.Value, FMaxInclusive.Value);
+    if (C <> -1) and (C <> 0) then
+      FacetError('minInclusive-less-than-equal-to-maxInclusive', 'The minInclusive ' +
+        Quote(FMinInclusive.Value.Text) + ' is not less than or equal to the maxInclusive ' +
+        Quote(FMaxInclusive.Value.Text));
+  end;
+  if FMinExclusive.Present and FMaxExclusive.Present then
+  begin
+    C := LandrixXmlXsdCompareValues(FMinExclusive.Value, FMaxExclusive.Value);
+    if (C <> -1) and (C <> 0) then
+      FacetError('minExclusive-less-than-equal-to-maxExclusive', 'The minExclusive ' +
+        Quote(FMinExclusive.Value.Text) + ' is not less than or equal to the maxExclusive ' +
+        Quote(FMaxExclusive.Value.Text));
+  end;
+  if FMinExclusive.Present and FMaxInclusive.Present and
+    (LandrixXmlXsdCompareValues(FMinExclusive.Value, FMaxInclusive.Value) <> -1) then
+    FacetError('minExclusive-less-than-maxInclusive', 'The minExclusive ' + Quote(FMinExclusive.Value.Text) +
+      ' is not less than the maxInclusive ' + Quote(FMaxInclusive.Value.Text));
+  if FMinInclusive.Present and FMaxExclusive.Present and
+    (LandrixXmlXsdCompareValues(FMinInclusive.Value, FMaxExclusive.Value) <> -1) then
+    FacetError('minInclusive-less-than-maxExclusive', 'The minInclusive ' + Quote(FMinInclusive.Value.Text) +
+      ' is not less than the maxExclusive ' + Quote(FMaxExclusive.Value.Text));
+  if (FFractionDigits >= 0) and (FTotalDigits >= 0) and (FFractionDigits > FTotalDigits) then
+    FacetError('fractionDigits-totalDigits', 'The ' + CountText('fractionDigits', FFractionDigits) +
+      ' is greater than the ' + CountText('totalDigits', FTotalDigits));
+  { against the base type }
+  BaseLength := BaseCount(xsfLength);
+  BaseMin := BaseCount(xsfMinLength);
+  BaseMax := BaseCount(xsfMaxLength);
+  if FLength >= 0 then
+  begin
+    if (BaseMin >= 0) and (FLength < BaseMin) then
+      FacetError('length-minLength-maxLength.1.1', 'The ' + CountText('length', FLength) +
+        ' is less than the ' + CountText('minLength', BaseMin) + ' of the base type');
+    if (BaseMax >= 0) and (FLength > BaseMax) then
+      FacetError('length-minLength-maxLength.2.1', 'The ' + CountText('length', FLength) +
+        ' is greater than the ' + CountText('maxLength', BaseMax) + ' of the base type');
+    if (BaseLength >= 0) and (FLength <> BaseLength) then
+      FacetError('length-valid-restriction', 'The ' + CountText('length', FLength) +
+        ' differs from the ' + CountText('length', BaseLength) + ' of the base type');
+  end;
+  { with a length, minLength and maxLength may only repeat the ones of the
+    base type (Xerces) }
+  if (BaseLength >= 0) or (FLength >= 0) then
+  begin
+    if FMinLength >= 0 then
+    begin
+      if (BaseLength >= 0) and (BaseLength < FMinLength) then
+        FacetError('length-minLength-maxLength.1.1', 'The ' + CountText('length', BaseLength) +
+          ' of the base type is less than the ' + CountText('minLength', FMinLength));
+      if (FLength >= 0) and (FLength < FMinLength) then
+        FacetError('length-minLength-maxLength.1.1', 'The ' + CountText('length', FLength) +
+          ' is less than the ' + CountText('minLength', FMinLength));
+      if BaseMin < 0 then
+        FacetError('length-minLength-maxLength.1.2.a', 'minLength cannot be given with length unless the ' +
+          'base type has a minLength');
+      if FMinLength <> BaseMin then
+        FacetError('length-minLength-maxLength.1.2.b', 'The ' + CountText('minLength', FMinLength) +
+          ' given with length differs from the ' + CountText('minLength', BaseMin) + ' of the base type');
+    end;
+    if FMaxLength >= 0 then
+    begin
+      if (BaseLength >= 0) and (BaseLength > FMaxLength) then
+        FacetError('length-minLength-maxLength.2.1', 'The ' + CountText('length', BaseLength) +
+          ' of the base type is greater than the ' + CountText('maxLength', FMaxLength));
+      if (FLength >= 0) and (FLength > FMaxLength) then
+        FacetError('length-minLength-maxLength.2.1', 'The ' + CountText('length', FLength) +
+          ' is greater than the ' + CountText('maxLength', FMaxLength));
+      if BaseMax < 0 then
+        FacetError('length-minLength-maxLength.2.2.a', 'maxLength cannot be given with length unless the ' +
+          'base type has a maxLength');
+      if FMaxLength <> BaseMax then
+        FacetError('length-minLength-maxLength.2.2.b', 'The ' + CountText('maxLength', FMaxLength) +
+          ' given with length differs from the ' + CountText('maxLength', BaseMax) + ' of the base type');
+    end;
+  end;
+  if FMinLength >= 0 then
+  begin
+    { as Xerces: against the base minLength only without a base maxLength }
+    if BaseMax >= 0 then
+    begin
+      if FMinLength > BaseMax then
+        FacetError('minLength-less-than-equal-to-maxLength', 'The ' + CountText('minLength', FMinLength) +
+          ' is greater than the ' + CountText('maxLength', BaseMax) + ' of the base type');
+    end
+    else if BaseMin >= 0 then
+    begin
+      if BaseFixed(xsfMinLength) and (FMinLength <> BaseMin) then
+        FacetError('FixedFacetValue', 'The ' + CountText('minLength', FMinLength) +
+          ' differs from the fixed value ''' + IntToStr(BaseMin) + ''' of the base type');
+      if FMinLength < BaseMin then
+        FacetError('minLength-valid-restriction', 'The ' + CountText('minLength', FMinLength) +
+          ' is less than the ' + CountText('minLength', BaseMin) + ' of the base type');
+    end;
+  end;
+  if (FMaxLength >= 0) and (BaseMin >= 0) and (FMaxLength < BaseMin) then
+    FacetError('minLength-less-than-equal-to-maxLength', 'The ' + CountText('maxLength', FMaxLength) +
+      ' is less than the ' + CountText('minLength', BaseMin) + ' of the base type');
+  if (FMaxLength >= 0) and (BaseMax >= 0) then
+  begin
+    if BaseFixed(xsfMaxLength) and (FMaxLength <> BaseMax) then
+      FacetError('FixedFacetValue', 'The ' + CountText('maxLength', FMaxLength) +
+        ' differs from the fixed value ''' + IntToStr(BaseMax) + ''' of the base type');
+    if FMaxLength > BaseMax then
+      FacetError('maxLength-valid-restriction', 'The ' + CountText('maxLength', FMaxLength) +
+        ' is greater than the ' + CountText('maxLength', BaseMax) + ' of the base type');
+  end;
+  { the bounds against the base type: in ParseBound }
+  BaseTotal := BaseCount(xsfTotalDigits);
+  BaseFraction := BaseCount(xsfFractionDigits);
+  if (FTotalDigits >= 0) and (BaseTotal >= 0) then
+  begin
+    if BaseFixed(xsfTotalDigits) and (FTotalDigits <> BaseTotal) then
+      FacetError('FixedFacetValue', 'The ' + CountText('totalDigits', FTotalDigits) +
+        ' differs from the fixed value ''' + IntToStr(BaseTotal) + ''' of the base type');
+    if FTotalDigits > BaseTotal then
+      FacetError('totalDigits-valid-restriction', 'The ' + CountText('totalDigits', FTotalDigits) +
+        ' is greater than the ' + CountText('totalDigits', BaseTotal) + ' of the base type');
+  end;
+  if (FFractionDigits >= 0) and (BaseTotal >= 0) and (FFractionDigits > BaseTotal) then
+    FacetError('fractionDigits-totalDigits', 'The ' + CountText('fractionDigits', FFractionDigits) +
+      ' is greater than the ' + CountText('totalDigits', BaseTotal) + ' of the base type');
+  if FFractionDigits >= 0 then
+  begin
+    { xs:integer and the types derived from it have fractionDigits 0, fixed }
+    if (FLexicalRule = xslInteger) and (FFractionDigits <> 0) then
+      FacetError('FixedFacetValue', 'The ' + CountText('fractionDigits', FFractionDigits) +
+        ' differs from the fixed value ''0'' of the base type');
+    if BaseFraction >= 0 then
+    begin
+      if BaseFixed(xsfFractionDigits) and (FFractionDigits <> BaseFraction) then
+        FacetError('FixedFacetValue', 'The ' + CountText('fractionDigits', FFractionDigits) +
+          ' differs from the fixed value ''' + IntToStr(BaseFraction) + ''' of the base type');
+      if FFractionDigits > BaseFraction then
+        FacetError('fractionDigits-valid-restriction', 'The ' + CountText('fractionDigits', FFractionDigits) +
+          ' is greater than the ' + CountText('fractionDigits', BaseFraction) + ' of the base type');
+    end;
+  end;
 end;
 
 { XML Schema 1.0 Part 2, 4.1.5 (cos-applicable-facets) }
 function FacetApplies(Primitive: TLandrixXmlXsdPrimitive; Facet: TLandrixXmlXsdFacet): Boolean;
 begin
   case Primitive of
-    xspAnySimpleType, xspString, xspHexBinary, xspBase64Binary, xspAnyURI:
+    { as Xerces: not even whiteSpace on anySimpleType itself (the facets
+      of a list are checked by the caller) }
+    xspAnySimpleType:
+      Result := False;
+    xspString, xspHexBinary, xspBase64Binary, xspAnyURI:
       Result := Facet in [xsfLength, xsfMinLength, xsfMaxLength, xsfPattern, xsfEnumeration, xsfWhiteSpace];
     xspBoolean:
       Result := Facet in [xsfPattern, xsfWhiteSpace];
@@ -1538,10 +1859,12 @@ begin
   end;
 end;
 
-procedure TLandrixXmlXsdSimpleType.AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8);
+procedure TLandrixXmlXsdSimpleType.AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8;
+  Fixed: Boolean);
 var
   V: TLandrixXmlXsdValue;
   Mode: TLandrixXmlXsdWhiteSpace;
+  T: TLandrixXmlXsdSimpleType;
 begin
   if FVariety = xsvUnion then
     raise ELandrixXmlError.CreateCode(xecUnsupported, 'Facets on union types are not supported');
@@ -1555,6 +1878,8 @@ begin
     xsfEnumeration, xsfWhiteSpace]) or (FVariety <> xsvList) and not FacetApplies(FPrimitive, Facet) then
     raise ELandrixXmlError.CreateCode(xecInvalidArgument,
       'Facet not allowed for this type (cos-applicable-facets)');
+  if Facet in FDefined then
+    FacetError('src-single-facet-value', 'The facet ' + FacetName(Facet) + ' is given twice');
   case Facet of
     xsfLength: FLength := NonNegativeFacet(Value, False);
     xsfMinLength: FMinLength := NonNegativeFacet(Value, False);
@@ -1569,7 +1894,7 @@ begin
       end;
     xsfEnumeration:
       begin
-        V := ParseFacetValue(Value);
+        V := ParseFacetValue(Value, 'enumeration-valid-restriction');
         if FEnumerationCount = Length(FEnumeration) then
           SetLength(FEnumeration, 2 * FEnumerationCount + 8);
         FEnumeration[FEnumerationCount] := V;
@@ -1585,34 +1910,50 @@ begin
           Mode := xwsCollapse
         else
           raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Invalid whiteSpace value ' + Quote(Value));
+        { the built-in types other than string and its derivations fix
+          collapse, so do lists }
         if ((FVariety = xsvList) or (FPrimitive <> xspString) and (FPrimitive <> xspAnySimpleType)) and
           (Mode <> xwsCollapse) then
-          raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'whiteSpace must be collapse for this type');
+          FacetError('FixedFacetValue', 'whiteSpace must be collapse for this type');
+        T := FBase;
+        while (T <> nil) and not (xsfWhiteSpace in T.FFixed) do
+          T := T.FBase;
+        if (T <> nil) and (Mode <> FBase.FWhiteSpace) then
+          FacetError('FixedFacetValue', 'whiteSpace differs from the fixed value of the base type');
+        if (Mode = xwsPreserve) and (FBase.FWhiteSpace = xwsReplace) then
+          FacetError('whiteSpace-valid-restriction.2', 'whiteSpace cannot be weaker than the base type''s');
         if Mode < FBase.FWhiteSpace then
-          raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'whiteSpace cannot be weaker than the base type''s');
+          FacetError('whiteSpace-valid-restriction.1', 'whiteSpace cannot be weaker than the base type''s');
         FWhiteSpace := Mode;
       end;
     xsfMaxInclusive:
       begin
-        FMaxInclusive.Value := ParseFacetValue(Value);
+        FMaxInclusive.Value := ParseBound(Facet, Value);
         FMaxInclusive.Present := True;
       end;
     xsfMaxExclusive:
       begin
-        FMaxExclusive.Value := ParseFacetValue(Value);
+        FMaxExclusive.Value := ParseBound(Facet, Value);
         FMaxExclusive.Present := True;
       end;
     xsfMinInclusive:
       begin
-        FMinInclusive.Value := ParseFacetValue(Value);
+        FMinInclusive.Value := ParseBound(Facet, Value);
         FMinInclusive.Present := True;
       end;
     xsfMinExclusive:
       begin
-        FMinExclusive.Value := ParseFacetValue(Value);
+        FMinExclusive.Value := ParseBound(Facet, Value);
         FMinExclusive.Present := True;
       end;
   end;
+  if not (Facet in [xsfPattern, xsfEnumeration]) then
+  begin
+    Include(FDefined, Facet);
+    if Fixed then
+      Include(FFixed, Facet);
+  end;
+  CheckFacetConsistency;
 end;
 
 function TLandrixXmlXsdSimpleType.CheckPatterns(const Value: TLandrixXmlXsdValue; const TypeName: string;
@@ -2349,12 +2690,8 @@ end;
 function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
   out Error: TLandrixXmlXsdError): Boolean;
 var
-  Normalized: TLandrixXmlUtf8;
-  T: TLandrixXmlXsdSimpleType;
   I: Integer;
   MemberError: TLandrixXmlXsdError;
-  TypeName: string;
-  Found: Boolean;
 begin
   Result := False;
   Error.Code := '';
@@ -2380,6 +2717,24 @@ begin
       DisplayName + '''.');
     Exit;
   end;
+  Result := ValidateLexical(Text, Value, Error) and CheckFacets(Value, Error);
+end;
+
+{ An atomic value up to the facets other than patterns: white space, the
+  patterns of all types and the lexical form (Xerces' getActualValue). }
+function TLandrixXmlXsdSimpleType.ValidateLexical(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
+  out Error: TLandrixXmlXsdError): Boolean;
+var
+  Normalized: TLandrixXmlUtf8;
+  T: TLandrixXmlXsdSimpleType;
+  TypeName: string;
+  Found: Boolean;
+begin
+  Result := False;
+  Error.Code := '';
+  Error.Message := '';
+  Value.Variety := xsvAtomic;
+  Value.Items := nil;
   { Xerces collapses only string-based values; the others (numbers,
     booleans, dates, binary, anyURI, ID, IDREF) are only trimmed unless a
     pattern facet applies, which makes it collapse them first. Internal
@@ -2415,7 +2770,7 @@ begin
         ValidatorName + '''.');
     Exit;
   end;
-  Result := CheckFacets(Value, Error);
+  Result := True;
 end;
 
 { ---------------------------------------------------------------------- }

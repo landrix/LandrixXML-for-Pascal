@@ -667,6 +667,12 @@ begin
   CheckSchemaRule('<xs:element name="r"><xs:key name="k"><xs:selector xpath="a"/><xs:field xpath="@b"/></xs:key>' +
     '<xs:keyref name="kr" refer="missing"><xs:selector xpath="a"/><xs:field xpath="@b"/></xs:keyref></xs:element>',
     'src-resolve', 1, 'keyref to no key');
+  CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:string"><xs:minLength value="3"/>' +
+    '<xs:maxLength value="2"/></xs:restriction></xs:simpleType>', 'minLength-less-than-equal-to-maxLength', 1,
+    'inconsistent facets');
+  CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:string"><xs:maxLength value="3" ' +
+    'fixed="true"/></xs:restriction></xs:simpleType>' + #10 + '<xs:simpleType name="t"><xs:restriction base="s">' +
+    '<xs:maxLength value="2"/></xs:restriction></xs:simpleType>', 'FixedFacetValue', 2, 'fixed facet');
   { valid forms the rules must accept }
   FileName := TempSchema('<xs:annotation><xs:documentation xml:lang="de">x</xs:documentation></xs:annotation>' +
     '<xs:element name="r" id="e1"><xs:complexType mixed="true"><xs:sequence minOccurs="0" maxOccurs="unbounded">' +

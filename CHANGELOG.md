@@ -76,6 +76,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with `ConstraintCode` (the code Xerces reports, e.g.
   `s4s-att-not-allowed`), `SchemaFile` and the position in `Line` and
   `Column`.
+  The facets of a simple type are checked against each other and against
+  the base type as Xerces checks them (for example minLength not above
+  maxLength, bounds in order, lengths and digits not wider than the base
+  type's, a facet given twice); `fixed` on facets is honoured
+  (`AddFacet` has a new parameter `Fixed`, default False). No facets on
+  `xs:anySimpleType` itself, as in Xerces.
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs
@@ -242,7 +248,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 35,648 of 39,336 applicable XSD 1.0 tests pass, 3,035
+  the CI checks: 35,810 of 39,336 applicable XSD 1.0 tests pass, 3,035
   use constructs that are not supported.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
