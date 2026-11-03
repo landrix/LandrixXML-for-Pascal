@@ -313,7 +313,9 @@ of the W3C XML Schema Test Suite, LandrixXml follows Xerces on purpose,
 so that a document gets the same verdict as with the official
 validators. A profile that follows the specification instead may be
 added as an option later; there is none yet. The known cases (with the
-test suite's names):
+test suite's names; in the source code each place is marked with a
+comment `Xerces deviation:` and these names, and every new case gets
+both the mark and an entry here):
 
 - Name characters of `Name`, `NCName`, `ID`, `IDREF` and `NMTOKEN` are
   those of XML 1.0 Fourth Edition, as in Xerces; the suite's XML 1.1 /

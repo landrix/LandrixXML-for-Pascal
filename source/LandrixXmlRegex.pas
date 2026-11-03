@@ -59,8 +59,9 @@
   xrmXsd also takes the plain block name with its spaces, as Xerces):
   the XPath modes know the blocks as Saxon (Unicode up to 6.0, old names
   such as IsGreek kept), xrmXsd those of the Java runtime's Xerces
-  (Unicode 3.1, no surrogate blocks); LandrixXmlBlockData.inc. An
-  unknown block name makes the pattern invalid. Invalid patterns and
+  (Unicode 3.1, no surrogate blocks; Xerces deviation: reM77, reN75,
+  HighSurrogates); LandrixXmlBlockData.inc. An unknown block name makes
+  the pattern invalid. Invalid patterns and
   flags raise xecRegex.
 
   A hyphen in a character class follows XML Schema 1.0 in the modes XSD
@@ -1698,7 +1699,8 @@ begin
       { XML Schema 1.0: a hyphen inside the class must be escaped; 1.1
         and XPath take it literally where it cannot start a range }
       { the end of the positive group is also before a subtraction "-[",
-        as XML Schema 1.0 (F.1) says; xrmXsd keeps Xerces' reading }
+        as XML Schema 1.0 (F.1) says; xrmXsd keeps Xerces' reading, so
+        "--[" is an error there (Xerces deviation: reF56) }
       if (FMode <> xrmXPath) and (C = Ord('-')) and not First and (PeekAt(1) <> Ord(']')) and
         not ((FMode = xrmXPath20) and (PeekAt(1) = Ord('-')) and (PeekAt(2) = Ord('['))) then
         Error('"-" must be escaped or stand at the start or end of a character class');

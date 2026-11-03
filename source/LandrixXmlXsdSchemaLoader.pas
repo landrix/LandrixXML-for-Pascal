@@ -1182,6 +1182,8 @@ begin
   begin
     if FindPending(pkComplexType, NamespaceUri, LocalName, SelfOwner) <> nil then
       Fail(Doc, Node, QualifiedText(NamespaceUri, LocalName) + ' is not a simple type');
+    { Xerces deviation: missing001, missing006. A missing type is an error
+      when the schema is loaded, also if nothing uses it }
     Fail(Doc, Node, MissingText('type', NamespaceUri, LocalName));
   end;
   Result := ResolveSimpleType(P);
@@ -2421,6 +2423,8 @@ begin
     for I := 0 to Integer(Items.Count) - 1 do
     begin
       Item := TAttributeItem(Items[I]);
+      { Xerces deviation: attP031. A prohibited use is dropped with its
+        fixed value, so only a wildcard can allow the attribute }
       if Item.Prohibited then
         Continue;
       if IsExtension and (T.FindAttribute(Item.Decl.NamespaceUri, Item.Decl.Name) <> nil) then

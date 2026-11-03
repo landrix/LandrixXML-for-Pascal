@@ -8,6 +8,12 @@ A line may opt out of the identifier checks with the marker comment
 ``// check-forbidden: allow`` (only for conditional compatibility code, e.g.
 ``NativeInt`` inside a ``{$IF CompilerVersion >= 20.0}`` branch).
 
+With the default paths it also checks that the deliberate deviations of
+the XML Schema validator from the specification are marked: every test
+name listed in README.md ("XML Schema: Xerces, not the letter of the
+specification") appears after a comment tag "Xerces deviation:" in
+source/, and every tagged name is listed there.
+
 Usage: python tools/check-forbidden.py [path ...]
 Default paths: source, tests, samples, examples.
 """
@@ -239,6 +245,105 @@ def check_file(path, violations):
                 violations.append(Violation(path, no, msg))
 
 
+DEVIATION_SECTION = "### XML Schema: Xerces, not the letter of the specification"
+DEVIATION_TAG = re.compile(r"Xerces deviation:\s*((?:[A-Za-z][A-Za-z0-9_]*\s*,\s*)*[A-Za-z][A-Za-z0-9_]*)")
+# a parenthesis that holds only test names in backticks, e.g. "(`xv001`, `xv002`)"
+NAME_GROUP = re.compile(r"\(((?:\s*(?:ElemDecl\s+)?`[^`]+`\s*,?)+)\)")
+TEST_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+
+
+def comment_blocks(text):
+    """Return (line, text) for every comment; "//" comments on consecutive
+    lines form one block. String literals are skipped."""
+    blocks = []
+    i = 0
+    n = len(text)
+    line = 1
+    last_slash = None  # index in blocks of a "//" block ending on line - 1
+    while i < n:
+        c = text[i]
+        if c == "\n":
+            line += 1
+            i += 1
+        elif c == "'":
+            j = i + 1
+            while j < n and text[j] != "\n":
+                if text[j] == "'":
+                    if j + 1 < n and text[j + 1] == "'":
+                        j += 2
+                        continue
+                    break
+                j += 1
+            i = j + 1
+            last_slash = None
+        elif text.startswith("//", i):
+            j = text.find("\n", i)
+            if j < 0:
+                j = n
+            body = text[i + 2:j]
+            if last_slash is not None and blocks[last_slash][2] == line - 1:
+                start, prev, _ = blocks[last_slash]
+                blocks[last_slash] = (start, prev + " " + body, line)
+            else:
+                blocks.append((line, body, line))
+                last_slash = len(blocks) - 1
+            i = j
+        elif c == "{" or text.startswith("(*", i):
+            close = "}" if c == "{" else "*)"
+            j = text.find(close, i)
+            if j < 0:
+                j = n
+            chunk = text[i:j + len(close)]
+            blocks.append((line, chunk, -1))
+            line += chunk.count("\n")
+            i = j + len(close)
+            last_slash = None
+        else:
+            if not c.isspace():
+                last_slash = None
+            i += 1
+    return [(start, body) for start, body, _ in blocks]
+
+
+def check_deviations(root, violations):
+    readme = os.path.join(root, "README.md")
+    with open(readme, encoding="utf-8") as f:
+        text = f.read()
+    start = text.find(DEVIATION_SECTION)
+    if start < 0:
+        violations.append(Violation(readme, 0, "section %r missing" % DEVIATION_SECTION))
+        return
+    end = text.find("\n#", start + len(DEVIATION_SECTION))
+    section = text[start:end if end >= 0 else len(text)]
+    listed = {}
+    for m in NAME_GROUP.finditer(section):
+        line = text.count("\n", 0, start + m.start()) + 1
+        for name in re.findall(r"`([^`]+)`", m.group(1)):
+            if TEST_NAME.match(name):
+                listed.setdefault(name, line)
+    tagged = {}
+    for dirpath, dirnames, filenames in os.walk(os.path.join(root, "source")):
+        for fn in sorted(filenames):
+            if not fn.lower().endswith(EXTENSIONS):
+                continue
+            path = os.path.join(dirpath, fn)
+            with open(path, encoding="latin-1") as f:
+                src = f.read()
+            for start, body in comment_blocks(src):
+                for m in DEVIATION_TAG.finditer(body):
+                    line = start + body.count("\n", 0, m.start())
+                    for name in re.split(r"\s*,\s*", m.group(1).strip()):
+                        tagged.setdefault(name, (path, line))
+    for name in sorted(listed):
+        if name not in tagged:
+            violations.append(Violation(readme, listed[name],
+                                        "deviation %s has no \"Xerces deviation:\" tag in source/" % name))
+    for name in sorted(tagged):
+        if name not in listed:
+            path, line = tagged[name]
+            violations.append(Violation(path, line, "tagged deviation %s is not listed in README.md" % name))
+
+
 def main(argv):
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     paths = argv[1:] or [os.path.join(root, d) for d in ("source", "tests", "samples", "examples")]
@@ -255,6 +360,8 @@ def main(argv):
     violations = []
     for f in files:
         check_file(f, violations)
+    if not argv[1:]:
+        check_deviations(root, violations)
     for v in violations:
         print(v)
     print("check-forbidden: %d file(s), %d violation(s)" % (len(files), len(violations)))

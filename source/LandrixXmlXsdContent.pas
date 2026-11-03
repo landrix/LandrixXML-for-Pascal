@@ -656,6 +656,8 @@ begin
   end
   else
   begin
+    { Xerces deviation: complex022. An empty choice matches nothing in
+      XML Schema 1.0; Xerces lets it match the empty sequence }
     P.FBodyNullable := P.ChildCount = 0;
     for I := 0 to P.ChildCount - 1 do
     begin

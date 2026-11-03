@@ -250,6 +250,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Schema loader and validator, with a baseline of the passing tests that
   the CI checks: 35,810 of 39,336 applicable XSD 1.0 tests pass, 3,035
   use constructs that are not supported.
+- The places where the XML Schema validator follows Xerces instead of the
+  specification on purpose are tagged `Xerces deviation:` with the test
+  names of the README list; `tools/check-forbidden.py` checks that tags
+  and list match.
 - Regular expressions: back-references (`\1` and so on) in the XPath
   dialects. A pattern with a back-reference runs on a backtracking
   matcher limited to 10,000,000 steps per call (`xecLimit` beyond, never

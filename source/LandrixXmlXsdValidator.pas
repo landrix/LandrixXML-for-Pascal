@@ -621,6 +621,8 @@ begin
               Inc(J);
             if (J = I) and not M.IsSelector then
             begin
+              { Xerces deviation: idZ015. An attribute without a type (matched
+                by a lax or skip wildcard) still gives a field value }
               if FAttrValid[A] then
                 FieldMatched(M, LandrixXmlXsdValueKey(FAttrValues[A]), LandrixXmlXsdValueText(FAttrValues[A]))
               else
@@ -1188,7 +1190,10 @@ begin
   end;
 end;
 
-{ The xsi attributes every element may have. }
+{ The xsi attributes every element may have. Xerces deviation: schA1,
+  ctL021, attgD034, particlesB013, targetNS00101m1_p. The location hints
+  are allowed but never read (the schema is the one given, as a
+  preloaded schema in Xerces). }
 function IsXsiBuiltin(const A: TLandrixXmlXsdEventAttribute): Boolean;
 begin
   Result := (A.NamespaceUri = LandrixXmlXsiNamespace) and ((A.LocalName = 'type') or (A.LocalName = 'nil') or
@@ -1361,6 +1366,8 @@ begin
       SetLength(FAttrValid, FAttrCount);
       SetLength(FAttrValues, FAttrCount);
     end;
+    { Xerces deviation: idZ012. A default or fixed value is validated but
+      not registered as an ID or IDREF }
     FAttrValid[FAttrCount - 1] := Use.Decl.SimpleType.Validate(S, Value, Error);
     FAttrValues[FAttrCount - 1] := Value;
   end;

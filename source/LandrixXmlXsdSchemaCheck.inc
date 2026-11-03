@@ -16,7 +16,10 @@
   The errors carry the code Xerces reports (s4s-att-not-allowed,
   s4s-att-must-appear, s4s-att-invalid-value, s4s-elt-must-match.1,
   s4s-elt-invalid-content.1, s4s-elt-character). Included in the
-  implementation section. }
+  implementation section.
+  Xerces deviation: vc001, vc002, vc024. The version attributes
+  (vc:minVersion and the like) are not evaluated, so XSD 1.1 elements
+  they would exclude are errors. }
 
 type
   { The rule of one kind of schema element. Attributes: names with the
@@ -107,6 +110,8 @@ const
     (Kind: 'compositor.top'; Attributes: 'id=ID'; Content: 'annotation?;element|group|choice|sequence|any*'),
     (Kind: 'all'; Attributes: 'minOccurs=zeroOrOne maxOccurs=one id=ID'; Content: 'annotation?;element*'),
     (Kind: 'all.top'; Attributes: 'id=ID'; Content: 'annotation?;element*'),
+    { Xerces deviation: s3_10_1ii08, s3_10_6ii01, s3_10_6ii02, s3_10_6ii04.
+      No notNamespace and notQName (XSD 1.1) on the wildcards }
     (Kind: 'any';
      Attributes: 'namespace=namespaceList processContents=processContents ' + OccursAttributes + ' id=ID';
      Content: 'annotation?'),

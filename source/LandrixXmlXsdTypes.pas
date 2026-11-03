@@ -593,8 +593,8 @@ begin
         begin
           if not ReadDigits(S, P, 2, Value.Month) or (Value.Month < 1) or (Value.Month > 12) then
             Exit;
-          { Xerces also accepts --MM--, the form of XML Schema 1.0 before
-            its errata }
+          { Xerces deviation: gMonth_pattern001_1274. Xerces also accepts
+            --MM--, the form of XML Schema 1.0 before its errata }
           if (Kind = xspGMonth) and (P + 1 <= Length(S)) and (S[P] = '-') and (S[P + 1] = '-') then
             Inc(P, 2);
           if Kind = xspGMonthDay then
@@ -1005,7 +1005,8 @@ end;
 
 { Name, NCName (no colon) or NMTOKEN (only name characters), with the
   character classes of XML 1.0 Fourth Edition as Xerces checks them (the
-  parser uses the Fifth Edition, which allows more characters). }
+  parser uses the Fifth Edition, which allows more characters).
+  Xerces deviation: xv001, xv002, xv004, xv009. }
 function IsNameKind(const S: TLandrixXmlUtf8; Rule: TLandrixXmlXsdLexicalRule): Boolean;
 var
   CodePoints: TLandrixXmlCodePoints;
@@ -1739,7 +1740,7 @@ begin
         ' differs from the ' + CountText('length', BaseLength) + ' of the base type');
   end;
   { with a length, minLength and maxLength may only repeat the ones of the
-    base type (Xerces) }
+    base type (Xerces deviation: errF001; the errata allow more) }
   if (BaseLength >= 0) or (FLength >= 0) then
   begin
     if FMinLength >= 0 then
