@@ -3,7 +3,10 @@
 the Java runtime (Xerces, as used by the KoSIT validator): every schema
 must be rejected with the listed constraint code (the sixth field where
 Xerces reports another code than LandrixXml), every 'valid' one must
-load. The file is written by hand; run this after adding cases and with
+load. A body with a form feed (the escape \\f) holds a second document
+after it (in the same xs:schema element unless it starts with <xs:schema),
+written next to the first; its file
+name replaces %B% in the first. The file is written by hand; run this after adding cases and with
 every new JDK (tools/check-xerces-drift.py does).
   javac --release 17 -d OUT tools/XsdOracle.java
   python tools/check-xsdrules.py --java PATH/java.exe --classes OUT
@@ -27,7 +30,7 @@ def unescape(s):
     while i < len(s):
         if s[i] == "\\" and i + 1 < len(s):
             i += 1
-            out.append({"n": "\n", "r": "\r", "t": "\t"}.get(s[i], s[i]))
+            out.append({"n": "\n", "r": "\r", "t": "\t", "f": "\f"}.get(s[i], s[i]))
         else:
             out.append(s[i])
         i += 1
@@ -57,11 +60,22 @@ def verdict(java, classes, tmp, number, root, body):
     'oracle-failed' if the Java process failed otherwise."""
     xsd = os.path.join(tmp, "rule%d.xsd" % number)
     xml = os.path.join(tmp, "rule%d.xml" % number)
+    if "\f" in body:
+        body, second = body.split("\f", 1)
+        name = "rule%d-b.xsd" % number
+        with open(os.path.join(tmp, name), "w", encoding="utf-8", newline="\n") as f:
+            if second.startswith("<xs:schema"):
+                f.write(second)
+            else:
+                f.write('<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"' + root + '>' + second +
+                        '</xs:schema>')
+        body = body.replace("%B%", name)
     with open(xsd, "w", encoding="utf-8", newline="\n") as f:
         f.write('<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"' + root + '>' + body + '</xs:schema>')
     with open(xml, "w", encoding="utf-8", newline="\n") as f:
         f.write("<r/>\n")
-    p = subprocess.run([java, "-cp", classes, "XsdOracle", xsd, xml], capture_output=True, text=True,
+    # a small heap: many oracles run at once
+    p = subprocess.run([java, "-Xmx128m", "-cp", classes, "XsdOracle", xsd, xml], capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
     if p.returncode == 0:
         return "valid", ""
@@ -88,7 +102,8 @@ def main():
             got, message = future.result()
             if got != code:
                 bad += 1
-                print("line %d (%s): expected %s, the JDK says %s %s" % (number, name, code, got, message))
+                text = "line %d (%s): expected %s, the JDK says %s %s" % (number, name, code, got, message)
+                print(text.encode("ascii", "backslashreplace").decode("ascii"))
     print("%d rules, %d agree, %d differ (%d with a known other code in LandrixXml)" %
           (len(rows), len(rows) - bad, bad, known))
     sys.exit(1 if bad else 0)

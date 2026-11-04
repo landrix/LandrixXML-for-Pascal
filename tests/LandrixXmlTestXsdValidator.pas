@@ -82,6 +82,7 @@ begin
         'n': Result[N] := #10;
         'r': Result[N] := #13;
         't': Result[N] := #9;
+        'f': Result[N] := #12;
       else
         Result[N] := AnsiChar(S[I]);
       end;
@@ -655,12 +656,13 @@ end;
 { tests/data/xsdschema/rules.txt: schemas with the constraint code Xerces
   reports (a sixth field holds Xerces' code where it is known to differ),
   and valid forms that must load (tools/check-xsdrules.py checks the codes
-  against the JDK) }
+  against the JDK). A form feed in the body starts a second document,
+  written next to the first, whose name replaces %B% in the first. }
 procedure TestSchemaRules;
 var
   L, Fields: TStringList;
-  K, Count: Integer;
-  FileName, Body: string;
+  K, Count, P: Integer;
+  FileName, Body, Root, Second, SecondFile: string;
   S: TLandrixXmlXsdSchemaSet;
 begin
   Count := 0;
@@ -679,20 +681,39 @@ begin
           Continue;
         Inc(Count);
         Body := LandrixXmlUtf8ToString(Unescaped(Fields[4]));
-        if Fields[0] <> 'valid' then
-          CheckSchemaRule(Body, Fields[0], StrToInt(Fields[1]), Fields[2],
-            LandrixXmlUtf8ToString(Unescaped(Fields[3])))
-        else
+        Root := LandrixXmlUtf8ToString(Unescaped(Fields[3]));
+        SecondFile := '';
+        P := Pos(#12, Body);
+        if P > 0 then
         begin
-          FileName := TempSchema(Body, LandrixXmlUtf8ToString(Unescaped(Fields[3])));
-          S := nil;
-          try
-            S := LandrixXmlXsdLoadSchema(FileName);
-            Check(S.FindElement('', 'r') <> nil, Fields[2] + ' load');
-          finally
-            S.Free;
-            DeleteFile(FileName);
+          Second := Copy(Body, P + 1, MaxInt);
+          Body := Copy(Body, 1, P - 1);
+          SecondFile := ExtractFilePath(ParamStr(0)) + 'xsdrule-' + IntToStr(K) + '-b.xsd';
+          if Copy(Second, 1, 10) = '<xs:schema' then
+            WriteTestFile(SecondFile, Second)
+          else
+            WriteTestFile(SecondFile, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"' + Root + '>' +
+              Second + '</xs:schema>');
+          Body := StringReplace(Body, '%B%', ExtractFileName(SecondFile), [rfReplaceAll]);
+        end;
+        try
+          if Fields[0] <> 'valid' then
+            CheckSchemaRule(Body, Fields[0], StrToInt(Fields[1]), Fields[2], Root)
+          else
+          begin
+            FileName := TempSchema(Body, Root);
+            S := nil;
+            try
+              S := LandrixXmlXsdLoadSchema(FileName);
+              Check(S.FindElement('', 'r') <> nil, Fields[2] + ' load');
+            finally
+              S.Free;
+              DeleteFile(FileName);
+            end;
           end;
+        finally
+          if SecondFile <> '' then
+            DeleteFile(SecondFile);
         end;
       finally
         Fields.Free;

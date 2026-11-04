@@ -106,6 +106,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of a restriction against those of the base (required, type, fixed
   value, wildcard subset and processContents). New
   `TLandrixXmlXsdSimpleType.MemberCount` and `Members`.
+  References and directives are checked as Xerces checks them: a
+  document refers only to its own target namespace, the built-in types
+  and the namespaces it imports itself (`src-resolve.4`), does not import
+  its own namespace (`src-import.1`), has no two global components of the
+  same name (`sch-props-correct.2`, also a component redefined twice),
+  and a redefinition refers to the redefined component as Xerces requires
+  (`src-redefine.5` to `.7`; an attribute group without a reference to
+  itself must restrict the original).
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs

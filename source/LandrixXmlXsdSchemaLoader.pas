@@ -274,6 +274,9 @@ type
     ElementQualified: Boolean;
     AttributeQualified: Boolean;
     FinalDefault: TDerivationKinds;
+    { the namespaces of the document's xs:import elements ('' for one
+      without namespace), loaded or not }
+    Imports: TLandrixXmlUtf8Array;
   end;
 
   TPendingKind = (pkElement, pkAttribute, pkComplexType, pkSimpleType, pkGroup, pkAttributeGroup);
@@ -362,7 +365,14 @@ type
     function LoadDocument(const FileName: string; Including: TSchemaDoc; IsImport: Boolean;
       const ImportNamespace: TLandrixXmlUtf8; Node: TLandrixXmlNode): TSchemaDoc;
     procedure Collect(Doc: TSchemaDoc; Node: TLandrixXmlNode; Kind: TPendingKind);
-    procedure ApplyRedefine(Doc: TSchemaDoc; Redefine: TLandrixXmlNode);
+    procedure ApplyRedefine(Doc: TSchemaDoc; Redefine: TLandrixXmlNode; Redefined: TSchemaDoc);
+    function CountSelfReferences(Doc: TSchemaDoc; Node: TLandrixXmlNode; const ElementName,
+      Name: TLandrixXmlUtf8): Integer;
+    procedure CheckRedefinition(Doc: TSchemaDoc; Node: TLandrixXmlNode; Kind: TPendingKind;
+      const Name: TLandrixXmlUtf8);
+    procedure CheckAttributeGroupRestriction(P: TPending; Items: TObjectList; Wildcard: TLandrixXmlXsdWildcard);
+    function GroupAsType(const Name: TLandrixXmlUtf8; Items: TObjectList;
+      Wildcard: TLandrixXmlXsdWildcard): TLandrixXmlXsdComplexType;
     function ResolveQName(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value: TLandrixXmlUtf8;
       out NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
     function QNameAttr(Doc: TSchemaDoc; Node: TLandrixXmlNode; const AttrName: TLandrixXmlUtf8;
@@ -821,6 +831,16 @@ begin
       HasNs := AttrTrimmed(Child, 'namespace', Ns);
       if not HasNs then
         Ns := '';
+      { a document cannot import its own namespace (Xerces compares the
+        namespace attribute with the target namespace, both maybe absent) }
+      if not HasNs and (Result.TargetNamespace = '') then
+        FailCheck(Result.FileName, Child, 'src-import.1.2', 'an import without namespace needs a target ' +
+          'namespace in the importing document');
+      if HasNs and (Ns <> '') and (Ns = Result.TargetNamespace) then
+        FailCheck(Result.FileName, Child, 'src-import.1.1', 'the namespace "' + Esc(Ns) +
+          '" of the import is the target namespace of the importing document');
+      SetLength(Result.Imports, Length(Result.Imports) + 1);
+      Result.Imports[High(Result.Imports)] := Ns;
       HasLocation := AttrTrimmed(Child, 'schemaLocation', Location);
       if not HasLocation then
         Location := '';
@@ -839,7 +859,7 @@ begin
       begin
         Redefined := LoadDocument(Target, Result, False, '', Child);
         if Redefined <> nil then
-          ApplyRedefine(Result, Child);
+          ApplyRedefine(Result, Child, Redefined);
       end
       else if HasRedefinitions(Child) then
         Fail(Result, Child, 'cannot resolve the redefine of "' + Esc(Location) + '"')
@@ -890,10 +910,186 @@ begin
   P.NamespaceUri := Doc.TargetNamespace;
   P.Name := Name;
   if Clash or not FMaps[Kind].Add(Doc.TargetNamespace, Name, P) then
-    Fail(Doc, Node, 'duplicate global declaration of ' + QualifiedText(Doc.TargetNamespace, Name));
+    FailCheck(Doc.FileName, Node, 'sch-props-correct.2', 'duplicate global declaration of ' +
+      QualifiedText(Doc.TargetNamespace, Name));
 end;
 
-procedure TLoader.ApplyRedefine(Doc: TSchemaDoc; Redefine: TLandrixXmlNode);
+{ The first child element that is not an annotation. }
+function FirstContentChild(Node: TLandrixXmlNode): TLandrixXmlNode;
+begin
+  Result := Node.FirstChildElement;
+  while IsXs(Result, 'annotation') do
+    Result := Result.NextSiblingElement;
+end;
+
+{ True if the ref value Value at Node names the component Name of the
+  document's namespace, as Xerces' findQName: no import is needed and an
+  undeclared prefix stands for no namespace. }
+function RefersTo(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value, Name: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+  Prefix, LocalName, Ns: TLandrixXmlUtf8;
+begin
+  Prefix := '';
+  LocalName := Value;
+  for I := 1 to Length(Value) do
+    if Value[I] = ':' then
+    begin
+      Prefix := Copy(Value, 1, I - 1);
+      LocalName := Copy(Value, I + 1, MaxInt);
+      Break;
+    end;
+  if not Node.LookupNamespace(Prefix, Ns) then
+  begin
+    Ns := '';
+    if (Prefix = '') and Doc.Chameleon then
+      Ns := Doc.TargetNamespace;
+  end;
+  Result := (Ns = Doc.TargetNamespace) and (LocalName = Name);
+end;
+
+{ Xerces' changeRedefineGroup: the references to the component Name of
+  the document's namespace in the elements named ElementName (of any
+  namespace, also inside annotations) below Node; a group that refers to
+  itself must occur once (src-redefine.6.1.2). }
+function TLoader.CountSelfReferences(Doc: TSchemaDoc; Node: TLandrixXmlNode; const ElementName,
+  Name: TLandrixXmlUtf8): Integer;
+var
+  Child: TLandrixXmlNode;
+  Value, Occurs: TLandrixXmlUtf8;
+begin
+  Result := 0;
+  Child := Node.FirstChildElement;
+  while Child <> nil do
+  begin
+    if Child.LocalNameUtf8 <> ElementName then
+      Inc(Result, CountSelfReferences(Doc, Child, ElementName, Name))
+    else if Attr(Child, 'ref', Value) and (Value <> '') and RefersTo(Doc, Child, Value, Name) then
+    begin
+      Inc(Result);
+      if (ElementName = 'group') and ((Attr(Child, 'minOccurs', Occurs) and (Occurs <> '1')) or
+        (Attr(Child, 'maxOccurs', Occurs) and (Occurs <> '1'))) then
+        FailCheck(Doc.FileName, Child, 'src-redefine.6.1.2', 'the reference of the redefined group ' +
+          QualifiedText(Doc.TargetNamespace, Name) + ' to itself must occur exactly once');
+    end;
+    Child := Child.NextSiblingElement;
+  end;
+end;
+
+{ Xerces' renameRedefiningComponents: a redefined simple type restricts
+  itself, a redefined complex type extends or restricts itself, and a
+  redefined group or attribute group refers to itself at most once. }
+procedure TLoader.CheckRedefinition(Doc: TSchemaDoc; Node: TLandrixXmlNode; Kind: TPendingKind;
+  const Name: TLandrixXmlUtf8);
+var
+  Sub, Derivation: TLandrixXmlNode;
+  Ns, LocalName: TLandrixXmlUtf8;
+  Target: string;
+begin
+  Target := QualifiedText(Doc.TargetNamespace, Name);
+  case Kind of
+    pkSimpleType:
+      begin
+        Sub := FirstContentChild(Node);
+        if Sub = nil then
+          FailCheck(Doc.FileName, Node, 'src-redefine.5.a.a', 'the redefinition of ' + Target +
+            ' must have a restriction');
+        if not IsXs(Sub, 'restriction') then
+          FailCheck(Doc.FileName, Node, 'src-redefine.5.a.b', 'the redefinition of ' + Target +
+            ' must be a restriction, not xs:' + Esc(Sub.LocalNameUtf8));
+        if not QNameAttr(Doc, Sub, 'base', Ns, LocalName) or (Ns <> Doc.TargetNamespace) or (LocalName <> Name) then
+          FailCheck(Doc.FileName, Node, 'src-redefine.5.a.c', 'the restriction in the redefinition of ' + Target +
+            ' must have the redefined type as its base');
+      end;
+    pkComplexType:
+      begin
+        Sub := FirstContentChild(Node);
+        if Sub = nil then
+          FailCheck(Doc.FileName, Node, 'src-redefine.5.b.a', 'the redefinition of ' + Target +
+            ' must have simple or complex content');
+        Derivation := FirstContentChild(Sub);
+        if Derivation = nil then
+          FailCheck(Doc.FileName, Sub, 'src-redefine.5.b.b', 'the redefinition of ' + Target +
+            ' must have an extension or restriction');
+        if not (IsXs(Derivation, 'restriction') or IsXs(Derivation, 'extension')) then
+          FailCheck(Doc.FileName, Derivation, 'src-redefine.5.b.c', 'the redefinition of ' + Target +
+            ' must have an extension or restriction, not xs:' + Esc(Derivation.LocalNameUtf8));
+        if not QNameAttr(Doc, Derivation, 'base', Ns, LocalName) or (Ns <> Doc.TargetNamespace) or
+          (LocalName <> Name) then
+          FailCheck(Doc.FileName, Derivation, 'src-redefine.5.b.d', 'the ' + Esc(Derivation.LocalNameUtf8) +
+            ' in the redefinition of ' + Target + ' must have the redefined type as its base');
+      end;
+    pkGroup:
+      if CountSelfReferences(Doc, Node, 'group', Name) > 1 then
+        FailCheck(Doc.FileName, Node, 'src-redefine.6.1.1', 'the redefinition of ' + Target +
+          ' refers to itself more than once');
+    pkAttributeGroup:
+      if CountSelfReferences(Doc, Node, 'attributeGroup', Name) > 1 then
+        FailCheck(Doc.FileName, Node, 'src-redefine.7.1', 'the redefinition of ' + Target +
+          ' refers to itself more than once');
+  end;
+end;
+
+{ Xerces' check of an attribute group redefinition without a reference
+  to itself: it must restrict the original (src-redefine.7.2.2, reported
+  with the code of the failed rule of validRestrictionOf). }
+procedure TLoader.CheckAttributeGroupRestriction(P: TPending; Items: TObjectList; Wildcard: TLandrixXmlXsdWildcard);
+var
+  BaseItems: TObjectList;
+  BaseWildcard: TLandrixXmlXsdWildcard;
+  Derived, Base: TLandrixXmlXsdComplexType;
+  Saved: TPending;
+begin
+  Derived := nil;
+  Base := nil;
+  BaseItems := TObjectList.Create(True);
+  try
+    Saved := FCurrent;
+    FCurrent := P.Original;
+    try
+      BaseWildcard := nil;
+      CollectAttributes(P.Original.Doc, P.Original.Node, BaseItems, BaseWildcard);
+    finally
+      FCurrent := Saved;
+    end;
+    Derived := GroupAsType(P.Name, Items, Wildcard);
+    Base := GroupAsType(P.Name, BaseItems, BaseWildcard);
+    CheckAttributeRestriction(P.Doc, P.Node, Derived, Base, Items, Wildcard);
+  finally
+    Derived.Free;
+    Base.Free;
+    BaseItems.Free;
+  end;
+end;
+
+{ An attribute group as the attribute uses of a complex type (not owned
+  by the schema set); prohibited uses are left out, as in Xerces. }
+function TLoader.GroupAsType(const Name: TLandrixXmlUtf8; Items: TObjectList;
+  Wildcard: TLandrixXmlXsdWildcard): TLandrixXmlXsdComplexType;
+var
+  I: Integer;
+  Item: TAttributeItem;
+  Use: TLandrixXmlXsdAttributeUse;
+begin
+  Result := TLandrixXmlXsdComplexType.Create;
+  Result.Name := Name;
+  Result.DisplayName := Name;
+  for I := 0 to Integer(Items.Count) - 1 do
+  begin
+    Item := TAttributeItem(Items[I]);
+    if Item.Prohibited then
+      Continue;
+    Use := TLandrixXmlXsdAttributeUse.Create;
+    Use.Decl := Item.Decl;
+    Use.Required := Item.Required;
+    Use.ValueConstraint := Item.ValueConstraint;
+    Use.ConstraintValue := Item.ConstraintValue;
+    Result.AddAttribute(Use);
+  end;
+  Result.AttributeWildcard := Wildcard;
+end;
+
+procedure TLoader.ApplyRedefine(Doc: TSchemaDoc; Redefine: TLandrixXmlNode; Redefined: TSchemaDoc);
 var
   Child: TLandrixXmlNode;
   Kind: TPendingKind;
@@ -927,6 +1123,14 @@ begin
     if Original = nil then
       Fail(Doc, Child, 'the redefined component ' + QualifiedText(Doc.TargetNamespace, Name) +
         ' does not exist');
+    { the component is redefined already, other than by the redefined
+      document itself (a chain of redefinitions): twice in this document
+      or by another redefine of the same document.
+      Xerces deviation: schU3 }
+    if (Original.Original <> nil) and (Original.Doc <> Redefined) then
+      FailCheck(Doc.FileName, Child, 'sch-props-correct.2', 'duplicate global declaration of ' +
+        QualifiedText(Doc.TargetNamespace, Name));
+    CheckRedefinition(Doc, Child, Kind, Name);
     P := TPending.Create;
     FPendings.Add(P);
     P.Kind := Kind;
@@ -938,6 +1142,19 @@ begin
     FMaps[Kind].Put(Doc.TargetNamespace, Name, P);
     Child := Child.NextSiblingElement;
   end;
+end;
+
+function InSet(const S: TLandrixXmlUtf8; const List: TLandrixXmlUtf8Array): Boolean;
+var
+  I: Integer;
+begin
+  for I := 0 to Integer(Length(List)) - 1 do
+    if List[I] = S then
+    begin
+      Result := True;
+      Exit;
+    end;
+  Result := False;
 end;
 
 function TLoader.ResolveQName(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value: TLandrixXmlUtf8;
@@ -967,6 +1184,18 @@ begin
   if (NamespaceUri = '') and Doc.Chameleon then
     NamespaceUri := Doc.TargetNamespace;
   Result := LocalName <> '';
+  { src-resolve.4: a document refers to its own target namespace, to the
+    built-in types and to the namespaces it imports itself }
+  if Result and (NamespaceUri <> Doc.TargetNamespace) and (NamespaceUri <> LandrixXmlXsdNamespace) and
+    not InSet(NamespaceUri, Doc.Imports) then
+  begin
+    if NamespaceUri = '' then
+      FailCheck(Doc.FileName, Node, 'src-resolve.4.1', 'the reference ' + Esc(S) + ' has no namespace, but ' +
+        'the document has a target namespace and does not import the absent namespace')
+    else
+      FailCheck(Doc.FileName, Node, 'src-resolve.4.2', 'the reference ' + Esc(S) + ' is in the namespace "' +
+        Esc(NamespaceUri) + '", which the document does not import');
+  end;
 end;
 
 function TLoader.QNameAttr(Doc: TSchemaDoc; Node: TLandrixXmlNode; const AttrName: TLandrixXmlUtf8;
@@ -1763,19 +1992,6 @@ begin
       Fail(Doc, Node, 'invalid processContents "' + Esc(Value) + '"');
   end;
   FLocalCache.Add('', Key, Result);
-end;
-
-function InSet(const S: TLandrixXmlUtf8; const List: TLandrixXmlUtf8Array): Boolean;
-var
-  I: Integer;
-begin
-  for I := 0 to Integer(Length(List)) - 1 do
-    if List[I] = S then
-    begin
-      Result := True;
-      Exit;
-    end;
-  Result := False;
 end;
 
 { Xerces' isSubsetOf of the namespace constraints }
@@ -3277,6 +3493,9 @@ begin
           try
             Wildcard := nil;
             CollectAttributes(P.Doc, P.Node, Items, Wildcard);
+            if (P.Original <> nil) and
+              (CountSelfReferences(P.Doc, P.Node, 'attributeGroup', P.Name) = 0) then
+              CheckAttributeGroupRestriction(P, Items, Wildcard);
           finally
             FCurrent := Saved;
             Items.Free;
