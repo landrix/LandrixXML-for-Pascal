@@ -202,6 +202,8 @@ type
     function ParseBound(Facet: TLandrixXmlXsdFacet; const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
     function ValidateList(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
       out Error: TLandrixXmlXsdError): Boolean;
+    function GetMemberCount: Integer;
+    function GetMember(Index: Integer): TLandrixXmlXsdSimpleType;
     function ValidateLexical(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
       out Error: TLandrixXmlXsdError): Boolean;
   public
@@ -259,6 +261,10 @@ type
     { True if the type is xs:ID or derived from it, a list of such items or
       a union with such a member (Xerces' isIDType). }
     function IsIdType: Boolean;
+    { The member types of a union (also of a restriction of one); 0 for
+      the other varieties. }
+    property MemberCount: Integer read GetMemberCount;
+    property Members[Index: Integer]: TLandrixXmlXsdSimpleType read GetMember;
   end;
 
 { The built-in type with this local name in the XML Schema namespace, or
@@ -1483,6 +1489,16 @@ destructor TLandrixXmlXsdSimpleType.Destroy;
 begin
   FPatterns.Free;
   inherited Destroy;
+end;
+
+function TLandrixXmlXsdSimpleType.GetMemberCount: Integer;
+begin
+  Result := Integer(Length(FMembers));
+end;
+
+function TLandrixXmlXsdSimpleType.GetMember(Index: Integer): TLandrixXmlXsdSimpleType;
+begin
+  Result := FMembers[Index];
 end;
 
 function TLandrixXmlXsdSimpleType.DisplayName: string;

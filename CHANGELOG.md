@@ -96,6 +96,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   namespace, and elements of the same name in one content model have the
   same type (`cos-element-consistent`). New
   `TLandrixXmlXsdSimpleType.IsIdType`.
+  Type derivations are checked as Xerces checks them, except the
+  restriction of particles: `final` and `finalDefault` of complex and
+  simple types (also for list item and union member types), no
+  restriction of `xs:anySimpleType` itself, the base of simple content,
+  the content types of extensions and mixed restrictions, a local simple
+  type of a simple content restriction derived from the base's, at most
+  one attribute of an ID type, and the attributes and attribute wildcard
+  of a restriction against those of the base (required, type, fixed
+  value, wildcard subset and processContents). New
+  `TLandrixXmlXsdSimpleType.MemberCount` and `Members`.
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs

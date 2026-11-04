@@ -262,6 +262,10 @@ end;
 { ---------------------------------------------------------------------- }
 
 type
+  { the derivations a final attribute (or finalDefault) forbids }
+  TDerivationKind = (dkExtension, dkRestriction, dkList, dkUnion);
+  TDerivationKinds = set of TDerivationKind;
+
   TSchemaDoc = class
     FileName: string;
     Root: TLandrixXmlNode;
@@ -269,6 +273,7 @@ type
     Chameleon: Boolean;
     ElementQualified: Boolean;
     AttributeQualified: Boolean;
+    FinalDefault: TDerivationKinds;
   end;
 
   TPendingKind = (pkElement, pkAttribute, pkComplexType, pkSimpleType, pkGroup, pkAttributeGroup);
@@ -306,6 +311,11 @@ type
     Node: TLandrixXmlNode;
   end;
 
+  { the final of a type, if it is not empty }
+  TFinalEntry = class
+    Final: TDerivationKinds;
+  end;
+
   TKeyRefFixup = class
     Constraint: TLandrixXmlXsdIdentityConstraint;
     NamespaceUri: TLandrixXmlUtf8;
@@ -328,6 +338,9 @@ type
     FIdentity: TLandrixXmlXsdNameMap;
     FFixups: TObjectList;
     FValueChecks: TObjectList;
+    { TFinalEntry by PointerKey of the type }
+    FFinals: TLandrixXmlXsdNameMap;
+    FFinalEntries: TObjectList;
     { the skipped documents: namespace, tab, description }
     FSkipped: TStringList;
     { the documents checked against the schema for schemas }
@@ -365,6 +378,12 @@ type
     function ResolveSimpleType(P: TPending): TLandrixXmlXsdSimpleType;
     procedure ResolveTypeRef(Doc: TSchemaDoc; Node: TLandrixXmlNode; const AttrName: TLandrixXmlUtf8;
       out Simple: TLandrixXmlXsdSimpleType; out Complex: TLandrixXmlXsdComplexType; out Pending: TPending);
+    procedure SetFinal(Component: TObject; Doc: TSchemaDoc; Node: TLandrixXmlNode);
+    function FinalOf(Component: TObject): TDerivationKinds;
+    function SimpleDerivationOk(D, B: TLandrixXmlXsdSimpleType; Block: TDerivationKinds): Boolean;
+    function DerivedFromMember(D, U: TLandrixXmlXsdSimpleType; Block: TDerivationKinds): Boolean;
+    procedure CheckSimpleBase(Doc: TSchemaDoc; Node, TypeNode: TLandrixXmlNode; const Name: TLandrixXmlUtf8;
+      Base: TLandrixXmlXsdSimpleType; Kind: TDerivationKind);
     function SimpleTypeRef(Doc: TSchemaDoc; Node: TLandrixXmlNode; const NamespaceUri,
       LocalName: TLandrixXmlUtf8; SelfOwner: TLandrixXmlNode = nil): TLandrixXmlXsdSimpleType;
     function BuildElement(Doc: TSchemaDoc; Node: TLandrixXmlNode; Global: Boolean;
@@ -388,6 +407,9 @@ type
       MaxOccurs: Integer): TLandrixXmlXsdParticle;
     function ParticleOfChildren(Doc: TSchemaDoc; Parent: TLandrixXmlNode): TLandrixXmlXsdParticle;
     function EffectiveParticle(Doc: TSchemaDoc; TypeNode: TLandrixXmlNode): TLandrixXmlXsdParticle;
+    function HasOwnParticle(Doc: TSchemaDoc; Parent: TLandrixXmlNode): Boolean;
+    procedure CheckAttributeRestriction(Doc: TSchemaDoc; Node: TLandrixXmlNode; T,
+      BaseType: TLandrixXmlXsdComplexType; Items: TObjectList; Wildcard: TLandrixXmlXsdWildcard);
     procedure CollectAttributes(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Items: TObjectList;
       var Wildcard: TLandrixXmlXsdWildcard);
     function BuildIdentity(Doc: TSchemaDoc; Node: TLandrixXmlNode): TLandrixXmlXsdIdentityConstraint;
@@ -485,6 +507,39 @@ begin
   Result := LandrixXmlStringToUtf8(Format('%p', [P]));
 end;
 
+{ The value of a final or finalDefault attribute; #all stands for every
+  derivation.
+  Xerces deviation, not in the test suite: the final of a simple type
+  keeps extension (from #all or from finalDefault), so it forbids simple
+  content extending the type; XML Schema 1.0 drops it }
+function ParseDerivations(const Value: TLandrixXmlUtf8): TDerivationKinds;
+var
+  I, Start: Integer;
+  Token: TLandrixXmlUtf8;
+begin
+  Result := [];
+  I := 1;
+  while I <= Integer(Length(Value)) do
+  begin
+    while (I <= Integer(Length(Value))) and IsSpace(AnsiChar(Value[I])) do
+      Inc(I);
+    Start := I;
+    while (I <= Integer(Length(Value))) and not IsSpace(AnsiChar(Value[I])) do
+      Inc(I);
+    Token := Copy(Value, Start, I - Start);
+    if Token = '#all' then
+      Result := [dkExtension, dkRestriction, dkList, dkUnion]
+    else if Token = 'extension' then
+      Include(Result, dkExtension)
+    else if Token = 'restriction' then
+      Include(Result, dkRestriction)
+    else if Token = 'list' then
+      Include(Result, dkList)
+    else if Token = 'union' then
+      Include(Result, dkUnion);
+  end;
+end;
+
 { --- TLoader ------------------------------------------------------------ }
 
 constructor TLoader.Create(Resolver: TLandrixXmlXsdResolver);
@@ -504,6 +559,8 @@ begin
   FIdentity := TLandrixXmlXsdNameMap.Create;
   FFixups := TObjectList.Create(True);
   FValueChecks := TObjectList.Create(True);
+  FFinals := TLandrixXmlXsdNameMap.Create;
+  FFinalEntries := TObjectList.Create(True);
   FSkipped := TStringList.Create;
   FCheckedFiles := TStringList.Create;
   FCheckedFiles.CaseSensitive := True;
@@ -526,6 +583,8 @@ begin
   FIdentity.Free;
   FFixups.Free;
   FValueChecks.Free;
+  FFinals.Free;
+  FFinalEntries.Free;
   FSkipped.Free;
   FCheckedFiles.Free;
   FSet.Free;
@@ -737,6 +796,8 @@ begin
   Result.Chameleon := not HasTns and (Effective <> '');
   Result.ElementQualified := AttrTrimmed(Root, 'elementFormDefault', Value) and (Value = 'qualified');
   Result.AttributeQualified := AttrTrimmed(Root, 'attributeFormDefault', Value) and (Value = 'qualified');
+  if Attr(Root, 'finalDefault', Value) then
+    Result.FinalDefault := ParseDerivations(Value);
   Child := Root.FirstChildElement;
   while Child <> nil do
   begin
@@ -1217,6 +1278,110 @@ end;
 
 { --- types --------------------------------------------------------------- }
 
+{ The final of a type defined at Node: its final attribute or the
+  finalDefault of the document (also for an anonymous type, as Xerces) }
+procedure TLoader.SetFinal(Component: TObject; Doc: TSchemaDoc; Node: TLandrixXmlNode);
+var
+  Value: TLandrixXmlUtf8;
+  Final: TDerivationKinds;
+  Entry: TFinalEntry;
+begin
+  if Attr(Node, 'final', Value) then
+    Final := ParseDerivations(Value)
+  else
+    Final := Doc.FinalDefault;
+  if Final = [] then
+    Exit;
+  Entry := TFinalEntry.Create;
+  FFinalEntries.Add(Entry);
+  Entry.Final := Final;
+  FFinals.Put('', PointerKey(Component), Entry);
+end;
+
+{ empty for the built-in types }
+function TLoader.FinalOf(Component: TObject): TDerivationKinds;
+var
+  Entry: TObject;
+begin
+  Result := [];
+  if Component = nil then
+    Exit;
+  Entry := FFinals.Find('', PointerKey(Component));
+  if Entry <> nil then
+    Result := TFinalEntry(Entry).Final;
+end;
+
+{ Xerces' checkSimpleDerivationOk: D is B or validly derived from it;
+  Block holds the derivations that must not be used }
+function TLoader.SimpleDerivationOk(D, B: TLandrixXmlXsdSimpleType; Block: TDerivationKinds): Boolean;
+var
+  AnySimple: TLandrixXmlXsdSimpleType;
+begin
+  Result := True;
+  if D = B then
+    Exit;
+  Result := False;
+  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
+  if (D = AnySimple) or (D.Base = nil) or (dkRestriction in Block) or (dkRestriction in FinalOf(D.Base)) then
+    Exit;
+  if D.Base = B then
+    Result := True
+  else if (D.Base <> AnySimple) and SimpleDerivationOk(D.Base, B, Block) then
+    Result := True
+  else if (D.Variety <> xsvAtomic) and (B = AnySimple) then
+    Result := True
+  else if B.Variety = xsvUnion then
+    Result := DerivedFromMember(D, B, Block);
+end;
+
+{ D is validly derived from a member of the union U; a member that is a
+  union counts by its own members (Xerces expands them) }
+function TLoader.DerivedFromMember(D, U: TLandrixXmlXsdSimpleType; Block: TDerivationKinds): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  for I := 0 to U.MemberCount - 1 do
+    if U.Members[I].Variety = xsvUnion then
+    begin
+      if DerivedFromMember(D, U.Members[I], Block) then
+        Exit;
+    end
+    else if SimpleDerivationOk(D, U.Members[I], Block) then
+      Exit;
+  Result := False;
+end;
+
+{ Xerces' findDTValidator: the base of a restriction, the item type of a
+  list or a member of a union, given by name, must allow the use; Name
+  and TypeNode are those of the type being built }
+procedure TLoader.CheckSimpleBase(Doc: TSchemaDoc; Node, TypeNode: TLandrixXmlNode; const Name: TLandrixXmlUtf8;
+  Base: TLandrixXmlXsdSimpleType; Kind: TDerivationKind);
+var
+  TypeName: string;
+begin
+  if Name <> '' then
+    TypeName := Esc(Name)
+  else
+    TypeName := Esc(AnonymousTypeName(TypeNode));
+  if (Kind = dkRestriction) and (Base = LandrixXmlXsdBuiltinType('anySimpleType')) and
+    ((Doc.TargetNamespace <> LandrixXmlXsdNamespace) or (LandrixXmlXsdBuiltinType(Name) = nil)) then
+    FailCheck(Doc.FileName, Node, 'cos-st-restricts.1.1', 'the type ' + TypeName +
+      ' is atomic, so its base cannot be xs:anySimpleType');
+  if Kind in FinalOf(Base) then
+    case Kind of
+      dkRestriction:
+        FailCheck(Doc.FileName, Node, 'st-props-correct.3', 'the final of ' + Base.DisplayName +
+          ' forbids the restriction ' + TypeName);
+      dkList:
+        FailCheck(Doc.FileName, Node, 'cos-st-restricts.2.3.1.1', 'the final of ' + Base.DisplayName +
+          ' forbids its use as the item type of the list ' + TypeName);
+    else
+      FailCheck(Doc.FileName, Node, 'cos-st-restricts.3.3.1.1', 'the final of ' + Base.DisplayName +
+        ' forbids its use as a member type of the union ' + TypeName);
+    end;
+end;
+
 function TLoader.SimpleTypeRef(Doc: TSchemaDoc; Node: TLandrixXmlNode; const NamespaceUri,
   LocalName: TLandrixXmlUtf8; SelfOwner: TLandrixXmlNode): TLandrixXmlXsdSimpleType;
 var
@@ -1314,7 +1479,10 @@ begin
   begin
     Base := nil;
     if QNameAttr(Doc, Child, 'base', Ns, LocalName) then
+    begin
       Base := SimpleTypeRef(Doc, Child, Ns, LocalName, Node);
+      CheckSimpleBase(Doc, Child, Node, Name, Base, dkRestriction);
+    end;
     Sub := Child.FirstChildElement;
     while IsXs(Sub, 'annotation') do
       Sub := Sub.NextSiblingElement;
@@ -1354,6 +1522,7 @@ begin
           ResolveQName(Doc, Child, Item, Ns, LocalName);
           SetLength(Members, Length(Members) + 1);
           Members[High(Members)] := SimpleTypeRef(Doc, Child, Ns, LocalName);
+          CheckSimpleBase(Doc, Child, Node, Name, Members[High(Members)], dkUnion);
         end;
       end;
     end;
@@ -1384,7 +1553,10 @@ begin
   begin
     ItemType := nil;
     if QNameAttr(Doc, Child, 'itemType', Ns, LocalName) then
+    begin
       ItemType := SimpleTypeRef(Doc, Child, Ns, LocalName);
+      CheckSimpleBase(Doc, Child, Node, Name, ItemType, dkList);
+    end;
     Sub := Child.FirstChildElement;
     while IsXs(Sub, 'annotation') do
       Sub := Sub.NextSiblingElement;
@@ -1415,6 +1587,7 @@ begin
   end
   else
     Fail(Doc, Node, 'a simple type needs a restriction or a union');
+  SetFinal(Result, Doc, Node);
   if P <> nil then
   begin
     P.Component := Result;
@@ -1603,6 +1776,38 @@ begin
       Exit;
     end;
   Result := False;
+end;
+
+{ Xerces' isSubsetOf of the namespace constraints }
+function WildcardSubset(Sub, Super: TLandrixXmlXsdWildcard): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  if Super.Constraint = xncAny then
+    Exit;
+  Result := False;
+  case Sub.Constraint of
+    xncNot:
+      Result := (Super.Constraint = xncNot) and (Sub.Namespaces[0] = Super.Namespaces[0]);
+    xncList:
+      if Super.Constraint = xncList then
+      begin
+        for I := 0 to Integer(Length(Sub.Namespaces)) - 1 do
+          if not InSet(Sub.Namespaces[I], Super.Namespaces) then
+            Exit;
+        Result := True;
+      end
+      else
+        Result := not InSet(Super.Namespaces[0], Sub.Namespaces) and not InSet('', Sub.Namespaces);
+  end;
+end;
+
+{ Xerces' weakerProcessContents }
+function WeakerProcessContents(Sub, Super: TLandrixXmlXsdWildcard): Boolean;
+begin
+  Result := ((Sub.ProcessContents = xpcLax) and (Super.ProcessContents = xpcStrict)) or
+    ((Sub.ProcessContents = xpcSkip) and (Super.ProcessContents <> xpcSkip));
 end;
 
 function SameWildcard(A, B: TLandrixXmlXsdWildcard): Boolean;
@@ -2000,19 +2205,33 @@ end;
 function IsEmptyCompositor(Parent: TLandrixXmlNode): Boolean;
 var
   Child, Sub: TLandrixXmlNode;
-  Value: TLandrixXmlUtf8;
+  Value, Digits: TLandrixXmlUtf8;
 begin
   Result := False;
   Child := Parent.FirstChildElement;
   while IsXs(Child, 'annotation') do
     Child := Child.NextSiblingElement;
+  { a choice counts with minOccurs 0 (also written "00" or "+0") }
   if (Child = nil) or not (IsXs(Child, 'sequence') or IsXs(Child, 'all') or
-    (IsXs(Child, 'choice') and AttrTrimmed(Child, 'minOccurs', Value) and (Value = '0'))) then
+    (IsXs(Child, 'choice') and AttrTrimmed(Child, 'minOccurs', Value) and ParseNonNegative(Value, Digits) and
+    (Digits = ''))) then
     Exit;
   Sub := Child.FirstChildElement;
   while IsXs(Sub, 'annotation') do
     Sub := Sub.NextSiblingElement;
   Result := Sub = nil;
+end;
+
+{ True if Parent (a complexType or a derivation) has a particle of its
+  own as it is built; an empty compositor and one with maxOccurs="0" do
+  not count (Xerces) }
+function TLoader.HasOwnParticle(Doc: TSchemaDoc; Parent: TLandrixXmlNode): Boolean;
+var
+  Own: TLandrixXmlXsdParticle;
+begin
+  Own := ParticleOfChildren(Doc, Parent);
+  Result := (Own <> nil) and not IsEmptyCompositor(Parent);
+  Own.Free;
 end;
 
 { The content particle of a complex type, built afresh (also the base
@@ -2233,6 +2452,148 @@ begin
   end;
 end;
 
+{ Java's equals of two atomic actual values of Xerces: string, anyURI
+  and anySimpleType values are all strings there, the others compare as
+  values }
+function SameAtomic(const A, B: TLandrixXmlXsdValue): Boolean;
+const
+  StringLike = [xspAnySimpleType, xspString, xspAnyURI];
+begin
+  if (A.Primitive in StringLike) and (B.Primitive in StringLike) then
+    Result := A.Text = B.Text
+  else
+    Result := LandrixXmlXsdCompareValues(A, B) = 0;
+end;
+
+function ItemValue(const Item: TLandrixXmlXsdAtomicValue): TLandrixXmlXsdValue;
+begin
+  Result.Primitive := Item.Primitive;
+  Result.Text := Item.Text;
+  Result.RawText := Item.RawText;
+  Result.MemberType := Item.MemberType;
+  Result.Length := Item.Length;
+  Result.DecimalValue := Item.DecimalValue;
+  Result.DoubleValue := Item.DoubleValue;
+  Result.BooleanValue := Item.BooleanValue;
+  Result.DateTime := Item.DateTime;
+  Result.Variety := xsvAtomic;
+  Result.Items := nil;
+end;
+
+{ Java's equals of two actual values; lists (ListData.equals) item by
+  item, whatever the item types }
+function SameActualValue(const A, B: TLandrixXmlXsdValue): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if (A.Variety = xsvList) <> (B.Variety = xsvList) then
+    Exit;
+  if A.Variety <> xsvList then
+  begin
+    Result := SameAtomic(A, B);
+    Exit;
+  end;
+  if Length(A.Items) <> Length(B.Items) then
+    Exit;
+  for I := 0 to Integer(Length(A.Items)) - 1 do
+    if not SameAtomic(ItemValue(A.Items[I]), ItemValue(B.Items[I])) then
+      Exit;
+  Result := True;
+end;
+
+{ as Xerces: the fixed values are compared after the second validation,
+  each with its own type, by Java's equals of the actual values }
+function SameFixedValue(TA: TLandrixXmlXsdSimpleType; const A: TLandrixXmlUtf8;
+  TB: TLandrixXmlXsdSimpleType; const B: TLandrixXmlUtf8): Boolean;
+var
+  VA, VB: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+begin
+  Result := ValidTwice(TA, A, VA, Error) and ValidTwice(TB, B, VB, Error) and SameActualValue(VA, VB);
+end;
+
+{ Xerces' validRestrictionOf for the attributes of a restriction (XML
+  Schema 1.0, derivation-ok-restriction 2 to 4): Items are the own uses,
+  prohibited ones included, Wildcard the own wildcard }
+procedure TLoader.CheckAttributeRestriction(Doc: TSchemaDoc; Node: TLandrixXmlNode; T,
+  BaseType: TLandrixXmlXsdComplexType; Items: TObjectList; Wildcard: TLandrixXmlXsdWildcard);
+var
+  I: Integer;
+  Item: TAttributeItem;
+  BaseUse: TLandrixXmlXsdAttributeUse;
+  BaseConstraint, OwnConstraint: TLandrixXmlXsdValueConstraint;
+  BaseValue, OwnValue: TLandrixXmlUtf8;
+  Prefix: string;
+begin
+  Prefix := 'the restriction ' + Esc(T.DisplayName) + ' of ' + Esc(BaseType.DisplayName) + ': ';
+  for I := 0 to Integer(Items.Count) - 1 do
+  begin
+    Item := TAttributeItem(Items[I]);
+    if Item.Prohibited then
+      Continue;
+    BaseUse := BaseType.FindAttribute(Item.Decl.NamespaceUri, Item.Decl.Name);
+    if BaseUse = nil then
+    begin
+      if BaseType.AttributeWildcard = nil then
+        FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.2.a', Prefix + 'the base has no attribute ' +
+          Esc(Item.Decl.Name) + ' and no attribute wildcard');
+      if not BaseType.AttributeWildcard.Allows(Item.Decl.NamespaceUri) then
+        FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.2.b', Prefix + 'the base has no attribute ' +
+          Esc(Item.Decl.Name) + ' and its attribute wildcard does not allow it');
+      Continue;
+    end;
+    if BaseUse.Required and not Item.Required then
+      FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.1', Prefix + 'the attribute ' +
+        Esc(Item.Decl.Name) + ' is required in the base');
+    if not SimpleDerivationOk(Item.Decl.SimpleType, BaseUse.Decl.SimpleType, FinalOf(BaseUse.Decl.SimpleType)) then
+      FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.2', Prefix + 'the type ' +
+        Item.Decl.SimpleType.DisplayName + ' of attribute ' + Esc(Item.Decl.Name) +
+        ' is not validly derived from ' + BaseUse.Decl.SimpleType.DisplayName);
+    { the effective value constraints: of the use, else of the declaration }
+    BaseConstraint := BaseUse.ValueConstraint;
+    BaseValue := BaseUse.ConstraintValue;
+    if BaseConstraint = xvcNone then
+    begin
+      BaseConstraint := BaseUse.Decl.ValueConstraint;
+      BaseValue := BaseUse.Decl.ConstraintValue;
+    end;
+    OwnConstraint := Item.ValueConstraint;
+    OwnValue := Item.ConstraintValue;
+    if OwnConstraint = xvcNone then
+    begin
+      OwnConstraint := Item.Decl.ValueConstraint;
+      OwnValue := Item.Decl.ConstraintValue;
+    end;
+    if BaseConstraint = xvcFixed then
+    begin
+      if OwnConstraint <> xvcFixed then
+        FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.3.a', Prefix + 'the attribute ' +
+          Esc(Item.Decl.Name) + ' must be fixed as in the base');
+      if not SameFixedValue(Item.Decl.SimpleType, OwnValue, BaseUse.Decl.SimpleType, BaseValue) then
+        FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.3.b', Prefix + 'the attribute ' +
+          Esc(Item.Decl.Name) + ' must have the fixed value ' + Esc(BaseValue) + ' of the base');
+    end;
+  end;
+  for I := 0 to BaseType.AttributeCount - 1 do
+    if BaseType.Attributes[I].Required and
+      (T.FindAttribute(BaseType.Attributes[I].Decl.NamespaceUri, BaseType.Attributes[I].Decl.Name) = nil) then
+      FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.3', Prefix + 'the attribute ' +
+        Esc(BaseType.Attributes[I].Decl.Name) + ' is required in the base');
+  if Wildcard <> nil then
+  begin
+    if BaseType.AttributeWildcard = nil then
+      FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.4.1', Prefix +
+        'there is an attribute wildcard, but the base has none');
+    if not WildcardSubset(Wildcard, BaseType.AttributeWildcard) then
+      FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.4.2', Prefix +
+        'the attribute wildcard is not a subset of that of the base');
+    if WeakerProcessContents(Wildcard, BaseType.AttributeWildcard) then
+      FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.4.3', Prefix +
+        'the processContents of the attribute wildcard is weaker than that of the base');
+  end;
+end;
+
 function TLoader.CreateComplexType(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Name: TLandrixXmlUtf8;
   P: TPending): TLandrixXmlXsdComplexType;
 var
@@ -2251,6 +2612,7 @@ begin
   T.SchemaFile := Doc.FileName;
   T.SchemaLine := Node.Line;
   T.Abstract := BoolAttr(Node, 'abstract');
+  SetFinal(T, Doc, Node);
   if P <> nil then
   begin
     P.Component := T;
@@ -2314,10 +2676,14 @@ var
   I, J: Integer;
   Item: TAttributeItem;
   Use: TLandrixXmlXsdAttributeUse;
-  Found, HasFacets: Boolean;
+  Found, CheckModel: Boolean;
+  Final: TDerivationKinds;
+  Local: TLandrixXmlXsdSimpleType;
+  IdName: TLandrixXmlUtf8;
 begin
   if P <> nil then
     P.State := psResolving;
+  CheckModel := False;
   Mixed := BoolAttr(Node, 'mixed');
   Child := Node.FirstChildElement;
   while IsXs(Child, 'annotation') do
@@ -2353,6 +2719,31 @@ begin
       else
         Fail(Doc, Derivation, MissingText('complex type', Ns, LocalName));
     end;
+    if IsSimpleContent then
+    begin
+      { src-ct.2.1: simple content extends a simple type or a complex type
+        with simple content, or restricts a complex type with simple
+        content or with mixed, emptiable content }
+      if BaseSimple <> nil then
+        Found := IsExtension
+      else
+        Found := (BaseType.ContentType = xctSimple) or (not IsExtension and (BaseType.ContentType = xctMixed) and
+          ((BaseType.Model = nil) or Emptiable(BaseType.Model.Root)));
+      if not Found then
+        FailCheck(Doc.FileName, Child, 'src-ct.2.1', 'the simple content of ' + Esc(T.DisplayName) +
+          ' must restrict a complex type with simple or mixed, emptiable content or extend a simple type ' +
+          'or a complex type with simple content');
+    end;
+    if BaseSimple <> nil then
+      Final := FinalOf(BaseSimple)
+    else
+      Final := FinalOf(BaseType);
+    if IsExtension and (dkExtension in Final) then
+      FailCheck(Doc.FileName, Child, 'cos-ct-extends.1.1', 'the final of ' + Esc(LocalName) +
+        ' forbids the extension ' + Esc(T.DisplayName))
+    else if not IsExtension and (dkRestriction in Final) then
+      FailCheck(Doc.FileName, Child, 'derivation-ok-restriction.1', 'the final of ' + Esc(LocalName) +
+        ' forbids the restriction ' + Esc(T.DisplayName));
     if (BaseType = FSet.AnyType) and IsExtension and not IsSimpleContent then
       Unsupported(Doc, Derivation, 'extending xs:anyType');
   end;
@@ -2371,11 +2762,11 @@ begin
       Simple := BaseSimple
     else if (BaseType <> nil) and (BaseType.ContentType = xctSimple) then
       Simple := BaseType.SimpleType
-    else if (BaseType = nil) or IsExtension or (BaseType.ContentType <> xctMixed) or
-      ((BaseType.Model <> nil) and not Emptiable(BaseType.Model.Root)) or not HasLocalSimpleType(Derivation) then
-      { a mixed base with emptiable content may be restricted to the local
-        simple type of the restriction }
-      Fail(Doc, Derivation, 'the base of simple content must have simple content');
+    else if not HasLocalSimpleType(Derivation) then
+      { a mixed base with emptiable content (src-ct.2.1 above) is
+        restricted to the local simple type of the restriction }
+      FailCheck(Doc.FileName, Derivation, 'src-ct.2.2', 'the restriction of the mixed content of ' +
+        Esc(LocalName) + ' to simple content needs a simple type');
     if not IsExtension then
     begin
       { a restriction of simple content: an anonymous restriction of the
@@ -2384,41 +2775,52 @@ begin
       while IsXs(Sub, 'annotation') do
         Sub := Sub.NextSiblingElement;
       if IsXs(Sub, 'simpleType') then
-        Simple := BuildSimpleType(Doc, Sub, '', nil);
-      HasFacets := False;
-      Sub := Derivation.FirstChildElement;
-      while Sub <> nil do
       begin
-        if not (IsXs(Sub, 'annotation') or IsXs(Sub, 'simpleType') or IsXs(Sub, 'attribute') or
-          IsXs(Sub, 'attributeGroup') or IsXs(Sub, 'anyAttribute')) then
-          HasFacets := True;
-        Sub := Sub.NextSiblingElement;
+        Local := BuildSimpleType(Doc, Sub, '', nil);
+        if (Simple <> nil) and not SimpleDerivationOk(Local, Simple, FinalOf(Simple)) then
+          FailCheck(Doc.FileName, Sub, 'derivation-ok-restriction.5.2.2.1', 'the simple type of ' +
+            Esc(T.DisplayName) + ' is not validly derived from ' + Simple.DisplayName +
+            ', the simple content of the base');
+        Simple := Local;
       end;
-      if HasFacets then
-      begin
-        Simple := TLandrixXmlXsdSimpleType.CreateRestriction(Simple, '', '');
-        FSet.Own(Simple);
-        Simple.AnonymousName := AnonymousTypeName(Child);
-        AddFacets(Doc, Derivation, Simple);
-      end;
+      { always a type of its own, with an empty final (Xerces), also
+        without facets }
+      Simple := TLandrixXmlXsdSimpleType.CreateRestriction(Simple, '', '');
+      FSet.Own(Simple);
+      Simple.AnonymousName := AnonymousTypeName(Child);
+      AddFacets(Doc, Derivation, Simple);
     end;
     T.SimpleType := Simple;
   end
   else
   begin
+    { an extension with a particle of its own (a mixed one always has
+      one, as Xerces) keeps the content type of a base that is not empty;
+      a mixed restriction needs a mixed base }
+    if IsExtension and (BaseType.ContentType <> xctEmpty) and (Mixed or HasOwnParticle(Doc, Derivation)) then
+    begin
+      if not Mixed and (BaseType.ContentType <> xctElementOnly) then
+        FailCheck(Doc.FileName, Derivation, 'cos-ct-extends.1.4.3.2.2.1.a', 'the content of ' +
+          Esc(T.DisplayName) + ' is element-only, but that of its base ' + Esc(LocalName) + ' is not');
+      if Mixed and (BaseType.ContentType <> xctMixed) then
+        FailCheck(Doc.FileName, Derivation, 'cos-ct-extends.1.4.3.2.2.1.b', 'the content of ' +
+          Esc(T.DisplayName) + ' is mixed, but that of its base ' + Esc(LocalName) + ' is not');
+    end
+    else if not IsExtension and Mixed and (BaseType.ContentType <> xctMixed) then
+      FailCheck(Doc.FileName, Derivation, 'derivation-ok-restriction.5.4.1.2', 'the content of ' +
+        Esc(T.DisplayName) + ' is mixed, but that of its base ' + Esc(LocalName) + ' is not');
     Particle := EffectiveParticle(Doc, Node);
-    if (Particle = nil) and IsExtension and (BaseType <> nil) and (BaseType.ContentType = xctSimple) then
+    if (Particle = nil) and IsExtension and (BaseType.ContentType = xctSimple) then
     begin
       { an extension without particles keeps the base's simple content
-        (Xerces); a mixed one is an error (cos-ct-extends.1.4.3.2.2.1.b) }
-      if Mixed then
-        Fail(Doc, Derivation, 'complex content cannot extend simple content as mixed content');
+        (Xerces) }
       T.ContentType := xctSimple;
       T.SimpleType := BaseType.SimpleType;
     end
     else if Particle = nil then
     begin
-      if Mixed then
+      { an extension without particles keeps the mixed content of its base }
+      if Mixed or (IsExtension and (BaseType.ContentType = xctMixed)) then
       begin
         { text only: an empty model rejects every child (2.4.d) }
         T.ContentType := xctMixed;
@@ -2442,16 +2844,7 @@ begin
         Fail(Doc, Node, 'a content model must be a model group');
       end;
       T.Model := TLandrixXmlXsdContentModel.Create(Particle);
-      Seen := TLandrixXmlXsdNameMap.Create;
-      try
-        CheckElementsConsistent(Doc, Node, T.Model.Root, Seen);
-      finally
-        Seen.Free;
-      end;
-      if T.Model.FindAmbiguity(First, Second) then
-        FailCheck(Doc.FileName, Node, 'cos-nonambig', Esc(First.Display) + ' and ' +
-          Esc(Second.Display) + ' make the content model ambiguous (Unique Particle ' +
-          'Attribution)');
+      CheckModel := True;
     end;
   end;
   { attributes }
@@ -2521,8 +2914,34 @@ begin
       T.AddAttribute(Use);
     end;
     T.AttributeWildcard := Wildcard;
+    { ct-props-correct.5: at most one attribute of an ID type }
+    IdName := '';
+    for I := 0 to T.AttributeCount - 1 do
+      if T.Attributes[I].Decl.SimpleType.IsIdType then
+      begin
+        if IdName <> '' then
+          FailCheck(Doc.FileName, Derivation, 'ct-props-correct.5', 'the attributes ' + Esc(IdName) + ' and ' +
+            Esc(T.Attributes[I].Decl.Name) + ' of ' + Esc(T.DisplayName) + ' both have an ID type');
+        IdName := T.Attributes[I].Decl.Name;
+      end;
+    if not IsExtension and (BaseType <> nil) and (IsSimpleContent or (BaseType <> FSet.AnyType)) then
+      CheckAttributeRestriction(Doc, Derivation, T, BaseType, Items, Wildcard);
   finally
     Items.Free;
+  end;
+  { the content model, after the attributes as in Xerces }
+  if CheckModel then
+  begin
+    Seen := TLandrixXmlXsdNameMap.Create;
+    try
+      CheckElementsConsistent(Doc, Node, T.Model.Root, Seen);
+    finally
+      Seen.Free;
+    end;
+    if T.Model.FindAmbiguity(First, Second) then
+      FailCheck(Doc.FileName, Node, 'cos-nonambig', Esc(First.Display) + ' and ' +
+        Esc(Second.Display) + ' make the content model ambiguous (Unique Particle ' +
+        'Attribution)');
   end;
   if P <> nil then
     P.State := psDone;

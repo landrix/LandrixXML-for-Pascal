@@ -352,6 +352,12 @@ both the mark and an entry here):
   element stands for any number of repetitions, so for example a sequence
   of `a` (exactly twice), `a` and a repeated choice is ambiguous, though
   XML Schema 1.0 allows it.
+- The `final` of a simple type also forbids the extension by a complex
+  type with simple content when it is `#all` or comes from a
+  `finalDefault` that names `extension`; XML Schema 1.0 limits the
+  `{final}` of simple types to restriction, list and union (no test of
+  the suite covers this; in the source code the mark reads
+  `Xerces deviation, not in the test suite`).
 - A restriction that has or inherits a `length` may give `minLength` or
   `maxLength` only if its base type has the same one; the errata of XML
   Schema 1.0 allow more (`errF001`).
@@ -369,11 +375,13 @@ Differences from Xerces, also on purpose:
   (attributes, their values, children and their order) and the facets of
   each simple type against each other and against its base type (as
   Xerces, also fixed facets), Unique Particle Attribution of content
-  models and the rules of element and attribute declarations (value
-  constraints, ID types, consistent element types), but does not prove
-  derivations and other
-  schema component constraints yet: invalid schemas that Xerces rejects
-  may load (the target schemas are valid for Xerces).
+  models, the rules of element and attribute declarations (value
+  constraints, ID types, consistent element types) and of type
+  derivations (`final`, the content types of extensions and restrictions,
+  the attributes and attribute wildcards of restrictions), but does not
+  yet check that the particles of a restriction restrict those of its
+  base, nor some other schema component constraints: invalid schemas
+  that Xerces rejects may load (the target schemas are valid for Xerces).
 
 ## Conformance and tests
 
@@ -410,16 +418,16 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 35,894
+  load or be rejected, documents that must be valid or invalid) 35,952
   pass and 3,035 use a construct this library does not support (above
   all `xs:duration`, `xs:QName`, `xs:all`, union facets, substitution
   groups, `xs:NOTATION`, `xsi:type`); they are reported as unsupported,
-  never accepted silently. Of the 404 failures 344 are invalid schemas that
+  never accepted silently. Of the 348 failures 288 are invalid schemas that
   load, as the loader checks the schema documents against the schema for
-  schemas, the facets of simple types, Unique Particle Attribution and
-  the value constraints of element and attribute declarations, but does
-  not prove derivations
-  and other schema component constraints; 3 more stop at the resource
+  schemas, the facets of simple types, Unique Particle Attribution, the
+  value constraints of element and attribute declarations and type
+  derivations except the restriction of particles and some other schema
+  component constraints; 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline
   for the CI.
 - About 135 test cases with more than 9000 checks, including generated
