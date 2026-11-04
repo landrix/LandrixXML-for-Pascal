@@ -635,303 +635,73 @@ begin
   end;
 end;
 
+function SplitTabs(const Line: string): TStringList;
+var
+  P: Integer;
+  Rest: string;
+begin
+  Result := TStringList.Create;
+  Rest := Line;
+  P := Pos(#9, Rest);
+  while P > 0 do
+  begin
+    Result.Add(Copy(Rest, 1, P - 1));
+    Rest := Copy(Rest, P + 1, MaxInt);
+    P := Pos(#9, Rest);
+  end;
+  Result.Add(Rest);
+end;
+
+{ tests/data/xsdschema/rules.txt: schemas with the constraint code Xerces
+  reports (a sixth field holds Xerces' code where it is known to differ),
+  and valid forms that must load (tools/check-xsdrules.py checks the codes
+  against the JDK) }
 procedure TestSchemaRules;
 var
-  FileName: string;
+  L, Fields: TStringList;
+  K, Count: Integer;
+  FileName, Body: string;
   S: TLandrixXmlXsdSchemaSet;
 begin
-  CheckSchemaRule('<xs:element name="r" maxOccur="2"/>', 's4s-att-not-allowed', 1, 'unknown attribute');
-  CheckSchemaRule('<xs:element name="r" xs:type="xs:int"/>', 's4s-att-not-allowed', 1,
-    'attribute in the XML Schema namespace');
-  CheckSchemaRule('<xs:element name="1r"/>', 's4s-att-invalid-value', 1, 'name not an NCName');
-  CheckSchemaRule('<xs:element name="r" nillable="yes"/>', 's4s-att-invalid-value', 1, 'boolean');
-  CheckSchemaRule('<xs:complexType name="t" block="all"/>', 's4s-att-invalid-value', 1, 'derivation set');
-  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:sequence><xs:any namespace="##others"/>' +
-    '</xs:sequence></xs:complexType></xs:element>', 's4s-att-invalid-value', 1, 'namespace list');
-  CheckSchemaRule('<xs:element name="a" id="x"/><xs:element name="b" id="x"/>', 's4s-att-invalid-value', 1,
-    'duplicate id');
-  CheckSchemaRule('<xs:element/>', 's4s-att-must-appear', 1, 'top-level element without name');
-  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:sequence><xs:element ref="r" name="x"/>' +
-    '</xs:sequence></xs:complexType></xs:element>', 's4s-att-not-allowed', 1, 'name besides ref');
-  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:attribute name="a"/><xs:sequence/>' +
-    '</xs:complexType></xs:element>', 's4s-elt-must-match.1', 1, 'particle after an attribute');
-  CheckSchemaRule('<xs:element name="r"><xs:annotation/><xs:annotation/></xs:element>', 's4s-elt-must-match.1', 1,
-    'two annotations');
-  CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:int"><xs:sequence/></xs:restriction>' +
-    '</xs:simpleType>', 's4s-elt-invalid-content.1', 1, 'a particle in a simple type');
-  CheckSchemaRule('<xs:element name="r"/>' + #10 + '<xs:group name="g"/>', 's4s-elt-must-match.1', 2,
-    'a group without a compositor');
-  CheckSchemaRule('<xs:element name="r">text</xs:element>', 's4s-elt-character', 1, 'character data');
-  CheckSchemaRule('<xs:element name="r"><xs:annotation><xs:documentation xml:lang="">x</xs:documentation>' +
-    '</xs:annotation></xs:element>', 's4s-att-invalid-value', 1, 'empty xml:lang');
-  CheckSchemaRule('<xs:element name="r" type="xs: string"/>', 's4s-att-invalid-value', 1, 'space in a QName');
-  CheckSchemaRule('<xs:element name="r"><xs:key name="k"><xs:selector xpath="a"/><xs:field xpath="@b"/></xs:key>' +
-    '<xs:keyref name="kr" refer="missing"><xs:selector xpath="a"/><xs:field xpath="@b"/></xs:keyref></xs:element>',
-    'src-resolve', 1, 'keyref to no key');
-  CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:string"><xs:minLength value="3"/>' +
-    '<xs:maxLength value="2"/></xs:restriction></xs:simpleType>', 'minLength-less-than-equal-to-maxLength', 1,
-    'inconsistent facets');
-  CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:string"><xs:maxLength value="3" ' +
-    'fixed="true"/></xs:restriction></xs:simpleType>' + #10 + '<xs:simpleType name="t"><xs:restriction base="s">' +
-    '<xs:maxLength value="2"/></xs:restriction></xs:simpleType>', 'FixedFacetValue', 2, 'fixed facet');
-  CheckSchemaRule('<xs:element name="r"/>' + #10 + '<xs:complexType name="t"><xs:sequence>' +
-    '<xs:element name="a" minOccurs="0"/><xs:element name="a"/></xs:sequence></xs:complexType>',
-    'cos-nonambig', 2, 'ambiguous content model');
-  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:choice><xs:any namespace="##any"/>' +
-    '<xs:element ref="r"/></xs:choice></xs:complexType></xs:element>', 'cos-nonambig', 1,
-    'a wildcard competing with an element');
-  { element and attribute declarations }
-  CheckSchemaRule('<xs:element name="r" type="xs:int" default="x"/>', 'e-props-correct.2', 1, 'invalid element default');
-  CheckSchemaRule('<xs:element name="r" fixed="x"><xs:complexType><xs:sequence><xs:element name="a"/>' +
-    '</xs:sequence></xs:complexType></xs:element>', 'e-props-correct.2', 1, 'fixed value of element-only content');
-  CheckSchemaRule('<xs:element name="r" fixed="x"><xs:complexType mixed="true"><xs:sequence>' +
-    '<xs:element name="a"/></xs:sequence></xs:complexType></xs:element>', 'e-props-correct.2', 1,
-    'fixed value of mixed content that is not emptiable');
-  CheckSchemaRule('<xs:element name="r" type="xs:ID" default="x"/>', 'e-props-correct.5', 1, 'default of an ID element');
-  CheckSchemaRule('<xs:element name="r"/>' + #10 + '<xs:attribute name="a" type="xs:int" default="x"/>',
-    'cvc-datatype-valid.1.2.1', 2, 'invalid attribute default');
-  CheckSchemaRule('<xs:attribute name="a" type="xs:ID" fixed="x"/>', 'a-props-correct.3', 1, 'fixed ID attribute');
-  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:attribute name="a" default="x" use="required"/>' +
-    '</xs:complexType></xs:element>', 'src-attribute.2', 1, 'default with use required');
-  CheckSchemaRule('<xs:attribute name="a" type="xs:int" fixed="1"/><xs:element name="r"><xs:complexType>' +
-    '<xs:attribute ref="a" fixed="2"/></xs:complexType></xs:element>', 'au-props-correct.2', 1,
-    'a use with another fixed value');
-  CheckSchemaRule('<xs:attribute name="a" type="xs:int" fixed="1"/><xs:element name="r"><xs:complexType>' +
-    '<xs:attribute ref="a" default="1"/></xs:complexType></xs:element>', 'au-props-correct.2', 1,
-    'a use with a default for a fixed declaration');
-  CheckSchemaRule('<xs:attribute name="xmlns"/>', 'no-xmlns', 1, 'attribute xmlns');
-  CheckSchemaRule('<xs:attribute name="a"/>', 'no-xsi', 1, 'attribute in the xsi namespace',
-    ' targetNamespace="http://www.w3.org/2001/XMLSchema-instance"');
-  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:sequence><xs:element name="a" type="xs:int"/>' +
-    '<xs:element name="a" type="xs:string" minOccurs="0"/></xs:sequence></xs:complexType></xs:element>',
-    'cos-element-consistent', 1, 'two elements a with different types');
-  { type derivations }
-  CheckSchemaRule('<xs:complexType name="b" final="extension"/><xs:complexType name="d"><xs:complexContent>' +
-    '<xs:extension base="b"/></xs:complexContent></xs:complexType>',
-    'cos-ct-extends.1.1', 1, 'extension of a final type');
-  CheckSchemaRule('<xs:complexType name="b"/><xs:complexType name="d"><xs:complexContent>' +
-    '<xs:restriction base="b"/></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.1', 1, 'restriction forbidden by finalDefault', ' finalDefault="restriction"');
-  CheckSchemaRule('<xs:simpleType name="s" final="#all"><xs:restriction base="xs:int"/></xs:simpleType>' +
-    '<xs:complexType name="d"><xs:simpleContent><xs:extension base="s"/></xs:simpleContent>' +
-    '</xs:complexType>',
-    'cos-ct-extends.1.1', 1, 'simple content extending a final simple type');
-  CheckSchemaRule('<xs:simpleType name="s" final="restriction"><xs:restriction base="xs:int"/></xs:simpleType>' +
-    '<xs:simpleType name="t"><xs:restriction base="s"/></xs:simpleType>',
-    'st-props-correct.3', 1, 'restriction of a final simple type');
-  CheckSchemaRule('<xs:simpleType name="s" final="list"><xs:restriction base="xs:int"/></xs:simpleType>' +
-    '<xs:simpleType name="t"><xs:list itemType="s"/></xs:simpleType>',
-    'cos-st-restricts.2.3.1.1', 1, 'list of a final item type');
-  CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:int"/></xs:simpleType>' +
-    '<xs:simpleType name="t"><xs:union memberTypes="xs:date s"/></xs:simpleType>',
-    'cos-st-restricts.3.3.1.1', 1, 'union of a final member type', ' finalDefault="union"');
-  CheckSchemaRule('<xs:simpleType name="s"><xs:restriction base="xs:anySimpleType"/></xs:simpleType>',
-    'cos-st-restricts.1.1', 1, 'restriction of xs:anySimpleType');
-  CheckSchemaRule('<xs:complexType name="d"><xs:simpleContent><xs:restriction base="xs:int"/></xs:simpleContent>' +
-    '</xs:complexType>',
-    'src-ct.2.1', 1, 'simple content restricting a simple type');
-  CheckSchemaRule('<xs:complexType name="b"><xs:sequence><xs:element name="x"/></xs:sequence></xs:complexType>' +
-    '<xs:complexType name="d"><xs:simpleContent><xs:extension base="b"/></xs:simpleContent>' +
-    '</xs:complexType>',
-    'src-ct.2.1', 1, 'simple content extending element-only content');
-  CheckSchemaRule('<xs:complexType name="b" mixed="true"><xs:sequence><xs:element name="x"/></xs:sequence>' +
-    '</xs:complexType><xs:complexType name="d"><xs:simpleContent><xs:restriction base="b">' +
-    '<xs:simpleType><xs:restriction base="xs:int"/></xs:simpleType></xs:restriction>' +
-    '</xs:simpleContent></xs:complexType>',
-    'src-ct.2.1', 1, 'simple content restricting mixed content that is not emptiable');
-  CheckSchemaRule('<xs:complexType name="b"><xs:simpleContent><xs:extension base="xs:int"/></xs:simpleContent>' +
-    '</xs:complexType><xs:complexType name="d"><xs:simpleContent><xs:restriction base="b">' +
-    '<xs:simpleType><xs:restriction base="xs:string"/></xs:simpleType></xs:restriction>' +
-    '</xs:simpleContent></xs:complexType>',
-    'derivation-ok-restriction.5.2.2.1', 1, 'local simple type not derived from the base');
-  CheckSchemaRule('<xs:complexType name="b" mixed="true"><xs:sequence><xs:element name="x"/></xs:sequence>' +
-    '</xs:complexType><xs:complexType name="d"><xs:complexContent><xs:extension base="b">' +
-    '<xs:sequence><xs:element name="y"/></xs:sequence></xs:extension></xs:complexContent>' +
-    '</xs:complexType>',
-    'cos-ct-extends.1.4.3.2.2.1.a', 1, 'element-only extension of mixed content');
-  CheckSchemaRule('<xs:complexType name="b"><xs:simpleContent><xs:extension base="xs:int"/></xs:simpleContent>' +
-    '</xs:complexType><xs:complexType name="d"><xs:complexContent><xs:extension base="b">' +
-    '<xs:sequence><xs:element name="y"/></xs:sequence></xs:extension></xs:complexContent>' +
-    '</xs:complexType>',
-    'cos-ct-extends.1.4.3.2.2.1.a', 1, 'element-only extension of simple content');
-  CheckSchemaRule('<xs:complexType name="b"><xs:sequence><xs:element name="x"/></xs:sequence></xs:complexType>' +
-    '<xs:complexType name="d" mixed="true"><xs:complexContent><xs:extension base="b"/>' +
-    '</xs:complexContent></xs:complexType>',
-    'cos-ct-extends.1.4.3.2.2.1.b', 1, 'mixed extension of element-only content');
-  CheckSchemaRule('<xs:complexType name="b"><xs:sequence><xs:element name="x"/></xs:sequence></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent mixed="true"><xs:restriction base="b">' +
-    '<xs:sequence><xs:element name="x"/></xs:sequence></xs:restriction></xs:complexContent>' +
-    '</xs:complexType>',
-    'derivation-ok-restriction.5.4.1.2', 1, 'mixed restriction of element-only content');
-  CheckSchemaRule('<xs:complexType name="d"><xs:attribute name="a" type="xs:ID"/>' +
-    '<xs:attribute name="c" type="xs:ID"/></xs:complexType>',
-    'ct-props-correct.5', 1, 'two ID attributes');
-  CheckSchemaRule('<xs:complexType name="b"><xs:attribute name="a" type="xs:ID"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:extension base="b">' +
-    '<xs:attribute name="c" type="xs:ID"/></xs:extension></xs:complexContent></xs:complexType>',
-    'ct-props-correct.5', 1, 'an ID attribute added to one of the base');
-  CheckSchemaRule('<xs:complexType name="b"><xs:attribute name="a" use="required"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b"><xs:attribute name="a"/>' +
-    '</xs:restriction></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.2.1.1', 1, 'a required attribute made optional');
-  CheckSchemaRule('<xs:complexType name="b"><xs:attribute name="a" type="xs:int"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b">' +
-    '<xs:attribute name="a" type="xs:string"/></xs:restriction></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.2.1.2', 1, 'an attribute type not derived from the base one');
-  CheckSchemaRule('<xs:complexType name="b"><xs:attribute name="a" type="xs:int" fixed="1"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b">' +
-    '<xs:attribute name="a" type="xs:int"/></xs:restriction></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.2.1.3.a', 1, 'a fixed attribute no longer fixed');
-  CheckSchemaRule('<xs:complexType name="b"><xs:attribute name="a" type="xs:int" fixed="1"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b">' +
-    '<xs:attribute name="a" type="xs:int" fixed="2"/></xs:restriction></xs:complexContent>' +
-    '</xs:complexType>',
-    'derivation-ok-restriction.2.1.3.b', 1, 'a fixed attribute with another value');
-  CheckSchemaRule('<xs:complexType name="b"></xs:complexType><xs:complexType name="d"><xs:complexContent>' +
-    '<xs:restriction base="b"><xs:attribute name="a"/></xs:restriction></xs:complexContent>' +
-    '</xs:complexType>',
-    'derivation-ok-restriction.2.2.a', 1, 'a new attribute without a base wildcard');
-  CheckSchemaRule('<xs:complexType name="b"><xs:anyAttribute namespace="##other"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b"><xs:attribute name="a"/>' +
-    '</xs:restriction></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.2.2.b', 1, 'a new attribute the base wildcard does not allow');
-  CheckSchemaRule('<xs:complexType name="b"><xs:attribute name="a" use="required"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b">' +
-    '<xs:attribute name="a" use="prohibited"/></xs:restriction></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.3', 1, 'a required attribute prohibited');
-  CheckSchemaRule('<xs:complexType name="b"></xs:complexType><xs:complexType name="d"><xs:complexContent>' +
-    '<xs:restriction base="b"><xs:anyAttribute/></xs:restriction></xs:complexContent>' +
-    '</xs:complexType>',
-    'derivation-ok-restriction.4.1', 1, 'a wildcard without a base wildcard');
-  CheckSchemaRule('<xs:complexType name="b"><xs:anyAttribute namespace="##other"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b"><xs:anyAttribute/>' +
-    '</xs:restriction></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.4.2', 1, 'a wildcard that is no subset');
-  CheckSchemaRule('<xs:complexType name="b"><xs:anyAttribute processContents="lax"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b">' +
-    '<xs:anyAttribute processContents="skip"/></xs:restriction></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.4.3', 1, 'a wildcard with weaker processContents');
-  CheckSchemaRule('<xs:simpleType name="custom"><xs:restriction base="xs:anySimpleType"/></xs:simpleType>',
-    'cos-st-restricts.1.1', 1, 'restriction of xs:anySimpleType in the XML Schema namespace', ' targetNamespace="http://www.w3.org/2001/XMLSchema"');
-  CheckSchemaRule('<xs:simpleType name="inner"><xs:union memberTypes="xs:int xs:string"/></xs:simpleType>' +
-    '<xs:simpleType name="outer"><xs:union memberTypes="inner xs:boolean"/></xs:simpleType>' +
-    '<xs:complexType name="b"><xs:attribute name="a" type="outer"/></xs:complexType>' +
-    '<xs:complexType name="d"><xs:complexContent><xs:restriction base="b">' +
-    '<xs:attribute name="a" type="inner"/></xs:restriction></xs:complexContent></xs:complexType>',
-    'derivation-ok-restriction.2.1.2', 1, 'an attribute type that is a member union of the base one');
-  { valid forms the rules must accept }
-  FileName := TempSchema('<xs:annotation><xs:documentation xml:lang="de">x</xs:documentation></xs:annotation>' +
-    '<xs:element name="r" id="e1"><xs:complexType mixed="true"><xs:sequence minOccurs="0" maxOccurs="unbounded">' +
-    '<xs:element ref="r" minOccurs="0"/><xs:any namespace="urn:y  urn:z" processContents="lax"/>' +
-    '</xs:sequence><xs:attribute name="a" form="qualified" ' +
-    'use="required"><xs:simpleType><xs:restriction base="xs:string"><xs:maxLength value=" 5 " fixed="true"/>' +
-    '<xs:enumeration value="x"/></xs:restriction></xs:simpleType></xs:attribute><xs:anyAttribute ' +
-    'namespace="##any" processContents="skip"/></xs:complexType></xs:element>' +
-    '<xs:group name="g"><xs:annotation/><xs:sequence><xs:element name="x"/></xs:sequence></xs:group>' +
-    '<xs:simpleType name="u" final="#all"><xs:union memberTypes="xs:int  xs:date"><xs:simpleType>' +
-    '<xs:list itemType="xs:token"/></xs:simpleType></xs:union></xs:simpleType>' +
-    '<xs:element name="m" fixed="x"><xs:complexType mixed="true"><xs:sequence minOccurs="0">' +
-    '<xs:element name="a"/></xs:sequence></xs:complexType></xs:element>' +
-    '<xs:attribute name="d" type="xs:decimal" fixed="1.0"/><xs:element name="u"><xs:complexType>' +
-    '<xs:attribute ref="d" fixed="1"/><xs:attribute name="w" type="xs:int" default="7"/></xs:complexType>' +
-    '</xs:element>' +
-    '<xs:element name="o" default="x"><xs:complexType mixed="true"><xs:sequence minOccurs="0" maxOccurs="2">' +
-    '<xs:any minOccurs="2" maxOccurs="3" processContents="lax"/></xs:sequence></xs:complexType></xs:element>' +
-    '<xs:attribute name="dt" type="xs:date" fixed="2000-01-01+01:00"/><xs:element name="v"><xs:complexType>' +
-    '<xs:attribute ref="dt" fixed="1999-12-31Z"/></xs:complexType></xs:element>' +
-    '<xs:complexType name="t" block="extension restriction" final="#all"><xs:simpleContent>' +
-    '<xs:extension base="xs:int"><xs:attribute name="b" type="xs:int" default="1"/></xs:extension>' +
-    '</xs:simpleContent></xs:complexType>', ' xmlns:t="urn:x" elementFormDefault="qualified" ' +
-    'blockDefault="substitution" finalDefault="list union" xml:lang="en" version="1.0"');
-  S := nil;
+  Count := 0;
+  L := TStringList.Create;
   try
-    S := LandrixXmlXsdLoadSchema(FileName);
-    Check(S.FindElement('', 'r') <> nil, 'valid forms load');
+    L.LoadFromFile(IncludeTrailingPathDelimiter(RepositoryRoot) + 'tests' + PathDelim + 'data' + PathDelim +
+      'xsdschema' + PathDelim + 'rules.txt');
+    for K := 0 to Integer(L.Count) - 1 do
+    begin
+      if (L[K] = '') or (L[K][1] = '#') then
+        Continue;
+      Fields := SplitTabs(L[K]);
+      try
+        Check((Integer(Fields.Count) = 5) or (Integer(Fields.Count) = 6), 'rules.txt line ' + IntToStr(K + 1));
+        if (Integer(Fields.Count) <> 5) and (Integer(Fields.Count) <> 6) then
+          Continue;
+        Inc(Count);
+        Body := LandrixXmlUtf8ToString(Unescaped(Fields[4]));
+        if Fields[0] <> 'valid' then
+          CheckSchemaRule(Body, Fields[0], StrToInt(Fields[1]), Fields[2],
+            LandrixXmlUtf8ToString(Unescaped(Fields[3])))
+        else
+        begin
+          FileName := TempSchema(Body, LandrixXmlUtf8ToString(Unescaped(Fields[3])));
+          S := nil;
+          try
+            S := LandrixXmlXsdLoadSchema(FileName);
+            Check(S.FindElement('', 'r') <> nil, Fields[2] + ' load');
+          finally
+            S.Free;
+            DeleteFile(FileName);
+          end;
+        end;
+      finally
+        Fields.Free;
+      end;
+    end;
   finally
-    S.Free;
-    DeleteFile(FileName);
+    L.Free;
   end;
-  FileName := TempSchema('<xs:complexType name="fe" final="restriction"><xs:sequence><xs:element name="x"/>' +
-    '</xs:sequence></xs:complexType><xs:complexType name="fe2"><xs:complexContent>' +
-    '<xs:extension base="fe"><xs:sequence><xs:element name="y"/></xs:sequence></xs:extension>' +
-    '</xs:complexContent></xs:complexType><xs:complexType name="fr" final="extension"/>' +
-    '<xs:complexType name="fr2"><xs:complexContent><xs:restriction base="fr"/></xs:complexContent>' +
-    '</xs:complexType><xs:complexType name="fd" final=""/><xs:complexType name="fd2">' +
-    '<xs:complexContent><xs:extension base="fd"/></xs:complexContent></xs:complexType>' +
-    '<xs:simpleType name="sl" final="restriction"><xs:restriction base="xs:int"/></xs:simpleType>' +
-    '<xs:simpleType name="sl2"><xs:list itemType="sl"/></xs:simpleType><xs:simpleType name="su">' +
-    '<xs:union memberTypes="xs:int xs:date"/></xs:simpleType><xs:complexType name="sc">' +
-    '<xs:simpleContent><xs:extension base="xs:decimal"><xs:attribute name="a" type="su"/>' +
-    '<xs:attribute name="f" type="xs:decimal" fixed="1.0"/>' +
-    '<xs:attribute name="r" type="xs:int" use="required"/>' +
-    '<xs:attribute name="o" type="xs:anySimpleType"/><xs:attribute name="p"/></xs:extension>' +
-    '</xs:simpleContent></xs:complexType><xs:complexType name="sc2"><xs:simpleContent>' +
-    '<xs:restriction base="sc"><xs:simpleType><xs:restriction base="xs:integer"/></xs:simpleType>' +
-    '<xs:maxInclusive value="5"/><xs:attribute name="a" type="xs:short"/>' +
-    '<xs:attribute name="f" type="xs:decimal" fixed="1"/>' +
-    '<xs:attribute name="r" type="xs:byte" use="required"/><xs:attribute name="o" type="sl2"/>' +
-    '<xs:attribute name="p" use="prohibited"/></xs:restriction></xs:simpleContent></xs:complexType>' +
-    '<xs:complexType name="mx" mixed="true"><xs:sequence minOccurs="0"><xs:element name="x"/>' +
-    '</xs:sequence><xs:anyAttribute namespace="##any" processContents="lax"/></xs:complexType>' +
-    '<xs:complexType name="mx2"><xs:simpleContent><xs:restriction base="mx"><xs:simpleType>' +
-    '<xs:restriction base="xs:string"/></xs:simpleType></xs:restriction></xs:simpleContent>' +
-    '</xs:complexType><xs:complexType name="mx3" mixed="true"><xs:complexContent>' +
-    '<xs:extension base="mx"><xs:sequence><xs:element name="y"/></xs:sequence></xs:extension>' +
-    '</xs:complexContent></xs:complexType><xs:complexType name="mx4"><xs:complexContent>' +
-    '<xs:extension base="mx"><xs:attribute name="b"/></xs:extension></xs:complexContent>' +
-    '</xs:complexType><xs:complexType name="mx5"><xs:complexContent><xs:restriction base="mx">' +
-    '<xs:sequence><xs:element name="x"/></xs:sequence><xs:attribute name="n" type="xs:ID"/>' +
-    '<xs:anyAttribute namespace="##other" processContents="strict"/></xs:restriction>' +
-    '</xs:complexContent></xs:complexType><xs:complexType name="em"/>' +
-    '<xs:complexType name="em2" mixed="true"><xs:complexContent><xs:extension base="em"/>' +
-    '</xs:complexContent></xs:complexType><xs:complexType name="el"><xs:sequence>' +
-    '<xs:element name="x"/></xs:sequence></xs:complexType><xs:complexType name="el2">' +
-    '<xs:complexContent><xs:extension base="el"><xs:sequence/></xs:extension></xs:complexContent>' +
-    '</xs:complexType><xs:complexType name="ss"><xs:simpleContent><xs:extension base="xs:int"/>' +
-    '</xs:simpleContent></xs:complexType><xs:complexType name="ss2"><xs:complexContent>' +
-    '<xs:extension base="ss"><xs:attribute name="b"/></xs:extension></xs:complexContent>' +
-    '</xs:complexType><xs:complexType name="z1"><xs:simpleContent><xs:extension base="xs:string"/>' +
-    '</xs:simpleContent></xs:complexType><xs:complexType name="z2"><xs:complexContent>' +
-    '<xs:extension base="z1"><xs:sequence minOccurs="0" maxOccurs="0"><xs:element name="x"/>' +
-    '</xs:sequence></xs:extension></xs:complexContent></xs:complexType><xs:simpleType name="zs">' +
-    '<xs:union memberTypes="xs:string xs:anyURI"/></xs:simpleType><xs:complexType name="zb">' +
-    '<xs:attribute name="a" type="zs" fixed="urn:x"/></xs:complexType><xs:complexType name="zd">' +
-    '<xs:complexContent><xs:restriction base="zb">' +
-    '<xs:attribute name="a" type="xs:anyURI" fixed="urn:x"/></xs:restriction></xs:complexContent>' +
-    '</xs:complexType><xs:simpleType name="zu" final="restriction">' +
-    '<xs:union memberTypes="xs:int xs:string"/></xs:simpleType><xs:complexType name="za">' +
-    '<xs:simpleContent><xs:extension base="zu"/></xs:simpleContent></xs:complexType>' +
-    '<xs:complexType name="zr"><xs:simpleContent><xs:restriction base="za"/></xs:simpleContent>' +
-    '</xs:complexType><xs:complexType name="zr2"><xs:simpleContent><xs:restriction base="zr">' +
-    '<xs:simpleType><xs:restriction base="xs:int"/></xs:simpleType></xs:restriction>' +
-    '</xs:simpleContent></xs:complexType><xs:simpleType name="zl1"><xs:list itemType="xs:string"/>' +
-    '</xs:simpleType><xs:simpleType name="zl2"><xs:list itemType="xs:anyURI"/></xs:simpleType>' +
-    '<xs:simpleType name="zlu"><xs:union memberTypes="zl1 zl2"/></xs:simpleType>' +
-    '<xs:complexType name="zlb"><xs:attribute name="a" type="zlu" fixed="urn:x urn:y"/>' +
-    '</xs:complexType><xs:complexType name="zld"><xs:complexContent><xs:restriction base="zlb">' +
-    '<xs:attribute name="a" type="zl2" fixed="urn:x urn:y"/></xs:restriction></xs:complexContent>' +
-    '</xs:complexType><xs:simpleType name="zi" final=""><xs:union memberTypes="xs:int xs:string"/>' +
-    '</xs:simpleType><xs:simpleType name="zm1"><xs:list itemType="zi"/></xs:simpleType>' +
-    '<xs:simpleType name="zm2"><xs:list itemType="xs:int"/></xs:simpleType>' +
-    '<xs:simpleType name="zmu"><xs:union memberTypes="zm1 zm2"/></xs:simpleType>' +
-    '<xs:complexType name="zmb"><xs:attribute name="a" type="zmu" fixed="1 2"/></xs:complexType>' +
-    '<xs:complexType name="zmd"><xs:complexContent><xs:restriction base="zmb">' +
-    '<xs:attribute name="a" type="zm2" fixed="1 2"/></xs:restriction></xs:complexContent>' +
-    '</xs:complexType><xs:complexType name="zc" mixed="true"/><xs:complexType name="zc2">' +
-    '<xs:complexContent><xs:extension base="zc"><xs:choice minOccurs="00"/></xs:extension>' +
-    '</xs:complexContent></xs:complexType><xs:complexType name="zx" mixed="true"/>' +
-    '<xs:complexType name="zx2"><xs:complexContent><xs:extension base="zx"/></xs:complexContent>' +
-    '</xs:complexType><xs:complexType name="zx3" mixed="true"><xs:complexContent>' +
-    '<xs:restriction base="zx2"/></xs:complexContent></xs:complexType><xs:element name="r"/>',
-    ' finalDefault="list"');
-  S := nil;
-  try
-    S := LandrixXmlXsdLoadSchema(FileName);
-    Check(S.FindElement('', 'r') <> nil, 'valid derivations load');
-  finally
-    S.Free;
-    DeleteFile(FileName);
-  end;
+  Check(Count >= 60, 'rules.txt read');
 end;
 
 procedure Register;

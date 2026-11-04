@@ -430,6 +430,13 @@ Differences from Xerces, also on purpose:
   component constraints; 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline
   for the CI.
+- The XML Schema reference data (simple types, validator cases, content
+  models, Unique Particle Attribution, the schema rules in
+  `tests/data/xsdschema/rules.txt`) comes from the validator of the Java
+  runtime, the one the KoSIT validator uses; `tests/data/xerces-oracle.txt`
+  names the runtime. `tools/check-xerces-drift.py --jdk DIR` regenerates
+  it with another JDK and reports what changed, so a new Java version
+  that changes Xerces' results is noticed.
 - About 135 test cases with more than 9000 checks, including generated
   conversion cases with Python's `decimal` module as an independent oracle.
 - Real-world XRechnung, ZUGFeRD and GAEB files (kept locally, not in the

@@ -121,6 +121,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a keyref outside the scope of its key is reported as
   `KeyRefOutOfScope`. `tools/gen-xsdvalidator-testdata.py` generates the
   test cases, `tests/data/xsdvalidator/edge` holds one small case per rule.
+- `tools/check-xerces-drift.py`: reruns every generator that asks the Java
+  runtime's XML Schema validator with another JDK and reports the files
+  that come out differently; `tests/data/xerces-oracle.txt` records the
+  runtime of the committed data. The schema rule tests moved to
+  `tests/data/xsdschema/rules.txt`, checked against the JDK by
+  `tools/check-xsdrules.py`.
 - `LandrixXmlXPathTree`: a read-only tree of a document in the XPath data
   model, built from the pull reader or from a DOM: nodes in document order
   in flat arrays, attributes as nodes, text and CDATA merged, numbered
