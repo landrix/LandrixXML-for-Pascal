@@ -607,12 +607,13 @@ end;
 
 { the schema for schemas: the constraint code Xerces reports and the
   position of the offending element }
-procedure CheckSchemaRule(const Body, ConstraintCode: string; Line: Integer; const Name: string);
+procedure CheckSchemaRule(const Body, ConstraintCode: string; Line: Integer; const Name: string;
+  const RootAttributes: string = '');
 var
   FileName: string;
   S: TLandrixXmlXsdSchemaSet;
 begin
-  FileName := TempSchema(Body);
+  FileName := TempSchema(Body, RootAttributes);
   S := nil;
   try
     try
@@ -679,6 +680,31 @@ begin
   CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:choice><xs:any namespace="##any"/>' +
     '<xs:element ref="r"/></xs:choice></xs:complexType></xs:element>', 'cos-nonambig', 1,
     'a wildcard competing with an element');
+  { element and attribute declarations }
+  CheckSchemaRule('<xs:element name="r" type="xs:int" default="x"/>', 'e-props-correct.2', 1, 'invalid element default');
+  CheckSchemaRule('<xs:element name="r" fixed="x"><xs:complexType><xs:sequence><xs:element name="a"/>' +
+    '</xs:sequence></xs:complexType></xs:element>', 'e-props-correct.2', 1, 'fixed value of element-only content');
+  CheckSchemaRule('<xs:element name="r" fixed="x"><xs:complexType mixed="true"><xs:sequence>' +
+    '<xs:element name="a"/></xs:sequence></xs:complexType></xs:element>', 'e-props-correct.2', 1,
+    'fixed value of mixed content that is not emptiable');
+  CheckSchemaRule('<xs:element name="r" type="xs:ID" default="x"/>', 'e-props-correct.5', 1, 'default of an ID element');
+  CheckSchemaRule('<xs:element name="r"/>' + #10 + '<xs:attribute name="a" type="xs:int" default="x"/>',
+    'cvc-datatype-valid.1.2.1', 2, 'invalid attribute default');
+  CheckSchemaRule('<xs:attribute name="a" type="xs:ID" fixed="x"/>', 'a-props-correct.3', 1, 'fixed ID attribute');
+  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:attribute name="a" default="x" use="required"/>' +
+    '</xs:complexType></xs:element>', 'src-attribute.2', 1, 'default with use required');
+  CheckSchemaRule('<xs:attribute name="a" type="xs:int" fixed="1"/><xs:element name="r"><xs:complexType>' +
+    '<xs:attribute ref="a" fixed="2"/></xs:complexType></xs:element>', 'au-props-correct.2', 1,
+    'a use with another fixed value');
+  CheckSchemaRule('<xs:attribute name="a" type="xs:int" fixed="1"/><xs:element name="r"><xs:complexType>' +
+    '<xs:attribute ref="a" default="1"/></xs:complexType></xs:element>', 'au-props-correct.2', 1,
+    'a use with a default for a fixed declaration');
+  CheckSchemaRule('<xs:attribute name="xmlns"/>', 'no-xmlns', 1, 'attribute xmlns');
+  CheckSchemaRule('<xs:attribute name="a"/>', 'no-xsi', 1, 'attribute in the xsi namespace',
+    ' targetNamespace="http://www.w3.org/2001/XMLSchema-instance"');
+  CheckSchemaRule('<xs:element name="r"><xs:complexType><xs:sequence><xs:element name="a" type="xs:int"/>' +
+    '<xs:element name="a" type="xs:string" minOccurs="0"/></xs:sequence></xs:complexType></xs:element>',
+    'cos-element-consistent', 1, 'two elements a with different types');
   { valid forms the rules must accept }
   FileName := TempSchema('<xs:annotation><xs:documentation xml:lang="de">x</xs:documentation></xs:annotation>' +
     '<xs:element name="r" id="e1"><xs:complexType mixed="true"><xs:sequence minOccurs="0" maxOccurs="unbounded">' +
@@ -690,6 +716,15 @@ begin
     '<xs:group name="g"><xs:annotation/><xs:sequence><xs:element name="x"/></xs:sequence></xs:group>' +
     '<xs:simpleType name="u" final="#all"><xs:union memberTypes="xs:int  xs:date"><xs:simpleType>' +
     '<xs:list itemType="xs:token"/></xs:simpleType></xs:union></xs:simpleType>' +
+    '<xs:element name="m" fixed="x"><xs:complexType mixed="true"><xs:sequence minOccurs="0">' +
+    '<xs:element name="a"/></xs:sequence></xs:complexType></xs:element>' +
+    '<xs:attribute name="d" type="xs:decimal" fixed="1.0"/><xs:element name="u"><xs:complexType>' +
+    '<xs:attribute ref="d" fixed="1"/><xs:attribute name="w" type="xs:int" default="7"/></xs:complexType>' +
+    '</xs:element>' +
+    '<xs:element name="o" default="x"><xs:complexType mixed="true"><xs:sequence minOccurs="0" maxOccurs="2">' +
+    '<xs:any minOccurs="2" maxOccurs="3" processContents="lax"/></xs:sequence></xs:complexType></xs:element>' +
+    '<xs:attribute name="dt" type="xs:date" fixed="2000-01-01+01:00"/><xs:element name="v"><xs:complexType>' +
+    '<xs:attribute ref="dt" fixed="1999-12-31Z"/></xs:complexType></xs:element>' +
     '<xs:complexType name="t" block="extension restriction" final="#all"><xs:simpleContent>' +
     '<xs:extension base="xs:int"><xs:attribute name="b" type="xs:int" default="1"/></xs:extension>' +
     '</xs:simpleContent></xs:complexType>', ' xmlns:t="urn:x" elementFormDefault="qualified" ' +

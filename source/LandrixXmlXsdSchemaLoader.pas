@@ -96,6 +96,30 @@ function LandrixXmlXsdLoadSchema(const FileName: string;
 
 implementation
 
+const
+  XsiNamespace = 'http://www.w3.org/2001/XMLSchema-instance';
+
+{ Xerces' checkDefaultValid: the value and then its canonical form must
+  be valid for the type }
+function ValidTwice(T: TLandrixXmlXsdSimpleType; const Text: TLandrixXmlUtf8;
+  out Canonical: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
+var
+  Value: TLandrixXmlXsdValue;
+begin
+  Result := T.Validate(Text, Value, Error) and T.Validate(LandrixXmlXsdValueText(Value), Canonical, Error);
+end;
+
+{ as Xerces: the values after the second validation (of the canonical
+  forms) are compared }
+function SameAttributeValue(Decl: TLandrixXmlXsdAttributeDecl; const A, B: TLandrixXmlUtf8): Boolean;
+var
+  VA, VB: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+begin
+  Result := ValidTwice(Decl.SimpleType, A, VA, Error) and ValidTwice(Decl.SimpleType, B, VB, Error) and
+    (LandrixXmlXsdCompareValues(VA, VB) = 0);
+end;
+
 { ---------------------------------------------------------------------- }
 { ELandrixXmlXsdSchemaError                                              }
 { ---------------------------------------------------------------------- }
@@ -274,6 +298,14 @@ type
     ConstraintValue: TLandrixXmlUtf8;
   end;
 
+  { an element declaration with a value constraint, checked when every
+    type is complete }
+  TElementValueCheck = class
+    Decl: TLandrixXmlXsdElementDecl;
+    Doc: TSchemaDoc;
+    Node: TLandrixXmlNode;
+  end;
+
   TKeyRefFixup = class
     Constraint: TLandrixXmlXsdIdentityConstraint;
     NamespaceUri: TLandrixXmlUtf8;
@@ -295,6 +327,7 @@ type
     FLocalCache: TLandrixXmlXsdNameMap;
     FIdentity: TLandrixXmlXsdNameMap;
     FFixups: TObjectList;
+    FValueChecks: TObjectList;
     { the skipped documents: namespace, tab, description }
     FSkipped: TStringList;
     { the documents checked against the schema for schemas }
@@ -361,6 +394,11 @@ type
     function ParsePaths(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Expr: TLandrixXmlUtf8;
       IsField: Boolean): TLandrixXmlXsdPaths;
     procedure ResolveAll;
+    procedure CheckElementValue(Check: TElementValueCheck);
+    procedure CheckAttributeValue(Doc: TSchemaDoc; Node: TLandrixXmlNode; Decl: TLandrixXmlXsdAttributeDecl;
+      const Value: TLandrixXmlUtf8);
+    procedure CheckElementsConsistent(Doc: TSchemaDoc; Node: TLandrixXmlNode; Particle: TLandrixXmlXsdParticle;
+      Seen: TLandrixXmlXsdNameMap);
   public
     constructor Create(Resolver: TLandrixXmlXsdResolver);
     destructor Destroy; override;
@@ -465,6 +503,7 @@ begin
   FLocalCache := TLandrixXmlXsdNameMap.Create;
   FIdentity := TLandrixXmlXsdNameMap.Create;
   FFixups := TObjectList.Create(True);
+  FValueChecks := TObjectList.Create(True);
   FSkipped := TStringList.Create;
   FCheckedFiles := TStringList.Create;
   FCheckedFiles.CaseSensitive := True;
@@ -486,6 +525,7 @@ begin
   FLocalCache.Free;
   FIdentity.Free;
   FFixups.Free;
+  FValueChecks.Free;
   FSkipped.Free;
   FCheckedFiles.Free;
   FSet.Free;
@@ -966,6 +1006,7 @@ var
   TypePending: TPending;
   Qualified, HasDefault, HasFixed: Boolean;
   DefaultValue, FixedValue: TLandrixXmlUtf8;
+  Check: TElementValueCheck;
 begin
   if not AttrTrimmed(Node, 'name', Name) or (Name = '') then
     Fail(Doc, Node, 'an element declaration without a name');
@@ -1046,6 +1087,14 @@ begin
   begin
     D.ValueConstraint := xvcFixed;
     D.ConstraintValue := FixedValue;
+  end;
+  if D.ValueConstraint <> xvcNone then
+  begin
+    Check := TElementValueCheck.Create;
+    FValueChecks.Add(Check);
+    Check.Decl := D;
+    Check.Doc := Doc;
+    Check.Node := Node;
   end;
   if P <> nil then
     P.State := psDone;
@@ -1133,6 +1182,11 @@ begin
   end;
   if D.SimpleType = nil then
     D.SimpleType := LandrixXmlXsdBuiltinType('anySimpleType');
+  if Name = 'xmlns' then
+    FailCheck(Doc.FileName, Node, 'no-xmlns', 'an attribute declaration cannot be named xmlns');
+  if D.NamespaceUri = XsiNamespace then
+    FailCheck(Doc.FileName, Node, 'no-xsi', 'an attribute declaration cannot be in the namespace ' +
+      Esc(XsiNamespace));
   { the value constraint of a local declaration belongs to its use, as in
     Xerces (cvc-complex-type.3.1 rather than cvc-attribute.4) }
   if not Global then
@@ -1150,10 +1204,12 @@ begin
   if Attr(Node, 'fixed', Value) then
   begin
     if D.ValueConstraint <> xvcNone then
-      Fail(Doc, Node, 'attribute ' + Esc(Name) + ' has both default and fixed');
+      FailCheck(Doc.FileName, Node, 'src-attribute.1', 'attribute ' + Esc(Name) + ' has both default and fixed');
     D.ValueConstraint := xvcFixed;
     D.ConstraintValue := Value;
   end;
+  if D.ValueConstraint <> xvcNone then
+    CheckAttributeValue(Doc, Node, D, D.ConstraintValue);
   if P <> nil then
     P.State := psDone;
   Result := D;
@@ -2072,6 +2128,9 @@ begin
         end;
         if Attr(Child, 'fixed', Value) then
         begin
+          if Item.ValueConstraint <> xvcNone then
+            FailCheck(Doc.FileName, Child, 'src-attribute.1', 'attribute ' + Esc(Item.Decl.Name) +
+              ' has both default and fixed');
           Item.ValueConstraint := xvcFixed;
           Item.ConstraintValue := Value;
         end;
@@ -2092,7 +2151,8 @@ begin
         if Attr(Child, 'fixed', Value) then
         begin
           if Item.ValueConstraint <> xvcNone then
-            Fail(Doc, Child, 'attribute ' + Esc(Item.Decl.Name) + ' has both default and fixed');
+            FailCheck(Doc.FileName, Child, 'src-attribute.1', 'attribute ' + Esc(Item.Decl.Name) +
+              ' has both default and fixed');
           Item.ValueConstraint := xvcFixed;
           Item.ConstraintValue := Value;
         end;
@@ -2105,6 +2165,18 @@ begin
           Item.Prohibited := True
         else if Value <> 'optional' then
           Fail(Doc, Child, 'invalid use "' + Esc(Value) + '"');
+      end;
+      { the value constraint of the use, in the order of Xerces }
+      if (Item.ValueConstraint = xvcDefault) and (Item.Required or Item.Prohibited) then
+        FailCheck(Doc.FileName, Child, 'src-attribute.2', 'attribute ' + Esc(Item.Decl.Name) +
+          ' has a default, so its use must be optional');
+      if Item.ValueConstraint <> xvcNone then
+      begin
+        CheckAttributeValue(Doc, Child, Item.Decl, Item.ConstraintValue);
+        if (Item.Decl.ValueConstraint = xvcFixed) and ((Item.ValueConstraint <> xvcFixed) or
+          not SameAttributeValue(Item.Decl, Item.ConstraintValue, Item.Decl.ConstraintValue)) then
+          FailCheck(Doc.FileName, Child, 'au-props-correct.2', 'the use of attribute ' + Esc(Item.Decl.Name) +
+            ' must have the fixed value ' + Esc(Item.Decl.ConstraintValue) + ' of its declaration');
       end;
       { a prohibited use in an attribute group is dropped later, so it is
         no duplicate }
@@ -2238,6 +2310,7 @@ var
   Items: TObjectList;
   Wildcard: TLandrixXmlXsdWildcard;
   Particle, First, Second: TLandrixXmlXsdParticle;
+  Seen: TLandrixXmlXsdNameMap;
   I, J: Integer;
   Item: TAttributeItem;
   Use: TLandrixXmlXsdAttributeUse;
@@ -2369,6 +2442,12 @@ begin
         Fail(Doc, Node, 'a content model must be a model group');
       end;
       T.Model := TLandrixXmlXsdContentModel.Create(Particle);
+      Seen := TLandrixXmlXsdNameMap.Create;
+      try
+        CheckElementsConsistent(Doc, Node, T.Model.Root, Seen);
+      finally
+        Seen.Free;
+      end;
       if T.Model.FindAmbiguity(First, Second) then
         FailCheck(Doc.FileName, Node, 'cos-nonambig', Esc(First.Display) + ' and ' +
           Esc(Second.Display) + ' make the content model ambiguous (Unique Particle ' +
@@ -2652,6 +2731,89 @@ end;
 
 { --- everything ------------------------------------------------------------ }
 
+{ a-props-correct.2 (reported with the code of the failed check, as
+  Xerces reports it first) and a-props-correct.3 }
+procedure TLoader.CheckAttributeValue(Doc: TSchemaDoc; Node: TLandrixXmlNode; Decl: TLandrixXmlXsdAttributeDecl;
+  const Value: TLandrixXmlUtf8);
+var
+  Canonical: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+begin
+  if not ValidTwice(Decl.SimpleType, Value, Canonical, Error) then
+    FailCheck(Doc.FileName, Node, Error.Code, 'the value ' + Esc(Value) + ' of attribute ' + Esc(Decl.Name) +
+      ' is not valid for its type: ' + Error.Message);
+  if Decl.SimpleType.IsIdType then
+    FailCheck(Doc.FileName, Node, 'a-props-correct.3', 'attribute ' + Esc(Decl.Name) +
+      ' has the type ID, so it cannot have a default or fixed value');
+end;
+
+{ e-props-correct.2 and .5; Xerces never marks a complex type as having
+  an ID content (containsTypeID is never set), so only simple types count }
+procedure TLoader.CheckElementValue(Check: TElementValueCheck);
+var
+  D: TLandrixXmlXsdElementDecl;
+  T: TLandrixXmlXsdSimpleType;
+  Valid: Boolean;
+  Canonical: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+begin
+  D := Check.Decl;
+  T := D.SimpleType;
+  Valid := True;
+  if T = nil then
+  begin
+    case D.ComplexType.ContentType of
+      xctSimple:
+        T := D.ComplexType.SimpleType;
+      xctMixed:
+        begin
+          { the particle must be emptiable (structurally, as Xerces); the
+            value is a string }
+          if D.ComplexType.Model <> nil then
+            Valid := Emptiable(D.ComplexType.Model.Root);
+          T := LandrixXmlXsdBuiltinType('string');
+        end;
+    else
+      Valid := False;
+    end;
+  end;
+  if Valid then
+    Valid := ValidTwice(T, D.ConstraintValue, Canonical, Error);
+  if not Valid then
+    FailCheck(Check.Doc.FileName, Check.Node, 'e-props-correct.2', 'the value ' + Esc(D.ConstraintValue) +
+      ' of element ' + Esc(D.Name) + ' is not valid for its type');
+  { Xerces deviation: stE072. A union with an ID member counts as ID }
+  if (D.SimpleType <> nil) and D.SimpleType.IsIdType then
+    FailCheck(Check.Doc.FileName, Check.Node, 'e-props-correct.5', 'element ' + Esc(D.Name) +
+      ' has the type ID, so it cannot have a default or fixed value');
+end;
+
+{ cos-element-consistent: elements of the same name in one content model
+  have the same type (the declarations of a type's particle, groups
+  included, not the content of the elements) }
+procedure TLoader.CheckElementsConsistent(Doc: TSchemaDoc; Node: TLandrixXmlNode; Particle: TLandrixXmlXsdParticle;
+  Seen: TLandrixXmlXsdNameMap);
+var
+  I: Integer;
+  D, Other: TLandrixXmlXsdElementDecl;
+begin
+  if Particle = nil then
+    Exit;
+  if Particle.Kind = xpkElement then
+  begin
+    D := TLandrixXmlXsdElementDecl(Particle.Decl);
+    Other := TLandrixXmlXsdElementDecl(Seen.Find(D.NamespaceUri, D.Name));
+    if Other = nil then
+      Seen.Add(D.NamespaceUri, D.Name, D)
+    else if (Other <> D) and ((Other.SimpleType <> D.SimpleType) or (Other.ComplexType <> D.ComplexType)) then
+      FailCheck(Doc.FileName, Node, 'cos-element-consistent', 'the content model has elements ' +
+        QualifiedText(D.NamespaceUri, D.Name) + ' with different types');
+    Exit;
+  end;
+  for I := 0 to Particle.ChildCount - 1 do
+    CheckElementsConsistent(Doc, Node, Particle.Children[I], Seen);
+end;
+
 procedure TLoader.ResolveAll;
 var
   I: Integer;
@@ -2704,6 +2866,8 @@ begin
     end;
     Inc(I);
   end;
+  for I := 0 to Integer(FValueChecks.Count) - 1 do
+    CheckElementValue(TElementValueCheck(FValueChecks[I]));
   for I := 0 to Integer(FFixups.Count) - 1 do
   begin
     Fixup := TKeyRefFixup(FFixups[I]);

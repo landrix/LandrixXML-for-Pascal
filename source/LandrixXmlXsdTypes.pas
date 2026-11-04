@@ -256,6 +256,9 @@ type
     { True if AType is this type or one of its base types (to recognize ID
       and IDREF values). }
     function IsDerivedFrom(AType: TLandrixXmlXsdSimpleType): Boolean;
+    { True if the type is xs:ID or derived from it, a list of such items or
+      a union with such a member (Xerces' isIDType). }
+    function IsIdType: Boolean;
   end;
 
 { The built-in type with this local name in the XML Schema namespace, or
@@ -1517,6 +1520,26 @@ begin
     T := T.FBase;
   end;
   Result := False;
+end;
+
+function TLandrixXmlXsdSimpleType.IsIdType: Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  case FVariety of
+    xsvAtomic:
+      Result := IsDerivedFrom(LandrixXmlXsdBuiltinType('ID'));
+    xsvList:
+      Result := FItemType.IsIdType;
+    xsvUnion:
+      for I := 0 to Integer(Length(FMembers)) - 1 do
+        if FMembers[I].IsIdType then
+        begin
+          Result := True;
+          Exit;
+        end;
+  end;
 end;
 
 function NonNegativeFacet(const Text: TLandrixXmlUtf8; Positive: Boolean): Integer;
