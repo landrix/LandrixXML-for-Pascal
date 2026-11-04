@@ -839,6 +839,8 @@ begin
       if HasNs and (Ns <> '') and (Ns = Result.TargetNamespace) then
         FailCheck(Result.FileName, Child, 'src-import.1.1', 'the namespace "' + Esc(Ns) +
           '" of the import is the target namespace of the importing document');
+      { Xerces deviation: schZ014_a, schZ014_b. namespace="" is accepted
+        and stands for no namespace }
       SetLength(Result.Imports, Length(Result.Imports) + 1);
       Result.Imports[High(Result.Imports)] := Ns;
       HasLocation := AttrTrimmed(Child, 'schemaLocation', Location);

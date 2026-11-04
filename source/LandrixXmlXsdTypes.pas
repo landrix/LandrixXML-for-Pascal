@@ -602,8 +602,17 @@ begin
         begin
           if not ReadDigits(S, P, 2, Value.Month) or (Value.Month < 1) or (Value.Month > 12) then
             Exit;
-          { Xerces deviation: gMonth_pattern001_1274. Xerces also accepts
-            --MM--, the form of XML Schema 1.0 before its errata }
+          { Xerces deviation: gMonth_pattern001_1274, gMonth_enumeration002_203, gMonth_maxInclusive002_205,
+            gMonth_maxExclusive002_208, gMonth_minInclusive002_210, gMonth_minExclusive002_213,
+            gMonth_enumeration001_1275, gMonth_enumeration002_1276, gMonth_enumeration003_1277,
+            gMonth_enumeration004_1278, gMonth_maxInclusive001_1279, gMonth_maxInclusive002_1280,
+            gMonth_maxInclusive003_1281, gMonth_maxExclusive001_1282, gMonth_maxExclusive002_1283,
+            gMonth_maxExclusive003_1284, gMonth_minInclusive001_1285, gMonth_minInclusive002_1286,
+            gMonth_minInclusive003_1287, gMonth_minInclusive004_1288, gMonth_minInclusive005_1289,
+            gMonth_minExclusive001_1290, gMonth_minExclusive002_1291, gMonth_minExclusive003_1292,
+            gMonth_minExclusive004_1293, gMonth_minExclusive005_1294.
+            Xerces also accepts --MM--, the form of XML Schema 1.0 before
+            its errata (also in facet values) }
           if (Kind = xspGMonth) and (P + 1 <= Length(S)) and (S[P] = '-') and (S[P + 1] = '-') then
             Inc(P, 2);
           if Kind = xspGMonthDay then
@@ -1683,6 +1692,10 @@ begin
     if Exclusive.Present and (LandrixXmlXsdCompareValues(Result, Exclusive.Value) = 0) then
       Exit;
   end;
+  { Xerces deviation: positiveInteger_maxExclusive001_1834,
+    positiveInteger_maxExclusive002_1835. An exclusive bound only has to be
+    a valid value of the base type, so maxExclusive 1 on positiveInteger is
+    accepted, though no value is left }
   if not FBase.CheckFacets(Result, Error) then
     InvalidFacetValue(Text, Error);
 end;

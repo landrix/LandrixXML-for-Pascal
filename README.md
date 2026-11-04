@@ -322,7 +322,26 @@ both the mark and an entry here):
   Fifth Edition tests expect the newer ones (`xv001`, `xv002`, `xv004`,
   `xv009`).
 - `gMonth` also accepts the form `--MM--` of XML Schema 1.0 before its
-  errata (`gMonth_pattern001_1274`).
+  errata, also in facet values (`gMonth_pattern001_1274`,
+  `gMonth_enumeration002_203`, `gMonth_maxInclusive002_205`,
+  `gMonth_maxExclusive002_208`, `gMonth_minInclusive002_210`,
+  `gMonth_minExclusive002_213`, `gMonth_enumeration001_1275`,
+  `gMonth_enumeration002_1276`, `gMonth_enumeration003_1277`,
+  `gMonth_enumeration004_1278`, `gMonth_maxInclusive001_1279`,
+  `gMonth_maxInclusive002_1280`, `gMonth_maxInclusive003_1281`,
+  `gMonth_maxExclusive001_1282`, `gMonth_maxExclusive002_1283`,
+  `gMonth_maxExclusive003_1284`, `gMonth_minInclusive001_1285`,
+  `gMonth_minInclusive002_1286`, `gMonth_minInclusive003_1287`,
+  `gMonth_minInclusive004_1288`, `gMonth_minInclusive005_1289`,
+  `gMonth_minExclusive001_1290`, `gMonth_minExclusive002_1291`,
+  `gMonth_minExclusive003_1292`, `gMonth_minExclusive004_1293`,
+  `gMonth_minExclusive005_1294`).
+- An exclusive bound only has to be a valid value of the base type, so
+  `maxExclusive="1"` on `positiveInteger` is accepted though no value is
+  left (`positiveInteger_maxExclusive001_1834`,
+  `positiveInteger_maxExclusive002_1835`).
+- An `xs:import` with `namespace=""` is accepted (`schZ014_a`,
+  `schZ014_b`).
 - An `IDREF`/`IDREFS` attribute value supplied by a default or fixed
   value of the schema is not checked as a reference, and a key field that
   selects an attribute matched by a lax or skip wildcard is accepted
