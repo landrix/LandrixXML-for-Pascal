@@ -3514,136 +3514,412 @@ end;
 
 { --- identity constraints ------------------------------------------------- }
 
-{ True if S begins with the axis name Axis and "::", with white space
-  allowed before the "::" (between the tokens of the XPath subset); Rest is
-  the text after it, trimmed. }
-function AxisStep(const S, Axis: TLandrixXmlUtf8; out Rest: TLandrixXmlUtf8): Boolean;
+type
+  { the tokens of Xerces' XPath scanner that the XPath subset of identity
+    constraints allows; every other token is c-general-xpath }
+  TIdcTokenKind = (itAt, itAttributeAxis, itChildAxis, itDoubleColon, itName, itAny, itNamespace, itSlash,
+    itDoubleSlash, itUnion, itPeriod);
+  TIdcToken = record
+    Kind: TIdcTokenKind;
+    Prefix: TLandrixXmlUtf8;
+    LocalName: TLandrixXmlUtf8;
+  end;
+  TIdcTokens = array of TIdcToken;
+
+function IsIdcSpace(C: AnsiChar): Boolean;
+begin
+  Result := (C = ' ') or (C = #9) or (C = #10) or (C = #13);
+end;
+
+function IsIdcNameStart(C: AnsiChar): Boolean;
+begin
+  Result := ((C >= 'a') and (C <= 'z')) or ((C >= 'A') and (C <= 'Z')) or (C = '_') or (Ord(C) >= $80);
+end;
+
+function IsIdcNameChar(C: AnsiChar): Boolean;
+begin
+  Result := IsIdcNameStart(C) or ((C >= '0') and (C <= '9')) or (C = '.') or (C = '-');
+end;
+
+{ Xerces' Selector.XPath.normalize (Field: fixupXPath): "./" before every
+  branch that does not begin with '.' or '/' (a field's empty branch
+  stays empty) }
+function NormalizeIdcPath(const Expr: TLandrixXmlUtf8; IsField: Boolean): TLandrixXmlUtf8;
 var
-  I: Integer;
+  I, Start: Integer;
+  Branch, Trim: TLandrixXmlUtf8;
+begin
+  Result := '';
+  Start := 1;
+  for I := 1 to Integer(Length(Expr)) + 1 do
+    if (I > Integer(Length(Expr))) or (Expr[I] = '|') then
+    begin
+      Branch := Copy(Expr, Start, I - Start);
+      Trim := Trimmed(Branch);
+      if not ((Trim <> '') and ((Trim[1] = '.') or (Trim[1] = '/'))) and (not IsField or (Trim <> '')) then
+        Result := Result + './';
+      Result := Result + Branch;
+      if I <= Integer(Length(Expr)) then
+        Result := Result + '|';
+      Start := I + 1;
+    end;
+end;
+
+{ the end of the name run at I: name characters, non-ASCII bytes
+  included; the run is checked as an NCName by the caller }
+function IdcNameEnd(const S: TLandrixXmlUtf8; I: Integer): Integer;
+begin
+  Result := I;
+  if (Result <= Integer(Length(S))) and IsIdcNameStart(AnsiChar(S[Result])) then
+    while (Result <= Integer(Length(S))) and IsIdcNameChar(AnsiChar(S[Result])) do
+      Inc(Result);
+end;
+
+function IsIdcNCName(const S: TLandrixXmlUtf8): Boolean;
+var
+  Value: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+begin
+  Result := (S <> '') and LandrixXmlXsdBuiltinType('NCName').Validate(S, Value, Error) and (Value.Text = S);
+end;
+
+{ Xerces' XPath.Scanner.scanExpr restricted to the tokens of the subset:
+  False for anything else }
+function ScanIdcPath(const S: TLandrixXmlUtf8; out Tokens: TIdcTokens): Boolean;
+var
+  I, N, Start: Integer;
+  StarIsOperator, IsNamespace, IsAxis: Boolean;
+  Name, Prefix: TLandrixXmlUtf8;
+
+  procedure Add(Kind: TIdcTokenKind; const APrefix, ALocalName: TLandrixXmlUtf8);
+  begin
+    SetLength(Tokens, Length(Tokens) + 1);
+    Tokens[High(Tokens)].Kind := Kind;
+    Tokens[High(Tokens)].Prefix := APrefix;
+    Tokens[High(Tokens)].LocalName := ALocalName;
+  end;
+
 begin
   Result := False;
-  Rest := '';
-  if Copy(S, 1, Length(Axis)) <> Axis then
-    Exit;
-  I := Length(Axis) + 1;
-  while (I <= Length(S)) and ((S[I] = ' ') or (S[I] = #9) or (S[I] = #10) or (S[I] = #13)) do
-    Inc(I);
-  if Copy(S, I, 2) <> '::' then
-    Exit;
-  Rest := Trimmed(Copy(S, I + 2, MaxInt));
+  Tokens := nil;
+  N := Integer(Length(S));
+  I := 1;
+  StarIsOperator := False;
+  while True do
+  begin
+    while (I <= N) and IsIdcSpace(AnsiChar(S[I])) do
+      Inc(I);
+    if I > N then
+      Break;
+    case S[I] of
+      '.':
+        begin
+          { '.' alone, before '/' or '|', or before white space that ends
+            the expression or precedes '/' or '|' }
+          if I = N then
+            Inc(I)
+          else if (S[I + 1] = '/') or (S[I + 1] = '|') then
+            Inc(I)
+          else if IsIdcSpace(AnsiChar(S[I + 1])) then
+          begin
+            Inc(I);
+            while (I <= N) and IsIdcSpace(AnsiChar(S[I])) do
+              Inc(I);
+            if (I <= N) and (S[I] <> '|') and (S[I] <> '/') then
+              Exit;
+          end
+          else
+            Exit;
+          Add(itPeriod, '', '');
+          StarIsOperator := True;
+        end;
+      '@':
+        begin
+          Add(itAt, '', '');
+          StarIsOperator := False;
+          Inc(I);
+        end;
+      ':':
+        begin
+          if (I = N) or (S[I + 1] <> ':') then
+            Exit;
+          Add(itDoubleColon, '', '');
+          StarIsOperator := False;
+          Inc(I, 2);
+        end;
+      '/':
+        begin
+          if (I < N) and (S[I + 1] = '/') then
+          begin
+            Add(itDoubleSlash, '', '');
+            Inc(I, 2);
+          end
+          else
+          begin
+            Add(itSlash, '', '');
+            Inc(I);
+          end;
+          StarIsOperator := False;
+        end;
+      '|':
+        begin
+          Add(itUnion, '', '');
+          StarIsOperator := False;
+          Inc(I);
+        end;
+      '*':
+        begin
+          { after a name test it is the multiplication operator }
+          if StarIsOperator then
+            Exit;
+          Add(itAny, '', '');
+          StarIsOperator := True;
+          Inc(I);
+        end;
+    else
+      begin
+        if not IsIdcNameStart(AnsiChar(S[I])) then
+          Exit;
+        Start := I;
+        I := IdcNameEnd(S, I);
+        Name := Copy(S, Start, I - Start);
+        if not IsIdcNCName(Name) then
+          Exit;
+        Prefix := '';
+        IsNamespace := False;
+        IsAxis := False;
+        if (I <= N) and (S[I] = ':') then
+        begin
+          Inc(I);
+          if I > N then
+            Exit;
+          if S[I] = '*' then
+          begin
+            Inc(I);
+            IsNamespace := True;
+          end
+          else if S[I] = ':' then
+          begin
+            Inc(I);
+            IsAxis := True;
+          end
+          else
+          begin
+            Prefix := Name;
+            Start := I;
+            I := IdcNameEnd(S, I);
+            Name := Copy(S, Start, I - Start);
+            if not IsIdcNCName(Name) then
+              Exit;
+          end;
+        end;
+        while (I <= N) and IsIdcSpace(AnsiChar(S[I])) do
+          Inc(I);
+        { an operator name (and, or, mod, div), a function or node type
+          are not in the subset }
+        if StarIsOperator or ((I <= N) and (S[I] = '(') and not IsNamespace and not IsAxis) then
+          Exit;
+        if IsAxis or ((I < N) and (S[I] = ':') and (S[I + 1] = ':')) then
+        begin
+          if IsNamespace then
+            Exit;
+          if Name = 'attribute' then
+            Add(itAttributeAxis, '', '')
+          else if Name = 'child' then
+            Add(itChildAxis, '', '')
+          else
+            Exit;
+          Add(itDoubleColon, '', '');
+          StarIsOperator := False;
+          if not IsAxis then
+            Inc(I, 2);
+        end
+        else if IsNamespace then
+        begin
+          Add(itNamespace, Name, '');
+          StarIsOperator := True;
+        end
+        else
+        begin
+          Add(itName, Prefix, Name);
+          StarIsOperator := True;
+        end;
+      end;
+    end;
+  end;
   Result := True;
 end;
 
+{ An XPath expression of a selector or field, parsed as Xerces does
+  (XPath.parseExpression with Selector.XPath and Field.XPath): the subset
+  of XML Schema 1.0 section 3.11.6, white space between tokens allowed;
+  c-general-xpath for anything else, c-general-xpath-ns for an undeclared
+  prefix, c-selector-xpath for a selector that ends at an attribute and
+  c-fields-xpaths for a field with an attribute step before its end. }
 function TLoader.ParsePaths(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Expr: TLandrixXmlUtf8;
   IsField: Boolean): TLandrixXmlXsdPaths;
 var
-  Parts: TLandrixXmlUtf8Array;
-  I, J, K, N, Start: Integer;
-  Part, StepText, Prefix, Rest: TLandrixXmlUtf8;
+  Tokens: TIdcTokens;
+  T, J, StepCount: Integer;
+  Expecting, Attribute: Boolean;
   Path: TLandrixXmlXsdPath;
   Step: TLandrixXmlXsdPathStep;
-  Steps: TLandrixXmlUtf8Array;
 
   procedure Bad;
   begin
-    Unsupported(Doc, Node, 'the XPath expression "' + Esc(Expr) + '"');
+    FailCheck(Doc.FileName, Node, 'c-general-xpath', 'the expression ' + Esc(Expr) +
+      ' is not valid with respect to the XPath subset supported by XML Schema');
+  end;
+
+  procedure Check(B: Boolean);
+  begin
+    if not B then
+      Bad;
+  end;
+
+  function Next: TIdcToken;
+  begin
+    if T > High(Tokens) then
+      Bad;
+    Result := Tokens[T];
+    Inc(T);
+  end;
+
+  procedure AddPath;
+  begin
+    Check(StepCount <> 0);
+    SetLength(Result, Length(Result) + 1);
+    Result[High(Result)] := Path;
+    Path.Descendant := False;
+    Path.Steps := nil;
+    StepCount := 0;
+  end;
+
+  procedure NodeTest(const Token: TIdcToken; IsAttribute: Boolean);
+  begin
+    Step.AnyName := False;
+    Step.AnyLocalName := False;
+    Step.NamespaceUri := '';
+    Step.LocalName := '';
+    Step.IsAttribute := IsAttribute;
+    case Token.Kind of
+      itAny:
+        begin
+          Step.AnyName := True;
+          Step.Text := '*';
+        end;
+      itNamespace, itName:
+        begin
+          if (Token.Prefix <> '') and not Node.LookupNamespace(Token.Prefix, Step.NamespaceUri) then
+            FailCheck(Doc.FileName, Node, 'c-general-xpath-ns', 'a namespace prefix in the expression ' +
+              Esc(Expr) + ' is not declared');
+          if Token.Kind = itNamespace then
+          begin
+            Step.AnyLocalName := True;
+            Step.Text := Token.Prefix + ':*';
+          end
+          else
+          begin
+            { XML Schema 1.0: an unprefixed name has no namespace }
+            Step.LocalName := Token.LocalName;
+            if Token.Prefix <> '' then
+              Step.Text := Token.Prefix + ':' + Token.LocalName
+            else
+              Step.Text := Token.LocalName;
+          end;
+        end;
+    else
+      Bad;
+    end;
+    SetLength(Path.Steps, Length(Path.Steps) + 1);
+    Path.Steps[High(Path.Steps)] := Step;
+    Inc(StepCount);
   end;
 
 begin
   Result := nil;
-  Parts := nil;
-  { split at '|' }
-  Start := 1;
-  for I := 1 to Length(Expr) + 1 do
-    if (I > Length(Expr)) or (Expr[I] = '|') then
-    begin
-      SetLength(Parts, Length(Parts) + 1);
-      Parts[High(Parts)] := Trimmed(Copy(Expr, Start, I - Start));
-      Start := I + 1;
-    end;
-  for I := 0 to Integer(Length(Parts)) - 1 do
+  if not ScanIdcPath(NormalizeIdcPath(Expr, IsField), Tokens) then
+    Bad;
+  Path.Descendant := False;
+  Path.Steps := nil;
+  StepCount := 0;
+  Expecting := True;
+  T := 0;
+  while T <= High(Tokens) do
   begin
-    Part := Parts[I];
-    Path.Descendant := False;
-    Path.Steps := nil;
-    if Copy(Part, 1, 3) = './/' then
-    begin
-      Path.Descendant := True;
-      Part := Trimmed(Copy(Part, 4, MaxInt));
-    end;
-    if Part = '' then
-      Bad;
-    { split at '/' }
-    Steps := nil;
-    Start := 1;
-    for J := 1 to Length(Part) + 1 do
-      if (J > Length(Part)) or (Part[J] = '/') then
-      begin
-        SetLength(Steps, Length(Steps) + 1);
-        Steps[High(Steps)] := Trimmed(Copy(Part, Start, J - Start));
-        Start := J + 1;
-      end;
-    for J := 0 to Integer(Length(Steps)) - 1 do
-    begin
-      StepText := Steps[J];
-      if StepText = '' then
-        Bad;
-      if StepText = '.' then
-        Continue;
-      Step.AnyName := False;
-      Step.AnyLocalName := False;
-      Step.NamespaceUri := '';
-      Step.LocalName := '';
-      Step.IsAttribute := False;
-      if StepText[1] = '@' then
-      begin
-        Step.IsAttribute := True;
-        StepText := Trimmed(Copy(StepText, 2, MaxInt));
-      end
-      else if AxisStep(StepText, 'attribute', Rest) then
-      begin
-        Step.IsAttribute := True;
-        StepText := Rest;
-      end
-      else if AxisStep(StepText, 'child', Rest) then
-        StepText := Rest;
-      if (StepText = '') or (Step.IsAttribute and (not IsField or (J <> High(Steps)))) then
-        Bad;
-      Step.Text := StepText;
-      if StepText = '*' then
-        Step.AnyName := True
-      else
-      begin
-        Prefix := '';
-        K := 0;
-        for N := 1 to Length(StepText) do
-          if StepText[N] = ':' then
-          begin
-            K := N;
-            Break;
-          end;
-        if K > 0 then
+    case Next.Kind of
+      itUnion:
         begin
-          Prefix := Copy(StepText, 1, K - 1);
-          StepText := Copy(StepText, K + 1, MaxInt);
-          if not Node.LookupNamespace(Prefix, Step.NamespaceUri) then
-            Fail(Doc, Node, 'the prefix "' + Esc(Prefix) + '" is not declared');
+          Check(not Expecting);
+          AddPath;
+          Expecting := True;
         end;
-        { XML Schema 1.0: an unprefixed name has no namespace }
-        if StepText = '*' then
-          Step.AnyLocalName := True
-        else
-          Step.LocalName := StepText;
-        for N := 1 to Length(StepText) do
-          if (StepText[N] = '(') or (StepText[N] = '[') or (StepText[N] = ' ') or (StepText[N] = ':') then
-            Bad;
-      end;
-      SetLength(Path.Steps, Length(Path.Steps) + 1);
-      Path.Steps[High(Path.Steps)] := Step;
+      itAt:
+        begin
+          Check(Expecting);
+          NodeTest(Next, True);
+          Expecting := False;
+        end;
+      itAttributeAxis, itChildAxis:
+        begin
+          Check(Expecting);
+          Attribute := Tokens[T - 1].Kind = itAttributeAxis;
+          Check(Next.Kind = itDoubleColon);
+          NodeTest(Next, Attribute);
+          Expecting := False;
+        end;
+      itAny, itNamespace, itName:
+        begin
+          Check(Expecting);
+          NodeTest(Tokens[T - 1], False);
+          Expecting := False;
+        end;
+      itPeriod:
+        begin
+          Check(Expecting);
+          Expecting := False;
+          { only the first '.' of a path is a step, and '//' may follow it }
+          if StepCount = 0 then
+          begin
+            Inc(StepCount);
+            if (T <= High(Tokens)) and (Tokens[T].Kind = itDoubleSlash) then
+            begin
+              Inc(T);
+              Path.Descendant := True;
+              Inc(StepCount);
+              Expecting := True;
+            end;
+          end;
+        end;
+      itSlash:
+        begin
+          Check(not Expecting);
+          Expecting := True;
+        end;
+    else
+      { '//' elsewhere, '::' without an axis }
+      Bad;
     end;
-    SetLength(Result, Length(Result) + 1);
-    Result[High(Result)] := Path;
   end;
+  Check(not Expecting);
+  AddPath;
+  for T := 0 to Integer(Length(Result)) - 1 do
+    for J := 0 to Integer(Length(Result[T].Steps)) - 1 do
+      if Result[T].Steps[J].IsAttribute then
+      begin
+        if not IsField and (J = High(Result[T].Steps)) then
+          FailCheck(Doc.FileName, Node, 'c-selector-xpath', 'the selector ' + Esc(Expr) +
+            ' is not valid; selector xpaths cannot contain attributes')
+        else if IsField and (J < High(Result[T].Steps)) then
+          FailCheck(Doc.FileName, Node, 'c-fields-xpaths', 'the field ' + Esc(Expr) + ' is not valid');
+      end;
+  { a selector step on the attribute axis before the last one: Xerces
+    accepts it (it never matches); not supported here }
+  if not IsField then
+    for T := 0 to Integer(Length(Result)) - 1 do
+      for J := 0 to Integer(Length(Result[T].Steps)) - 2 do
+        if Result[T].Steps[J].IsAttribute then
+          Unsupported(Doc, Node, 'the XPath expression "' + Esc(Expr) + '"');
 end;
 
 function TLoader.BuildIdentity(Doc: TSchemaDoc; Node: TLandrixXmlNode): TLandrixXmlXsdIdentityConstraint;
