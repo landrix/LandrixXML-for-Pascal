@@ -1,0 +1,60 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="p" type="P" maxOccurs="unbounded"/>
+        <xs:element name="m" type="M" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="o" type="O" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="g" type="G" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="x" type="X" minOccurs="0"/>
+        <xs:element name="b" type="P" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="P">
+    <xs:all>
+      <xs:element name="name" type="xs:string"/>
+      <xs:element name="age" type="xs:int" minOccurs="0"/>
+      <xs:element name="city" type="xs:string" default="Berlin" minOccurs="0"/>
+    </xs:all>
+    <xs:attribute name="id" type="xs:ID"/>
+  </xs:complexType>
+  <xs:complexType name="M" mixed="true">
+    <xs:all>
+      <xs:element name="a"/>
+      <xs:element name="b" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+  <xs:complexType name="O">
+    <xs:all minOccurs="0">
+      <xs:element name="a"/>
+      <xs:element name="b"/>
+    </xs:all>
+  </xs:complexType>
+  <xs:group name="grp">
+    <xs:all>
+      <xs:element name="u" type="xs:int"/>
+      <xs:element name="v"/>
+    </xs:all>
+  </xs:group>
+  <xs:complexType name="G">
+    <xs:group ref="grp" minOccurs="0"/>
+  </xs:complexType>
+  <xs:complexType name="X">
+    <xs:complexContent>
+      <xs:extension base="P">
+        <xs:attribute name="extra"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="R">
+    <xs:complexContent>
+      <xs:restriction base="P">
+        <xs:all>
+          <xs:element name="name" type="xs:string"/>
+          <xs:element name="age" type="xs:int"/>
+        </xs:all>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:schema>

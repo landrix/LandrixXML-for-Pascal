@@ -160,6 +160,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `TLandrixXmlXsdElementDecl.Nillable` and `Block`, and
   `TLandrixXmlXsdSchemaSet.TypeDerivationOk`. The `block` attribute of
   complex types is read.
+  `xs:all` is supported as Xerces does: its elements in any order, each
+  at most once, the expected list naming those not yet present, an
+  optional group that may stay empty; the schema constraints
+  cos-all-limited (an all group only as the whole content model, its
+  elements and references to it occurring at most once, no extension
+  adding particles to an all group or an all group to particles), Unique
+  Particle Attribution and the restriction rules with all groups
+  (rcase-Recurse, rcase-RecurseUnordered, rcase-NSRecurseCheckCardinality).
+  New particle kind `xpkAll` in `LandrixXmlXsdContent`; an element in an
+  all group may carry any occurrence bounds for the schema-for-schemas
+  check, as in Xerces, and is rejected by cos-all-limited.2 instead.
+  `tools/gen-xsdcontent-testdata.py --all` generates the all group cases
+  in `tests/data/xsdcontent/all.txt`. A reference to a type, element,
+  group, attribute or attribute group that does not exist is reported
+  with the code `src-resolve`, as in Xerces (the code was empty).
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs
@@ -332,7 +347,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 37,295 of 39,336 applicable XSD 1.0 tests pass, 1,939
+  the CI checks: 37,659 of 39,336 applicable XSD 1.0 tests pass, 1,575
   use constructs that are not supported.
 - The places where the XML Schema validator follows Xerces instead of the
   specification on purpose are tagged `Xerces deviation:` with the test

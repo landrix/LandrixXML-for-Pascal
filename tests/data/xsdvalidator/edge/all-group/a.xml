@@ -1,0 +1,12 @@
+<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <p><name>Ann</name><name>Bob</name><age>x</age></p>
+  <p><age>4</age></p>
+  <p><city/><name>C</name><zip>1</zip><age>5</age></p>
+  <m><a/>text<a/></m>
+  <o><a/></o>
+  <o><b/>x</o>
+  <g><u>y</u></g>
+  <x extra="1"><name>Eve</name><age>1</age><name>F</name></x>
+  <b xsi:type="R"><name>Z</name></b>
+  <b xsi:type="R"><name>Z</name><city>K</city><age>1</age></b>
+</root>

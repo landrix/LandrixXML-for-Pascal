@@ -1,0 +1,126 @@
+file a.xml
+error 2 28 cvc-complex-type.2.4.a Invalid content was found starting with element 'name'. One of '{age, city}' is expected.
+error 2 50 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 50 cvc-type.3.1.3 The value 'x' of element 'age' is not valid.
+error 3 22 cvc-complex-type.2.4.b The content of element 'p' is not complete. One of '{name, city}' is expected.
+error 4 32 cvc-complex-type.2.4.a Invalid content was found starting with element 'zip'. One of '{age}' is expected.
+error 5 18 cvc-complex-type.2.4.a Invalid content was found starting with element 'a'. One of '{b}' is expected.
+error 6 14 cvc-complex-type.2.4.b The content of element 'o' is not complete. One of '{b}' is expected.
+error 7 15 cvc-complex-type.2.3 Element 'o' cannot have character [children], because the type's content type is element-only.
+error 7 15 cvc-complex-type.2.4.b The content of element 'o' is not complete. One of '{a}' is expected.
+error 8 14 cvc-datatype-valid.1.2.1 'y' is not a valid value for 'integer'.
+error 8 14 cvc-type.3.1.3 The value 'y' of element 'u' is not valid.
+error 8 18 cvc-complex-type.2.4.b The content of element 'g' is not complete. One of '{v}' is expected.
+error 9 50 cvc-complex-type.2.4.a Invalid content was found starting with element 'name'. One of '{city}' is expected.
+error 10 37 cvc-complex-type.2.4.b The content of element 'b' is not complete. One of '{age}' is expected.
+error 11 39 cvc-complex-type.2.4.a Invalid content was found starting with element 'city'. One of '{age}' is expected.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  \n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <p id="p1"><age>30</age><name>Ann</name></p><g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 8 14 cvc-complex-type.2.4.a Invalid content was found starting with element 'p'. One of '{o, g, x, b}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  \n  <o><b/><a/></o>\n  <o/><g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <x extra="1"><name>Eve</name></x><g/>\n  <g><v/><u>1</u></g>\n  \n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 8 40 cvc-complex-type.2.4.a Invalid content was found starting with element 'g'. One of '{b}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  \n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age unknown="1">1</age><name>Z</name></b>\n</root>\n
+error 11 36 cvc-type.3.1.1 Element 'age' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age>999999999</p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 4 67 cvc-complex-type.2.3 Element 'p' cannot have character [children], because the type's content type is element-only.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 3 49 cvc-complex-type.2.4.a Invalid content was found starting with element 'name'. One of '{city}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 7 14 cvc-complex-type.2.4.a Invalid content was found starting with element 'b'. One of '{a}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>2026-13-01</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u>  a  b  </g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 9 30 cvc-complex-type.2.3 Element 'g' cannot have character [children], because the type's content type is element-only.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>1.005</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><age>Ann</age></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 3 32 cvc-complex-type.2.4.a Invalid content was found starting with element 'age'. One of '{name, city}' is expected.
+error 3 41 cvc-datatype-valid.1.2.1 'Ann' is not a valid value for 'integer'.
+error 3 41 cvc-type.3.1.3 The value 'Ann' of element 'age' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"/>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 10 17 cvc-complex-type.2.4.b The content of element 'x' is not complete. One of '{name, age, city}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1.005</age><name>Z</name></b>\n</root>\n
+error 11 35 cvc-datatype-valid.1.2.1 '1.005' is not a valid value for 'integer'.
+error 11 35 cvc-type.3.1.3 The value '1.005' of element 'age' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="x"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 7 14 cvc-complex-type.2.4.b The content of element 'o' is not complete. One of '{b}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>-1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1" unknown="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 10 28 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'x'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><a/><b/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o unknown="1"><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 7 18 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'o'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <p/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 6 7 cvc-complex-type.2.4.a Invalid content was found starting with element 'p'. One of '{m, o, g, x, b}' is expected.
+error 6 7 cvc-complex-type.2.4.b The content of element 'p' is not complete. One of '{name, age, city}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a>  a  b  </a></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><age>4</age><city>Hamburg</city><name>Bob</name></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/><b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 5 19 cvc-complex-type.2.4.a Invalid content was found starting with element 'b'. One of '{a}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 4 42 cvc-complex-type.2.4.b The content of element 'p' is not complete. One of '{name}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u unknown="1">1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 9 25 cvc-type.3.1.1 Element 'u' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g unknown="1"><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 9 18 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'g'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>999999999</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 9 18 cvc-complex-type.2.4.b The content of element 'g' is not complete. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  \n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p><p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m unknown="1">text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 5 18 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'm'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g><g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><name>Z</name></b>\n</root>\n
+error 11 37 cvc-complex-type.2.4.b The content of element 'b' is not complete. One of '{age}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <a/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 5 25 cvc-complex-type.2.4.a Invalid content was found starting with element 'a'. One of '{b}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/>1.005</o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 7 23 cvc-complex-type.2.3 Element 'o' cannot have character [children], because the type's content type is element-only.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <p id="p1"><age>30</age><name>Ann</name></p>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  \n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <x id="p1"><age>30</age><name>Ann</name></x>\n  <p><city>Hamburg</city><name>Bob</name><age>4</age></p>\n  <m>text <b/> more <a/> end</m>\n  <o/>\n  <o><b/><a/></o>\n  <g/>\n  <g><v/><u>1</u></g>\n  <x extra="1"><name>Eve</name></x>\n  <b xsi:type="R"><age>1</age><name>Z</name></b>\n</root>\n
+error 3 14 cvc-complex-type.2.4.a Invalid content was found starting with element 'x'. One of '{p}' is expected.

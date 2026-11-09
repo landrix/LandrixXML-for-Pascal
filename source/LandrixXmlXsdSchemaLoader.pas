@@ -30,7 +30,7 @@
   the content and attributes are taken as written (the target schemas
   are valid for Xerces). Constructs the validator does not support raise
   ELandrixXmlError with xecUnsupported and the file and line, also when
-  they are declared but not used: xs:all, xs:notation,
+  they are declared but not used: xs:notation,
   substitution groups, abstract elements, the extension of xs:anyType,
   and the built-in types LandrixXmlXsdTypes lacks. Other schema errors
   raise xecSchema. }
@@ -461,6 +461,9 @@ type
     function RecurseOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; out Code: string): Boolean;
     function RecurseLaxOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
       out Code: string): Boolean;
+    function RecurseUnorderedOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+      out Code: string): Boolean;
+    function OwnIsAll(Doc: TSchemaDoc; Parent: TLandrixXmlNode): Boolean;
     function MapAndSumOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
       out Code: string): Boolean;
     function NSRecurseCheckCardinalityOk(DChildren: TList; DMin, DMax: Int64; W: TLandrixXmlXsdParticle;
@@ -1652,7 +1655,7 @@ begin
       Fail(Doc, Node, QualifiedText(NamespaceUri, LocalName) + ' is not a simple type');
     { Xerces deviation: missing001, missing006. A missing type is an error
       when the schema is loaded, also if nothing uses it }
-    Fail(Doc, Node, MissingText('type', NamespaceUri, LocalName));
+    FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('type', NamespaceUri, LocalName));
   end;
   Result := ResolveSimpleType(P);
 end;
@@ -2318,10 +2321,11 @@ function TLoader.BuildCompositor(Doc: TSchemaDoc; Node: TLandrixXmlNode; MinOccu
 var
   Child: TLandrixXmlNode;
   Sub: TLandrixXmlXsdParticle;
+  SubMin, SubMax: Integer;
 begin
   if IsXs(Node, 'all') then
-    Unsupported(Doc, Node, 'xs:all');
-  if IsXs(Node, 'sequence') then
+    Result := TLandrixXmlXsdParticle.CreateGroup(xpkAll, MinOccurs, MaxOccurs)
+  else if IsXs(Node, 'sequence') then
     Result := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, MinOccurs, MaxOccurs)
   else if IsXs(Node, 'choice') then
     Result := TLandrixXmlXsdParticle.CreateGroup(xpkChoice, MinOccurs, MaxOccurs)
@@ -2337,6 +2341,27 @@ begin
       if not IsXs(Child, 'annotation') then
       begin
         Sub := BuildParticle(Doc, Child);
+        { cos-all-limited.2, after the element (Xerces checks the bounds
+          once it is traversed): an element of an all group occurs at
+          most once (maxOccurs 0 drops it) }
+        if Result.Kind = xpkAll then
+        begin
+          ParseOccurs(Self, Doc, Child, SubMin, SubMax);
+          if (SubMax <> 1) and (SubMax <> 0) then
+          begin
+            Sub.Free;
+            FailCheck(Doc.FileName, Child, 'cos-all-limited.2', 'an element of an all group has maxOccurs ' +
+              'other than 0 or 1');
+          end;
+        end;
+        { cos-all-limited.1.2: a reference to an all group inside a
+          sequence or choice }
+        if (Sub <> nil) and (Sub.Kind = xpkAll) then
+        begin
+          Sub.Free;
+          FailCheck(Doc.FileName, Child, 'cos-all-limited.1.2', 'an all group must be the whole content ' +
+            'model of a type');
+        end;
         if Sub <> nil then
           Result.Add(Sub);
       end;
@@ -2368,7 +2393,7 @@ begin
     begin
       P := FindPending(pkElement, Ns, LocalName);
       if P = nil then
-        Fail(Doc, Node, MissingText('element', Ns, LocalName));
+        FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('element', Ns, LocalName));
       D := ResolveElement(P);
     end
     else
@@ -2393,7 +2418,7 @@ begin
     else
       P := FindPending(pkGroup, Ns, LocalName);
     if P = nil then
-      Fail(Doc, Node, MissingText('group', Ns, LocalName));
+      FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('group', Ns, LocalName));
     if (P.State = psResolving) and (P.ResolveDepth = FElementDepth) then
       Fail(Doc, Node, 'circular group reference ' + QualifiedText(Ns, LocalName));
     Inner := P.Node.FirstChildElement;
@@ -2409,6 +2434,15 @@ begin
     P.ResolveDepth := FElementDepth;
     try
       Result := BuildCompositor(P.Doc, Inner, MinOccurs, MaxOccurs);
+      { cos-all-limited.1.2: a reference to an all group occurs at most
+        once }
+      if (Result.Kind = xpkAll) and (MaxOccurs <> 1) and (MaxOccurs <> 0) then
+      begin
+        Result.Free;
+        Result := nil;
+        FailCheck(Doc.FileName, Node, 'cos-all-limited.1.2', 'a reference to an all group has maxOccurs ' +
+          'other than 0 or 1');
+      end;
     finally
       { a reference inside an element of the group: the outer one goes on }
       if OldState = psResolving then
@@ -2591,10 +2625,10 @@ begin
         if P = nil then
         begin
           if Ns = LandrixXmlNamespaceXml then
-            Fail(Doc, Child, MissingText('attribute', Ns, LocalName) +
+            FailCheck(Doc.FileName, Child, 'src-resolve', MissingText('attribute', Ns, LocalName) +
               ' (import xml.xsd for the xml: attributes)')
           else
-            Fail(Doc, Child, MissingText('attribute', Ns, LocalName));
+            FailCheck(Doc.FileName, Child, 'src-resolve', MissingText('attribute', Ns, LocalName));
         end;
         Item.Decl := ResolveAttribute(P);
         if Attr(Child, 'default', Value) then
@@ -2673,7 +2707,7 @@ begin
       else
         P := FindPending(pkAttributeGroup, Ns, LocalName);
       if P = nil then
-        Fail(Doc, Child, MissingText('attribute group', Ns, LocalName));
+        FailCheck(Doc.FileName, Child, 'src-resolve', MissingText('attribute group', Ns, LocalName));
       if P.State = psResolving then
         Fail(Doc, Child, 'circular attribute group reference ' + QualifiedText(Ns, LocalName));
       Saved := FCurrent;
@@ -2891,7 +2925,7 @@ begin
   if (P = nil) or (P.MinOccurs = 0) then
     Exit;
   case P.Kind of
-    xpkSequence:
+    xpkSequence, xpkAll:
       for I := 0 to P.ChildCount - 1 do
         if not Emptiable(P.Children[I]) then
         begin
@@ -2935,7 +2969,7 @@ var
   I, J: Integer;
   Item: TAttributeItem;
   Use: TLandrixXmlXsdAttributeUse;
-  Found, CheckModel: Boolean;
+  Found, CheckModel, OwnAll: Boolean;
   Final: TLandrixXmlXsdDerivations;
   Local: TLandrixXmlXsdSimpleType;
   IdName: TLandrixXmlUtf8;
@@ -2978,7 +3012,7 @@ begin
       else if IsSimpleContent then
         BaseSimple := SimpleTypeRef(Doc, Derivation, Ns, LocalName, Node)
       else
-        Fail(Doc, Derivation, MissingText('complex type', Ns, LocalName));
+        FailCheck(Doc.FileName, Derivation, 'src-resolve', MissingText('complex type', Ns, LocalName));
     end;
     if IsSimpleContent then
     begin
@@ -3070,6 +3104,16 @@ begin
     else if not IsExtension and Mixed and (BaseType.ContentType <> xctMixed) then
       FailCheck(Doc.FileName, Derivation, 'derivation-ok-restriction.5.4.1.2', 'the content of ' +
         Esc(T.DisplayName) + ' is mixed, but that of its base ' + Esc(LocalName) + ' is not');
+    { cos-all-limited.1.2: an extension that adds particles to particles
+      of its base, where either is an all group; the own particle is
+      built first, so that its errors (src-resolve) come first, as in
+      Xerces }
+    OwnAll := IsExtension and OwnIsAll(Doc, Derivation);
+    if IsExtension and (BaseType.ContentType <> xctEmpty) and (Mixed or HasOwnParticle(Doc, Derivation)) and
+      (((BaseType.Model <> nil) and (BaseType.Model.Root <> nil) and (BaseType.Model.Root.Kind = xpkAll)) or
+      OwnAll) then
+      FailCheck(Doc.FileName, Derivation, 'cos-all-limited.1.2', 'the extension ' + Esc(T.DisplayName) +
+        ' adds particles to its base ' + Esc(LocalName) + ', and one of them is an all group');
     Particle := EffectiveParticle(Doc, Node);
     if (Particle = nil) and IsExtension and (BaseType.ContentType = xctSimple) then
     begin
@@ -3658,6 +3702,17 @@ begin
     Result := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 1);
 end;
 
+{ True if the model group child of Parent is an all group (also through
+  a group reference); an empty one does not count (Xerces drops it) }
+function TLoader.OwnIsAll(Doc: TSchemaDoc; Parent: TLandrixXmlNode): Boolean;
+var
+  Own: TLandrixXmlXsdParticle;
+begin
+  Own := ParticleOfChildren(Doc, Parent);
+  Result := (Own <> nil) and (Own.Kind = xpkAll) and not IsEmptyCompositor(Parent);
+  Own.Free;
+end;
+
 { Xerces' particle of a complex type, built afresh: as EffectiveParticle,
   but mixed content without a particle has an empty sequence, which an
   extension also puts in front of its own particle }
@@ -3890,8 +3945,58 @@ begin
   Result := True;
 end;
 
-{ Xerces' particleValidRestriction (substitution groups and xs:all are
-  not supported): True if D is a valid restriction of B, else Code is the
+{ Xerces' checkRecurseUnordered: a sequence restricting an all group,
+  each particle restricting a base particle that no earlier one took
+  (one already taken is skipped, as Xerces swallows that error); the
+  base particles left over must be emptiable }
+function TLoader.RecurseUnorderedOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+  out Code: string): Boolean;
+var
+  I, J: Integer;
+  Sub: string;
+  Found: array of Boolean;
+  Matched: Boolean;
+begin
+  Result := False;
+  if not OccursWithin(DMin, DMax, BMin, BMax) then
+  begin
+    Code := 'rcase-RecurseUnordered.1';
+    Exit;
+  end;
+  Code := 'rcase-RecurseUnordered.2';
+  Found := nil;
+  SetLength(Found, Integer(BChildren.Count));
+  for J := 0 to Integer(BChildren.Count) - 1 do
+    Found[J] := False;
+  for I := 0 to Integer(DChildren.Count) - 1 do
+  begin
+    Matched := False;
+    J := 0;
+    while not Matched and (J < Integer(BChildren.Count)) do
+    begin
+      if ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), TLandrixXmlXsdParticle(BChildren[J]), True,
+        Sub) then
+      begin
+        if not Found[J] then
+        begin
+          Found[J] := True;
+          Matched := True;
+        end;
+      end;
+      Inc(J);
+    end;
+    if not Matched then
+      Exit;
+  end;
+  for J := 0 to Integer(BChildren.Count) - 1 do
+    if not Found[J] and not Emptiable(TLandrixXmlXsdParticle(BChildren[J])) then
+      Exit;
+  Code := '';
+  Result := True;
+end;
+
+{ Xerces' particleValidRestriction (substitution groups are not
+  supported): True if D is a valid restriction of B, else Code is the
   constraint Xerces reports }
 function TLoader.ParticleRestricts(D, B: TLandrixXmlXsdParticle; CheckWildcardOccurs: Boolean;
   out Code: string): Boolean;
@@ -3988,6 +4093,9 @@ begin
               Code);
           xpkSequence:
             Result := RecurseOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs, Code);
+          xpkAll:
+            Result := RecurseUnorderedOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs,
+              B.MaxOccurs, Code);
           xpkChoice:
             begin
               Count := DChildren.Count;
@@ -3998,6 +4106,16 @@ begin
                 Result := MapAndSumOk(DChildren, BChildren, D.MinOccurs * Count, D.MaxOccurs * Count,
                   B.MinOccurs, B.MaxOccurs, Code);
             end;
+        else
+          Code := 'cos-particle-restrict.2';
+        end;
+      xpkAll:
+        case B.Kind of
+          xpkWildcard:
+            Result := NSRecurseCheckCardinalityOk(DChildren, MinRange(D), MaxRange(D), B, CheckWildcardOccurs,
+              Code);
+          xpkAll:
+            Result := RecurseOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs, Code);
         else
           Code := 'cos-particle-restrict.2';
         end;

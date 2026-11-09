@@ -32,6 +32,11 @@ per model:
 verdict is "ok" or "cos-nonambig:X|Y" with the two particles Xerces names
 (a name or WC[##any]). Models rejected for another reason are skipped.
 
+With --all N it writes tests/data/xsdcontent/all.txt instead, in the
+format of cases.txt: N random all groups (A(...), elements a to f that
+occur at most once, the group itself optional or not) and child sequences
+in any order, with missing, repeated and unknown elements.
+
 The files are committed; rerun this script only when the set changes.
 """
 
@@ -73,6 +78,9 @@ def notation(p):
     return p[0] + "(" + " ".join(notation(c) for c in p[1]) + ")" + bounds_text(p[2])
 
 
+TAGS = {"S": "xs:sequence", "C": "xs:choice", "A": "xs:all"}
+
+
 def occurs_attrs(b):
     s = ""
     if b[0] != 1:
@@ -88,7 +96,7 @@ def schema_xml(p):
             return '<xs:element name="%s"%s/>' % (q[1], occurs_attrs(q[2]))
         if q[0] == "w":
             return '<xs:any processContents="skip"%s/>' % occurs_attrs(q[2])
-        tag = "xs:sequence" if q[0] == "S" else "xs:choice"
+        tag = TAGS[q[0]]
         return "<%s%s>%s</%s>" % (tag, occurs_attrs(q[2]), "".join(emit(c) for c in q[1]), tag)
     return ('<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="r">'
             "<xs:complexType>%s</xs:complexType></xs:element></xs:schema>" % emit(p))
@@ -206,6 +214,36 @@ def main_upa(args):
     print("%d models, %d ambiguous" % (len(rows), sum(1 for r in rows if "\tcos-" in r)))
 
 
+def main_all(args):
+    rng = random.Random(args.seed + 2000)
+    rows = []
+    kept = 0
+    with tempfile.TemporaryDirectory() as tmp:
+        for _ in range(args.all):
+            names = rng.sample(NAMES, rng.randint(1, 5))
+            children = [("e", n, rng.choice([(1, 1), (1, 1), (0, 1)])) for n in names]
+            p = ("A", children, rng.choice([(1, 1), (1, 1), (0, 1)]))
+            instances = []
+            for _ in range(8):
+                present = [c[1] for c in children if c[2][0] == 1 or rng.random() < 0.5]
+                rng.shuffle(present)
+                if p[2][0] == 0 and rng.random() < 0.2:
+                    present = []
+                if rng.random() < 0.6:
+                    present = mutate(rng, present)
+                instances.append(present[:12])
+            results = run_model(args.java, args.classes, tmp, p, instances)
+            if results is None:
+                continue
+            kept += 1
+            for kids, res in zip(instances, results):
+                rows.append("\t".join([notation(p), ",".join(kids), "|".join(res)]))
+    os.makedirs(args.out, exist_ok=True)
+    with open(os.path.join(args.out, "all.txt"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(rows) + "\n")
+    print("%d models kept, %d cases written" % (kept, len(rows)))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--java", required=True)
@@ -214,9 +252,13 @@ def main():
     ap.add_argument("--models", type=int, default=1500)
     ap.add_argument("--out", default=OUT, help="output directory (default tests/data/xsdcontent)")
     ap.add_argument("--upa", type=int, default=0, help="write upa.txt with this many models")
+    ap.add_argument("--all", type=int, default=0, help="write all.txt with this many all groups")
     args = ap.parse_args()
     if args.upa:
         main_upa(args)
+        return
+    if args.all:
+        main_all(args)
         return
     rng = random.Random(args.seed)
     rows = []

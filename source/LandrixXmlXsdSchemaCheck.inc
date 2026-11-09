@@ -64,10 +64,10 @@ const
      Content: 'annotation?;simpleType|complexType?;unique|key|keyref*'),
     (Kind: 'element.all';
      Attributes: 'name=NCName ref=QName type=QName default=string fixed=string nillable=boolean ' +
-       'block=blockSet form=form minOccurs=zeroOrOne maxOccurs=zeroOrOne id=ID';
+       'block=blockSet form=form ' + OccursAttributes + ' id=ID';
      Content: 'annotation?;simpleType|complexType?;unique|key|keyref*'),
     (Kind: 'element.ref'; Attributes: 'ref=QName ' + OccursAttributes + ' id=ID'; Content: 'annotation?'),
-    (Kind: 'element.allref'; Attributes: 'ref=QName minOccurs=zeroOrOne maxOccurs=zeroOrOne id=ID';
+    (Kind: 'element.allref'; Attributes: 'ref=QName ' + OccursAttributes + ' id=ID';
      Content: 'annotation?'),
     (Kind: 'attribute.ref'; Attributes: 'ref=QName use=use default=string fixed=string id=ID';
      Content: 'annotation?'),

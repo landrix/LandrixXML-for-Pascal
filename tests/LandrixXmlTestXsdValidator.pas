@@ -343,8 +343,6 @@ end;
 
 procedure TestLoadErrors;
 begin
-  CheckLoadError('<xs:element name="r"><xs:complexType><xs:all><xs:element name="a"/></xs:all></xs:complexType></xs:element>',
-    xecUnsupported, 'xs:all');
   CheckLoadError('<xs:simpleType name="l"><xs:list itemType="xs:int"/></xs:simpleType>' +
     '<xs:simpleType name="ll"><xs:list itemType="l"/></xs:simpleType>', xecSchema, 'a list of lists');
   CheckLoadError('<xs:element name="r" type="xs:ENTITIES"/>', xecUnsupported, 'xs:ENTITIES');

@@ -6,7 +6,8 @@
 
   Tests for LandrixXmlXsdContent: generated cases (tests/data/xsdcontent,
   results from the Xerces validator of the Java runtime), the three ways
-  of checking occurrence bounds, failure recovery and wildcards. }
+  of checking occurrence bounds, failure recovery, wildcards and all
+  groups. }
 
 unit LandrixXmlTestXsdContent;
 
@@ -61,7 +62,8 @@ begin
   until P = 0;
 end;
 
-{ Model notation of the generator: S(...) sequence, C(...) choice, a
+{ Model notation of the generator: S(...) sequence, C(...) choice, A(...)
+  all group, a
   letter an element, "*" a ##any wildcard, an optional suffix gives min
   and max in braces (max u for unbounded). }
 function ParseBounds(const S: string; var I: Integer; out MinOccurs, MaxOccurs: Integer): Boolean;
@@ -96,10 +98,12 @@ var
   MinOccurs, MaxOccurs, K: Integer;
   Name: string;
 begin
-  if ((S[I] = 'S') or (S[I] = 'C')) and (I < Length(S)) and (S[I + 1] = '(') then
+  if ((S[I] = 'S') or (S[I] = 'C') or (S[I] = 'A')) and (I < Length(S)) and (S[I + 1] = '(') then
   begin
     if S[I] = 'S' then
       Kind := xpkSequence
+    else if S[I] = 'A' then
+      Kind := xpkAll
     else
       Kind := xpkChoice;
     Inc(I, 2);
@@ -194,7 +198,7 @@ begin
   end;
 end;
 
-procedure TestGeneratedData;
+procedure CheckGeneratedData(const FileName: string; MinCount: Integer);
 var
   L: TStringList;
   K, MismatchCount: Integer;
@@ -208,8 +212,8 @@ begin
   MismatchCount := 0;
   L := TStringList.Create;
   try
-    L.LoadFromFile(DataFile('cases.txt'));
-    Check(L.Count > 3000, 'content model cases present');
+    L.LoadFromFile(DataFile(FileName));
+    Check(L.Count > MinCount, FileName + ': content model cases present');
     for K := 0 to L.Count - 1 do
     begin
       Fields := Split(L[K], #9);
@@ -232,9 +236,117 @@ begin
             '    got ' + Got;
       end;
     end;
-    Check(MismatchCount = 0, IntToStr(MismatchCount) + ' differences from Xerces:' + Mismatches);
+    Check(MismatchCount = 0, FileName + ': ' + IntToStr(MismatchCount) + ' differences from Xerces:' +
+      Mismatches);
   finally
     L.Free;
+  end;
+end;
+
+procedure TestGeneratedData;
+begin
+  CheckGeneratedData('cases.txt', 3000);
+end;
+
+procedure TestGeneratedAllGroups;
+begin
+  CheckGeneratedData('all.txt', 2000);
+end;
+
+{ An all group must reject Child; the caller keeps Child then. }
+procedure CheckAllRejects(Child: TLandrixXmlXsdParticle; const What: string);
+var
+  Root: TLandrixXmlXsdParticle;
+  Added: Boolean;
+begin
+  Root := TLandrixXmlXsdParticle.CreateGroup(xpkAll, 1, 1);
+  Added := False;
+  try
+    try
+      Root.Add(Child);
+      Added := True;
+      FailNotRaised(What + ' in an all group');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), What);
+    end;
+  finally
+    if not Added then
+      Child.Free;
+    Root.Free;
+  end;
+end;
+
+{ All groups through the API: what a group may hold and where it may
+  stand, the expected list, an optional group, ambiguity }
+procedure TestAllGroups;
+var
+  Model: TLandrixXmlXsdContentModel;
+  Root, Inner: TLandrixXmlXsdParticle;
+  State: TLandrixXmlXsdContentState;
+  Issue: TLandrixXmlXsdContentIssue;
+  First, Second: TLandrixXmlXsdParticle;
+  List: TList;
+begin
+  CheckAllRejects(TLandrixXmlXsdParticle.CreateElement('', U('a'), nil, 0, 2), 'maxOccurs 2');
+  CheckAllRejects(TLandrixXmlXsdParticle.CreateElement('', U('a'), nil, 0, 0), 'maxOccurs 0');
+  CheckAllRejects(TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 1), 'a sequence');
+  { an all group below the root, an all group occurring twice }
+  Root := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 1);
+  try
+    Inner := TLandrixXmlXsdParticle.CreateGroup(xpkAll, 1, 1);
+    Root.Add(Inner);
+    try
+      TLandrixXmlXsdContentModel.Create(Root).Free;
+      FailNotRaised('an all group in a sequence');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'all group in a sequence');
+    end;
+  finally
+    Root.Free;
+  end;
+  Root := TLandrixXmlXsdParticle.CreateGroup(xpkAll, 1, 2);
+  try
+    try
+      TLandrixXmlXsdContentModel.Create(Root).Free;
+      FailNotRaised('an all group with maxOccurs 2');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'all group with maxOccurs 2');
+    end;
+  finally
+    Root.Free;
+  end;
+  Model := ParseModel('A(a b{0,1} c){0,1}');
+  State := TLandrixXmlXsdContentState.Create;
+  List := TList.Create;
+  try
+    Check(not Model.FindAmbiguity(First, Second), 'distinct names: unambiguous');
+    State.Start(Model);
+    CheckEquals(0, Integer(Length(State.Finish)), 'an optional all group may stay empty');
+    State.Start(Model);
+    Check(State.Step('', U('c'), Issue) = Model.Leaves[2], 'c first');
+    State.Expected(List);
+    CheckEquals(2, Integer(List.Count), 'a and b still expected');
+    Check((List[0] = Model.Leaves[0]) and (List[1] = Model.Leaves[1]), 'in the order of the group');
+    CheckEquals(1, Integer(Length(State.Finish)), 'a is missing');
+    Check(State.Step('', U('a'), Issue) = Model.Leaves[0], 'then a');
+    CheckEquals(0, Integer(Length(State.Finish)), 'complete without b');
+    Check(State.Step('', U('c'), Issue) = Model.Leaves[2], 'c again: still looked up');
+    Check(Issue.Kind = xciUnexpected, 'c twice');
+    Check(State.Failed, 'failed');
+  finally
+    List.Free;
+    State.Free;
+    Model.Free;
+  end;
+  Model := ParseModel('A(a b a{0,1})');
+  try
+    Check(Model.FindAmbiguity(First, Second), 'a twice: ambiguous');
+    Check((First = Model.Leaves[0]) and (Second = Model.Leaves[2]), 'the two a, in order');
+  finally
+    Model.Free;
   end;
 end;
 
@@ -517,6 +629,8 @@ end;
 procedure Register;
 begin
   RegisterTest('XsdContent.GeneratedData', TestGeneratedData);
+  RegisterTest('XsdContent.GeneratedAllGroups', TestGeneratedAllGroups);
+  RegisterTest('XsdContent.AllGroups', TestAllGroups);
   RegisterTest('XsdContent.BoundsChecks', TestBoundsChecks);
   RegisterTest('XsdContent.SameDeclarationTwice', TestSameDeclarationTwice);
   RegisterTest('XsdContent.FailureRecovery', TestFailureRecovery);

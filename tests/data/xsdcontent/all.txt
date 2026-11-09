@@ -1,0 +1,2400 @@
+A(a{0,1} c{0,1} f{0,1} d{0,1} e){0,1}	a,e,d,c,c,f	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f}' is expected.
+A(a{0,1} c{0,1} f{0,1} d{0,1} e){0,1}	c,e,f	
+A(a{0,1} c{0,1} f{0,1} d{0,1} e){0,1}	d,e,a,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, f}' is expected.
+A(a{0,1} c{0,1} f{0,1} d{0,1} e){0,1}	e,d,f	
+A(a{0,1} c{0,1} f{0,1} d{0,1} e){0,1}	e,a,c,d,f	
+A(a{0,1} c{0,1} f{0,1} d{0,1} e){0,1}	b,e,c,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a, c, f, d, e}' is expected.
+A(a{0,1} c{0,1} f{0,1} d{0,1} e){0,1}	f,e,a	
+A(a{0,1} c{0,1} f{0,1} d{0,1} e){0,1}	e	
+A(f a c){0,1}	a,f,c	
+A(f a c){0,1}	a,f,c,b	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(f a c){0,1}	c,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(f a c){0,1}	c,a,f	
+A(f a c){0,1}	c,a,a,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f}' is expected.
+A(f a c){0,1}		
+A(f a c){0,1}	c,a,f	
+A(f a c){0,1}	c,a,f	
+A(e d{0,1} a)	e,a,d	
+A(e d{0,1} a)	a,e	
+A(e d{0,1} a)	a,e,d	
+A(e d{0,1} a)	a,e	
+A(e d{0,1} a)	e,a	
+A(e d{0,1} a)	d,a,e	
+A(e d{0,1} a)	e,a,d	
+A(e d{0,1} a)	a,e	
+A(d c b{0,1} e)	c,e,d	
+A(d c b{0,1} e)	d,c,e	
+A(d c b{0,1} e)	c,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d, b}' is expected.
+A(d c b{0,1} e)	e,d,c	
+A(d c b{0,1} e)	d,c,e	
+A(d c b{0,1} e)	b,e,c,d	
+A(d c b{0,1} e)	c,e,e,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d, b}' is expected.
+A(d c b{0,1} e)	d,c,e	
+A(d f c b){0,1}	f,d,b,c	
+A(d f c b){0,1}	f,c,b,b,d	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d}' is expected.
+A(d f c b){0,1}	f,d,d,c,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, b}' is expected.
+A(d f c b){0,1}	f,b,c,d	
+A(d f c b){0,1}		
+A(d f c b){0,1}	c,b,d,f,f	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(d f c b){0,1}	c,d,b,f	
+A(d f c b){0,1}	d,c,b,f	
+A(d{0,1} a c{0,1} f)	a,f	
+A(d{0,1} a c{0,1} f)	d,f,a	
+A(d{0,1} a c{0,1} f)	a,f,a,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d, c}' is expected.
+A(d{0,1} a c{0,1} f)	f,a,c	
+A(d{0,1} a c{0,1} f)	f,a,a,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d, c}' is expected.
+A(d{0,1} a c{0,1} f)	d,f,c,a	
+A(d{0,1} a c{0,1} f)	f,a	
+A(d{0,1} a c{0,1} f)	f,a	
+A(b{0,1} c{0,1} f e a{0,1})	a,e,b,f	
+A(b{0,1} c{0,1} f e a{0,1})	a,e,b,f	
+A(b{0,1} c{0,1} f e a{0,1})	e,c,a,f,b	
+A(b{0,1} c{0,1} f e a{0,1})	c,b,e,f	
+A(b{0,1} c{0,1} f e a{0,1})	e,f	
+A(b{0,1} c{0,1} f e a{0,1})	e,c,f,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, a}' is expected.
+A(b{0,1} c{0,1} f e a{0,1})	f,b,a,e	
+A(b{0,1} c{0,1} f e a{0,1})	e,f,b,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, a}' is expected.
+A(b e){0,1}	e,b	
+A(b e){0,1}	b,e	
+A(b e){0,1}	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(b e){0,1}		
+A(b e){0,1}	b,e,e	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(b e){0,1}		
+A(b e){0,1}	b,e	
+A(b e){0,1}		
+A(c{0,1} e{0,1}){0,1}		
+A(c{0,1} e{0,1}){0,1}	e,c	
+A(c{0,1} e{0,1}){0,1}	e,c	
+A(c{0,1} e{0,1}){0,1}		
+A(c{0,1} e{0,1}){0,1}	c	
+A(c{0,1} e{0,1}){0,1}	e	
+A(c{0,1} e{0,1}){0,1}		
+A(c{0,1} e{0,1}){0,1}		
+A(c a d{0,1}){0,1}	c,a	
+A(c a d{0,1}){0,1}	a,d,c	
+A(c a d{0,1}){0,1}	c,a	
+A(c a d{0,1}){0,1}	a,c	
+A(c a d{0,1}){0,1}	c,a	
+A(c a d{0,1}){0,1}	a,a,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, d}' is expected.
+A(c a d{0,1}){0,1}	d,a,a,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+A(c a d{0,1}){0,1}	b,a,d,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, a, d}' is expected.
+A(e){0,1}	b,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e}' is expected.
+A(e){0,1}	e	
+A(e){0,1}	e	
+A(e){0,1}	e	
+A(e){0,1}		
+A(e){0,1}		
+A(e){0,1}	b,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e}' is expected.
+A(e){0,1}		
+A(d a){0,1}	d,a,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(d a){0,1}		
+A(d a){0,1}	a,d	
+A(d a){0,1}	a,d	
+A(d a){0,1}	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d, a}' is expected.
+A(d a){0,1}	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d a){0,1}		
+A(d a){0,1}		
+A(d a{0,1}){0,1}	e,a,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d, a}' is expected.
+A(d a{0,1}){0,1}	d,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(d a{0,1}){0,1}	d,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+A(d a{0,1}){0,1}	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d a{0,1}){0,1}	d	
+A(d a{0,1}){0,1}	d	
+A(d a{0,1}){0,1}	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d, a}' is expected.
+A(d a{0,1}){0,1}	a,d	
+A(f c e b d)	f,c,d,d,e,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e, b}' is expected.
+A(f c e b d)	b,d,c,f,e	
+A(f c e b d)	d,b,e,b,c,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f, c}' is expected.
+A(f c e b d)	f,c,d,b	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(f c e b d)	d,b,c,f,e	
+A(f c e b d)	f,d,b,c,e	
+A(f c e b d)	e,b,f,c,d	
+A(f c e b d)	b,c,d,f,e	
+A(a e b{0,1} d){0,1}	e,d,a	
+A(a e b{0,1} d){0,1}	e,b,d,d,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(a e b{0,1} d){0,1}	d,e,b	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a e b{0,1} d){0,1}	d,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, b}' is expected.
+A(a e b{0,1} d){0,1}		
+A(a e b{0,1} d){0,1}	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, e, d}' is expected.
+A(a e b{0,1} d){0,1}	a,b,d,e	
+A(a e b{0,1} d){0,1}	a,d,e,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(b)	b,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(b)	b	
+A(b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b)	b	
+A(b)	b	
+A(b)	b	
+A(b c{0,1}){0,1}	b,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+A(b c{0,1}){0,1}	b	
+A(b c{0,1}){0,1}	b	
+A(b c{0,1}){0,1}	c,c,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+A(b c{0,1}){0,1}	b,c,c	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(b c{0,1}){0,1}		
+A(b c{0,1}){0,1}		
+A(b c{0,1}){0,1}	b	
+A(a{0,1} b)	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(a{0,1} b)	a,b,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(a{0,1} b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, b}' is expected.
+A(a{0,1} b)	b,a	
+A(a{0,1} b)	b	
+A(a{0,1} b)	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(a{0,1} b)	b,a	
+A(a{0,1} b)	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b{0,1} a{0,1} f d c)	c,d,a,f	
+A(b{0,1} a{0,1} f d c)	b,a,d,f,c	
+A(b{0,1} a{0,1} f d c)	a,f,d,c	
+A(b{0,1} a{0,1} f d c)	a,c,d,f,b,f	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(b{0,1} a{0,1} f d c)	d,a,c	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, f}' is expected.
+A(b{0,1} a{0,1} f d c)	f,a,c,d	
+A(b{0,1} a{0,1} f d c)	d,c,f	
+A(b{0,1} a{0,1} f d c)	f,d,c,a,b	
+A(b d{0,1} a f{0,1} c{0,1})	a,b	
+A(b d{0,1} a f{0,1} c{0,1})	c,f,a,d,d,b	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+A(b d{0,1} a f{0,1} c{0,1})	a,d,b,f	
+A(b d{0,1} a f{0,1} c{0,1})	f,a,b	
+A(b d{0,1} a f{0,1} c{0,1})	d,d,c,a,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b, a, f, c}' is expected.
+A(b d{0,1} a f{0,1} c{0,1})	f,a,c,a,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, d}' is expected.
+A(b d{0,1} a f{0,1} c{0,1})	d,a,f	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, c}' is expected.
+A(b d{0,1} a f{0,1} c{0,1})	c,a,f,b	
+A(d c e b)	d,e,b,c	
+A(d c e b)	c,d,b,e	
+A(d c e b)	d,c,b,e	
+A(d c e b)	c,d,b	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(d c e b)	b,c,e	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d c e b)	d,b,c,e	
+A(d c e b)	b,e,a,d,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d, c}' is expected.
+A(d c e b)	c,d,e,b	
+A(b a f)	b,a,f	
+A(b a f)	b,f,a	
+A(b a f)	a,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b a f)	f,a,a,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+A(b a f)	a,b,f	
+A(b a f)	a,b,f	
+A(b a f)	f,b,a	
+A(b a f)	f,b,b,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+A(b f)	f,b	
+A(b f)	f,b	
+A(b f)	f,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+A(b f)	b,f	
+A(b f)	c,b,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, f}' is expected.
+A(b f)	f,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+A(b f)	f,b	
+A(b f)	f,b	
+A(d{0,1}){0,1}	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d}' is expected.
+A(d{0,1}){0,1}		
+A(d{0,1}){0,1}	d,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d{0,1}){0,1}		
+A(d{0,1}){0,1}		
+A(d{0,1}){0,1}	d	
+A(d{0,1}){0,1}		
+A(d{0,1}){0,1}	d	
+A(a c{0,1} b){0,1}	b,c,a,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(a c{0,1} b){0,1}	a,b	
+A(a c{0,1} b){0,1}	c,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(a c{0,1} b){0,1}	c,b,a	
+A(a c{0,1} b){0,1}	b,a	
+A(a c{0,1} b){0,1}	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, b}' is expected.
+A(a c{0,1} b){0,1}	c,a,b	
+A(a c{0,1} b){0,1}	c,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(d{0,1} f){0,1}	f,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d}' is expected.
+A(d{0,1} f){0,1}		
+A(d{0,1} f){0,1}	f,d	
+A(d{0,1} f){0,1}		
+A(d{0,1} f){0,1}	d,f	
+A(d{0,1} f){0,1}	f	
+A(d{0,1} f){0,1}	c,f,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d, f}' is expected.
+A(d{0,1} f){0,1}		
+A(b c d{0,1}){0,1}	d,b,c	
+A(b c d{0,1}){0,1}	d,c,b	
+A(b c d{0,1}){0,1}		
+A(b c d{0,1}){0,1}	d,b,c	
+A(b c d{0,1}){0,1}	c,b	
+A(b c d{0,1}){0,1}	b,d,c,e	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(b c d{0,1}){0,1}	c,b	
+A(b c d{0,1}){0,1}	c,c,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, d}' is expected.
+A(b a{0,1} c{0,1}){0,1}	b,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a, c}' is expected.
+A(b a{0,1} c{0,1}){0,1}	f,c,b,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b, a, c}' is expected.
+A(b a{0,1} c{0,1}){0,1}	b	
+A(b a{0,1} c{0,1}){0,1}	c,b	
+A(b a{0,1} c{0,1}){0,1}	b,a	
+A(b a{0,1} c{0,1}){0,1}	b	
+A(b a{0,1} c{0,1}){0,1}	c,b	
+A(b a{0,1} c{0,1}){0,1}	b,b,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a, c}' is expected.
+A(f{0,1} b e{0,1})	b,e	
+A(f{0,1} b e{0,1})	d,b,e,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, b, e}' is expected.
+A(f{0,1} b e{0,1})	b,d,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, e}' is expected.
+A(f{0,1} b e{0,1})	b,e	
+A(f{0,1} b e{0,1})	e,b	
+A(f{0,1} b e{0,1})	b,f	
+A(f{0,1} b e{0,1})	e,b	
+A(f{0,1} b e{0,1})	b,e,f	
+A(f e{0,1} c b){0,1}	b,e,c,f,f	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f e{0,1} c b){0,1}	b,f,e,c	
+A(f e{0,1} c b){0,1}	b,c,f	
+A(f e{0,1} c b){0,1}	b,f,c	
+A(f e{0,1} c b){0,1}	b,c,f	
+A(f e{0,1} c b){0,1}		
+A(f e{0,1} c b){0,1}	b,c,f	
+A(f e{0,1} c b){0,1}	b,c,f,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(c{0,1} a e{0,1})	c,a	
+A(c{0,1} a e{0,1})	e,c,a	
+A(c{0,1} a e{0,1})	c,e,a	
+A(c{0,1} a e{0,1})	e,a	
+A(c{0,1} a e{0,1})	a,e	
+A(c{0,1} a e{0,1})	c,a	
+A(c{0,1} a e{0,1})	a	
+A(c{0,1} a e{0,1})	c,e,a	
+A(e f a{0,1})	f,e	
+A(e f a{0,1})	a,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(e f a{0,1})	f,a,e	
+A(e f a{0,1})	e,a,f,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(e f a{0,1})	f,e	
+A(e f a{0,1})	e,f	
+A(e f a{0,1})	f,e	
+A(e f a{0,1})	e,f	
+A(d{0,1} a b{0,1} f e)	a,f,e,d	
+A(d{0,1} a b{0,1} f e)	e,d,f,a	
+A(d{0,1} a b{0,1} f e)	b,b,a,e,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d, a, f, e}' is expected.
+A(d{0,1} a b{0,1} f e)	f,a,d,e	
+A(d{0,1} a b{0,1} f e)	e,f,a	
+A(d{0,1} a b{0,1} f e)	e,f,d,b,a	
+A(d{0,1} a b{0,1} f e)	f,f,a,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d, a, b, e}' is expected.
+A(d{0,1} a b{0,1} f e)	e,b,a,f,d	
+A(c{0,1})	c	
+A(c{0,1})		
+A(c{0,1})		
+A(c{0,1})	c,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(c{0,1})	c	
+A(c{0,1})		
+A(c{0,1})	c	
+A(c{0,1})	c	
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(b){0,1}		
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(c{0,1} b{0,1})	b,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+A(c{0,1} b{0,1})		
+A(c{0,1} b{0,1})	c	
+A(c{0,1} b{0,1})	d,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, b}' is expected.
+A(c{0,1} b{0,1})	c,b	
+A(c{0,1} b{0,1})	b,c	
+A(c{0,1} b{0,1})	b	
+A(c{0,1} b{0,1})	b,c	
+A(b{0,1} a c){0,1}	b,d,c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a, c}' is expected.
+A(b{0,1} a c){0,1}	c,a,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+A(b{0,1} a c){0,1}	b,c,a	
+A(b{0,1} a c){0,1}	a,a,b,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, c}' is expected.
+A(b{0,1} a c){0,1}		
+A(b{0,1} a c){0,1}	c,a,b	
+A(b{0,1} a c){0,1}	b,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(b{0,1} a c){0,1}	a,c,b	
+A(f c d{0,1} b)	f,d,b,c	
+A(f c d{0,1} b)	b,f,d,c	
+A(f c d{0,1} b)	f,c,b	
+A(f c d{0,1} b)	f,c,b	
+A(f c d{0,1} b)	f,b,c	
+A(f c d{0,1} b)	c,f,b	
+A(f c d{0,1} b)	b,b,d,c,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f, c, d}' is expected.
+A(f c d{0,1} b)	c,f,b,f,d	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d}' is expected.
+A(e{0,1} f){0,1}	e,f,f	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(e{0,1} f){0,1}	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(e{0,1} f){0,1}	f,e	
+A(e{0,1} f){0,1}	e,f	
+A(e{0,1} f){0,1}	f	
+A(e{0,1} f){0,1}	f,e	
+A(e{0,1} f){0,1}	f,e	
+A(e{0,1} f){0,1}		
+A(e{0,1} d{0,1} a f{0,1})	a	
+A(e{0,1} d{0,1} a f{0,1})	e,d,a	
+A(e{0,1} d{0,1} a f{0,1})	a,e,f,d	
+A(e{0,1} d{0,1} a f{0,1})	f,f,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e, d, a}' is expected.
+A(e{0,1} d{0,1} a f{0,1})	a,e,f	
+A(e{0,1} d{0,1} a f{0,1})	e,d,f,a	
+A(e{0,1} d{0,1} a f{0,1})	f,d,e,a	
+A(e{0,1} d{0,1} a f{0,1})	d,f,a,e	
+A(e a{0,1} f b{0,1})	e,a,f	
+A(e a{0,1} f b{0,1})	a,a,e,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e, f, b}' is expected.
+A(e a{0,1} f b{0,1})	f,e	
+A(e a{0,1} f b{0,1})	e,f,a	
+A(e a{0,1} f b{0,1})	e,f,b	
+A(e a{0,1} f b{0,1})	b,f,e	
+A(e a{0,1} f b{0,1})	e,f	
+A(e a{0,1} f b{0,1})	e,f	
+A(c f e{0,1})	c,f,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(c f e{0,1})	c,f,e	
+A(c f e{0,1})	f,c	
+A(c f e{0,1})	f,e,c	
+A(c f e{0,1})	f,c	
+A(c f e{0,1})	f,c,c,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e}' is expected.
+A(c f e{0,1})	f,c	
+A(c f e{0,1})	e,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(f{0,1} a d)	a,d	
+A(f{0,1} a d)	a,d	
+A(f{0,1} a d)	a,f,d	
+A(f{0,1} a d)	d,a	
+A(f{0,1} a d)	a,d	
+A(f{0,1} a d)	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, d}' is expected.
+A(f{0,1} a d)	a,f,d	
+A(f{0,1} a d)	a,d	
+A(a{0,1} f b)	f,b	
+A(a{0,1} f b)	a,b,f	
+A(a{0,1} f b)	f,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a, b}' is expected.
+A(a{0,1} f b)	f,a,b	
+A(a{0,1} f b)	f,b,a	
+A(a{0,1} f b)	f,a,b	
+A(a{0,1} f b)	b,f,a	
+A(a{0,1} f b)	f,b	
+A(a)	a	
+A(a)	a	
+A(a)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a)	a,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(a)	a	
+A(a)	a	
+A(a)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a)	d,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(f{0,1} e{0,1} d{0,1} b c)	c,b	
+A(f{0,1} e{0,1} d{0,1} b c)	e,c,b	
+A(f{0,1} e{0,1} d{0,1} b c)	b,d,c	
+A(f{0,1} e{0,1} d{0,1} b c)	c,e,b	
+A(f{0,1} e{0,1} d{0,1} b c)	c,b,d,f	
+A(f{0,1} e{0,1} d{0,1} b c)	b,b,d,c,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f, e, d, c}' is expected.
+A(f{0,1} e{0,1} d{0,1} b c)	d,c,b	
+A(f{0,1} e{0,1} d{0,1} b c)	d,c,b,e,f	
+A(d{0,1} a)	d,a	
+A(d{0,1} a)	d,a	
+A(d{0,1} a)	a	
+A(d{0,1} a)	a,d,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d{0,1} a)	a	
+A(d{0,1} a)	a,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d}' is expected.
+A(d{0,1} a)	a	
+A(d{0,1} a)	d,a	
+A(a d{0,1})	e,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a, d}' is expected.
+A(a d{0,1})	a,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d}' is expected.
+A(a d{0,1})	d,a	
+A(a d{0,1})	a	
+A(a d{0,1})	c,a,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, d}' is expected.
+A(a d{0,1})	a,d,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(a d{0,1})	a,d	
+A(a d{0,1})	a	
+A(b f c{0,1} d{0,1} e{0,1})	d,b,e,f	
+A(b f c{0,1} d{0,1} e{0,1})	f,b,f,c,e,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, d, e}' is expected.
+A(b f c{0,1} d{0,1} e{0,1})	e,b,f	
+A(b f c{0,1} d{0,1} e{0,1})	f,b,b,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, d, e}' is expected.
+A(b f c{0,1} d{0,1} e{0,1})	f,c,b,d	
+A(b f c{0,1} d{0,1} e{0,1})	f,d,b	
+A(b f c{0,1} d{0,1} e{0,1})	c,b,f,e	
+A(b f c{0,1} d{0,1} e{0,1})	c,e,b,f	
+A(c f a b{0,1} e){0,1}	f,c,a,e	
+A(c f a b{0,1} e){0,1}		
+A(c f a b{0,1} e){0,1}	f,e,a,c	
+A(c f a b{0,1} e){0,1}	c,e,e,a,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f, a, b}' is expected.
+A(c f a b{0,1} e){0,1}		
+A(c f a b{0,1} e){0,1}		
+A(c f a b{0,1} e){0,1}	a,e,e,b,c,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, f, b}' is expected.
+A(c f a b{0,1} e){0,1}	c,a,e,f	
+A(a)	a	
+A(a)	a,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(a)	a,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(a)	a	
+A(a)	f,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+A(a)	a	
+A(a)	a	
+A(a)	a,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f d{0,1} e){0,1}	e,f	
+A(f d{0,1} e){0,1}	e,f	
+A(f d{0,1} e){0,1}		
+A(f d{0,1} e){0,1}	f,f,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d, e}' is expected.
+A(f d{0,1} e){0,1}	e,f	
+A(f d{0,1} e){0,1}	f,e,d	
+A(f d{0,1} e){0,1}	e,d,f	
+A(f d{0,1} e){0,1}	e,d,f	
+A(b{0,1}){0,1}		
+A(b{0,1}){0,1}		
+A(b{0,1}){0,1}	b	
+A(b{0,1}){0,1}		
+A(b{0,1}){0,1}	b	
+A(b{0,1}){0,1}		
+A(b{0,1}){0,1}		
+A(b{0,1}){0,1}	b	
+A(e b{0,1} d a){0,1}	e,a,d	
+A(e b{0,1} d a){0,1}	e,d,a,a,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+A(e b{0,1} d a){0,1}	e,a,d,b	
+A(e b{0,1} d a){0,1}		
+A(e b{0,1} d a){0,1}	e,a,d,b	
+A(e b{0,1} d a){0,1}	d,a,e	
+A(e b{0,1} d a){0,1}	e,d,a	
+A(e b{0,1} d a){0,1}	d,a,e	
+A(a{0,1} f{0,1} d e{0,1})	f,d,a,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e}' is expected.
+A(a{0,1} f{0,1} d e{0,1})	e,d	
+A(a{0,1} f{0,1} d e{0,1})	a,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d, e}' is expected.
+A(a{0,1} f{0,1} d e{0,1})	d,e,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a, f}' is expected.
+A(a{0,1} f{0,1} d e{0,1})	a,e,d,f	
+A(a{0,1} f{0,1} d e{0,1})	f,d	
+A(a{0,1} f{0,1} d e{0,1})	d,f	
+A(a{0,1} f{0,1} d e{0,1})	a,d,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, e}' is expected.
+A(a e f c d)	c,f,e,d,a	
+A(a e f c d)	a,e,c,f,d	
+A(a e f c d)	c,a,d,f,f,e	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(a e f c d)	d,f,e,a,c,c	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(a e f c d)	a,c,f,e,d	
+A(a e f c d)	c,a,d,e	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(a e f c d)	e,f,c,d,a	
+A(a e f c d)	f,a,e,d,c	
+A(c b{0,1})	b,c,c	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c b{0,1})	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(c b{0,1})	c,b	
+A(c b{0,1})	c	
+A(c b{0,1})	c	
+A(c b{0,1})	b,c,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(c b{0,1})	c,b	
+A(c b{0,1})	c	
+A(b d e{0,1}){0,1}	d,b,e	
+A(b d e{0,1}){0,1}	e,d	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b d e{0,1}){0,1}	b,d	
+A(b d e{0,1}){0,1}	d,e,b	
+A(b d e{0,1}){0,1}	d,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b d e{0,1}){0,1}	b,d	
+A(b d e{0,1}){0,1}	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, e}' is expected.
+A(b d e{0,1}){0,1}	d,b	
+A(a){0,1}	a	
+A(a){0,1}	e,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+A(a){0,1}		
+A(a){0,1}	a,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(a){0,1}		
+A(a){0,1}	a	
+A(a){0,1}		
+A(a){0,1}		
+A(c a{0,1})	c	
+A(c a{0,1})	c	
+A(c a{0,1})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, a}' is expected.
+A(c a{0,1})	c,a	
+A(c a{0,1})	c	
+A(c a{0,1})	c	
+A(c a{0,1})	a,c	
+A(c a{0,1})	c	
+A(f d b e){0,1}	f,d,e,b,b	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(f d b e){0,1}	e,b,c,f,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f, d}' is expected.
+A(f d b e){0,1}	e,d,f,b	
+A(f d b e){0,1}	f,b,e,e,d	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d}' is expected.
+A(f d b e){0,1}	b,f,d,e	
+A(f d b e){0,1}	f,e,e,d,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d, b}' is expected.
+A(f d b e){0,1}	f,d,b,e	
+A(f d b e){0,1}	e,b,d,f	
+A(c{0,1})		
+A(c{0,1})	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c{0,1})		
+A(c{0,1})	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c{0,1})		
+A(c{0,1})		
+A(c{0,1})		
+A(c{0,1})		
+A(c{0,1} d)	c,d	
+A(c{0,1} d)	d	
+A(c{0,1} d)	d,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(c{0,1} d)	d	
+A(c{0,1} d)	b,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, d}' is expected.
+A(c{0,1} d)	c,d	
+A(c{0,1} d)	d,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(c{0,1} d)	d	
+A(f c b){0,1}	b,f,b,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+A(f c b){0,1}	c,b,f	
+A(f c b){0,1}	c,f,b	
+A(f c b){0,1}	f,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(f c b){0,1}	b,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(f c b){0,1}		
+A(f c b){0,1}	f,b,c	
+A(f c b){0,1}		
+A(a{0,1} c e{0,1})	c,e	
+A(a{0,1} c e{0,1})	c	
+A(a{0,1} c e{0,1})	c,e	
+A(a{0,1} c e{0,1})	a,a,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, e}' is expected.
+A(a{0,1} c e{0,1})	c	
+A(a{0,1} c e{0,1})	c	
+A(a{0,1} c e{0,1})	a,e,e,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+A(a{0,1} c e{0,1})	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, e}' is expected.
+A(d){0,1}		
+A(d){0,1}	d,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d){0,1}	d	
+A(d){0,1}	d	
+A(d){0,1}	d	
+A(d){0,1}		
+A(d){0,1}	d	
+A(d){0,1}	d,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(a{0,1})	a	
+A(a{0,1})		
+A(a{0,1})		
+A(a{0,1})	a	
+A(a{0,1})		
+A(a{0,1})	a,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(a{0,1})		
+A(a{0,1})		
+A(c{0,1} d{0,1}){0,1}		
+A(c{0,1} d{0,1}){0,1}	d	
+A(c{0,1} d{0,1}){0,1}		
+A(c{0,1} d{0,1}){0,1}		
+A(c{0,1} d{0,1}){0,1}		
+A(c{0,1} d{0,1}){0,1}	c	
+A(c{0,1} d{0,1}){0,1}	d	
+A(c{0,1} d{0,1}){0,1}	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, d}' is expected.
+A(a e c{0,1} f){0,1}	c,d,e,f,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a, e, f}' is expected.
+A(a e c{0,1} f){0,1}		
+A(a e c{0,1} f){0,1}		
+A(a e c{0,1} f){0,1}	c,a,e,f	
+A(a e c{0,1} f){0,1}	a,e,f,c	
+A(a e c{0,1} f){0,1}	a,e,f	
+A(a e c{0,1} f){0,1}	c,a,f,e	
+A(a e c{0,1} f){0,1}	c,a,e,f	
+A(c b f){0,1}	c,b,f	
+A(c b f){0,1}	b,f,c	
+A(c b f){0,1}		
+A(c b f){0,1}	c,b,f	
+A(c b f){0,1}	f,c,b	
+A(c b f){0,1}	f,c,f,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+A(c b f){0,1}	c,f,b	
+A(c b f){0,1}	b,c,f	
+A(e{0,1} f b a){0,1}	f,a,b	
+A(e{0,1} f b a){0,1}	b,a,e,f	
+A(e{0,1} f b a){0,1}	a,f,b	
+A(e{0,1} f b a){0,1}		
+A(e{0,1} f b a){0,1}	f	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, b, a}' is expected.
+A(e{0,1} f b a){0,1}	a,b,f	
+A(e{0,1} f b a){0,1}	e,a,a,b,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, b}' is expected.
+A(e{0,1} f b a){0,1}	c,a,f,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e, f, b, a}' is expected.
+A(f c{0,1} d e a)	f,e,d,a	
+A(f c{0,1} d e a)	a,f,d,e	
+A(f c{0,1} d e a)	d,e,a,f,f	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+A(f c{0,1} d e a)	d,e,f,a,c	
+A(f c{0,1} d e a)	e,f,a,d	
+A(f c{0,1} d e a)	c,e,a,f,d	
+A(f c{0,1} d e a)	a,e,f,d	
+A(f c{0,1} d e a)	c,a,f,d	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(c d a{0,1} b)	b,a,d,c	
+A(c d a{0,1} b)	c,b,d	
+A(c d a{0,1} b)	c,d,b	
+A(c d a{0,1} b)	c,d,b,a	
+A(c d a{0,1} b)	d,c,b	
+A(c d a{0,1} b)	c,c,b,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d, a, b}' is expected.
+A(c d a{0,1} b)	a,b,b,c,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, d}' is expected.
+A(c d a{0,1} b)	d,c,b,d	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(b a e c d){0,1}	d,c,e,d,a,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b, a}' is expected.
+A(b a e c d){0,1}	e,b,d,c,a	
+A(b a e c d){0,1}	c,a,b,e,d	
+A(b a e c d){0,1}	e,a,d,b,c	
+A(b a e c d){0,1}		
+A(b a e c d){0,1}	b,c,a,e,d	
+A(b a e c d){0,1}		
+A(b a e c d){0,1}	d,c,e,a,b	
+A(a f{0,1} e b d)	a,a,d,f,e,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, e, b, d}' is expected.
+A(a f{0,1} e b d)	e,a,b	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, d}' is expected.
+A(a f{0,1} e b d)	e,f,d,a,b	
+A(a f{0,1} e b d)	a,b,d,e	
+A(a f{0,1} e b d)	b,d,e,a	
+A(a f{0,1} e b d)	d,b,e	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, f}' is expected.
+A(a f{0,1} e b d)	d,a,b,f,e	
+A(a f{0,1} e b d)	d,e,b,a	
+A(f)	f	
+A(f)	f,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(f)	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(f)	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(f)	f,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(e{0,1} d b c{0,1} f{0,1}){0,1}	f,b,e,d,c	
+A(e{0,1} d b c{0,1} f{0,1}){0,1}		
+A(e{0,1} d b c{0,1} f{0,1}){0,1}	d,e,b,c	
+A(e{0,1} d b c{0,1} f{0,1}){0,1}	f,d,b	
+A(e{0,1} d b c{0,1} f{0,1}){0,1}	f,b,e,d	
+A(e{0,1} d b c{0,1} f{0,1}){0,1}		
+A(e{0,1} d b c{0,1} f{0,1}){0,1}	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, b, c, f}' is expected.
+A(e{0,1} d b c{0,1} f{0,1}){0,1}	b,d,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e, c, f}' is expected.
+A(a f{0,1} d c{0,1})	c,f,a,d	
+A(a f{0,1} d c{0,1})	f,d,c,a	
+A(a f{0,1} d c{0,1})	a,f,d	
+A(a f{0,1} d c{0,1})	a,d,c,f	
+A(a f{0,1} d c{0,1})	d,a,f	
+A(a f{0,1} d c{0,1})	d,c,a	
+A(a f{0,1} d c{0,1})	a,d	
+A(a f{0,1} d c{0,1})	c,a,d	
+A(b c{0,1}){0,1}		
+A(b c{0,1}){0,1}		
+A(b c{0,1}){0,1}		
+A(b c{0,1}){0,1}		
+A(b c{0,1}){0,1}	b,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+A(b c{0,1}){0,1}	b,c	
+A(b c{0,1}){0,1}		
+A(b c{0,1}){0,1}		
+A(d c a b e{0,1})	c,b,a,e,d	
+A(d c a b e{0,1})	e,a,d,c,b	
+A(d c a b e{0,1})	b,a,c,d	
+A(d c a b e{0,1})	c,a,d,b,e,b	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(d c a b e{0,1})	a,d,c,b	
+A(d c a b e{0,1})	d,a,b,c	
+A(d c a b e{0,1})	a,b,d,c,e	
+A(d c a b e{0,1})	a,d,b,e,c	
+A(e f b{0,1}){0,1}	e,f	
+A(e f b{0,1}){0,1}		
+A(e f b{0,1}){0,1}	b,f,e	
+A(e f b{0,1}){0,1}	e,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(e f b{0,1}){0,1}		
+A(e f b{0,1}){0,1}	f,e,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(e f b{0,1}){0,1}		
+A(e f b{0,1}){0,1}		
+A(e)	e	
+A(e)	e	
+A(e)	e,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e)	e	
+A(e)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(e)	e	
+A(e)	e	
+A(e)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(f b{0,1} a d e)	d,e,f,a	
+A(f b{0,1} a d e)	e,d,f,a	
+A(f b{0,1} a d e)	e,e,d,a,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f, b, a, d}' is expected.
+A(f b{0,1} a d e)	f,a,d,e	
+A(f b{0,1} a d e)	b,f,a,e,d	
+A(f b{0,1} a d e)	e,e,f,d,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f, b, a, d}' is expected.
+A(f b{0,1} a d e)	e,d,a,f	
+A(f b{0,1} a d e)	e,e,a,f,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f, b, a, d}' is expected.
+A(a{0,1} d{0,1})	d	
+A(a{0,1} d{0,1})	a,a,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d}' is expected.
+A(a{0,1} d{0,1})		
+A(a{0,1} d{0,1})		
+A(a{0,1} d{0,1})	a,a,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d}' is expected.
+A(a{0,1} d{0,1})		
+A(a{0,1} d{0,1})	d	
+A(a{0,1} d{0,1})	a,d	
+A(a e d{0,1} c f{0,1})	e,c,a,a,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d, f}' is expected.
+A(a e d{0,1} c f{0,1})	a,c,e	
+A(a e d{0,1} c f{0,1})	a,c,d,e	
+A(a e d{0,1} c f{0,1})	c,a,f,e	
+A(a e d{0,1} c f{0,1})	e,a,d,e,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, f}' is expected.
+A(a e d{0,1} c f{0,1})	f,e,c,d,a	
+A(a e d{0,1} c f{0,1})	c,d,a,e	
+A(a e d{0,1} c f{0,1})	e,c,a,d,e	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f}' is expected.
+A(f{0,1} c e{0,1} a)	a,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, c}' is expected.
+A(f{0,1} c e{0,1} a)	e,a,f,c	
+A(f{0,1} c e{0,1} a)	a,f,e,c,c	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(f{0,1} c e{0,1} a)	c,a	
+A(f{0,1} c e{0,1} a)	c,a	
+A(f{0,1} c e{0,1} a)	c,a,f	
+A(f{0,1} c e{0,1} a)	c,a,f,e	
+A(f{0,1} c e{0,1} a)	c,a,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, e}' is expected.
+A(a{0,1} d c b{0,1} e{0,1})	b,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, d, e}' is expected.
+A(a{0,1} d c b{0,1} e{0,1})	a,b,d,c	
+A(a{0,1} d c b{0,1} e{0,1})	d,c	
+A(a{0,1} d c b{0,1} e{0,1})	d,a,c	
+A(a{0,1} d c b{0,1} e{0,1})	d,c,a	
+A(a{0,1} d c b{0,1} e{0,1})	c,c,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, d, b, e}' is expected.
+A(a{0,1} d c b{0,1} e{0,1})	d,a,e,c,b	
+A(a{0,1} d c b{0,1} e{0,1})	d,c	
+A(e{0,1} c a d{0,1})	d,c,a	
+A(e{0,1} c a d{0,1})	c,a	
+A(e{0,1} c a d{0,1})	d,e,c,a	
+A(e{0,1} c a d{0,1})	a,c,e	
+A(e{0,1} c a d{0,1})	e,c,c,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, d}' is expected.
+A(e{0,1} c a d{0,1})	c,c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e, a, d}' is expected.
+A(e{0,1} c a d{0,1})	a,c	
+A(e{0,1} c a d{0,1})	c,a,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e, d}' is expected.
+A(b f c d{0,1} e)	e,e,d,f,b,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, f, c, d}' is expected.
+A(b f c d{0,1} e)	d,c,e,f,b	
+A(b f c d{0,1} e)	e,b,f,c	
+A(b f c d{0,1} e)	c,f,b,e	
+A(b f c d{0,1} e)	e,b,f,c	
+A(b f c d{0,1} e)	c,b,e,d,f	
+A(b f c d{0,1} e)	b,f,e,c	
+A(b f c d{0,1} e)	b,e,d,d,c,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, c}' is expected.
+A(f{0,1}){0,1}	f	
+A(f{0,1}){0,1}		
+A(f{0,1}){0,1}		
+A(f{0,1}){0,1}		
+A(f{0,1}){0,1}		
+A(f{0,1}){0,1}	f	
+A(f{0,1}){0,1}	f	
+A(f{0,1}){0,1}	f	
+A(e a d)	a,e,d	
+A(e a d)	e,a,d	
+A(e a d)	e,d,a,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(e a d)	a,d,e	
+A(e a d)	d,e,a	
+A(e a d)	a,e,d	
+A(e a d)	d,e,e,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+A(e a d)	d,e,a	
+A(b{0,1} f{0,1} d c a{0,1})	d,c,a,f,b	
+A(b{0,1} f{0,1} d c a{0,1})	f,d,c	
+A(b{0,1} f{0,1} d c a{0,1})	a,c,d,f,f	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+A(b{0,1} f{0,1} d c a{0,1})	b,c,c,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f, d, a}' is expected.
+A(b{0,1} f{0,1} d c a{0,1})	c,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, d, a}' is expected.
+A(b{0,1} f{0,1} d c a{0,1})	f,c,d	
+A(b{0,1} f{0,1} d c a{0,1})	c,d	
+A(b{0,1} f{0,1} d c a{0,1})	d,b,b,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f, c, a}' is expected.
+A(d e b{0,1} c{0,1} f){0,1}	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d, e, b, c, f}' is expected.
+A(d e b{0,1} c{0,1} f){0,1}		
+A(d e b{0,1} c{0,1} f){0,1}	c,f,d,b,c,e	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e}' is expected.
+A(d e b{0,1} c{0,1} f){0,1}	e,f,d	
+A(d e b{0,1} c{0,1} f){0,1}	e,f,c,d	
+A(d e b{0,1} c{0,1} f){0,1}		
+A(d e b{0,1} c{0,1} f){0,1}	e,c,f,d	
+A(d e b{0,1} c{0,1} f){0,1}		
+A(a c f e b){0,1}	b,e,a,a,c,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, f}' is expected.
+A(a c f e b){0,1}	a,b,e,f,f,c	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+A(a c f e b){0,1}	f,e,b,c,a	
+A(a c f e b){0,1}	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, c, f, b}' is expected.
+A(a c f e b){0,1}	b,f,f,c,a,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a, c, e}' is expected.
+A(a c f e b){0,1}	e,f,a,c,b	
+A(a c f e b){0,1}	b,c,a,e,f	
+A(a c f e b){0,1}	a,f,e,b,c	
+A(d{0,1} c b a e)	a,c,b,e,e	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d}' is expected.
+A(d{0,1} c b a e)	c,b,e,a,d	
+A(d{0,1} c b a e)	d,a,e,b,c	
+A(d{0,1} c b a e)	d,e,b,c,a	
+A(d{0,1} c b a e)	b,c,e,a	
+A(d{0,1} c b a e)	d,a,c,e,b	
+A(d{0,1} c b a e)	e,d,a,c,b	
+A(d{0,1} c b a e)	e,b,c,d,a	
+A(a c f)	a,f,c	
+A(a c f)	f,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a c f)	f,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a c f)	a,c,f	
+A(a c f)	f,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a c f)	f,e,c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a, c}' is expected.
+A(a c f)	f,c,a	
+A(a c f)	f,c,a	
+A(e b d){0,1}	e,b,d	
+A(e b d){0,1}	d,b,f,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(e b d){0,1}	b,d,e,e	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e b d){0,1}	e,d,b	
+A(e b d){0,1}	e,e,b,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, d}' is expected.
+A(e b d){0,1}	d,d,b,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e, b}' is expected.
+A(e b d){0,1}		
+A(e b d){0,1}	e,d,b	
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(f)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(e a{0,1} b){0,1}		
+A(e a{0,1} b){0,1}	e,b,a	
+A(e a{0,1} b){0,1}	e,b,a	
+A(e a{0,1} b){0,1}	a,e,b	
+A(e a{0,1} b){0,1}	e,b	
+A(e a{0,1} b){0,1}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e, a, b}' is expected.
+A(e a{0,1} b){0,1}		
+A(e a{0,1} b){0,1}	a,a,b,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e, b}' is expected.
+A(b{0,1} c e{0,1} f{0,1})	e,c	
+A(b{0,1} c e{0,1} f{0,1})	b,c,f,e	
+A(b{0,1} c e{0,1} f{0,1})	c	
+A(b{0,1} c e{0,1} f{0,1})	f,b,e,e,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+A(b{0,1} c e{0,1} f{0,1})	c,e,c,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, f}' is expected.
+A(b{0,1} c e{0,1} f{0,1})	f,e,c	
+A(b{0,1} c e{0,1} f{0,1})	c,b,e	
+A(b{0,1} c e{0,1} f{0,1})	f,b,e	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(e{0,1} d{0,1} f b c)	b,c,f	
+A(e{0,1} d{0,1} f b c)	c,b,f	
+A(e{0,1} d{0,1} f b c)	b,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, d, f}' is expected.
+A(e{0,1} d{0,1} f b c)	d,e,f,c,b	
+A(e{0,1} d{0,1} f b c)	c,b,f,d,f,e	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(e{0,1} d{0,1} f b c)	c,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, d, b}' is expected.
+A(e{0,1} d{0,1} f b c)	d,c,f,b	
+A(e{0,1} d{0,1} f b c)	b,c,f,d	
+A(d c e{0,1}){0,1}	c,d,e	
+A(d c e{0,1}){0,1}		
+A(d c e{0,1}){0,1}	d,c	
+A(d c e{0,1}){0,1}	e,d,c	
+A(d c e{0,1}){0,1}	d,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(d c e{0,1}){0,1}	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, e}' is expected.
+A(d c e{0,1}){0,1}	d,e,c	
+A(d c e{0,1}){0,1}	e,d	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(d f{0,1}){0,1}	a,f,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d, f}' is expected.
+A(d f{0,1}){0,1}	d	
+A(d f{0,1}){0,1}	d	
+A(d f{0,1}){0,1}	f,d	
+A(d f{0,1}){0,1}	d	
+A(d f{0,1}){0,1}	d,f	
+A(d f{0,1}){0,1}	d	
+A(d f{0,1}){0,1}	d	
+A(a b){0,1}	a,b	
+A(a b){0,1}	b,a,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(a b){0,1}	b,a	
+A(a b){0,1}	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a b){0,1}	a,b	
+A(a b){0,1}	a,a,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+A(a b){0,1}	a,b	
+A(a b){0,1}	b,a	
+A(e b){0,1}	b,e	
+A(e b){0,1}	e,b	
+A(e b){0,1}	e,b	
+A(e b){0,1}	e,b	
+A(e b){0,1}	e,b	
+A(e b){0,1}	b,e	
+A(e b){0,1}	b,e	
+A(e b){0,1}		
+A(a e d f)	a,e,f,d	
+A(a e d f)	d,a,f,e	
+A(a e d f)	d,d,a,f,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a, e, f}' is expected.
+A(a e d f)	e,a,f,d	
+A(a e d f)	a,d,f,e,e	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(a e d f)	e,f,d,a	
+A(a e d f)	d,f,e,e,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+A(a e d f)	f,d,a,e	
+A(f)	f	
+A(f)	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f)	f	
+A(f)	f	
+A(f)	f	
+A(f)	b,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f}' is expected.
+A(f)	f	
+A(f)	d,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f}' is expected.
+A(e d)	c,e,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e, d}' is expected.
+A(e d)	e,d	
+A(e d)	e,d,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(e d)	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(e d)	d,e	
+A(e d)	d,e	
+A(e d)	d,d,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e}' is expected.
+A(e d)	e,d	
+A(b d c f)	f,c,b,d	
+A(b d c f)	f,b,c,d	
+A(b d c f)	b,d,c,f	
+A(b d c f)	b,c,d,f	
+A(b d c f)	f,d,c	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b d c f)	f,b,b,c,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d, c}' is expected.
+A(b d c f)	c,f,d,d,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+A(b d c f)	d,c,f,b	
+A(a b{0,1} f e)	a,e,f,b	
+A(a b{0,1} f e)	f,e,b,a	
+A(a b{0,1} f e)	e,f,a,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+A(a b{0,1} f e)	f,e,a	
+A(a b{0,1} f e)	e,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, f}' is expected.
+A(a b{0,1} f e)	e,a,f,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(a b{0,1} f e)	e,a,f	
+A(a b{0,1} f e)	b,f,e,a,a	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(f a b{0,1} e)	e,a,b,f	
+A(f a b{0,1} e)	a,e,f	
+A(f a b{0,1} e)	e,a,b,f	
+A(f a b{0,1} e)	f,a,a,e,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, e}' is expected.
+A(f a b{0,1} e)	a,f,e,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(f a b{0,1} e)	a,d,f,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, b, e}' is expected.
+A(f a b{0,1} e)	f,b,a,e	
+A(f a b{0,1} e)	a,f,b,e	
+A(d c{0,1}){0,1}		
+A(d c{0,1}){0,1}	d	
+A(d c{0,1}){0,1}		
+A(d c{0,1}){0,1}	d	
+A(d c{0,1}){0,1}	d,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(d c{0,1}){0,1}	d,c	
+A(d c{0,1}){0,1}	d	
+A(d c{0,1}){0,1}		
+A(f b){0,1}	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, b}' is expected.
+A(f b){0,1}	f,b	
+A(f b){0,1}	b,f,f	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f b){0,1}	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(f b){0,1}	b,f,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(f b){0,1}	b,f	
+A(f b){0,1}	b,f	
+A(f b){0,1}		
+A(d{0,1} a{0,1} c)	d,c,a	
+A(d{0,1} a{0,1} c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d, a, c}' is expected.
+A(d{0,1} a{0,1} c)	c,d	
+A(d{0,1} a{0,1} c)	a,c	
+A(d{0,1} a{0,1} c)	a,c	
+A(d{0,1} a{0,1} c)	c,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d, a}' is expected.
+A(d{0,1} a{0,1} c)	c,d,a	
+A(d{0,1} a{0,1} c)	c,d	
+A(e a c)	a,e,e,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+A(e a c)	c,a,e	
+A(e a c)	e,a,c	
+A(e a c)	a,e,c	
+A(e a c)	c,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(e a c)	c,a,e,e	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e a c)	c,f,a,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e, a}' is expected.
+A(e a c)	e,a,c	
+A(b c)	b,b,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+A(b c)	c,b,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b c)	b,c	
+A(b c)	c,b	
+A(b c)	b,c	
+A(b c)	c,b	
+A(b c)	c	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b c)	c,b	
+A(d a)	d,a	
+A(d a)	d,a	
+A(d a)	d,a,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(d a)	d,a	
+A(d a)	a,d	
+A(d a)	a,d	
+A(d a)	d,d,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(d a)	d,a	
+A(b d){0,1}	b,d,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(b d){0,1}	b,d	
+A(b d){0,1}	d,b	
+A(b d){0,1}	c,b,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, d}' is expected.
+A(b d){0,1}	d,b	
+A(b d){0,1}	b,d	
+A(b d){0,1}	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(b d){0,1}		
+A(a d{0,1})	a,d	
+A(a d{0,1})	d,a	
+A(a d{0,1})	a,d	
+A(a d{0,1})	a	
+A(a d{0,1})	d,a	
+A(a d{0,1})	a	
+A(a d{0,1})	d,a	
+A(a d{0,1})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, d}' is expected.
+A(d a)	a,d	
+A(d a)	d,a,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(d a)	b,d,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d, a}' is expected.
+A(d a)	a,d	
+A(d a)	d,a	
+A(d a)	a,f,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d}' is expected.
+A(d a)	a,d,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d a)	d,a	
+A(f{0,1})	f	
+A(f{0,1})		
+A(f{0,1})	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f{0,1})		
+A(f{0,1})	f	
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})		
+A(f e a{0,1} d){0,1}	a,d,f,e	
+A(f e a{0,1} d){0,1}	e,f,d,e,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+A(f e a{0,1} d){0,1}	f,d	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, a}' is expected.
+A(f e a{0,1} d){0,1}	e,a,d,f	
+A(f e a{0,1} d){0,1}		
+A(f e a{0,1} d){0,1}	a,e,d,f	
+A(f e a{0,1} d){0,1}	a,e,f,d	
+A(f e a{0,1} d){0,1}	f,d,e	
+A(c{0,1} a d)	a,d,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(c{0,1} a d)	a,d	
+A(c{0,1} a d)	d,a	
+A(c{0,1} a d)	c,d,a,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(c{0,1} a d)	d,c,a	
+A(c{0,1} a d)	d,a,a,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+A(c{0,1} a d)	d,a,c	
+A(c{0,1} a d)	d,a	
+A(b d)	d,c,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+A(b d)	d,b,c	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(b d)	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b d)	d,b	
+A(b d)	b,b,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d}' is expected.
+A(b d)	b,f,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d}' is expected.
+A(b d)	b,d	
+A(b d)	b,d	
+A(d f{0,1} c b{0,1}){0,1}	f,d,e,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, b}' is expected.
+A(d f{0,1} c b{0,1}){0,1}	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d, f, c, b}' is expected.
+A(d f{0,1} c b{0,1}){0,1}	b,d,c	
+A(d f{0,1} c b{0,1}){0,1}		
+A(d f{0,1} c b{0,1}){0,1}	d,b,f,c	
+A(d f{0,1} c b{0,1}){0,1}	d,c,f	
+A(d f{0,1} c b{0,1}){0,1}	f,c,c,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d, b}' is expected.
+A(d f{0,1} c b{0,1}){0,1}		
+A(d)	d	
+A(d)	d	
+A(d)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d)	d	
+A(d)	d	
+A(d)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d)	d	
+A(d)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(c{0,1} f a)	a,f	
+A(c{0,1} f a)	c,f,a	
+A(c{0,1} f a)	c,f,a	
+A(c{0,1} f a)	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, f}' is expected.
+A(c{0,1} f a)	c,d,f,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, a}' is expected.
+A(c{0,1} f a)	a,c,f	
+A(c{0,1} f a)	f,a,c,c	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c{0,1} f a)	c,f,a	
+A(a{0,1} c b{0,1} f{0,1} d){0,1}	a,c,f,d	
+A(a{0,1} c b{0,1} f{0,1} d){0,1}	f,c,b,d,b	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+A(a{0,1} c b{0,1} f{0,1} d){0,1}	b,a,c,f,d	
+A(a{0,1} c b{0,1} f{0,1} d){0,1}	d,f,b,c	
+A(a{0,1} c b{0,1} f{0,1} d){0,1}	f,c,d	
+A(a{0,1} c b{0,1} f{0,1} d){0,1}	a,c,d	
+A(a{0,1} c b{0,1} f{0,1} d){0,1}		
+A(a{0,1} c b{0,1} f{0,1} d){0,1}	d,c,a,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, f}' is expected.
+A(c{0,1} a f d b{0,1})	c,f,d,a	
+A(c{0,1} a f d b{0,1})	f,d,a	
+A(c{0,1} a f d b{0,1})	a,d,c	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, b}' is expected.
+A(c{0,1} a f d b{0,1})	f,a,d,b	
+A(c{0,1} a f d b{0,1})	d,f,a	
+A(c{0,1} a f d b{0,1})	a,f,f,b,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, d, b}' is expected.
+A(c{0,1} a f d b{0,1})	a,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, d, b}' is expected.
+A(c{0,1} a f d b{0,1})	c,a,d,f	
+A(e{0,1} b f)	f	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, b}' is expected.
+A(e{0,1} b f)	b,f	
+A(e{0,1} b f)	f,e,b	
+A(e{0,1} b f)	e,b,f	
+A(e{0,1} b f)	b,e,f	
+A(e{0,1} b f)	b,f,e	
+A(e{0,1} b f)	f,e,b	
+A(e{0,1} b f)	f,b	
+A(b{0,1} d{0,1} f a)	a,a,b,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, d, f}' is expected.
+A(b{0,1} d{0,1} f a)	b,d,d,a,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, a}' is expected.
+A(b{0,1} d{0,1} f a)	f,d,a,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+A(b{0,1} d{0,1} f a)	f,b,a	
+A(b{0,1} d{0,1} f a)	f,a,d,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(b{0,1} d{0,1} f a)	f,b,a,d	
+A(b{0,1} d{0,1} f a)	f,a,b	
+A(b{0,1} d{0,1} f a)	d,a,f	
+A(b a f)	f,f,b,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b, a}' is expected.
+A(b a f)	b,f,a	
+A(b a f)	a,f,b	
+A(b a f)	b,a,f	
+A(b a f)	b,a,a,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f}' is expected.
+A(b a f)	a,f,b	
+A(b a f)	a,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b a f)	f,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(c{0,1}){0,1}		
+A(c{0,1}){0,1}		
+A(c{0,1}){0,1}		
+A(c{0,1}){0,1}		
+A(c{0,1}){0,1}		
+A(c{0,1}){0,1}		
+A(c{0,1}){0,1}		
+A(c{0,1}){0,1}		
+A(d c{0,1} a)	a,d	
+A(d c{0,1} a)	d,a	
+A(d c{0,1} a)	d,c,a	
+A(d c{0,1} a)	a,d	
+A(d c{0,1} a)	d,c,a	
+A(d c{0,1} a)	d,a	
+A(d c{0,1} a)	d,a	
+A(d c{0,1} a)	c,a,d	
+A(e a){0,1}	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(e a){0,1}	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(e a){0,1}		
+A(e a){0,1}	a,e	
+A(e a){0,1}	a,e	
+A(e a){0,1}	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(e a){0,1}	a,e	
+A(e a){0,1}	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a e d{0,1} b c){0,1}	b,a,e,c	
+A(a e d{0,1} b c){0,1}	c,e,a,b	
+A(a e d{0,1} b c){0,1}	b,e,c,a	
+A(a e d{0,1} b c){0,1}	a,c,d,e,b	
+A(a e d{0,1} b c){0,1}	a,a,c,e,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e, d, b, c}' is expected.
+A(a e d{0,1} b c){0,1}	e,a,b,c,d	
+A(a e d{0,1} b c){0,1}		
+A(a e d{0,1} b c){0,1}		
+A(c{0,1})		
+A(c{0,1})	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c{0,1})		
+A(c{0,1})		
+A(c{0,1})		
+A(c{0,1})		
+A(c{0,1})		
+A(c{0,1})	c	
+A(b{0,1})	b	
+A(b{0,1})		
+A(b{0,1})	b	
+A(b{0,1})	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+A(b{0,1})		
+A(b{0,1})		
+A(b{0,1})	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b{0,1})	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(c f{0,1} d)	f,d	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(c f{0,1} d)	d,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(c f{0,1} d)	c,d	
+A(c f{0,1} d)	c	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, d}' is expected.
+A(c f{0,1} d)	c,d	
+A(c f{0,1} d)	d,c,f	
+A(c f{0,1} d)	c,d	
+A(c f{0,1} d)	c,a,d,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, d}' is expected.
+A(d){0,1}		
+A(d){0,1}	d	
+A(d){0,1}		
+A(d){0,1}	d	
+A(d){0,1}	d	
+A(d){0,1}	d	
+A(d){0,1}	d,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d){0,1}	d	
+A(c{0,1} b){0,1}	c,b	
+A(c{0,1} b){0,1}	c,b	
+A(c{0,1} b){0,1}	b	
+A(c{0,1} b){0,1}	b,c	
+A(c{0,1} b){0,1}	f,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, b}' is expected.
+A(c{0,1} b){0,1}	b,c	
+A(c{0,1} b){0,1}	b	
+A(c{0,1} b){0,1}	b,c	
+A(f d c e)	e,d,d,c,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, c}' is expected.
+A(f d c e)	e,d,f,c	
+A(f d c e)	f,e,d,d,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(f d c e)	f,e,d,c	
+A(f d c e)	e,c,d,f	
+A(f d c e)	b,d,e,c,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f, d, c, e}' is expected.
+A(f d c e)	f,d,d,c,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, e}' is expected.
+A(f d c e)	f,e,d,c	
+A(f d)	f,d	
+A(f d)	f	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(f d)	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(f d)	f,f,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d}' is expected.
+A(f d)	d,f	
+A(f d)	d,f	
+A(f d)	d,f,f	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f d)	f	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d f{0,1} a{0,1} b c){0,1}	f,d,b,c,c	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+A(d f{0,1} a{0,1} b c){0,1}	c,b,f,d	
+A(d f{0,1} a{0,1} b c){0,1}	b,c,d,d	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, a}' is expected.
+A(d f{0,1} a{0,1} b c){0,1}	c,f,d,b	
+A(d f{0,1} a{0,1} b c){0,1}	b,f,c,d	
+A(d f{0,1} a{0,1} b c){0,1}	b,f,c,d	
+A(d f{0,1} a{0,1} b c){0,1}	d,b,c,f	
+A(d f{0,1} a{0,1} b c){0,1}	b,f,a,c,d	
+A(b e{0,1} f)	f,b	
+A(b e{0,1} f)	f,b	
+A(b e{0,1} f)	b,f,e	
+A(b e{0,1} f)	b,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(b e{0,1} f)	b,f	
+A(b e{0,1} f)	b,f,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e}' is expected.
+A(b e{0,1} f)	d,f,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b, e, f}' is expected.
+A(b e{0,1} f)	b,f	
+A(f{0,1} a e)	a,e	
+A(f{0,1} a e)	f,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(f{0,1} a e)	a,f,f,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(f{0,1} a e)	f,e,a	
+A(f{0,1} a e)	f,a,e	
+A(f{0,1} a e)	a,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(f{0,1} a e)	e,a	
+A(f{0,1} a e)	f,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(e f c d a)	a,e,d,c,f	
+A(e f c d a)	a,c,f,e,d	
+A(e f c d a)	f,e,d,a,c	
+A(e f c d a)	c,f,d,a,e	
+A(e f c d a)	d,e,f,a,c	
+A(e f c d a)	c,d,e,f,a	
+A(e f c d a)	d,e,e,f,c,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f, c, a}' is expected.
+A(e f c d a)	f,a,c,d	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(e{0,1} c a)	c,a	
+A(e{0,1} c a)	c,a	
+A(e{0,1} c a)	c,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(e{0,1} c a)	a,c	
+A(e{0,1} c a)	c,e,a,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(e{0,1} c a)	a,c	
+A(e{0,1} c a)	c,a	
+A(e{0,1} c a)	a,a,e,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e, c}' is expected.
+A(e a f{0,1} c{0,1} d{0,1})	a,e,d,c,e	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f}' is expected.
+A(e a f{0,1} c{0,1} d{0,1})	a,c,e	
+A(e a f{0,1} c{0,1} d{0,1})	f,a,e	
+A(e a f{0,1} c{0,1} d{0,1})	e,d,a,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f, c}' is expected.
+A(e a f{0,1} c{0,1} d{0,1})	e,a,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, c, d}' is expected.
+A(e a f{0,1} c{0,1} d{0,1})	f,c,e,d,a	
+A(e a f{0,1} c{0,1} d{0,1})	e,f,c,a	
+A(e a f{0,1} c{0,1} d{0,1})	e,c,f	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, d}' is expected.
+A(d e a{0,1} b{0,1})	f,a,e,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d, e, a, b}' is expected.
+A(d e a{0,1} b{0,1})	e,b,d,a	
+A(d e a{0,1} b{0,1})	d,e,b	
+A(d e a{0,1} b{0,1})	d,e,a,b	
+A(d e a{0,1} b{0,1})	e,a,d	
+A(d e a{0,1} b{0,1})	b,d,e	
+A(d e a{0,1} b{0,1})	b,d,d,e,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e, a}' is expected.
+A(d e a{0,1} b{0,1})	d,a,e,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(e)	e,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e)	e	
+A(e)	e	
+A(e)	e	
+A(e)	e	
+A(e)	e	
+A(e)	e	
+A(e)	e	
+A(f)	f	
+A(f)	f	
+A(f)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(f)	f	
+A(f)	f	
+A(f)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(f)	f	
+A(f)	e,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f}' is expected.
+A(b f d{0,1} a{0,1} c)	c,b,f	
+A(b f d{0,1} a{0,1} c)	f,c,b	
+A(b f d{0,1} a{0,1} c)	f,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, d, a}' is expected.
+A(b f d{0,1} a{0,1} c)	c,d,b,f	
+A(b f d{0,1} a{0,1} c)	f,c,b	
+A(b f d{0,1} a{0,1} c)	c,f,b,a	
+A(b f d{0,1} a{0,1} c)	c,f,a,b,d	
+A(b f d{0,1} a{0,1} c)	f,c,b	
+A(b{0,1} a{0,1}){0,1}	b,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+A(b{0,1} a{0,1}){0,1}		
+A(b{0,1} a{0,1}){0,1}		
+A(b{0,1} a{0,1}){0,1}		
+A(b{0,1} a{0,1}){0,1}	b,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(b{0,1} a{0,1}){0,1}		
+A(b{0,1} a{0,1}){0,1}	b,a	
+A(b{0,1} a{0,1}){0,1}		
+A(b e{0,1} f d)	e,d,b,f	
+A(b e{0,1} f d)	f,b,d	
+A(b e{0,1} f d)	d,b,f	
+A(b e{0,1} f d)	d,b,f	
+A(b e{0,1} f d)	b,f,d	
+A(b e{0,1} f d)	b,f,d	
+A(b e{0,1} f d)	d,f,b	
+A(b e{0,1} f d)	f,d,e	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b a{0,1} e f{0,1} c{0,1}){0,1}	c,e,a	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, f}' is expected.
+A(b a{0,1} e f{0,1} c{0,1}){0,1}	b,e	
+A(b a{0,1} e f{0,1} c{0,1}){0,1}	a,b,f,e	
+A(b a{0,1} e f{0,1} c{0,1}){0,1}		
+A(b a{0,1} e f{0,1} c{0,1}){0,1}	a,e,c,b,f	
+A(b a{0,1} e f{0,1} c{0,1}){0,1}	e,b,a,c	
+A(b a{0,1} e f{0,1} c{0,1}){0,1}	e,b,a,c,f	
+A(b a{0,1} e f{0,1} c{0,1}){0,1}	c,b,e,f	
+A(a c)	a,c	
+A(a c)	e,a,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a, c}' is expected.
+A(a c)	a,c	
+A(a c)	c,a	
+A(a c)	c,a	
+A(a c)	a,c	
+A(a c)	a,c	
+A(a c)	c,a	
+A(f c)	c,f,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(f c)	f,c	
+A(f c)	f,c	
+A(f c)	c,f	
+A(f c)	f,c	
+A(f c)	c	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(f c)	c,f	
+A(f c)	f,c	
+A(c{0,1} f e{0,1} a{0,1}){0,1}		
+A(c{0,1} f e{0,1} a{0,1}){0,1}	c,f,e	
+A(c{0,1} f e{0,1} a{0,1}){0,1}	e,c,f	
+A(c{0,1} f e{0,1} a{0,1}){0,1}		
+A(c{0,1} f e{0,1} a{0,1}){0,1}		
+A(c{0,1} f e{0,1} a{0,1}){0,1}		
+A(c{0,1} f e{0,1} a{0,1}){0,1}	f,a,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, e}' is expected.
+A(c{0,1} f e{0,1} a{0,1}){0,1}		
+A(b a{0,1} d f)	d,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, f}' is expected.
+A(b a{0,1} d f)	f,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, d}' is expected.
+A(b a{0,1} d f)	f,a,b,d	
+A(b a{0,1} d f)	b,f,d	
+A(b a{0,1} d f)	d,f,b	
+A(b a{0,1} d f)	d,b,f	
+A(b a{0,1} d f)	b,d,f	
+A(b a{0,1} d f)	b,f,d	
+A(d)	d,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d)	d	
+A(d)	d,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d)	d	
+A(d)	d	
+A(d)	d,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d)	d	
+A(f e{0,1} c){0,1}	c	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, e}' is expected.
+A(f e{0,1} c){0,1}	c,e,f	
+A(f e{0,1} c){0,1}		
+A(f e{0,1} c){0,1}	c,e,f,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(f e{0,1} c){0,1}	e,c,f	
+A(f e{0,1} c){0,1}		
+A(f e{0,1} c){0,1}		
+A(f e{0,1} c){0,1}	c,f,e	
+A(d{0,1})	d	
+A(d{0,1})		
+A(d{0,1})	d	
+A(d{0,1})	a,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d}' is expected.
+A(d{0,1})	d	
+A(d{0,1})		
+A(d{0,1})		
+A(d{0,1})	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d}' is expected.
+A(a c f)	f,c,a	
+A(a c f)	a,c,f	
+A(a c f)	f,c,c,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+A(a c f)	f,e,c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a, c}' is expected.
+A(a c f)	a,c,a,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f}' is expected.
+A(a c f)	c,f,a,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(a c f)	f,a,c	
+A(a c f)	f,c,a	
+A(c{0,1} a e d f{0,1})	e,c,a,d	
+A(c{0,1} a e d f{0,1})	f,a,d,d,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, e}' is expected.
+A(c{0,1} a e d f{0,1})	f,d,a,e,c	
+A(c{0,1} a e d f{0,1})	a,e,f,d	
+A(c{0,1} a e d f{0,1})	a,d,e	
+A(c{0,1} a e d f{0,1})	e,d,a,f	
+A(c{0,1} a e d f{0,1})	e,a,d,f	
+A(c{0,1} a e d f{0,1})	a,d,f,e,e	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+A(d e{0,1} b)	b,e,d	
+A(d e{0,1} b)	b,e,d	
+A(d e{0,1} b)	d,b	
+A(d e{0,1} b)	b,d	
+A(d e{0,1} b)	e,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d e{0,1} b)	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, b}' is expected.
+A(d e{0,1} b)	d,e,b	
+A(d e{0,1} b)	b,d,c,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e}' is expected.
+A(c d a{0,1} b{0,1}){0,1}	c,c,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d, a, b}' is expected.
+A(c d a{0,1} b{0,1}){0,1}	d,b,b,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, a}' is expected.
+A(c d a{0,1} b{0,1}){0,1}	d,c,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, b}' is expected.
+A(c d a{0,1} b{0,1}){0,1}	b,d,c	
+A(c d a{0,1} b{0,1}){0,1}	c,a,d	
+A(c d a{0,1} b{0,1}){0,1}	d,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, b}' is expected.
+A(c d a{0,1} b{0,1}){0,1}	b,d	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, a}' is expected.
+A(c d a{0,1} b{0,1}){0,1}	d,c,a	
+A(d f c{0,1})	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, c}' is expected.
+A(d f c{0,1})	d,f,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+A(d f c{0,1})	f,d	
+A(d f c{0,1})	d,f	
+A(d f c{0,1})	c,f,d	
+A(d f c{0,1})	d,c,f	
+A(d f c{0,1})	c,f,d	
+A(d f c{0,1})	d,f,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+A(d a{0,1} e{0,1} b{0,1} f)	d,f	
+A(d a{0,1} e{0,1} b{0,1} f)	f,b,d	
+A(d a{0,1} e{0,1} b{0,1} f)	f,d	
+A(d a{0,1} e{0,1} b{0,1} f)	d,f,b	
+A(d a{0,1} e{0,1} b{0,1} f)	f,e,d,b,d	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(d a{0,1} e{0,1} b{0,1} f)	f,d,a	
+A(d a{0,1} e{0,1} b{0,1} f)	f,d	
+A(d a{0,1} e{0,1} b{0,1} f)	d,f,e	
+A(f{0,1} e)	e	
+A(f{0,1} e)	e,f,f	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f{0,1} e)	c,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f, e}' is expected.
+A(f{0,1} e)	e	
+A(f{0,1} e)	f,e,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(f{0,1} e)	e	
+A(f{0,1} e)	e,f	
+A(f{0,1} e)	e	
+A(a d b){0,1}	b,d,a	
+A(a d b){0,1}	b,a,b,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d}' is expected.
+A(a d b){0,1}	d,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a d b){0,1}	b,a,d	
+A(a d b){0,1}	b,a,d	
+A(a d b){0,1}	b,d,a	
+A(a d b){0,1}		
+A(a d b){0,1}		
+A(c f a d b)	b,f,a,d,c	
+A(c f a d b)	d,d,c,a,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, f, a, b}' is expected.
+A(c f a d b)	d,c,b,f,a	
+A(c f a d b)	c,a,f,b,d	
+A(c f a d b)	c,b,d,a,f	
+A(c f a d b)	c,b,d,a,f	
+A(c f a d b)	c,d,b,a,f	
+A(c f a d b)	c,d,a,f,b,f	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(c e b{0,1} d f)	c,d,d,e,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e, b, f}' is expected.
+A(c e b{0,1} d f)	d,d,c,f,e,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, e, b, f}' is expected.
+A(c e b{0,1} d f)	d,e,c,f	
+A(c e b{0,1} d f)	d,c,e,f	
+A(c e b{0,1} d f)	b,d,e,c,f,e	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(c e b{0,1} d f)	d,c,e,f,b	
+A(c e b{0,1} d f)	d,f,c,e	
+A(c e b{0,1} d f)	e,d,f,c	
+A(b c{0,1} f)	b,f,c,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(b c{0,1} f)	b,f,c	
+A(b c{0,1} f)	f,b	
+A(b c{0,1} f)	b,c,f,b	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b c{0,1} f)	f,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b, c}' is expected.
+A(b c{0,1} f)	b,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(b c{0,1} f)	f,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b, c}' is expected.
+A(b c{0,1} f)	c,f,b,d	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(f{0,1})	f	
+A(f{0,1})		
+A(f{0,1})	d,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f}' is expected.
+A(f{0,1})		
+A(f{0,1})	f	
+A(f{0,1})		
+A(f{0,1})	f	
+A(f{0,1})	f	
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(b){0,1}	b	
+A(b){0,1}		
+A(b){0,1}		
+A(b){0,1}	b	
+A(b{0,1} c a f{0,1})	a,c,b,f	
+A(b{0,1} c a f{0,1})	a,c	
+A(b{0,1} c a f{0,1})	f,b,c,a	
+A(b{0,1} c a f{0,1})	a,c	
+A(b{0,1} c a f{0,1})	f,c,a	
+A(b{0,1} c a f{0,1})	e,c,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, c, a, f}' is expected.
+A(b{0,1} c a f{0,1})	f,b,c,a,a	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(b{0,1} c a f{0,1})	a,f,c,b	
+A(b a){0,1}	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(b a){0,1}	a,b	
+A(b a){0,1}	a,b	
+A(b a){0,1}	a,c,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+A(b a){0,1}	b,a	
+A(b a){0,1}		
+A(b a){0,1}	a,b	
+A(b a){0,1}	a,b	
+A(c b{0,1})	c	
+A(c b{0,1})	b,c	
+A(c b{0,1})	c,b,e	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(c b{0,1})	c	
+A(c b{0,1})	c,b	
+A(c b{0,1})	b,c	
+A(c b{0,1})	d,b,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, b}' is expected.
+A(c b{0,1})	c	
+A(c e a d f)	d,a,e,f,c	
+A(c e a d f)	c,e,a,f,d	
+A(c e a d f)	c,e,d,a,f	
+A(c e a d f)	a,c,f,d,e	
+A(c e a d f)	e,c,a,f,e,d	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d}' is expected.
+A(c e a d f)	f,d,e,c,a	
+A(c e a d f)	d,e,a,f,c	
+A(c e a d f)	a,c,e,d,f	
+A(a f c{0,1})	a,f,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+A(a f c{0,1})	a,f	
+A(a f c{0,1})	a,a,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, c}' is expected.
+A(a f c{0,1})	c,a,f	
+A(a f c{0,1})	c,f,a	
+A(a f c{0,1})	a,f,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+A(a f c{0,1})	f,a	
+A(a f c{0,1})	a,f	
+A(e c b{0,1} d f{0,1}){0,1}	b,c,e	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d, f}' is expected.
+A(e c b{0,1} d f{0,1}){0,1}	d,e,c,f	
+A(e c b{0,1} d f{0,1}){0,1}	c,e,f,d	
+A(e c b{0,1} d f{0,1}){0,1}	e,b,c,f,d	
+A(e c b{0,1} d f{0,1}){0,1}		
+A(e c b{0,1} d f{0,1}){0,1}		
+A(e c b{0,1} d f{0,1}){0,1}	c,d,e	
+A(e c b{0,1} d f{0,1}){0,1}	c,e,d	
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})	f	
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})	f	
+A(f{0,1})	f	
+A(c e)	c,c,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e}' is expected.
+A(c e)	c,e	
+A(c e)	c,e	
+A(c e)	e,c	
+A(c e)	e,c,c	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c e)	c	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(c e)	e,c	
+A(c e)	e,c	
+A(d a c{0,1})	d,a,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+A(d a c{0,1})	a,c,d	
+A(d a c{0,1})	d,a	
+A(d a c{0,1})	d,a	
+A(d a c{0,1})	c,a,d	
+A(d a c{0,1})	c,a,d	
+A(d a c{0,1})	a,d	
+A(d a c{0,1})	a,d	
+A(a d{0,1}){0,1}	a,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d}' is expected.
+A(a d{0,1}){0,1}	d,a	
+A(a d{0,1}){0,1}		
+A(a d{0,1}){0,1}	d,d,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(a d{0,1}){0,1}	a,d,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(a d{0,1}){0,1}	a	
+A(a d{0,1}){0,1}	a	
+A(a d{0,1}){0,1}	a,d	
+A(b a){0,1}	b,a	
+A(b a){0,1}	b,a	
+A(b a){0,1}	b,a	
+A(b a){0,1}	a,b	
+A(b a){0,1}	a,b,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b a){0,1}	a,b	
+A(b a){0,1}	a,b	
+A(b a){0,1}	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(c e{0,1} d{0,1})	c,d,e	
+A(c e{0,1} d{0,1})	e,c,d,d	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(c e{0,1} d{0,1})	c	
+A(c e{0,1} d{0,1})	c,e,d	
+A(c e{0,1} d{0,1})	c,e	
+A(c e{0,1} d{0,1})	c	
+A(c e{0,1} d{0,1})	c	
+A(c e{0,1} d{0,1})	c	
+A(f b d)	d,b,f	
+A(f b d)	d,b,f	
+A(f b d)	f,d,b	
+A(f b d)	d,f	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(f b d)	d,d,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, b}' is expected.
+A(f b d)	b,d,f	
+A(f b d)	f,b,d,d	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(f b d)	b,d,f	
+A(b{0,1} a d)	a,d	
+A(b{0,1} a d)	b,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(b{0,1} a d)	d,a,b,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(b{0,1} a d)	a,d	
+A(b{0,1} a d)	d,a	
+A(b{0,1} a d)	e,d,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, a, d}' is expected.
+A(b{0,1} a d)	a,b,d	
+A(b{0,1} a d)	a,d,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+A(c)	c	
+A(c)	c	
+A(c)	c	
+A(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c)	c	
+A(c)	c,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(c)	f,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+A(c)	c	
+A(c d f){0,1}	f,c,d	
+A(c d f){0,1}	f,c,d	
+A(c d f){0,1}	f,d,c	
+A(c d f){0,1}	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, d, f}' is expected.
+A(c d f){0,1}	f,c,d	
+A(c d f){0,1}	c,c,f,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d, f}' is expected.
+A(c d f){0,1}	f,f,c,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, d}' is expected.
+A(c d f){0,1}	c,f,d	
+A(e b)	e,b	
+A(e b)	a,b,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e, b}' is expected.
+A(e b)	e,b,f	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(e b)	e,b	
+A(e b)	c,e,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e, b}' is expected.
+A(e b)	e,b	
+A(e b)	b,e,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(e b)	b,e	
+A(b){0,1}	b	
+A(b){0,1}	e,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(b){0,1}	b	
+A(b){0,1}		
+A(b){0,1}		
+A(b){0,1}		
+A(b){0,1}	b	
+A(b){0,1}	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(d{0,1} e a)	a,d,e	
+A(d{0,1} e a)	e,a	
+A(d{0,1} e a)	a,e,d	
+A(d{0,1} e a)	e,d,a	
+A(d{0,1} e a)	e,a	
+A(d{0,1} e a)	d,a,e	
+A(d{0,1} e a)	a,d,d,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e}' is expected.
+A(d{0,1} e a)	d,e,a	
+A(d{0,1} f a b)	b,a,f	
+A(d{0,1} f a b)	a,c,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d, f, b}' is expected.
+A(d{0,1} f a b)	d,b,f,a	
+A(d{0,1} f a b)	f,a,b	
+A(d{0,1} f a b)	a,b,f	
+A(d{0,1} f a b)	a,b,f	
+A(d{0,1} f a b)	f,a,b	
+A(d{0,1} f a b)	f,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d, b}' is expected.
+A(b a c)	b,c,a	
+A(b a c)	b,b,c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a, c}' is expected.
+A(b a c)	a,b,c	
+A(b a c)	a,b,c	
+A(b a c)	b,a,c	
+A(b a c)	b,c,a	
+A(b a c)	a,c,b	
+A(b a c)	c,b,a	
+A(b{0,1} d{0,1} c{0,1})	b,c	
+A(b{0,1} d{0,1} c{0,1})		
+A(b{0,1} d{0,1} c{0,1})	d	
+A(b{0,1} d{0,1} c{0,1})	d,b,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+A(b{0,1} d{0,1} c{0,1})	d	
+A(b{0,1} d{0,1} c{0,1})		
+A(b{0,1} d{0,1} c{0,1})	d,b	
+A(b{0,1} d{0,1} c{0,1})	b,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d, c}' is expected.
+A(f c)	c,f	
+A(f c)	c,c,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f}' is expected.
+A(f c)	f,c	
+A(f c)	f,c	
+A(f c)	f,c	
+A(f c)	c,f	
+A(f c)	c,f	
+A(f c)	c,f	
+A(c e{0,1})	c,c,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e}' is expected.
+A(c e{0,1})	c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e}' is expected.
+A(c e{0,1})	c,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e}' is expected.
+A(c e{0,1})	c,e	
+A(c e{0,1})	c	
+A(c e{0,1})	c	
+A(c e{0,1})	e,c	
+A(c e{0,1})	c	
+A(c{0,1} b d a{0,1}){0,1}	b,d,d,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, a}' is expected.
+A(c{0,1} b d a{0,1}){0,1}	b,c,d	
+A(c{0,1} b d a{0,1}){0,1}	b,a,d	
+A(c{0,1} b d a{0,1}){0,1}	d,b	
+A(c{0,1} b d a{0,1}){0,1}	d,c,c,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, a}' is expected.
+A(c{0,1} b d a{0,1}){0,1}	b,d	
+A(c{0,1} b d a{0,1}){0,1}	d,b	
+A(c{0,1} b d a{0,1}){0,1}	b,a,d	
+A(b{0,1} e)	e,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(b{0,1} e)	e,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(b{0,1} e)	b,e	
+A(b{0,1} e)	e	
+A(b{0,1} e)	e,b	
+A(b{0,1} e)	b,e	
+A(b{0,1} e)	e	
+A(b{0,1} e)	b,e,e	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(a b e{0,1})	a,e,b	
+A(a b e{0,1})	a,e,b	
+A(a b e{0,1})	e,b,a	
+A(a b e{0,1})	a,e,b	
+A(a b e{0,1})	b,c,a,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, e}' is expected.
+A(a b e{0,1})	e,a,b	
+A(a b e{0,1})	b,a	
+A(a b e{0,1})	a,b	
+A(d{0,1} e{0,1} b f)	f,b,e,d	
+A(d{0,1} e{0,1} b f)	e,f,b,d	
+A(d{0,1} e{0,1} b f)	b,f,e	
+A(d{0,1} e{0,1} b f)	f,b,e,d	
+A(d{0,1} e{0,1} b f)	b,d	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, f}' is expected.
+A(d{0,1} e{0,1} b f)	b,f,d,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(d{0,1} e{0,1} b f)	f,d,b	
+A(d{0,1} e{0,1} b f)	f,d,b	
+A(b f a e{0,1} c{0,1})	a,e,f,b,c	
+A(b f a e{0,1} c{0,1})	b,f,a	
+A(b f a e{0,1} c{0,1})	b,a,f,b,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e, c}' is expected.
+A(b f a e{0,1} c{0,1})	e,a,b,f	
+A(b f a e{0,1} c{0,1})	a,a,f,e,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, f, e, c}' is expected.
+A(b f a e{0,1} c{0,1})	e,b,a	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, c}' is expected.
+A(b f a e{0,1} c{0,1})	b,a,c,e,f	
+A(b f a e{0,1} c{0,1})	e,b,f,c,b,a	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+A(c d f b)	f,c,d	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(c d f b)	b,f,c,d	
+A(c d f b)	d,c,b,f	
+A(c d f b)	b,f,d,c	
+A(c d f b)	b,c,d,b,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f}' is expected.
+A(c d f b)	b,f,d,d,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(c d f b)	b,c,d,f	
+A(c d f b)	c,c,d,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d, f, b}' is expected.
+A(e c f b{0,1} d){0,1}		
+A(e c f b{0,1} d){0,1}	d,b,e,f	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(e c f b{0,1} d){0,1}	d,f,e,b,c	
+A(e c f b{0,1} d){0,1}	e,c,d,f	
+A(e c f b{0,1} d){0,1}	d,b,c,c,e,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e, f}' is expected.
+A(e c f b{0,1} d){0,1}	c,d,f,b,e	
+A(e c f b{0,1} d){0,1}		
+A(e c f b{0,1} d){0,1}	d,e,b,c,c,f	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f}' is expected.
+A(a d c e b){0,1}	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a, d, c, e, b}' is expected.
+A(a d c e b){0,1}	b,d,e,a,c	
+A(a d c e b){0,1}	a,c,e,b,d	
+A(a d c e b){0,1}	a,e,b,d,d,c	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(a d c e b){0,1}	b,e,a,d,c	
+A(a d c e b){0,1}	c,d,e,b,a	
+A(a d c e b){0,1}	b,a,e,c,d	
+A(a d c e b){0,1}	d,e,a,c,b	
+A(c)	c	
+A(c)	d,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(c)	c	
+A(c)	c	
+A(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(c)	c	
+A(c)	c	
+A(c)	c	
+A(e f)	e,f	
+A(e f)	e,f	
+A(e f)	e,f,e	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e f)	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(e f)	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(e f)	a,f,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e, f}' is expected.
+A(e f)	e,f	
+A(e f)	e,f	
+A(b{0,1} c d a e{0,1})	b,e,d,c,a	
+A(b{0,1} c d a e{0,1})	c,d,a	
+A(b{0,1} c d a e{0,1})	a,b,e,d	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(b{0,1} c d a e{0,1})	a,c,d	
+A(b{0,1} c d a e{0,1})	d,c,a,b	
+A(b{0,1} c d a e{0,1})	c,d,a,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, e}' is expected.
+A(b{0,1} c d a e{0,1})	d,c,e,a,b	
+A(b{0,1} c d a e{0,1})	e,a,c,d,d	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+A(b a{0,1}){0,1}		
+A(b a{0,1}){0,1}	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, a}' is expected.
+A(b a{0,1}){0,1}	b	
+A(b a{0,1}){0,1}	b	
+A(b a{0,1}){0,1}	a,b	
+A(b a{0,1}){0,1}	a,b	
+A(b a{0,1}){0,1}	b,a	
+A(b a{0,1}){0,1}	b	
+A(d c e{0,1} f a{0,1})	d,f,c	
+A(d c e{0,1} f a{0,1})	d,f,c	
+A(d c e{0,1} f a{0,1})	d,c,f	
+A(d c e{0,1} f a{0,1})	e,c,f,d	
+A(d c e{0,1} f a{0,1})	c,f,a,e,f,d	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d}' is expected.
+A(d c e{0,1} f a{0,1})	f,e,c,d	
+A(d c e{0,1} f a{0,1})	c,f,d,e	
+A(d c e{0,1} f a{0,1})	c,d,f	
+A(c e b){0,1}	b,b,c,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, e}' is expected.
+A(c e b){0,1}	c,c,b,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e, b}' is expected.
+A(c e b){0,1}	c,e,b	
+A(c e b){0,1}	c,e,b	
+A(c e b){0,1}	d,c,e,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, e, b}' is expected.
+A(c e b){0,1}	c,e,b,f	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(c e b){0,1}	c,c,b,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e, b}' is expected.
+A(c e b){0,1}	b,e,c,e	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(b{0,1} e a c{0,1} f{0,1})	a,e	
+A(b{0,1} e a c{0,1} f{0,1})	b,c,e,a,d	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f}' is expected.
+A(b{0,1} e a c{0,1} f{0,1})	e,f,b,a,c	
+A(b{0,1} e a c{0,1} f{0,1})	c,b,a,e	
+A(b{0,1} e a c{0,1} f{0,1})	a,e	
+A(b{0,1} e a c{0,1} f{0,1})	e,f,a	
+A(b{0,1} e a c{0,1} f{0,1})	e,b,a,f	
+A(b{0,1} e a c{0,1} f{0,1})	e,a	
+A(e a{0,1} c b)	c,b,e	
+A(e a{0,1} c b)	a,b,c,e	
+A(e a{0,1} c b)	b,e,c	
+A(e a{0,1} c b)	a,b,c,e	
+A(e a{0,1} c b)	b,e,a,c	
+A(e a{0,1} c b)	a,b,e,c	
+A(e a{0,1} c b)	a,e,e,c,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, b}' is expected.
+A(e a{0,1} c b)	e,b,c,a	
+A(e d f{0,1} a)	a,d,f,e	
+A(e d f{0,1} a)	d,d,a,f,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e, f, a}' is expected.
+A(e d f{0,1} a)	e,d,f,a	
+A(e d f{0,1} a)	f,d,a	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(e d f{0,1} a)	e,d,a	
+A(e d f{0,1} a)	e,f,d,a,a	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(e d f{0,1} a)	f,d,e,a	
+A(e d f{0,1} a)	e,a,d	
+A(f)	f,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(f)	f	
+A(f)	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f)	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f)	f	
+A(f)	f	
+A(f)	b,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f}' is expected.
+A(f)	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(c f e){0,1}	e,c,f	
+A(c f e){0,1}	f,e,c	
+A(c f e){0,1}	e,f,c,b	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(c f e){0,1}	f,e,c	
+A(c f e){0,1}		
+A(c f e){0,1}		
+A(c f e){0,1}	c,f,e	
+A(c f e){0,1}	f,f,e,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, e}' is expected.
+A(d e b{0,1}){0,1}	b,e,d	
+A(d e b{0,1}){0,1}	e,d,b	
+A(d e b{0,1}){0,1}	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, b}' is expected.
+A(d e b{0,1}){0,1}	e,d,b	
+A(d e b{0,1}){0,1}	e,d	
+A(d e b{0,1}){0,1}	b,e,d	
+A(d e b{0,1}){0,1}	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, b}' is expected.
+A(d e b{0,1}){0,1}	e,d	
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f}' is expected.
+A(f{0,1})	f	
+A(b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b)	b	
+A(b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b)	b	
+A(b)	b	
+A(b)	b	
+A(b)	b	
+A(b d c e f)	e,f,c,d,b,d	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(b d c e f)	f,c,e,d,b	
+A(b d c e f)	f,e,b,c,d	
+A(b d c e f)	e,d,b,f,c	
+A(b d c e f)	b,f,c,d,e	
+A(b d c e f)	c,d,e,f,d,b	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+A(b d c e f)	c,e,d,f,b	
+A(b d c e f)	c,f,e,d,b	
+A(f a c e d){0,1}		
+A(f a c e d){0,1}	e,a,f,c,d	
+A(f a c e d){0,1}	c,f,d,e,a	
+A(f a c e d){0,1}	c,d,e,a,f	
+A(f a c e d){0,1}	d,d,c,e,f,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f, a, c, e}' is expected.
+A(f a c e d){0,1}	a,f,d,d,e,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, e}' is expected.
+A(f a c e d){0,1}	e,d,f,c	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(f a c e d){0,1}	f,a,e,d,d,c	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+A(a f d c{0,1})	a,f,d	
+A(a f d c{0,1})	f,a,d	
+A(a f d c{0,1})	d,a,f	
+A(a f d c{0,1})	f,a,c,d	
+A(a f d c{0,1})	d,a,f	
+A(a f d c{0,1})	a,c,d,f	
+A(a f d c{0,1})	a,f,d	
+A(a f d c{0,1})	d,d,f,a,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a, f, c}' is expected.
+A(a{0,1} c e{0,1} f){0,1}	e,b,f,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a, c, f}' is expected.
+A(a{0,1} c e{0,1} f){0,1}	f,e,a,c	
+A(a{0,1} c e{0,1} f){0,1}		
+A(a{0,1} c e{0,1} f){0,1}	f,c,e	
+A(a{0,1} c e{0,1} f){0,1}	e,f,c	
+A(a{0,1} c e{0,1} f){0,1}	c,f	
+A(a{0,1} c e{0,1} f){0,1}		
+A(a{0,1} c e{0,1} f){0,1}		
+A(f{0,1})		
+A(f{0,1})	f	
+A(f{0,1})	f	
+A(f{0,1})	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f{0,1})	f	
+A(f{0,1})		
+A(f{0,1})	f	
+A(f{0,1})		
+A(f e b c a)	f,a,b,c,e	
+A(f e b c a)	e,c,c,b,a,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f, b, a}' is expected.
+A(f e b c a)	b,e,a,f	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(f e b c a)	b,e,f,a,c	
+A(f e b c a)	f,e,c,b,a	
+A(f e b c a)	a,b,f,e,c	
+A(f e b c a)	b,e,c,a,f	
+A(f e b c a)	c,e,a,f	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(e f a)	a,f,e	
+A(e f a)	e,f,a,a	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(e f a)	f,e,a	
+A(e f a)	e,f,a	
+A(e f a)	f,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(e f a)	e,e,f,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f, a}' is expected.
+A(e f a)	a,e,f	
+A(e f a)	e,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(b{0,1}){0,1}		
+A(b{0,1}){0,1}	b	
+A(b{0,1}){0,1}	b	
+A(b{0,1}){0,1}		
+A(b{0,1}){0,1}	b,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(b{0,1}){0,1}	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+A(b{0,1}){0,1}	b	
+A(b{0,1}){0,1}	b	
+A(a{0,1} b c e d)	c,a,d,b,e	
+A(a{0,1} b c e d)	c,d,b,b,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a, e}' is expected.
+A(a{0,1} b c e d)	a,e,c,d,b	
+A(a{0,1} b c e d)	b,d,d,e,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a, c, e}' is expected.
+A(a{0,1} b c e d)	c,e,d,a,b	
+A(a{0,1} b c e d)	a,c,b,e	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(a{0,1} b c e d)	e,b,d,c,a	
+A(a{0,1} b c e d)	d,b,a,e,c	
+A(e{0,1})		
+A(e{0,1})		
+A(e{0,1})	e	
+A(e{0,1})	b,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e}' is expected.
+A(e{0,1})	e,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e{0,1})		
+A(e{0,1})	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e}' is expected.
+A(e{0,1})	e,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e d c{0,1}){0,1}	d,c,e	
+A(e d c{0,1}){0,1}	e,e,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d, c}' is expected.
+A(e d c{0,1}){0,1}	d,c,e	
+A(e d c{0,1}){0,1}		
+A(e d c{0,1}){0,1}		
+A(e d c{0,1}){0,1}	d,e	
+A(e d c{0,1}){0,1}	e,d	
+A(e d c{0,1}){0,1}	d,e,c	
+A(a{0,1} b{0,1} c f)	c,a,f	
+A(a{0,1} b{0,1} c f)	b,f,c,a	
+A(a{0,1} b{0,1} c f)	c,f,a	
+A(a{0,1} b{0,1} c f)	c,f,b	
+A(a{0,1} b{0,1} c f)	c,b,f	
+A(a{0,1} b{0,1} c f)	a,c,f	
+A(a{0,1} b{0,1} c f)	f,c	
+A(a{0,1} b{0,1} c f)	a,f,c,b	
+A(c{0,1} e{0,1} f{0,1} d b{0,1})	d	
+A(c{0,1} e{0,1} f{0,1} d b{0,1})	d,c,f,e	
+A(c{0,1} e{0,1} f{0,1} d b{0,1})	b,f,f,e,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, e, d}' is expected.
+A(c{0,1} e{0,1} f{0,1} d b{0,1})	d,f,f,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, e, b}' is expected.
+A(c{0,1} e{0,1} f{0,1} d b{0,1})	c,f,f,d,e,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e, d, b}' is expected.
+A(c{0,1} e{0,1} f{0,1} d b{0,1})	b,d	
+A(c{0,1} e{0,1} f{0,1} d b{0,1})	c,d	
+A(c{0,1} e{0,1} f{0,1} d b{0,1})	f,d,c	
+A(e{0,1} c)	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(e{0,1} c)	c	
+A(e{0,1} c)	e,e,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+A(e{0,1} c)	c	
+A(e{0,1} c)	c	
+A(e{0,1} c)	c,c,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e}' is expected.
+A(e{0,1} c)	e,c	
+A(e{0,1} c)	c,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e}' is expected.
+A(f d{0,1} c)	c,f	
+A(f d{0,1} c)	c,f	
+A(f d{0,1} c)	f,c	
+A(f d{0,1} c)	c,f,d	
+A(f d{0,1} c)	f,c,d	
+A(f d{0,1} c)	f,c	
+A(f d{0,1} c)	c,f	
+A(f d{0,1} c)	d,f,c	
+A(f{0,1})	f,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})		
+A(f{0,1})	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{f}' is expected.
+A(f{0,1})	f	
+A(f{0,1})	f	
+A(f{0,1})		
+A(a f d)	d,a,f	
+A(a f d)	a,f,d	
+A(a f d)	f,d,a	
+A(a f d)	a,f,d	
+A(a f d)	d,a,f	
+A(a f d)	f,a,d	
+A(a f d)	f,d,a	
+A(a f d)	e,a,d,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a, f, d}' is expected.
+A(c){0,1}	c	
+A(c){0,1}	b,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+A(c){0,1}	a,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+A(c){0,1}	c	
+A(c){0,1}	c	
+A(c){0,1}	c	
+A(c){0,1}		
+A(c){0,1}	c	
+A(e{0,1} d f{0,1})	d,f	
+A(e{0,1} d f{0,1})	d	
+A(e{0,1} d f{0,1})	d	
+A(e{0,1} d f{0,1})	f,d,e	
+A(e{0,1} d f{0,1})	d,e,f	
+A(e{0,1} d f{0,1})	e,d	
+A(e{0,1} d f{0,1})	f,d	
+A(e{0,1} d f{0,1})	d,f	
+A(c a b d f)	c,c,d,b,f,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, b, d, f}' is expected.
+A(c a b d f)	a,b,d,c	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(c a b d f)	b,f,c,d,a	
+A(c a b d f)	a,b,d,c,f	
+A(c a b d f)	d,a,c,f	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(c a b d f)	a,d,f,b,c	
+A(c a b d f)	a,c,a,f,d,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, d, f}' is expected.
+A(c a b d f)	c,b,f,d,a	
+A(f d{0,1} e{0,1})	e,f,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d}' is expected.
+A(f d{0,1} e{0,1})	f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d, e}' is expected.
+A(f d{0,1} e{0,1})	f,e	
+A(f d{0,1} e{0,1})	f	
+A(f d{0,1} e{0,1})	f,d,e	
+A(f d{0,1} e{0,1})	f,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{d, e}' is expected.
+A(f d{0,1} e{0,1})	f	
+A(f d{0,1} e{0,1})	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, e}' is expected.
+A(c e d{0,1} f b)	b,c,e,f	
+A(c e d{0,1} f b)	e,c,b,f	
+A(c e d{0,1} f b)	b,c,f,e,d	
+A(c e d{0,1} f b)	c,b,b,e,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e, d, f}' is expected.
+A(c e d{0,1} f b)	c,f,e,d	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(c e d{0,1} f b)	e,b,c,d,f	
+A(c e d{0,1} f b)	c,b,e,f	
+A(c e d{0,1} f b)	c,e,d,f,b	
+A(e c a{0,1} d){0,1}	d,e,c,a	
+A(e c a{0,1} d){0,1}	a,e,c,d	
+A(e c a{0,1} d){0,1}		
+A(e c a{0,1} d){0,1}	e,c,d	
+A(e c a{0,1} d){0,1}	c,e,a,d	
+A(e c a{0,1} d){0,1}	a,d,c,e	
+A(e c a{0,1} d){0,1}	c,e,d	
+A(e c a{0,1} d){0,1}		
+A(e{0,1} c b f a)	a,b,c,e,f	
+A(e{0,1} c b f a)	b,c,e,f,a	
+A(e{0,1} c b f a)	f,b,a,c	
+A(e{0,1} c b f a)	c,a,b,f	
+A(e{0,1} c b f a)	a,e,c,f,b,b	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(e{0,1} c b f a)	a,f,c,b	
+A(e{0,1} c b f a)	c,b,f,e,a	
+A(e{0,1} c b f a)	a,c,f,b	
+A(f d b e a){0,1}	a,d,f,b,e	
+A(f d b e a){0,1}	b,e,d,f,a	
+A(f d b e a){0,1}	e,f,a,d,b	
+A(f d b e a){0,1}	d,b,e,e,a,f	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{f, a}' is expected.
+A(f d b e a){0,1}		
+A(f d b e a){0,1}	f,b,d,a,e	
+A(f d b e a){0,1}	b,e,d,f,a	
+A(f d b e a){0,1}		
+A(a c b)	b,c,a	
+A(a c b)	b,a,c	
+A(a c b)	c,b,b,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+A(a c b)	b,a,c	
+A(a c b)	a,c,b	
+A(a c b)	a,b,c	
+A(a c b)	b,c,a	
+A(a c b)	b,a,c	
+A(a f c e)	f,a,e,c	
+A(a f c e)	b,f,e,a,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a, f, c, e}' is expected.
+A(a f c e)	e,f,a,c	
+A(a f c e)	f,c,c,e,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, e}' is expected.
+A(a f c e)	c,f,a,e	
+A(a f c e)	a,e,f,c,f	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(a f c e)	f,c,e,a	
+A(a f c e)	f,c,e,a	
+A(d b e a{0,1} f{0,1})	f,e,a,b	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d b e a{0,1} f{0,1})	b,b,f,a,e,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d, e, a, f}' is expected.
+A(d b e a{0,1} f{0,1})	b,d,f,e	
+A(d b e a{0,1} f{0,1})	d,b,a,e	
+A(d b e a{0,1} f{0,1})	e,f,b,d	
+A(d b e a{0,1} f{0,1})	b,f,e,d	
+A(d b e a{0,1} f{0,1})	a,b,d,e,f	
+A(d b e a{0,1} f{0,1})	d,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, a, f}' is expected.
+A(b)	b	
+A(b)	b	
+A(b)	b	
+A(b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b)	b	
+A(b)	b	
+A(b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(c){0,1}		
+A(c){0,1}		
+A(c){0,1}		
+A(c){0,1}	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c){0,1}	c	
+A(c){0,1}	c	
+A(c){0,1}	a,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+A(c){0,1}	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(b{0,1} d c)	d,c	
+A(b{0,1} d c)	d,b,c	
+A(b{0,1} d c)	d,c,b	
+A(b{0,1} d c)	c,d	
+A(b{0,1} d c)	d,c	
+A(b{0,1} d c)	c,d	
+A(b{0,1} d c)	b,c,d	
+A(b{0,1} d c)	c,c,b,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, d}' is expected.
+A(f{0,1} e b{0,1})	f	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, b}' is expected.
+A(f{0,1} e b{0,1})	e	
+A(f{0,1} e b{0,1})	e	
+A(f{0,1} e b{0,1})	e,b	
+A(f{0,1} e b{0,1})	e,f,b,b	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(f{0,1} e b{0,1})	e,b,f,d	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(f{0,1} e b{0,1})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, e, b}' is expected.
+A(f{0,1} e b{0,1})	f,d,b,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e, b}' is expected.
+A(a d){0,1}	a,d	
+A(a d){0,1}	d,a	
+A(a d){0,1}	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(a d){0,1}	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a, d}' is expected.
+A(a d){0,1}	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(a d){0,1}	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a d){0,1}	a,d	
+A(a d){0,1}	d,a	
+A(f{0,1} c{0,1} b{0,1} e{0,1} d)	b,e,f,c,d	
+A(f{0,1} c{0,1} b{0,1} e{0,1} d)	e,c,d	
+A(f{0,1} c{0,1} b{0,1} e{0,1} d)	b,c,d,f,f	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(f{0,1} c{0,1} b{0,1} e{0,1} d)	c,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, e, d}' is expected.
+A(f{0,1} c{0,1} b{0,1} e{0,1} d)	d,c	
+A(f{0,1} c{0,1} b{0,1} e{0,1} d)	c,f,d	
+A(f{0,1} c{0,1} b{0,1} e{0,1} d)	f,b,c,d	
+A(f{0,1} c{0,1} b{0,1} e{0,1} d)	e,c,c,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f, b, d}' is expected.
+A(c b{0,1} e a){0,1}	b,e,c,a	
+A(c b{0,1} e a){0,1}	a,e,b,c	
+A(c b{0,1} e a){0,1}	e,c,a,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+A(c b{0,1} e a){0,1}	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, b, e, a}' is expected.
+A(c b{0,1} e a){0,1}	b,a,e,e,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+A(c b{0,1} e a){0,1}	e,b,a	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(c b{0,1} e a){0,1}	b,a,c,c,e	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e}' is expected.
+A(c b{0,1} e a){0,1}		
+A(d{0,1} c{0,1} a b)	d,a,b	
+A(d{0,1} c{0,1} a b)	b,c,a	
+A(d{0,1} c{0,1} a b)	a,d,c,b	
+A(d{0,1} c{0,1} a b)	b,d,a	
+A(d{0,1} c{0,1} a b)	a,b,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{d, c}' is expected.
+A(d{0,1} c{0,1} a b)	b,c,a	
+A(d{0,1} c{0,1} a b)	d,b,a	
+A(d{0,1} c{0,1} a b)	b,c,a,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d}' is expected.
+A(f b e d)	d,e,f,b	
+A(f b e d)	d,b,f	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(f b e d)	e,d,b,f	
+A(f b e d)	e,b,b,d,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f, d}' is expected.
+A(f b e d)	f,d,e,b	
+A(f b e d)	d,b,e,f	
+A(f b e d)	d,e,b,f,f	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f b e d)	d,b,f	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(c f d{0,1} a)	f,c,a	
+A(c f d{0,1} a)	f,c,d,a,d	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(c f d{0,1} a)	c,a	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, d}' is expected.
+A(c f d{0,1} a)	a,c,f	
+A(c f d{0,1} a)	c,a,f	
+A(c f d{0,1} a)	a,c,f	
+A(c f d{0,1} a)	c,f,d,a	
+A(c f d{0,1} a)	d,b,c,f,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, f, a}' is expected.
+A(b{0,1} f e)	e,f,b	
+A(b{0,1} f e)	f,b,e	
+A(b{0,1} f e)	f,b,e	
+A(b{0,1} f e)	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, f}' is expected.
+A(b{0,1} f e)	e,f,b,b	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b{0,1} f e)	c,b,f,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, f, e}' is expected.
+A(b{0,1} f e)	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, f}' is expected.
+A(b{0,1} f e)	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, f}' is expected.
+A(e){0,1}	e	
+A(e){0,1}	e	
+A(e){0,1}		
+A(e){0,1}		
+A(e){0,1}	e,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(e){0,1}		
+A(e){0,1}	e,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e){0,1}	e	
+A(d a e b)	a,d,b,e	
+A(d a e b)	e,b,a,d	
+A(d a e b)	b,e,a	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(d a e b)	d,a,b	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(d a e b)	b,d,a,e,e	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(d a e b)	b,d,d,a,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a, e}' is expected.
+A(d a e b)	a,e,b,d,b	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(d a e b)	d,b,a,e	
+A(c f{0,1}){0,1}		
+A(c f{0,1}){0,1}		
+A(c f{0,1}){0,1}	c,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f}' is expected.
+A(c f{0,1}){0,1}		
+A(c f{0,1}){0,1}	c	
+A(c f{0,1}){0,1}		
+A(c f{0,1}){0,1}	f,c	
+A(c f{0,1}){0,1}		
+A(a{0,1} f)	a,f	
+A(a{0,1} f)	a,f	
+A(a{0,1} f)	f,e,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+A(a{0,1} f)	a,f	
+A(a{0,1} f)	f,a	
+A(a{0,1} f)	a,f,f	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(a{0,1} f)	f	
+A(a{0,1} f)	f,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+A(f{0,1} d b)	b,d	
+A(f{0,1} d b)	b,d,f	
+A(f{0,1} d b)	f,d,b	
+A(f{0,1} d b)	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, d}' is expected.
+A(f{0,1} d b)	b,d	
+A(f{0,1} d b)	d,b	
+A(f{0,1} d b)	b,d	
+A(f{0,1} d b)	f,d,b	
+A(e{0,1})		
+A(e{0,1})		
+A(e{0,1})		
+A(e{0,1})		
+A(e{0,1})	e	
+A(e{0,1})		
+A(e{0,1})	e,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e{0,1})		
+A(a{0,1} c{0,1})		
+A(a{0,1} c{0,1})		
+A(a{0,1} c{0,1})	c	
+A(a{0,1} c{0,1})	a,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+A(a{0,1} c{0,1})	c	
+A(a{0,1} c{0,1})	c,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(a{0,1} c{0,1})	a	
+A(a{0,1} c{0,1})	c,a,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(e f d a b{0,1}){0,1}	f,e,d,a,a	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+A(e f d a b{0,1}){0,1}	e,a,b,d,f	
+A(e f d a b{0,1}){0,1}	f,e,a,d	
+A(e f d a b{0,1}){0,1}	b,f,d,a,e	
+A(e f d a b{0,1}){0,1}		
+A(e f d a b{0,1}){0,1}	f,a,e,d	
+A(e f d a b{0,1}){0,1}	b,f,a,e,e,d	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{d}' is expected.
+A(e f d a b{0,1}){0,1}	e,f,a,d	
+A(e{0,1} d)	d	
+A(e{0,1} d)	d,e	
+A(e{0,1} d)	d,e	
+A(e{0,1} d)	d	
+A(e{0,1} d)	f,e,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e, d}' is expected.
+A(e{0,1} d)	e,d,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(e{0,1} d)	e,d	
+A(e{0,1} d)	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(b d{0,1} f c a{0,1})	d,b,f,c	
+A(b d{0,1} f c a{0,1})	a,b,f	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d, c}' is expected.
+A(b d{0,1} f c a{0,1})	b,f,c,d	
+A(b d{0,1} f c a{0,1})	f,c,b,d,a,c	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(b d{0,1} f c a{0,1})	b,f,c,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{d, a}' is expected.
+A(b d{0,1} f c a{0,1})	f,b,c	
+A(b d{0,1} f c a{0,1})	f,c,d,b	
+A(b d{0,1} f c a{0,1})	f,c,b	
+A(c{0,1} d e{0,1} b{0,1} a)	c,a,d,b	
+A(c{0,1} d e{0,1} b{0,1} a)	d,b	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, e, a}' is expected.
+A(c{0,1} d e{0,1} b{0,1} a)	a,d,e,c	
+A(c{0,1} d e{0,1} b{0,1} a)	d,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, b, a}' is expected.
+A(c{0,1} d e{0,1} b{0,1} a)	a,c,d,b	
+A(c{0,1} d e{0,1} b{0,1} a)	d,a	
+A(c{0,1} d e{0,1} b{0,1} a)	b,d,a,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, e}' is expected.
+A(c{0,1} d e{0,1} b{0,1} a)	d,b,e,a	
+A(c a)	c,a,c	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c a)	c,a	
+A(c a)	a,c	
+A(c a)	a,c,f	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(c a)	a,a,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+A(c a)	a,f,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+A(c a)	f,c,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, a}' is expected.
+A(c a)	c,c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+A(f{0,1} c)	c	
+A(f{0,1} c)	c,f	
+A(f{0,1} c)	f	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(f{0,1} c)	c	
+A(f{0,1} c)	c	
+A(f{0,1} c)	c,f	
+A(f{0,1} c)	c	
+A(f{0,1} c)	c	
+A(c d{0,1} a)	a,c	
+A(c d{0,1} a)	a,c	
+A(c d{0,1} a)	a,c	
+A(c d{0,1} a)	a,c	
+A(c d{0,1} a)	a,c	
+A(c d{0,1} a)	d,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(c d{0,1} a)	c,a,d	
+A(c d{0,1} a)	a,c	
+A(f{0,1} e d){0,1}		
+A(f{0,1} e d){0,1}	e,d	
+A(f{0,1} e d){0,1}	d,e	
+A(f{0,1} e d){0,1}		
+A(f{0,1} e d){0,1}	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, e}' is expected.
+A(f{0,1} e d){0,1}	f,d,e	
+A(f{0,1} e d){0,1}	d,f,f,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(f{0,1} e d){0,1}	d,b,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f, e}' is expected.
+A(e d)	d,e	
+A(e d)	e,d	
+A(e d)	d,e	
+A(e d)	e,d	
+A(e d)	d,e	
+A(e d)	e,d,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(e d)	d,d,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{e}' is expected.
+A(e d)	e,d	
+A(f d{0,1} e)	e,f	
+A(f d{0,1} e)	e	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, d}' is expected.
+A(f d{0,1} e)	d,f,e	
+A(f d{0,1} e)	e,d,f	
+A(f d{0,1} e)	e,f,d	
+A(f d{0,1} e)	f,e	
+A(f d{0,1} e)	c,e,f,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{f, d, e}' is expected.
+A(f d{0,1} e)	d,f,e	
+A(d a){0,1}	a,d,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(d a){0,1}	a,d	
+A(d a){0,1}	d,a	
+A(d a){0,1}	d,a,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(d a){0,1}	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(d a){0,1}	a,a,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{d}' is expected.
+A(d a){0,1}	a,d	
+A(d a){0,1}	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(f)	f,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(f)	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f)	f	
+A(f)	f	
+A(f)	f,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(f)	f	
+A(f)	f	
+A(f)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f}' is expected.
+A(e b{0,1} a d{0,1})	b,a,e	
+A(e b{0,1} a d{0,1})	a,e	
+A(e b{0,1} a d{0,1})	a,d,e	
+A(e b{0,1} a d{0,1})	a,e	
+A(e b{0,1} a d{0,1})	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e, b, d}' is expected.
+A(e b{0,1} a d{0,1})	a,e	
+A(e b{0,1} a d{0,1})	a,d,b,e	
+A(e b{0,1} a d{0,1})	e,a,d	
+A(c f b d){0,1}	f,d,c,b	
+A(c f b d){0,1}	d,f,c,b	
+A(c f b d){0,1}	c,d,f,b	
+A(c f b d){0,1}	d,c,f,b	
+A(c f b d){0,1}		
+A(c f b d){0,1}		
+A(c f b d){0,1}	f,c,c,d,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, d}' is expected.
+A(c f b d){0,1}	b,d,f,c	
+A(d{0,1} c{0,1} a{0,1} f)	f	
+A(d{0,1} c{0,1} a{0,1} f)	f,d	
+A(d{0,1} c{0,1} a{0,1} f)	c,f,a	
+A(d{0,1} c{0,1} a{0,1} f)	d,f,a	
+A(d{0,1} c{0,1} a{0,1} f)	f,a	
+A(d{0,1} c{0,1} a{0,1} f)	f,a,d	
+A(d{0,1} c{0,1} a{0,1} f)	d,f,a	
+A(d{0,1} c{0,1} a{0,1} f)	c,f	
+A(f d)	d,f	
+A(f d)	d,f	
+A(f d)	f,d	
+A(f d)	f,d	
+A(f d)	d,f	
+A(f d)	f	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(f d)	b,d,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{f, d}' is expected.
+A(f d)	f,d,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(b a)	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(b a)	a,b,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(b a)	b,a	
+A(b a)	a,b	
+A(b a)	b,a,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b a)	a,b	
+A(b a)	a	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+A(b a)	a,b	
+A(c a e d b){0,1}	e,a,b,d,c	
+A(c a e d b){0,1}		
+A(c a e d b){0,1}	e,b,a,c,d	
+A(c a e d b){0,1}		
+A(c a e d b){0,1}	c,e,f,a,d,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a, d, b}' is expected.
+A(c a e d b){0,1}	a,c,e,d,b,d	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(c a e d b){0,1}		
+A(c a e d b){0,1}	d,c,b,e,d,a	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+A(d){0,1}	d	
+A(d){0,1}	d	
+A(d){0,1}	d	
+A(d){0,1}	d	
+A(d){0,1}		
+A(d){0,1}	d,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(d){0,1}		
+A(d){0,1}	d	
+A(e{0,1})	e	
+A(e{0,1})	e,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(e{0,1})	e	
+A(e{0,1})	e	
+A(e{0,1})	e	
+A(e{0,1})		
+A(e{0,1})		
+A(e{0,1})		
+A(c)	e,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+A(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c)	c	
+A(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+A(f d b a{0,1})	b,d,f	
+A(f d b a{0,1})	f,d,b,a	
+A(f d b a{0,1})	b,f,d	
+A(f d b a{0,1})	d,f,b	
+A(f d b a{0,1})	d,b,f	
+A(f d b a{0,1})	b,a,d,f	
+A(f d b a{0,1})	d,b,f	
+A(f d b a{0,1})	d,f,e,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, a}' is expected.
+A(e b d c f)	a,b,e,d,c,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{e, b, d, c, f}' is expected.
+A(e b d c f)	e,f,c,b,d	
+A(e b d c f)	b,e,d,c,f	
+A(e b d c f)	c,b,d,f,f,e	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(e b d c f)	f,c,b,d	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(e b d c f)	b,e,f,d	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+A(e b d c f)	b,f,d,e,c	
+A(e b d c f)	c,e,d,f,b	
+A(e b a d c{0,1}){0,1}		
+A(e b a d c{0,1}){0,1}		
+A(e b a d c{0,1}){0,1}	d,b,b,c,e,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e, a, c}' is expected.
+A(e b a d c{0,1}){0,1}	b,a,d,e	
+A(e b a d c{0,1}){0,1}	e,a,c,d,d,b	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+A(e b a d c{0,1}){0,1}	d,e,a,b	
+A(e b a d c{0,1}){0,1}	d,b,e	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, c}' is expected.
+A(e b a d c{0,1}){0,1}		
+A(e)	e	
+A(e)	e,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(e)	f,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{e}' is expected.
+A(e)	e	
+A(e)	e	
+A(e)	e	
+A(e)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{e}' is expected.
+A(e)	e,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(b{0,1})		
+A(b{0,1})	b	
+A(b{0,1})	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(b{0,1})	b	
+A(b{0,1})	b	
+A(b{0,1})	b	
+A(b{0,1})	b	
+A(b{0,1})	b	
+A(f{0,1} d e)	f,d,e,e	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(f{0,1} d e)	d	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{f, e}' is expected.
+A(f{0,1} d e)	e,d,f	
+A(f{0,1} d e)	d,f,e	
+A(f{0,1} d e)	f,d,e,e	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(f{0,1} d e)	d,e	
+A(f{0,1} d e)	e,d	
+A(f{0,1} d e)	d,a,e,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{f, e}' is expected.
+A(e{0,1} a c)	a,e,c	
+A(e{0,1} a c)	c,a,e	
+A(e{0,1} a c)	a,c,e	
+A(e{0,1} a c)	c,a	
+A(e{0,1} a c)	c,c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{e, a}' is expected.
+A(e{0,1} a c)	b,e,a,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{e, a, c}' is expected.
+A(e{0,1} a c)	a,c	
+A(e{0,1} a c)	a,c	
+A(e d f)	e,d,f	
+A(e d f)	f,e	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{d}' is expected.
+A(e d f)	e,f,d	
+A(e d f)	e,f,d	
+A(e d f)	d,f,e,d	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+A(e d f)	e,f,d,f	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+A(e d f)	e,d,f	
+A(e d f)	e,f,d	
+A(a)	a	
+A(a)	a	
+A(a)	a	
+A(a)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+A(a)	a,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+A(a)	a	
+A(a)	a,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+A(a)	a	
+A(b e a)	a,e,b	
+A(b e a)	e,b,a	
+A(b e a)	a,b,e,e	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+A(b e a)	e,b,a	
+A(b e a)	a,b,e	
+A(b e a)	a,b,e	
+A(b e a)	a,e,b	
+A(b e a)	a,e,b	

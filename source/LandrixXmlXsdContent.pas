@@ -5,8 +5,9 @@
   or https://opensource.org/licenses/MIT for the full license text.
 
   Content models of XML Schema complex types: a tree of particles
-  (sequence, choice, element, wildcard, each with minOccurs and maxOccurs)
-  checked against the child elements of an element, one child at a time.
+  (sequence, choice, all, element, wildcard, each with minOccurs and
+  maxOccurs) checked against the child elements of an element, one child
+  at a time.
 
   The checker interprets the particle tree directly with a stack of frames
   (particle, occurrence count, current child) and decides each child by one
@@ -31,6 +32,11 @@
   - After the first mismatch the state fails: no further order checks,
     no "incomplete" report at the end; later children are looked up by
     name among the model's particles.
+  An all group is the whole model (its root) and holds elements that
+  occur at most once, in any order. As in Xerces, a child takes the first
+  element of the group not yet present that matches it; the expected list
+  names the elements not yet present, in the order of the group; an
+  optional all group (minOccurs 0) without any child is complete.
   Known difference: Xerces keeps the counters of counted bounds in the
   shared content model, so an element of the same type nested inside
   resets the outer element's counts; here every element counts its own
@@ -55,7 +61,9 @@ const
   LandrixXmlXsdUnbounded = -1;
 
 type
-  TLandrixXmlXsdParticleKind = (xpkElement, xpkWildcard, xpkSequence, xpkChoice);
+  { xpkAll: an all group, only as the root of a model, with elements
+    that occur at most once (XML Schema 1.0) }
+  TLandrixXmlXsdParticleKind = (xpkElement, xpkWildcard, xpkSequence, xpkChoice, xpkAll);
 
   TLandrixXmlXsdNamespaceConstraint = (
     xncAny,  { ##any }
@@ -101,7 +109,10 @@ type
       const Namespaces: TLandrixXmlUtf8Array; Decl: TObject; MinOccurs, MaxOccurs: Integer);
     constructor CreateGroup(Kind: TLandrixXmlXsdParticleKind; MinOccurs, MaxOccurs: Integer);
     destructor Destroy; override;
-    { Appends Child to a sequence or choice and takes ownership. }
+    { Appends Child to a sequence, choice or all group and takes
+      ownership. An all group takes only elements with minOccurs 0 or 1
+      and maxOccurs 1 (leave out an element with maxOccurs 0); otherwise
+      xecInvalidArgument is raised and the caller keeps Child. }
     procedure Add(Child: TLandrixXmlXsdParticle);
     { Element: same expanded name. Wildcard: the namespace is allowed. }
     function Matches(const NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
@@ -137,8 +148,11 @@ type
     function GetTermCount: Integer;
     function GetTerm(Index: Integer): TLandrixXmlXsdParticle;
   public
-    { Takes ownership of Root (a sequence or choice; nil for a model that
-      allows no child element). Root must not change afterwards. }
+    { Takes ownership of Root (a sequence, choice or all group; nil for a
+      model that allows no child element). An all group must be the root,
+      with minOccurs 0 or 1 and maxOccurs 1. Root must not change
+      afterwards. If the constructor raises (xecInvalidArgument), the
+      caller keeps Root. }
     constructor Create(Root: TLandrixXmlXsdParticle);
     destructor Destroy; override;
     { The first term (element or wildcard, in document order) that matches;
@@ -212,6 +226,11 @@ type
     FCur: TLandrixXmlXsdContentFrames;
     FFailed: Boolean;
     FCounts: TLandrixXmlXsdContentCounts;
+    { an all group: which of its elements are present, and whether any
+      child came at all }
+    FAll: Boolean;
+    FAllSeen: TLandrixXmlXsdContentCounts;
+    FAllStarted: Boolean;
     function TryStep(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlXsdParticle;
     function ConfigCanEnd(const Frames: TLandrixXmlXsdContentFrames; Len: Integer): Boolean;
     procedure OccurrenceOf(out Issue: TLandrixXmlXsdContentIssue; out Present: Boolean);
@@ -302,8 +321,8 @@ constructor TLandrixXmlXsdParticle.CreateGroup(Kind: TLandrixXmlXsdParticleKind;
   MinOccurs, MaxOccurs: Integer);
 begin
   inherited Create;
-  if not (Kind in [xpkSequence, xpkChoice]) then
-    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'A group is a sequence or a choice');
+  if not (Kind in [xpkSequence, xpkChoice, xpkAll]) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'A group is a sequence, a choice or an all group');
   FKind := Kind;
   FMinOccurs := MinOccurs;
   FMaxOccurs := MaxOccurs;
@@ -322,6 +341,8 @@ procedure TLandrixXmlXsdParticle.Add(Child: TLandrixXmlXsdParticle);
 begin
   if FChildren = nil then
     raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'Only a group has children');
+  if (FKind = xpkAll) and ((Child.FKind <> xpkElement) or (Child.FMaxOccurs <> 1) or (Child.FMinOccurs > 1)) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'An all group holds elements that occur at most once');
   FChildren.Add(Child);
 end;
 
@@ -531,11 +552,29 @@ end;
 { TLandrixXmlXsdContentModel                                             }
 { ---------------------------------------------------------------------- }
 
+{ True if an all group occurs below P }
+function HasInnerAll(P: TLandrixXmlXsdParticle): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to P.ChildCount - 1 do
+    if (P.Children[I].FKind = xpkAll) or HasInnerAll(P.Children[I]) then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
 constructor TLandrixXmlXsdContentModel.Create(Root: TLandrixXmlXsdParticle);
 begin
   inherited Create;
   if (Root <> nil) and Root.IsLeaf then
     raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'The root of a content model is a group');
+  if (Root <> nil) and HasInnerAll(Root) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'An all group must be the root of a content model');
+  if (Root <> nil) and (Root.FKind = xpkAll) and ((Root.FMaxOccurs <> 1) or (Root.FMinOccurs > 1)) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'An all group occurs at most once');
   FRoot := Root;
   FLeaves := TList.Create;
   FTerms := TList.Create;
@@ -658,6 +697,18 @@ begin
         P.FBodyNullable := False;
         Break;
       end;
+    end;
+  end
+  else if P.FKind = xpkAll then
+  begin
+    { any element can come first; empty if every element is optional }
+    P.FBodyNullable := True;
+    for I := 0 to P.ChildCount - 1 do
+    begin
+      Child := P.Children[I];
+      P.FFirst.Add(Child);
+      if not Child.FNullable then
+        P.FBodyNullable := False;
     end;
   end
   else
@@ -1276,6 +1327,20 @@ begin
   Second := nil;
   if FRoot = nil then
     Exit;
+  { an all group: Xerces' XSAllCM compares its elements pairwise }
+  if FRoot.FKind = xpkAll then
+  begin
+    for I := 0 to Integer(FLeaves.Count) - 1 do
+      for J := I + 1 to Integer(FLeaves.Count) - 1 do
+        if not Result and ParticlesOverlap(TLandrixXmlXsdParticle(FLeaves[I]),
+          TLandrixXmlXsdParticle(FLeaves[J])) then
+        begin
+          Result := True;
+          First := TLandrixXmlXsdParticle(FLeaves[I]);
+          Second := TLandrixXmlXsdParticle(FLeaves[J]);
+        end;
+    Exit;
+  end;
   { without two overlapping particles there is nothing to decide (the
     usual case); the tree is not even built }
   Clash := False;
@@ -1555,7 +1620,15 @@ begin
   FModel := Model;
   FFailed := False;
   FConfigCount := 0;
-  if Model.FRoot <> nil then
+  FAll := (Model.FRoot <> nil) and (Model.FRoot.FKind = xpkAll);
+  FAllStarted := False;
+  if FAll then
+  begin
+    SetLength(FAllSeen, Model.LeafCount);
+    for I := 0 to Model.LeafCount - 1 do
+      FAllSeen[I] := 0;
+  end
+  else if Model.FRoot <> nil then
   begin
     Initial := nil;
     SetLength(Initial, 1);
@@ -1718,6 +1791,7 @@ var
   SwapLens: TLandrixXmlXsdContentCounts;
   Present: Boolean;
   List: TList;
+  I: Integer;
 begin
   Swap := nil;
   SwapLens := nil;
@@ -1728,6 +1802,22 @@ begin
   Issue.Count := 0;
   if FFailed then
   begin
+    Result := FModel.FindTerm(NamespaceUri, LocalName);
+    Exit;
+  end;
+  if FAll then
+  begin
+    { the first element not yet present that matches (XSAllCM) }
+    FAllStarted := True;
+    for I := 0 to FModel.LeafCount - 1 do
+      if (FAllSeen[I] = 0) and FModel.Leaves[I].Matches(NamespaceUri, LocalName) then
+      begin
+        FAllSeen[I] := 1;
+        Result := FModel.Leaves[I];
+        Exit;
+      end;
+    Issue.Kind := xciUnexpected;
+    FFailed := True;
     Result := FModel.FindTerm(NamespaceUri, LocalName);
     Exit;
   end;
@@ -1793,6 +1883,13 @@ begin
   List.Clear;
   Marks := nil;
   Frames := nil;
+  if FAll then
+  begin
+    for I := 0 to FModel.LeafCount - 1 do
+      if FAllSeen[I] = 0 then
+        List.Add(FModel.Leaves[I]);
+    Exit;
+  end;
   SetLength(Marks, FModel.TermCount);
   for I := 0 to FModel.TermCount - 1 do
     Marks[I] := False;
@@ -1872,6 +1969,26 @@ var
   Term: TLandrixXmlXsdParticle;
 begin
   Result := nil;
+  if FAll then
+  begin
+    { an optional all group may stay empty; else every element with
+      minOccurs 1 must be present }
+    if FFailed or (not FAllStarted and (FModel.FRoot.FMinOccurs = 0)) then
+      Exit;
+    for I := 0 to FModel.LeafCount - 1 do
+      if (FAllSeen[I] = 0) and (FModel.Leaves[I].FMinOccurs > 0) then
+      begin
+        Issue.Kind := xciIncomplete;
+        Issue.Term := nil;
+        Issue.MinOccurs := 0;
+        Issue.MaxOccurs := 0;
+        Issue.Count := 0;
+        SetLength(Result, 1);
+        Result[0] := Issue;
+        Exit;
+      end;
+    Exit;
+  end;
   CanEnd := FConfigCount = 0;
   for I := 0 to FConfigCount - 1 do
     if ConfigCanEnd(FConfigs[I], FConfigLens[I]) then
