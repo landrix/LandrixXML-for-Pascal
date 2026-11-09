@@ -262,8 +262,9 @@ end;
 { ---------------------------------------------------------------------- }
 
 type
-  { the derivations a final attribute (or finalDefault) forbids }
-  TDerivationKind = (dkExtension, dkRestriction, dkList, dkUnion);
+  { the derivations a final or block attribute (or finalDefault,
+    blockDefault) forbids; substitution only in block }
+  TDerivationKind = (dkExtension, dkRestriction, dkList, dkUnion, dkSubstitution);
   TDerivationKinds = set of TDerivationKind;
 
   TSchemaDoc = class
@@ -274,6 +275,7 @@ type
     ElementQualified: Boolean;
     AttributeQualified: Boolean;
     FinalDefault: TDerivationKinds;
+    BlockDefault: TDerivationKinds;
     { the namespaces of the document's xs:import elements ('' for one
       without namespace), loaded or not }
     Imports: TLandrixXmlUtf8Array;
@@ -319,6 +321,27 @@ type
     Final: TDerivationKinds;
   end;
 
+  { the nillable and block of an element declaration }
+  TElementEntry = class
+    Nillable: Boolean;
+    Block: TDerivationKinds;
+  end;
+
+  { a complex type whose content is checked when every type is complete,
+    as in Xerces' fullSchemaChecking: the consistency of the element
+    declarations and the Unique Particle Attribution of its model (if
+    CheckModel), and between them, if BasePending is set, the restriction
+    of the base type's particle }
+  TTypeCheck = class
+    T: TLandrixXmlXsdComplexType;
+    Doc: TSchemaDoc;
+    Node: TLandrixXmlNode;
+    { the component being built when the type was }
+    Current: TPending;
+    CheckModel: Boolean;
+    BasePending: TPending;
+  end;
+
   TKeyRefFixup = class
     Constraint: TLandrixXmlXsdIdentityConstraint;
     NamespaceUri: TLandrixXmlUtf8;
@@ -344,6 +367,10 @@ type
     { TFinalEntry by PointerKey of the type }
     FFinals: TLandrixXmlXsdNameMap;
     FFinalEntries: TObjectList;
+    { TElementEntry by PointerKey of the element declaration (the entries
+      are owned by FFinalEntries) }
+    FElementEntries: TLandrixXmlXsdNameMap;
+    FTypeChecks: TObjectList;
     { the skipped documents: namespace, tab, description }
     FSkipped: TStringList;
     { the documents checked against the schema for schemas }
@@ -431,6 +458,23 @@ type
       const Value: TLandrixXmlUtf8);
     procedure CheckElementsConsistent(Doc: TSchemaDoc; Node: TLandrixXmlNode; Particle: TLandrixXmlXsdParticle;
       Seen: TLandrixXmlXsdNameMap);
+    function OwnParticle(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Mixed: Boolean): TLandrixXmlXsdParticle;
+    function TypeParticle(Doc: TSchemaDoc; TypeNode: TLandrixXmlNode): TLandrixXmlXsdParticle;
+    function ComplexDerivationOk(D: TLandrixXmlXsdComplexType; BaseSimple: TLandrixXmlXsdSimpleType;
+      BaseComplex: TLandrixXmlXsdComplexType; Block: TDerivationKinds): Boolean;
+    function ElementTypeDerivationOk(D, B: TLandrixXmlXsdElementDecl): Boolean;
+    function NameAndTypeOk(D, B: TLandrixXmlXsdParticle; out Code: string): Boolean;
+    function ParticleRestricts(D, B: TLandrixXmlXsdParticle; CheckWildcardOccurs: Boolean;
+      out Code: string): Boolean;
+    function RecurseOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; out Code: string): Boolean;
+    function RecurseLaxOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+      out Code: string): Boolean;
+    function MapAndSumOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+      out Code: string): Boolean;
+    function NSRecurseCheckCardinalityOk(DChildren: TList; DMin, DMax: Int64; W: TLandrixXmlXsdParticle;
+      CheckWildcardOccurs: Boolean; out Code: string): Boolean;
+    procedure CheckType(Check: TTypeCheck);
+    procedure CheckGroupRestriction(P: TPending);
   public
     constructor Create(Resolver: TLandrixXmlXsdResolver);
     destructor Destroy; override;
@@ -546,8 +590,20 @@ begin
     else if Token = 'list' then
       Include(Result, dkList)
     else if Token = 'union' then
-      Include(Result, dkUnion);
+      Include(Result, dkUnion)
+    else if Token = 'substitution' then
+      Include(Result, dkSubstitution);
   end;
+end;
+
+{ The value of a block or blockDefault attribute; #all stands for
+  extension, restriction and substitution (Xerces) }
+function ParseBlock(const Value: TLandrixXmlUtf8): TDerivationKinds;
+begin
+  if Trimmed(Value) = '#all' then
+    Result := [dkExtension, dkRestriction, dkSubstitution]
+  else
+    Result := ParseDerivations(Value) * [dkExtension, dkRestriction, dkSubstitution];
 end;
 
 { --- TLoader ------------------------------------------------------------ }
@@ -571,6 +627,8 @@ begin
   FValueChecks := TObjectList.Create(True);
   FFinals := TLandrixXmlXsdNameMap.Create;
   FFinalEntries := TObjectList.Create(True);
+  FElementEntries := TLandrixXmlXsdNameMap.Create;
+  FTypeChecks := TObjectList.Create(True);
   FSkipped := TStringList.Create;
   FCheckedFiles := TStringList.Create;
   FCheckedFiles.CaseSensitive := True;
@@ -595,6 +653,8 @@ begin
   FValueChecks.Free;
   FFinals.Free;
   FFinalEntries.Free;
+  FElementEntries.Free;
+  FTypeChecks.Free;
   FSkipped.Free;
   FCheckedFiles.Free;
   FSet.Free;
@@ -808,6 +868,8 @@ begin
   Result.AttributeQualified := AttrTrimmed(Root, 'attributeFormDefault', Value) and (Value = 'qualified');
   if Attr(Root, 'finalDefault', Value) then
     Result.FinalDefault := ParseDerivations(Value);
+  if Attr(Root, 'blockDefault', Value) then
+    Result.BlockDefault := ParseBlock(Value);
   Child := Root.FirstChildElement;
   while Child <> nil do
   begin
@@ -1299,6 +1361,7 @@ var
   Qualified, HasDefault, HasFixed: Boolean;
   DefaultValue, FixedValue: TLandrixXmlUtf8;
   Check: TElementValueCheck;
+  Entry: TElementEntry;
 begin
   if not AttrTrimmed(Node, 'name', Name) or (Name = '') then
     Fail(Doc, Node, 'an element declaration without a name');
@@ -1310,6 +1373,14 @@ begin
   FSet.Own(D);
   D.Name := Name;
   D.Global := Global;
+  Entry := TElementEntry.Create;
+  FFinalEntries.Add(Entry);
+  Entry.Nillable := BoolAttr(Node, 'nillable');
+  if Attr(Node, 'block', Value) then
+    Entry.Block := ParseBlock(Value)
+  else
+    Entry.Block := Doc.BlockDefault;
+  FElementEntries.Put('', PointerKey(D), Entry);
   D.SchemaFile := Doc.FileName;
   D.SchemaLine := Node.Line;
   if Global then
@@ -2889,8 +2960,7 @@ var
   BaseSimple, Simple: TLandrixXmlXsdSimpleType;
   Items: TObjectList;
   Wildcard: TLandrixXmlXsdWildcard;
-  Particle, First, Second: TLandrixXmlXsdParticle;
-  Seen: TLandrixXmlXsdNameMap;
+  Particle: TLandrixXmlXsdParticle;
   I, J: Integer;
   Item: TAttributeItem;
   Use: TLandrixXmlXsdAttributeUse;
@@ -2898,10 +2968,12 @@ var
   Final: TDerivationKinds;
   Local: TLandrixXmlXsdSimpleType;
   IdName: TLandrixXmlUtf8;
+  Check: TTypeCheck;
 begin
   if P <> nil then
     P.State := psResolving;
   CheckModel := False;
+  BasePending := nil;
   Mixed := BoolAttr(Node, 'mixed');
   Child := Node.FirstChildElement;
   while IsXs(Child, 'annotation') do
@@ -3147,19 +3219,19 @@ begin
   finally
     Items.Free;
   end;
-  { the content model, after the attributes as in Xerces }
-  if CheckModel then
+  { the content model, when every type is complete (Xerces checks it
+    after the attributes, in fullSchemaChecking) }
+  if CheckModel or (not IsSimpleContent and not IsExtension and (BasePending <> nil)) then
   begin
-    Seen := TLandrixXmlXsdNameMap.Create;
-    try
-      CheckElementsConsistent(Doc, Node, T.Model.Root, Seen);
-    finally
-      Seen.Free;
-    end;
-    if T.Model.FindAmbiguity(First, Second) then
-      FailCheck(Doc.FileName, Node, 'cos-nonambig', Esc(First.Display) + ' and ' +
-        Esc(Second.Display) + ' make the content model ambiguous (Unique Particle ' +
-        'Attribution)');
+    Check := TTypeCheck.Create;
+    FTypeChecks.Add(Check);
+    Check.T := T;
+    Check.Doc := Doc;
+    Check.Node := Node;
+    Check.Current := FCurrent;
+    Check.CheckModel := CheckModel;
+    if not IsSimpleContent and not IsExtension then
+      Check.BasePending := BasePending;
   end;
   if P <> nil then
     P.State := psDone;
@@ -3451,6 +3523,684 @@ begin
     CheckElementsConsistent(Doc, Node, Particle.Children[I], Seen);
 end;
 
+{ --- particle restriction (Xerces' particleValidRestriction) ----------- }
+
+{ True if the bounds Min1..Max1 lie within Min2..Max2 (unbounded:
+  LandrixXmlXsdUnbounded) }
+function OccursWithin(Min1, Max1, Min2, Max2: Int64): Boolean;
+begin
+  Result := (Min1 >= Min2) and ((Max2 = LandrixXmlXsdUnbounded) or
+    ((Max1 <> LandrixXmlXsdUnbounded) and (Max1 <= Max2)));
+end;
+
+{ Xerces' isEmpty: a model group whose particles contain no element and
+  no wildcard }
+function IsEmptyParticle(P: TLandrixXmlXsdParticle): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if P.IsLeaf then
+    Exit;
+  for I := 0 to P.ChildCount - 1 do
+    if not IsEmptyParticle(P.Children[I]) then
+      Exit;
+  Result := True;
+end;
+
+{ Xerces' minEffectiveTotalRange }
+function MinRange(P: TLandrixXmlXsdParticle): Int64;
+var
+  I: Integer;
+  One: Int64;
+begin
+  if P.IsLeaf then
+  begin
+    Result := P.MinOccurs;
+    Exit;
+  end;
+  Result := 0;
+  for I := 0 to P.ChildCount - 1 do
+  begin
+    One := MinRange(P.Children[I]);
+    if P.Kind = xpkChoice then
+    begin
+      if (I = 0) or (One < Result) then
+        Result := One;
+    end
+    else
+      Result := Result + One;
+  end;
+  Result := Result * P.MinOccurs;
+end;
+
+{ Xerces' maxEffectiveTotalRange (LandrixXmlXsdUnbounded for no upper
+  bound) }
+function MaxRange(P: TLandrixXmlXsdParticle): Int64;
+var
+  I: Integer;
+  One, Group: Int64;
+begin
+  if P.IsLeaf then
+  begin
+    Result := P.MaxOccurs;
+    Exit;
+  end;
+  Result := LandrixXmlXsdUnbounded;
+  Group := 0;
+  for I := 0 to P.ChildCount - 1 do
+  begin
+    One := MaxRange(P.Children[I]);
+    if One = LandrixXmlXsdUnbounded then
+      Exit;
+    if P.Kind = xpkChoice then
+    begin
+      if One > Group then
+        Group := One;
+    end
+    else
+      Group := Group + One;
+  end;
+  if P.MaxOccurs <> LandrixXmlXsdUnbounded then
+    Result := Group * P.MaxOccurs
+  else if Group = 0 then
+    Result := 0;
+end;
+
+{ Xerces' getNonUnaryGroup: a group occurring once with one particle
+  stands for that particle }
+function NonUnaryGroup(P: TLandrixXmlXsdParticle): TLandrixXmlXsdParticle;
+begin
+  Result := P;
+  while not Result.IsLeaf and (Result.MinOccurs = 1) and (Result.MaxOccurs = 1) and (Result.ChildCount = 1) do
+    Result := Result.Children[0];
+end;
+
+{ Xerces' gatherChildren: a group occurring once of the same kind as its
+  parent is replaced by its particles, an empty one occurring once is
+  dropped }
+procedure GatherChildren(ParentKind: TLandrixXmlXsdParticleKind; P: TLandrixXmlXsdParticle; List: TList);
+var
+  I: Integer;
+begin
+  if P.IsLeaf or (P.MinOccurs <> 1) or (P.MaxOccurs <> 1) then
+    List.Add(P)
+  else if P.Kind = ParentKind then
+  begin
+    for I := 0 to P.ChildCount - 1 do
+      GatherChildren(P.Kind, P.Children[I], List);
+  end
+  else if not IsEmptyParticle(P) then
+    List.Add(P);
+end;
+
+{ Xerces' removePointlessChildren: the particles of the group P (not
+  owned) }
+function PointlessChildrenRemoved(P: TLandrixXmlXsdParticle): TList;
+var
+  I: Integer;
+begin
+  Result := TList.Create;
+  for I := 0 to P.ChildCount - 1 do
+    GatherChildren(P.Kind, P.Children[I], Result);
+end;
+
+{ the simple type of an element's value: its simple type or the simple
+  content of its complex type; nil for other content }
+function ElementValueType(E: TLandrixXmlXsdElementDecl): TLandrixXmlXsdSimpleType;
+begin
+  Result := E.SimpleType;
+  if (Result = nil) and (E.ComplexType <> nil) and (E.ComplexType.ContentType = xctSimple) then
+    Result := E.ComplexType.SimpleType;
+end;
+
+{ as Xerces: the actual values (each with its own type) if the derived
+  element has a simple value, the strings otherwise; a base with mixed
+  content has string values }
+function SameElementValue(D, B: TLandrixXmlXsdElementDecl): Boolean;
+var
+  DT, BT: TLandrixXmlXsdSimpleType;
+begin
+  DT := ElementValueType(D);
+  if DT = nil then
+  begin
+    Result := D.ConstraintValue = B.ConstraintValue;
+    Exit;
+  end;
+  BT := ElementValueType(B);
+  if BT = nil then
+    BT := LandrixXmlXsdBuiltinType('string');
+  Result := SameFixedValue(DT, D.ConstraintValue, BT, B.ConstraintValue);
+end;
+
+{ the particle of Parent's model group child, an empty one as nil, and
+  for mixed content without a particle an empty sequence (Xerces) }
+function TLoader.OwnParticle(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Mixed: Boolean): TLandrixXmlXsdParticle;
+begin
+  Result := ParticleOfChildren(Doc, Parent);
+  if (Result <> nil) and IsEmptyCompositor(Parent) then
+  begin
+    Result.Free;
+    Result := nil;
+  end;
+  if (Result = nil) and Mixed then
+    Result := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 1);
+end;
+
+{ Xerces' particle of a complex type, built afresh: as EffectiveParticle,
+  but mixed content without a particle has an empty sequence, which an
+  extension also puts in front of its own particle }
+function TLoader.TypeParticle(Doc: TSchemaDoc; TypeNode: TLandrixXmlNode): TLandrixXmlXsdParticle;
+var
+  Child, Derivation: TLandrixXmlNode;
+  Own, BaseParticle: TLandrixXmlXsdParticle;
+  Ns, LocalName, Value: TLandrixXmlUtf8;
+  BasePending, Saved: TPending;
+  Mixed: Boolean;
+begin
+  Result := nil;
+  Child := TypeNode.FirstChildElement;
+  while IsXs(Child, 'annotation') do
+    Child := Child.NextSiblingElement;
+  if IsXs(Child, 'simpleContent') then
+    Exit;
+  Mixed := BoolAttr(TypeNode, 'mixed');
+  if not IsXs(Child, 'complexContent') then
+  begin
+    Result := OwnParticle(Doc, TypeNode, Mixed);
+    Exit;
+  end;
+  if Attr(Child, 'mixed', Value) then
+    Mixed := BoolAttr(Child, 'mixed');
+  Derivation := Child.FirstChildElement;
+  while IsXs(Derivation, 'annotation') do
+    Derivation := Derivation.NextSiblingElement;
+  BasePending := nil;
+  if IsXs(Derivation, 'extension') then
+  begin
+    QNameAttr(Doc, Derivation, 'base', Ns, LocalName);
+    BasePending := FindPending(pkComplexType, Ns, LocalName, TypeNode);
+  end;
+  if BasePending = nil then
+  begin
+    Result := OwnParticle(Doc, Derivation, Mixed);
+    Exit;
+  end;
+  Saved := FCurrent;
+  FCurrent := BasePending;
+  try
+    BaseParticle := TypeParticle(BasePending.Doc, BasePending.Node);
+  finally
+    FCurrent := Saved;
+  end;
+  try
+    Own := OwnParticle(Doc, Derivation, Mixed);
+  except
+    BaseParticle.Free;
+    raise;
+  end;
+  if Own = nil then
+    Result := BaseParticle
+  else if BaseParticle = nil then
+    Result := Own
+  else
+  begin
+    Result := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 1);
+    Result.Add(BaseParticle);
+    Result.Add(Own);
+  end;
+end;
+
+{ Xerces' checkComplexDerivation: D is the base (BaseSimple or
+  BaseComplex) or derived from it without the derivations in Block }
+function TLoader.ComplexDerivationOk(D: TLandrixXmlXsdComplexType; BaseSimple: TLandrixXmlXsdSimpleType;
+  BaseComplex: TLandrixXmlXsdComplexType; Block: TDerivationKinds): Boolean;
+var
+  AnySimple: TLandrixXmlXsdSimpleType;
+begin
+  Result := True;
+  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
+  while D <> nil do
+  begin
+    if D = BaseComplex then
+      Exit;
+    if ((D.Derivation = xdExtension) and (dkExtension in Block)) or
+      ((D.Derivation = xdRestriction) and (dkRestriction in Block)) then
+      Break;
+    if D.BaseComplex <> nil then
+    begin
+      if D.BaseComplex = BaseComplex then
+        Exit;
+      if D.BaseComplex = FSet.AnyType then
+        Break;
+      D := D.BaseComplex;
+    end
+    else
+    begin
+      if D.BaseSimple = nil then
+        Break;
+      if D.BaseSimple = BaseSimple then
+        Exit;
+      if D.BaseSimple = AnySimple then
+        Break;
+      if BaseComplex <> nil then
+      begin
+        if BaseComplex <> FSet.AnyType then
+          Break;
+        BaseSimple := AnySimple;
+      end;
+      Result := SimpleDerivationOk(D.BaseSimple, BaseSimple, Block);
+      Exit;
+    end;
+  end;
+  Result := False;
+end;
+
+{ Xerces' checkTypeDerivationOk for the types of two element
+  declarations, without extension, list and union }
+function TLoader.ElementTypeDerivationOk(D, B: TLandrixXmlXsdElementDecl): Boolean;
+var
+  AnySimple, BaseSimple: TLandrixXmlXsdSimpleType;
+begin
+  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
+  if D.ComplexType = FSet.AnyType then
+    Result := B.ComplexType = FSet.AnyType
+  else if D.SimpleType <> nil then
+  begin
+    BaseSimple := B.SimpleType;
+    if D.SimpleType = AnySimple then
+      Result := (B.ComplexType = FSet.AnyType) or (BaseSimple = AnySimple)
+    else
+    begin
+      if B.ComplexType = FSet.AnyType then
+        BaseSimple := AnySimple;
+      Result := (BaseSimple <> nil) and SimpleDerivationOk(D.SimpleType, BaseSimple,
+        [dkExtension, dkList, dkUnion]);
+    end;
+  end
+  else
+    Result := ComplexDerivationOk(D.ComplexType, B.SimpleType, B.ComplexType, [dkExtension, dkList, dkUnion]);
+end;
+
+{ Xerces' checkNameAndTypeOK for two element particles; the identity
+  constraints are not compared (Xerces neither) }
+function TLoader.NameAndTypeOk(D, B: TLandrixXmlXsdParticle; out Code: string): Boolean;
+var
+  DE, BE: TLandrixXmlXsdElementDecl;
+  DEntry, BEntry: TElementEntry;
+begin
+  Result := False;
+  DE := TLandrixXmlXsdElementDecl(D.Decl);
+  BE := TLandrixXmlXsdElementDecl(B.Decl);
+  DEntry := TElementEntry(FElementEntries.Find('', PointerKey(DE)));
+  BEntry := TElementEntry(FElementEntries.Find('', PointerKey(BE)));
+  if (DE.Name <> BE.Name) or (DE.NamespaceUri <> BE.NamespaceUri) then
+    Code := 'rcase-NameAndTypeOK.1'
+  else if DEntry.Nillable and not BEntry.Nillable then
+    Code := 'rcase-NameAndTypeOK.2'
+  else if not OccursWithin(D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs) then
+    Code := 'rcase-NameAndTypeOK.3'
+  else if (BE.ValueConstraint = xvcFixed) and (DE.ValueConstraint <> xvcFixed) then
+    Code := 'rcase-NameAndTypeOK.4.a'
+  else if (BE.ValueConstraint = xvcFixed) and not SameElementValue(DE, BE) then
+    Code := 'rcase-NameAndTypeOK.4.b'
+  else if not (BEntry.Block <= DEntry.Block) then
+    Code := 'rcase-NameAndTypeOK.6'
+  else if not ElementTypeDerivationOk(DE, BE) then
+    Code := 'rcase-NameAndTypeOK.7'
+  else
+    Result := True;
+end;
+
+{ Xerces' checkRecurse: the particles in order, each restricting the
+  next particle of the base it can; the base particles skipped and left
+  over must be emptiable }
+function TLoader.RecurseOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+  out Code: string): Boolean;
+var
+  I, J, Current: Integer;
+  Sub: string;
+  B: TLandrixXmlXsdParticle;
+begin
+  Result := False;
+  if not OccursWithin(DMin, DMax, BMin, BMax) then
+  begin
+    Code := 'rcase-Recurse.1';
+    Exit;
+  end;
+  Code := 'rcase-Recurse.2';
+  Current := 0;
+  for I := 0 to Integer(DChildren.Count) - 1 do
+  begin
+    J := Current;
+    while J < Integer(BChildren.Count) do
+    begin
+      B := TLandrixXmlXsdParticle(BChildren[J]);
+      Inc(Current);
+      if ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), B, True, Sub) then
+        Break;
+      if not Emptiable(B) then
+        Exit;
+      Inc(J);
+    end;
+    if J >= Integer(BChildren.Count) then
+      Exit;
+  end;
+  for J := Current to Integer(BChildren.Count) - 1 do
+    if not Emptiable(TLandrixXmlXsdParticle(BChildren[J])) then
+      Exit;
+  Code := '';
+  Result := True;
+end;
+
+{ Xerces' checkRecurseLax: the particles in order, each restricting one
+  of the next particles of the base }
+function TLoader.RecurseLaxOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+  out Code: string): Boolean;
+var
+  I, J, Current: Integer;
+  Sub: string;
+begin
+  Result := False;
+  if not OccursWithin(DMin, DMax, BMin, BMax) then
+  begin
+    Code := 'rcase-RecurseLax.1';
+    Exit;
+  end;
+  Code := 'rcase-RecurseLax.2';
+  Current := 0;
+  for I := 0 to Integer(DChildren.Count) - 1 do
+  begin
+    J := Current;
+    while J < Integer(BChildren.Count) do
+    begin
+      Inc(Current);
+      if ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), TLandrixXmlXsdParticle(BChildren[J]), True,
+        Sub) then
+        Break;
+      Inc(J);
+    end;
+    if J >= Integer(BChildren.Count) then
+      Exit;
+  end;
+  Code := '';
+  Result := True;
+end;
+
+{ Xerces' checkMapAndSum: a sequence restricting a choice, each particle
+  restricting one of the choice }
+function TLoader.MapAndSumOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+  out Code: string): Boolean;
+var
+  I, J: Integer;
+  Sub: string;
+  Found: Boolean;
+begin
+  Result := False;
+  if not OccursWithin(DMin, DMax, BMin, BMax) then
+  begin
+    Code := 'rcase-MapAndSum.2';
+    Exit;
+  end;
+  for I := 0 to Integer(DChildren.Count) - 1 do
+  begin
+    Found := False;
+    for J := 0 to Integer(BChildren.Count) - 1 do
+      if not Found and ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), TLandrixXmlXsdParticle(BChildren[J]),
+        True, Sub) then
+        Found := True;
+    if not Found then
+    begin
+      Code := 'rcase-MapAndSum.1';
+      Exit;
+    end;
+  end;
+  Code := '';
+  Result := True;
+end;
+
+{ Xerces' checkNSRecurseCheckCardinality: a model group restricting the
+  wildcard particle W; the particles are checked without the occurrence
+  ranges of the wildcard }
+function TLoader.NSRecurseCheckCardinalityOk(DChildren: TList; DMin, DMax: Int64; W: TLandrixXmlXsdParticle;
+  CheckWildcardOccurs: Boolean; out Code: string): Boolean;
+var
+  I: Integer;
+  Sub: string;
+begin
+  Result := False;
+  if CheckWildcardOccurs and not OccursWithin(DMin, DMax, W.MinOccurs, W.MaxOccurs) then
+  begin
+    Code := 'rcase-NSRecurseCheckCardinality.2';
+    Exit;
+  end;
+  for I := 0 to Integer(DChildren.Count) - 1 do
+    if not ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), W, False, Sub) then
+    begin
+      Code := 'rcase-NSRecurseCheckCardinality.1';
+      Exit;
+    end;
+  Code := '';
+  Result := True;
+end;
+
+{ Xerces' particleValidRestriction (substitution groups and xs:all are
+  not supported): True if D is a valid restriction of B, else Code is the
+  constraint Xerces reports }
+function TLoader.ParticleRestricts(D, B: TLandrixXmlXsdParticle; CheckWildcardOccurs: Boolean;
+  out Code: string): Boolean;
+var
+  DChildren, BChildren, Single: TList;
+  DW, BW: TLandrixXmlXsdWildcard;
+  Count: Int64;
+begin
+  Result := False;
+  Code := '';
+  if IsEmptyParticle(D) and not Emptiable(B) then
+  begin
+    Code := 'cos-particle-restrict.a';
+    Exit;
+  end;
+  if not IsEmptyParticle(D) and IsEmptyParticle(B) then
+  begin
+    Code := 'cos-particle-restrict.b';
+    Exit;
+  end;
+  D := NonUnaryGroup(D);
+  B := NonUnaryGroup(B);
+  DChildren := nil;
+  BChildren := nil;
+  Single := nil;
+  try
+    if not D.IsLeaf then
+      DChildren := PointlessChildrenRemoved(D);
+    if not B.IsLeaf then
+      BChildren := PointlessChildrenRemoved(B);
+    case D.Kind of
+      xpkElement:
+        case B.Kind of
+          xpkElement:
+            Result := NameAndTypeOk(D, B, Code);
+          xpkWildcard:
+            begin
+              if CheckWildcardOccurs and not OccursWithin(D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs) then
+                Code := 'rcase-NSCompat.2'
+              else if not TLandrixXmlXsdWildcard(B.Decl).Allows(D.NamespaceUri) then
+                Code := 'rcase-NSCompat.1'
+              else
+                Result := True;
+            end;
+        else
+          { the element as if it were in a group of the base's kind.
+            Xerces deviation: particlesZ001. An element repeated without
+            bound does not restrict a repeated choice whose element
+            occurs once (XML Schema 1.1 allows it) }
+          Single := TList.Create;
+          Single.Add(D);
+          if B.Kind = xpkChoice then
+            Result := RecurseLaxOk(Single, BChildren, 1, 1, B.MinOccurs, B.MaxOccurs, Code)
+          else
+            Result := RecurseOk(Single, BChildren, 1, 1, B.MinOccurs, B.MaxOccurs, Code);
+        end;
+      xpkWildcard:
+        if B.Kind <> xpkWildcard then
+          Code := 'cos-particle-restrict.2'
+        else
+        begin
+          DW := TLandrixXmlXsdWildcard(D.Decl);
+          BW := TLandrixXmlXsdWildcard(B.Decl);
+          { Xerces deviation: particlesHa080, particlesHa084. The
+            occurrence range is compared also for a wildcard in a group
+            restricting a wildcard, where the group's range counts }
+          if not OccursWithin(D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs) then
+            Code := 'rcase-NSSubset.2'
+          else if not WildcardSubset(DW, BW) then
+            Code := 'rcase-NSSubset.1'
+          else if WeakerProcessContents(DW, BW) then
+            Code := 'rcase-NSSubset.3'
+          else
+            Result := True;
+        end;
+      xpkChoice:
+        case B.Kind of
+          xpkWildcard:
+            Result := NSRecurseCheckCardinalityOk(DChildren, MinRange(D), MaxRange(D), B, CheckWildcardOccurs,
+              Code);
+          xpkChoice:
+            Result := RecurseLaxOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs,
+              Code);
+        else
+          Code := 'cos-particle-restrict.2';
+        end;
+      { Xerces deviation: mgE014. A sequence whose particles all have
+        maxOccurs 0 stays an empty sequence, which cannot restrict an
+        element }
+      xpkSequence:
+        case B.Kind of
+          xpkWildcard:
+            Result := NSRecurseCheckCardinalityOk(DChildren, MinRange(D), MaxRange(D), B, CheckWildcardOccurs,
+              Code);
+          xpkSequence:
+            Result := RecurseOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs, Code);
+          xpkChoice:
+            begin
+              Count := DChildren.Count;
+              if D.MaxOccurs = LandrixXmlXsdUnbounded then
+                Result := MapAndSumOk(DChildren, BChildren, D.MinOccurs * Count, LandrixXmlXsdUnbounded,
+                  B.MinOccurs, B.MaxOccurs, Code)
+              else
+                Result := MapAndSumOk(DChildren, BChildren, D.MinOccurs * Count, D.MaxOccurs * Count,
+                  B.MinOccurs, B.MaxOccurs, Code);
+            end;
+        else
+          Code := 'cos-particle-restrict.2';
+        end;
+    end;
+  finally
+    Single.Free;
+    DChildren.Free;
+    BChildren.Free;
+  end;
+end;
+
+{ the checks of a complex type's content in the order of Xerces'
+  fullSchemaChecking }
+procedure TLoader.CheckType(Check: TTypeCheck);
+var
+  Saved: TPending;
+  Seen: TLandrixXmlXsdNameMap;
+  First, Second, Derived, Base: TLandrixXmlXsdParticle;
+  Code: string;
+begin
+  Saved := FCurrent;
+  FCurrent := Check.Current;
+  Derived := nil;
+  Base := nil;
+  try
+    if Check.CheckModel then
+    begin
+      Seen := TLandrixXmlXsdNameMap.Create;
+      try
+        CheckElementsConsistent(Check.Doc, Check.Node, Check.T.Model.Root, Seen);
+      finally
+        Seen.Free;
+      end;
+    end;
+    if Check.BasePending <> nil then
+    begin
+      Derived := TypeParticle(Check.Doc, Check.Node);
+      FCurrent := Check.BasePending;
+      Base := TypeParticle(Check.BasePending.Doc, Check.BasePending.Node);
+      FCurrent := Check.Current;
+      { Xerces deviation: particlesZ039. Empty content compares only the
+        particles, so it also restricts a base with simple content }
+      if Derived = nil then
+      begin
+        if not Emptiable(Base) then
+          FailCheck(Check.Doc.FileName, Check.Node, 'derivation-ok-restriction.5.3.2', 'the content of ' +
+            Esc(Check.T.DisplayName) + ' is empty, but that of its base ' + Esc(Check.BasePending.Name) +
+            ' is not emptiable');
+      end
+      else if Base = nil then
+        FailCheck(Check.Doc.FileName, Check.Node, 'derivation-ok-restriction.5.4.2', 'the content of ' +
+          Esc(Check.T.DisplayName) + ' has particles, but that of its base ' + Esc(Check.BasePending.Name) +
+          ' is empty')
+      else if not ParticleRestricts(Derived, Base, True, Code) then
+        FailCheck(Check.Doc.FileName, Check.Node, Code, 'the content of ' + Esc(Check.T.DisplayName) +
+          ' is not a valid restriction of the content of its base ' + Esc(Check.BasePending.Name));
+    end;
+    if Check.CheckModel and Check.T.Model.FindAmbiguity(First, Second) then
+      FailCheck(Check.Doc.FileName, Check.Node, 'cos-nonambig', Esc(First.Display) + ' and ' +
+        Esc(Second.Display) + ' make the content model ambiguous (Unique Particle ' +
+        'Attribution)');
+  finally
+    Derived.Free;
+    Base.Free;
+    FCurrent := Saved;
+  end;
+end;
+
+{ src-redefine.6.2.2: a group redefined without a reference to itself
+  must restrict the original (Xerces reports the code of the failed
+  restriction rule first) }
+procedure TLoader.CheckGroupRestriction(P: TPending);
+var
+  Saved: TPending;
+  Derived, Base: TLandrixXmlXsdParticle;
+  Code: string;
+begin
+  Saved := FCurrent;
+  Derived := nil;
+  Base := nil;
+  try
+    FCurrent := P;
+    Derived := ParticleOfChildren(P.Doc, P.Node);
+    FCurrent := P.Original;
+    Base := ParticleOfChildren(P.Original.Doc, P.Original.Node);
+    FCurrent := Saved;
+    Code := '';
+    if Base = nil then
+    begin
+      if Derived <> nil then
+        Code := 'src-redefine.6.2.2';
+    end
+    else if Derived = nil then
+    begin
+      if not Emptiable(Base) then
+        Code := 'src-redefine.6.2.2';
+    end
+    else
+      ParticleRestricts(Derived, Base, True, Code);
+    if Code <> '' then
+      FailCheck(P.Doc.FileName, P.Node, Code, 'the redefinition of the group ' +
+        QualifiedText(P.NamespaceUri, P.Name) + ' is not a valid restriction of the original');
+  finally
+    Derived.Free;
+    Base.Free;
+    FCurrent := Saved;
+  end;
+end;
+
 procedure TLoader.ResolveAll;
 var
   I: Integer;
@@ -3521,6 +4271,21 @@ begin
         QualifiedText(Fixup.Constraint.NamespaceUri, Fixup.Constraint.Name) +
         ' has another number of fields than its key in ' + Fixup.FileName, Fixup.FileName, Fixup.Line, Fixup.Column);
     Fixup.Constraint.Refer := Refer;
+  end;
+  { as Xerces' fullSchemaChecking: groups redefined without a reference
+    to themselves restrict the original, then the content models }
+  for I := 0 to Integer(FPendings.Count) - 1 do
+  begin
+    P := TPending(FPendings[I]);
+    if (P.Kind = pkGroup) and (P.Original <> nil) and
+      (CountSelfReferences(P.Doc, P.Node, 'group', P.Name) = 0) then
+      CheckGroupRestriction(P);
+  end;
+  I := 0;
+  while I < FTypeChecks.Count do
+  begin
+    CheckType(TTypeCheck(FTypeChecks[I]));
+    Inc(I);
   end;
 end;
 

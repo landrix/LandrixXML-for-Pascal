@@ -381,6 +381,17 @@ both the mark and an entry here):
   same document) is an error (`sch-props-correct.2`), as Xerces sees
   two components of the same name; the suite expects the schema to load
   (`schU3`).
+- The particles of a restriction are checked as Xerces checks them, so
+  some restrictions the suite expects to load are rejected: a sequence
+  whose only element has `maxOccurs="0"` stays an empty sequence, which
+  cannot restrict an element (`mgE014`); a wildcard in a group that
+  restricts a wildcard must fit the occurrence range of that wildcard
+  (`particlesHa080`, `particlesHa084`); and an element repeated without
+  bound does not restrict a repeated choice of elements that occur once,
+  which only XML Schema 1.1 allows (`particlesZ001`).
+- Empty content may restrict a complex type with simple content, as
+  Xerces compares only the particles; XML Schema 1.0 requires the base
+  to have empty or emptiable element content (`particlesZ039`).
 - A restriction that has or inherits a `length` may give `minLength` or
   `maxLength` only if its base type has the same one; the errata of XML
   Schema 1.0 allow more (`errF001`).
@@ -401,11 +412,10 @@ Differences from Xerces, also on purpose:
   models, the rules of element and attribute declarations (value
   constraints, ID types, consistent element types) and of type
   derivations (`final`, the content types of extensions and restrictions,
-  the attributes and attribute wildcards of restrictions) and of
-  references, imports and redefinitions, but does not
-  yet check that the particles of a restriction restrict those of its
-  base, nor some other schema component constraints: invalid schemas
-  that Xerces rejects may load (the target schemas are valid for Xerces).
+  the attributes, attribute wildcards and particles of restrictions) and
+  of references, imports and redefinitions; schemas that Xerces rejects
+  for a schema component constraint it does not check may load (the
+  target schemas are valid for Xerces).
 
 ## Conformance and tests
 
@@ -442,14 +452,12 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 35,980
-  pass and 3,035 use a construct this library does not support (above
+  load or be rejected, documents that must be valid or invalid) 36,209
+  pass and 3,028 use a construct this library does not support (above
   all `xs:duration`, `xs:QName`, `xs:all`, union facets, substitution
   groups, `xs:NOTATION`, `xsi:type`); they are reported as unsupported,
-  never accepted silently. Of the 325 failures 264 are invalid schemas that
-  load: 234 need the check that the particles of a restriction restrict
-  those of its base type, which the loader does not make yet, and Xerces
-  loads the other 30 too; 3 more stop at the resource
+  never accepted silently. Of the 96 failures 30 are invalid schemas that
+  load, as in Xerces; 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline
   for the CI.
 - The XML Schema reference data (simple types, validator cases, content
