@@ -79,3 +79,11 @@ uriPatEnum	anyURI	pattern=.*	enumeration=a b
 uriLen4	anyURI	length=4
 u-enum-any	union	enumNs	string
 u-int-tok	union	b-int	enumTok
+u-pat	u-int-tok	pattern=[0-9]+|Yes
+u-enum	u-int-tok	enumeration=007	enumeration=Yes	enumeration=a  b
+u-pat-enum	u-pat	enumeration=1	enumeration=Yes
+u-pat-ws	u-enum-any	pattern=a b|Yes
+u-dec-str	union	b-decimal	string
+u-dec-str-enum	u-dec-str	enumeration=1.0	enumeration=abc
+u-str-dec	union	string	b-decimal
+u-str-dec-enum	u-str-dec	enumeration=1.0	enumeration=abc

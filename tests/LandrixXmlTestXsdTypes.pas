@@ -420,19 +420,32 @@ end;
 
 procedure TestUnionFacets;
 var
-  U1: TLandrixXmlXsdSimpleType;
+  U1, R: TLandrixXmlXsdSimpleType;
 begin
+  R := nil;
   U1 := TLandrixXmlXsdSimpleType.CreateUnion([LandrixXmlXsdBuiltinType('int'),
     LandrixXmlXsdBuiltinType('date')], '', U('u'));
   try
+    { the facets of a union go on a restriction of it }
     try
       U1.AddFacet(xsfPattern, U('[0-9]+'));
       FailNotRaised('ELandrixXmlError for a facet on a union');
     except
       on E: ELandrixXmlError do
-        CheckEquals(Ord(xecUnsupported), Ord(E.Code), 'facet on a union');
+        CheckEquals(Ord(xecInvalidOperation), Ord(E.Code), 'facet on a union');
     end;
+    { only pattern and enumeration apply to a union }
+    R := TLandrixXmlXsdSimpleType.CreateRestriction(U1, '', U('r'));
+    try
+      R.AddFacet(xsfWhiteSpace, U('collapse'));
+      FailNotRaised('ELandrixXmlError for whiteSpace on a union');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'whiteSpace on a union');
+    end;
+    R.AddFacet(xsfPattern, U('[0-9]+'));
   finally
+    R.Free;
     U1.Free;
   end;
 end;

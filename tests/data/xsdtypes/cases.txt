@@ -2290,6 +2290,12 @@ u-enum-any	Yes
 u-enum-any	No	
 u-enum-any	a  b	
 u-enum-any	a b	
+u-enum-any	 Yes 	
+u-enum-any	1.00	
+u-enum-any	abc	
+u-enum-any	 abc	
+u-enum-any	7	
+u-enum-any	1e0	
 u-int-tok		cvc-datatype-valid.1.2.3
 u-int-tok	a	cvc-datatype-valid.1.2.3
 u-int-tok	 a 	cvc-datatype-valid.1.2.3
@@ -2310,3 +2316,217 @@ u-int-tok	Yes
 u-int-tok	No	cvc-datatype-valid.1.2.3
 u-int-tok	a  b	
 u-int-tok	a b	
+u-int-tok	 Yes 	
+u-int-tok	1.00	cvc-datatype-valid.1.2.3
+u-int-tok	abc	cvc-datatype-valid.1.2.3
+u-int-tok	 abc	cvc-datatype-valid.1.2.3
+u-int-tok	7	
+u-int-tok	1e0	cvc-datatype-valid.1.2.3
+u-pat		cvc-pattern-valid
+u-pat	a	cvc-pattern-valid
+u-pat	 a 	cvc-pattern-valid
+u-pat	hex:610962	cvc-pattern-valid
+u-pat	hex:6C696E650A627265616B	cvc-pattern-valid
+u-pat	hex:C3A9C3A9	cvc-pattern-valid
+u-pat	<&>	cvc-pattern-valid
+u-pat	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-pattern-valid
+u-pat	0	
+u-pat	-1	cvc-pattern-valid
+u-pat	1	
+u-pat	+7	cvc-pattern-valid
+u-pat	007	
+u-pat	1.0	cvc-pattern-valid
+u-pat	1.	cvc-pattern-valid
+u-pat	2147483647	
+u-pat	Yes	
+u-pat	No	cvc-pattern-valid
+u-pat	a  b	cvc-pattern-valid
+u-pat	a b	cvc-pattern-valid
+u-pat	 Yes 	
+u-pat	1.00	cvc-pattern-valid
+u-pat	abc	cvc-pattern-valid
+u-pat	 abc	cvc-pattern-valid
+u-pat	7	
+u-pat	1e0	cvc-pattern-valid
+u-enum		cvc-datatype-valid.1.2.3
+u-enum	a	cvc-datatype-valid.1.2.3
+u-enum	 a 	cvc-datatype-valid.1.2.3
+u-enum	hex:610962	
+u-enum	hex:6C696E650A627265616B	cvc-datatype-valid.1.2.3
+u-enum	hex:C3A9C3A9	cvc-datatype-valid.1.2.3
+u-enum	<&>	cvc-datatype-valid.1.2.3
+u-enum	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-datatype-valid.1.2.3
+u-enum	0	cvc-enumeration-valid
+u-enum	-1	cvc-enumeration-valid
+u-enum	1	cvc-enumeration-valid
+u-enum	+7	
+u-enum	007	
+u-enum	1.0	cvc-datatype-valid.1.2.3
+u-enum	1.	cvc-datatype-valid.1.2.3
+u-enum	2147483647	cvc-enumeration-valid
+u-enum	Yes	
+u-enum	No	cvc-datatype-valid.1.2.3
+u-enum	a  b	
+u-enum	a b	
+u-enum	 Yes 	
+u-enum	1.00	cvc-datatype-valid.1.2.3
+u-enum	abc	cvc-datatype-valid.1.2.3
+u-enum	 abc	cvc-datatype-valid.1.2.3
+u-enum	7	
+u-enum	1e0	cvc-datatype-valid.1.2.3
+u-pat-enum		cvc-pattern-valid
+u-pat-enum	a	cvc-pattern-valid
+u-pat-enum	 a 	cvc-pattern-valid
+u-pat-enum	hex:610962	cvc-pattern-valid
+u-pat-enum	hex:6C696E650A627265616B	cvc-pattern-valid
+u-pat-enum	hex:C3A9C3A9	cvc-pattern-valid
+u-pat-enum	<&>	cvc-pattern-valid
+u-pat-enum	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-pattern-valid
+u-pat-enum	0	cvc-enumeration-valid
+u-pat-enum	-1	cvc-pattern-valid
+u-pat-enum	1	
+u-pat-enum	+7	cvc-pattern-valid
+u-pat-enum	007	cvc-enumeration-valid
+u-pat-enum	1.0	cvc-pattern-valid
+u-pat-enum	1.	cvc-pattern-valid
+u-pat-enum	2147483647	cvc-enumeration-valid
+u-pat-enum	Yes	
+u-pat-enum	No	cvc-pattern-valid
+u-pat-enum	a  b	cvc-pattern-valid
+u-pat-enum	a b	cvc-pattern-valid
+u-pat-enum	 Yes 	
+u-pat-enum	1.00	cvc-pattern-valid
+u-pat-enum	abc	cvc-pattern-valid
+u-pat-enum	 abc	cvc-pattern-valid
+u-pat-enum	7	cvc-enumeration-valid
+u-pat-enum	1e0	cvc-pattern-valid
+u-pat-ws		cvc-pattern-valid
+u-pat-ws	a	cvc-pattern-valid
+u-pat-ws	 a 	cvc-pattern-valid
+u-pat-ws	hex:610962	
+u-pat-ws	hex:6C696E650A627265616B	cvc-pattern-valid
+u-pat-ws	hex:C3A9C3A9	cvc-pattern-valid
+u-pat-ws	<&>	cvc-pattern-valid
+u-pat-ws	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-pattern-valid
+u-pat-ws	0	cvc-pattern-valid
+u-pat-ws	-1	cvc-pattern-valid
+u-pat-ws	1	cvc-pattern-valid
+u-pat-ws	+7	cvc-pattern-valid
+u-pat-ws	007	cvc-pattern-valid
+u-pat-ws	1.0	cvc-pattern-valid
+u-pat-ws	1.	cvc-pattern-valid
+u-pat-ws	2147483647	cvc-pattern-valid
+u-pat-ws	Yes	
+u-pat-ws	No	cvc-pattern-valid
+u-pat-ws	a  b	
+u-pat-ws	a b	
+u-pat-ws	 Yes 	
+u-pat-ws	1.00	cvc-pattern-valid
+u-pat-ws	abc	cvc-pattern-valid
+u-pat-ws	 abc	cvc-pattern-valid
+u-pat-ws	7	cvc-pattern-valid
+u-pat-ws	1e0	cvc-pattern-valid
+u-dec-str		
+u-dec-str	a	
+u-dec-str	 a 	
+u-dec-str	hex:610962	
+u-dec-str	hex:6C696E650A627265616B	
+u-dec-str	hex:C3A9C3A9	
+u-dec-str	<&>	
+u-dec-str	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
+u-dec-str	0	
+u-dec-str	-1	
+u-dec-str	1	
+u-dec-str	+7	
+u-dec-str	007	
+u-dec-str	1.0	
+u-dec-str	1.	
+u-dec-str	2147483647	
+u-dec-str	Yes	
+u-dec-str	No	
+u-dec-str	a  b	
+u-dec-str	a b	
+u-dec-str	 Yes 	
+u-dec-str	1.00	
+u-dec-str	abc	
+u-dec-str	 abc	
+u-dec-str	7	
+u-dec-str	1e0	
+u-dec-str-enum		cvc-enumeration-valid
+u-dec-str-enum	a	cvc-enumeration-valid
+u-dec-str-enum	 a 	cvc-enumeration-valid
+u-dec-str-enum	hex:610962	cvc-enumeration-valid
+u-dec-str-enum	hex:6C696E650A627265616B	cvc-enumeration-valid
+u-dec-str-enum	hex:C3A9C3A9	cvc-enumeration-valid
+u-dec-str-enum	<&>	cvc-enumeration-valid
+u-dec-str-enum	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-enumeration-valid
+u-dec-str-enum	0	cvc-enumeration-valid
+u-dec-str-enum	-1	cvc-enumeration-valid
+u-dec-str-enum	1	
+u-dec-str-enum	+7	cvc-enumeration-valid
+u-dec-str-enum	007	cvc-enumeration-valid
+u-dec-str-enum	1.0	
+u-dec-str-enum	1.	
+u-dec-str-enum	2147483647	cvc-enumeration-valid
+u-dec-str-enum	Yes	cvc-enumeration-valid
+u-dec-str-enum	No	cvc-enumeration-valid
+u-dec-str-enum	a  b	cvc-enumeration-valid
+u-dec-str-enum	a b	cvc-enumeration-valid
+u-dec-str-enum	 Yes 	cvc-enumeration-valid
+u-dec-str-enum	1.00	
+u-dec-str-enum	abc	
+u-dec-str-enum	 abc	cvc-enumeration-valid
+u-dec-str-enum	7	cvc-enumeration-valid
+u-dec-str-enum	1e0	cvc-enumeration-valid
+u-str-dec		
+u-str-dec	a	
+u-str-dec	 a 	
+u-str-dec	hex:610962	
+u-str-dec	hex:6C696E650A627265616B	
+u-str-dec	hex:C3A9C3A9	
+u-str-dec	<&>	
+u-str-dec	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
+u-str-dec	0	
+u-str-dec	-1	
+u-str-dec	1	
+u-str-dec	+7	
+u-str-dec	007	
+u-str-dec	1.0	
+u-str-dec	1.	
+u-str-dec	2147483647	
+u-str-dec	Yes	
+u-str-dec	No	
+u-str-dec	a  b	
+u-str-dec	a b	
+u-str-dec	 Yes 	
+u-str-dec	1.00	
+u-str-dec	abc	
+u-str-dec	 abc	
+u-str-dec	7	
+u-str-dec	1e0	
+u-str-dec-enum		cvc-enumeration-valid
+u-str-dec-enum	a	cvc-enumeration-valid
+u-str-dec-enum	 a 	cvc-enumeration-valid
+u-str-dec-enum	hex:610962	cvc-enumeration-valid
+u-str-dec-enum	hex:6C696E650A627265616B	cvc-enumeration-valid
+u-str-dec-enum	hex:C3A9C3A9	cvc-enumeration-valid
+u-str-dec-enum	<&>	cvc-enumeration-valid
+u-str-dec-enum	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	cvc-enumeration-valid
+u-str-dec-enum	0	cvc-enumeration-valid
+u-str-dec-enum	-1	cvc-enumeration-valid
+u-str-dec-enum	1	cvc-enumeration-valid
+u-str-dec-enum	+7	cvc-enumeration-valid
+u-str-dec-enum	007	cvc-enumeration-valid
+u-str-dec-enum	1.0	
+u-str-dec-enum	1.	cvc-enumeration-valid
+u-str-dec-enum	2147483647	cvc-enumeration-valid
+u-str-dec-enum	Yes	cvc-enumeration-valid
+u-str-dec-enum	No	cvc-enumeration-valid
+u-str-dec-enum	a  b	cvc-enumeration-valid
+u-str-dec-enum	a b	cvc-enumeration-valid
+u-str-dec-enum	 Yes 	cvc-enumeration-valid
+u-str-dec-enum	1.00	cvc-enumeration-valid
+u-str-dec-enum	abc	
+u-str-dec-enum	 abc	cvc-enumeration-valid
+u-str-dec-enum	7	cvc-enumeration-valid
+u-str-dec-enum	1e0	cvc-enumeration-valid

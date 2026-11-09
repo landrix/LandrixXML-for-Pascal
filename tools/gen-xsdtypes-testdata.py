@@ -95,6 +95,16 @@ TYPES = [
     ("uriLen4", "anyURI", [("length", "4")]),
     ("u-enum-any", "union", ["enumNs", "string"]),
     ("u-int-tok", "union", ["b-int", "enumTok"]),
+    # facets on unions: patterns on the collapsed value, enumeration by the
+    # value of the member type that accepts it
+    ("u-pat", "u-int-tok", [("pattern", "[0-9]+|Yes")]),
+    ("u-enum", "u-int-tok", [("enumeration", "007"), ("enumeration", "Yes"), ("enumeration", "a  b")]),
+    ("u-pat-enum", "u-pat", [("enumeration", "1"), ("enumeration", "Yes")]),
+    ("u-pat-ws", "u-enum-any", [("pattern", "a b|Yes")]),
+    ("u-dec-str", "union", ["b-decimal", "string"]),
+    ("u-dec-str-enum", "u-dec-str", [("enumeration", "1.0"), ("enumeration", "abc")]),
+    ("u-str-dec", "union", ["string", "b-decimal"]),
+    ("u-str-dec-enum", "u-str-dec", [("enumeration", "1.0"), ("enumeration", "abc")]),
 ]
 
 VALUES = {
@@ -182,7 +192,8 @@ def builtin_of(type_id):
 def values_for(type_id, rng):
     b = builtin_of(type_id)
     if b == "union":
-        vals = VALUES["string"] + VALUES["integer"][:8] + ["Yes", "No", "a  b", "a b"]
+        vals = VALUES["string"] + VALUES["integer"][:8] + ["Yes", "No", "a  b", "a b", " Yes ", "1.0", "1.00",
+                                                           "abc", " abc", "7", "1e0"]
     else:
         vals = list(VALUES[GROUP[b]])
         if GROUP[b] in ("string", "name"):

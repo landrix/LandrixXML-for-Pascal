@@ -38,7 +38,12 @@
   anyURI, and the list types NMTOKENS and IDREFS. Not supported
   (LandrixXmlXsdBuiltinType returns nil, the schema loader reports
   xecUnsupported): duration and its subtypes, QName, NOTATION, ENTITY,
-  ENTITIES; also facets on unions.
+  ENTITIES.
+
+  A restriction of a union may have pattern and enumeration facets
+  (Xerces): the patterns apply to the value with collapsed white space,
+  then the member types are tried in order, then the enumeration compares
+  the value of the member type that accepted it.
 
   Order of date and time values as in XML Schema 1.0, 3.2.7.4: a value
   without time zone lies somewhere between +14:00 and -14:00, so it is
@@ -229,11 +234,10 @@ type
       invalid, not allowed for the base type or inconsistent with the
       facets given so far or with those of the base type (as Xerces checks
       them; the message of a failed check ends with the Xerces code in
-      parentheses, e.g. "(minLength-less-than-equal-to-maxLength)"),
-      xecUnsupported for
-      facets on a union; xecInvalidOperation on a built-in type and on a
-      type made by CreateList (facets of a list go on a restriction of
-      it). }
+      parentheses, e.g. "(minLength-less-than-equal-to-maxLength)");
+      xecInvalidOperation on a built-in type and on a type made by
+      CreateList or CreateUnion (facets of a list or union go on a
+      restriction of it). A union allows pattern and enumeration. }
     procedure AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8; Fixed: Boolean = False);
     { Checks Text (an element or attribute value as written). }
     function Validate(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
@@ -1919,16 +1923,17 @@ var
   Mode: TLandrixXmlXsdWhiteSpace;
   T: TLandrixXmlXsdSimpleType;
 begin
-  if FVariety = xsvUnion then
-    raise ELandrixXmlError.CreateCode(xecUnsupported, 'Facets on union types are not supported');
   if FBuiltin then
     raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'Built-in types cannot get facets');
   { the facets of a list belong to a restriction of it (its values are
     lists, the list type itself derives from anySimpleType) }
   if (FVariety = xsvList) and (FBase.FVariety <> xsvList) then
     raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'Facets of a list type go on a restriction of it');
+  if (FVariety = xsvUnion) and (FBase.FVariety <> xsvUnion) then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'Facets of a union type go on a restriction of it');
   if (FVariety = xsvList) and not (Facet in [xsfLength, xsfMinLength, xsfMaxLength, xsfPattern,
-    xsfEnumeration, xsfWhiteSpace]) or (FVariety <> xsvList) and not FacetApplies(FPrimitive, Facet) then
+    xsfEnumeration, xsfWhiteSpace]) or (FVariety = xsvUnion) and not (Facet in [xsfPattern, xsfEnumeration]) or
+    (FVariety = xsvAtomic) and not FacetApplies(FPrimitive, Facet) then
     raise ELandrixXmlError.CreateCode(xecInvalidArgument,
       'Facet not allowed for this type (cos-applicable-facets)');
   if Facet in FDefined then
@@ -2745,6 +2750,7 @@ function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; out Valu
 var
   I: Integer;
   MemberError: TLandrixXmlXsdError;
+  T: TLandrixXmlXsdSimpleType;
 begin
   Result := False;
   Error.Code := '';
@@ -2758,10 +2764,27 @@ begin
   end;
   if FVariety = xsvUnion then
   begin
+    { as Xerces: the patterns of a restriction on the collapsed value,
+      then the member types, then the enumeration }
+    if HasPatterns then
+    begin
+      Value.Primitive := xspAnySimpleType;
+      Value.Text := LandrixXmlXsdNormalizeWhiteSpace(Text, xwsCollapse);
+      Value.RawText := Text;
+      Value.MemberType := nil;
+      Value.Length := 0;
+      T := Self;
+      while T <> nil do
+      begin
+        if not T.CheckPatterns(Value, DisplayName, Error) then
+          Exit;
+        T := T.FBase;
+      end;
+    end;
     for I := 0 to Integer(Length(FMembers)) - 1 do
       if FMembers[I].Validate(Text, Value, MemberError) then
       begin
-        Result := True;
+        Result := CheckFacets(Value, Error);
         Exit;
       end;
     Value.RawText := Text;

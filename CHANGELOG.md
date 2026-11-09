@@ -122,6 +122,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`src-redefine.6.2.2`). The content models are now checked when every
   type is complete, in Xerces' order (consistent elements, restriction,
   Unique Particle Attribution).
+  A restriction of a union may have `pattern` and `enumeration` facets,
+  validated as Xerces does: the patterns on the value with collapsed
+  white space, then the member types in order, then the enumeration
+  against the value of the member type that accepted it (before,
+  `AddFacet` raised `xecUnsupported` for them; a facet on a type made by
+  `CreateUnion` itself now raises `xecInvalidOperation`).
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs
@@ -294,7 +300,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 36,209 of 39,336 applicable XSD 1.0 tests pass, 3,028
+  the CI checks: 36,594 of 39,336 applicable XSD 1.0 tests pass, 2,643
   use constructs that are not supported.
 - The places where the XML Schema validator follows Xerces instead of the
   specification on purpose are tagged `Xerces deviation:` with the test

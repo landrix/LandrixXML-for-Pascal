@@ -3695,6 +3695,66 @@ list-language-length-6: NISTSchema-SV-II-list-language-length-2 NISTXML-SV-II-li
 list-language-length-7: NISTSchema-SV-II-list-language-length-3 NISTXML-SV-II-list-language-length-3-1 NISTXML-SV-II-list-language-length-3-2 NISTXML-SV-II-list-language-length-3-3 NISTXML-SV-II-list-language-length-3-4 NISTXML-SV-II-list-language-length-3-5
 list-language-length-8: NISTSchema-SV-II-list-language-length-4 NISTXML-SV-II-list-language-length-4-1 NISTXML-SV-II-list-language-length-4-2 NISTXML-SV-II-list-language-length-4-3 NISTXML-SV-II-list-language-length-4-4 NISTXML-SV-II-list-language-length-4-5
 list-language-length-9: NISTSchema-SV-II-list-language-length-5 NISTXML-SV-II-list-language-length-5-1 NISTXML-SV-II-list-language-length-5-2 NISTXML-SV-II-list-language-length-5-3 NISTXML-SV-II-list-language-length-5-4 NISTXML-SV-II-list-language-length-5-5
+union-anyURI-float-pattern: NISTSchema-SV-IV-union-anyURI-float-pattern-1 NISTXML-SV-IV-union-anyURI-float-pattern-1-1 NISTXML-SV-IV-union-anyURI-float-pattern-1-2 NISTXML-SV-IV-union-anyURI-float-pattern-1-3 NISTXML-SV-IV-union-anyURI-float-pattern-1-4 NISTXML-SV-IV-union-anyURI-float-pattern-1-5
+union-anyURI-float-pattern-1: NISTSchema-SV-IV-union-anyURI-float-pattern-2 NISTXML-SV-IV-union-anyURI-float-pattern-2-1 NISTXML-SV-IV-union-anyURI-float-pattern-2-2 NISTXML-SV-IV-union-anyURI-float-pattern-2-3 NISTXML-SV-IV-union-anyURI-float-pattern-2-4 NISTXML-SV-IV-union-anyURI-float-pattern-2-5
+union-anyURI-float-pattern-2: NISTSchema-SV-IV-union-anyURI-float-pattern-3 NISTXML-SV-IV-union-anyURI-float-pattern-3-1 NISTXML-SV-IV-union-anyURI-float-pattern-3-2 NISTXML-SV-IV-union-anyURI-float-pattern-3-3 NISTXML-SV-IV-union-anyURI-float-pattern-3-4 NISTXML-SV-IV-union-anyURI-float-pattern-3-5
+union-anyURI-float-pattern-3: NISTSchema-SV-IV-union-anyURI-float-pattern-4 NISTXML-SV-IV-union-anyURI-float-pattern-4-1 NISTXML-SV-IV-union-anyURI-float-pattern-4-2 NISTXML-SV-IV-union-anyURI-float-pattern-4-3 NISTXML-SV-IV-union-anyURI-float-pattern-4-4 NISTXML-SV-IV-union-anyURI-float-pattern-4-5
+union-anyURI-float-pattern-4: NISTSchema-SV-IV-union-anyURI-float-pattern-5 NISTXML-SV-IV-union-anyURI-float-pattern-5-1 NISTXML-SV-IV-union-anyURI-float-pattern-5-2 NISTXML-SV-IV-union-anyURI-float-pattern-5-3 NISTXML-SV-IV-union-anyURI-float-pattern-5-4 NISTXML-SV-IV-union-anyURI-float-pattern-5-5
+union-anyURI-float-enumeration: NISTSchema-SV-IV-union-anyURI-float-enumeration-1 NISTXML-SV-IV-union-anyURI-float-enumeration-1-1 NISTXML-SV-IV-union-anyURI-float-enumeration-1-2 NISTXML-SV-IV-union-anyURI-float-enumeration-1-3 NISTXML-SV-IV-union-anyURI-float-enumeration-1-4 NISTXML-SV-IV-union-anyURI-float-enumeration-1-5
+union-anyURI-float-enumeration-1: NISTSchema-SV-IV-union-anyURI-float-enumeration-2 NISTXML-SV-IV-union-anyURI-float-enumeration-2-1 NISTXML-SV-IV-union-anyURI-float-enumeration-2-2 NISTXML-SV-IV-union-anyURI-float-enumeration-2-3 NISTXML-SV-IV-union-anyURI-float-enumeration-2-4 NISTXML-SV-IV-union-anyURI-float-enumeration-2-5
+union-anyURI-float-enumeration-2: NISTSchema-SV-IV-union-anyURI-float-enumeration-3 NISTXML-SV-IV-union-anyURI-float-enumeration-3-1 NISTXML-SV-IV-union-anyURI-float-enumeration-3-2 NISTXML-SV-IV-union-anyURI-float-enumeration-3-3 NISTXML-SV-IV-union-anyURI-float-enumeration-3-4 NISTXML-SV-IV-union-anyURI-float-enumeration-3-5
+union-anyURI-float-enumeration-3: NISTSchema-SV-IV-union-anyURI-float-enumeration-4 NISTXML-SV-IV-union-anyURI-float-enumeration-4-1 NISTXML-SV-IV-union-anyURI-float-enumeration-4-2 NISTXML-SV-IV-union-anyURI-float-enumeration-4-3 NISTXML-SV-IV-union-anyURI-float-enumeration-4-4 NISTXML-SV-IV-union-anyURI-float-enumeration-4-5
+union-anyURI-float-enumeration-4: NISTSchema-SV-IV-union-anyURI-float-enumeration-5 NISTXML-SV-IV-union-anyURI-float-enumeration-5-1 NISTXML-SV-IV-union-anyURI-float-enumeration-5-2 NISTXML-SV-IV-union-anyURI-float-enumeration-5-3 NISTXML-SV-IV-union-anyURI-float-enumeration-5-4 NISTXML-SV-IV-union-anyURI-float-enumeration-5-5
+union-gMonthDay-gYearMonth-pattern: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-pattern-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-1-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-1-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-1-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-1-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-1-5
+union-gMonthDay-gYearMonth-pattern-1: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-pattern-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-2-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-2-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-2-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-2-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-2-5
+union-gMonthDay-gYearMonth-pattern-2: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-pattern-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-3-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-3-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-3-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-3-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-3-5
+union-gMonthDay-gYearMonth-pattern-3: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-pattern-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-4-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-4-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-4-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-4-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-4-5
+union-gMonthDay-gYearMonth-pattern-4: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-pattern-5 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-5-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-5-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-5-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-5-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-pattern-5-5
+union-gMonthDay-gYearMonth-enumeration: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-enumeration-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-1-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-1-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-1-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-1-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-1-5
+union-gMonthDay-gYearMonth-enumeration-1: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-enumeration-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-2-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-2-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-2-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-2-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-2-5
+union-gMonthDay-gYearMonth-enumeration-2: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-enumeration-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-3-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-3-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-3-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-3-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-3-5
+union-gMonthDay-gYearMonth-enumeration-3: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-enumeration-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-4-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-4-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-4-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-4-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-4-5
+union-gMonthDay-gYearMonth-enumeration-4: NISTSchema-SV-IV-union-gMonthDay-gYearMonth-enumeration-5 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-5-1 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-5-2 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-5-3 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-5-4 NISTXML-SV-IV-union-gMonthDay-gYearMonth-enumeration-5-5
+union-short-gYear-pattern: NISTSchema-SV-IV-union-short-gYear-pattern-1 NISTXML-SV-IV-union-short-gYear-pattern-1-1 NISTXML-SV-IV-union-short-gYear-pattern-1-2 NISTXML-SV-IV-union-short-gYear-pattern-1-3 NISTXML-SV-IV-union-short-gYear-pattern-1-4 NISTXML-SV-IV-union-short-gYear-pattern-1-5
+union-short-gYear-pattern-1: NISTSchema-SV-IV-union-short-gYear-pattern-2 NISTXML-SV-IV-union-short-gYear-pattern-2-1 NISTXML-SV-IV-union-short-gYear-pattern-2-2 NISTXML-SV-IV-union-short-gYear-pattern-2-3 NISTXML-SV-IV-union-short-gYear-pattern-2-4 NISTXML-SV-IV-union-short-gYear-pattern-2-5
+union-short-gYear-pattern-2: NISTSchema-SV-IV-union-short-gYear-pattern-3 NISTXML-SV-IV-union-short-gYear-pattern-3-1 NISTXML-SV-IV-union-short-gYear-pattern-3-2 NISTXML-SV-IV-union-short-gYear-pattern-3-3 NISTXML-SV-IV-union-short-gYear-pattern-3-4 NISTXML-SV-IV-union-short-gYear-pattern-3-5
+union-short-gYear-pattern-3: NISTSchema-SV-IV-union-short-gYear-pattern-4 NISTXML-SV-IV-union-short-gYear-pattern-4-1 NISTXML-SV-IV-union-short-gYear-pattern-4-2 NISTXML-SV-IV-union-short-gYear-pattern-4-3 NISTXML-SV-IV-union-short-gYear-pattern-4-4 NISTXML-SV-IV-union-short-gYear-pattern-4-5
+union-short-gYear-pattern-4: NISTSchema-SV-IV-union-short-gYear-pattern-5 NISTXML-SV-IV-union-short-gYear-pattern-5-1 NISTXML-SV-IV-union-short-gYear-pattern-5-2 NISTXML-SV-IV-union-short-gYear-pattern-5-3 NISTXML-SV-IV-union-short-gYear-pattern-5-4 NISTXML-SV-IV-union-short-gYear-pattern-5-5
+union-short-gYear-enumeration: NISTSchema-SV-IV-union-short-gYear-enumeration-1 NISTXML-SV-IV-union-short-gYear-enumeration-1-1 NISTXML-SV-IV-union-short-gYear-enumeration-1-2 NISTXML-SV-IV-union-short-gYear-enumeration-1-3 NISTXML-SV-IV-union-short-gYear-enumeration-1-4 NISTXML-SV-IV-union-short-gYear-enumeration-1-5
+union-short-gYear-enumeration-1: NISTSchema-SV-IV-union-short-gYear-enumeration-2 NISTXML-SV-IV-union-short-gYear-enumeration-2-1 NISTXML-SV-IV-union-short-gYear-enumeration-2-2 NISTXML-SV-IV-union-short-gYear-enumeration-2-3 NISTXML-SV-IV-union-short-gYear-enumeration-2-4 NISTXML-SV-IV-union-short-gYear-enumeration-2-5
+union-short-gYear-enumeration-2: NISTSchema-SV-IV-union-short-gYear-enumeration-3 NISTXML-SV-IV-union-short-gYear-enumeration-3-1 NISTXML-SV-IV-union-short-gYear-enumeration-3-2 NISTXML-SV-IV-union-short-gYear-enumeration-3-3 NISTXML-SV-IV-union-short-gYear-enumeration-3-4 NISTXML-SV-IV-union-short-gYear-enumeration-3-5
+union-short-gYear-enumeration-3: NISTSchema-SV-IV-union-short-gYear-enumeration-4 NISTXML-SV-IV-union-short-gYear-enumeration-4-1 NISTXML-SV-IV-union-short-gYear-enumeration-4-2 NISTXML-SV-IV-union-short-gYear-enumeration-4-3 NISTXML-SV-IV-union-short-gYear-enumeration-4-4 NISTXML-SV-IV-union-short-gYear-enumeration-4-5
+union-short-gYear-enumeration-4: NISTSchema-SV-IV-union-short-gYear-enumeration-5 NISTXML-SV-IV-union-short-gYear-enumeration-5-1 NISTXML-SV-IV-union-short-gYear-enumeration-5-2 NISTXML-SV-IV-union-short-gYear-enumeration-5-3 NISTXML-SV-IV-union-short-gYear-enumeration-5-4 NISTXML-SV-IV-union-short-gYear-enumeration-5-5
+union-anyURI-float-pattern-5: NISTSchema-SV-II-union-anyURI-float-pattern-1 NISTXML-SV-II-union-anyURI-float-pattern-1-1 NISTXML-SV-II-union-anyURI-float-pattern-1-2 NISTXML-SV-II-union-anyURI-float-pattern-1-3 NISTXML-SV-II-union-anyURI-float-pattern-1-4 NISTXML-SV-II-union-anyURI-float-pattern-1-5
+union-anyURI-float-pattern-6: NISTSchema-SV-II-union-anyURI-float-pattern-2 NISTXML-SV-II-union-anyURI-float-pattern-2-1 NISTXML-SV-II-union-anyURI-float-pattern-2-2 NISTXML-SV-II-union-anyURI-float-pattern-2-3 NISTXML-SV-II-union-anyURI-float-pattern-2-4 NISTXML-SV-II-union-anyURI-float-pattern-2-5
+union-anyURI-float-pattern-7: NISTSchema-SV-II-union-anyURI-float-pattern-3 NISTXML-SV-II-union-anyURI-float-pattern-3-1 NISTXML-SV-II-union-anyURI-float-pattern-3-2 NISTXML-SV-II-union-anyURI-float-pattern-3-3 NISTXML-SV-II-union-anyURI-float-pattern-3-4 NISTXML-SV-II-union-anyURI-float-pattern-3-5
+union-anyURI-float-pattern-8: NISTSchema-SV-II-union-anyURI-float-pattern-4 NISTXML-SV-II-union-anyURI-float-pattern-4-1 NISTXML-SV-II-union-anyURI-float-pattern-4-2 NISTXML-SV-II-union-anyURI-float-pattern-4-3 NISTXML-SV-II-union-anyURI-float-pattern-4-4 NISTXML-SV-II-union-anyURI-float-pattern-4-5
+union-anyURI-float-pattern-9: NISTSchema-SV-II-union-anyURI-float-pattern-5 NISTXML-SV-II-union-anyURI-float-pattern-5-1 NISTXML-SV-II-union-anyURI-float-pattern-5-2 NISTXML-SV-II-union-anyURI-float-pattern-5-3 NISTXML-SV-II-union-anyURI-float-pattern-5-4 NISTXML-SV-II-union-anyURI-float-pattern-5-5
+union-anyURI-float-enumeration-5: NISTSchema-SV-II-union-anyURI-float-enumeration-1 NISTXML-SV-II-union-anyURI-float-enumeration-1-1 NISTXML-SV-II-union-anyURI-float-enumeration-1-2 NISTXML-SV-II-union-anyURI-float-enumeration-1-3 NISTXML-SV-II-union-anyURI-float-enumeration-1-4 NISTXML-SV-II-union-anyURI-float-enumeration-1-5
+union-anyURI-float-enumeration-6: NISTSchema-SV-II-union-anyURI-float-enumeration-2 NISTXML-SV-II-union-anyURI-float-enumeration-2-1 NISTXML-SV-II-union-anyURI-float-enumeration-2-2 NISTXML-SV-II-union-anyURI-float-enumeration-2-3 NISTXML-SV-II-union-anyURI-float-enumeration-2-4 NISTXML-SV-II-union-anyURI-float-enumeration-2-5
+union-anyURI-float-enumeration-7: NISTSchema-SV-II-union-anyURI-float-enumeration-3 NISTXML-SV-II-union-anyURI-float-enumeration-3-1 NISTXML-SV-II-union-anyURI-float-enumeration-3-2 NISTXML-SV-II-union-anyURI-float-enumeration-3-3 NISTXML-SV-II-union-anyURI-float-enumeration-3-4 NISTXML-SV-II-union-anyURI-float-enumeration-3-5
+union-anyURI-float-enumeration-8: NISTSchema-SV-II-union-anyURI-float-enumeration-4 NISTXML-SV-II-union-anyURI-float-enumeration-4-1 NISTXML-SV-II-union-anyURI-float-enumeration-4-2 NISTXML-SV-II-union-anyURI-float-enumeration-4-3 NISTXML-SV-II-union-anyURI-float-enumeration-4-4 NISTXML-SV-II-union-anyURI-float-enumeration-4-5
+union-anyURI-float-enumeration-9: NISTSchema-SV-II-union-anyURI-float-enumeration-5 NISTXML-SV-II-union-anyURI-float-enumeration-5-1 NISTXML-SV-II-union-anyURI-float-enumeration-5-2 NISTXML-SV-II-union-anyURI-float-enumeration-5-3 NISTXML-SV-II-union-anyURI-float-enumeration-5-4 NISTXML-SV-II-union-anyURI-float-enumeration-5-5
+union-gMonthDay-gYearMonth-pattern-5: NISTSchema-SV-II-union-gMonthDay-gYearMonth-pattern-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-1-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-1-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-1-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-1-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-1-5
+union-gMonthDay-gYearMonth-pattern-6: NISTSchema-SV-II-union-gMonthDay-gYearMonth-pattern-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-2-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-2-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-2-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-2-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-2-5
+union-gMonthDay-gYearMonth-pattern-7: NISTSchema-SV-II-union-gMonthDay-gYearMonth-pattern-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-3-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-3-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-3-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-3-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-3-5
+union-gMonthDay-gYearMonth-pattern-8: NISTSchema-SV-II-union-gMonthDay-gYearMonth-pattern-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-4-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-4-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-4-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-4-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-4-5
+union-gMonthDay-gYearMonth-pattern-9: NISTSchema-SV-II-union-gMonthDay-gYearMonth-pattern-5 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-5-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-5-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-5-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-5-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-pattern-5-5
+union-gMonthDay-gYearMonth-enumeration-5: NISTSchema-SV-II-union-gMonthDay-gYearMonth-enumeration-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-1-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-1-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-1-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-1-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-1-5
+union-gMonthDay-gYearMonth-enumeration-6: NISTSchema-SV-II-union-gMonthDay-gYearMonth-enumeration-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-2-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-2-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-2-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-2-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-2-5
+union-gMonthDay-gYearMonth-enumeration-7: NISTSchema-SV-II-union-gMonthDay-gYearMonth-enumeration-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-3-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-3-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-3-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-3-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-3-5
+union-gMonthDay-gYearMonth-enumeration-8: NISTSchema-SV-II-union-gMonthDay-gYearMonth-enumeration-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-4-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-4-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-4-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-4-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-4-5
+union-gMonthDay-gYearMonth-enumeration-9: NISTSchema-SV-II-union-gMonthDay-gYearMonth-enumeration-5 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-5-1 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-5-2 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-5-3 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-5-4 NISTXML-SV-II-union-gMonthDay-gYearMonth-enumeration-5-5
+union-short-gYear-pattern-5: NISTSchema-SV-II-union-short-gYear-pattern-1 NISTXML-SV-II-union-short-gYear-pattern-1-1 NISTXML-SV-II-union-short-gYear-pattern-1-2 NISTXML-SV-II-union-short-gYear-pattern-1-3 NISTXML-SV-II-union-short-gYear-pattern-1-4 NISTXML-SV-II-union-short-gYear-pattern-1-5
+union-short-gYear-pattern-6: NISTSchema-SV-II-union-short-gYear-pattern-2 NISTXML-SV-II-union-short-gYear-pattern-2-1 NISTXML-SV-II-union-short-gYear-pattern-2-2 NISTXML-SV-II-union-short-gYear-pattern-2-3 NISTXML-SV-II-union-short-gYear-pattern-2-4 NISTXML-SV-II-union-short-gYear-pattern-2-5
+union-short-gYear-pattern-7: NISTSchema-SV-II-union-short-gYear-pattern-3 NISTXML-SV-II-union-short-gYear-pattern-3-1 NISTXML-SV-II-union-short-gYear-pattern-3-2 NISTXML-SV-II-union-short-gYear-pattern-3-3 NISTXML-SV-II-union-short-gYear-pattern-3-4 NISTXML-SV-II-union-short-gYear-pattern-3-5
+union-short-gYear-pattern-8: NISTSchema-SV-II-union-short-gYear-pattern-4 NISTXML-SV-II-union-short-gYear-pattern-4-1 NISTXML-SV-II-union-short-gYear-pattern-4-2 NISTXML-SV-II-union-short-gYear-pattern-4-3 NISTXML-SV-II-union-short-gYear-pattern-4-4 NISTXML-SV-II-union-short-gYear-pattern-4-5
+union-short-gYear-pattern-9: NISTSchema-SV-II-union-short-gYear-pattern-5 NISTXML-SV-II-union-short-gYear-pattern-5-1 NISTXML-SV-II-union-short-gYear-pattern-5-2 NISTXML-SV-II-union-short-gYear-pattern-5-3 NISTXML-SV-II-union-short-gYear-pattern-5-4 NISTXML-SV-II-union-short-gYear-pattern-5-5
+union-short-gYear-enumeration-5: NISTSchema-SV-II-union-short-gYear-enumeration-1 NISTXML-SV-II-union-short-gYear-enumeration-1-1 NISTXML-SV-II-union-short-gYear-enumeration-1-2 NISTXML-SV-II-union-short-gYear-enumeration-1-3 NISTXML-SV-II-union-short-gYear-enumeration-1-4 NISTXML-SV-II-union-short-gYear-enumeration-1-5
+union-short-gYear-enumeration-6: NISTSchema-SV-II-union-short-gYear-enumeration-2 NISTXML-SV-II-union-short-gYear-enumeration-2-1 NISTXML-SV-II-union-short-gYear-enumeration-2-2 NISTXML-SV-II-union-short-gYear-enumeration-2-3 NISTXML-SV-II-union-short-gYear-enumeration-2-4 NISTXML-SV-II-union-short-gYear-enumeration-2-5
+union-short-gYear-enumeration-7: NISTSchema-SV-II-union-short-gYear-enumeration-3 NISTXML-SV-II-union-short-gYear-enumeration-3-1 NISTXML-SV-II-union-short-gYear-enumeration-3-2 NISTXML-SV-II-union-short-gYear-enumeration-3-3 NISTXML-SV-II-union-short-gYear-enumeration-3-4 NISTXML-SV-II-union-short-gYear-enumeration-3-5
+union-short-gYear-enumeration-8: NISTSchema-SV-II-union-short-gYear-enumeration-4 NISTXML-SV-II-union-short-gYear-enumeration-4-1 NISTXML-SV-II-union-short-gYear-enumeration-4-2 NISTXML-SV-II-union-short-gYear-enumeration-4-3 NISTXML-SV-II-union-short-gYear-enumeration-4-4 NISTXML-SV-II-union-short-gYear-enumeration-4-5
+union-short-gYear-enumeration-9: NISTSchema-SV-II-union-short-gYear-enumeration-5 NISTXML-SV-II-union-short-gYear-enumeration-5-1 NISTXML-SV-II-union-short-gYear-enumeration-5-2 NISTXML-SV-II-union-short-gYear-enumeration-5-3 NISTXML-SV-II-union-short-gYear-enumeration-5-4 NISTXML-SV-II-union-short-gYear-enumeration-5-5
 set sunMeta/suntest
 test001: test
 test002: test
@@ -6530,6 +6590,7 @@ positiveInteger_fractionDigits005_1015: =
 positiveInteger_fractionDigits006_1016: =
 positiveInteger_fractionDigits007_1017: =
 positiveInteger_fractionDigits008_1018: =
+union_minInclisive_1019: =
 string_length001_1020: = string_length001_1020.i
 string_length002_1021: = string_length002_1021.v
 string_length003_1022: = string_length003_1022.i
@@ -10025,6 +10086,7 @@ particlesW015: =
 particlesW016: = particlesW016.v
 particlesZ002: = particlesZ002.v
 particlesZ003: = particlesZ003.v
+particlesZ005: = particlesZ005.v
 particlesZ009: =
 particlesZ010: =
 particlesZ011: =
@@ -10036,7 +10098,10 @@ particlesZ021: =
 particlesZ022: =
 particlesZ023: =
 particlesZ024: =
+particlesZ030_a: =
 particlesZ030_b: =
+particlesZ030_c: =
+particlesZ030_d: =
 particlesZ031: =
 particlesZ033_a: =
 particlesZ033_c: =
@@ -12899,9 +12964,18 @@ stF012: =
 stF013: =
 stF014: =
 stF015: =
+stF016: =
+stF017: =
+stF018: =
+stF019: =
+stF020: =
 stF021: =
 stF022: =
 stF023: =
+stF024: =
+stF025: =
+stF026: =
+stF027: =
 stF028: =
 stF029: =
 stF030: =
@@ -12959,7 +13033,16 @@ stJ018: =
 stJ019: =
 stK003: =
 stK004: =
+stK005: =
+stK006: =
+stK007: =
+stK008: =
+stK009: =
 stK010: =
+stK011: =
+stK012: =
+stK013: =
+stK014: =
 stK015: =
 stK016: =
 stK017: =
@@ -13012,6 +13095,7 @@ stZ069: =
 stZ070: =
 stZ071: = stZ071.v
 stZ072: = stZ072.v
+stZ073b: =
 stZ074: = stZ074.v
 set msMeta/Wildcards_w3c
 wildA001: =

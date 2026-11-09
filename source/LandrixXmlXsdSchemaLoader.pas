@@ -1760,11 +1760,29 @@ begin
   end;
 end;
 
+{ Appends a member type to a union; a union stands for its own member
+  types, as in Xerces.
+  Xerces deviation, not in the test suite: the facets of a restricted
+  union used as a member are dropped with it }
+procedure AddUnionMember(var Members: TLandrixXmlXsdSimpleTypeArray; Member: TLandrixXmlXsdSimpleType);
+var
+  I: Integer;
+begin
+  if Member.Variety = xsvUnion then
+  begin
+    for I := 0 to Member.MemberCount - 1 do
+      AddUnionMember(Members, Member.Members[I]);
+    Exit;
+  end;
+  SetLength(Members, Length(Members) + 1);
+  Members[High(Members)] := Member;
+end;
+
 function TLoader.BuildSimpleType(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Name: TLandrixXmlUtf8;
   P: TPending): TLandrixXmlXsdSimpleType;
 var
   Child, Sub: TLandrixXmlNode;
-  Base, ItemType: TLandrixXmlXsdSimpleType;
+  Base, ItemType, Member: TLandrixXmlXsdSimpleType;
   Members: TLandrixXmlXsdSimpleTypeArray;
   Ns, LocalName, Value, Item: TLandrixXmlUtf8;
   I, Start: Integer;
@@ -1822,9 +1840,9 @@ begin
         begin
           Item := Copy(Value, Start, I - Start);
           ResolveQName(Doc, Child, Item, Ns, LocalName);
-          SetLength(Members, Length(Members) + 1);
-          Members[High(Members)] := SimpleTypeRef(Doc, Child, Ns, LocalName);
-          CheckSimpleBase(Doc, Child, Node, Name, Members[High(Members)], dkUnion);
+          Member := SimpleTypeRef(Doc, Child, Ns, LocalName);
+          CheckSimpleBase(Doc, Child, Node, Name, Member, dkUnion);
+          AddUnionMember(Members, Member);
         end;
       end;
     end;
@@ -1833,8 +1851,7 @@ begin
     begin
       if IsXs(Sub, 'simpleType') then
       begin
-        SetLength(Members, Length(Members) + 1);
-        Members[High(Members)] := BuildSimpleType(Doc, Sub, '', nil);
+        AddUnionMember(Members, BuildSimpleType(Doc, Sub, '', nil));
       end
       else if not IsXs(Sub, 'annotation') then
         Fail(Doc, Sub, 'unexpected element "' + Esc(Sub.NameUtf8) + '" in xs:union');

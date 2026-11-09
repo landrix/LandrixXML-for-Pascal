@@ -392,6 +392,10 @@ both the mark and an entry here):
 - Empty content may restrict a complex type with simple content, as
   Xerces compares only the particles; XML Schema 1.0 requires the base
   to have empty or emptiable element content (`particlesZ039`).
+- A union that is a member type of another union stands for its own
+  member types, so the facets of a restricted union are dropped there
+  (no test of the suite covers this; in the source code the mark reads
+  `Xerces deviation, not in the test suite`).
 - A restriction that has or inherits a `length` may give `minLength` or
   `maxLength` only if its base type has the same one; the errata of XML
   Schema 1.0 allow more (`errF001`).
@@ -452,9 +456,9 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 36,209
-  pass and 3,028 use a construct this library does not support (above
-  all `xs:duration`, `xs:QName`, `xs:all`, union facets, substitution
+  load or be rejected, documents that must be valid or invalid) 36,594
+  pass and 2,643 use a construct this library does not support (above
+  all `xs:duration`, `xs:QName`, `xs:all`, substitution
   groups, `xs:NOTATION`, `xsi:type`); they are reported as unsupported,
   never accepted silently. Of the 96 failures 30 are invalid schemas that
   load, as in Xerces; 3 more stop at the resource
