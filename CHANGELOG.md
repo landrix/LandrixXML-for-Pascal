@@ -175,6 +175,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   in `tests/data/xsdcontent/all.txt`. A reference to a type, element,
   group, attribute or attribute group that does not exist is reported
   with the code `src-resolve`, as in Xerces (the code was empty).
+  Substitution groups and abstract elements are supported as Xerces
+  does: a member takes the place of its head in a content model (also in
+  all groups) and is validated with its own declaration, unless the head
+  blocks substitution or the derivation of the member's type is blocked
+  by the head's `block` or a type's `block`; an element without a type
+  takes that of its head; an abstract element in a document is reported
+  (cvc-elt.2). The loader checks e-props-correct.4 (the member's type
+  derived from the head's, within the head's `final`) and .6 (circular
+  substitution groups), Unique Particle Attribution and
+  cos-element-consistent with the members, and treats a head with members
+  as a choice of them in restrictions, as Xerces does. New in the API:
+  `TLandrixXmlXsdElementDecl.SubstitutionGroup`, `Abstract` and `Final`;
+  `TLandrixXmlXsdParticle.AddSubstitute`, `SubstituteCount` and
+  `MatchingDecl`. `tools/gen-xsdcontent-testdata.py --subst` generates the
+  content model cases with substitution groups in
+  `tests/data/xsdcontent/subst.txt`.
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs
@@ -347,7 +363,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 37,659 of 39,336 applicable XSD 1.0 tests pass, 1,575
+  the CI checks: 38,126 of 39,336 applicable XSD 1.0 tests pass, 1,102
   use constructs that are not supported.
 - The places where the XML Schema validator follows Xerces instead of the
   specification on purpose are tagged `Xerces deviation:` with the test

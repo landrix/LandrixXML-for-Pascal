@@ -32,6 +32,10 @@
   - After the first mismatch the state fails: no further order checks,
     no "incomplete" report at the end; later children are looked up by
     name among the model's particles.
+  An element particle can have substitutes (the members of the
+  substitution group of its declaration, as the caller determines them):
+  it matches their names as well, here and in the check of Unique
+  Particle Attribution, while the expected lists name only the particle.
   An all group is the whole model (its root) and holds elements that
   occur at most once, in any order. As in Xerces, a child takes the first
   element of the group not yet present that matches it; the expected list
@@ -88,6 +92,10 @@ type
     FNamespaces: TLandrixXmlUtf8Array;
     FDecl: TObject;
     FChildren: TObjectList;
+    FSubNamespaces: TLandrixXmlUtf8Array;
+    FSubNames: TLandrixXmlUtf8Array;
+    FSubDecls: array of TObject;
+    FSubCount: Integer;
     { set when the model is compiled }
     FLeafIndex: Integer;
     FTermIndex: Integer;
@@ -114,8 +122,21 @@ type
       and maxOccurs 1 (leave out an element with maxOccurs 0); otherwise
       xecInvalidArgument is raised and the caller keeps Child. }
     procedure Add(Child: TLandrixXmlXsdParticle);
-    { Element: same expanded name. Wildcard: the namespace is allowed. }
+    { Adds a substitute to an element particle: an element that can take
+      its place (a member of the substitution group of its declaration).
+      The particle then also matches that name, in the content model and
+      in FindAmbiguity. Decl is the caller's declaration object for the
+      substitute (not owned). Add the substitutes before the model is
+      used; on another particle xecInvalidOperation is raised. }
+    procedure AddSubstitute(const NamespaceUri, LocalName: TLandrixXmlUtf8; Decl: TObject);
+    { Element: same expanded name as the particle or one of its
+      substitutes. Wildcard: the namespace is allowed. }
     function Matches(const NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
+    { The declaration object for a child of this name: Decl if the
+      particle matches it by its own name or as a wildcard, the
+      substitute's object for a substitute's name, nil if the particle
+      does not match. }
+    function MatchingDecl(const NamespaceUri, LocalName: TLandrixXmlUtf8): TObject;
     { As Xerces prints the particle in expected lists: name or
       "namespace":name for an element, WC[...] for a wildcard. }
     function Display: TLandrixXmlUtf8;
@@ -128,6 +149,7 @@ type
     property Constraint: TLandrixXmlXsdNamespaceConstraint read FConstraint;
     property Namespaces: TLandrixXmlUtf8Array read FNamespaces;
     property Decl: TObject read FDecl;
+    property SubstituteCount: Integer read FSubCount;
     property ChildCount: Integer read GetChildCount;
     property Children[Index: Integer]: TLandrixXmlXsdParticle read GetChild;
     { after compilation: the check of the occurrence bounds of a leaf }
@@ -364,6 +386,43 @@ begin
   Result := FKind in [xpkElement, xpkWildcard];
 end;
 
+procedure TLandrixXmlXsdParticle.AddSubstitute(const NamespaceUri, LocalName: TLandrixXmlUtf8; Decl: TObject);
+begin
+  if FKind <> xpkElement then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'Only an element particle has substitutes');
+  if FSubCount = Integer(Length(FSubNames)) then
+  begin
+    SetLength(FSubNamespaces, 2 * FSubCount + 4);
+    SetLength(FSubNames, 2 * FSubCount + 4);
+    SetLength(FSubDecls, 2 * FSubCount + 4);
+  end;
+  FSubNamespaces[FSubCount] := NamespaceUri;
+  FSubNames[FSubCount] := LocalName;
+  FSubDecls[FSubCount] := Decl;
+  Inc(FSubCount);
+end;
+
+function TLandrixXmlXsdParticle.MatchingDecl(const NamespaceUri, LocalName: TLandrixXmlUtf8): TObject;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if FKind = xpkElement then
+  begin
+    if (LocalName = FLocalName) and (NamespaceUri = FNamespaceUri) then
+      Result := FDecl
+    else
+      for I := 0 to FSubCount - 1 do
+        if (LocalName = FSubNames[I]) and (NamespaceUri = FSubNamespaces[I]) then
+        begin
+          Result := FSubDecls[I];
+          Exit;
+        end;
+  end
+  else if Matches(NamespaceUri, LocalName) then
+    Result := FDecl;
+end;
+
 function TLandrixXmlXsdParticle.Matches(const NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
 var
   I: Integer;
@@ -371,7 +430,15 @@ begin
   Result := False;
   case FKind of
     xpkElement:
-      Result := (LocalName = FLocalName) and (NamespaceUri = FNamespaceUri);
+      begin
+        Result := (LocalName = FLocalName) and (NamespaceUri = FNamespaceUri);
+        I := 0;
+        while not Result and (I < FSubCount) do
+        begin
+          Result := (LocalName = FSubNames[I]) and (NamespaceUri = FSubNamespaces[I]);
+          Inc(I);
+        end;
+      end;
     xpkWildcard:
       case FConstraint of
         xncAny:
@@ -1293,15 +1360,31 @@ begin
       Result := A.Matches(Candidates[I], '') and B.Matches(Candidates[I], '');
 end;
 
-{ Xerces' overlapUPA (no substitution groups here) }
+{ the wildcard W allows the element particle E or one of its substitutes }
+function ElementWildcardOverlap(E, W: TLandrixXmlXsdParticle): Boolean;
+var
+  I: Integer;
+begin
+  Result := W.Matches(E.NamespaceUri, E.LocalName);
+  I := 0;
+  while not Result and (I < E.FSubCount) do
+  begin
+    Result := W.Matches(E.FSubNamespaces[I], E.FSubNames[I]);
+    Inc(I);
+  end;
+end;
+
+{ Xerces' overlapUPA: two elements overlap if they have the same name or
+  one has a substitute with the other's name (substitutes of both with
+  the same name do not count, as in Xerces) }
 function ParticlesOverlap(A, B: TLandrixXmlXsdParticle): Boolean;
 begin
   if (A.Kind = xpkElement) and (B.Kind = xpkElement) then
-    Result := (A.LocalName = B.LocalName) and (A.NamespaceUri = B.NamespaceUri)
+    Result := A.Matches(B.NamespaceUri, B.LocalName) or B.Matches(A.NamespaceUri, A.LocalName)
   else if A.Kind = xpkElement then
-    Result := B.Matches(A.NamespaceUri, A.LocalName)
+    Result := ElementWildcardOverlap(A, B)
   else if B.Kind = xpkElement then
-    Result := A.Matches(B.NamespaceUri, B.LocalName)
+    Result := ElementWildcardOverlap(B, A)
   else
     Result := WildcardsOverlap(A, B);
 end;
@@ -1647,16 +1730,22 @@ end;
   pushed during the exploration (Fresh) must take the child before it may
   be left again, so every branch ends after finitely many moves. The
   configurations that took the child go to FNext; the leaf they matched
-  is the result (the same leaf in all of them, by Unique Particle
-  Attribution). }
+  is the result. By Unique Particle Attribution it is the same leaf in all
+  of them, except where substitutes Xerces leaves out of that check (see
+  AddSubstitute's caller) let two leaves take the child: then, as Xerces
+  takes the first transition in the order of its leaves, only the leaf
+  that comes first in document order and its configurations remain. }
 function TLandrixXmlXsdContentState.TryStep(const NamespaceUri,
   LocalName: TLandrixXmlUtf8): TLandrixXmlXsdParticle;
 var
   I, J, K, Len, Top, Explored: Integer;
   P, Child: TLandrixXmlXsdParticle;
-  Complete, Duplicate: Boolean;
+  Complete, Duplicate, Mixed: Boolean;
+  Swap: TLandrixXmlXsdContentFrames;
 begin
   Result := nil;
+  Mixed := False;
+  Swap := nil;
   FNextCount := 0;
   FWorkCount := 0;
   for I := FConfigCount - 1 downto 0 do
@@ -1696,7 +1785,13 @@ begin
         if Duplicate then
           Dec(FNextCount);
         if Result = nil then
-          Result := P;
+          Result := P
+        else if Result <> P then
+        begin
+          Mixed := True;
+          if P.FTermIndex < Result.FTermIndex then
+            Result := P;
+        end;
       end;
       if not FCur[Top].Fresh and (FCur[Top].Count >= P.FEffectiveMin) then
         AppendConfig(FWork, FWorkLens, FWorkCount, FCur, Len - 1, 0);
@@ -1753,6 +1848,24 @@ begin
     { or leave the group }
     if not FCur[Top].Fresh and ((FCur[Top].Count >= P.FEffectiveMin) or P.FBodyNullable) then
       AppendConfig(FWork, FWorkLens, FWorkCount, FCur, Len - 1, 0);
+  end;
+  if Mixed then
+  begin
+    { keep the configurations of the first leaf }
+    K := 0;
+    for I := 0 to FNextCount - 1 do
+      if FNext[I][FNextLens[I] - 1].Particle = Result then
+      begin
+        if K <> I then
+        begin
+          Swap := FNext[K];
+          FNext[K] := FNext[I];
+          FNext[I] := Swap;
+          FNextLens[K] := FNextLens[I];
+        end;
+        Inc(K);
+      end;
+    FNextCount := K;
   end;
 end;
 

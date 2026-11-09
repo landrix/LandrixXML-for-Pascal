@@ -1,5 +1,7 @@
 # W3C XML Schema Test Suite 7bc3365, harness 2: the passing tests
 # per test set, one line per group: GROUP: TEST ... (= for a test named as its group)
+set common/introspection
+introspection: introspect-testSet-schema introspect-testSet-introspection-1 introspect-testSet-NIST2004-01-14-2 introspect-testSet-suntest-3 introspect-testSet-AGroupDef-4 introspect-testSet-AttrDecl-5 introspect-testSet-AttrUse-6 introspect-testSet-CType-7 introspect-testSet-ElemDecl-8 introspect-testSet-IdConstrDefs-9 introspect-testSet-MGroup-10 introspect-testSet-MGroupDef-11 introspect-testSet-Notation-12 introspect-testSet-SType-13 introspect-testSet-Schema-14 introspect-testSet-Wildcard-15 introspect-testSet-MS-Additional2006-07-15-16 introspect-testSet-MS-Annotations2006-07-15-17 introspect-testSet-MS-AttributeGroup2006-07-15-18 introspect-testSet-MS-Attribute2006-07-15-19 introspect-testSet-MS-ComplexType2006-07-15-20 introspect-testSet-MS-DataTypes2006-07-15-21 introspect-testSet-MS-Element2006-07-15-22 introspect-testSet-MS-Errata102006-07-15-23 introspect-testSet-MS-Group2006-07-15-24 introspect-testSet-MS-IdentityConstraint2006-07-15-25 introspect-testSet-MS-ModelGroups2006-07-15-26 introspect-testSet-MS-Notations2006-07-15-27 introspect-testSet-MS-Particles2006-07-15-28 introspect-testSet-MS-Regex2006-07-15-29 introspect-testSet-MS-Schema2006-07-15-30 introspect-testSet-MS-SimpleType2006-07-15-31 introspect-testSet-MS-Wildcards2006-07-15-32 introspect-testSet-BoeingXSDTestCases-33 introspect-testSet-All-34 introspect-testSet-Assert-35 introspect-testSet-Complex-36 introspect-testSet-CTA-37 introspect-testSet-Id-38 introspect-testSet-Open-39 introspect-testSet-Override-40 introspect-testSet-Simple-41 introspect-testSet-Subsgroup-42 introspect-testSet-TargetNS-43 introspect-testSet-VC-44 introspect-testSet-Wild-45 introspect-testSet-XmlVersions-46 introspect-testSet-Zone-47 introspect-testSet-Zone-48 introspect-testSet-substitution-groups-49 introspect-testSet-allGroup-50 introspect-testSet-anyAttribute-51 introspect-testSet-Assert-52 introspect-testSet-assertion-53 introspect-testSet-ConditionalInclusion-54 introspect-testSet-constraintsOnAttribute-55 introspect-testSet-CyclicDependencies_Redefine_Include_Import_Override-56 introspect-testSet-date-57 introspect-testSet-dateTimeStamp-58 introspect-testSet-dayTimeDuration-59 introspect-testSet-defaultAttributesApply-60 introspect-testSet-DefaultFixed-61 introspect-testSet-double-62 introspect-testSet-EDCWildcard-63 introspect-testSet-explicitTimezone-64 introspect-testSet-float-65 introspect-testSet-gYearMonth-66 introspect-testSet-gYear-67 introspect-testSet-gMonthDay-68 introspect-testSet-gDay-69 introspect-testSet-gMonth-70 introspect-testSet-ID_IDREF-71 introspect-testSet-IdentityConstraint-72 introspect-testSet-list-73 introspect-testSet-PopenContent-74 introspect-testSet-RegularExpression-75 introspect-testSet-RestrictionOfComplexTypes-76 introspect-testSet-rf-whiteSpace-77 introspect-testSet-substitutionGroup-78 introspect-testSet-TargetNS-79 introspect-testSet-time-80 introspect-testSet-TypeAlternativeTests-81 introspect-testSet-CTA-82 introspect-testSet-union-83 introspect-testSet-UnitsLength-84 introspect-testSet-unsignedIntegers-85 introspect-testSet-VC-86 introspect-testSet-wildcard-87 introspect-testSet-XML11Support-88 introspect-testSet-XPathDefaultNSonKeyKeyRefUnique-89 introspect-testSet-XSImportReference-90 introspect-testSet-yearMonthDuration-91
 set nistMeta/NISTXMLSchemaDatatypes
 atomic-decimal-minExclusive: NISTSchema-SV-IV-atomic-decimal-minExclusive-1 NISTXML-SV-IV-atomic-decimal-minExclusive-1-1 NISTXML-SV-IV-atomic-decimal-minExclusive-1-2 NISTXML-SV-IV-atomic-decimal-minExclusive-1-3 NISTXML-SV-IV-atomic-decimal-minExclusive-1-4 NISTXML-SV-IV-atomic-decimal-minExclusive-1-5
 atomic-decimal-minExclusive-1: NISTSchema-SV-IV-atomic-decimal-minExclusive-2 NISTXML-SV-IV-atomic-decimal-minExclusive-2-1 NISTXML-SV-IV-atomic-decimal-minExclusive-2-2 NISTXML-SV-IV-atomic-decimal-minExclusive-2-3 NISTXML-SV-IV-atomic-decimal-minExclusive-2-4 NISTXML-SV-IV-atomic-decimal-minExclusive-2-5
@@ -3828,6 +3830,7 @@ test002: test test.1.v test.2.n test.3.n test.4.n test.5.n
 test003: test test.1.v test.2.n test.3.n test.4.n test.5.n
 test004: test test.1.v test.2.n test.3.n test.4.n test.5.n
 test005: test test.1.v test.2.n test.3.n test.4.n test.5.n
+test006: test test.1.v test.10.n test.11.n test.12.n test.13.n test.14.n test.15.n test.16.n test.17.n test.18.n test.19.n test.2.v test.20.n test.21.n test.22.n test.23.n test.24.n test.25.n test.26.n test.27.n test.28.n test.29.n test.3.n test.30.n test.31.n test.32.n test.33.n test.34.n test.4.n test.5.n test.6.n test.7.n test.8.n test.9.n
 test007: test test.1.v test.6.v test.2.n test.3.n test.4.n test.5.n test.7.n test.8.n
 test008: test test.1.n test.10.n test.11.n test.12.n test.5.n test.7.n test.8.n test.9.n test.2.v test.3.v test.4.v test.6.v
 test009: test test.13.n test.8.n test.1.v test.10.v test.11.v test.12.v test.2.v test.3.v test.4.v test.5.v test.6.v test.7.v test.9.v
@@ -3853,6 +3856,9 @@ xsd004: = xsd004.n00 xsd004.n01 xsd004.n02 xsd004.n03 xsd004.n04 xsd004.n05 xsd0
 xsd005: = xsd005.n00 xsd005.n01 xsd005.n02 xsd005.n03 xsd005.n04 xsd005.n05 xsd005.n06 xsd005.v00
 xsd006: = xsd006.n00 xsd006.n01 xsd006.n02 xsd006.n03 xsd006.n04 xsd006.n05 xsd006.n06 xsd006.n07 xsd006.n08 xsd006.n09 xsd006.n10 xsd006.n11 xsd006.v00
 xsd007.e: =
+xsd008: = xsd008.n00 xsd008.n01 xsd008.n02 xsd008.v00
+xsd009.e: =
+xsd010.e: =
 xsd011: = xsd011.n00 xsd011.n01 xsd011.n02 xsd011.n03 xsd011.n04 xsd011.v00
 xsd012: = xsd012.n00 xsd012.v00
 xsd013.e: =
@@ -4003,12 +4009,20 @@ psubstitutions00103m: pSubstitutions00103m pSubstitutions00103m1_p pSubstitution
 psubstitutions00104m: pSubstitutions00104m pSubstitutions00104m1_p pSubstitutions00104m1_n pSubstitutions00104m2_p pSubstitutions00104m2_n
 targetns00101m: targetNS00101m targetNS00101m1_p targetNS00101m1_n
 set sunMeta/ElemDecl
+abstract00101m: = abstract00101m1_p abstract00101m1_n
+abstract00201m1: = Negative
 abstract00201m2: = Positive
 abstract00201m3: = Positive
 annotation00101m1: = Positive
 annotation00101m2: =
 annotation00101m3: = Positive
 annotation00101m4: =
+disallowedsubst00101m: disallowedSubst00101m disallowedSubst00101m1_p disallowedSubst00101m1_n
+disallowedsubst00102m1: disallowedSubst00102m1 Positive
+disallowedsubst00102m2: disallowedSubst00102m2 Negative
+disallowedsubst00105m: disallowedSubst00105m disallowedSubst00105m1_p disallowedSubst00105m1_n
+disallowedsubst00106m1: disallowedSubst00106m1 Positive
+disallowedsubst00106m2: disallowedSubst00106m2 Negative
 disallowedsubst00202m1: disallowedSubst00202m1
 disallowedsubst00202m10: disallowedSubst00202m10
 disallowedsubst00202m11: disallowedSubst00202m11
@@ -4021,6 +4035,21 @@ disallowedsubst00202m6: disallowedSubst00202m6
 disallowedsubst00202m7: disallowedSubst00202m7
 disallowedsubst00202m8: disallowedSubst00202m8
 disallowedsubst00202m9: disallowedSubst00202m9
+disallowedsubst00301m1: disallowedSubst00301m1 Positive
+disallowedsubst00301m2: disallowedSubst00301m2 Negative
+disallowedsubst00401m1: disallowedSubst00401m1 Positive
+disallowedsubst00401m2: disallowedSubst00401m2 Negative
+disallowedsubst00501m1: disallowedSubst00501m1 Positive
+disallowedsubst00501m2: disallowedSubst00501m2 Negative
+disallowedsubst00502m1: disallowedSubst00502m1 Positive
+disallowedsubst00502m2: disallowedSubst00502m2 Positive
+disallowedsubst00502m3: disallowedSubst00502m3 Negative
+disallowedsubst00502m4: disallowedSubst00502m4 Negative
+disallowedsubst00503m1: disallowedSubst00503m1 Positive
+disallowedsubst00503m2: disallowedSubst00503m2 Positive
+disallowedsubst00503m3: disallowedSubst00503m3 Negative
+disallowedsubst00503m4: disallowedSubst00503m4 Negative
+disallowedsubst00503m5: disallowedSubst00503m5 Negative
 idconstrdefs00101m: idConstrDefs00101m idConstrDefs00101m1_p idConstrDefs00101m1_n
 idconstrdefs00201m: idConstrDefs00201m idConstrDefs00201m1_p idConstrDefs00201m2_n idConstrDefs00201m3_n idConstrDefs00201m4_n
 idconstrdefs00202m: idConstrDefs00202m idConstrDefs00202m1_p idConstrDefs00202m1_n
@@ -4088,7 +4117,14 @@ scope00101m: = scope00101m1_p
 scope00201m1: = Positive
 scope00201m2: =
 scope00301m: = scope00301m1_p
+substgrpaffil00101m: substGrpAffil00101m substGrpAffil00101m1_p substGrpAffil00101m1_n
+substgrpaffil00201m: substGrpAffil00201m substGrpAffil00201m1_p substGrpAffil00201m1_n
+substgrpexcl00202m1: substGrpExcl00202m1 Positive
+substgrpexcl00202m2: substGrpExcl00202m2
+substgrpexcl00301m1: substGrpExcl00301m1 Positive
 substgrpexcl00301m3: substGrpExcl00301m3 Positive
+substgrpexcl00303m1: substGrpExcl00303m1 Positive
+substgrpexcl00303m2: substGrpExcl00303m2
 substgrpexcl00303m3: substGrpExcl00303m3 Positive
 substgrpexcl00401m1: substGrpExcl00401m1 Positive
 substgrpexcl00401m2: substGrpExcl00401m2 Positive
@@ -4121,6 +4157,8 @@ typedef00101m: typeDef00101m typeDef00101m1_p typeDef00101m1_n
 typedef00201m: typeDef00201m typeDef00201m1_p typeDef00201m1_n
 typedef00202m: typeDef00202m typeDef00202m1_p typeDef00202m1_n
 typedef00203m: typeDef00203m typeDef00203m1_p typeDef00203m1_n
+typedef00204m: typeDef00204m typeDef00204m1_p typeDef00204m1_n
+typedef00205m: typeDef00205m typeDef00205m1_p
 typedef00301m: typeDef00301m typeDef00301m1_p typeDef00301m1_n
 typedef00401m: typeDef00401m typeDef00401m1_p typeDef00401m1_n
 typedef00402m: typeDef00402m typeDef00402m1_p typeDef00402m1_n
@@ -4468,6 +4506,7 @@ set msMeta/Additional_w3c
 addA001: =
 addA002: =
 addA003: =
+addA005: = addA005.v
 addC001: = addC001.v
 addB001: =
 addB002: = addB002.i
@@ -4536,6 +4575,7 @@ addB070a: =
 addB072: =
 addB073: =
 addB075: = addB075.i
+addB076: = addB076.v
 addB077: =
 addB078: =
 addB078A: =
@@ -4574,6 +4614,7 @@ addB110: =
 addB111: =
 addB112: =
 addB113: =
+addB114: = addB114.i
 addB115: = addB115.i
 addB116: = addB116.v
 addB117: =
@@ -4588,10 +4629,12 @@ addB128: =
 addB129: = addB129.v
 addB130: = addB130.v
 addB131: = addB131.v
+addB132: = addB132.v
 addB135: = addB135.v
 addB136: = addB136.v
 addB137: =
 addB140: = addB140.v
+addB141: =
 addB143: = addB143.i
 addB144: =
 addB145: = addB145.v
@@ -4612,6 +4655,7 @@ addB175: = addB175.i
 addB176: = addB176.v
 addB177: =
 addB178: =
+addB180: =
 addB182: = addB182.v
 addB183: =
 addB184: =
@@ -5700,11 +5744,13 @@ ctO004: =
 ctO005: =
 ctO006: = ctO006.v
 ctO007: =
+ctZ001: = ctZ001.v
 ctZ002: =
 ctZ003: = ctZ003.v
 ctZ004: =
 ctZ005: = ctZ005.i
 ctZ006: = ctZ006.v
+ctZ007: = ctZ007.v
 ctZ008: = ctZ008.v
 ctZ009: = ctZ009.v
 ctZ009_a: = ctZ009_a.v
@@ -7862,11 +7908,13 @@ elemA014: =
 elemA015: =
 elemA016: =
 elemA017: =
+elemB001: =
 elemB002: =
 elemB003: =
 elemB004: =
 elemB005: =
 elemB006: =
+elemB007: =
 elemB008: =
 elemB009: =
 elemB010: =
@@ -7895,8 +7943,15 @@ elemD003: =
 elemD004: =
 elemD005: =
 elemD006: =
+elemE001: =
+elemE002: =
+elemE003: =
+elemE004: =
+elemE005: =
 elemE006: =
 elemE007: =
+elemE008: =
+elemE009: =
 elemF001: =
 elemF002: =
 elemF003: =
@@ -7973,6 +8028,7 @@ elemN003: =
 elemN004: =
 elemN005: =
 elemN006: =
+elemO001: = elemO001.i
 elemO002: = elemO002.v
 elemO003: = elemO003.v
 elemO004: = elemO004.v
@@ -8021,6 +8077,14 @@ elemR003: =
 elemR004: = elemR004.v
 elemR005: = elemR005.v
 elemR006: =
+elemS001: =
+elemS002: = elemS002.v
+elemS003: = elemS003.v
+elemS004: =
+elemS005: =
+elemS006: =
+elemS007: = elemS007.v
+elemS008: = elemS008.v
 elemT001: = elemT001.i
 elemT002: = elemT002.v
 elemT003: = elemT003.v
@@ -8036,6 +8100,61 @@ elemT012: = elemT012.i
 elemT013: = elemT013.i
 elemT014: = elemT014.v
 elemT015: = elemT015.v
+elemT016: = elemT016.v
+elemT017: = elemT017.i
+elemT018: = elemT018.i
+elemT019: = elemT019.i
+elemT020: = elemT020.i
+elemT021: = elemT021.i
+elemT022: = elemT022.i
+elemT023: = elemT023.i
+elemT024: = elemT024.i
+elemT025: = elemT025.v
+elemT026: = elemT026.v
+elemT027: = elemT027.v
+elemT028: = elemT028.v
+elemT029: = elemT029.v
+elemT030: = elemT030.v
+elemT031: = elemT031.i
+elemT032: = elemT032.v
+elemT033: = elemT033.i
+elemT034: = elemT034.i
+elemT035: = elemT035.i
+elemT036: = elemT036.i
+elemT037: = elemT037.i
+elemT038: = elemT038.v
+elemT039: = elemT039.i
+elemT040: = elemT040.v
+elemT041: = elemT041.v
+elemT042: = elemT042.v
+elemT043: = elemT043.v
+elemT044: = elemT044.v
+elemT045: = elemT045.i
+elemT046: = elemT046.i
+elemT047: = elemT047.i
+elemT048: = elemT048.i
+elemT049: = elemT049.i
+elemT050: = elemT050.i
+elemT051: = elemT051.i
+elemT052: = elemT052.i
+elemT053: = elemT053.i
+elemT054: = elemT054.v
+elemT055: = elemT055.v
+elemT056: = elemT056.v
+elemT057: = elemT057.v
+elemT058: = elemT058.v
+elemT059: = elemT059.i
+elemT060: = elemT060.i
+elemT061: = elemT061.i
+elemT062: = elemT062.v
+elemT063: = elemT063.i
+elemT064: = elemT064.v
+elemT065: = elemT065.i
+elemT066: = elemT066.v
+elemT067: = elemT067.v
+elemT068: = elemT068.i
+elemT069: = elemT069.i
+elemT070: = elemT070.i
 elemT071: = elemT071.v
 elemT072: = elemT072.v
 elemT073: = elemT073.v
@@ -8066,6 +8185,7 @@ elemU024: = elemU024.v
 elemU025: = elemU025.i
 elemZ001: = elemZ001.v
 elemZ002: = elemZ002.v
+elemZ003: = elemZ003.v
 elemZ004: =
 elemZ005: =
 elemZ006: =
@@ -8073,11 +8193,24 @@ elemZ007: =
 elemZ008: =
 elemZ009: = elemZ009.v
 elemZ010: = elemZ010.v
+elemZ011: =
+elemZ012: =
 elemZ014: = elemZ014.v
 elemZ015: = elemZ015.i
 elemZ016: = elemZ016.i
 elemZ018: = elemZ018.v
 elemZ019: = elemZ019.v
+elemZ020: = elemZ020.v
+elemZ021a: = elemZ021a.v
+elemZ021b: = elemZ021b.i
+elemZ021c: = elemZ021c.v
+elemZ021d: = elemZ021d.v
+elemZ021e: = elemZ021e.v
+elemZ021f: = elemZ021f.i
+elemZ021g: = elemZ021g.i
+elemZ022a: = elemZ022a.i
+elemZ022b: = elemZ022b.v
+elemZ023: = elemZ023.i
 QFE1700a1: = QFE1700a1.v
 QFE1700a2: = QFE1700a2.v
 QFE1700a3: = QFE1700a3.v
@@ -8094,6 +8227,19 @@ QFE1700f2: = QFE1700f2.v
 QFE1700f3: = QFE1700f3.i
 QFE1700g1: = QFE1700g1.i
 QFE1700g2: = QFE1700g2.v
+elemZ025: =
+elemZ027_a: =
+elemZ027_b: =
+elemZ027_e: =
+elemZ027_f: =
+elemZ028a: =
+elemZ028b: =
+elemZ028c: =
+elemZ028d: =
+elemZ028e: =
+elemZ028f1: =
+elemZ028f2: =
+elemZ028f3: =
 elemZ029: = elemZ029.v
 elemZ030: =
 elemZ032a: =
@@ -8600,10 +8746,12 @@ idF022: = idF022.v
 idF023: = idF023.v
 idF024: = idF024.v
 idF025: = idF025.v
+idF026: = idF026.v
 idF027: = idF027.v
 idF028: = idF028.v
 idF029: = idF029.v
 idF030: = idF030.v
+idF031: = idF031.v
 idF032: = idF032.v
 idF033: = idF033.v
 idF034: = idF034.v
@@ -8627,10 +8775,12 @@ idG016: = idG016.v
 idG017: = idG017.v
 idG018: = idG018.v
 idG019: = idG019.v
+idG020: = idG020.i
 idG021: = idG021.v
 idG022: = idG022.v
 idG023: = idG023.v
 idG024: = idG024.v
+idG025: = idG025.i
 idG026: = idG026.v
 idG027: = idG027.v
 idG028: = idG028.v
@@ -8658,10 +8808,12 @@ idH020: = idH020.v
 idH021: = idH021.v
 idH022: = idH022.v
 idH023: = idH023.v
+idH024: = idH024.v
 idH025: = idH025.v
 idH026: = idH026.v
 idH027: = idH027.v
 idH028: = idH028.v
+idH029: = idH029.v
 idH030: = idH030.v
 idH031: =
 idH032: = idH032.v
@@ -9701,6 +9853,16 @@ particlesDb007: = particlesDb007.v
 particlesDb008: = particlesDb008.i
 particlesDb009: = particlesDb009.i
 particlesDb010: = particlesDb010.i
+particlesDb011: = particlesDb011.i
+particlesDc001: = particlesDc001.v
+particlesDc002: = particlesDc002.v
+particlesDc003: = particlesDc003.v
+particlesDc004: = particlesDc004.i
+particlesDc005: = particlesDc005.i
+particlesDc006: = particlesDc006.i
+particlesDc007: = particlesDc007.v
+particlesDc008: = particlesDc008.i
+particlesDc009: = particlesDc009.i
 particlesEa001: = particlesEa001.v
 particlesEa002: = particlesEa002.i
 particlesEa003: = particlesEa003.v
@@ -9968,6 +10130,7 @@ particlesIg013: =
 particlesIg014: = particlesIg014.v
 particlesIg015: = particlesIg015.v
 particlesIg016: =
+particlesIh001: =
 particlesIj001: = particlesIj001.v
 particlesIj002: = particlesIj002.v
 particlesIj003: =
@@ -10399,17 +10562,23 @@ particlesW016: = particlesW016.v
 particlesZ002: = particlesZ002.v
 particlesZ003: = particlesZ003.v
 particlesZ005: = particlesZ005.v
+particlesZ008: = particlesZ008.v
 particlesZ009: =
 particlesZ010: =
 particlesZ011: =
+particlesZ012: = particlesZ012.v
 particlesZ013: =
+particlesZ014: =
+particlesZ015: = particlesZ015.i
 particlesZ016: = particlesZ016.i
 particlesZ017: =
 particlesZ018: =
+particlesZ020: =
 particlesZ021: =
 particlesZ022: =
 particlesZ023: =
 particlesZ024: =
+particlesZ028: =
 particlesZ030_a: =
 particlesZ030_b: =
 particlesZ030_c: =
@@ -10418,6 +10587,9 @@ particlesZ031: =
 particlesZ033_a: =
 particlesZ033_c: =
 particlesZ033_d: =
+particlesZ033_e: =
+particlesZ033_f: =
+particlesZ033_g: =
 particlesZ034_a1: = particlesZ034_a1.v
 particlesZ034_a2: = particlesZ034_a2.i
 particlesZ034_a3: = particlesZ034_a3.i
@@ -13420,6 +13592,15 @@ stZ039: = stZ039.i
 stZ040: = stZ040.v
 stZ041: =
 stZ042: =
+stZ045: = stZ045.v
+stZ046: = stZ046.v
+stZ047: = stZ047.v
+stZ048: =
+stZ049: =
+stZ050: = stZ050.v
+stZ053: = stZ053.v
+stZ054: = stZ054.v
+stZ055: = stZ055.v
 stZ067: =
 stZ068: =
 stZ069: =
@@ -13744,6 +13925,13 @@ wildZ013c: = wildZ013c.v
 wildZ013d: = wildZ013d.i
 wildZ013e: = wildZ013e.i
 wildZ013f: = wildZ013f.i
+set boeingMeta/BoeingXSDTestSet
+ipo1: = ipo_1 ipo_2
+ipo2: = ipo_1 ipo_2
+ipo3: = ipo_1 ipo_2
+ipo4: = ipo_1 ipo_2
+ipo5: = ipo_1 ipo_2
+ipo6: = ipo_1 ipo_2
 set saxonMeta/Complex
 complex011: complex011.xsd complex011.v1.xml complex011.v2.xml complex011.n1.xml complex011.n2.xml complex011.n3.xml
 complex012: complex012.xsd complex012.v1.xml complex012.v2.xml complex012.v3.xml complex012.v4.xml complex012.v5.xml complex012.v6.xml complex012.n1.xml complex012.n2.xml complex012.n3.xml

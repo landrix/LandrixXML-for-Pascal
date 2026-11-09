@@ -37,6 +37,15 @@ format of cases.txt: N random all groups (A(...), elements a to f that
 occur at most once, the group itself optional or not) and child sequences
 in any order, with missing, repeated and unknown elements.
 
+With --subst N it writes tests/data/xsdcontent/subst.txt instead, in the
+format of cases.txt: N random models whose elements refer to global
+declarations with substitution groups, always the same ones (SUBST_GROUPS:
+x and y are members of a, z of y and so of a, w of b; c has none), and
+child sequences that use the members too. A model the JDK rejects for
+Unique Particle Attribution gives one line
+  model  #upa  cos-nonambig:X|Y
+with the two particles Xerces names.
+
 The files are committed; rerun this script only when the set changes.
 """
 
@@ -133,10 +142,10 @@ def mutate(rng, children):
     return c
 
 
-def run_model(java, classes, tmp, p, instances):
+def run_model(java, classes, tmp, p, instances, xml=None):
     xsd = os.path.join(tmp, "s.xsd")
     with open(xsd, "w", encoding="utf-8") as f:
-        f.write(schema_xml(p))
+        f.write(xml if xml is not None else schema_xml(p))
     files = []
     for k, children in enumerate(instances):
         name = os.path.join(tmp, "i%d.xml" % k)
@@ -177,10 +186,10 @@ def rand_upa_particle(rng, depth):
     return (kind, children, bounds)
 
 
-def upa_verdict(java, classes, tmp, p):
+def upa_verdict(java, classes, tmp, p, xml=None):
     xsd = os.path.join(tmp, "s.xsd")
     with open(xsd, "w", encoding="utf-8") as f:
-        f.write(schema_xml(p))
+        f.write(xml if xml is not None else schema_xml(p))
     doc = os.path.join(tmp, "d.xml")
     with open(doc, "w", encoding="utf-8") as f:
         f.write("<r/>")
@@ -244,6 +253,71 @@ def main_all(args):
     print("%d models kept, %d cases written" % (kept, len(rows)))
 
 
+# the members of each head (transitively), as the tests use them
+SUBST_GROUPS = {"a": "xyz", "y": "z", "b": "w"}
+SUBST_DECLS = [("a", None), ("b", None), ("c", None), ("x", "a"), ("y", "a"), ("z", "y"), ("w", "b")]
+SUBST_MODEL_NAMES = "abcxy"
+SUBST_CHILD_NAMES = "abcxyzwd"
+
+
+def subst_schema_xml(p):
+    def emit(q):
+        if q[0] == "e":
+            return '<xs:element ref="%s"%s/>' % (q[1], occurs_attrs(q[2]))
+        tag = TAGS[q[0]]
+        return "<%s%s>%s</%s>" % (tag, occurs_attrs(q[2]), "".join(emit(c) for c in q[1]), tag)
+    decls = "".join('<xs:element name="%s"%s/>' % (n, "" if h is None else ' substitutionGroup="%s"' % h)
+                    for n, h in SUBST_DECLS)
+    return ('<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">%s<xs:element name="r">'
+            "<xs:complexType>%s</xs:complexType></xs:element></xs:schema>" % (decls, emit(p)))
+
+
+def rand_subst_particle(rng, depth):
+    if depth >= 3 or (depth > 0 and rng.random() < 0.5):
+        return ("e", rng.choice(SUBST_MODEL_NAMES), rng.choice(BOUNDS))
+    kind = rng.choice("SC")
+    children = [rand_subst_particle(rng, depth + 1) for _ in range(rng.randint(1, 3))]
+    bounds = (1, 1) if depth == 0 and rng.random() < 0.6 else rng.choice(BOUNDS)
+    return (kind, children, bounds)
+
+
+def main_subst(args):
+    rng = random.Random(args.seed + 3000)
+    rows = []
+    kept = 0
+    ambiguous = 0
+    with tempfile.TemporaryDirectory() as tmp:
+        for _ in range(args.subst):
+            p = rand_subst_particle(rng, 0)
+            xml = subst_schema_xml(p)
+            instances = []
+            for _ in range(8):
+                children = []
+                sample(rng, p, children)
+                children = [rng.choice(SUBST_GROUPS[c]) if c in SUBST_GROUPS and rng.random() < 0.5 else c
+                            for c in children]
+                if rng.random() < 0.6:
+                    children = mutate(rng, children)
+                    if rng.random() < 0.3:
+                        children.insert(rng.randint(0, len(children)), rng.choice(SUBST_CHILD_NAMES))
+                instances.append(children[:12])
+            results = run_model(args.java, args.classes, tmp, p, instances, xml)
+            if results is None:
+                verdict = upa_verdict(args.java, args.classes, tmp, p, xml)
+                if verdict is not None and verdict != "ok":
+                    ambiguous += 1
+                    rows.append("\t".join([notation(p), "#upa", verdict]))
+                continue
+            kept += 1
+            for children, res in zip(instances, results):
+                rows.append("\t".join([notation(p), ",".join(children),
+                                       "jdk-exception" if res is None else "|".join(res)]))
+    os.makedirs(args.out, exist_ok=True)
+    with open(os.path.join(args.out, "subst.txt"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(rows) + "\n")
+    print("%d models kept, %d ambiguous, %d lines written" % (kept, ambiguous, len(rows)))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--java", required=True)
@@ -253,7 +327,12 @@ def main():
     ap.add_argument("--out", default=OUT, help="output directory (default tests/data/xsdcontent)")
     ap.add_argument("--upa", type=int, default=0, help="write upa.txt with this many models")
     ap.add_argument("--all", type=int, default=0, help="write all.txt with this many all groups")
+    ap.add_argument("--subst", type=int, default=0,
+                    help="write subst.txt with this many models with substitution groups")
     args = ap.parse_args()
+    if args.subst:
+        main_subst(args)
+        return
     if args.upa:
         main_upa(args)
         return

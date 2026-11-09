@@ -6,8 +6,8 @@
 
   Tests for LandrixXmlXsdContent: generated cases (tests/data/xsdcontent,
   results from the Xerces validator of the Java runtime), the three ways
-  of checking occurrence bounds, failure recovery, wildcards and all
-  groups. }
+  of checking occurrence bounds, failure recovery, wildcards, all groups
+  and substitutes. }
 
 unit LandrixXmlTestXsdContent;
 
@@ -198,7 +198,45 @@ begin
   end;
 end;
 
-procedure CheckGeneratedData(const FileName: string; MinCount: Integer);
+{ The substitution groups of subst.txt (SUBST_GROUPS of
+  tools/gen-xsdcontent-testdata.py): x, y and z can take the place of a,
+  z that of y, w that of b. }
+procedure AddTestSubstitutes(Model: TLandrixXmlXsdContentModel);
+var
+  I, K: Integer;
+  Leaf: TLandrixXmlXsdParticle;
+  Members: string;
+begin
+  for I := 0 to Model.LeafCount - 1 do
+  begin
+    Leaf := Model.Leaves[I];
+    Members := '';
+    if Leaf.LocalName = U('a') then
+      Members := 'xyz'
+    else if Leaf.LocalName = U('y') then
+      Members := 'z'
+    else if Leaf.LocalName = U('b') then
+      Members := 'w';
+    for K := 1 to Length(Members) do
+      Leaf.AddSubstitute('', U(Members[K]), nil);
+  end;
+end;
+
+{ The ambiguity Xerces would report, as in upa.txt. }
+function AmbiguityText(Model: TLandrixXmlXsdContentModel): string;
+var
+  First, Second: TLandrixXmlXsdParticle;
+begin
+  if Model.FindAmbiguity(First, Second) then
+    Result := 'cos-nonambig:' + LandrixXmlUtf8ToString(First.Display) + '|' +
+      LandrixXmlUtf8ToString(Second.Display)
+  else
+    Result := 'ok';
+end;
+
+{ Substitutes: the generated data with substitution groups also holds
+  models Xerces rejects for Unique Particle Attribution (#upa). }
+procedure CheckGeneratedData(const FileName: string; MinCount: Integer; Substitutes: Boolean = False);
 var
   L: TStringList;
   K, MismatchCount: Integer;
@@ -219,7 +257,18 @@ begin
       Fields := Split(L[K], #9);
       Model := ParseModel(Fields[0]);
       try
-        Got := Evaluate(Model, Fields[1]);
+        if Substitutes then
+          AddTestSubstitutes(Model);
+        if Fields[1] = '#upa' then
+          Got := AmbiguityText(Model)
+        else
+        begin
+          { a model Xerces accepts must be unambiguous here too }
+          if Substitutes and (AmbiguityText(Model) <> 'ok') then
+            Got := AmbiguityText(Model)
+          else
+            Got := Evaluate(Model, Fields[1]);
+        end;
       finally
         Model.Free;
       end;
@@ -251,6 +300,107 @@ end;
 procedure TestGeneratedAllGroups;
 begin
   CheckGeneratedData('all.txt', 2000);
+end;
+
+procedure TestGeneratedSubstitutes;
+begin
+  CheckGeneratedData('subst.txt', 1500, True);
+end;
+
+{ Substitutes through the API: matching, the declaration of the match,
+  the expected list (the particle only), ambiguity, and that only an
+  element particle takes them }
+procedure TestSubstitutes;
+var
+  Model: TLandrixXmlXsdContentModel;
+  Root, A, W: TLandrixXmlXsdParticle;
+  State: TLandrixXmlXsdContentState;
+  Issue: TLandrixXmlXsdContentIssue;
+  First, Second: TLandrixXmlXsdParticle;
+  List: TList;
+  DeclA, DeclX: TObject;
+  Namespaces: TLandrixXmlUtf8Array;
+begin
+  Namespaces := nil;
+  DeclA := TObject.Create;
+  DeclX := TObject.Create;
+  List := TList.Create;
+  State := TLandrixXmlXsdContentState.Create;
+  Model := nil;
+  try
+    Root := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 1);
+    A := TLandrixXmlXsdParticle.CreateElement('', U('a'), DeclA, 1, 1);
+    Root.Add(A);
+    Root.Add(TLandrixXmlXsdParticle.CreateElement('', U('b'), nil, 0, 1));
+    Model := TLandrixXmlXsdContentModel.Create(Root);
+    A.AddSubstitute(U('urn:x'), U('x'), DeclX);
+    CheckEquals(1, A.SubstituteCount, 'one substitute');
+    Check(A.Matches(U('urn:x'), U('x')), 'the substitute matches');
+    Check(not A.Matches('', U('x')), 'the namespace counts');
+    Check(A.MatchingDecl('', U('a')) = DeclA, 'own name: the particle''s declaration');
+    Check(A.MatchingDecl(U('urn:x'), U('x')) = DeclX, 'substitute: its declaration');
+    Check(A.MatchingDecl('', U('b')) = nil, 'no match: nil');
+    State.Start(Model);
+    Check(State.Step(U('urn:x'), U('x'), Issue) = A, 'the substitute takes the place of a');
+    CheckEquals(Ord(xciNone), Ord(Issue.Kind), 'no issue');
+    State.Start(Model);
+    State.Step('', U('c'), Issue);
+    CheckEquals(Ord(xciUnexpected), Ord(Issue.Kind), 'c is unexpected');
+    State.Expected(List);
+    CheckEqualsStr('{a}', LandrixXmlUtf8ToString(LandrixXmlXsdExpectedText(List)), 'the expected list names a only');
+    Check(not Model.FindAmbiguity(First, Second), 'a then b is unambiguous');
+  finally
+    Model.Free;
+    State.Free;
+    List.Free;
+    DeclA.Free;
+    DeclX.Free;
+  end;
+  { a choice of a and its substitute x is ambiguous }
+  Model := ParseModel('C(a x)');
+  try
+    Model.Leaves[0].AddSubstitute('', U('x'), nil);
+    Check(Model.FindAmbiguity(First, Second), 'a with substitute x next to x');
+    Check((First.LocalName = U('a')) and (Second.LocalName = U('x')), 'the pair a, x');
+  finally
+    Model.Free;
+  end;
+  { substitutes of two particles with the same name do not compete (Xerces) }
+  Model := ParseModel('C(a b)');
+  try
+    Model.Leaves[0].AddSubstitute('', U('z'), nil);
+    Model.Leaves[1].AddSubstitute('', U('z'), nil);
+    Check(not Model.FindAmbiguity(First, Second), 'a and b sharing the substitute z');
+  finally
+    Model.Free;
+  end;
+  { a wildcard allowing only the substitute's namespace }
+  SetLength(Namespaces, 1);
+  Namespaces[0] := U('urn:x');
+  Root := TLandrixXmlXsdParticle.CreateGroup(xpkChoice, 1, 1);
+  A := TLandrixXmlXsdParticle.CreateElement('', U('a'), nil, 1, 1);
+  Root.Add(A);
+  Root.Add(TLandrixXmlXsdParticle.CreateWildcard(xncList, Namespaces, nil, 1, 1));
+  Model := TLandrixXmlXsdContentModel.Create(Root);
+  try
+    Check(not Model.FindAmbiguity(First, Second), 'a next to a wildcard of urn:x');
+    A.AddSubstitute(U('urn:x'), U('x'), nil);
+    Check(Model.FindAmbiguity(First, Second), 'a with substitute urn:x:x next to a wildcard of urn:x');
+  finally
+    Model.Free;
+  end;
+  W := TLandrixXmlXsdParticle.CreateWildcard(xncAny, nil, nil, 1, 1);
+  try
+    try
+      W.AddSubstitute('', U('x'), nil);
+      FailNotRaised('a substitute of a wildcard');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidOperation), Ord(E.Code), 'a substitute of a wildcard');
+    end;
+  finally
+    W.Free;
+  end;
 end;
 
 { An all group must reject Child; the caller keeps Child then. }
@@ -630,6 +780,8 @@ procedure Register;
 begin
   RegisterTest('XsdContent.GeneratedData', TestGeneratedData);
   RegisterTest('XsdContent.GeneratedAllGroups', TestGeneratedAllGroups);
+  RegisterTest('XsdContent.GeneratedSubstitutes', TestGeneratedSubstitutes);
+  RegisterTest('XsdContent.Substitutes', TestSubstitutes);
   RegisterTest('XsdContent.AllGroups', TestAllGroups);
   RegisterTest('XsdContent.BoundsChecks', TestBoundsChecks);
   RegisterTest('XsdContent.SameDeclarationTwice', TestSameDeclarationTwice);

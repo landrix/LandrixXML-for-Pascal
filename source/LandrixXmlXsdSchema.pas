@@ -197,7 +197,10 @@ type
     FConstraintActual: TLandrixXmlXsdValue;
     FGlobal: Boolean;
     FNillable: Boolean;
+    FAbstract: Boolean;
     FBlock: TLandrixXmlXsdDerivations;
+    FFinal: TLandrixXmlXsdDerivations;
+    FSubstitutionGroup: TLandrixXmlXsdElementDecl;
     FConstraints: TList;
     function GetConstraintCount: Integer;
     function GetConstraint(Index: Integer): TLandrixXmlXsdIdentityConstraint;
@@ -221,6 +224,16 @@ type
       (disallowed substitutions: extension, restriction, substitution):
       the block attribute or the blockDefault of the schema document }
     property Block: TLandrixXmlXsdDerivations read FBlock write FBlock;
+    { an abstract element cannot appear in a document itself, only the
+      members of its substitution group }
+    property Abstract: Boolean read FAbstract write FAbstract;
+    { the derivations the types of substitution group members must not use
+      (substitution group exclusions: extension, restriction): the final
+      attribute or the finalDefault of the schema document }
+    property Final: TLandrixXmlXsdDerivations read FFinal write FFinal;
+    { the head of the substitution group this global element belongs to
+      (its substitutionGroup attribute), nil for none }
+    property SubstitutionGroup: TLandrixXmlXsdElementDecl read FSubstitutionGroup write FSubstitutionGroup;
     property ConstraintCount: Integer read GetConstraintCount;
     property Constraints[Index: Integer]: TLandrixXmlXsdIdentityConstraint read GetConstraint;
   end;

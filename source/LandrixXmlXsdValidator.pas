@@ -41,6 +41,9 @@
 
   xsi:type replaces the declared type (cvc-elt.4), xsi:nil marks an
   element of a nillable declaration as empty (cvc-elt.3), as in Xerces.
+  A member of a substitution group takes the place of its head in a
+  content model and is validated with its own declaration; an element
+  whose declaration is abstract is reported (cvc-elt.2).
   An xsi:type naming a built-in type that is not supported (duration,
   NOTATION, ENTITY, ENTITIES) is reported with the code "unsupported"
   (never silently accepted). Default values are used for validation but
@@ -1631,7 +1634,9 @@ begin
         if Particle <> nil then
         begin
           if Particle.Kind = xpkElement then
-            Decl := TLandrixXmlXsdElementDecl(Particle.Decl)
+            { the particle's declaration or that of the member of its
+              substitution group }
+            Decl := TLandrixXmlXsdElementDecl(Particle.MatchingDecl(NamespaceUri, LocalName))
           else
           begin
             Wildcard := TLandrixXmlXsdWildcard(Particle.Decl);
@@ -1708,6 +1713,9 @@ begin
   end;
   for I := 0 to FAttrCount - 1 do
     FAttrValid[I] := False;
+  if (Decl <> nil) and Decl.Abstract then
+    Report('cvc-elt.2', 'The value of {abstract} in the element declaration for ' + Q(Name) +
+      ' must be false.', Line, Column, Decl);
   if (CT <> nil) and CT.Abstract then
     Report('cvc-type.2', 'The type definition cannot be abstract for element ' +
       LandrixXmlEscapeForMessage(Name, MaxInt) + '.', Line, Column, Decl);

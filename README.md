@@ -358,9 +358,10 @@ both the mark and an entry here):
 - The regular expression forms `\p{IsHighSurrogates}`,
   `\p{IsLowSurrogates}` and `[a-z--[b-z]]` are errors (`reF56`, `reM77`,
   `reN75`, `HighSurrogates`).
-- A missing type (also the item type of a list) is an error when the
-  schema is loaded, also if nothing uses it; the suite expects the error
-  only when the type is needed (`missing001`, `missing006`).
+- A missing type (also the item type of a list) or substitution group
+  head is an error when the schema is loaded, also if nothing uses it;
+  the suite expects the error only when the component is needed
+  (`missing001`, `missing002`, `missing003`, `missing006`).
 - The XSD 1.1 version attributes (`vc:minVersion` and the like) are not
   evaluated, so XSD 1.1 constructs they would exclude are errors (`vc001`,
   `vc002`, `vc024`).
@@ -462,11 +463,10 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 37,659
-  pass and 1,575 use a construct this library does not support (above
-  all `xs:duration`, substitution
-  groups, `xs:NOTATION`); they are reported as unsupported,
-  never accepted silently. Of the 99 failures 30 are invalid schemas that
+  load or be rejected, documents that must be valid or invalid) 38,126
+  pass and 1,102 use a construct this library does not support (above
+  all `xs:duration` and `xs:NOTATION`); they are reported as unsupported,
+  never accepted silently. Of the 105 failures 30 are invalid schemas that
   load and 2 documents Xerces accepts too; 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline
   for the CI.

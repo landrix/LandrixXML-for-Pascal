@@ -30,10 +30,22 @@
   the content and attributes are taken as written (the target schemas
   are valid for Xerces). Constructs the validator does not support raise
   ELandrixXmlError with xecUnsupported and the file and line, also when
-  they are declared but not used: xs:notation,
-  substitution groups, abstract elements, the extension of xs:anyType,
-  and the built-in types LandrixXmlXsdTypes lacks. Other schema errors
-  raise xecSchema. }
+  they are declared but not used: xs:notation, the extension of
+  xs:anyType, and the built-in types LandrixXmlXsdTypes lacks. Other
+  schema errors raise xecSchema.
+
+  Substitution groups: the element particles of a content model get the
+  members of the substitution group of their declaration as substitutes
+  (TLandrixXmlXsdParticle.AddSubstitute), as Xerces' substitution group
+  handler finds them: global elements whose chain of substitutionGroup
+  attributes leads to the head, unless the head blocks substitution or
+  the derivation of the member's type uses a method the head's block or
+  the prohibited substitutions of a type on the way exclude. Members
+  whose type is derived only from a member of a union type of the head,
+  or that of an element on the way only from a member of a union type of
+  its own head, match in documents, but do not count for Unique Particle
+  Attribution, element consistency and restrictions (Xerces leaves them
+  out there). }
 
 unit LandrixXmlXsdSchemaLoader;
 
@@ -322,12 +334,22 @@ type
     ConstraintActual: TLandrixXmlXsdValue;
   end;
 
-  { an element declaration with a value constraint, checked when every
-    type is complete }
+  { an element declaration with a value constraint or a substitution
+    group head, checked when every type is complete }
   TElementValueCheck = class
     Decl: TLandrixXmlXsdElementDecl;
     Doc: TSchemaDoc;
     Node: TLandrixXmlNode;
+  end;
+
+  { the substitution group of a head: Members as Xerces'
+    getSubstitutionGroup lists them, Extra the further elements it
+    accepts in documents (types derived from a member of a union) }
+  TSubstitutionGroup = class
+    Members: TList;
+    Extra: TList;
+    constructor Create;
+    destructor Destroy; override;
   end;
 
   { a complex type whose content is checked when every type is complete,
@@ -368,6 +390,18 @@ type
     FFixups: TObjectList;
     FValueChecks: TObjectList;
     FTypeChecks: TObjectList;
+    { the global element declarations, in the order they were built }
+    FGlobalElements: TList;
+    { the elements resolving their substitution group head (circularity) }
+    FHeadChain: TList;
+    { the elements that take the type of their head once it is known }
+    FHeadTyped: TList;
+    { the content models with particles, to receive the substitutes }
+    FModels: TList;
+    { how many of them have their members as substitutes already }
+    FMembersAdded: Integer;
+    FSubGroups: TObjectList;
+    FSubGroupMap: TLandrixXmlXsdNameMap;
     { the skipped documents: namespace, tab, description }
     FSkipped: TStringList;
     { the documents checked against the schema for schemas }
@@ -448,6 +482,14 @@ type
       IsField: Boolean): TLandrixXmlXsdPaths;
     procedure ResolveAll;
     procedure CheckElementValue(Check: TElementValueCheck);
+    procedure CheckSubstitution(Check: TElementValueCheck);
+    procedure ApplyHeadType(D: TLandrixXmlXsdElementDecl);
+    function SubstitutableType(DS: TLandrixXmlXsdSimpleType; DC: TLandrixXmlXsdComplexType;
+      BS: TLandrixXmlXsdSimpleType; BC: TLandrixXmlXsdComplexType; Blocking: TLandrixXmlXsdDerivations;
+      out ViaUnion: Boolean): Boolean;
+    procedure BuildSubstitutionGroups;
+    function GroupOf(Head: TLandrixXmlXsdElementDecl): TSubstitutionGroup;
+    procedure AddSubstitutes(Extra: Boolean);
     function CheckAttributeValue(Doc: TSchemaDoc; Node: TLandrixXmlNode; Decl: TLandrixXmlXsdAttributeDecl;
       const Value: TLandrixXmlUtf8): TLandrixXmlXsdValue;
     procedure CheckElementsConsistent(Doc: TSchemaDoc; Node: TLandrixXmlNode; Particle: TLandrixXmlXsdParticle;
@@ -458,16 +500,20 @@ type
     function NameAndTypeOk(D, B: TLandrixXmlXsdParticle; out Code: string): Boolean;
     function ParticleRestricts(D, B: TLandrixXmlXsdParticle; CheckWildcardOccurs: Boolean;
       out Code: string): Boolean;
-    function RecurseOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; out Code: string): Boolean;
-    function RecurseLaxOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+    function ParticleRestrictsSub(D, B: TLandrixXmlXsdParticle; CheckWildcardOccurs, DSub, BSub: Boolean;
+      out Code: string; out BExpanded: Boolean): Boolean;
+    function ExpandedChildren(P: TLandrixXmlXsdParticle; Sub: Boolean): TList;
+    function RecurseOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; DSub, BSub: Boolean;
+      out Code: string): Boolean;
+    function RecurseLaxOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; DSub, BSub: Boolean;
       out Code: string): Boolean;
     function RecurseUnorderedOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
-      out Code: string): Boolean;
+      DSub, BSub: Boolean; out Code: string): Boolean;
     function OwnIsAll(Doc: TSchemaDoc; Parent: TLandrixXmlNode): Boolean;
-    function MapAndSumOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+    function MapAndSumOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; DSub, BSub: Boolean;
       out Code: string): Boolean;
     function NSRecurseCheckCardinalityOk(DChildren: TList; DMin, DMax: Int64; W: TLandrixXmlXsdParticle;
-      CheckWildcardOccurs: Boolean; out Code: string): Boolean;
+      CheckWildcardOccurs, DSub: Boolean; out Code: string): Boolean;
     procedure CheckType(Check: TTypeCheck);
     procedure CheckGroupRestriction(P: TPending);
   public
@@ -612,6 +658,22 @@ begin
     Result := ParseDerivations(Value) * [xdExtension, xdRestriction, xdSubstitution];
 end;
 
+{ --- TSubstitutionGroup -------------------------------------------------- }
+
+constructor TSubstitutionGroup.Create;
+begin
+  inherited Create;
+  Members := TList.Create;
+  Extra := TList.Create;
+end;
+
+destructor TSubstitutionGroup.Destroy;
+begin
+  Members.Free;
+  Extra.Free;
+  inherited Destroy;
+end;
+
 { --- TLoader ------------------------------------------------------------ }
 
 constructor TLoader.Create(Resolver: TLandrixXmlXsdResolver);
@@ -632,6 +694,12 @@ begin
   FFixups := TObjectList.Create(True);
   FValueChecks := TObjectList.Create(True);
   FTypeChecks := TObjectList.Create(True);
+  FGlobalElements := TList.Create;
+  FHeadChain := TList.Create;
+  FHeadTyped := TList.Create;
+  FModels := TList.Create;
+  FSubGroups := TObjectList.Create(True);
+  FSubGroupMap := TLandrixXmlXsdNameMap.Create;
   FSkipped := TStringList.Create;
   FCheckedFiles := TStringList.Create;
   FCheckedFiles.CaseSensitive := True;
@@ -655,6 +723,12 @@ begin
   FFixups.Free;
   FValueChecks.Free;
   FTypeChecks.Free;
+  FGlobalElements.Free;
+  FHeadChain.Free;
+  FHeadTyped.Free;
+  FModels.Free;
+  FSubGroupMap.Free;
+  FSubGroups.Free;
   FSkipped.Free;
   FCheckedFiles.Free;
   FSet.Free;
@@ -1360,20 +1434,23 @@ var
   Complex: TLandrixXmlXsdComplexType;
   TypePending: TPending;
   Qualified, HasDefault, HasFixed: Boolean;
-  DefaultValue, FixedValue: TLandrixXmlUtf8;
+  DefaultValue, FixedValue, HeadNs, HeadName: TLandrixXmlUtf8;
   Check: TElementValueCheck;
+  HeadPending: TPending;
+  SavedChain: TList;
 begin
   if not AttrTrimmed(Node, 'name', Name) or (Name = '') then
     Fail(Doc, Node, 'an element declaration without a name');
-  if Attr(Node, 'substitutionGroup', Value) then
-    Unsupported(Doc, Node, 'substitution groups (element ' + Esc(Name) + ')');
-  if BoolAttr(Node, 'abstract') then
-    Unsupported(Doc, Node, 'abstract elements (element ' + Esc(Name) + ')');
   D := TLandrixXmlXsdElementDecl.Create;
   FSet.Own(D);
   D.Name := Name;
   D.Global := Global;
   D.Nillable := BoolAttr(Node, 'nillable');
+  D.Abstract := BoolAttr(Node, 'abstract');
+  if Attr(Node, 'final', Value) then
+    D.Final := ParseDerivations(Value) * [xdExtension, xdRestriction]
+  else
+    D.Final := Doc.FinalDefault * [xdExtension, xdRestriction];
   if Attr(Node, 'block', Value) then
     D.Block := ParseBlock(Value)
   else
@@ -1399,11 +1476,37 @@ begin
     P.Component := D;
     P.State := psResolving;
     if FMaps[pkElement].Find(P.NamespaceUri, P.Name) = P then
+    begin
       FSet.Elements.Put(D.NamespaceUri, D.Name, D);
+      FGlobalElements.Add(D);
+    end;
+  end;
+  { the head of the substitution group, before the type (Xerces); a head
+    met again while the heads are being resolved is circular }
+  if Global and (P <> nil) and QNameAttr(Doc, Node, 'substitutionGroup', HeadNs, HeadName) then
+  begin
+    HeadPending := FindPending(pkElement, HeadNs, HeadName);
+    { Xerces deviation: missing002, missing003. A missing head is an error
+      when the schema is loaded, also if nothing uses the element }
+    if HeadPending = nil then
+      FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('element', HeadNs, HeadName));
+    if (HeadPending = P) or (FHeadChain.IndexOf(HeadPending) >= 0) then
+      FailCheck(Doc.FileName, Node, 'e-props-correct.6', 'the substitution group of element ' + Esc(Name) +
+        ' is circular');
+    FHeadChain.Add(P);
+    try
+      D.SubstitutionGroup := ResolveElement(HeadPending);
+    finally
+      { P is the last entry: the chain is a stack }
+      FHeadChain.Delete(Integer(FHeadChain.Count) - 1);
+    end;
   end;
   { the type: a group referenced again inside it is not circular (the
-    element ends the recursion, it is declared already) }
+    element ends the recursion, it is declared already); heads met in it
+    start a chain of their own }
   Inc(FElementDepth);
+  SavedChain := FHeadChain;
+  FHeadChain := TList.Create;
   try
     if Attr(Node, 'type', Value) then
     begin
@@ -1430,10 +1533,24 @@ begin
       Child := Child.NextSiblingElement;
     end;
   finally
+    FHeadChain.Free;
+    FHeadChain := SavedChain;
     Dec(FElementDepth);
   end;
+  { without a type: that of the head (once the head has one), else
+    anyType }
   if (D.SimpleType = nil) and (D.ComplexType = nil) then
-    D.ComplexType := FSet.AnyType;
+  begin
+    if D.SubstitutionGroup = nil then
+      D.ComplexType := FSet.AnyType
+    else if (D.SubstitutionGroup.SimpleType <> nil) or (D.SubstitutionGroup.ComplexType <> nil) then
+    begin
+      D.SimpleType := D.SubstitutionGroup.SimpleType;
+      D.ComplexType := D.SubstitutionGroup.ComplexType;
+    end
+    else
+      FHeadTyped.Add(D);
+  end;
   HasDefault := Attr(Node, 'default', DefaultValue);
   HasFixed := Attr(Node, 'fixed', FixedValue);
   if HasDefault and HasFixed then
@@ -1448,7 +1565,7 @@ begin
     D.ValueConstraint := xvcFixed;
     D.ConstraintValue := FixedValue;
   end;
-  if D.ValueConstraint <> xvcNone then
+  if (D.ValueConstraint <> xvcNone) or (D.SubstitutionGroup <> nil) then
   begin
     Check := TElementValueCheck.Create;
     FValueChecks.Add(Check);
@@ -3149,6 +3266,7 @@ begin
         Fail(Doc, Node, 'a content model must be a model group');
       end;
       T.Model := TLandrixXmlXsdContentModel.Create(Particle);
+      FModels.Add(T.Model);
       CheckModel := True;
     end;
   end;
@@ -3473,8 +3591,206 @@ begin
       ' has the type ID, so it cannot have a default or fixed value');
 end;
 
-{ e-props-correct.2 and .5; Xerces never marks a complex type as having
-  an ID content (containsTypeID is never set), so only simple types count }
+{ the type of an element whose substitutionGroup head had no type yet
+  when it was built (a head being built further up): that of the head }
+procedure TLoader.ApplyHeadType(D: TLandrixXmlXsdElementDecl);
+var
+  H: TLandrixXmlXsdElementDecl;
+begin
+  if (D.SimpleType <> nil) or (D.ComplexType <> nil) then
+    Exit;
+  H := D.SubstitutionGroup;
+  if H = nil then
+  begin
+    D.ComplexType := FSet.AnyType;
+    Exit;
+  end;
+  ApplyHeadType(H);
+  D.SimpleType := H.SimpleType;
+  D.ComplexType := H.ComplexType;
+end;
+
+{ Xerces' typeDerivationOK of its substitution group handler: the type DS
+  or DC is the type BS or BC or derived from it, and none of the methods
+  of the derivation is in Blocking or the prohibited substitutions of a
+  complex type on the way (the base included); otherwise, if the base is
+  a union, derived so from one of its members (ViaUnion) }
+function TLoader.SubstitutableType(DS: TLandrixXmlXsdSimpleType; DC: TLandrixXmlXsdComplexType;
+  BS: TLandrixXmlXsdSimpleType; BC: TLandrixXmlXsdComplexType; Blocking: TLandrixXmlXsdDerivations;
+  out ViaUnion: Boolean): Boolean;
+var
+  S, NS: TLandrixXmlXsdSimpleType;
+  C, NC: TLandrixXmlXsdComplexType;
+  Methods, Blocks: TLandrixXmlXsdDerivations;
+  I: Integer;
+  Inner: Boolean;
+begin
+  ViaUnion := False;
+  S := DS;
+  C := DC;
+  Methods := [];
+  Blocks := Blocking;
+  while not ((S = BS) and (C = BC)) and (C <> FSet.AnyType) do
+  begin
+    NS := nil;
+    NC := nil;
+    if C <> nil then
+    begin
+      Include(Methods, C.Derivation);
+      if C.BaseComplex <> nil then
+        NC := C.BaseComplex
+      else
+        NS := C.BaseSimple;
+    end
+    else
+    begin
+      Include(Methods, xdRestriction);
+      NS := S.Base;
+    end;
+    if (NS = nil) and (NC = nil) then
+      NC := FSet.AnyType;
+    S := NS;
+    C := NC;
+    if C <> nil then
+      Blocks := Blocks + C.Block;
+  end;
+  if (S = BS) and (C = BC) then
+    Result := Methods * Blocks = []
+  else
+  begin
+    Result := False;
+    if (BS <> nil) and (BS.Variety = xsvUnion) then
+      for I := 0 to BS.MemberCount - 1 do
+        if not Result and SubstitutableType(DS, DC, BS.Members[I], nil, Blocking, Inner) then
+        begin
+          Result := True;
+          ViaUnion := True;
+        end;
+  end;
+end;
+
+function TLoader.GroupOf(Head: TLandrixXmlXsdElementDecl): TSubstitutionGroup;
+begin
+  Result := TSubstitutionGroup(FSubGroupMap.Find(Head.NamespaceUri, Head.Name));
+end;
+
+{ the substitution groups of all heads: every global element joins the
+  group of each head on its chain it can substitute in documents (Xerces'
+  substitutionGroupOK); it is a member (Xerces' getSubstitutionGroup) only
+  if, in addition, the type of every element on the way derives from that
+  of its own head without a union and without a blocked method
+  (getDBMethods for each step), else an extra element }
+procedure TLoader.BuildSubstitutionGroups;
+var
+  I, Steps: Integer;
+  E, X, H: TLandrixXmlXsdElementDecl;
+  Group: TSubstitutionGroup;
+  ViaUnion, Direct: Boolean;
+begin
+  for I := 0 to Integer(FHeadTyped.Count) - 1 do
+    ApplyHeadType(TLandrixXmlXsdElementDecl(FHeadTyped[I]));
+  for I := 0 to Integer(FGlobalElements.Count) - 1 do
+  begin
+    E := TLandrixXmlXsdElementDecl(FGlobalElements[I]);
+    X := E;
+    H := E.SubstitutionGroup;
+    Direct := True;
+    Steps := 0;
+    while (H <> nil) and (Steps <= Integer(FGlobalElements.Count)) do
+    begin
+      { the step from X to its head H }
+      if Direct then
+        Direct := SubstitutableType(X.SimpleType, X.ComplexType, H.SimpleType, H.ComplexType, [], ViaUnion) and
+          not ViaUnion;
+      if not (xdSubstitution in H.Block) and SubstitutableType(E.SimpleType, E.ComplexType, H.SimpleType,
+        H.ComplexType, H.Block, ViaUnion) then
+      begin
+        Group := GroupOf(H);
+        if Group = nil then
+        begin
+          Group := TSubstitutionGroup.Create;
+          FSubGroups.Add(Group);
+          FSubGroupMap.Add(H.NamespaceUri, H.Name, Group);
+        end;
+        if ViaUnion or not Direct then
+          Group.Extra.Add(E)
+        else
+          Group.Members.Add(E);
+      end;
+      X := H;
+      H := H.SubstitutionGroup;
+      Inc(Steps);
+    end;
+  end;
+end;
+
+{ gives the element particles of global declarations in the content
+  models their substitutes: the members (for Unique Particle Attribution
+  and documents; only to the models that do not have them yet, as the
+  checks can build further types) or the extra elements (for documents
+  only, at the end) }
+procedure TLoader.AddSubstitutes(Extra: Boolean);
+var
+  I, J, K, First: Integer;
+  Model: TLandrixXmlXsdContentModel;
+  Leaf: TLandrixXmlXsdParticle;
+  Group: TSubstitutionGroup;
+  List: TList;
+  M: TLandrixXmlXsdElementDecl;
+begin
+  First := 0;
+  if not Extra then
+  begin
+    First := FMembersAdded;
+    FMembersAdded := Integer(FModels.Count);
+  end;
+  if FSubGroups.Count = 0 then
+    Exit;
+  for I := First to Integer(FModels.Count) - 1 do
+  begin
+    Model := TLandrixXmlXsdContentModel(FModels[I]);
+    for J := 0 to Model.LeafCount - 1 do
+    begin
+      Leaf := Model.Leaves[J];
+      if (Leaf.Kind = xpkElement) and TLandrixXmlXsdElementDecl(Leaf.Decl).Global then
+      begin
+        Group := GroupOf(TLandrixXmlXsdElementDecl(Leaf.Decl));
+        if Group <> nil then
+        begin
+          if Extra then
+            List := Group.Extra
+          else
+            List := Group.Members;
+          for K := 0 to Integer(List.Count) - 1 do
+          begin
+            M := TLandrixXmlXsdElementDecl(List[K]);
+            Leaf.AddSubstitute(M.NamespaceUri, M.Name, M);
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
+{ e-props-correct.4: the type of a substitution group member is derived
+  from that of its head, without the derivations the head's final
+  excludes }
+procedure TLoader.CheckSubstitution(Check: TElementValueCheck);
+var
+  D, H: TLandrixXmlXsdElementDecl;
+begin
+  D := Check.Decl;
+  H := D.SubstitutionGroup;
+  if (H <> nil) and not FSet.TypeDerivationOk(D.SimpleType, D.ComplexType, H.SimpleType, H.ComplexType,
+    H.Final) then
+    FailCheck(Check.Doc.FileName, Check.Node, 'e-props-correct.4', 'the type of element ' + Esc(D.Name) +
+      ' is not validly derived from the type of its substitution group head ' +
+      QualifiedText(H.NamespaceUri, H.Name));
+end;
+
+{ e-props-correct.2, .4 and .5 in Xerces' order; Xerces never marks a
+  complex type as having an ID content (containsTypeID is never set), so
+  only simple types count }
 procedure TLoader.CheckElementValue(Check: TElementValueCheck);
 var
   D: TLandrixXmlXsdElementDecl;
@@ -3484,6 +3800,11 @@ var
   Error: TLandrixXmlXsdError;
 begin
   D := Check.Decl;
+  if D.ValueConstraint = xvcNone then
+  begin
+    CheckSubstitution(Check);
+    Exit;
+  end;
   T := D.SimpleType;
   Valid := True;
   if T = nil then
@@ -3510,6 +3831,7 @@ begin
   if not Valid then
     FailCheck(Check.Doc.FileName, Check.Node, 'e-props-correct.2', 'the value ' + Esc(D.ConstraintValue) +
       ' of element ' + Esc(D.Name) + ' is not valid for its type');
+  CheckSubstitution(Check);
   { Xerces deviation: stE072. A union with an ID member counts as ID }
   if (D.SimpleType <> nil) and D.SimpleType.IsIdType then
     FailCheck(Check.Doc.FileName, Check.Node, 'e-props-correct.5', 'element ' + Esc(D.Name) +
@@ -3518,24 +3840,37 @@ end;
 
 { cos-element-consistent: elements of the same name in one content model
   have the same type (the declarations of a type's particle, groups
-  included, not the content of the elements) }
+  included, and the substitution groups of global ones; not the content
+  of the elements) }
 procedure TLoader.CheckElementsConsistent(Doc: TSchemaDoc; Node: TLandrixXmlNode; Particle: TLandrixXmlXsdParticle;
   Seen: TLandrixXmlXsdNameMap);
 var
-  I: Integer;
+  I, J: Integer;
   D, Other: TLandrixXmlXsdElementDecl;
+  Group: TSubstitutionGroup;
 begin
   if Particle = nil then
     Exit;
   if Particle.Kind = xpkElement then
   begin
-    D := TLandrixXmlXsdElementDecl(Particle.Decl);
-    Other := TLandrixXmlXsdElementDecl(Seen.Find(D.NamespaceUri, D.Name));
-    if Other = nil then
-      Seen.Add(D.NamespaceUri, D.Name, D)
-    else if (Other <> D) and ((Other.SimpleType <> D.SimpleType) or (Other.ComplexType <> D.ComplexType)) then
-      FailCheck(Doc.FileName, Node, 'cos-element-consistent', 'the content model has elements ' +
-        QualifiedText(D.NamespaceUri, D.Name) + ' with different types');
+    Group := nil;
+    if TLandrixXmlXsdElementDecl(Particle.Decl).Global then
+      Group := GroupOf(TLandrixXmlXsdElementDecl(Particle.Decl));
+    J := -1;
+    while (J < 0) or ((Group <> nil) and (J < Integer(Group.Members.Count))) do
+    begin
+      if J < 0 then
+        D := TLandrixXmlXsdElementDecl(Particle.Decl)
+      else
+        D := TLandrixXmlXsdElementDecl(Group.Members[J]);
+      Other := TLandrixXmlXsdElementDecl(Seen.Find(D.NamespaceUri, D.Name));
+      if Other = nil then
+        Seen.Add(D.NamespaceUri, D.Name, D)
+      else if (Other <> D) and ((Other.SimpleType <> D.SimpleType) or (Other.ComplexType <> D.ComplexType)) then
+        FailCheck(Doc.FileName, Node, 'cos-element-consistent', 'the content model has elements ' +
+          QualifiedText(D.NamespaceUri, D.Name) + ' with different types');
+      Inc(J);
+    end;
     Exit;
   end;
   for I := 0 to Particle.ChildCount - 1 do
@@ -3816,12 +4151,13 @@ end;
 { Xerces' checkRecurse: the particles in order, each restricting the
   next particle of the base it can; the base particles skipped and left
   over must be emptiable }
-function TLoader.RecurseOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+function TLoader.RecurseOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; DSub, BSub: Boolean;
   out Code: string): Boolean;
 var
   I, J, Current: Integer;
   Sub: string;
   B: TLandrixXmlXsdParticle;
+  Expanded: Boolean;
 begin
   Result := False;
   if not OccursWithin(DMin, DMax, BMin, BMax) then
@@ -3838,7 +4174,7 @@ begin
     begin
       B := TLandrixXmlXsdParticle(BChildren[J]);
       Inc(Current);
-      if ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), B, True, Sub) then
+      if ParticleRestrictsSub(TLandrixXmlXsdParticle(DChildren[I]), B, True, DSub, BSub, Sub, Expanded) then
         Break;
       if not Emptiable(B) then
         Exit;
@@ -3855,12 +4191,14 @@ begin
 end;
 
 { Xerces' checkRecurseLax: the particles in order, each restricting one
-  of the next particles of the base }
-function TLoader.RecurseLaxOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+  of the next particles of the base; a base particle that was expanded
+  into its substitution group can take the next particle too }
+function TLoader.RecurseLaxOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; DSub, BSub: Boolean;
   out Code: string): Boolean;
 var
   I, J, Current: Integer;
   Sub: string;
+  Expanded: Boolean;
 begin
   Result := False;
   if not OccursWithin(DMin, DMax, BMin, BMax) then
@@ -3876,9 +4214,13 @@ begin
     while J < Integer(BChildren.Count) do
     begin
       Inc(Current);
-      if ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), TLandrixXmlXsdParticle(BChildren[J]), True,
-        Sub) then
+      if ParticleRestrictsSub(TLandrixXmlXsdParticle(DChildren[I]), TLandrixXmlXsdParticle(BChildren[J]), True,
+        DSub, BSub, Sub, Expanded) then
+      begin
+        if Expanded then
+          Dec(Current);
         Break;
+      end;
       Inc(J);
     end;
     if J >= Integer(BChildren.Count) then
@@ -3890,12 +4232,12 @@ end;
 
 { Xerces' checkMapAndSum: a sequence restricting a choice, each particle
   restricting one of the choice }
-function TLoader.MapAndSumOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
+function TLoader.MapAndSumOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64; DSub, BSub: Boolean;
   out Code: string): Boolean;
 var
   I, J: Integer;
   Sub: string;
-  Found: Boolean;
+  Found, Expanded: Boolean;
 begin
   Result := False;
   if not OccursWithin(DMin, DMax, BMin, BMax) then
@@ -3907,8 +4249,8 @@ begin
   begin
     Found := False;
     for J := 0 to Integer(BChildren.Count) - 1 do
-      if not Found and ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), TLandrixXmlXsdParticle(BChildren[J]),
-        True, Sub) then
+      if not Found and ParticleRestrictsSub(TLandrixXmlXsdParticle(DChildren[I]),
+        TLandrixXmlXsdParticle(BChildren[J]), True, DSub, BSub, Sub, Expanded) then
         Found := True;
     if not Found then
     begin
@@ -3924,10 +4266,11 @@ end;
   wildcard particle W; the particles are checked without the occurrence
   ranges of the wildcard }
 function TLoader.NSRecurseCheckCardinalityOk(DChildren: TList; DMin, DMax: Int64; W: TLandrixXmlXsdParticle;
-  CheckWildcardOccurs: Boolean; out Code: string): Boolean;
+  CheckWildcardOccurs, DSub: Boolean; out Code: string): Boolean;
 var
   I: Integer;
   Sub: string;
+  Expanded: Boolean;
 begin
   Result := False;
   if CheckWildcardOccurs and not OccursWithin(DMin, DMax, W.MinOccurs, W.MaxOccurs) then
@@ -3936,7 +4279,7 @@ begin
     Exit;
   end;
   for I := 0 to Integer(DChildren.Count) - 1 do
-    if not ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), W, False, Sub) then
+    if not ParticleRestrictsSub(TLandrixXmlXsdParticle(DChildren[I]), W, False, DSub, False, Sub, Expanded) then
     begin
       Code := 'rcase-NSRecurseCheckCardinality.1';
       Exit;
@@ -3950,12 +4293,12 @@ end;
   (one already taken is skipped, as Xerces swallows that error); the
   base particles left over must be emptiable }
 function TLoader.RecurseUnorderedOk(DChildren, BChildren: TList; DMin, DMax, BMin, BMax: Int64;
-  out Code: string): Boolean;
+  DSub, BSub: Boolean; out Code: string): Boolean;
 var
   I, J: Integer;
   Sub: string;
   Found: array of Boolean;
-  Matched: Boolean;
+  Matched, Expanded: Boolean;
 begin
   Result := False;
   if not OccursWithin(DMin, DMax, BMin, BMax) then
@@ -3974,8 +4317,8 @@ begin
     J := 0;
     while not Matched and (J < Integer(BChildren.Count)) do
     begin
-      if ParticleRestricts(TLandrixXmlXsdParticle(DChildren[I]), TLandrixXmlXsdParticle(BChildren[J]), True,
-        Sub) then
+      if ParticleRestrictsSub(TLandrixXmlXsdParticle(DChildren[I]), TLandrixXmlXsdParticle(BChildren[J]), True,
+        DSub, BSub, Sub, Expanded) then
       begin
         if not Found[J] then
         begin
@@ -3995,18 +4338,152 @@ begin
   Result := True;
 end;
 
-{ Xerces' particleValidRestriction (substitution groups are not
-  supported): True if D is a valid restriction of B, else Code is the
-  constraint Xerces reports }
+{ Xerces' particleValidRestriction: True if D is a valid restriction of
+  B, else Code is the constraint Xerces reports }
 function TLoader.ParticleRestricts(D, B: TLandrixXmlXsdParticle; CheckWildcardOccurs: Boolean;
   out Code: string): Boolean;
 var
+  Expanded: Boolean;
+begin
+  Result := ParticleRestrictsSub(D, B, CheckWildcardOccurs, True, True, Code, Expanded);
+end;
+
+{ the UTF-16 code units of the character at Index of the UTF-8 string S,
+  the first in the upper half, as one number (a character above U+FFFF
+  as its surrogate pair) }
+function Utf16Key(const S: TLandrixXmlUtf8; Index: Integer): Int64;
+var
+  B, Count, K: Integer;
+  Cp: Int64;
+begin
+  B := Ord(S[Index]);
+  if B < $80 then
+  begin
+    Cp := B;
+    Count := 0;
+  end
+  else if B < $E0 then
+  begin
+    Cp := B and $1F;
+    Count := 1;
+  end
+  else if B < $F0 then
+  begin
+    Cp := B and $0F;
+    Count := 2;
+  end
+  else
+  begin
+    Cp := B and $07;
+    Count := 3;
+  end;
+  for K := 1 to Count do
+    if Index + K <= Integer(Length(S)) then
+      Cp := (Cp shl 6) or (Ord(S[Index + K]) and $3F);
+  if Cp < $10000 then
+    Result := Cp shl 16
+  else
+    Result := (($D800 + ((Cp - $10000) shr 10)) shl 16) or ($DC00 + ((Cp - $10000) and $3FF));
+end;
+
+{ A before B in the order of Java's String.compareTo (UTF-16 code units),
+  which differs from the order of the UTF-8 bytes between characters
+  above U+FFFF and those from U+E000 to U+FFFF }
+function Utf16Before(const A, B: TLandrixXmlUtf8): Boolean;
+var
+  I, N: Integer;
+begin
+  N := Integer(Length(A));
+  if Integer(Length(B)) < N then
+    N := Integer(Length(B));
+  I := 1;
+  while (I <= N) and (A[I] = B[I]) do
+    Inc(I);
+  if I > N then
+    Result := Integer(Length(A)) < Integer(Length(B))
+  else
+  begin
+    { back to the first byte of the character that differs }
+    while (I > 1) and ((Ord(A[I]) and $C0) = $80) do
+      Dec(I);
+    Result := Utf16Key(A, I) < Utf16Key(B, I);
+  end;
+end;
+
+{ ascending by namespace, then by local name (Xerces'
+  ELEMENT_PARTICLE_COMPARATOR) }
+function ElementDeclBefore(A, B: TLandrixXmlXsdElementDecl): Boolean;
+begin
+  if A.NamespaceUri <> B.NamespaceUri then
+    Result := Utf16Before(A.NamespaceUri, B.NamespaceUri)
+  else
+    Result := Utf16Before(A.Name, B.Name);
+end;
+
+{ Xerces treats an element particle of a global declaration with a
+  non-empty substitution group as a choice of the members and the head,
+  each once, sorted by name: the particles of that choice (owned by the
+  list), nil if P is not expanded (Sub is False once the particle was
+  expanded at this level, as Xerces drops its handler) }
+function TLoader.ExpandedChildren(P: TLandrixXmlXsdParticle; Sub: Boolean): TList;
+var
+  Head, E: TLandrixXmlXsdElementDecl;
+  Group: TSubstitutionGroup;
+  Decls: TList;
+  I, J: Integer;
+begin
+  Result := nil;
+  if not Sub or (P.Kind <> xpkElement) then
+    Exit;
+  Head := TLandrixXmlXsdElementDecl(P.Decl);
+  if not Head.Global then
+    Exit;
+  Group := GroupOf(Head);
+  if (Group = nil) or (Group.Members.Count = 0) then
+    Exit;
+  Decls := TList.Create;
+  try
+    { the members, then the head, sorted (insertion sort, stable) }
+    for I := 0 to Integer(Group.Members.Count) do
+    begin
+      if I < Integer(Group.Members.Count) then
+        E := TLandrixXmlXsdElementDecl(Group.Members[I])
+      else
+        E := Head;
+      J := Integer(Decls.Count);
+      Decls.Add(E);
+      while (J > 0) and ElementDeclBefore(E, TLandrixXmlXsdElementDecl(Decls[J - 1])) do
+      begin
+        Decls[J] := Decls[J - 1];
+        Decls[J - 1] := E;
+        Dec(J);
+      end;
+    end;
+    Result := TObjectList.Create(True);
+    for I := 0 to Integer(Decls.Count) - 1 do
+    begin
+      E := TLandrixXmlXsdElementDecl(Decls[I]);
+      Result.Add(TLandrixXmlXsdParticle.CreateElement(E.NamespaceUri, E.Name, E, 1, 1));
+    end;
+  finally
+    Decls.Free;
+  end;
+end;
+
+{ particleValidRestriction with Xerces' substitution group handlers: DSub
+  and BSub are False once a particle on that side was expanded into its
+  substitution group; BExpanded tells whether B was }
+function TLoader.ParticleRestrictsSub(D, B: TLandrixXmlXsdParticle; CheckWildcardOccurs, DSub, BSub: Boolean;
+  out Code: string; out BExpanded: Boolean): Boolean;
+var
   DChildren, BChildren, Single: TList;
   DW, BW: TLandrixXmlXsdWildcard;
-  Count: Int64;
+  Count, DMin, DMax, BMin, BMax, DMinRange, DMaxRange: Int64;
+  DKind, BKind: TLandrixXmlXsdParticleKind;
 begin
   Result := False;
   Code := '';
+  BExpanded := False;
   if IsEmptyParticle(D) and not Emptiable(B) then
   begin
     Code := 'cos-particle-restrict.a';
@@ -4023,18 +4500,49 @@ begin
   BChildren := nil;
   Single := nil;
   try
+    DKind := D.Kind;
+    BKind := B.Kind;
+    DMin := D.MinOccurs;
+    DMax := D.MaxOccurs;
+    BMin := B.MinOccurs;
+    BMax := B.MaxOccurs;
     if not D.IsLeaf then
+    begin
       DChildren := PointlessChildrenRemoved(D);
+      DMinRange := MinRange(D);
+      DMaxRange := MaxRange(D);
+    end
+    else
+    begin
+      DChildren := ExpandedChildren(D, DSub);
+      DMinRange := DMin;
+      DMaxRange := DMax;
+      if DChildren <> nil then
+      begin
+        DKind := xpkChoice;
+        DSub := False;
+      end;
+    end;
     if not B.IsLeaf then
-      BChildren := PointlessChildrenRemoved(B);
-    case D.Kind of
+      BChildren := PointlessChildrenRemoved(B)
+    else
+    begin
+      BChildren := ExpandedChildren(B, BSub);
+      if BChildren <> nil then
+      begin
+        BKind := xpkChoice;
+        BSub := False;
+        BExpanded := True;
+      end;
+    end;
+    case DKind of
       xpkElement:
-        case B.Kind of
+        case BKind of
           xpkElement:
             Result := NameAndTypeOk(D, B, Code);
           xpkWildcard:
             begin
-              if CheckWildcardOccurs and not OccursWithin(D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs) then
+              if CheckWildcardOccurs and not OccursWithin(DMin, DMax, BMin, BMax) then
                 Code := 'rcase-NSCompat.2'
               else if not TLandrixXmlXsdWildcard(B.Decl).Allows(D.NamespaceUri) then
                 Code := 'rcase-NSCompat.1'
@@ -4048,13 +4556,13 @@ begin
             occurs once (XML Schema 1.1 allows it) }
           Single := TList.Create;
           Single.Add(D);
-          if B.Kind = xpkChoice then
-            Result := RecurseLaxOk(Single, BChildren, 1, 1, B.MinOccurs, B.MaxOccurs, Code)
+          if BKind = xpkChoice then
+            Result := RecurseLaxOk(Single, BChildren, 1, 1, BMin, BMax, DSub, BSub, Code)
           else
-            Result := RecurseOk(Single, BChildren, 1, 1, B.MinOccurs, B.MaxOccurs, Code);
+            Result := RecurseOk(Single, BChildren, 1, 1, BMin, BMax, DSub, BSub, Code);
         end;
       xpkWildcard:
-        if B.Kind <> xpkWildcard then
+        if BKind <> xpkWildcard then
           Code := 'cos-particle-restrict.2'
         else
         begin
@@ -4063,7 +4571,7 @@ begin
           { Xerces deviation: particlesHa080, particlesHa084. The
             occurrence range is compared also for a wildcard in a group
             restricting a wildcard, where the group's range counts }
-          if not OccursWithin(D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs) then
+          if not OccursWithin(DMin, DMax, BMin, BMax) then
             Code := 'rcase-NSSubset.2'
           else if not WildcardSubset(DW, BW) then
             Code := 'rcase-NSSubset.1'
@@ -4073,13 +4581,12 @@ begin
             Result := True;
         end;
       xpkChoice:
-        case B.Kind of
+        case BKind of
           xpkWildcard:
-            Result := NSRecurseCheckCardinalityOk(DChildren, MinRange(D), MaxRange(D), B, CheckWildcardOccurs,
+            Result := NSRecurseCheckCardinalityOk(DChildren, DMinRange, DMaxRange, B, CheckWildcardOccurs, DSub,
               Code);
           xpkChoice:
-            Result := RecurseLaxOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs,
-              Code);
+            Result := RecurseLaxOk(DChildren, BChildren, DMin, DMax, BMin, BMax, DSub, BSub, Code);
         else
           Code := 'cos-particle-restrict.2';
         end;
@@ -4087,35 +4594,34 @@ begin
         maxOccurs 0 stays an empty sequence, which cannot restrict an
         element }
       xpkSequence:
-        case B.Kind of
+        case BKind of
           xpkWildcard:
-            Result := NSRecurseCheckCardinalityOk(DChildren, MinRange(D), MaxRange(D), B, CheckWildcardOccurs,
+            Result := NSRecurseCheckCardinalityOk(DChildren, DMinRange, DMaxRange, B, CheckWildcardOccurs, DSub,
               Code);
           xpkSequence:
-            Result := RecurseOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs, Code);
+            Result := RecurseOk(DChildren, BChildren, DMin, DMax, BMin, BMax, DSub, BSub, Code);
           xpkAll:
-            Result := RecurseUnorderedOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs,
-              B.MaxOccurs, Code);
+            Result := RecurseUnorderedOk(DChildren, BChildren, DMin, DMax, BMin, BMax, DSub, BSub, Code);
           xpkChoice:
             begin
               Count := DChildren.Count;
-              if D.MaxOccurs = LandrixXmlXsdUnbounded then
-                Result := MapAndSumOk(DChildren, BChildren, D.MinOccurs * Count, LandrixXmlXsdUnbounded,
-                  B.MinOccurs, B.MaxOccurs, Code)
+              if DMax = LandrixXmlXsdUnbounded then
+                Result := MapAndSumOk(DChildren, BChildren, DMin * Count, LandrixXmlXsdUnbounded, BMin, BMax,
+                  DSub, BSub, Code)
               else
-                Result := MapAndSumOk(DChildren, BChildren, D.MinOccurs * Count, D.MaxOccurs * Count,
-                  B.MinOccurs, B.MaxOccurs, Code);
+                Result := MapAndSumOk(DChildren, BChildren, DMin * Count, DMax * Count, BMin, BMax, DSub, BSub,
+                  Code);
             end;
         else
           Code := 'cos-particle-restrict.2';
         end;
       xpkAll:
-        case B.Kind of
+        case BKind of
           xpkWildcard:
-            Result := NSRecurseCheckCardinalityOk(DChildren, MinRange(D), MaxRange(D), B, CheckWildcardOccurs,
+            Result := NSRecurseCheckCardinalityOk(DChildren, DMinRange, DMaxRange, B, CheckWildcardOccurs, DSub,
               Code);
           xpkAll:
-            Result := RecurseOk(DChildren, BChildren, D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs, Code);
+            Result := RecurseOk(DChildren, BChildren, DMin, DMax, BMin, BMax, DSub, BSub, Code);
         else
           Code := 'cos-particle-restrict.2';
         end;
@@ -4136,6 +4642,7 @@ var
   First, Second, Derived, Base: TLandrixXmlXsdParticle;
   Code: string;
 begin
+  AddSubstitutes(False);
   Saved := FCurrent;
   FCurrent := Check.Current;
   Derived := nil;
@@ -4280,6 +4787,8 @@ begin
     end;
     Inc(I);
   end;
+  BuildSubstitutionGroups;
+  AddSubstitutes(False);
   for I := 0 to Integer(FValueChecks.Count) - 1 do
     CheckElementValue(TElementValueCheck(FValueChecks[I]));
   for I := 0 to Integer(FFixups.Count) - 1 do
@@ -4311,6 +4820,8 @@ begin
     CheckType(TTypeCheck(FTypeChecks[I]));
     Inc(I);
   end;
+  AddSubstitutes(False);
+  AddSubstitutes(True);
 end;
 
 { ---------------------------------------------------------------------- }

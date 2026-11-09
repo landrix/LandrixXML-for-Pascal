@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <shape><v>1</v></shape>
+  <circle><v>x</v></circle>
+  <dot><v>2</v><w>z</w></dot>
+  <price>1.5</price>
+  <blocked xsi:type="Ext"><v>1</v></blocked>
+  <um>70000</um>
+  <ah/>
+</root>

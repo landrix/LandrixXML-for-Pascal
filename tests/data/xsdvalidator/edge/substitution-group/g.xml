@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <circle><v>1</v></circle>
+  <all><circle><v>1</v></circle><dot><v>2</v></dot></all>
+  <all><dot><v>1</v></dot></all>
+</root>

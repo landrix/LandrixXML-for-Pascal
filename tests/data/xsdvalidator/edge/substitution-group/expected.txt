@@ -1,0 +1,148 @@
+file a.xml
+error 3 10 cvc-elt.2 The value of {abstract} in the element declaration for 'shape' must be false.
+error 4 19 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 4 19 cvc-type.3.1.3 The value 'x' of element 'v' is not valid.
+error 5 19 cvc-complex-type.2.4.d Invalid content was found starting with element 'w'. No child element is expected at this point.
+error 6 21 cvc-datatype-valid.1.2.1 '1.5' is not a valid value for 'integer'.
+error 6 21 cvc-type.3.1.3 The value '1.5' of element 'price' is not valid.
+error 7 27 cvc-elt.4.3 Type 'Ext' is not validly derived from the type definition, 'Base', of element 'blocked'.
+error 8 17 cvc-maxInclusive-valid Value '70000' is not facet-valid with respect to maxInclusive '32767' for type 'short'.
+error 8 17 cvc-type.3.1.3 The value '70000' of element 'um' is not valid.
+error 9 8 cvc-elt.2 The value of {abstract} in the element declaration for 'ah' must be false.
+
+file b.xml
+error 4 7 cvc-complex-type.2.4.a Invalid content was found starting with element 'bx'. One of '{shape, item, blocked, nosub, th, uh, all, ah, end}' is expected.
+
+file c.xml
+error 4 8 cvc-complex-type.2.4.a Invalid content was found starting with element 'ns1'. One of '{shape, item, blocked, nosub, th, uh, all, ah, end}' is expected.
+
+file d.xml
+error 4 7 cvc-complex-type.2.4.a Invalid content was found starting with element 'tr'. One of '{shape, item, blocked, nosub, th, uh, all, ah, end}' is expected.
+
+file e.xml
+error 2 8 cvc-elt.2 The value of {abstract} in the element declaration for 'shape' must be false.
+
+file f.xml
+error 3 10 cvc-complex-type.2.4.a Invalid content was found starting with element 'price'. One of '{shape}' is expected.
+
+file g.xml
+error 4 38 cvc-complex-type.2.4.a Invalid content was found starting with element 'dot'. One of '{item}' is expected.
+error 5 8 cvc-complex-type.2.4.a Invalid content was found starting with element 'all'. One of '{ah, end}' is expected.
+error 5 33 cvc-complex-type.2.4.b The content of element 'all' is not complete. One of '{item}' is expected.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price unknown="1">7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 8 22 cvc-type.3.1.1 Element 'price' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v unknown="1">3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 5 23 cvc-type.3.1.1 Element 'v' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <square>7</square>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 8 11 cvc-complex-type.2.4.a Invalid content was found starting with element 'square'. One of '{item, blocked, nosub, th, uh, all, ah, end}' is expected.
+error 8 21 cvc-complex-type.2.3 Element 'square' cannot have character [children], because the type's content type is element-only.
+error 8 21 cvc-complex-type.2.4.b The content of element 'square' is not complete. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square/><price>3</price></all>\n  <end/>\n</root>\n
+error 15 17 cvc-complex-type.2.4.b The content of element 'square' is not complete. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th/>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 12 8 cvc-complex-type.2.4.b The content of element 'th' is not complete. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot unknown="1"><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 5 20 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'dot'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  \n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  \n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v>  a  b  </th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 12 28 cvc-complex-type.2.3 Element 'th' cannot have character [children], because the type's content type is element-only.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br/>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 10 8 cvc-complex-type.2.4.b The content of element 'br' is not complete. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v unknown="1">5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 15 31 cvc-type.3.1.1 Element 'v' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <um>1.5</um>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 7 15 cvc-datatype-valid.1.2.1 '1.5' is not a valid value for 'integer'.
+error 7 15 cvc-type.3.1.3 The value '1.5' of element 'um' is not valid.
+error 8 10 cvc-complex-type.2.4.a Invalid content was found starting with element 'price'. One of '{uh, all, ah, end}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot/>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 5 9 cvc-complex-type.2.4.b The content of element 'dot' is not complete. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub unknown="1">a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 11 22 cvc-type.3.1.1 Element 'nosub' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v>1.005</square><price>3</price></all>\n  <end/>\n</root>\n
+error 15 38 cvc-complex-type.2.3 Element 'square' cannot have character [children], because the type's content type is element-only.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  \n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price></price></all>\n  <end/>\n</root>\n
+error 15 48 cvc-datatype-valid.1.2.1 '' is not a valid value for 'integer'.
+error 15 48 cvc-type.3.1.3 The value '' of element 'price' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  \n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price unknown="1">3</price></all>\n  <end/>\n</root>\n
+error 15 52 cvc-type.3.1.1 Element 'price' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  \n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <circle><v>1</v></circle><item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square><square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><w>x</w><v>2</v></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 4 14 cvc-complex-type.2.4.a Invalid content was found starting with element 'w'. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square unknown="1"><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 15 28 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'square'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>999999999</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item unknown="1">1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 7 21 cvc-type.3.1.1 Element 'item' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked><blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v unknown="1">2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 4 26 cvc-type.3.1.1 Element 'v' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 15 27 cvc-complex-type.2.4.a Invalid content was found starting with element 'v'. One of '{w}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <square>1.5</square>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 7 23 cvc-complex-type.2.3 Element 'square' cannot have character [children], because the type's content type is element-only.
+error 7 23 cvc-complex-type.2.4.b The content of element 'square' is not complete. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  \n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <square xsi:type="Ext"><v>4</v><w>y</w></square>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <end/><br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  \n</root>\n
+error 10 13 cvc-complex-type.2.4.d Invalid content was found starting with element 'br'. No child element is expected at this point.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v unknown="1">1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 3 26 cvc-type.3.1.1 Element 'v' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 4 14 cvc-complex-type.2.4.a Invalid content was found starting with element 'w'. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um unknown="1">5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 14 19 cvc-type.3.1.1 Element 'um' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <blocked>a</blocked>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 11 23 cvc-complex-type.2.3 Element 'blocked' cannot have character [children], because the type's content type is element-only.
+error 11 23 cvc-complex-type.2.4.b The content of element 'blocked' is not complete. One of '{v}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <item>1.5</item><square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>\n  \n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 4 27 cvc-complex-type.2.4.a Invalid content was found starting with element 'square'. One of '{item, blocked, nosub, th, uh, all, ah, end}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <circle><v>1</v></circle>\n  <square><v>2</v><w>x</w></square>\n  <dot><v>3</v></dot>\n  <circle xsi:type="Ext"><v>4</v><v>4</v><w>y</w></circle>\n  <item>1.5</item>\n  <price>7</price>\n  <blocked><v>1</v></blocked>\n  <br><v>2</v></br>\n  <nosub>a</nosub>\n  <th><v>1</v></th>\n  <uh>2000-01-01</uh>\n  <um>5</um>\n  <all><square><v>5</v></square><price>3</price></all>\n  <end/>\n</root>\n
+error 6 37 cvc-complex-type.2.4.a Invalid content was found starting with element 'v'. One of '{w}' is expected.

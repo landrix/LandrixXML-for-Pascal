@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <circle><v>1</v></circle>
+  <square><v>2</v><w>x</w></square>
+  <dot><v>3</v></dot>
+  <circle xsi:type="Ext"><v>4</v><w>y</w></circle>
+  <item>1.5</item>
+  <price>7</price>
+  <blocked><v>1</v></blocked>
+  <br><v>2</v></br>
+  <nosub>a</nosub>
+  <th><v>1</v></th>
+  <uh>2000-01-01</uh>
+  <um>5</um>
+  <all><square><v>5</v></square><price>3</price></all>
+  <end/>
+</root>

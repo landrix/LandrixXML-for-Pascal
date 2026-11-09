@@ -346,8 +346,8 @@ begin
   CheckLoadError('<xs:simpleType name="l"><xs:list itemType="xs:int"/></xs:simpleType>' +
     '<xs:simpleType name="ll"><xs:list itemType="l"/></xs:simpleType>', xecSchema, 'a list of lists');
   CheckLoadError('<xs:element name="r" type="xs:ENTITIES"/>', xecUnsupported, 'xs:ENTITIES');
-  CheckLoadError('<xs:element name="h"/><xs:element name="r" substitutionGroup="h"/>', xecUnsupported,
-    'substitution group');
+  CheckLoadError('<xs:element name="h" substitutionGroup="r"/><xs:element name="r" substitutionGroup="h"/>',
+    xecSchema, 'circular substitution group');
   CheckLoadError('<xs:element name="r" type="xs:duration"/>', xecUnsupported, 'xs:duration');
   CheckLoadError('<xs:element name="r" type="missing"/>', xecSchema, 'unknown type');
   CheckLoadError('<xs:element name="r"/><xs:element name="r"/>', xecSchema, 'duplicate element');

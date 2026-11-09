@@ -1,0 +1,2590 @@
+C(c{0,1} C(C(c{1,3} y{0,2}){0,1} S(y x{2,u} b{0,1}){2,3} C(a{1,u} x{0,1}){1,u}){0,1} S(a C(c x{0,1} y){0,u})){0,2}	#upa	cos-nonambig:c|c
+C(S(y{0,1} S(c)){1,u} S(a{0,3} c{1,3} S(c){0,1}) S(a S(a{0,u}){2,3} C(b{1,3} y b{0,3}){0,2})){1,3}	#upa	cos-nonambig:y|a
+C(C(b{0,1}) S(S(b){1,u} C(x{0,3}){0,u}){1,u})	#upa	cos-nonambig:b|b
+S(b{0,1})	w,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(b{0,1})	x,w,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+S(b{0,1})		
+S(b{0,1})	b	
+S(b{0,1})		
+S(b{0,1})	b	
+S(b{0,1})	b	
+S(b{0,1})	b	
+S(S(x{0,3} S(c{0,3}){0,3} b{2,3})){0,1}	x,x,x,c,b,w,w	
+S(S(x{0,3} S(c{0,3}){0,3} b{2,3})){0,1}	c,c,c,b,b,b	
+S(S(x{0,3} S(c{0,3}){0,3} b{2,3})){0,1}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{x, c, b}' is expected.
+S(S(x{0,3} S(c{0,3}){0,3} b{2,3})){0,1}		
+S(S(x{0,3} S(c{0,3}){0,3} b{2,3})){0,1}	c	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, b}' is expected.
+S(S(x{0,3} S(c{0,3}){0,3} b{2,3})){0,1}		
+S(S(x{0,3} S(c{0,3}){0,3} b{2,3})){0,1}	x,c,c,b,w,w	
+S(S(x{0,3} S(c{0,3}){0,3} b{2,3})){0,1}	w,w	
+S(y S(S(y a{0,1} b) C(a{0,1}){1,3} C(x c{2,3} y){2,u}){0,1})	#upa	cos-nonambig:a|x
+C(S(x{2,3} a{2,3} c{0,1}) c{2,3})	#upa	cos-nonambig:x|a
+C(S(C(b){1,3}) C(x{0,1} S(a y y){0,1}){0,3} S(S(a{1,3} a{0,3} c){0,1} a c){2,u})	#upa	cos-nonambig:x|a
+C(S(x{0,1} S(c b{0,1}){0,u} c){0,3} C(x{0,1} x){0,u}){1,3}	#upa	cos-nonambig:x|x
+S(b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+S(b)	w	
+S(b)	w	
+S(b)	w	
+S(b)	w	
+S(b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(b)	b	
+S(b)	w	
+C(C(c{2,3}){1,u}){0,2}	c,c,c,c,c,c,c,c,c,c,c	
+C(C(c{2,3}){1,u}){0,2}	x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+C(C(c{2,3}){1,u}){0,2}	c,c,c,c,c,c,c,c,c	
+C(C(c{2,3}){1,u}){0,2}		
+C(C(c{2,3}){1,u}){0,2}	c,c,c,c,c,c,c,c,c	
+C(C(c{2,3}){1,u}){0,2}		
+C(C(c{2,3}){1,u}){0,2}	c,c,c,c,c,c,c	
+C(C(c{2,3}){1,u}){0,2}	c,c,c,c,c,c,c,c,c,c,c,c	
+S(S(S(b{0,1}){0,1}))	w	
+S(S(S(b{0,1}){0,1}))		
+S(S(S(b{0,1}){0,1}))	w	
+S(S(S(b{0,1}){0,1}))	w	
+S(S(S(b{0,1}){0,1}))		
+S(S(S(b{0,1}){0,1}))	w	
+S(S(S(b{0,1}){0,1}))	a,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+S(S(S(b{0,1}){0,1}))		
+S(x{0,1} S(S(x x{0,1} b{0,1}){1,3}) a{2,u}){2,3}	#upa	cos-nonambig:x|x
+C(C(C(b c{3,3} c)){0,2}){1,3}	#upa	cos-nonambig:c|c
+S(a)	a,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(a)	y	
+S(a)	a,z	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'z'. No child element is expected at this point.
+S(a)	c,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+S(a)	z,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(a)	a	
+S(a)	e,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+S(a)	x	
+C(x{0,u} b)	w	
+C(x{0,u} b)	w	
+C(x{0,u} b)	x,x	
+C(x{0,u} b)	x	
+C(x{0,u} b)	w	
+C(x{0,u} b)	z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{x, b}' is expected.
+C(x{0,u} b)	b,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+C(x{0,u} b)	x	
+C(S(c S(c a{0,1} a)){1,u} C(C(x b{0,1} c{3,3}){3,3}){0,3} C(c{0,3} S(x{3,3} c{3,3})){3,3}){3,3}	#upa	cos-nonambig:c|c
+C(b C(S(a{0,u} a{0,u} y){0,2} c x{0,2}){1,3}){0,1}	#upa	cos-nonambig:a|a
+S(x{3,3} b)	x,x,b,x	2:cvc-complex-type.2.4.g:Invalid content was found starting with element 'b'. 'x' is expected to occur a minimum of '3' times in the current sequence. One more instance is required to satisfy this constraint.
+S(x{3,3} b)	x,x,x,w	
+S(x{3,3} b)	x,x,x,x,b	3:cvc-complex-type.2.4.e:'x' can occur a maximum of '3' times in the current sequence. This limit was exceeded. At this point one of '{b}' is expected.
+S(x{3,3} b)	x,x,x	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+S(x{3,3} b)	x,x,x,w	
+S(x{3,3} b)	x,x,x,b	
+S(x{3,3} b)	x,x,x,b	
+S(x{3,3} b)	x,x,x,b	
+S(C(C(b{0,3}){2,3} S(y{2,3}){0,1}){2,u})	w,w,z,z	
+S(C(C(b{0,3}){2,3} S(y{2,3}){0,1}){2,u})	d,y,y,z,y,z,b,b,w,w,w,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b, y}' is expected.
+S(C(C(b{0,3}){2,3} S(y{2,3}){0,1}){2,u})	y,y,b,w,e,b,w,b,b	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, y}' is expected.
+S(C(C(b{0,3}){2,3} S(y{2,3}){0,1}){2,u})	b,b	
+S(C(C(b{0,3}){2,3} S(y{2,3}){0,1}){2,u})	w,w,w,b,b,w,w,z,y,z,a,w	10:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, y}' is expected.
+S(C(C(b{0,3}){2,3} S(y{2,3}){0,1}){2,u})	w,b,b,w,w,b,w,b,y,z,z	
+S(C(C(b{0,3}){2,3} S(y{2,3}){0,1}){2,u})	w,b,w,w,w,w,y,y	
+S(C(C(b{0,3}){2,3} S(y{2,3}){0,1}){2,u})	y,y,z,z,z	
+S(c)	c	
+S(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c)	c	
+S(c)	c	
+S(c)	c	
+S(c)	c,c,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c)	w,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c}' is expected.
+S(c{0,1} x y{0,3})	x	
+S(c{0,1} x y{0,3})	x,z	
+S(c{0,1} x y{0,3})	c,x,z,z	
+S(c{0,1} x y{0,3})	x,z,y	
+S(c{0,1} x y{0,3})	x,y	
+S(c{0,1} x y{0,3})	x,z,y	
+S(c{0,1} x y{0,3})	x	
+S(c{0,1} x y{0,3})	y,x,c,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c, x}' is expected.
+S(c)	c	
+S(c)	c	
+S(c)	c	
+S(c)	x,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+S(c)	c	
+S(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c)	c	
+S(c)	c,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(b{0,1} C(C(b){1,3} y c{3,3}){0,1})	#upa	cos-nonambig:b|b
+S(a x{0,u}){0,u}	#upa	cos-nonambig:a|x
+S(y{0,u} S(S(x y{3,3} y){0,1}){0,1})	z,x,y,z,z,y	
+S(y{0,u} S(S(x y{3,3} y){0,1}){0,1})	z	
+S(y{0,u} S(S(x y{3,3} y){0,1}){0,1})	x,z,y,z,z	
+S(y{0,u} S(S(x y{3,3} y){0,1}){0,1})	z	
+S(y{0,u} S(S(x y{3,3} y){0,1}){0,1})	z	
+S(y{0,u} S(S(x y{3,3} y){0,1}){0,1})	x,y,y,y,z	
+S(y{0,u} S(S(x y{3,3} y){0,1}){0,1})	z,y	
+S(y{0,u} S(S(x y{3,3} y){0,1}){0,1})	y,y	
+S(x x S(b S(b{0,u}){0,1} C(a{0,u}){0,2}))	b,x,x,b,w,x,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{x}' is expected.
+S(x x S(b S(b{0,u}){0,1} C(a{0,u}){0,2}))	x,x,b,w,a	
+S(x x S(b S(b{0,u}){0,1} C(a{0,u}){0,2}))	x,x,b,w,a,b,a	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(x x S(b S(b{0,u}){0,1} C(a{0,u}){0,2}))	x,x,w,a	
+S(x x S(b S(b{0,u}){0,1} C(a{0,u}){0,2}))	x,x,w	
+S(x x S(b S(b{0,u}){0,1} C(a{0,u}){0,2}))	x,x,b,a,y	
+S(x x S(b S(b{0,u}){0,1} C(a{0,u}){0,2}))	x,x,w,b,w	
+S(x x S(b S(b{0,u}){0,1} C(a{0,u}){0,2}))	x,x,w	
+S(x S(C(y{3,3} c a{0,1}){0,2} C(a{1,3})){3,3}){0,u}	#upa	cos-nonambig:x|a
+C(C(C(a{0,1}){2,3} x{0,2}){0,3} y{3,3})	#upa	cos-nonambig:a|x
+S(y{2,3})	z,z	
+S(y{2,3})	a,z,y,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+S(y{2,3})	b,z,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+S(y{2,3})	y,y	
+S(y{2,3})	z,y	
+S(y{2,3})	z,z,a,y	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+S(y{2,3})	y,z	
+S(y{2,3})	z,z	
+S(x a){2,u}	x,z,x,y	
+S(x a){2,u}	x,w,x,x,x,x,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{a}' is expected.
+S(x a){2,u}	x,y,x,y,x,a	
+S(x a){2,u}	x,x,x,a,x,a	
+S(x a){2,u}	x,a,x,z	
+S(x a){2,u}	x,y,c,x,a,f,x,a,x,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+S(x a){2,u}	x,x,d,x,x,x,x,x,x,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{x}' is expected.
+S(x a){2,u}	x,a,x,x	
+C(y{0,1} S(x b{2,3} S(y{2,u} c{0,2} y){2,3}){1,u})	#upa	cos-nonambig:y|y
+S(C(b{0,u} S(y{0,1} a{0,2} y)) b{2,u} c{3,3})	#upa	cos-nonambig:b|b
+C(b){3,3}	b,b,b	
+C(b){3,3}	w,w,b	
+C(b){3,3}	w,b,w	
+C(b){3,3}	w,w,w	
+C(b){3,3}	w,w,w,w	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(b){3,3}	w,w,b	
+C(b){3,3}	w,w,w	
+C(b){3,3}	b,w,w	
+S(c{0,1} x)	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, x}' is expected.
+S(c{0,1} x)	c,x	
+S(c{0,1} x)	x	
+S(c{0,1} x)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, x}' is expected.
+S(c{0,1} x)	x	
+S(c{0,1} x)	c,x	
+S(c{0,1} x)	x	
+S(c{0,1} x)	c,c,x	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+C(c{2,u}){2,3}	c,c,c,c,c,c,c,c,c	
+C(c{2,u}){2,3}	c,c,c,c,c,c,c,c,c,c	
+C(c{2,u}){2,3}	c,c,c,z,c,c,c,c,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{c}' is expected.
+C(c{2,u}){2,3}	c,c,c,c,c,c,c,c,c	
+C(c{2,u}){2,3}	c,c,c,c,c,c,c	
+C(c{2,u}){2,3}	c,c,c,c,c,c	
+C(c{2,u}){2,3}	c,c,c,c,c,c,c,c,c	
+C(c{2,u}){2,3}	c,c,c,c,c,c,c,c	
+S(S(S(a{1,3} x{2,3} x{1,3}) S(c{0,1}){2,3} b{0,1}) b{1,u} b{3,3}){0,1}	#upa	cos-nonambig:a|x
+C(C(C(x{0,1}){0,1} b{0,1}){0,1} x C(C(a{0,1} y{0,3}){0,u} y)){0,1}	#upa	cos-nonambig:x|x
+S(y){0,u}	y,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+S(y){0,u}		
+S(y){0,u}	d,y,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+S(y){0,u}	z	
+S(y){0,u}	z	
+S(y){0,u}		
+S(y){0,u}	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+S(y){0,u}	z,z,z	
+C(y{2,u} y{1,u} b{1,u}){0,3}	#upa	cos-nonambig:y|y
+S(C(C(x) x{0,1}){1,u} C(y C(b{0,1}){2,3}) a{3,3}){0,2}	#upa	cos-nonambig:x|x
+S(y a{1,u})	z,a,a	
+S(y a{1,u})	z,a,a	
+S(y a{1,u})	z,a,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+S(y a{1,u})	y,a,a	
+S(y a{1,u})	z,f,z,x,x,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+S(y a{1,u})	y,z,a	
+S(y a{1,u})	z,y,x,y	
+S(y a{1,u})	y,z,a,a	
+S(c a{2,3} S(S(c){0,1} c{0,3} a{0,3})){2,u}	#upa	cos-nonambig:c|c
+C(x{0,u} S(x{0,1} c{0,1} x){1,u} C(y b{0,1}){0,3}){1,u}	#upa	cos-nonambig:x|x
+S(x c{0,2} S(C(y{1,3}){2,3} S(y{2,u} c{1,3})))	#upa	cos-nonambig:y|y
+C(C(c{0,1} S(c{1,u} b)) x)	#upa	cos-nonambig:c|c
+C(c{0,3} S(c c){0,2})	#upa	cos-nonambig:c|c
+C(S(S(y) S(y{0,1} y{2,3} y{3,3}){2,u} c{0,1}){0,u})	#upa	cos-nonambig:y|y
+S(C(a{0,1} C(b{0,2}){0,2}))		
+S(C(a{0,1} C(b{0,2}){0,2}))		
+S(C(a{0,1} C(b{0,2}){0,2}))	a,w,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+S(C(a{0,1} C(b{0,2}){0,2}))		
+S(C(a{0,1} C(b{0,2}){0,2}))	b,b	
+S(C(a{0,1} C(b{0,2}){0,2}))		
+S(C(a{0,1} C(b{0,2}){0,2}))	w,b,b	
+S(C(a{0,1} C(b{0,2}){0,2}))	a	
+S(c{0,u} a{2,u} C(b C(c{0,2} y{2,3} y){2,3} C(b{0,1} y){2,3}))	#upa	cos-nonambig:a|y
+S(y{2,u} y){1,3}	#upa	cos-nonambig:y|y
+S(C(a){1,u} y)	#upa	cos-nonambig:a|y
+S(x x x{2,3})	x,x,e,x,x,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x}' is expected.
+S(x x x{2,3})	x,x,x,x,x	
+S(x x x{2,3})	x,x,x,x	
+S(x x x{2,3})	x,x,x,x,x	
+S(x x x{2,3})	x,x,x,x,x	
+S(x x x{2,3})	x,x,c,x,a,x,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+S(x x x{2,3})	x,x,x,x	
+S(x x x{2,3})	x,x,x,x	
+C(x{2,3} S(S(a{3,3} x b{3,3}){0,1} a))	#upa	cos-nonambig:x|a
+S(S(y{0,1}))		
+S(S(y{0,1}))		
+S(S(y{0,1}))	x,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y}' is expected.
+S(S(y{0,1}))	w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{y}' is expected.
+S(S(y{0,1}))	z	
+S(S(y{0,1}))		
+S(S(y{0,1}))	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+S(S(y{0,1}))		
+S(c C(b{0,1}){0,u} S(C(x{0,1} a{2,3}){2,3} b x{0,u}){2,3}){2,3}	#upa	cos-nonambig:b|b
+C(S(x S(c{1,u} x y)){3,3})	x,c,c,c,x,z,x,c,c,x,z,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(S(x S(c{1,u} x y)){3,3})	x,c,x,y,e,x,c,c,x,y,a,x	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x}' is expected.
+C(S(x S(c{1,u} x y)){3,3})	x,c,c,c,x,z,x,x,c,y,x,c	7:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+C(S(x S(c{1,u} x y)){3,3})	x,c,c,x,z,x,c,c,c,x,y,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(S(x S(c{1,u} x y)){3,3})	x,c,x,z,x,c,c,c,x,z,x,c	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, x}' is expected.
+C(S(x S(c{1,u} x y)){3,3})	x,c,c,x,z,x,c,x,z,x,c,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(S(x S(c{1,u} x y)){3,3})	x,c,x,z,x,c,c,x,y,x,c,c	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, x}' is expected.
+C(S(x S(c{1,u} x y)){3,3})	x,c,c,x,y,x,c,c,c,x,y,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(C(a{0,2}){0,1})	y,x,a,b	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(C(a{0,2}){0,1})	a	
+S(C(a{0,2}){0,1})	y,a,y,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(C(a{0,2}){0,1})		
+S(C(a{0,2}){0,1})		
+S(C(a{0,2}){0,1})	z,x,x	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+S(C(a{0,2}){0,1})	y,w	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{a}' is expected.
+S(C(a{0,2}){0,1})	z	
+C(S(C(c{0,2} b) C(b{1,3} a{2,3} b{3,3}){3,3} C(x c{2,u}){0,u}){0,1} S(S(x{0,1} a){2,3} S(x a{0,3} c{0,2}) b){0,2} S(S(b{1,u} x{1,3}){0,u}){1,u})	#upa	cos-nonambig:b|b
+S(y)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(y)	z,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(y)	z	
+S(y)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(y)	y,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+S(y)	y	
+S(y)	y	
+S(y)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(c{0,1} b{0,u} y)	x,d,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c, b, y}' is expected.
+C(c{0,1} b{0,u} y)	w,b	
+C(c{0,1} b{0,u} y)	b	
+C(c{0,1} b{0,u} y)	b	
+C(c{0,1} b{0,u} y)	z	
+C(c{0,1} b{0,u} y)		
+C(c{0,1} b{0,u} y)	y	
+C(c{0,1} b{0,u} y)	w,c,w	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+C(x S(S(x{0,3}) a{0,1}){0,3} x{0,u}){1,u}	#upa	cos-nonambig:x|x
+S(C(C(y{2,u} y{1,u} c{0,1}) b S(x{2,3} a){0,1}) C(b{0,1}){0,2} y{1,u})	#upa	cos-nonambig:y|y
+S(S(C(c{0,1} a{2,3} a{2,3}) x{1,3} x{0,2}) y{1,3} c{0,2})	#upa	cos-nonambig:a|a
+S(b{2,3} C(y{0,1} y{0,1} C(y{1,3})){0,1})	#upa	cos-nonambig:y|y
+C(c{2,u} y S(c{0,2}){1,3}){0,1}	#upa	cos-nonambig:c|c
+C(S(C(b{3,3} b{0,2}){0,1} x{3,3} C(a{2,3}){0,1}){0,1})	#upa	cos-nonambig:b|b
+C(C(C(x{0,1} a{3,3}) C(c{1,u} b{0,2} b{1,u}){3,3} b){0,3} c{0,1} c{0,1})	#upa	cos-nonambig:x|a
+C(S(b))	b	
+C(S(b))	b	
+C(S(b))	w	
+C(S(b))	w,w	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+C(S(b))	b	
+C(S(b))	b,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+C(S(b))	b	
+C(S(b))	w	
+S(c S(C(c y{0,u} x{0,1})){0,u})	c	
+S(c S(C(c y{0,u} x{0,1})){0,u})	c,c,z,y	
+S(c S(C(c y{0,u} x{0,1})){0,u})	x,c,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+S(c S(C(c y{0,u} x{0,1})){0,u})	c,x	
+S(c S(C(c y{0,u} x{0,1})){0,u})	c,c,c,c	
+S(c S(C(c y{0,u} x{0,1})){0,u})	c,x	
+S(c S(C(c y{0,u} x{0,1})){0,u})	c,c,c	
+S(c S(C(c y{0,u} x{0,1})){0,u})	c,c,c	
+S(C(c c{0,1}){1,3})	#upa	cos-nonambig:c|c
+S(a{1,u})	x,a,x	
+S(a{1,u})	a,z,a	
+S(a{1,u})	x,x,z,y	
+S(a{1,u})	a	
+S(a{1,u})	y,y,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+S(a{1,u})	z,z	
+S(a{1,u})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+S(a{1,u})	a	
+S(C(a{0,1}){1,u})	x	
+S(C(a{0,1}){1,u})		
+S(C(a{0,1}){1,u})	a	
+S(C(a{0,1}){1,u})	x,y	
+S(C(a{0,1}){1,u})	a,b,x,x	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(C(a{0,1}){1,u})	z	
+S(C(a{0,1}){1,u})	x	
+S(C(a{0,1}){1,u})	b,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+C(y{2,3} y{2,3}){0,1}	#upa	cos-nonambig:y|y
+S(c{2,u} C(a){0,1})	c,c,c,c,z	
+S(c{2,u} C(a){0,1})	c,c,c,z	
+S(c{2,u} C(a){0,1})	c,c,c,c,a	
+S(c{2,u} C(a){0,1})	a,c,c,c,c,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+S(c{2,u} C(a){0,1})	c,c,c,z	
+S(c{2,u} C(a){0,1})	c,c,c,c,a	
+S(c{2,u} C(a){0,1})	c,c,c,c,a	
+S(c{2,u} C(a){0,1})	c,c,c,c,c,x	
+S(a C(y{0,1}){3,3} C(C(c{0,1}) x{0,2} b{0,1}){0,2}){0,1}	z	
+S(a C(y{0,1}){3,3} C(C(c{0,1}) x{0,2} b{0,1}){0,2}){0,1}	y,y,y,z,w,x	
+S(a C(y{0,1}){3,3} C(C(c{0,1}) x{0,2} b{0,1}){0,2}){0,1}		
+S(a C(y{0,1}){3,3} C(C(c{0,1}) x{0,2} b{0,1}){0,2}){0,1}		
+S(a C(y{0,1}){3,3} C(C(c{0,1}) x{0,2} b{0,1}){0,2}){0,1}		
+S(a C(y{0,1}){3,3} C(C(c{0,1}) x{0,2} b{0,1}){0,2}){0,1}		
+S(a C(y{0,1}){3,3} C(C(c{0,1}) x{0,2} b{0,1}){0,2}){0,1}	z,y,b,y,y	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c, x, b}' is expected.
+S(a C(y{0,1}){3,3} C(C(c{0,1}) x{0,2} b{0,1}){0,2}){0,1}	y,y,y,c,c	
+S(a C(C(c{0,1} b{2,u}) C(a b{0,2}){0,1} S(b)) C(b{0,1} b{3,3}))	#upa	cos-nonambig:b|b
+S(b{0,3} y{1,3} b{0,3})	b,b,z,y,f	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y, b}' is expected.
+S(b{0,3} y{1,3} b{0,3})	b,y,b,w	
+S(b{0,3} y{1,3} b{0,3})	z,y	
+S(b{0,3} y{1,3} b{0,3})	b,y,y,z,w	
+S(b{0,3} y{1,3} b{0,3})	y,z	
+S(b{0,3} y{1,3} b{0,3})	b,a,y,y,z,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, y}' is expected.
+S(b{0,3} y{1,3} b{0,3})	y,y	
+S(b{0,3} y{1,3} b{0,3})	w,b,z,z,y,b,a	6:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+C(c{0,3} S(C(y{1,u}){3,3}) x){0,2}	c,z,y,y,y,y,y	
+C(c{0,3} S(C(y{1,u}){3,3}) x){0,2}		
+C(c{0,3} S(C(y{1,u}){3,3}) x){0,2}	c	
+C(c{0,3} S(C(y{1,u}){3,3}) x){0,2}	y,y,y,z,z	
+C(c{0,3} S(C(y{1,u}){3,3}) x){0,2}	c,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, y, x}' is expected.
+C(c{0,3} S(C(y{1,u}){3,3}) x){0,2}		
+C(c{0,3} S(C(y{1,u}){3,3}) x){0,2}	x,x	
+C(c{0,3} S(C(y{1,u}){3,3}) x){0,2}		
+C(C(S(c{0,2} c{2,3}) x S(c){0,2}){0,u} S(b{0,3} a{1,3}){1,u})	#upa	cos-nonambig:c|c
+C(S(y{0,1} y{0,3} C(y{1,u} c{1,3} x{0,1}){2,3})){1,3}	#upa	cos-nonambig:y|y
+C(a{0,u} x)	#upa	cos-nonambig:a|x
+S(a{0,u} C(C(y{0,2} x{0,2}){1,u}){1,3})	#upa	cos-nonambig:a|y
+C(x{0,2}){0,u}	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+C(x{0,2}){0,u}		
+C(x{0,2}){0,u}		
+C(x{0,2}){0,u}		
+C(x{0,2}){0,u}		
+C(x{0,2}){0,u}	d,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{x}' is expected.
+C(x{0,2}){0,u}	x,x	
+C(x{0,2}){0,u}	x,x	
+S(c{2,3})	c,c,c	
+S(c{2,3})	c,c,c	
+S(c{2,3})	c,c,c,c	3:cvc-complex-type.2.4.f:'c' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(c{2,3})	c,c,c	
+S(c{2,3})	c,c,z	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{c}' is expected.
+S(c{2,3})	c,c,c	
+S(c{2,3})	c,c,c,c,c	3:cvc-complex-type.2.4.f:'c' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(c{2,3})	c,c	
+C(S(C(y a) C(a c)){0,3} C(y{2,u} C(a{3,3} y{0,2}){1,u}){0,2} C(C(a{0,2} b{1,u})){2,u})	#upa	cos-nonambig:y|a
+S(C(C(y{0,1} c c{0,1})){0,3} y x{1,u}){1,3}	#upa	cos-nonambig:y|y
+S(C(y){0,1} c{2,u} S(c{3,3} C(b c))){0,1}	#upa	cos-nonambig:c|c
+S(S(y{0,3} C(y{0,3} a{0,1} a{0,1}) C(y x{0,u} c){0,u}) S(S(b{2,u} c{0,1}){2,u}){0,1} y{2,u})	#upa	cos-nonambig:y|y
+S(b C(S(c{0,1}){2,3}){0,1} c)	#upa	cos-nonambig:c|c
+C(b{0,1})	b	
+C(b{0,1})	b	
+C(b{0,1})	b	
+C(b{0,1})		
+C(b{0,1})	x,w,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+C(b{0,1})	c,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+C(b{0,1})	w	
+C(b{0,1})	b	
+C(C(b c{1,u} C(x)){0,1})	y,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{b, c, x}' is expected.
+C(C(b c{1,u} C(x)){0,1})		
+C(C(b c{1,u} C(x)){0,1})	x,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(C(b c{1,u} C(x)){0,1})	w	
+C(C(b c{1,u} C(x)){0,1})	c,c	
+C(C(b c{1,u} C(x)){0,1})	x	
+C(C(b c{1,u} C(x)){0,1})		
+C(C(b c{1,u} C(x)){0,1})		
+S(a{0,u} S(S(a{0,1}){2,3} S(c{1,3}){3,3}){0,2})	#upa	cos-nonambig:a|a
+S(C(S(c{2,u} y{1,3}){2,3} S(x{0,1}){3,3} y){0,1} x{0,2} c{2,u})	#upa	cos-nonambig:c|c
+C(y C(C(y x){0,2} S(c{1,3} x{2,3}){2,3}){0,2}){3,3}	#upa	cos-nonambig:y|y
+C(C(c{0,1} x){3,3} y y{0,u})	#upa	cos-nonambig:y|y
+C(C(c b{0,2} S(x{1,u}){1,u}))	x,x,x,x,x,x,x	
+C(C(c b{0,2} S(x{1,u}){1,u}))		
+C(C(c b{0,2} S(x{1,u}){1,u}))	b,w	
+C(C(c b{0,2} S(x{1,u}){1,u}))	c	
+C(C(c b{0,2} S(x{1,u}){1,u}))	c,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(C(c b{0,2} S(x{1,u}){1,u}))	x,x,x,x,x,x	
+C(C(c b{0,2} S(x{1,u}){1,u}))	x	
+C(C(c b{0,2} S(x{1,u}){1,u}))	c	
+C(S(S(y a{1,3}){1,u} S(y){0,1}){0,2})	#upa	cos-nonambig:y|a
+C(x{0,1} S(C(b{3,3} a{0,1} x){1,3} S(b{3,3})){0,1})	#upa	cos-nonambig:x|a
+C(S(b b{0,u}){0,1} C(a{0,2} c C(y y{2,3}){1,3}){2,u})	#upa	cos-nonambig:a|y
+C(c y{0,2} C(b{0,1} y{2,u})){2,3}	#upa	cos-nonambig:y|y
+C(a{1,3} C(a{0,1} c{0,3}) x{0,2})	#upa	cos-nonambig:a|a
+S(C(C(c x){1,3} y){0,1} c)	#upa	cos-nonambig:c|c
+C(C(C(a){0,1}){0,1} x{1,3})	#upa	cos-nonambig:a|x
+C(y{0,1})		
+C(y{0,1})	y,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+C(y{0,1})	z,y	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+C(y{0,1})		
+C(y{0,1})	z	
+C(y{0,1})	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+C(y{0,1})	z	
+C(y{0,1})		
+C(S(c{0,2}))	c,c	
+C(S(c{0,2}))	c,c,x	2:cvc-complex-type.2.4.f:'c' can occur a maximum of '2' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(S(c{0,2}))	b,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+C(S(c{0,2}))	c	
+C(S(c{0,2}))		
+C(S(c{0,2}))	c,d,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+C(S(c{0,2}))		
+C(S(c{0,2}))		
+S(c{2,u} x{1,3} S(S(c{0,1} a{0,u}){1,u} C(x)){0,1})	#upa	cos-nonambig:x|a
+S(c{1,u} S(x c){1,3})	c,c,x,x,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+S(c{1,u} S(x c){1,3})	c,c,x,c,x,c,x,c	
+S(c{1,u} S(x c){1,3})	y,c,c,c,x,c,a,x,c,x,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c}' is expected.
+S(c{1,u} S(x c){1,3})	c,c,x,c	
+S(c{1,u} S(x c){1,3})	c,c,w,x,c,c,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c, x}' is expected.
+S(c{1,u} S(x c){1,3})	c,c,c,c,x,c	
+S(c{1,u} S(x c){1,3})	c,c,c,c,x,c	
+S(c{1,u} S(x c){1,3})	e,c,c,x,c,x,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+C(y S(c{2,3} C(b{0,1} b{0,2} c){0,1} y{0,1}){1,3})	#upa	cos-nonambig:c|c
+S(S(b x{2,3} S(a{2,3}){0,1}){0,1}){0,1}	#upa	cos-nonambig:x|a
+S(C(b{0,3}){1,u} y)	z	
+S(C(b{0,3}){1,u} y)	b,b,w,w,z	
+S(C(b{0,3}){1,u} y)	w,b,z	
+S(C(b{0,3}){1,u} y)	w,y	
+S(C(b{0,3}){1,u} y)	b,b,z	
+S(C(b{0,3}){1,u} y)	w,w,z	
+S(C(b{0,3}){1,u} y)	b,w,z	
+S(C(b{0,3}){1,u} y)	a,w,b,b,w,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, y}' is expected.
+C(C(S(x{0,1} a{2,u} y)) x)	#upa	cos-nonambig:x|a
+S(y{0,1} c{1,u})	z,c	
+S(y{0,1} c{1,u})	z,c,c,c,c	
+S(y{0,1} c{1,u})	c,c	
+S(y{0,1} c{1,u})	c	
+S(y{0,1} c{1,u})	z,c	
+S(y{0,1} c{1,u})	y,b,c,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+S(y{0,1} c{1,u})	c,c,c	
+S(y{0,1} c{1,u})	y,c,c	
+C(y{3,3}){1,u}	z,z,z,z,y,y	
+C(y{3,3}){1,u}	z,z,z,y,z,y,y	7:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(y{3,3}){1,u}	z,y,y,z	4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(y{3,3}){1,u}	z,z,z,y,z,z	
+C(y{3,3}){1,u}	c,z,y,b,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+C(y{3,3}){1,u}	z,z,z	
+C(y{3,3}){1,u}	z,y,y,y,y,y,z,z,z	
+C(y{3,3}){1,u}	z,y,y	
+C(c b c{0,u})	#upa	cos-nonambig:c|c
+C(b{0,1})	b	
+C(b{0,1})	b	
+C(b{0,1})	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+C(b{0,1})	b	
+C(b{0,1})	d,f,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+C(b{0,1})		
+C(b{0,1})		
+C(b{0,1})	w	
+S(y x{1,u})	y,x,x	
+S(y x{1,u})	f,z,x,d,x,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+S(y x{1,u})	y,x,x,x	
+S(y x{1,u})	z,x,x,x,x	
+S(y x{1,u})	z,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{x}' is expected.
+S(y x{1,u})	z,x	
+S(y x{1,u})	c,x,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(y x{1,u})	z,x,x,x	
+C(b)	b	
+C(b)	w,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+C(b)	w,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(b)	f,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+C(b)	w	
+C(b)	b	
+C(b)	b	
+C(b)	w	
+C(x S(S(x)){0,2})	#upa	cos-nonambig:x|x
+C(c S(C(x c a{0,3}){2,3}){0,1} C(a{1,3} S(c c){2,3}))	#upa	cos-nonambig:c|c
+C(C(y))	z	
+C(C(y))		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(C(y))		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(C(y))	z	
+C(C(y))	y	
+C(C(y))	y,y	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+C(C(y))	a,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+C(C(y))	y,y	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+C(a{2,u} C(a S(y{1,u} b)) c{0,1}){0,2}	#upa	cos-nonambig:a|a
+C(C(C(x{0,1} a c{0,2}) c{0,1} S(a{1,u} a{0,1}))){2,u}	#upa	cos-nonambig:x|a
+S(c{2,u})	c	1:cvc-complex-type.2.4.i:The content of element 'r' is not complete. 'c' is expected to occur a minimum of '2' times. One more instance is required to satisfy this constraint.
+S(c{2,u})	c,c	
+S(c{2,u})	c,b,c,c,a	1:cvc-complex-type.2.4.g:Invalid content was found starting with element 'b'. 'c' is expected to occur a minimum of '2' times in the current sequence. One more instance is required to satisfy this constraint.
+S(c{2,u})	c,c,c,c	
+S(c{2,u})	c,c,c	
+S(c{2,u})	c,c,c	
+S(c{2,u})	c,c,c,c	
+S(c{2,u})	c,c,c	
+C(C(C(x{0,1} b x){0,1} S(b{1,u} c{0,1} x{0,1})){1,u} b{1,3} C(C(a{0,u} y{2,3}){0,1} x))	#upa	cos-nonambig:x|x
+S(C(a a C(y{0,1} a){0,1}){1,3} x{2,u} S(x S(x{2,u} y{3,3})){0,u})	#upa	cos-nonambig:a|a
+S(C(x S(b y{0,u} y{3,3}) S(x{0,3}){0,1}){0,2})	#upa	cos-nonambig:x|x
+C(y{0,1})	z	
+C(y{0,1})	z	
+C(y{0,1})	z	
+C(y{0,1})		
+C(y{0,1})	c,z,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+C(y{0,1})		
+C(y{0,1})	a,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+C(y{0,1})	y	
+C(S(a{0,2} C(x{2,u} x{0,3}){3,3} c){0,3} y S(y{0,2} C(y{1,3}){0,2}){3,3})	#upa	cos-nonambig:a|x
+C(y{0,1} S(C(x{0,2} c{0,u} y{1,u}) x{0,u}) S(C(c b x{3,3}) C(b{0,3})){3,3})	#upa	cos-nonambig:y|y
+C(x{3,3} C(y{2,3} c{1,3} C(y{0,1} y{2,u} x{0,2})){1,u}){0,u}	#upa	cos-nonambig:x|x
+S(S(c{0,1} S(c{3,3} c{1,u}){1,3} C(a{3,3} c)))	#upa	cos-nonambig:c|c
+S(x S(b c{0,1}){0,3} x{1,3})	z,x,b,w,c,x,x,x,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{x}' is expected.|9:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(x S(b c{0,1}){0,3} x{1,3})	x,w,c,x,x,d	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{x}' is expected.
+S(x S(b c{0,1}){0,3} x{1,3})	x,x	
+S(x S(b c{0,1}){0,3} x{1,3})	x,c,b,w,c,x,x,w	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, x}' is expected.|8:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(x S(b c{0,1}){0,3} x{1,3})	x,b,c,b,c,x,x	
+S(x S(b c{0,1}){0,3} x{1,3})	w,b,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{x}' is expected.|3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(x S(b c{0,1}){0,3} x{1,3})	x,c,w,x,x	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, x}' is expected.|5:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(x S(b c{0,1}){0,3} x{1,3})	x,w,w,c,x	
+S(S(C(x{0,2} c{2,3} x){0,1} C(y y{0,u}){0,1}){0,1} y{3,3})	#upa	cos-nonambig:x|x
+S(S(C(b y){1,3} S(c{1,3}){0,1}){0,2} C(S(y){3,3} y{0,2}){2,3})	#upa	cos-nonambig:y|y
+C(b{1,u}){0,2}	b,w,b,b,c	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+C(b{1,u}){0,2}	b,b	
+C(b{1,u}){0,2}		
+C(b{1,u}){0,2}	x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+C(b{1,u}){0,2}		
+C(b{1,u}){0,2}		
+C(b{1,u}){0,2}		
+C(b{1,u}){0,2}		
+C(S(b{0,1}){1,u} C(b{0,1} x{0,u}))	#upa	cos-nonambig:b|b
+C(C(C(b y){1,3} C(y{2,3} a{0,u} c){1,3}){0,1})	#upa	cos-nonambig:y|y
+S(C(x y{0,u} c{1,3}))	x	
+S(C(x y{0,u} c{1,3}))	c,c,c	
+S(C(x y{0,u} c{1,3}))	c,c	
+S(C(x y{0,u} c{1,3}))	c,c	
+S(C(x y{0,u} c{1,3}))	z,z,y,y	
+S(C(x y{0,u} c{1,3}))	c,y,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c}' is expected.
+S(C(x y{0,u} c{1,3}))		
+S(C(x y{0,u} c{1,3}))	c,c,c	
+S(y{0,u}){0,2}	z	
+S(y{0,u}){0,2}	y,y,z	
+S(y{0,u}){0,2}	z,z	
+S(y{0,u}){0,2}	z,z	
+S(y{0,u}){0,2}	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+S(y{0,u}){0,2}	z,z	
+S(y{0,u}){0,2}	y,z	
+S(y{0,u}){0,2}	y,y,y	
+S(C(y{0,3} C(x b a{1,3})))	#upa	cos-nonambig:y|a
+S(y{1,u} S(S(b{0,u} a x{0,2}){2,3}){0,u}){3,3}	#upa	cos-nonambig:y|a
+S(x{2,3} b{1,u} y{1,3}){0,2}	x,x,b,w,b,y,y,x,x,x,w,y	
+S(x{2,3} b{1,u} y{1,3}){0,2}	x,e,x,x,w,b,b,z,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x}' is expected.
+S(x{2,3} b{1,u} y{1,3}){0,2}	x,x,x,w,b,b,y,x,x,x,w,b	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, y}' is expected.
+S(x{2,3} b{1,u} y{1,3}){0,2}	x,x,w,b,w,y,y,z,x,x,x,b	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, y}' is expected.
+S(x{2,3} b{1,u} y{1,3}){0,2}		
+S(x{2,3} b{1,u} y{1,3}){0,2}	x,x,x,b,b,y,x,x,b,w,y,y	
+S(x{2,3} b{1,u} y{1,3}){0,2}	x,x,x,w,b,z	
+S(x{2,3} b{1,u} y{1,3}){0,2}	x,x,x,b,b,w,w,y,y,z,x,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x, b}' is expected.
+S(S(x{0,1} S(x{0,u}) b{0,2}) S(b C(y)){0,u})	#upa	cos-nonambig:x|x
+S(C(x C(a)){0,1} y C(c{0,1}){0,u})	#upa	cos-nonambig:x|a
+S(S(c{0,1} S(a{0,u})){0,u})		
+S(S(c{0,1} S(a{0,u})){0,u})	y,a,y	
+S(S(c{0,1} S(a{0,u})){0,u})	a,c	
+S(S(c{0,1} S(a{0,u})){0,u})		
+S(S(c{0,1} S(a{0,u})){0,u})	a,f,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, a}' is expected.
+S(S(c{0,1} S(a{0,u})){0,u})	c,y	
+S(S(c{0,1} S(a{0,u})){0,u})	x,c,a	
+S(S(c{0,1} S(a{0,u})){0,u})	a	
+S(C(y{2,3}){0,1} S(y y{0,u} c{0,3}) a)	#upa	cos-nonambig:y|y
+S(S(c{1,3} x){3,3}){0,2}		
+S(S(c{1,3} x){3,3}){0,2}		
+S(S(c{1,3} x){3,3}){0,2}		
+S(S(c{1,3} x){3,3}){0,2}	c,x,c,x,c,y,c,c,x,c,x,c	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c, x}' is expected.
+S(S(c{1,3} x){3,3}){0,2}		
+S(S(c{1,3} x){3,3}){0,2}		
+S(S(c{1,3} x){3,3}){0,2}	c,c,x,c,x,c,c,x	
+S(S(c{1,3} x){3,3}){0,2}	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+S(b{0,1} a{0,2}){0,1}	y,a	
+S(b{0,1} a{0,2}){0,1}	b,d,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+S(b{0,1} a{0,2}){0,1}	x,a	
+S(b{0,1} a{0,2}){0,1}	b,a	
+S(b{0,1} a{0,2}){0,1}	w	
+S(b{0,1} a{0,2}){0,1}		
+S(b{0,1} a{0,2}){0,1}	a	
+S(b{0,1} a{0,2}){0,1}	w	
+C(x)	x	
+C(x)	x,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+C(x)	x,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(C(a{2,u} x a{0,1}){0,1} x{0,1} a{0,u})	#upa	cos-nonambig:a|x
+S(S(S(x c{0,1})))	x,a,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+S(S(S(x c{0,1})))	x,c	
+S(S(S(x c{0,1})))	x,c	
+S(S(S(x c{0,1})))	x,e,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+S(S(S(x c{0,1})))	x,c,c	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(S(S(x c{0,1})))	x,c	
+S(S(S(x c{0,1})))	x	
+S(S(S(x c{0,1})))	x,c,c	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(b{0,1} x)	x	
+S(b{0,1} x)	w	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(b{0,1} x)	a,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, x}' is expected.
+S(b{0,1} x)	x	
+S(b{0,1} x)	x	
+S(b{0,1} x)	w,x	
+S(b{0,1} x)	x,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(b{0,1} x)	x	
+C(S(S(a a{2,3} y{2,3}) b C(b a{0,1} c{1,3}){0,1}){1,3} b{0,3}){2,u}	#upa	cos-nonambig:a|a
+S(C(b{0,2}){0,2} y{0,u} c{0,2})	z,f,y,d,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y, c}' is expected.
+S(C(b{0,2}){0,2} y{0,u} c{0,2})	a,y,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, y, c}' is expected.
+S(C(b{0,2}){0,2} y{0,u} c{0,2})	z,z	
+S(C(b{0,2}){0,2} y{0,u} c{0,2})	a,z,z,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, y, c}' is expected.
+S(C(b{0,2}){0,2} y{0,u} c{0,2})	b,b,z,y	
+S(C(b{0,2}){0,2} y{0,u} c{0,2})	w,w	
+S(C(b{0,2}){0,2} y{0,u} c{0,2})	b,b,z,y,c,c	
+S(C(b{0,2}){0,2} y{0,u} c{0,2})	b,w,b,w,y,z,c,c	
+C(C(a{2,u} x{0,3} S(c)))	#upa	cos-nonambig:a|x
+C(S(C(x){0,u}) b){3,3}	w,w	
+C(S(C(x){0,u}) b){3,3}	x,x,x,w	
+C(S(C(x){0,u}) b){3,3}	b,b,b	
+C(S(C(x){0,u}) b){3,3}	x,x,w,x	
+C(S(C(x){0,u}) b){3,3}	w,w,x,x	
+C(S(C(x){0,u}) b){3,3}	x,x,x	
+C(S(C(x){0,u}) b){3,3}	x,x	
+C(S(C(x){0,u}) b){3,3}	b,b,w	
+C(c{0,3})		
+C(c{0,3})		
+C(c{0,3})	c	
+C(c{0,3})	c,b,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+C(c{0,3})		
+C(c{0,3})	c,c	
+C(c{0,3})	c,c	
+C(c{0,3})		
+S(x{1,3} x{0,1} S(y C(x{2,u} y{0,3})){0,u}){0,u}	#upa	cos-nonambig:x|x
+C(y{0,1} c)	c	
+C(y{0,1} c)	c	
+C(y{0,1} c)	c,c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(y{0,1} c)	z,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(y{0,1} c)		
+C(y{0,1} c)		
+C(y{0,1} c)	c	
+C(y{0,1} c)	z	
+S(y a{0,2} C(b x{3,3}){0,1})	#upa	cos-nonambig:a|x
+S(c b{1,u} C(S(c){0,1} S(y{0,u} y{0,1} y{0,1}){2,3}){1,u})	#upa	cos-nonambig:y|y
+C(b{0,3} C(c){1,3} y{0,3})	y	
+C(b{0,3} C(c){1,3} y{0,3})	c,c,c,w,c	3:cvc-complex-type.2.4.f:'c' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(b{0,3} C(c){1,3} y{0,3})		
+C(b{0,3} C(c){1,3} y{0,3})	w,b	
+C(b{0,3} C(c){1,3} y{0,3})		
+C(b{0,3} C(c){1,3} y{0,3})	c	
+C(b{0,3} C(c){1,3} y{0,3})	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b, c, y}' is expected.
+C(b{0,3} C(c){1,3} y{0,3})	c,c,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+C(a{0,1} C(y{2,3} S(x{2,u}){0,3} a{0,1}){0,1})	#upa	cos-nonambig:a|y
+C(b{1,u})	w,w,b	
+C(b{1,u})	b,w,b,d	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+C(b{1,u})	b	
+C(b{1,u})	b,b	
+C(b{1,u})	w,b	
+C(b{1,u})	w	
+C(b{1,u})	w,w,w	
+C(b{1,u})	w,w,b	
+C(C(a{0,u} c{0,1}){2,3})	x,c	
+C(C(a{0,u} c{0,1}){2,3})	c,x,x,a	
+C(C(a{0,u} c{0,1}){2,3})	c,c	
+C(C(a{0,u} c{0,1}){2,3})	a,a,w	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{a, c}' is expected.
+C(C(a{0,u} c{0,1}){2,3})	z,x,x	
+C(C(a{0,u} c{0,1}){2,3})	c,c,z,a	
+C(C(a{0,u} c{0,1}){2,3})	x,c,a	
+C(C(a{0,u} c{0,1}){2,3})	y,z,x,c,y	
+S(y{2,3} x{0,u})	z,y,z	
+S(y{2,3} x{0,u})	z,y,z,x	
+S(y{2,3} x{0,u})	z,z,y,x	
+S(y{2,3} x{0,u})	z,z,z	
+S(y{2,3} x{0,u})	y,z,z	
+S(y{2,3} x{0,u})	y,z,z	
+S(y{2,3} x{0,u})	z,y,z,x	
+S(y{2,3} x{0,u})	y,z	
+C(b C(C(b c b{1,u}){0,1} C(b{1,u} y{1,u}){1,3}){1,3} S(C(a x{0,1} x{1,u}) b){0,3})	#upa	cos-nonambig:b|b
+C(a y{2,3})	#upa	cos-nonambig:a|y
+C(S(y){2,3} C(x){1,u} C(C(x) C(y{1,3}){3,3}){0,1})	#upa	cos-nonambig:y|y
+C(S(C(c{2,u}) C(y x b){0,1} C(c{2,3} a{2,u}){0,1}))	#upa	cos-nonambig:c|c
+S(S(C(a{0,1} c{1,3} x{2,u}){1,3}){1,u} c{0,1} S(y{0,3} y{2,3} S(c x{2,u}){0,1}))	#upa	cos-nonambig:a|x
+S(S(C(a{3,3} x) C(x c{0,1} a{1,3}) y){1,3})	#upa	cos-nonambig:a|x
+S(b C(c S(x){0,1} x{0,1}){0,1} b)	#upa	cos-nonambig:x|x
+C(b{0,u} S(S(x{1,u} y){2,u} y b{0,1}){0,1})		
+C(b{0,u} S(S(x{1,u} y){2,u} y b{0,1}){0,1})	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, x}' is expected.
+C(b{0,u} S(S(x{1,u} y){2,u} y b{0,1}){0,1})	x,z,x,x,x,x,z,x,x,x,y,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x, y}' is expected.
+C(b{0,u} S(S(x{1,u} y){2,u} y b{0,1}){0,1})	w,w	
+C(b{0,u} S(S(x{1,u} y){2,u} y b{0,1}){0,1})	b	
+C(b{0,u} S(S(x{1,u} y){2,u} y b{0,1}){0,1})		
+C(b{0,u} S(S(x{1,u} y){2,u} y b{0,1}){0,1})	x,x,y,x,x,x,x,y,x,y,y	
+C(b{0,u} S(S(x{1,u} y){2,u} y b{0,1}){0,1})	x,y,x,y,x,y,x,y	8:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x, y}' is expected.
+S(a{2,u} a{3,3})	#upa	cos-nonambig:a|a
+S(b{0,2} S(S(y{0,3}) S(a{2,u}) S(c{0,1} a{0,3} c{0,2}){0,2}){0,3} x{0,1})	#upa	cos-nonambig:y|a
+C(x{0,1} x{0,1} y){0,1}	#upa	cos-nonambig:x|x
+C(C(C(a{1,u} y{1,3} x{2,u}) c){3,3}){0,2}	#upa	cos-nonambig:a|y
+C(b{0,1})		
+C(b{0,1})	w	
+C(b{0,1})	w	
+C(b{0,1})	w,w	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+C(b{0,1})	b	
+C(b{0,1})	w,x,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(b{0,1})	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+C(b{0,1})		
+S(a{0,1} b{1,3}){2,3}	w,d,a,x,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a, b}' is expected.
+S(a{0,1} b{1,3}){2,3}	x,w,a,w,b,b,w,z,w,w	7:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{b}' is expected.
+S(a{0,1} b{1,3}){2,3}	b,b,z,w,b,w,a,b	
+S(a{0,1} b{1,3}){2,3}	x,w,b,w,w,x,b	
+S(a{0,1} b{1,3}){2,3}	y,b,b,a,b,w,b,b	
+S(a{0,1} b{1,3}){2,3}	a,w,w,w,b,w,b	
+S(a{0,1} b{1,3}){2,3}	a,b,w,b,w,b,w	
+S(a{0,1} b{1,3}){2,3}	b,z,d,w,b,y,w,y,b,w,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+S(S(S(b{0,1} y{2,u}) a{0,1}){2,u})	#upa	cos-nonambig:y|a
+S(S(C(c{0,1}){0,1} y c){2,u} y){0,u}	#upa	cos-nonambig:y|y
+C(C(S(c b y{1,u}){2,3} C(b){0,1} c{0,u}) a){0,u}	#upa	cos-nonambig:c|c
+C(a C(S(a{3,3} b) x{0,2} x{1,u}){0,1} S(S(c{0,3} c{0,u}) x{0,2} C(b{0,1} y c{0,1}){0,1}))	#upa	cos-nonambig:a|a
+S(b S(b){0,1}){0,u}	#upa	cos-nonambig:b|b
+S(S(C(a{1,u})){0,2} a{2,u})	#upa	cos-nonambig:a|a
+S(C(S(c{2,3} x{2,3} x{0,1}){0,1} C(b{3,3}) y{0,1}) C(S(y x{2,3}){2,u}){0,3})	#upa	cos-nonambig:x|x
+S(x{0,2}){2,3}	x	
+S(x{0,2}){2,3}	x,x	
+S(x{0,2}){2,3}	x	
+S(x{0,2}){2,3}		
+S(x{0,2}){2,3}	x,x,x,x	
+S(x{0,2}){2,3}	x,x,x,c,x,x	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+S(x{0,2}){2,3}	x,x,x	
+S(x{0,2}){2,3}	x,x,x	
+C(a{1,u}){0,1}		
+C(a{1,u}){0,1}		
+C(a{1,u}){0,1}	x,a	
+C(a{1,u}){0,1}	x	
+C(a{1,u}){0,1}	a,z	
+C(a{1,u}){0,1}		
+C(a{1,u}){0,1}	z,x	
+C(a{1,u}){0,1}	y	
+S(c{0,2} y{1,3} c)	c,y,c	
+S(c{0,2} y{1,3} c)	y,c,c	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c{0,2} y{1,3} c)	c,y,y,z,c	
+S(c{0,2} y{1,3} c)	c,c,y,c	
+S(c{0,2} y{1,3} c)	y,c	
+S(c{0,2} y{1,3} c)	c,c,z,y,c,y,c	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(c{0,2} y{1,3} c)	c,y,y,y,c	
+S(c{0,2} y{1,3} c)	c,f,c,z,z,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, y}' is expected.
+S(a{0,1} C(y{2,3}){0,u} c{0,1})	#upa	cos-nonambig:a|y
+S(S(b{0,3} y){0,1} S(C(c{3,3} x{3,3} y){0,1} S(c{0,1} x{2,u} b{3,3}) C(b a{0,1} y{3,3}){2,u}){0,u} S(C(c{3,3} x{1,3} c{1,u}){0,1}){0,2})	#upa	cos-nonambig:y|y
+C(C(C(x{0,1} y{0,1} b{0,3}){0,2} C(x{1,3} x{0,1} x{0,2}){0,u} x) S(y c{3,3} c){2,u} C(c{0,3} a{0,1}){0,u})	#upa	cos-nonambig:x|x
+C(b C(x) S(S(a{0,1} y a{0,u}) x{0,1} S(x{0,u} a)){2,u}){0,u}	#upa	cos-nonambig:x|a
+S(S(C(a{3,3}){0,u} x{0,1} S(x{1,3} y{0,u} y{0,1}){2,u}){1,u} x{1,3} y){0,u}	#upa	cos-nonambig:a|x
+S(C(C(a c{0,1}){0,1} c S(x){0,3}) S(c C(x{0,1}){0,3} C(b a{2,u} x{0,2}){0,3}){2,3} C(C(x{2,u} c{2,u} a{0,3}){0,u}))	#upa	cos-nonambig:a|x
+S(c{0,1})	c,a,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(c{0,1})		
+S(c{0,1})	c	
+S(c{0,1})		
+S(c{0,1})	c	
+S(c{0,1})		
+S(c{0,1})	c,c,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c{0,1})	c	
+C(x{0,u})	x	
+C(x{0,u})	x	
+C(x{0,u})	x,x,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{x}' is expected.
+C(x{0,u})	x,x	
+C(x{0,u})	x,x	
+C(x{0,u})	x	
+C(x{0,u})	x	
+C(x{0,u})	x	
+S(y{1,u}){2,3}	z,z,z,y	
+S(y{1,u}){2,3}	z,z,y,y,y,y,y,z	
+S(y{1,u}){2,3}	y,z,y,y,y,y,y	
+S(y{1,u}){2,3}	z,z	
+S(y{1,u}){2,3}	y,z,z,z,z,z,y	
+S(y{1,u}){2,3}	y,z,z,z,y,z,y	
+S(y{1,u}){2,3}	y,z,z,y,y,y	
+S(y{1,u}){2,3}	y,y,y	
+C(C(C(c{3,3} y{1,3}) b{2,3} C(c{2,u}){0,3}){2,u} a{0,1})	#upa	cos-nonambig:c|c
+S(b{0,1} S(b{3,3}){2,u} S(c){1,3})	#upa	cos-nonambig:b|b
+C(y x{1,u} x){2,u}	#upa	cos-nonambig:x|x
+C(a S(a{0,u} b{0,3}){0,1} C(S(y{3,3} b){2,3} C(y{0,2} a){0,2} a))	#upa	cos-nonambig:a|a
+S(S(x{0,1} S(a){1,3} y{0,3}){0,1} C(x{0,u} y{0,1}){0,u})	#upa	cos-nonambig:x|a
+C(S(x{0,1} x{0,1})){0,1}	#upa	cos-nonambig:x|x
+S(C(c S(b y a{1,3}){0,2})){0,2}		
+S(C(c S(b y a{1,3}){0,2})){0,2}	c	
+S(C(c S(b y a{1,3}){0,2})){0,2}		
+S(C(c S(b y a{1,3}){0,2})){0,2}	w,z,z,b,z,y,a,x	
+S(C(c S(b y a{1,3}){0,2})){0,2}	c	
+S(C(c S(b y a{1,3}){0,2})){0,2}		
+S(C(c S(b y a{1,3}){0,2})){0,2}	c,c,d	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+S(C(c S(b y a{1,3}){0,2})){0,2}		
+C(c{0,1} S(S(a y{2,3} x{0,u}) x{0,1} c){0,u} S(a{0,3}){0,2})	#upa	cos-nonambig:a|a
+S(x{1,u} S(S(b{0,1} y{0,1} y) C(x{0,1} a{2,3} c{2,u}){1,3}){3,3}){1,3}	#upa	cos-nonambig:x|x
+S(x{2,u} S(y{0,1} x{0,1}))	#upa	cos-nonambig:x|x
+S(a{0,1})	y,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+S(a{0,1})	y	
+S(a{0,1})	a	
+S(a{0,1})		
+S(a{0,1})	a	
+S(a{0,1})		
+S(a{0,1})	f,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+S(a{0,1})	z,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+S(y{0,1}){0,1}	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(y{0,1}){0,1}	y,y,z	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(y{0,1}){0,1}		
+S(y{0,1}){0,1}	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(y{0,1}){0,1}	y	
+S(y{0,1}){0,1}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+S(y{0,1}){0,1}		
+S(y{0,1}){0,1}	y	
+C(S(a{0,3}){0,1})	x,z	
+C(S(a{0,3}){0,1})		
+C(S(a{0,3}){0,1})	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+C(S(a{0,3}){0,1})		
+C(S(a{0,3}){0,1})	y,y	
+C(S(a{0,3}){0,1})		
+C(S(a{0,3}){0,1})	x,x	
+C(S(a{0,3}){0,1})	a,a	
+C(S(S(a{0,3} b{2,u}){0,3} y{0,2} y{0,1}){3,3}){0,1}	#upa	cos-nonambig:a|y
+C(C(C(a c{0,2})){2,3} C(y{3,3} b{0,u})){0,1}	#upa	cos-nonambig:a|y
+C(C(S(y y){0,1}){2,u} b{2,3})	b,b	
+C(C(S(y y){0,1}){2,u} b{2,3})	w,w	
+C(C(S(y y){0,1}){2,u} b{2,3})	z,y,y,y,z,y	
+C(C(S(y y){0,1}){2,u} b{2,3})	z,y,z,y	
+C(C(S(y y){0,1}){2,u} b{2,3})	z,y,y,z	
+C(C(S(y y){0,1}){2,u} b{2,3})	z,y	
+C(C(S(y y){0,1}){2,u} b{2,3})	z	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(C(S(y y){0,1}){2,u} b{2,3})	w,b,b	
+S(S(C(a x b)){3,3})	#upa	cos-nonambig:a|x
+C(a{0,1} C(y{0,2} S(y{0,u} x{0,2})))	#upa	cos-nonambig:a|y
+S(C(c{0,3}){0,1} C(S(a x{3,3} c{0,2}){0,1}){0,u})	c,c	
+S(C(c{0,3}){0,1} C(S(a x{3,3} c{0,2}){0,1}){0,u})	x,x,x,x,c,c	
+S(C(c{0,3}){0,1} C(S(a x{3,3} c{0,2}){0,1}){0,u})	c,c,x,x,x,x,x	7:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(C(c{0,3}){0,1} C(S(a x{3,3} c{0,2}){0,1}){0,u})	y,x,x,x,c	
+S(C(c{0,3}){0,1} C(S(a x{3,3} c{0,2}){0,1}){0,u})	y,x,x,x	
+S(C(c{0,3}){0,1} C(S(a x{3,3} c{0,2}){0,1}){0,u})	c	
+S(C(c{0,3}){0,1} C(S(a x{3,3} c{0,2}){0,1}){0,u})	c,z,x,x,x,c	
+S(C(c{0,3}){0,1} C(S(a x{3,3} c{0,2}){0,1}){0,u})	y	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(a C(C(a{2,u})))	y,y,a,x,z,a,a	
+S(a C(C(a{2,u})))	a,a,a	
+S(a C(C(a{2,u})))	y,y,x,a,x	
+S(a C(C(a{2,u})))	x,x,a	
+S(a C(C(a{2,u})))	d,a,a,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+S(a C(C(a{2,u})))	a,x,a,a,a	
+S(a C(C(a{2,u})))	y,y,z,z	
+S(a C(C(a{2,u})))	z,a,x,a,a	
+S(c){0,1}	c	
+S(c){0,1}	c	
+S(c){0,1}	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+S(c){0,1}	c	
+S(c){0,1}		
+S(c){0,1}	c	
+S(c){0,1}	c,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(c){0,1}		
+S(x{0,1} c{0,u} a{1,u}){0,1}	#upa	cos-nonambig:x|a
+C(a C(C(a y){0,u} S(a{0,1} x){1,3}){0,3} b){2,u}	#upa	cos-nonambig:a|a
+C(C(S(b{0,1} a x{0,u}){0,u} c){2,3} b C(c S(a x){0,1} S(c{0,1}){1,3}))	#upa	cos-nonambig:b|b
+C(a{0,u} C(a{0,u}){2,3} S(y{3,3}){1,u})	#upa	cos-nonambig:a|a
+S(C(b{2,u} C(b{0,3}) c{2,3}){0,u} S(b x S(a a{0,u}){2,3}) a{0,1})	#upa	cos-nonambig:b|b
+S(S(C(a a{1,u}) S(b){2,3} S(b{2,u}){2,u}){1,3} C(C(x{3,3} x) S(x x){0,1} S(c{2,u} c{0,1} x){2,3}) C(x{0,2} C(a{2,u}) x){0,2})	#upa	cos-nonambig:a|a
+C(C(c) C(S(y{2,3} c){1,3} a S(y{0,2}){0,3}){1,3} c){0,1}	#upa	cos-nonambig:c|c
+C(a{2,u})	x,z,d,z	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+C(a{2,u})	a,z	
+C(a{2,u})	a,z,z,a,b	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+C(a{2,u})	a,a,z,y	
+C(a{2,u})	z,a,a	
+C(a{2,u})	a,x,a	
+C(a{2,u})	z,d	1:cvc-complex-type.2.4.g:Invalid content was found starting with element 'd'. 'a' is expected to occur a minimum of '2' times in the current sequence. One more instance is required to satisfy this constraint.
+C(a{2,u})	a,a,z	
+C(S(b{1,3}){0,1} S(a{0,1}){2,u})	b	
+C(S(b{1,3}){0,1} S(a{0,1}){2,u})		
+C(S(b{1,3}){0,1} S(a{0,1}){2,u})	a,a,a	
+C(S(b{1,3}){0,1} S(a{0,1}){2,u})	y,y,z,a,z	
+C(S(b{1,3}){0,1} S(a{0,1}){2,u})	y,x	
+C(S(b{1,3}){0,1} S(a{0,1}){2,u})	x,z	
+C(S(b{1,3}){0,1} S(a{0,1}){2,u})	x,a	
+C(S(b{1,3}){0,1} S(a{0,1}){2,u})	w,b,w,w	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+C(y{0,1} c C(x{1,3} x{1,u}))	#upa	cos-nonambig:x|x
+C(c{2,u} c{1,3} c{0,1})	#upa	cos-nonambig:c|c
+C(y{0,u} a{0,1} C(C(c{1,3} y) y{2,3}))	#upa	cos-nonambig:y|a
+C(a)	a	
+C(a)	y,y	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+C(a)	x	
+C(a)	a	
+C(a)	a	
+C(a)	y	
+C(a)	a	
+C(a)	a	
+C(b{2,3})	w,w,b,b	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(b{2,3})	b,b	
+C(b{2,3})	w,b,w	
+C(b{2,3})	b,f,b	1:cvc-complex-type.2.4.g:Invalid content was found starting with element 'f'. 'b' is expected to occur a minimum of '2' times in the current sequence. One more instance is required to satisfy this constraint.
+C(b{2,3})	x,w,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+C(b{2,3})	b,b,w	
+C(b{2,3})	x,w,w,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+C(b{2,3})	w,w,w	
+S(c{0,u} a b)	y,b	
+S(c{0,u} a b)	x,b	
+S(c{0,u} a b)	c,z,w,w	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+S(c{0,u} a b)	w,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c, a}' is expected.
+S(c{0,u} a b)	c,c,y,w	
+S(c{0,u} a b)	c,c,x,w	
+S(c{0,u} a b)	c,z,w,b	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(c{0,u} a b)	c,c,c,z,w	
+C(x{2,u}){1,3}	x,x,x,x,x,x	
+C(x{2,u}){1,3}	x,x,x,x,x,x	
+C(x{2,u}){1,3}	x,x,x,x,x	
+C(x{2,u}){1,3}	x,x,x,x,x,x,x	
+C(x{2,u}){1,3}	x,x,x,x,x,x,x,x,x,x	
+C(x{2,u}){1,3}	x,x,x,x,x,x,x,x,x,x,x	
+C(x{2,u}){1,3}	f,d,x,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{x}' is expected.
+C(x{2,u}){1,3}	x,x,x,x,x,x	
+S(c)	d,c,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+S(c)	c	
+S(c)	c	
+S(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(c)	c	
+S(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c)	c	
+S(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(S(x{3,3} S(x{0,u} y{2,3}){2,3}){0,1} c)	x,x,x,x,y,z,z,y,x,x,z,z	
+C(S(x{3,3} S(x{0,u} y{2,3}){2,3}){0,1} c)	e,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x, c}' is expected.
+C(S(x{3,3} S(x{0,u} y{2,3}){2,3}){0,1} c)	c	
+C(S(x{3,3} S(x{0,u} y{2,3}){2,3}){0,1} c)	e,x,x,x,z,z,z,x,y,z,z,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x, c}' is expected.
+C(S(x{3,3} S(x{0,u} y{2,3}){2,3}){0,1} c)	c	
+C(S(x{3,3} S(x{0,u} y{2,3}){2,3}){0,1} c)	c	
+C(S(x{3,3} S(x{0,u} y{2,3}){2,3}){0,1} c)	c	
+C(S(x{3,3} S(x{0,u} y{2,3}){2,3}){0,1} c)		
+S(b x{0,2} a)	#upa	cos-nonambig:x|a
+S(C(y S(a{1,3} b{0,3}){0,1}){0,2})	#upa	cos-nonambig:y|a
+C(a b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+C(a b)	a	
+C(a b)	x	
+C(a b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, b}' is expected.
+C(a b)	a,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(a b)	c,e,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, b}' is expected.
+C(a b)	a	
+C(a b)	b	
+C(b{0,2})		
+C(b{0,2})	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+C(b{0,2})	w,b	
+C(b{0,2})	b	
+C(b{0,2})	b	
+C(b{0,2})		
+C(b{0,2})	w	
+C(b{0,2})		
+S(C(C(x{0,2}) C(y{0,u} y a{2,3})){0,3} c{0,1}){0,2}	#upa	cos-nonambig:x|a
+C(C(S(a{0,u} b{2,u} c{0,2}) a{0,u} C(b{1,3} a{0,1} b)){0,1} y S(C(x{0,1}){0,1} C(a){2,u} S(c{0,1} a{0,1} y){2,3}))	#upa	cos-nonambig:a|a
+C(a{0,1} b)		
+C(a{0,1} b)	b	
+C(a{0,1} b)	b	
+C(a{0,1} b)	b	
+C(a{0,1} b)	b	
+C(a{0,1} b)	a	
+C(a{0,1} b)		
+C(a{0,1} b)	b	
+C(b{2,3})	b,w,b	
+C(b{2,3})	w,w,b	
+C(b{2,3})	w,w,b	
+C(b{2,3})	w,b,b	
+C(b{2,3})	w,b,w	
+C(b{2,3})	w,b	
+C(b{2,3})	b,b	
+C(b{2,3})	w,b	
+S(C(b S(x{2,u} c{2,u} a{2,u}){0,2} C(x y{1,3}){2,3}) C(b))	#upa	cos-nonambig:b|b
+S(c{1,u} x{2,u})	c,c,x,x,x	
+S(c{1,u} x{2,u})	c,c,x,x,x	
+S(c{1,u} x{2,u})	c,x,x,x,x	
+S(c{1,u} x{2,u})	c,c,c,x,x,x,x	
+S(c{1,u} x{2,u})	c,c,x,x,x	
+S(c{1,u} x{2,u})	c,c,x,x,x	
+S(c{1,u} x{2,u})	c,c,c,x,x,x	
+S(c{1,u} x{2,u})	c,x,x	
+S(S(C(c{1,3} b x)){1,3})	c,b,c	
+S(S(C(c{1,3} b x)){1,3})	x	
+S(S(C(c{1,3} b x)){1,3})	b,c	
+S(S(C(c{1,3} b x)){1,3})	b,c,c,c	
+S(S(C(c{1,3} b x)){1,3})	x,w,b	
+S(S(C(c{1,3} b x)){1,3})	w,w,x	
+S(S(C(c{1,3} b x)){1,3})	x,c,y,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c, b, x}' is expected.
+S(S(C(c{1,3} b x)){1,3})	c,c,x,x	
+C(C(C(y{0,u} a)){2,u}){0,2}	#upa	cos-nonambig:y|a
+S(S(C(a{0,1} c x{0,2})){2,3}){2,3}	#upa	cos-nonambig:a|x
+C(C(x{0,1}){0,3} y a{0,1})	#upa	cos-nonambig:x|a
+S(y{0,1} S(S(x{0,u} c{1,u} x{0,1})) y)	z,x,x,c,y	
+S(y{0,1} S(S(x{0,u} c{1,u} x{0,1})) y)	c,c,y	
+S(y{0,1} S(S(x{0,u} c{1,u} x{0,1})) y)	z,x,x,c,b,x,y	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, x, y}' is expected.
+S(y{0,1} S(S(x{0,u} c{1,u} x{0,1})) y)	c,x,z	
+S(y{0,1} S(S(x{0,u} c{1,u} x{0,1})) y)	y,c,c,c,x,y	
+S(y{0,1} S(S(x{0,u} c{1,u} x{0,1})) y)	y,x,c,x,y,y	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(y{0,1} S(S(x{0,u} c{1,u} x{0,1})) y)	z,c,x,x,c,x,z	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y}' is expected.
+S(y{0,1} S(S(x{0,u} c{1,u} x{0,1})) y)	c,c,c,x,y	
+S(S(a C(a x{0,2} a){0,2}) a C(x{0,2}){3,3})	#upa	cos-nonambig:a|x
+C(b S(S(a{0,3} c{2,u}){2,u} S(x{1,3}) C(a)){0,1} S(x{0,1}){1,u})	#upa	cos-nonambig:a|x
+S(C(c{0,1} b C(c{1,3}){0,u}) S(y{0,u} S(c{0,1} b{0,1} a){0,1}){1,3})	#upa	cos-nonambig:c|c
+C(S(y{2,3} x{0,3}){0,u} x)	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y, x}' is expected.
+C(S(y{2,3} x{0,3}){0,u} x)	x	
+C(S(y{2,3} x{0,3}){0,u} x)	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y, x}' is expected.
+C(S(y{2,3} x{0,3}){0,u} x)	x	
+C(S(y{2,3} x{0,3}){0,u} x)	x	
+C(S(y{2,3} x{0,3}){0,u} x)	x	
+C(S(y{2,3} x{0,3}){0,u} x)	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y, x}' is expected.
+C(S(y{2,3} x{0,3}){0,u} x)	x	
+S(S(S(b b)){0,1} C(S(x){1,u} C(c){0,3}){1,3} S(x S(c{3,3}))){0,u}	#upa	cos-nonambig:x|x
+S(C(S(a b)))	z,z,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{b}' is expected.
+S(C(S(a b)))	w,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{a}' is expected.
+S(C(S(a b)))	a,a,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+S(C(S(a b)))	x,b	
+S(C(S(a b)))	z,b,f	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+S(C(S(a b)))	a,w	
+S(C(S(a b)))	a,b	
+S(C(S(a b)))	b,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+C(x{0,3} S(b{1,3} c{0,3} S(y)) S(c{1,u} b{0,2} a{2,3}))		
+C(x{0,3} S(b{1,3} c{0,3} S(y)) S(c{1,u} b{0,2} a{2,3}))	a,b,w,w,c,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{x, b, c}' is expected.
+C(x{0,3} S(b{1,3} c{0,3} S(y)) S(c{1,u} b{0,2} a{2,3}))		
+C(x{0,3} S(b{1,3} c{0,3} S(y)) S(c{1,u} b{0,2} a{2,3}))	w,w,b,c,z	
+C(x{0,3} S(b{1,3} c{0,3} S(y)) S(c{1,u} b{0,2} a{2,3}))	w,b,c,c,y	
+C(x{0,3} S(b{1,3} c{0,3} S(y)) S(c{1,u} b{0,2} a{2,3}))	c,z,a,a	
+C(x{0,3} S(b{1,3} c{0,3} S(y)) S(c{1,u} b{0,2} a{2,3}))	x	
+C(x{0,3} S(b{1,3} c{0,3} S(y)) S(c{1,u} b{0,2} a{2,3}))		
+S(c{0,1} b)	c,b	
+S(c{0,1} b)	c,w	
+S(c{0,1} b)	b,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c{0,1} b)	d,w,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, b}' is expected.
+S(c{0,1} b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, b}' is expected.
+S(c{0,1} b)	c,b	
+S(c{0,1} b)	c,w	
+S(c{0,1} b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c, b}' is expected.
+C(x{0,2} a{0,3} a{0,2}){3,3}	#upa	cos-nonambig:x|a
+S(x{0,1} S(y c){1,u}){1,3}	c,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x, y}' is expected.
+S(x{0,1} S(y c){1,u}){1,3}	x,z,c,z,c,x,z,c,y,c,z,c	
+S(x{0,1} S(y c){1,u}){1,3}	x,y,c,y,c,z,c	
+S(x{0,1} S(y c){1,u}){1,3}	y,c	
+S(x{0,1} S(y c){1,u}){1,3}	z,c,x,y,z,c,y,c,z,c,y,c	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{c}' is expected.
+S(x{0,1} S(y c){1,u}){1,3}	x,c,y,b,y,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(x{0,1} S(y c){1,u}){1,3}	x,z,c,y,c,z,c,x,y,c	
+S(x{0,1} S(y c){1,u}){1,3}	x,z,c,x,z,c,y,c,y,c,y,c	
+C(S(C(y{1,3} y x{0,2}){0,u}) c a{2,u})	#upa	cos-nonambig:y|y
+C(S(S(x{3,3} y{0,u} a{0,1}){1,3}){0,1} b{0,1} y{1,u})	#upa	cos-nonambig:x|a
+C(S(b{0,3}){0,1})	b,b	
+C(S(b{0,3}){0,1})		
+C(S(b{0,3}){0,1})	b,e,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+C(S(b{0,3}){0,1})	b	
+C(S(b{0,3}){0,1})	f,w,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+C(S(b{0,3}){0,1})		
+C(S(b{0,3}){0,1})		
+C(S(b{0,3}){0,1})		
+C(C(S(y y{0,2} a){0,1}))	#upa	cos-nonambig:y|a
+C(C(c{3,3} b{2,u}){0,1} C(C(c x y) x b{0,2}){0,1} x{0,3})	#upa	cos-nonambig:c|c
+C(C(C(x{2,u} a{0,1}) C(b b{3,3} c{2,3}){0,1}) y){3,3}	#upa	cos-nonambig:x|a
+C(c{1,3} C(S(b y{1,3}){1,3}) S(c{1,u}){1,3})	#upa	cos-nonambig:c|c
+S(a{1,u} b{2,3}){0,2}	x,w,b,b,x,y,b,w,w	
+S(a{1,u} b{2,3}){0,2}	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+S(a{1,u} b{2,3}){0,2}		
+S(a{1,u} b{2,3}){0,2}	y,b,b,w,a,a,x,b,w,b	
+S(a{1,u} b{2,3}){0,2}	y,y,a,b,w,a,b,b,w	
+S(a{1,u} b{2,3}){0,2}	y,x,b,w	
+S(a{1,u} b{2,3}){0,2}	a,z,y,x,b,w,w,z,w,w	
+S(a{1,u} b{2,3}){0,2}	w,a,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{a}' is expected.
+S(a y{0,u} c)	a,c	
+S(a y{0,u} c)	y,c	
+S(a y{0,u} c)	z,y,z,c	
+S(a y{0,u} c)	a,y,c	
+S(a y{0,u} c)	b,y,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(a y{0,u} c)	a,c	
+S(a y{0,u} c)	a,c	
+S(a y{0,u} c)	x,y,c	
+S(x{2,3} y{0,2} b){1,3}	x,x,y,w,x,x,y,z,b,x,x,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y, b}' is expected.
+S(x{2,3} y{0,2} b){1,3}	x,x,z,b,y,w	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{x}' is expected.
+S(x{2,3} y{0,2} b){1,3}	x,x,z,e,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{y, b}' is expected.
+S(x{2,3} y{0,2} b){1,3}	x,x,x,x,w,x,x,y,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y, b}' is expected.
+S(x{2,3} y{0,2} b){1,3}	x,x,x,y,z,b,x,x,x,z,z,b	
+S(x{2,3} y{0,2} b){1,3}	x,x,x,b,x,x,x,b	
+S(x{2,3} y{0,2} b){1,3}	x,x,x,y,z,w,x,x,c,x,y,b	8:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x, y, b}' is expected.
+S(x{2,3} y{0,2} b){1,3}	x,x,y	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y, b}' is expected.
+S(x x{0,1} a{0,3})	#upa	cos-nonambig:x|a
+C(C(S(b y){0,u}) C(x{0,u}){2,u})	b,z,w,z	
+C(C(S(b y){0,u}) C(x{0,u}){2,u})	b,z	
+C(C(S(b y){0,u}) C(x{0,u}){2,u})	x,x,x,x,x,x	
+C(C(S(b y){0,u}) C(x{0,u}){2,u})	b,y	
+C(C(S(b y){0,u}) C(x{0,u}){2,u})	x,x,x,x,x	
+C(C(S(b y){0,u}) C(x{0,u}){2,u})	x,x,x	
+C(C(S(b y){0,u}) C(x{0,u}){2,u})	w,y	
+C(C(S(b y){0,u}) C(x{0,u}){2,u})		
+C(C(y{2,u} y){3,3} S(S(a{0,2}){0,u} C(b b{2,3})))	#upa	cos-nonambig:y|y
+S(C(a{1,3}){0,u}){0,2}	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+S(C(a{1,3}){0,u}){0,2}		
+S(C(a{1,3}){0,u}){0,2}		
+S(C(a{1,3}){0,u}){0,2}		
+S(C(a{1,3}){0,u}){0,2}		
+S(C(a{1,3}){0,u}){0,2}		
+S(C(a{1,3}){0,u}){0,2}	z,y,a,a,a,a,y,a	
+S(C(a{1,3}){0,u}){0,2}	y,x	
+C(S(a))	y	
+C(S(a))	a	
+C(S(a))	a	
+C(S(a))		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+C(S(a))	y	
+C(S(a))	z	
+C(S(a))	x	
+C(S(a))	y,y	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(c{0,3} C(c{0,1} b) b{1,3})	#upa	cos-nonambig:c|c
+C(S(y{0,u} C(a{0,1}){0,3} x{0,3}){0,1})	#upa	cos-nonambig:y|a
+S(c{0,1} b){1,u}	c,b,b,c,w	
+S(c{0,1} b){1,u}	c,b	
+S(c{0,1} b){1,u}	c,b,f	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, b}' is expected.
+S(c{0,1} b){1,u}	c,b,d,w,c,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, b}' is expected.
+S(c{0,1} b){1,u}	b	
+S(c{0,1} b){1,u}	c,w,c	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+S(c{0,1} b){1,u}	c,b,c,b	
+S(c{0,1} b){1,u}	c,w,c,w,c,w	
+S(C(S(a{0,1} x{0,2} y{3,3}){1,3}) C(y C(b a{3,3}){0,1}){0,u} C(x{0,u}))	#upa	cos-nonambig:a|x
+S(S(C(c c){2,3} a b{0,2}) a{0,1} S(C(a{0,2}){0,2}){1,3})	#upa	cos-nonambig:c|c
+C(C(b{1,3}) S(x{1,3} S(b{0,1}){0,u} S(y{0,1} b{1,u} b{0,u}){0,1}) c){3,3}	#upa	cos-nonambig:b|b
+S(a C(y){0,1})	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(a C(y){0,1})	b,x,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(a C(y){0,1})	z,y	
+S(a C(y){0,1})	x	
+S(a C(y){0,1})	y,z,a	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(a C(y){0,1})	y,y,w,y	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+S(a C(y){0,1})	a,y	
+S(a C(y){0,1})	y,z	
+C(C(C(b{0,1} y{0,1}){0,u} c{0,u}){3,3} a{0,3} c{0,1})	#upa	cos-nonambig:y|a
+C(C(C(x{1,3} x{3,3} c{3,3}){0,1} x C(a{0,2} b){2,u}){0,3} C(b){3,3} y{0,2}){1,3}	#upa	cos-nonambig:x|x
+S(C(x S(x x{0,u}) C(c{0,1}){0,1}){0,1}){0,1}	#upa	cos-nonambig:x|x
+C(y{0,u}){0,3}	y,y	
+C(y{0,u}){0,3}		
+C(y{0,u}){0,3}		
+C(y{0,u}){0,3}	z,d,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+C(y{0,u}){0,3}		
+C(y{0,u}){0,3}		
+C(y{0,u}){0,3}	z,z	
+C(y{0,u}){0,3}		
+S(y S(c{0,2}){0,u})	y,c,z,c,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{c}' is expected.
+S(y S(c{0,2}){0,u})	y,c,c,c	
+S(y S(c{0,2}){0,u})	y,c,c	
+S(y S(c{0,2}){0,u})	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(y S(c{0,2}){0,u})	y,c,c,f,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+S(y S(c{0,2}){0,u})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(y S(c{0,2}){0,u})	z,c,c,c,c	
+S(y S(c{0,2}){0,u})	z,c,c,c	
+C(S(x{0,3} S(y{2,3} x{0,1}){0,3} C(b{0,3} a{1,u}){0,2}){2,3})	#upa	cos-nonambig:x|x
+S(c S(S(x{0,u} b{2,3} b{3,3}){0,2} a))	#upa	cos-nonambig:x|a
+S(b)	w,y	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(b)	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+S(b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+S(b)	b,w	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+S(b)	b,b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(b)	b	
+S(b)	z,b,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{b}' is expected.
+S(b)	b	
+S(b{1,u}){3,3}	b,w,w,b,b	
+S(b{1,u}){3,3}	b,b,b,w,b	
+S(b{1,u}){3,3}	b,b,w,w,b,w	
+S(b{1,u}){3,3}	w,b,w,w,w,w,b	
+S(b{1,u}){3,3}	b,w,b,b,b	
+S(b{1,u}){3,3}	w,w,w,w	
+S(b{1,u}){3,3}	w,w,w,b,w,w	
+S(b{1,u}){3,3}	b,b,b,b	
+C(S(S(x{2,3}){0,1} C(b)){0,1} C(C(y x y{0,1}){0,3} C(a{0,3}){2,3}){3,3} C(x{1,u} S(y a){0,3}){0,3}){0,u}	#upa	cos-nonambig:x|x
+S(S(c{0,3} c) a{1,3}){3,3}	#upa	cos-nonambig:c|c
+S(c)	c	
+S(c)	c	
+S(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(c)	c	
+S(c)	c	
+S(c)	c	
+S(c)	c,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(C(C(c{1,u}){1,u} b{2,3}){0,1} b a)	#upa	cos-nonambig:b|b
+C(S(y{0,3} C(b{3,3} x{2,u}){2,u} S(b{0,3} b){0,3}){1,3} c b{3,3})	#upa	cos-nonambig:b|b
+C(C(a{0,3} y){1,u} C(c{0,u} S(y{0,u} x{0,3} y{1,u}) y{2,3}))	#upa	cos-nonambig:a|y
+S(C(S(a{0,u} y{0,u} a{0,1}) C(a{0,1} b{0,1} y{0,1}) y) a C(a{3,3} C(b{0,3}){3,3} y{2,u})){0,1}	#upa	cos-nonambig:a|y
+C(b{0,3} b)	#upa	cos-nonambig:b|b
+S(b{2,3})	b,b,x,b,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+S(b{2,3})	w,b	
+S(b{2,3})	b,b,b	
+S(b{2,3})	w,b,b	
+S(b{2,3})	b,w,b	
+S(b{2,3})	b,b	
+S(b{2,3})	w,w,b	
+S(b{2,3})	w,w,b,w	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(a{0,3})		
+S(a{0,3})	a	
+S(a{0,3})	y	
+S(a{0,3})	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+S(a{0,3})	z,z	
+S(a{0,3})	y,z	
+S(a{0,3})	a,z	
+S(a{0,3})		
+S(S(S(b c{0,1} x{0,2}){0,3} C(b{0,1}){2,3} C(x b{0,1}){3,3}){0,3})	#upa	cos-nonambig:b|b
+C(x)	x	
+C(x)	x	
+C(x)	x,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(x)	x,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+C(x)	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{x}' is expected.
+C(x)	x	
+C(x)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+C(x)	x	
+C(c{0,2} a{2,u})	c,c,c	2:cvc-complex-type.2.4.f:'c' can occur a maximum of '2' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(c{0,2} a{2,u})		
+C(c{0,2} a{2,u})	c,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c}' is expected.
+C(c{0,2} a{2,u})	c,c	
+C(c{0,2} a{2,u})	c	
+C(c{0,2} a{2,u})	x,a,z	
+C(c{0,2} a{2,u})	c	
+C(c{0,2} a{2,u})	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, a}' is expected.
+C(C(C(x{0,1}){0,3}){0,1} S(a C(b a)))	#upa	cos-nonambig:x|a
+C(S(S(y y a{0,3}){2,3}){0,u}){3,3}	#upa	cos-nonambig:y|a
+S(C(S(y x{0,1}){0,1}){0,1} S(y{2,u}))	#upa	cos-nonambig:y|y
+C(c{0,u} c{0,1} c)	#upa	cos-nonambig:c|c
+C(b)	b,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+C(b)	w	
+C(b)	w	
+C(b)	w	
+C(b)	b	
+C(b)	b	
+C(b)	b	
+C(b)	d,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+C(x a C(S(a a{0,2})){2,3})	#upa	cos-nonambig:x|a
+C(C(S(b{3,3} b x){1,3} b y){0,1} x S(C(a{0,u} x{0,2} y){1,u} b x){0,1})	#upa	cos-nonambig:b|b
+C(y{2,u} C(y{0,1} b{0,1} b{3,3}){0,1} S(S(b{1,3})){0,u}){1,u}	#upa	cos-nonambig:y|y
+C(a)	z	
+C(a)	z	
+C(a)	a	
+C(a)	a	
+C(a)	c,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+C(a)	z	
+C(a)	a,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+C(a)	a	
+C(C(x C(b x{0,u}){3,3})){0,3}	#upa	cos-nonambig:x|x
+S(c{3,3} a{0,u} y){0,3}	#upa	cos-nonambig:a|y
+C(S(S(b y{2,u})){1,3}){1,u}	w,y,y,y,y	
+C(S(S(b y{2,u})){1,3}){1,u}	b,z,z,w,z,z,y,y,b,y,y,c	11:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, y}' is expected.
+C(S(S(b y{2,u})){1,3}){1,u}	b,y,z,y,b,y,y,z	
+C(S(S(b y{2,u})){1,3}){1,u}	b,y,z,z,y,b,y,y,y,z,b,z	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(S(S(b y{2,u})){1,3}){1,u}	b,y,z	
+C(S(S(b y{2,u})){1,3}){1,u}	b,y,y,b,y,y,z,w,y,y,w,z	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(S(S(b y{2,u})){1,3}){1,u}	b,y,z,y,z,w,c,w,z,z,y,z	6:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+C(S(S(b y{2,u})){1,3}){1,u}	y,z,y,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{b}' is expected.
+S(C(y y{0,1}))	#upa	cos-nonambig:y|y
+C(c a{0,1})	c,c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(c a{0,1})	x	
+C(c a{0,1})	z	
+C(c a{0,1})	c,b,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+C(c a{0,1})	c	
+C(c a{0,1})	y	
+C(c a{0,1})	c,y,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+C(c a{0,1})	a,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(c{1,u})	c,c	
+S(c{1,u})	c,c,c	
+S(c{1,u})	c,c	
+S(c{1,u})	c,c,c	
+S(c{1,u})	b,c,c,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+S(c{1,u})	c,c,c	
+S(c{1,u})	c,c	
+S(c{1,u})	c,c,c	
+C(S(S(a y{1,u})){0,1})	a,y	
+C(S(S(a y{1,u})){0,1})	x,y,f,y,z	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+C(S(S(a y{1,u})){0,1})	y,w	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{y}' is expected.
+C(S(S(a y{1,u})){0,1})	x,y,y	
+C(S(S(a y{1,u})){0,1})		
+C(S(S(a y{1,u})){0,1})	a,z,y	
+C(S(S(a y{1,u})){0,1})	a,z,y	
+C(S(S(a y{1,u})){0,1})		
+C(C(y{0,3}){2,3} x{0,u} a)	#upa	cos-nonambig:y|a
+C(C(c)){0,1}	c	
+C(C(c)){0,1}	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+C(C(c)){0,1}	c,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(C(c)){0,1}		
+C(C(c)){0,1}	b,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+C(C(c)){0,1}		
+C(C(c)){0,1}	e,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+C(C(c)){0,1}		
+C(c{0,1} S(S(x{2,u}){1,3}))	c	
+C(c{0,1} S(S(x{2,u}){1,3}))		
+C(c{0,1} S(S(x{2,u}){1,3}))	x,x	
+C(c{0,1} S(S(x{2,u}){1,3}))		
+C(c{0,1} S(S(x{2,u}){1,3}))	c	
+C(c{0,1} S(S(x{2,u}){1,3}))	c,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+C(c{0,1} S(S(x{2,u}){1,3}))	z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{c, x}' is expected.
+C(c{0,1} S(S(x{2,u}){1,3}))	c	
+C(b{1,3} S(C(a{1,u} b{0,3}){0,1}){0,1} y)	#upa	cos-nonambig:b|b
+C(a x{0,u})	#upa	cos-nonambig:a|x
+S(a{1,u})	a,a	
+S(a{1,u})	x	
+S(a{1,u})	a,a,x	
+S(a{1,u})	b,z,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(a{1,u})	a,z,x	
+S(a{1,u})	x,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(a{1,u})	x,a,a	
+S(a{1,u})	a,y	
+C(C(C(c{3,3} a{0,1} y) y){2,u})	#upa	cos-nonambig:a|y
+S(C(C(a{0,3} y){2,3} S(a y{0,1} x{0,2})) S(S(b{0,1} c{1,3}){1,3} b C(x{0,3} x{0,1}){3,3}) S(c{0,u} b{2,3} C(b{3,3} b{2,u} a{0,1}){0,1}))	#upa	cos-nonambig:a|y
+C(c S(x{0,2}){1,3})	x,x	
+C(c S(x{0,2}){1,3})	c	
+C(c S(x{0,2}){1,3})	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, x}' is expected.
+C(c S(x{0,2}){1,3})	b,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, x}' is expected.
+C(c S(x{0,2}){1,3})	e,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, x}' is expected.
+C(c S(x{0,2}){1,3})	c	
+C(c S(x{0,2}){1,3})	x,x,x	
+C(c S(x{0,2}){1,3})	x,x,x	
+S(y C(c{0,2} c b{3,3}){0,u} x){2,u}	#upa	cos-nonambig:c|c
+S(S(c{0,u} S(x{0,1})){0,u} c{0,2})	#upa	cos-nonambig:c|c
+C(b{3,3} c)	w,b,w,d	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(b{3,3} c)	w,b	2:cvc-complex-type.2.4.i:The content of element 'r' is not complete. 'b' is expected to occur a minimum of '3' times. One more instance is required to satisfy this constraint.
+C(b{3,3} c)	b,w,b	
+C(b{3,3} c)	w,b,b	
+C(b{3,3} c)	b,b,w	
+C(b{3,3} c)	c	
+C(b{3,3} c)	c	
+C(b{3,3} c)	c,a,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(b)	w,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+S(b)	w	
+S(b)	b	
+S(b)	b	
+S(b)	w,w	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+S(b)	b	
+S(b)	b	
+S(b)	b	
+S(c{0,2} a C(C(c{0,u} y y{1,3})))	#upa	cos-nonambig:y|y
+S(S(a C(x{3,3}){1,3}) b x{0,1})	z,x,x,x,w,x	
+S(S(a C(x{3,3}){1,3}) b x{0,1})	y,x,x,x,x,x,x,w	
+S(S(a C(x{3,3}){1,3}) b x{0,1})	z,x,e,x,x,x,x,x,x,x,x,b	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x}' is expected.
+S(S(a C(x{3,3}){1,3}) b x{0,1})	a,x,x,x,x,x,x,x,x,x,w,x	
+S(S(a C(x{3,3}){1,3}) b x{0,1})	x,x,x,x,x,x,x,x,x,x,b,x	
+S(S(a C(x{3,3}){1,3}) b x{0,1})	x,x,x,x,x,x,b,x	6:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{x}' is expected.
+S(S(a C(x{3,3}){1,3}) b x{0,1})	z,x,x,x,x,x,x,x,x,x,w	
+S(S(a C(x{3,3}){1,3}) b x{0,1})	z,x,x,x,a,x,x,x,w,x	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{x, b}' is expected.
+S(b{3,3})	a,w,b,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+S(b{3,3})	w,w,w	
+S(b{3,3})	b,b,w,w	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(b{3,3})	b,w,w	
+S(b{3,3})	b,b,b,b	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(b{3,3})	b,b,b	
+S(b{3,3})	w,w,b,f	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(b{3,3})	b,b,w	
+S(C(c c{0,2} x){0,1}){0,u}	#upa	cos-nonambig:c|c
+S(y{1,3})	y,y,y,z,a	3:cvc-complex-type.2.4.f:'y' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(y{1,3})	z,y,z	
+S(y{1,3})	y,z,z	
+S(y{1,3})	z,z	
+S(y{1,3})	z,y	
+S(y{1,3})	y,z,y	
+S(y{1,3})	b,y,z,z,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+S(y{1,3})	y,y	
+S(C(x{1,3} c S(y{0,1} b{1,3})){0,1} S(y{0,1} c{0,1}){2,u} x{0,1})	#upa	cos-nonambig:x|x
+S(a{0,1})	a,z,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'z'. No child element is expected at this point.
+S(a{0,1})		
+S(a{0,1})	a	
+S(a{0,1})		
+S(a{0,1})	y	
+S(a{0,1})		
+S(a{0,1})	z	
+S(a{0,1})	a	
+S(S(x{3,3} C(b y{1,3} a) C(b x{1,3}){3,3}){0,2} c a{0,1})	#upa	cos-nonambig:x|x
+S(x)	x	
+S(x)	x,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+S(x)	x,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+S(x)	x	
+S(x)	x	
+S(x)	x	
+S(x)	x	
+S(x)	x	
+C(C(c{0,1} C(b{2,3}){2,3} b{1,u}))	#upa	cos-nonambig:b|b
+S(C(S(x{0,1} a{0,3} a{3,3}){0,1} a{2,u}))	#upa	cos-nonambig:x|a
+C(C(c{0,1} C(x y){1,u}){0,1} C(C(y b{0,3})))	#upa	cos-nonambig:y|y
+C(x)	x	
+C(x)	c,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+C(x)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+C(x)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+C(x)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+C(x)	x	
+C(x)	f,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{x}' is expected.
+C(x)	x	
+C(y{1,u} S(a){2,u})	#upa	cos-nonambig:y|a
+C(y{0,u} S(a{1,u} C(a{2,3} y{0,3}){2,3} S(b{0,1} c x{0,2}){0,1}){0,1})	#upa	cos-nonambig:y|a
+S(a{2,3} S(b{0,1}){0,u})	z,a	
+S(a{2,3} S(b{0,1}){0,u})	a,z,x,w,w	
+S(a{2,3} S(b{0,1}){0,u})	c,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.|2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+S(a{2,3} S(b{0,1}){0,u})	y,y,a	
+S(a{2,3} S(b{0,1}){0,u})	a,a,y	
+S(a{2,3} S(b{0,1}){0,u})	y,x,a,b	
+S(a{2,3} S(b{0,1}){0,u})	a,c,a,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a, b}' is expected.|4:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+S(a{2,3} S(b{0,1}){0,u})	y,z	
+S(b{0,3})	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+S(b{0,3})		
+S(b{0,3})	w,b	
+S(b{0,3})	b,w	
+S(b{0,3})	w	
+S(b{0,3})		
+S(b{0,3})	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+S(b{0,3})	w,w	
+S(a C(b{0,u} a C(x{0,u}){2,3}){1,u})	#upa	cos-nonambig:a|x
+C(C(S(a){0,1} S(a a b{3,3}){3,3} C(a{3,3} y{3,3} x{2,u}){2,3}){1,u})	#upa	cos-nonambig:a|a
+C(C(a C(a{0,2}){0,1} S(x{1,3} a a{3,3})){1,u} c{0,3})	#upa	cos-nonambig:a|a
+C(a C(a{0,1} S(b{0,3}){3,3}))	#upa	cos-nonambig:a|a
+C(C(a{1,u} C(y x{3,3} c{0,1}){1,3} S(y{1,u} a{0,1} c){2,u}){3,3})	#upa	cos-nonambig:a|y
+C(C(b{2,3}) c{1,u} a{3,3})	c,c	
+C(C(b{2,3}) c{1,u} a{3,3})	w,b,w	
+C(C(b{2,3}) c{1,u} a{3,3})	b,w,b	
+C(C(b{2,3}) c{1,u} a{3,3})	b,b,b	
+C(C(b{2,3}) c{1,u} a{3,3})	b,w,b	
+C(C(b{2,3}) c{1,u} a{3,3})	c,w,c,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c}' is expected.
+C(C(b{2,3}) c{1,u} a{3,3})	z,z,z	
+C(C(b{2,3}) c{1,u} a{3,3})	c,c,c,c	
+S(x)	x,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+S(x)	x	
+S(x)	x	
+S(x)	f,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{x}' is expected.
+S(x)	x	
+S(x)	x	
+S(x)	b,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{x}' is expected.
+S(x)	x,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(y{1,u} c y)	z,a,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y, c}' is expected.
+S(y{1,u} c y)	c,z,z,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(y{1,u} c y)	z,z,z,c,z	
+S(y{1,u} c y)	z,y,b,y,c,y	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y, c}' is expected.
+S(y{1,u} c y)	y,y	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y, c}' is expected.
+S(y{1,u} c y)	y,c,z	
+S(y{1,u} c y)	z,d,f,y,y,c,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y, c}' is expected.
+S(y{1,u} c y)	z,z,c,y,y	4:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(S(y{1,u} b{1,u} C(x){0,u}))	y,z,y,b,b,x	
+S(S(y{1,u} b{1,u} C(x){0,u}))	z,y,w,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, x}' is expected.
+S(S(y{1,u} b{1,u} C(x){0,u}))	y,b,b,a,b,x	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, x}' is expected.
+S(S(y{1,u} b{1,u} C(x){0,u}))	y,b,x	
+S(S(y{1,u} b{1,u} C(x){0,u}))	z,z,z,w,w,w,x,x	
+S(S(y{1,u} b{1,u} C(x){0,u}))	z,b,w,x,w	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{x}' is expected.
+S(S(y{1,u} b{1,u} C(x){0,u}))	f,y,w,x,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+S(S(y{1,u} b{1,u} C(x){0,u}))	z,y,b	
+C(C(a C(a{0,3} x{0,1} b{0,1}) S(b x{0,2}){0,3}){0,2} b{3,3} a){1,3}	#upa	cos-nonambig:a|a
+C(c{1,3})	c	
+C(c{1,3})	c,c	
+C(c{1,3})	c,c	
+C(c{1,3})	c,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+C(c{1,3})	c,c,c	
+C(c{1,3})	c,c,c,c,z	3:cvc-complex-type.2.4.f:'c' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(c{1,3})	c	
+C(c{1,3})	c	
+S(S(b{0,3} C(x){0,3} b{0,1}){0,1} C(C(b{2,u} y{0,1})){1,3})	#upa	cos-nonambig:b|b
+C(b C(a S(c y){3,3} C(x c{0,1}){3,3}) b{2,u})	#upa	cos-nonambig:b|b
+S(S(c{3,3}) b){0,3}	c,c,c,w,c,c,b	6:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+S(S(c{3,3}) b){0,3}	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+S(S(c{3,3}) b){0,3}	c,c,c,w,c,c,b,c	6:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+S(S(c{3,3}) b){0,3}		
+S(S(c{3,3}) b){0,3}	c,c,c,b,a,c,c,c,w	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+S(S(c{3,3}) b){0,3}	c,c,c,c,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+S(S(c{3,3}) b){0,3}	c,c,c,w,c,c,c,w	
+S(S(c{3,3}) b){0,3}	c,c,w,c,c,c,w	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c}' is expected.
+C(a{0,1})	a,x,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(a{0,1})	a	
+C(a{0,1})	a	
+C(a{0,1})	x	
+C(a{0,1})	z	
+C(a{0,1})		
+C(a{0,1})	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+C(a{0,1})		
+C(y){0,3}	z,z	
+C(y){0,3}	z,z	
+C(y){0,3}	z,e,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{y}' is expected.
+C(y){0,3}		
+C(y){0,3}	z,z	
+C(y){0,3}	e,y,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{y}' is expected.
+C(y){0,3}	y	
+C(y){0,3}		
+S(S(S(c{0,2})) x a)	c,x,y	
+S(S(S(c{0,2})) x a)	c,x,y	
+S(S(S(c{0,2})) x a)	x,a	
+S(S(S(c{0,2})) x a)	c,x,a	
+S(S(S(c{0,2})) x a)	c,c,x,a	
+S(S(S(c{0,2})) x a)	a,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, x}' is expected.
+S(S(S(c{0,2})) x a)	x,x	
+S(S(S(c{0,2})) x a)	c,c,x,z	
+S(C(y{0,3} C(x{0,1} a{1,3}){0,1} x{2,3}){0,3} a)	#upa	cos-nonambig:y|a
+C(x{2,3} C(C(c{0,3}) x x{1,3}){3,3} S(c))	#upa	cos-nonambig:x|x
+C(x{2,3} x)	#upa	cos-nonambig:x|x
+S(C(a{1,u}) S(S(x){2,u} S(a c{1,3} y) x){2,u})	#upa	cos-nonambig:a|x
+C(a{1,u} S(y){0,2} C(b{0,1} S(c b{0,u}){2,u} a{3,3}))	#upa	cos-nonambig:a|y
+S(S(b c{0,u}){1,u} x{0,1} C(S(y{0,3}){0,u} b{0,u} S(b{0,1})){0,u})	#upa	cos-nonambig:b|b
+S(b C(c x{0,1} S(x b b{0,1})){0,1})	#upa	cos-nonambig:x|x
+S(S(b{2,u} S(y{1,3} c{0,1} y{0,1})){2,u}){2,u}	#upa	cos-nonambig:y|y
+S(a)	x	
+S(a)	y	
+S(a)	z	
+S(a)	a	
+S(a)	f,z,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+S(a)	a	
+S(a)	z	
+S(a)	y	
+C(y{0,2})	y,z	
+C(y{0,2})	z	
+C(y{0,2})	z,z	
+C(y{0,2})	w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{y}' is expected.
+C(y{0,2})		
+C(y{0,2})	y,f,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+C(y{0,2})		
+C(y{0,2})	y,z	
+S(S(a S(y c{0,3} b){0,u}){1,u})	#upa	cos-nonambig:a|y
+S(C(c{1,u} b{0,3} S(x){2,3}) S(S(c{0,3} b)){2,3})	#upa	cos-nonambig:c|c
+S(C(b{1,3}){0,1} C(S(c) x{2,u}){0,2} C(c b{0,1}))	#upa	cos-nonambig:b|b
+S(c{0,3})	c,c	
+S(c{0,3})	c,c	
+S(c{0,3})	c,c	
+S(c{0,3})	c,c	
+S(c{0,3})		
+S(c{0,3})		
+S(c{0,3})		
+S(c{0,3})	c	
+S(S(a{2,u} y{3,3}) S(C(b c){0,u} x a){0,1})	#upa	cos-nonambig:a|y
+S(C(b{3,3}){0,1} b)	#upa	cos-nonambig:b|b
+C(C(y{0,2} S(x)){0,2} a{0,1} x){2,3}	#upa	cos-nonambig:y|a
+S(b{1,3})	b,w	
+S(b{1,3})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+S(b{1,3})	w,b,w	
+S(b{1,3})	b,w	
+S(b{1,3})	b,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{b}' is expected.
+S(b{1,3})	w,w	
+S(b{1,3})	y,w,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{b}' is expected.
+S(b{1,3})	w	
+C(S(S(c{0,3}) S(y b a))){2,3}	e,c,c,y,w,a,c,y,w,y,y,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, y}' is expected.
+C(S(S(c{0,3}) S(y b a))){2,3}	z,w,c,y,b,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+C(S(S(c{0,3}) S(y b a))){2,3}	c,c,y,b,z,c,c,z,w,c,a,y	9:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+C(S(S(c{0,3}) S(y b a))){2,3}	z,b,y,y,w,x,c,c,z,b,a	
+C(S(S(c{0,3}) S(y b a))){2,3}	c,c,y,b,z,c,z,b,y,c,c,y	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+C(S(S(c{0,3}) S(y b a))){2,3}	c,c,y,a,c,z,w,x,c,z,w,a	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+C(S(S(c{0,3}) S(y b a))){2,3}	c,z,w,y,c,y,b,y,c,c,y,b	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+C(S(S(c{0,3}) S(y b a))){2,3}	c,y,w,a,z,x,c,c,z,b,y	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+S(S(a a C(c b{0,1} c)) x)	#upa	cos-nonambig:c|c
+C(a{2,3} c{1,3} a)	#upa	cos-nonambig:a|a
+S(C(b{0,1} S(x{0,1} x c) C(y)){2,u} S(C(c{1,3} y{0,1})){0,1})	#upa	cos-nonambig:x|x
+C(C(S(a{0,u})){1,3})	y,a	
+C(C(S(a{0,u})){1,3})	z,z	
+C(C(S(a{0,u})){1,3})		
+C(C(S(a{0,u})){1,3})	z,y,a,a	
+C(C(S(a{0,u})){1,3})	a,z,x	
+C(C(S(a{0,u})){1,3})	y,a,e,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+C(C(S(a{0,u})){1,3})	a,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+C(C(S(a{0,u})){1,3})	x	
+S(x{0,1} S(C(a{1,3}) x){2,u} a)	#upa	cos-nonambig:x|a
+S(x{1,u} S(x{0,u}){0,3})	#upa	cos-nonambig:x|x
+S(S(S(b{0,1} b y{0,1}) C(x{1,3}){0,1}){0,2} x{0,1}){1,3}	#upa	cos-nonambig:b|b
+C(b S(x){0,u} C(c C(x{2,u})){1,u})	#upa	cos-nonambig:x|x
+S(b C(x{0,2}){0,1} b{1,u}){0,1}	x,b,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+S(b C(x{0,2}){0,1} b{1,u}){0,1}	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x, b}' is expected.
+S(b C(x{0,2}){0,1} b{1,u}){0,1}	w,b,b,b	
+S(b C(x{0,2}){0,1} b{1,u}){0,1}	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+S(b C(x{0,2}){0,1} b{1,u}){0,1}		
+S(b C(x{0,2}){0,1} b{1,u}){0,1}	b,e,x,x,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x, b}' is expected.
+S(b C(x{0,2}){0,1} b{1,u}){0,1}	w,x,x,x,b,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+S(b C(x{0,2}){0,1} b{1,u}){0,1}		
+S(S(S(c{1,3} x{0,2}){0,1}){1,u} b{2,u} x{3,3}){0,1}	c,c,c,c,x,x,c,c,c,w,b,w	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, x}' is expected.
+S(S(S(c{1,3} x{0,2}){0,1}){1,u} b{2,u} x{3,3}){0,1}	c,c,c,w,b,b,x,x,x	
+S(S(S(c{1,3} x{0,2}){0,1}){1,u} b{2,u} x{3,3}){0,1}	c,x,x,w,w,w,b,x,x,x	
+S(S(S(c{1,3} x{0,2}){0,1}){1,u} b{2,u} x{3,3}){0,1}	c,c,c,c,c,x,x,b,w,b,b,w	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, x}' is expected.
+S(S(S(c{1,3} x{0,2}){0,1}){1,u} b{2,u} x{3,3}){0,1}	c,c,c,x,x,b,w,b,b,x,x,x	
+S(S(S(c{1,3} x{0,2}){0,1}){1,u} b{2,u} x{3,3}){0,1}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, b}' is expected.
+S(S(S(c{1,3} x{0,2}){0,1}){1,u} b{2,u} x{3,3}){0,1}	c,x,w,b,b,w,x,x,x	
+S(S(S(c{1,3} x{0,2}){0,1}){1,u} b{2,u} x{3,3}){0,1}	c,x,c,c,c,x,x,w,w,b,w,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(C(S(x{0,3} y c){0,u} a){3,3} y{0,1})	#upa	cos-nonambig:x|a
+S(b y{0,1} C(C(c{0,1} x{3,3} a{0,u}){0,1}){0,u})	#upa	cos-nonambig:y|a
+S(y{0,3})	y,y	
+S(y{0,3})	y,y	
+S(y{0,3})		
+S(y{0,3})	x,e,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y}' is expected.
+S(y{0,3})	x,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y}' is expected.
+S(y{0,3})	z,y	
+S(y{0,3})	y	
+S(y{0,3})	z,f	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+S(S(y c S(b{1,3} b{0,2} c){1,3}){0,u}){0,1}	#upa	cos-nonambig:b|b
+C(x){2,3}	x,x,x	
+C(x){2,3}	x,x,x	
+C(x){2,3}	x,x,x	
+C(x){2,3}	x,x,x	
+C(x){2,3}	x,x,x	
+C(x){2,3}	x,x	
+C(x){2,3}	x	1:cvc-complex-type.2.4.i:The content of element 'r' is not complete. 'x' is expected to occur a minimum of '2' times. One more instance is required to satisfy this constraint.
+C(x){2,3}	x,x	
+C(b{0,2} S(a{0,1} x){0,1} C(S(b{0,1})){0,1})	#upa	cos-nonambig:b|b
+C(S(x c){2,u} x{1,u} c{1,u}){0,u}	#upa	cos-nonambig:x|x
+C(C(C(a{0,1} b x{0,u}){0,3} C(c{2,3}){0,u} S(c y{0,2}){1,u}){2,3})	#upa	cos-nonambig:a|x
+S(S(x y S(b c x{1,3}){3,3}))	y,w,c,x,b,c,x,x,x,w,c,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{x}' is expected.
+S(S(x y S(b c x{1,3}){3,3}))	x,z,w,c,x,x,w,c,x,x,c,x	10:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b, x}' is expected.
+S(S(x y S(b c x{1,3}){3,3}))	x,z,b,c,x,w,c,x,x,x,b,c	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(S(x y S(b c x{1,3}){3,3}))	x,y,w,c,x,x,x,b,c,x,x,b	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(S(x y S(b c x{1,3}){3,3}))	x,y,w,c,c,x,x,w,c,x,x,b	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+S(S(x y S(b c x{1,3}){3,3}))	x,y,w,c,x,x,x,b,c,x,x,b	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(S(x y S(b c x{1,3}){3,3}))	y,b,c,x,x,x,b,c,x,b,c,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{x}' is expected.
+S(S(x y S(b c x{1,3}){3,3}))	x,y,b,c,x,x,w,c,x,x,x,b	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(S(S(b{0,2} b{3,3})){0,2})	#upa	cos-nonambig:b|b
+C(c S(S(y c x)){0,u} C(C(b{0,2} x{0,u} c{1,u}) c{0,2} S(y){0,1}){0,1})	#upa	cos-nonambig:c|c
+C(C(a){2,3} a)	#upa	cos-nonambig:a|a
+S(C(S(a{1,3} c{0,1}){3,3} S(c{0,1}){0,2} C(b{0,1} b{2,u})){1,u} C(x{2,3} a{2,3}){0,1} S(c C(b{0,1} c{3,3} b)){0,1})	#upa	cos-nonambig:a|x
+C(y){0,1}	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+C(y){0,1}	z	
+C(y){0,1}	z,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(y){0,1}	y	
+C(y){0,1}		
+C(y){0,1}	y,y	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+C(y){0,1}	w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{y}' is expected.
+C(y){0,1}		
+C(S(x{0,2} a{0,2} C(c{1,u} y{0,1})){0,2} C(C(c){1,u}){0,1})	#upa	cos-nonambig:x|a
+C(C(S(c{0,1})){0,1} x{0,1} S(y){0,1})	z	
+C(C(S(c{0,1})){0,1} x{0,1} S(y){0,1})	x	
+C(C(S(c{0,1})){0,1} x{0,1} S(y){0,1})		
+C(C(S(c{0,1})){0,1} x{0,1} S(y){0,1})	y,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+C(C(S(c{0,1})){0,1} x{0,1} S(y){0,1})	z	
+C(C(S(c{0,1})){0,1} x{0,1} S(y){0,1})	x	
+C(C(S(c{0,1})){0,1} x{0,1} S(y){0,1})	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, x, y}' is expected.
+C(C(S(c{0,1})){0,1} x{0,1} S(y){0,1})		
+S(S(S(x x{0,1} c{0,2}){2,3}){0,1} y S(y){2,3})	#upa	cos-nonambig:x|x
+S(c)	c	
+S(c)	c,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(c)	c	
+S(c)	c	
+S(c)	d,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+S(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(c)	c	
+C(a b)	x,x,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(a b)	z	
+C(a b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, b}' is expected.
+C(a b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a, b}' is expected.
+C(a b)	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a, b}' is expected.
+C(a b)	w	
+C(a b)	b,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(a b)	a,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(S(y{0,2}){0,1} a{2,u})	#upa	cos-nonambig:y|a
+S(C(c{2,3} S(y{0,3} a{0,1} c{0,1}) a{1,u}){3,3})	#upa	cos-nonambig:c|c
+S(x{0,1} C(x c x{1,u}){1,u} S(x{0,3}){2,3}){0,1}	#upa	cos-nonambig:x|x
+C(S(a{0,1} x{0,1} c{0,2}))	#upa	cos-nonambig:a|x
+S(y{2,u} C(C(y{0,u}){0,1} y){0,u}){1,u}	#upa	cos-nonambig:y|y
+C(C(C(a{0,1} y{1,3})){1,3})	#upa	cos-nonambig:a|y
+C(C(C(y{1,3} x{0,u} x{0,1})){0,2} b{0,2} b{0,1}){2,u}	#upa	cos-nonambig:x|x
+S(a b y){2,u}	a,a,w,z,x,b,z,a,b,y,a,w	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b}' is expected.
+S(a b y){2,u}	z,w,y,z,b,y,a,w,z,x,b,y	
+S(a b y){2,u}	a,b,y,y,b,z,a,w,z,a,w,y	
+S(a b y){2,u}	a,w,z,a,b,y,a,b,y	
+S(a b y){2,u}	a,b,y,b,y,w,z,a,b,z,z,w	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(a b y){2,u}	a,b,b,z,a,w,y	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+S(a b y){2,u}	y,b,y,a,b,y,b,y	6:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(a b y){2,u}	a,b,y,a,y,w,z,x,w,y	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{b}' is expected.
+C(c{0,1} C(S(c a{0,1}) x{0,3} S(a{2,u} c c){2,u}){2,3})	#upa	cos-nonambig:c|c
+S(C(C(a y{1,3}){2,3}) c{0,3})	#upa	cos-nonambig:a|y
+S(C(C(y{2,3}) c{1,u}){0,u} C(b{1,3} C(c{0,1} b{0,1}){1,u} y){0,3})	#upa	cos-nonambig:y|y
+S(C(S(c a{1,3} x{1,u}) b{1,3} C(c{1,u} b{0,3} y{3,3})){3,3}){0,1}	#upa	cos-nonambig:c|c
+S(S(C(y x{0,1} b){2,3} S(a{1,u}){2,u} y{0,3}) a{0,1}){0,1}	#upa	cos-nonambig:y|a
+S(x C(C(y{2,u}) b C(y{0,2}){0,u}) S(b){0,1}){2,3}	#upa	cos-nonambig:y|y
+C(C(S(b)){0,2})		
+C(C(S(b)){0,2})	b,b	
+C(C(S(b)){0,2})	z,e,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{b}' is expected.
+C(C(S(b)){0,2})	d,b,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+C(C(S(b)){0,2})	w	
+C(C(S(b)){0,2})	b,b	
+C(C(S(b)){0,2})	b	
+C(C(S(b)){0,2})	c,a,b,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+C(C(x S(a{0,1}){0,1}){0,u} S(y{3,3}){0,1})	#upa	cos-nonambig:x|a
+S(S(S(y x{1,3}){3,3} a{0,u}){2,3}){0,1}	#upa	cos-nonambig:y|a
+C(S(a{2,u} C(y x{2,u})){0,u}){0,u}	#upa	cos-nonambig:a|y
+S(a{1,u} b{0,1})	y,y,x,b	
+S(a{1,u} b{0,1})	d,a,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+S(a{1,u} b{0,1})	a,z,z	
+S(a{1,u} b{0,1})	z,z,b,b	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(a{1,u} b{0,1})	d,y,y,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+S(a{1,u} b{0,1})	z,x,y	
+S(a{1,u} b{0,1})	x,x	
+S(a{1,u} b{0,1})	y,w	
+S(S(C(y){2,3} C(y{3,3}) x{0,1}))	#upa	cos-nonambig:y|y
+C(C(c{3,3} C(x{0,3}) C(x){0,2}){3,3} x)	#upa	cos-nonambig:x|x
+C(S(b S(c{0,1} y{1,3} y)){0,1} c{3,3}){1,u}	#upa	cos-nonambig:y|y
+C(C(C(x{0,1} y{1,3} x{2,u}){0,1} y{0,1} C(y{1,u} b)) a{1,u} a{0,1})	#upa	cos-nonambig:x|x
+S(c){0,u}	c,c	
+S(c){0,u}	c,w,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c}' is expected.
+S(c){0,u}	c,c	
+S(c){0,u}	c,c	
+S(c){0,u}		
+S(c){0,u}		
+S(c){0,u}		
+S(c){0,u}	c	
+C(S(y b{0,2} C(y){0,1}) C(y a{0,2} C(x x{0,3}){0,3}){0,1})	#upa	cos-nonambig:y|y
+S(c{2,u} a C(C(a{2,u} b{0,u}){1,u}))	c,c,c,c,x,a,z,a,a	
+S(c{2,u} a C(C(a{2,u} b{0,u}){1,u}))	c,c,a,y,y	
+S(c{2,u} a C(C(a{2,u} b{0,u}){1,u}))	c,c,c,z,z,z,z	
+S(c{2,u} a C(C(a{2,u} b{0,u}){1,u}))	f,c,c,c,c,x,z,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.|8:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(c{2,u} a C(C(a{2,u} b{0,u}){1,u}))	c,c,c,c,y,a,a	
+S(c{2,u} a C(C(a{2,u} b{0,u}){1,u}))	c,c,c,z,a,a,a,b,b	
+S(c{2,u} a C(C(a{2,u} b{0,u}){1,u}))	c,c,a,z,b	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(c{2,u} a C(C(a{2,u} b{0,u}){1,u}))	c,c,y,w,a,z,a	
+C(C(a{1,u} y{1,3} C(a{2,3}){3,3}){2,u} a S(y{2,u} S(b) x{0,u}))	#upa	cos-nonambig:a|y
+C(y{1,3})	z	
+C(y{1,3})	z,z,z	
+C(y{1,3})	z,y	
+C(y{1,3})	y,z,z,z	3:cvc-complex-type.2.4.f:'y' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(y{1,3})	y,d,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+C(y{1,3})	y,z,y	
+C(y{1,3})	y,z	
+C(y{1,3})	y,y,z	
+S(b S(c{1,u} C(y{0,3} a)){3,3})	#upa	cos-nonambig:y|a
+S(b c c)	w,c,d,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+S(b c c)	b,c,c,c	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(b c c)	w,c,c	
+S(b c c)	b,c,c,c	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(b c c)	w,c,c,y	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(b c c)	b,c,c	
+S(b c c)	b,c,e,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+S(b c c)	b,b,c,c,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+C(S(x){1,3} S(C(a{1,3} b{0,1}) c{0,1}){2,3} c)	#upa	cos-nonambig:x|a
+C(S(C(y{1,u})){1,3})	z,z,z	
+C(S(C(y{1,u})){1,3})	z,y,y,y,y,y,z,c	7:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+C(S(C(y{1,u})){1,3})	y,z,c,z,y	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+C(S(C(y{1,u})){1,3})	y	
+C(S(C(y{1,u})){1,3})	z,y,z,y,y,c,z	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+C(S(C(y{1,u})){1,3})	y,y,y,z,z,y	
+C(S(C(y{1,u})){1,3})	z,z,z,y	
+C(S(C(y{1,u})){1,3})	y,y,y,z	
+C(a{1,3} C(c) b{0,u})	a	
+C(a{1,3} C(c) b{0,u})	z,z	
+C(a{1,3} C(c) b{0,u})	w,b,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+C(a{1,3} C(c) b{0,u})	y	
+C(a{1,3} C(c) b{0,u})	z,a,d,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+C(a{1,3} C(c) b{0,u})	b	
+C(a{1,3} C(c) b{0,u})		
+C(a{1,3} C(c) b{0,u})	b	
+S(C(S(b c){0,1}))	b,c	
+S(C(S(b c){0,1}))	w,c	
+S(C(S(b c){0,1}))		
+S(C(S(b c){0,1}))	w,e,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+S(C(S(b c){0,1}))	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+S(C(S(b c){0,1}))		
+S(C(S(b c){0,1}))	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(C(S(b c){0,1}))	b,c	
+S(S(x{3,3} a{1,3} S(x{1,3} x{1,u}){3,3}){3,3} c{2,u})	#upa	cos-nonambig:x|x
+S(a{1,u})	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+S(a{1,u})	a	
+S(a{1,u})	y,a,a	
+S(a{1,u})	x,a,a	
+S(a{1,u})	a,a,x	
+S(a{1,u})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{a}' is expected.
+S(a{1,u})	y,a,y	
+S(a{1,u})	a,y	
+C(c{0,u} C(a S(b){0,1} x{0,2}) b{0,3})	#upa	cos-nonambig:a|x
+S(a{0,2} y{2,3} y{0,1})	#upa	cos-nonambig:a|y
+C(b{0,3} C(b S(b{0,1} y{2,3} b{1,u}){1,3} S(a c{0,1}){0,2}))	#upa	cos-nonambig:b|b
+S(x S(x{0,1} C(b{1,u}){0,1} x{0,2}){0,3})	#upa	cos-nonambig:x|x
+C(b{1,u} c{1,u} y{0,1}){3,3}	c,c,w,b	
+C(b{1,u} c{1,u} y{0,1}){3,3}	w,b,w,w,w,b,w,w	
+C(b{1,u} c{1,u} y{0,1}){3,3}	b,z,c,c	
+C(b{1,u} c{1,u} y{0,1}){3,3}	b,w,w,w,b,b,w,b	
+C(b{1,u} c{1,u} y{0,1}){3,3}	c,c,b,b,w,b,w	
+C(b{1,u} c{1,u} y{0,1}){3,3}	w,w,z,b,w,w	
+C(b{1,u} c{1,u} y{0,1}){3,3}	c,y,a,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, c, y}' is expected.
+C(b{1,u} c{1,u} y{0,1}){3,3}	c,c,c,y	
+C(S(y{0,3} a{0,1}){3,3} S(a{0,1} C(b c{0,3}) c{0,3}) C(C(x b){0,2}){2,u})	#upa	cos-nonambig:y|a
+S(S(S(a{0,3} x{0,1}){1,u} S(x{2,3} a{0,2})){0,1} b{1,3})	#upa	cos-nonambig:a|x
+S(a)	x	
+S(a)	y,f,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+S(a)	y	
+S(a)	z	
+S(a)	z	
+S(a)	y,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+S(a)	x,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+S(a)	y	
+C(b){0,1}	b	
+C(b){0,1}		
+C(b){0,1}	e,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b}' is expected.
+C(b){0,1}	b	
+C(b){0,1}		
+C(b){0,1}	w	
+C(b){0,1}	w	
+C(b){0,1}	w	
+C(C(x{0,3} c{1,3} b){3,3} C(b c x))	#upa	cos-nonambig:x|x
+C(b)	w,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(b)	w	
+C(b)	z,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{b}' is expected.
+C(b)	z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{b}' is expected.
+C(b)	b	
+C(b)	w,e	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'e'. No child element is expected at this point.
+C(b)	w	
+C(b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(b{1,u})	w,w	
+S(b{1,u})	b	
+S(b{1,u})	w,w,b	
+S(b{1,u})	b,w	
+S(b{1,u})	b,b	
+S(b{1,u})	b,b	
+S(b{1,u})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+S(b{1,u})		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+C(c{0,1} S(S(b{0,1} y{0,3}){1,u}){0,u} S(c{1,u} C(c{1,3} x{0,1}))){0,3}	#upa	cos-nonambig:c|c
+S(C(c a{0,3}){1,u} a{0,u})	#upa	cos-nonambig:a|a
+C(x C(x{1,3} y{0,3}) C(b{2,3} y c{1,3}){2,3})	#upa	cos-nonambig:x|x
+C(c{3,3} c{0,u} y{0,1})	#upa	cos-nonambig:c|c
+C(c)	c	
+C(c)	c,d	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'd'. No child element is expected at this point.
+C(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(c)	c	
+C(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(c)	c	
+C(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(S(C(b c a{1,3}){0,2} c{0,u} C(x c{2,3} y{0,3}){1,u}){0,1} x{0,3} S(C(x{2,u} x)))	#upa	cos-nonambig:c|c
+S(S(a{0,2} C(b{0,2})){0,1})	y,a,b	
+S(S(a{0,2} C(b{0,2})){0,1})	w,f,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b}' is expected.
+S(S(a{0,2} C(b{0,2})){0,1})	a	
+S(S(a{0,2} C(b{0,2})){0,1})	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a, b}' is expected.
+S(S(a{0,2} C(b{0,2})){0,1})	a,a,b	
+S(S(a{0,2} C(b{0,2})){0,1})	a,w,x,b,w	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+S(S(a{0,2} C(b{0,2})){0,1})	z,x,w	
+S(S(a{0,2} C(b{0,2})){0,1})	x,y,b	
+S(S(y){0,1} S(C(a{0,1}) b{0,1}))	#upa	cos-nonambig:y|a
+C(S(c{0,1} a{2,3})){0,1}	c,y,f,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+C(S(c{0,1} a{2,3})){0,1}		
+C(S(c{0,1} a{2,3})){0,1}	x,y	
+C(S(c{0,1} a{2,3})){0,1}	c,a,a	
+C(S(c{0,1} a{2,3})){0,1}	a,a,a	
+C(S(c{0,1} a{2,3})){0,1}	c,y,x,z	
+C(S(c{0,1} a{2,3})){0,1}	c,a,x,x	
+C(S(c{0,1} a{2,3})){0,1}	c,x,d,a,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{a}' is expected.
+S(C(x{0,1} S(a{1,3} b){0,1} S(b{0,1} c{0,2} x){2,3}){1,u} C(a x){0,3} x)	#upa	cos-nonambig:x|a
+C(y{0,u})	y,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+C(y{0,u})		
+C(y{0,u})	z	
+C(y{0,u})	y	
+C(y{0,u})	y,z,a	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+C(y{0,u})	z	
+C(y{0,u})	z	
+C(y{0,u})	b,y,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+C(C(b S(a{2,u} b) S(a{0,1} x{1,3} y{3,3})){2,3} c{2,3} C(c{0,3} S(a{0,1}){0,2} y)){3,3}	#upa	cos-nonambig:a|a
+S(C(c{0,2}){3,3} C(C(b{2,3})){0,1})	c,c,c,c,c,w,b,w	
+S(C(c{0,2}){3,3} C(C(b{2,3})){0,1})	c,b,w,w	
+S(C(c{0,2}){3,3} C(C(b{2,3})){0,1})	c,c,c,c,b,w,w	
+S(C(c{0,2}){3,3} C(C(b{2,3})){0,1})	f,c,c,c,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c, b}' is expected.
+S(C(c{0,2}){3,3} C(C(b{2,3})){0,1})	c,c,b,w	
+S(C(c{0,2}){3,3} C(C(b{2,3})){0,1})	c,c,c,b,b,w	
+S(C(c{0,2}){3,3} C(C(b{2,3})){0,1})	c,c,c,c,b,c,w,w	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+S(C(c{0,2}){3,3} C(C(b{2,3})){0,1})	c,c,c,w,b	
+C(a S(S(b{3,3}){2,u}){0,2} b{0,1}){0,1}	#upa	cos-nonambig:b|b
+S(S(S(b) b){0,2} y)	e,b,b,w,b,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{b, y}' is expected.
+S(S(S(b) b){0,2} y)	z	
+S(S(S(b) b){0,2} y)	b,w,w,w,z	
+S(S(S(b) b){0,2} y)	w,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{b}' is expected.
+S(S(S(b) b){0,2} y)	b,w,y,y	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(S(S(b) b){0,2} y)	b,w,b,b,z	
+S(S(S(b) b){0,2} y)	b,w,z	
+S(S(S(b) b){0,2} y)	w,b,w,w,y	
+C(c y{0,1} C(C(b{3,3} b{1,3} c){0,u}){0,1})	#upa	cos-nonambig:c|c
+C(C(x{2,u}){0,1} b{0,u} y)	x,x,x,x,x	
+C(C(x{2,u}){0,1} b{0,u} y)	x,x,x,e,x	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x}' is expected.
+C(C(x{2,u}){0,1} b{0,u} y)	y,z,y	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'z'. No child element is expected at this point.
+C(C(x{2,u}){0,1} b{0,u} y)	x,x	
+C(C(x{2,u}){0,1} b{0,u} y)	b,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{b}' is expected.
+C(C(x{2,u}){0,1} b{0,u} y)	z	
+C(C(x{2,u}){0,1} b{0,u} y)	w,d,w	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+C(C(x{2,u}){0,1} b{0,u} y)	b	
+S(S(b{0,1} C(x{2,u} x{2,3} c{0,u}){0,1} x{0,3}) S(C(y{0,u}){2,3} S(y{1,u} b{0,2}){1,u}) b){0,1}	#upa	cos-nonambig:x|x
+C(S(x{0,2} S(y{1,3} c){3,3} c{0,3}) S(a C(y{0,1}){1,3}){0,1})	#upa	cos-nonambig:x|a
+S(c{0,1} S(S(a{2,u} y b){0,1} C(a{0,3})))	#upa	cos-nonambig:a|y
+C(S(c{1,u}){0,u}){0,3}	b,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+C(S(c{1,u}){0,u}){0,3}		
+C(S(c{1,u}){0,u}){0,3}	c,c,c	
+C(S(c{1,u}){0,u}){0,3}	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+C(S(c{1,u}){0,u}){0,3}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+C(S(c{1,u}){0,u}){0,3}	y,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c}' is expected.
+C(S(c{1,u}){0,u}){0,3}	c,c,x,c,c,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+C(S(c{1,u}){0,u}){0,3}		
+S(S(x{3,3}))	x,x,x,x	3:cvc-complex-type.2.4.f:'x' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(S(x{3,3}))	x,x,x	
+S(S(x{3,3}))	x,x,x	
+S(S(x{3,3}))	x,x	2:cvc-complex-type.2.4.i:The content of element 'r' is not complete. 'x' is expected to occur a minimum of '3' times. One more instance is required to satisfy this constraint.
+S(S(x{3,3}))	x,x,x,x	3:cvc-complex-type.2.4.f:'x' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(S(x{3,3}))	x,x,x	
+S(S(x{3,3}))	x,x,x,x	3:cvc-complex-type.2.4.f:'x' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(S(x{3,3}))	d,x,x,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{x}' is expected.
+S(b)	z,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{b}' is expected.
+S(b)	w	
+S(b)	d,b,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+S(b)	b,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(b)	w	
+S(b)	b	
+S(b)	w	
+S(b)	w	
+C(C(S(c{3,3} b{0,2} x{0,2}) C(a{0,u}){0,u} S(c{0,3} y){0,3})){2,3}	#upa	cos-nonambig:c|c
+S(C(c S(y){2,3} C(b{1,3} c a)){1,u} y{0,u}){0,3}	#upa	cos-nonambig:c|c
+S(c)	c	
+S(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c)	a,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+S(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+S(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c)	c	
+S(c)	c	
+S(c)	c	
+C(C(S(x{3,3} x){0,1} S(y{3,3}) c{0,3}))	z,y,y,c	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(C(S(x{3,3} x){0,1} S(y{3,3}) c{0,3}))	y,z,y	
+C(C(S(x{3,3} x){0,1} S(y{3,3}) c{0,3}))	c,c	
+C(C(S(x{3,3} x){0,1} S(y{3,3}) c{0,3}))		
+C(C(S(x{3,3} x){0,1} S(y{3,3}) c{0,3}))	y,z,y	
+C(C(S(x{3,3} x){0,1} S(y{3,3}) c{0,3}))	y,y,y	
+C(C(S(x{3,3} x){0,1} S(y{3,3}) c{0,3}))	x,x,x	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+C(C(S(x{3,3} x){0,1} S(y{3,3}) c{0,3}))	x,x,x	3:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(S(a{3,3} S(x{3,3} a{0,1}){1,3}){2,3})	#upa	cos-nonambig:a|x
+C(c)	c	
+C(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(c)	f,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+C(c)	c	
+C(c)	c,c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(c)	c	
+C(c)	e,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+C(c)	c	
+C(c{1,u})	c,c,x,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+C(c{1,u})	d,c,c,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+C(c{1,u})	c,c,c	
+C(c{1,u})	c,c,c	
+C(c{1,u})	c	
+C(c{1,u})	c,c	
+C(c{1,u})	c	
+C(c{1,u})	c	
+C(S(S(x{2,u}) S(a) C(x{2,u} y b{0,1}){2,3}) C(a{0,u} S(x) C(x{0,2}){0,1}){3,3} y{0,3})	#upa	cos-nonambig:x|a
+C(a b c{3,3}){1,3}	a	
+C(a b c{3,3}){1,3}	w,c,c,c	
+C(a b c{3,3}){1,3}	y,a,w,c,b,c,c	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(a b c{3,3}){1,3}	a,a	
+C(a b c{3,3}){1,3}	z,c	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(a b c{3,3}){1,3}	b,e,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a, b, c}' is expected.
+C(a b c{3,3}){1,3}	z,c,c,c	
+C(a b c{3,3}){1,3}	a,a	
+S(x{0,1} S(C(b{0,u} a x{0,1}){2,u} S(c{0,1} y{1,3} c{0,3}){2,3}){0,2}){1,u}	#upa	cos-nonambig:x|a
+C(C(y{2,u}))	z,y,y,y	
+C(C(y{2,u}))	y,y	
+C(C(y{2,u}))	z,z	
+C(C(y{2,u}))	y,z,b,z,z	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+C(C(y{2,u}))	z,z,z	
+C(C(y{2,u}))	z,y	
+C(C(y{2,u}))	y,z,f,z,y	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+C(C(y{2,u}))	y,z,z,y,y	
+C(y{2,u} c{0,u} C(C(y y{0,3}){0,u} a{2,3})){1,u}	#upa	cos-nonambig:y|y
+S(C(b S(b{2,u} b{3,3} x{2,u})){1,3}){1,3}	#upa	cos-nonambig:b|b
+S(S(x{0,1} y{1,u}){0,1} C(a b) a{0,2})	#upa	cos-nonambig:x|a
+S(C(S(y{1,3}){2,3} c{0,1}) c{0,1}){0,1}	#upa	cos-nonambig:c|c
+S(a{1,3}){0,1}		
+S(a{1,3}){0,1}	b,d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(a{1,3}){0,1}		
+S(a{1,3}){0,1}	y,y,y	
+S(a{1,3}){0,1}	a	
+S(a{1,3}){0,1}	x,w,z,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{a}' is expected.
+S(a{1,3}){0,1}		
+S(a{1,3}){0,1}	z,a,a	
+S(x{1,3} a{1,u})	#upa	cos-nonambig:x|a
+C(c{2,u} S(S(c{0,1} c{2,3} y{0,3}) S(x{1,u} c{3,3} y{0,2}){2,u}){0,1})	#upa	cos-nonambig:c|c
+C(S(S(x{0,1}) C(x b c){0,1} c))	#upa	cos-nonambig:x|x
+C(S(a{3,3} C(y) y{1,3}))	a,y,d,x,y,z,y,y	2:cvc-complex-type.2.4.g:Invalid content was found starting with element 'd'. 'a' is expected to occur a minimum of '3' times in the current sequence. One more instance is required to satisfy this constraint.
+C(S(a{3,3} C(y) y{1,3}))	a,a,z,z,y,z,z	
+C(S(a{3,3} C(y) y{1,3}))	z,y,a,z,z,y	
+C(S(a{3,3} C(y) y{1,3}))	x,x,x,y,y,y	
+C(S(a{3,3} C(y) y{1,3}))	a,x,a,y,z,z,y	
+C(S(a{3,3} C(y) y{1,3}))	x,a,a,y,z,y,x,y	6:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y}' is expected.
+C(S(a{3,3} C(y) y{1,3}))	x,a,x,z,z,z,z,y,w	7:cvc-complex-type.2.4.f:'y' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(S(a{3,3} C(y) y{1,3}))	f,a,x,z,y,z,z,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+S(S(S(b{1,3}){1,u} C(b c) S(c c{0,2}){1,u}){2,u} S(a c S(x x{0,1}){0,1})){0,1}	#upa	cos-nonambig:b|b
+C(S(C(x x a{3,3}) C(a{0,1} x{0,1} x{0,3})){3,3} c{0,1} C(c{1,u} S(b{3,3} x{3,3}){0,1} b))	#upa	cos-nonambig:x|x
+C(y C(a){1,u} x)	#upa	cos-nonambig:y|a
+S(a{0,1})	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{a}' is expected.
+S(a{0,1})	z	
+S(a{0,1})	a	
+S(a{0,1})	a	
+S(a{0,1})	a	
+S(a{0,1})		
+S(a{0,1})	x	
+S(a{0,1})	y	
+S(S(C(b{0,2} c{0,1} c{1,3})){2,u} C(C(x{1,3}){0,3}) c{0,1}){1,3}	#upa	cos-nonambig:c|c
+S(S(C(c{0,2} a{0,1}) x) S(C(y{0,1} x{0,3} a{0,1}){3,3} y{3,3} S(c{1,u} x x)){2,3})	#upa	cos-nonambig:a|x
+C(S(y{1,3} c) C(C(a{1,u}){3,3} C(c c y{0,1}){0,3})){3,3}	#upa	cos-nonambig:y|a
+C(C(x) C(x{1,3}){0,u})	#upa	cos-nonambig:x|x
+S(C(y{1,u}){0,1})	y,y,y,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(C(y{1,u}){0,1})		
+S(C(y{1,u}){0,1})	y,y	
+S(C(y{1,u}){0,1})	x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y}' is expected.
+S(C(y{1,u}){0,1})	y,y,z	
+S(C(y{1,u}){0,1})		
+S(C(y{1,u}){0,1})		
+S(C(y{1,u}){0,1})	f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+C(x)	y,x,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{x}' is expected.
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(x)	x	
+S(S(c){1,3} b{0,1}){0,1}		
+S(S(c){1,3} b{0,1}){0,1}	c,c,c,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{b}' is expected.
+S(S(c){1,3} b{0,1}){0,1}	c,c,c	
+S(S(c){1,3} b{0,1}){0,1}	c,c,w	
+S(S(c){1,3} b{0,1}){0,1}	a,c,c,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+S(S(c){1,3} b{0,1}){0,1}	c,c,c	
+S(S(c){1,3} b{0,1}){0,1}	c,c	
+S(S(c){1,3} b{0,1}){0,1}	c,w,w	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+S(c{0,1}){0,1}	y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c}' is expected.
+S(c{0,1}){0,1}		
+S(c{0,1}){0,1}		
+S(c{0,1}){0,1}		
+S(c{0,1}){0,1}	y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c}' is expected.
+S(c{0,1}){0,1}	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(c{0,1}){0,1}		
+S(c{0,1}){0,1}	c,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(b{0,1} C(y{3,3} a{0,u}){1,u} a{0,2}){2,u}	#upa	cos-nonambig:y|a
+C(a{3,3} S(C(y{2,u} b y{0,3}){0,1} C(c y y) C(a{0,u})){2,3}){0,1}	#upa	cos-nonambig:a|y
+C(a{2,3} S(C(c{1,3}){0,2}))	c,c,x,c,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+C(a{2,3} S(C(c{1,3}){0,2}))	a,f,x,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+C(a{2,3} S(C(c{1,3}){0,2}))		
+C(a{2,3} S(C(c{1,3}){0,2}))		
+C(a{2,3} S(C(c{1,3}){0,2}))	c,c,c,c,c	
+C(a{2,3} S(C(c{1,3}){0,2}))	x,x,y	
+C(a{2,3} S(C(c{1,3}){0,2}))	a,y,a	
+C(a{2,3} S(C(c{1,3}){0,2}))	y,a	
+C(a{2,u})	b,z,z,a,z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+C(a{2,u})	x,a,a,x	
+C(a{2,u})	x,a,z,a	
+C(a{2,u})	x,x,x	
+C(a{2,u})	a,a,a	
+C(a{2,u})	x,y,x,c	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+C(a{2,u})	x,x,a,a,a,y	
+C(a{2,u})	a,a,z,z	
+S(c{0,1} S(y{0,u}){1,3} S(y))	#upa	cos-nonambig:y|y
+C(S(c S(x{1,u} b{2,3}){3,3} c{2,3}){2,3})	#upa	cos-nonambig:c|c
+S(S(C(a{2,3} b{1,3} x){2,3} S(c{2,3} c){1,u} a{1,u}){0,1} a)	#upa	cos-nonambig:a|x
+C(c){0,1}	c	
+C(c){0,1}	a,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+C(c){0,1}	d,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+C(c){0,1}	c	
+C(c){0,1}		
+C(c){0,1}	c	
+C(c){0,1}	c	
+C(c){0,1}	c	
+C(C(C(x{3,3} c{0,2}){2,u}){0,u} S(y{0,1} a{0,2}){0,u}){0,2}	#upa	cos-nonambig:x|a
+C(y{1,u})	e,z,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{y}' is expected.
+C(y{1,u})	z,z,y,b	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+C(y{1,u})	y,y,y	
+C(y{1,u})	z,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+C(y{1,u})	b,z,z,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+C(y{1,u})	z,z,e	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{y}' is expected.
+C(y{1,u})	z,y,z	
+C(y{1,u})	y,y,a,z	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+S(b{1,3} x{3,3})	w,b,b,x,c,x,x	4:cvc-complex-type.2.4.h:Invalid content was found starting with element 'c'. 'x' is expected to occur a minimum of '3' times in the current sequence. '2' more instances are required to satisfy this constraint.
+S(b{1,3} x{3,3})	w,b,b,x,x,x	
+S(b{1,3} x{3,3})	w,b,a,x,x,x,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{b, x}' is expected.
+S(b{1,3} x{3,3})	w,b,w,x,x,x	
+S(b{1,3} x{3,3})	b,b,w,x,x,x	
+S(b{1,3} x{3,3})	b,b,w,x,x,x	
+S(b{1,3} x{3,3})	w,b,w,x,x,x	
+S(b{1,3} x{3,3})	w,x,x,x	
+S(C(S(c)))	c	
+S(C(S(c)))	c	
+S(C(S(c)))	c	
+S(C(S(c)))	c	
+S(C(S(c)))	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+S(C(S(c)))	c	
+S(C(S(c)))	c	
+S(C(S(c)))	c	
+S(x{0,1} S(x{0,1} C(a{3,3} b a{1,u}){1,u}))	#upa	cos-nonambig:x|x
+S(S(y c{0,1} a{2,u}){0,1})	z,c,z,z,a,y,z	
+S(S(y c{0,1} a{2,u}){0,1})	y,c,a,y	
+S(S(y c{0,1} a{2,u}){0,1})	z,c,z,y,y,a	
+S(S(y c{0,1} a{2,u}){0,1})	z,c,z,a,y,a,z	
+S(S(y c{0,1} a{2,u}){0,1})		
+S(S(y c{0,1} a{2,u}){0,1})	z,a,a,a	
+S(S(y c{0,1} a{2,u}){0,1})	y,a,a	
+S(S(y c{0,1} a{2,u}){0,1})	z,c,c,a,y,z	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+C(C(S(x{0,2} b{0,1}){0,3} y S(a{2,u}){1,u}){2,3} S(a{0,3}) S(c a){2,u})	#upa	cos-nonambig:x|a
+S(x C(a{2,u} S(b{3,3} b{3,3} y{2,3}){0,u}){3,3} C(C(c{0,2} x{0,u} b){0,1} S(x y{0,u}){1,u}){0,1})	#upa	cos-nonambig:a|y
+S(C(S(a{2,3})) S(C(a y{0,u} c{2,3}) S(b{2,3} b{0,u} c{0,1}){1,u}){0,2})	#upa	cos-nonambig:a|a
+S(c{1,3} b{0,3} S(c S(c{0,1} b){0,3} y)){0,u}	#upa	cos-nonambig:c|c
+C(c)	c	
+C(c)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(c)	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(c)	c	
+C(c)	c	
+C(c)	c,c,z	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(c)	c	
+C(c)	c	
+S(x){1,3}	x	
+S(x){1,3}	x,e	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x}' is expected.
+S(x){1,3}	c,x,a,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+S(x){1,3}	x,x,x,a	3:cvc-complex-type.2.4.f:'x' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(x){1,3}	x,x,x,x	3:cvc-complex-type.2.4.f:'x' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(x){1,3}		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x}' is expected.
+S(x){1,3}	x,x	
+S(x){1,3}	x,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{x}' is expected.
+C(S(S(a{1,3} b){3,3} C(b{3,3}){3,3} x{0,u}) C(C(x{0,1} c{3,3} y){0,3} x{0,u} c))	#upa	cos-nonambig:a|x
+C(b{2,3} C(C(b{0,3}) C(b{2,u} y{0,2})){3,3})	#upa	cos-nonambig:b|b
+C(b)	w	
+C(b)	b	
+C(b)	w	
+C(b)	w,w	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+C(b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+C(b)	b	
+C(b)	x,c,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+C(b)	b	
+C(b{3,3} S(a{2,3} c{0,u}){0,u} x)	#upa	cos-nonambig:a|x
+C(S(c C(x y c{1,3}){2,3}){1,3})	#upa	cos-nonambig:c|c
+S(x y{0,1})	x,y	
+S(x y{0,1})	x,z	
+S(x y{0,1})	x,z	
+S(x y{0,1})	x,y	
+S(x y{0,1})	x,y,y	2:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+S(x y{0,1})	x	
+S(x y{0,1})	x	
+S(x y{0,1})	x,y	
+C(a{0,3} c x){0,2}	#upa	cos-nonambig:a|x
+S(S(x{0,1} S(y b{0,3}){0,1}) C(S(c{1,u} x{2,3}))){2,u}	#upa	cos-nonambig:x|x
+C(y)	z	
+C(y)	y	
+C(y)	y	
+C(y)	z	
+C(y)	y,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(y)	z	
+C(y)	z	
+C(y)	z	
+C(C(b{0,2}){1,u} y C(C(x{2,u} b) b{3,3}))	#upa	cos-nonambig:b|b
+C(S(c{2,3} C(a{1,3}))){0,3}	c,c,c,a,d,a,c,c,c,a	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, a}' is expected.
+C(S(c{2,3} C(a{1,3}))){0,3}		
+C(S(c{2,3} C(a{1,3}))){0,3}		
+C(S(c{2,3} C(a{1,3}))){0,3}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+C(S(c{2,3} C(a{1,3}))){0,3}	c,c,z,a	
+C(S(c{2,3} C(a{1,3}))){0,3}	c	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{c}' is expected.
+C(S(c{2,3} C(a{1,3}))){0,3}		
+C(S(c{2,3} C(a{1,3}))){0,3}	c,c,c,y	
+C(C(C(y{0,1}) S(a{0,3} a)){0,1})	#upa	cos-nonambig:y|a
+S(S(y{0,1} C(x){0,1}){3,3} S(x{1,u} a){2,3})	#upa	cos-nonambig:x|x
+S(c{0,1} C(b{3,3}) S(S(b{1,u}){0,1} S(c c x){0,1}))	#upa	cos-nonambig:b|b
+S(b{0,1} C(c){0,2})	c	
+S(b{0,1} C(c){0,2})	b,b,b,c,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+S(b{0,1} C(c){0,2})	d,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b, c}' is expected.
+S(b{0,1} C(c){0,2})	b,c,c	
+S(b{0,1} C(c){0,2})	w,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{c}' is expected.
+S(b{0,1} C(c){0,2})		
+S(b{0,1} C(c){0,2})	b,c	
+S(b{0,1} C(c){0,2})	w,d,c,c,x	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c}' is expected.
+S(C(C(c{0,1}){0,1})){0,1}		
+S(C(C(c{0,1}){0,1})){0,1}	w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c}' is expected.
+S(C(C(c{0,1}){0,1})){0,1}	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+S(C(C(c{0,1}){0,1})){0,1}	c	
+S(C(C(c{0,1}){0,1})){0,1}		
+S(C(C(c{0,1}){0,1})){0,1}		
+S(C(C(c{0,1}){0,1})){0,1}	e,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+S(C(C(c{0,1}){0,1})){0,1}	y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c}' is expected.
+C(S(x{0,3}){1,3} S(S(x{3,3} c{3,3}) c{2,u} a)){0,2}	#upa	cos-nonambig:x|x
+S(C(c b{0,u})){1,3}	b,b,z	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{c, b}' is expected.
+S(C(c b{0,u})){1,3}	b,w,c	
+S(C(c b{0,u})){1,3}	c,c	
+S(C(c b{0,u})){1,3}	w,c,c,w	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'w'. No child element is expected at this point.
+S(C(c b{0,u})){1,3}	c	
+S(C(c b{0,u})){1,3}	c	
+S(C(c b{0,u})){1,3}	w,c	
+S(C(c b{0,u})){1,3}	c,c,w,b	
+C(y{0,1} S(x c b{0,2}){0,u} C(S(x{0,u}){3,3} b{0,1}){0,1}){3,3}	#upa	cos-nonambig:x|x
+C(y{0,3} S(C(b c{0,1}) C(b){2,u}) a)	#upa	cos-nonambig:y|a
+C(S(y)){3,3}	z,y,z	
+C(S(y)){3,3}	y,y,z	
+C(S(y)){3,3}	z,y,y	
+C(S(y)){3,3}	y,y,z	
+C(S(y)){3,3}	z,y,y	
+C(S(y)){3,3}	z,z,y	
+C(S(y)){3,3}	y,y,y	
+C(S(y)){3,3}	y,z,z	
+S(a{0,2} x{3,3} x){0,1}	#upa	cos-nonambig:a|x
+C(C(S(c{1,3}) y c{0,3}))	#upa	cos-nonambig:c|c
+C(a S(a{2,3} S(c){0,3}){0,3})	#upa	cos-nonambig:a|a
+C(b{0,1} C(b{0,2} b{1,u} C(c c y){1,u}){0,u})	#upa	cos-nonambig:b|b
+C(b{2,3} S(S(c{0,1} b{0,1} x){0,3}){0,u})	#upa	cos-nonambig:b|b
+C(c{2,u} x){2,3}	c,c,x	
+C(c{2,u} x){2,3}	c,c,c,x	
+C(c{2,u} x){2,3}	x,x,c,c,c	
+C(c{2,u} x){2,3}	c,c,c,x,w	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c, x}' is expected.
+C(c{2,u} x){2,3}	c,c,c,c,c,c,c	
+C(c{2,u} x){2,3}	c,c,b,a,x,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, x}' is expected.
+C(c{2,u} x){2,3}	x,c,c,c,c,c,c,c	
+C(c{2,u} x){2,3}	c,c,c,c,c,c	
+C(S(C(c){0,1} x{0,3} S(c{0,1} a)))	#upa	cos-nonambig:c|c
+C(x{0,1})	x	
+C(x{0,1})	x	
+C(x{0,1})		
+C(x{0,1})	x,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+C(x{0,1})	z,x,a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{x}' is expected.
+C(x{0,1})		
+C(x{0,1})	x	
+C(x{0,1})		
+C(C(C(b{0,1} b y{2,3}){1,u}))	#upa	cos-nonambig:b|b
+S(C(S(b{1,3} y c{2,u}){0,1} C(b{3,3}){1,3}))	#upa	cos-nonambig:b|b
+S(S(x{0,3}){0,1} S(C(c{2,3} x{3,3}) x{0,1}) S(y y{1,u}))	#upa	cos-nonambig:x|x
+C(C(S(x{1,3} b{0,u}) S(c{1,3} x{0,3})) S(C(x{2,u}) S(b a a{2,u}) a{0,2}){1,3})	#upa	cos-nonambig:x|x
+C(S(S(c{0,u} b{0,3} a{2,3})){2,u} x{2,u} y{0,u})	#upa	cos-nonambig:a|x
+S(a C(b{0,1}) b{1,3})	#upa	cos-nonambig:b|b
+S(x S(b{0,2} S(y a{0,u} b)))	x,b,z,y,b	
+S(x S(b{0,2} S(y a{0,u} b)))	x,b,b,z,b,f	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+S(x S(b{0,2} S(y a{0,u} b)))	x,w,b,z,a,y,w	
+S(x S(b{0,2} S(y a{0,u} b)))	x,y,w,b	3:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(x S(b{0,2} S(y a{0,u} b)))	x,w,b,z,a,x,w	
+S(x S(b{0,2} S(y a{0,u} b)))	x,z,a,z,b,b,c	5:cvc-complex-type.2.4.d:Invalid content was found starting with element 'b'. No child element is expected at this point.
+S(x S(b{0,2} S(y a{0,u} b)))	x,y,y,b	
+S(x S(b{0,2} S(y a{0,u} b)))	x,b,b,e,z,a,z,b	3:cvc-complex-type.2.4.e:'e' can occur a maximum of '2' times in the current sequence. This limit was exceeded. At this point one of '{y}' is expected.
+S(x{1,3})	x,x	
+S(x{1,3})	z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{x}' is expected.
+S(x{1,3})	x	
+S(x{1,3})	e,x,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x}' is expected.
+S(x{1,3})	x,x	
+S(x{1,3})	x	
+S(x{1,3})	x,x,x,c	3:cvc-complex-type.2.4.f:'x' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(x{1,3})	x,x,b,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{x}' is expected.
+S(b){0,1}		
+S(b){0,1}	w	
+S(b){0,1}	b,x,b	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'x'. No child element is expected at this point.
+S(b){0,1}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+S(b){0,1}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+S(b){0,1}	b	
+S(b){0,1}	y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{b}' is expected.
+S(b){0,1}		
+C(S(b{0,1} y{0,2} S(x x{0,3} b)){2,3} a{2,u}){0,1}	#upa	cos-nonambig:y|a
+S(b{0,3})		
+S(b{0,3})	x,w,w,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+S(b{0,3})	w	
+S(b{0,3})	b,b	
+S(b{0,3})	y,w,b,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{b}' is expected.
+S(b{0,3})	w	
+S(b{0,3})	w	
+S(b{0,3})		
+C(x{0,u} b{0,3})		
+C(x{0,u} b{0,3})	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x, b}' is expected.
+C(x{0,u} b{0,3})	w	
+C(x{0,u} b{0,3})	b,w,d	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+C(x{0,u} b{0,3})	c,f	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x, b}' is expected.
+C(x{0,u} b{0,3})	b,d,w	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b}' is expected.
+C(x{0,u} b{0,3})	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x, b}' is expected.
+C(x{0,u} b{0,3})	x,x,x	
+S(y{0,1} C(y){2,3} S(x{2,u} C(b{1,3} a{0,1} y{1,u}){0,1}){0,1})	#upa	cos-nonambig:y|y
+C(C(C(x{1,3}){1,u} C(a{2,u} c{1,u}){3,3}){0,1} b{0,u} S(S(b) S(y{0,2} c){0,3}){1,u})	#upa	cos-nonambig:x|a
+C(S(a{3,3} S(x{0,1})){0,3})	#upa	cos-nonambig:a|x
+S(x C(c{2,3}) S(C(a{3,3} b)))	x,c,c,c,b	
+S(x C(c{2,3}) S(C(a{3,3} b)))	x,c,c,c,a,x,y	
+S(x C(c{2,3}) S(C(a{3,3} b)))	x,c,c,c,b	
+S(x C(c{2,3}) S(C(a{3,3} b)))	x,x,c,w,c,a,x,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{c}' is expected.
+S(x C(c{2,3}) S(C(a{3,3} b)))	x,c,c,a,z	5:cvc-complex-type.2.4.i:The content of element 'r' is not complete. 'a' is expected to occur a minimum of '3' times. One more instance is required to satisfy this constraint.
+S(x C(c{2,3}) S(C(a{3,3} b)))	x,c,b,w	2:cvc-complex-type.2.4.g:Invalid content was found starting with element 'b'. 'c' is expected to occur a minimum of '2' times in the current sequence. One more instance is required to satisfy this constraint.
+S(x C(c{2,3}) S(C(a{3,3} b)))	x,c,c,w	
+S(x C(c{2,3}) S(C(a{3,3} b)))	x,c,c,c,a,c,b	5:cvc-complex-type.2.4.h:Invalid content was found starting with element 'c'. 'a' is expected to occur a minimum of '3' times in the current sequence. '2' more instances are required to satisfy this constraint.
+C(c x C(c{1,3} S(x x{1,u}){0,2} a{0,1}){2,3})	#upa	cos-nonambig:c|c
+S(C(S(x{0,1} c{1,u} x){2,3} S(a c) x){3,3} a{1,u})	#upa	cos-nonambig:x|a
+S(c{2,u} C(S(b{2,3} a{0,u}){3,3} b{0,3}){2,u})	#upa	cos-nonambig:b|b
+S(c{2,u} c{0,u})	#upa	cos-nonambig:c|c
+C(x{2,u})	x,x	
+C(x{2,u})	x,x,x,x	
+C(x{2,u})	x,x,x	
+C(x{2,u})	x,x	
+C(x{2,u})	x,x	
+C(x{2,u})	x,x	
+C(x{2,u})	x,x,x,x	
+C(x{2,u})	x,x,c,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+S(C(C(x{0,u} c{1,3}) a){0,1} a{1,u} C(C(b y x{0,u}) x{0,3} C(b{1,3} a{0,u} b{1,u}){2,u}){1,u})	#upa	cos-nonambig:x|a
+S(b{2,3})	b,w	
+S(b{2,3})	w,b	
+S(b{2,3})	w,b,w,b	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(b{2,3})	w,b,b	
+S(b{2,3})	w,c,w,b	1:cvc-complex-type.2.4.g:Invalid content was found starting with element 'c'. 'b' is expected to occur a minimum of '2' times in the current sequence. One more instance is required to satisfy this constraint.
+S(b{2,3})	w,w	
+S(b{2,3})	w,w,w	
+S(b{2,3})	w,w	
+S(C(y{0,3} y{0,2})){2,3}	#upa	cos-nonambig:y|y
+C(S(c{1,3}){0,3} b{0,u} y{1,u})		
+C(S(c{1,3}){0,3} b{0,u} y{1,u})	a	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, b, y}' is expected.
+C(S(c{1,3}){0,3} b{0,u} y{1,u})		
+C(S(c{1,3}){0,3} b{0,u} y{1,u})	c,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{c}' is expected.
+C(S(c{1,3}){0,3} b{0,u} y{1,u})	z,d	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+C(S(c{1,3}){0,3} b{0,u} y{1,u})	w	
+C(S(c{1,3}){0,3} b{0,u} y{1,u})	y,w,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{y}' is expected.
+C(S(c{1,3}){0,3} b{0,u} y{1,u})	b,w	
+S(C(a{0,1} b{0,2} a){2,u})	#upa	cos-nonambig:a|a
+S(c S(b S(y{1,3}){0,2} a){0,u} C(x{3,3}){0,3})	#upa	cos-nonambig:y|a
+C(C(C(x{0,1} b){3,3} S(b{2,3}){0,1} S(c{0,1}){3,3}){0,2})	#upa	cos-nonambig:b|b
+S(x{3,3} C(y{0,2} b{2,u}){0,1} C(y C(x{2,u} y){0,3} x{0,1}){0,u})	#upa	cos-nonambig:x|x
+C(S(C(c a x) S(y{0,u}){2,3} S(x{0,1})) x{1,3} S(S(b y{0,3} b{1,3}){1,3} S(y{0,2}){0,1}){0,2})	#upa	cos-nonambig:a|x
+S(b{2,u} a{0,3} a{1,u}){0,1}	#upa	cos-nonambig:a|a
+C(S(a{1,3} S(c{0,1}){0,1} a){3,3})	#upa	cos-nonambig:a|a
+C(y{0,3} S(C(b c{1,3} y{1,u}){1,u}){1,u})	#upa	cos-nonambig:y|y
+C(C(S(c{1,3}){0,3} c{1,u}) C(x{0,2}){2,u}){3,3}	#upa	cos-nonambig:c|c
+S(a{0,u} y C(x{3,3} a{1,3}))	#upa	cos-nonambig:a|y
+S(x{3,3} S(S(b{3,3} c{1,u}){1,u} C(y{0,1} b x){0,1}){0,2})	#upa	cos-nonambig:b|b
+S(S(C(y{0,1}){0,1} C(b a{0,1}) c{0,2}){1,u})	#upa	cos-nonambig:y|a
+S(a S(c{0,1} S(y){0,1}))	a,c,c,c	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(a S(c{0,1} S(y){0,1}))	y,a	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, y}' is expected.
+S(a S(c{0,1} S(y){0,1}))	a,c	
+S(a S(c{0,1} S(y){0,1}))	c,b,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{a}' is expected.
+S(a S(c{0,1} S(y){0,1}))	a,c	
+S(a S(c{0,1} S(y){0,1}))	y,c,b,y	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+S(a S(c{0,1} S(y){0,1}))	z	
+S(a S(c{0,1} S(y){0,1}))	y,c,z	
+C(C(C(c x{0,2}) C(x y{2,3} c{0,1}){2,3} a{2,u}))	#upa	cos-nonambig:c|c
+C(c{0,2}){0,u}	c,c	
+C(c{0,2}){0,u}	f,c,z,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{c}' is expected.
+C(c{0,2}){0,u}		
+C(c{0,2}){0,u}	c,c,c	
+C(c{0,2}){0,u}	b,c,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+C(c{0,2}){0,u}	w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c}' is expected.
+C(c{0,2}){0,u}		
+C(c{0,2}){0,u}	c,c,c,c	
+S(b{2,3} S(S(y{1,u} x{3,3}){3,3} y C(b{2,3} a{1,3}){1,u}){0,1})	w,b,w,z,x,x,x,y,y,x,x,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(b{2,3} S(S(y{1,u} x{3,3}){3,3} y C(b{2,3} a{1,3}){1,u}){0,1})	b,b,w	
+S(b{2,3} S(S(y{1,u} x{3,3}){3,3} y C(b{2,3} a{1,3}){1,u}){0,1})	w,b,w	
+S(b{2,3} S(S(y{1,u} x{3,3}){3,3} y C(b{2,3} a{1,3}){1,u}){0,1})	b,w,z,x,x,x,y,z,z,x,x,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(b{2,3} S(S(y{1,u} x{3,3}){3,3} y C(b{2,3} a{1,3}){1,u}){0,1})	b,w,w,b	jdk-exception
+S(b{2,3} S(S(y{1,u} x{3,3}){3,3} y C(b{2,3} a{1,3}){1,u}){0,1})	b,w,b,z,y,x,x,x,y,x,x,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(b{2,3} S(S(y{1,u} x{3,3}){3,3} y C(b{2,3} a{1,3}){1,u}){0,1})	b,w	
+S(b{2,3} S(S(y{1,u} x{3,3}){3,3} y C(b{2,3} a{1,3}){1,u}){0,1})	b,w,b,d,y,y,z,x,x,x,z,y	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b, y}' is expected.
+C(c C(a S(a{0,3} y{0,u} a{0,2}){0,3} C(a a{1,u})){0,u})	#upa	cos-nonambig:a|a
+C(S(C(b){1,u} S(y{0,2} a){0,u}) a)	#upa	cos-nonambig:y|a
+S(S(y{0,u} C(y{0,1}){0,u}){3,3} S(S(a{1,3}){2,3} c){0,1} C(b C(y a{1,3} x){0,2}){1,u})	#upa	cos-nonambig:y|y
+C(C(a){0,3} C(S(b{0,3} y{1,3} c){0,u} b{0,u}) c{0,3})	#upa	cos-nonambig:a|y
+S(x y{2,3})	x,y,z,z,z	4:cvc-complex-type.2.4.f:'y' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(x y{2,3})	x,y,a,y,a,z	2:cvc-complex-type.2.4.g:Invalid content was found starting with element 'a'. 'y' is expected to occur a minimum of '2' times in the current sequence. One more instance is required to satisfy this constraint.
+S(x y{2,3})	y,x,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{x}' is expected.
+S(x y{2,3})	b,y,z,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{x}' is expected.
+S(x y{2,3})	x,y,y,y,z	4:cvc-complex-type.2.4.f:'y' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(x y{2,3})	x,z,y,y	
+S(x y{2,3})	x,y,y	
+S(x y{2,3})	x,y,z,z,z,y	4:cvc-complex-type.2.4.f:'y' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(b{1,3} a{0,1} C(y{2,u} a{1,3} y{0,1}){2,3})	#upa	cos-nonambig:a|y
+C(x{0,1}){0,2}		
+C(x{0,1}){0,2}	x	
+C(x{0,1}){0,2}	c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{x}' is expected.
+C(x{0,1}){0,2}		
+C(x{0,1}){0,2}	x	
+C(x{0,1}){0,2}	x,x	
+C(x{0,1}){0,2}		
+C(x{0,1}){0,2}		
+C(S(S(a c{0,1} a{0,1}) a{3,3} x{1,3}){0,3} S(C(y{1,3} c{1,3} a){1,u} S(c{2,u})){0,u}){0,1}	#upa	cos-nonambig:a|x
+S(c{3,3})	c,c,c	
+S(c{3,3})	c,c,c,c	3:cvc-complex-type.2.4.f:'c' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(c{3,3})	c,c,c	
+S(c{3,3})	c,c,c	
+S(c{3,3})	a,c,b,c,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+S(c{3,3})	c,c,c	
+S(c{3,3})	c,c,c,f	3:cvc-complex-type.2.4.f:'c' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(c{3,3})	c,c,c	
+C(C(C(b{2,3}){0,1}){1,3} c{3,3} b)	#upa	cos-nonambig:b|b
+S(S(S(y{0,3} y c{1,u}){1,u} C(x{1,3})) y{3,3} a)	#upa	cos-nonambig:y|y
+S(S(C(a{0,1}){3,3} C(y{3,3} b{0,3} b{0,u}) x{0,1}) C(c){2,u})	#upa	cos-nonambig:a|y
+S(y{2,u})	y,y	
+S(y{2,u})	y	1:cvc-complex-type.2.4.i:The content of element 'r' is not complete. 'y' is expected to occur a minimum of '2' times. One more instance is required to satisfy this constraint.
+S(y{2,u})	z,y,y,y	
+S(y{2,u})	y,z,z	
+S(y{2,u})	z,y,y	
+S(y{2,u})	y,y,z	
+S(y{2,u})	y,y	
+S(y{2,u})	y,b,z	1:cvc-complex-type.2.4.g:Invalid content was found starting with element 'b'. 'y' is expected to occur a minimum of '2' times in the current sequence. One more instance is required to satisfy this constraint.
+S(y{0,1} c{0,u} S(S(a{0,1} x{1,u}){0,2} S(x{3,3} y x) C(a b){0,3}))	#upa	cos-nonambig:y|a
+C(a{3,3})	a,x,a	
+C(a{3,3})	a,x,x	
+C(a{3,3})	a,y,a	
+C(a{3,3})	x,a,a	
+C(a{3,3})	z,a,z	
+C(a{3,3})	a,z,y	
+C(a{3,3})	a,w,a,a,a	1:cvc-complex-type.2.4.h:Invalid content was found starting with element 'w'. 'a' is expected to occur a minimum of '3' times in the current sequence. '2' more instances are required to satisfy this constraint.
+C(a{3,3})	a,a,a	
+C(C(C(c{2,3}){1,u} C(x{0,1} b{2,3} a{0,3}){2,3}){0,1} c{0,2})	#upa	cos-nonambig:c|c
+S(C(b{1,3} a{1,3} C(c){0,3}){0,1} S(S(b{0,1} b a{2,u}){0,1} y{0,1} C(c{0,1}){0,1}){3,3} a{0,1})	#upa	cos-nonambig:b|b
+S(c{0,1} x{0,1} c{0,1}){1,3}	#upa	cos-nonambig:c|c
+C(a C(C(b{0,1} c{1,u}){2,3}){0,1} a{0,1})	#upa	cos-nonambig:a|a
+C(C(C(x{2,u} x{1,u}){0,2} S(b{0,1}){2,3}){3,3} b y{3,3}){0,1}	#upa	cos-nonambig:x|x
+C(C(C(x{0,u}){0,u}){0,1})	x	
+C(C(C(x{0,u}){0,u}){0,1})	x	
+C(C(C(x{0,u}){0,u}){0,1})	z	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{x}' is expected.
+C(C(C(x{0,u}){0,u}){0,1})		
+C(C(C(x{0,u}){0,u}){0,1})	b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{x}' is expected.
+C(C(C(x{0,u}){0,u}){0,1})		
+C(C(C(x{0,u}){0,u}){0,1})		
+C(C(C(x{0,u}){0,u}){0,1})	y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{x}' is expected.
+C(C(S(b a{1,u} y{0,3}) C(y c{3,3})){0,2} C(S(a y{0,2} b{1,u}){0,3} b C(x c a{1,3}){0,1})){0,1}	#upa	cos-nonambig:b|b
+S(a{0,u} a x)	#upa	cos-nonambig:a|a
+C(C(c{0,u}){0,1} x{0,u} S(S(c){1,3})){0,u}	#upa	cos-nonambig:c|c
+C(C(S(y){3,3} S(b c b{1,3}){0,1} c{2,3}){0,u})	#upa	cos-nonambig:b|b
+C(c y a{0,1}){1,3}	#upa	cos-nonambig:y|a
+S(x C(C(c{2,3}){2,u} C(b{0,u} x{2,3} y{3,3}) a{3,3}){0,2})	#upa	cos-nonambig:x|a
+C(S(C(y{0,u} y x)){0,3})	#upa	cos-nonambig:y|y
+C(c{0,1} S(x a b){0,1} S(S(b{1,3} a)){2,u})	b	1:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b, a}' is expected.
+C(c{0,1} S(x a b){0,1} S(S(b{1,3} a)){2,u})	x,y	2:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{b}' is expected.
+C(c{0,1} S(x a b){0,1} S(S(b{1,3} a)){2,u})	a,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, x, b}' is expected.
+C(c{0,1} S(x a b){0,1} S(S(b{1,3} a)){2,u})	e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c, x, b}' is expected.
+C(c{0,1} S(x a b){0,1} S(S(b{1,3} a)){2,u})	b,b,b,x,b,x,w,b,b,y	
+C(c{0,1} S(x a b){0,1} S(S(b{1,3} a)){2,u})	x,a,w	
+C(c{0,1} S(x a b){0,1} S(S(b{1,3} a)){2,u})	c,c	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'c'. No child element is expected at this point.
+C(c{0,1} S(x a b){0,1} S(S(b{1,3} a)){2,u})	x,y,b	
+C(y b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y, b}' is expected.
+C(y b)	z	
+C(y b)	y	
+C(y b)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y, b}' is expected.
+C(y b)	b	
+C(y b)	b	
+C(y b)	b	
+C(y b)	b	
+S(C(S(x{0,u}) a{3,3} S(a a){3,3}){0,2} y{0,2})	#upa	cos-nonambig:x|a
+S(c{0,1} S(a a{0,1}){3,3})	#upa	cos-nonambig:a|a
+S(C(S(c{0,1}){0,2} C(y{0,1}) C(a{0,u} b{2,3} y{1,3}){0,u}){0,1} x{0,2} y{0,3})	#upa	cos-nonambig:y|a
+S(c c{0,1})	c,b	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+S(c c{0,1})	c,c	
+S(c c{0,1})	c,c	
+S(c c{0,1})	c,c	
+S(c c{0,1})	c,c	
+S(c c{0,1})	c,c	
+S(c c{0,1})	c,e,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{c}' is expected.
+S(c c{0,1})	c,c	
+S(S(a{0,1} S(a{0,2} a{0,2}){2,3}){2,u} a{0,1})	#upa	cos-nonambig:a|a
+C(b{0,u} C(S(y y{0,u} c{2,3}){0,1}) a{3,3})	#upa	cos-nonambig:y|a
+S(x C(S(b{0,1} c{3,3}){0,1} C(x{1,u} x{1,3} x)){0,2})	#upa	cos-nonambig:x|x
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(x)	x	
+C(x)	b,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{x}' is expected.
+C(x)	w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{x}' is expected.
+C(x)	x	
+C(x)	x,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(c{2,u} S(C(b{1,u} b a{2,u}){1,3} S(a{3,3} a{3,3} a)){0,3} x{0,3}){0,1}	#upa	cos-nonambig:b|b
+C(c){2,3}	c,c,c	
+C(c){2,3}	c,c,c	
+C(c){2,3}	c,c	
+C(c){2,3}	c,c,c,c	3:cvc-complex-type.2.4.f:'c' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(c){2,3}	c	1:cvc-complex-type.2.4.i:The content of element 'r' is not complete. 'c' is expected to occur a minimum of '2' times. One more instance is required to satisfy this constraint.
+C(c){2,3}	a,c,w,c,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c}' is expected.
+C(c){2,3}	c,c	
+C(c){2,3}	c,c,c	
+C(a{0,1})	z,f	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'f'. No child element is expected at this point.
+C(a{0,1})	a	
+C(a{0,1})		
+C(a{0,1})	z	
+C(a{0,1})	w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{a}' is expected.
+C(a{0,1})		
+C(a{0,1})	a	
+C(a{0,1})	a	
+C(c a C(S(x y{2,3}){2,u} b b){0,1})	#upa	cos-nonambig:a|x
+C(C(b x{0,1}) C(C(y{0,1}){2,u} S(c{0,2} b{2,3} y{2,3})))	#upa	cos-nonambig:b|b
+C(S(x{0,1} a){0,2})	#upa	cos-nonambig:x|a
+S(a S(C(c{0,2}){1,3} c{2,3}){0,u}){2,3}	#upa	cos-nonambig:c|c
+C(C(C(b y{0,3} b{2,u}){2,u} y{0,1} y{2,u}){1,u} x C(C(y{2,3}){2,3} y{0,1}){1,u})	#upa	cos-nonambig:b|b
+C(S(S(x){2,3} y{2,3}) C(C(x{0,1}){0,1} S(a{0,1} b{0,3}){3,3} x){1,u} C(C(x{2,u} x{0,2}){0,2}))	#upa	cos-nonambig:x|x
+S(S(S(y b x{1,u}){0,1} S(c a{0,u} b{1,3}){0,1} S(b{3,3} a{2,3} a{0,3})){0,1} C(S(b{0,2} b{0,u})) S(C(b{1,u} y{2,3} x{1,3}) C(x){3,3}){2,3})	#upa	cos-nonambig:y|y
+C(y{2,u} c{0,3})	c,c	
+C(y{2,u} c{0,3})	c	
+C(y{2,u} c{0,3})	y,z	
+C(y{2,u} c{0,3})	z,z	
+C(y{2,u} c{0,3})		
+C(y{2,u} c{0,3})	c,y	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{c}' is expected.
+C(y{2,u} c{0,3})	c,c	
+C(y{2,u} c{0,3})	x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y, c}' is expected.
+C(a){2,u}	z,a,a	
+C(a){2,u}	y,y,x,z	
+C(a){2,u}	a,x,z,y	
+C(a){2,u}	a,y,a,a	
+C(a){2,u}	x,a,a,x	
+C(a){2,u}	a,y,z,a	
+C(a){2,u}	a,x,x,a	
+C(a){2,u}	a,x	
+C(b C(C(a{2,u} x){3,3}))	#upa	cos-nonambig:a|x
+C(y)	y	
+C(y)	z	
+C(y)	y,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(y)	z,z	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'z'. No child element is expected at this point.
+C(y)	z	
+C(y)		0:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+C(y)	y	
+C(y)	z,z	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'z'. No child element is expected at this point.
+S(C(y{3,3}){0,2})	y,z,y	
+S(C(y{3,3}){0,2})		
+S(C(y{3,3}){0,2})	y,z,z	
+S(C(y{3,3}){0,2})		
+S(C(y{3,3}){0,2})	y,y,y	
+S(C(y{3,3}){0,2})		
+S(C(y{3,3}){0,2})	y,y,z	
+S(C(y{3,3}){0,2})	z,y,y	
+S(C(S(b){0,1} c{0,1}){3,3} x{3,3} C(S(c{0,1} c x){0,1} a{3,3}))	#upa	cos-nonambig:x|a
+C(C(C(b{0,2} x x{2,u}) S(c{1,u}){2,u}){0,3})	#upa	cos-nonambig:x|x
+S(a{3,3} x{2,u} y{0,u}){0,1}	z,y,a,x,x,x,z	
+S(a{3,3} x{2,u} y{0,u}){0,1}		
+S(a{3,3} x{2,u} y{0,u}){0,1}	z,a,x,x,x,x	
+S(a{3,3} x{2,u} y{0,u}){0,1}	z,a,z,x,x,x,x	
+S(a{3,3} x{2,u} y{0,u}){0,1}	a,a,a,x,x,y,c	6:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(a{3,3} x{2,u} y{0,u}){0,1}	z,z,z,y,x,x,x	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{x}' is expected.
+S(a{3,3} x{2,u} y{0,u}){0,1}	y,z,a,x,x,x,x,x,y	
+S(a{3,3} x{2,u} y{0,u}){0,1}	a,a,a,x,x,x,x	
+C(x S(c S(c y{0,u}){2,u}){0,1})		
+C(x S(c S(c y{0,u}){2,u}){0,1})	c,c,z,z,c,y,c,d,c	7:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, y}' is expected.
+C(x S(c S(c y{0,u}){2,u}){0,1})	c,c,y,z,z,c,z,c	
+C(x S(c S(c y{0,u}){2,u}){0,1})	x	
+C(x S(c S(c y{0,u}){2,u}){0,1})	x,a	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'a'. No child element is expected at this point.
+C(x S(c S(c y{0,u}){2,u}){0,1})	c,c,z,c,y,z	
+C(x S(c S(c y{0,u}){2,u}){0,1})		
+C(x S(c S(c y{0,u}){2,u}){0,1})	c,c,c,y,y,c,y,c,y	
+C(S(y{0,1} c{1,3} a{0,3}){2,u}){0,3}	#upa	cos-nonambig:y|a
+C(S(C(c b) S(a{0,1} x a){2,u} S(c{0,1} a c{0,2}){2,u}){2,u} b{0,1} c{3,3}){0,1}	#upa	cos-nonambig:c|c
+C(S(C(c{1,u} y{0,3})){0,1})		
+C(S(C(c{1,u} y{0,3})){0,1})	c,c,c	
+C(S(C(c{1,u} y{0,3})){0,1})	z,z	
+C(S(C(c{1,u} y{0,3})){0,1})	z	
+C(S(C(c{1,u} y{0,3})){0,1})		
+C(S(C(c{1,u} y{0,3})){0,1})		
+C(S(C(c{1,u} y{0,3})){0,1})	z	
+C(S(C(c{1,u} y{0,3})){0,1})	a,z,y,y	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{c, y}' is expected.
+S(C(a{0,1} x{0,u} C(b{3,3} c c){0,2}){0,u})	#upa	cos-nonambig:a|x
+S(C(C(a b{0,1}){1,3} C(c y{0,u} a){0,3} C(x{1,3} y{2,u} b){0,u}){0,2}){2,u}	#upa	cos-nonambig:a|y
+S(y b{0,1}){2,u}	b,y,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+S(y b{0,1}){2,u}	z,y,d,z,b,b,y	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y, b}' is expected.
+S(y b{0,1}){2,u}	y,b,y,z,b,x,z	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{y}' is expected.
+S(y b{0,1}){2,u}	y,w,y,b,y,w	
+S(y b{0,1}){2,u}	z,z,b,d,z,z	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+S(y b{0,1}){2,u}	z,z,w,z,w,d	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{y}' is expected.
+S(y b{0,1}){2,u}	y,w,y,c,b,b,y	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y, b}' is expected.
+S(y b{0,1}){2,u}	b,z,b,c,y,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{y}' is expected.
+S(b{0,1} S(S(c x{2,u}){0,3})){0,2}		
+S(b{0,1} S(S(c x{2,u}){0,3})){0,2}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{b, c}' is expected.
+S(b{0,1} S(S(c x{2,u}){0,3})){0,2}	c,x,e,x,x,x	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'e'. One of '{x}' is expected.
+S(b{0,1} S(S(c x{2,u}){0,3})){0,2}		
+S(b{0,1} S(S(c x{2,u}){0,3})){0,2}	b,x,c,x,x,x	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b, c}' is expected.
+S(b{0,1} S(S(c x{2,u}){0,3})){0,2}	f,b,b	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{b, c}' is expected.
+S(b{0,1} S(S(c x{2,u}){0,3})){0,2}	b,c,x,x,c,x,x,x,x	
+S(b{0,1} S(S(c x{2,u}){0,3})){0,2}	b,c,x,x	
+C(b{2,3})	x,w,w	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+C(b{2,3})	b,b	
+C(b{2,3})	b,w	
+C(b{2,3})	w,w,w	
+C(b{2,3})	b,w	
+C(b{2,3})	w,b,b	
+C(b{2,3})	w	1:cvc-complex-type.2.4.i:The content of element 'r' is not complete. 'b' is expected to occur a minimum of '2' times. One more instance is required to satisfy this constraint.
+C(b{2,3})	w,w,w,w	3:cvc-complex-type.2.4.f:'b' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+S(S(a{0,2}) S(C(x{2,3} y{0,3} c{0,1}){1,u} S(a y{0,u}){0,1}))	#upa	cos-nonambig:a|x
+C(C(c S(y{0,1}){3,3}){2,u}){0,u}	c,c,y,y,c	
+C(C(c S(y{0,1}){3,3}){2,u}){0,u}	c,c,z,y	
+C(C(c S(y{0,1}){3,3}){2,u}){0,u}	c,y,c	
+C(C(c S(y{0,1}){3,3}){2,u}){0,u}	y,z,z,z,z,z,y,c,c	
+C(C(c S(y{0,1}){3,3}){2,u}){0,u}	d	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'd'. One of '{c, y}' is expected.
+C(C(c S(y{0,1}){3,3}){2,u}){0,u}	z,z,z,y,y	
+C(C(c S(y{0,1}){3,3}){2,u}){0,u}	b,e	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c, y}' is expected.
+C(C(c S(y{0,1}){3,3}){2,u}){0,u}		
+S(S(a{1,u} y{2,u} C(c){0,u}) C(C(x{0,1}) b) c{0,1})	#upa	cos-nonambig:a|y
+S(C(S(a{0,2} x{0,u} b{0,2}){0,2}))	#upa	cos-nonambig:a|x
+C(y{1,u}){2,u}	y,z,a,y,z,z,y,z	2:cvc-complex-type.2.4.a:Invalid content was found starting with element 'a'. One of '{y}' is expected.
+C(y{1,u}){2,u}	y,y,y,y,z,y,y	
+C(y{1,u}){2,u}	y,y,z,z,y,z,z	
+C(y{1,u}){2,u}	z,z,z,z,z,z,z,y	
+C(y{1,u}){2,u}	z,y,z,c,y,z	3:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+C(y{1,u}){2,u}	y,y,y,y,z	
+C(y{1,u}){2,u}	y,y,z,y,y	
+C(y{1,u}){2,u}	y,z,y,z,z,f,y	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{y}' is expected.
+S(a{2,u} y)	#upa	cos-nonambig:a|y
+C(S(b{2,3} a{2,u}){1,u} C(b{0,1} C(y y{1,3} x){0,2}){3,3})	#upa	cos-nonambig:b|b
+C(b{0,1} S(C(x{1,3} y b{2,3}) a C(y x){2,u}){2,u} C(S(c c){1,3}))	#upa	cos-nonambig:b|b
+S(a{0,u} b S(S(x y c{0,3}){2,3}){3,3})	b,x,z,c,x,y,c,x,z,c,c,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(a{0,u} b S(S(x y c{0,3}){2,3}){3,3})	z,y,b,x,z,c,x,y,x,y,c,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(a{0,u} b S(S(x y c{0,3}){2,3}){3,3})	a,b,x,z,c,x,y,c,c,x,z,c	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x, c}' is expected.
+S(a{0,u} b S(S(x y c{0,3}){2,3}){3,3})	y,x,b,x,z,x,y,x,z,c,c,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(a{0,u} b S(S(x y c{0,3}){2,3}){3,3})	a,b,x,y,x,c,z,c,c,x,y,x	5:cvc-complex-type.2.4.a:Invalid content was found starting with element 'c'. One of '{y}' is expected.
+S(a{0,u} b S(S(x y c{0,3}){2,3}){3,3})	b,x,z,c,z,c,x,z,x,f,y,c	4:cvc-complex-type.2.4.a:Invalid content was found starting with element 'z'. One of '{x, c}' is expected.
+S(a{0,u} b S(S(x y c{0,3}){2,3}){3,3})	w,x,y,c,c,x,z,c,c,x,y,c	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{x, c}' is expected.
+S(a{0,u} b S(S(x y c{0,3}){2,3}){3,3})	w,x,z,c,x,z,c,c,x,y,c,x	12:cvc-complex-type.2.4.b:The content of element 'r' is not complete. One of '{y}' is expected.
+S(a{0,3} y S(S(x) C(b{0,1} x{0,2}){1,3}))	#upa	cos-nonambig:a|y
+C(S(c C(a{2,u} a{0,3} y{0,1}) c{0,3}){2,u} c{0,1})	#upa	cos-nonambig:c|c
+C(y{2,3})	y,y,y	
+C(y{2,3})	z,y,z	
+C(y{2,3})	z,z,z	
+C(y{2,3})	y,y,z,f	3:cvc-complex-type.2.4.f:'y' can occur a maximum of '3' times in the current sequence. This limit was exceeded. No child element is expected at this point.
+C(y{2,3})	z,y	
+C(y{2,3})	z,z,y	
+C(y{2,3})	z,y,y	
+C(y{2,3})	z,z	
+C(S(b S(a b)){0,1} b{0,1} S(a y S(b){2,u}))	#upa	cos-nonambig:b|b
+S(y{0,3} S(c{0,2} C(y{1,u} y{3,3}){0,1}))	#upa	cos-nonambig:y|y
+S(S(a C(c{0,1}){0,u} c{3,3}){0,3})	#upa	cos-nonambig:c|c
+S(C(b{0,1}){0,1} S(C(a{0,u} c{1,u} y{2,3}){0,2}){0,u} C(c){0,1})	#upa	cos-nonambig:a|y
+S(S(S(a) S(a){1,u}))	z,y,a	
+S(S(S(a) S(a){1,u}))	a,b,x,y,z	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{a}' is expected.
+S(S(S(a) S(a){1,u}))	x,z,a,a	
+S(S(S(a) S(a){1,u}))	a,a,x	
+S(S(S(a) S(a){1,u}))	z,a	
+S(S(S(a) S(a){1,u}))	a,x,a	
+S(S(S(a) S(a){1,u}))	a,a,x,y	
+S(S(S(a) S(a){1,u}))	f,y,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'f'. One of '{a}' is expected.
+C(c x{0,u} y{0,2}){0,3}	w,c,c,c	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'w'. One of '{c, x, y}' is expected.
+C(c x{0,u} y{0,2}){0,3}		
+C(c x{0,u} y{0,2}){0,3}		
+C(c x{0,u} y{0,2}){0,3}	y,z,x	
+C(c x{0,u} y{0,2}){0,3}	c	
+C(c x{0,u} y{0,2}){0,3}	x,x	
+C(c x{0,u} y{0,2}){0,3}	x,c,c	
+C(c x{0,u} y{0,2}){0,3}	z,z,c	
+S(C(C(a){0,1} S(a{0,u}){2,3})){0,2}	#upa	cos-nonambig:a|a
+C(x{0,1} c{2,3} S(S(b{2,3} c a{0,u}){1,3}){0,u})	w,x,x	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'x'. One of '{b}' is expected.
+C(x{0,1} c{2,3} S(S(b{2,3} c a{0,u}){1,3}){0,u})	x	
+C(x{0,1} c{2,3} S(S(b{2,3} c a{0,u}){1,3}){0,u})	y,x	0:cvc-complex-type.2.4.a:Invalid content was found starting with element 'y'. One of '{x, c, b}' is expected.
+C(x{0,1} c{2,3} S(S(b{2,3} c a{0,u}){1,3}){0,u})	x,y,x	1:cvc-complex-type.2.4.d:Invalid content was found starting with element 'y'. No child element is expected at this point.
+C(x{0,1} c{2,3} S(S(b{2,3} c a{0,u}){1,3}){0,u})	b,b,b,c,w,b,w,c	
+C(x{0,1} c{2,3} S(S(b{2,3} c a{0,u}){1,3}){0,u})	c,b,c,c	1:cvc-complex-type.2.4.a:Invalid content was found starting with element 'b'. One of '{c}' is expected.
+C(x{0,1} c{2,3} S(S(b{2,3} c a{0,u}){1,3}){0,u})	x	
+C(x{0,1} c{2,3} S(S(b{2,3} c a{0,u}){1,3}){0,u})		
+C(S(x) y{0,2} x){0,1}	#upa	cos-nonambig:x|x
+C(c{0,1} x{1,3} x{0,1})	#upa	cos-nonambig:x|x
+S(S(y c{3,3} S(y{2,3} a){1,u}))	#upa	cos-nonambig:y|a

@@ -1,0 +1,23 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="U">
+    <xs:union memberTypes="xs:int xs:date"/>
+  </xs:simpleType>
+  <xs:element name="h" type="U"/>
+  <xs:element name="m" type="xs:short" substitutionGroup="h"/>
+  <xs:element name="r">
+    <xs:complexType>
+      <xs:sequence maxOccurs="unbounded">
+        <xs:choice>
+          <xs:sequence>
+            <xs:element ref="h"/>
+            <xs:element name="a"/>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:element ref="m"/>
+            <xs:element name="b"/>
+          </xs:sequence>
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
