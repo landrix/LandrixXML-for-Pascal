@@ -1,0 +1,34 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="Short">
+    <xs:restriction base="xs:duration">
+      <xs:minExclusive value="-PT1M"/>
+      <xs:maxInclusive value="P1M"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Choice">
+    <xs:restriction base="xs:duration">
+      <xs:enumeration value="P1D"/>
+      <xs:enumeration value="PT90M"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="d" type="xs:duration" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="s" type="Short" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="c" type="Choice" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="f" type="xs:duration" fixed="PT24H" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="k" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="id" type="xs:duration"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="a" type="Short"/>
+    </xs:complexType>
+    <xs:unique name="u">
+      <xs:selector xpath="k"/>
+      <xs:field xpath="@id"/>
+    </xs:unique>
+  </xs:element>
+</xs:schema>

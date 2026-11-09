@@ -90,3 +90,12 @@ u-str-dec-enum	u-str-dec	enumeration=1.0	enumeration=abc
 b-QName	QName
 qnameLen	QName	length=1	pattern=[a-z:]+
 qnameEnum	QName	enumeration=a	enumeration=xml:lang
+b-duration	duration
+durMax1M	duration	maxInclusive=P1M
+durMinEx	duration	minExclusive=-P1Y
+durEnum	duration	enumeration=P1D	enumeration=PT36H	enumeration=-P0D
+durRange	duration	minInclusive=PT1H	maxExclusive=P1DT1S
+durPat	duration	pattern=P[0-9]+D
+durMax2M	durMax1M	maxExclusive=P20D
+durQuirk	duration	maxInclusive=PT1048576H59M
+durWrap	duration	enumeration=P2147481800Y33D

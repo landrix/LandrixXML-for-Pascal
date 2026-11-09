@@ -110,6 +110,19 @@ TYPES = [
     ("b-QName", "QName", []),
     ("qnameLen", "QName", [("length", "1"), ("pattern", "[a-z:]+")]),
     ("qnameEnum", "QName", [("enumeration", "a"), ("enumeration", "xml:lang")]),
+    # duration: Xerces' partial order over four reference dates
+    ("b-duration", "duration", []),
+    ("durMax1M", "duration", [("maxInclusive", "P1M")]),
+    ("durMinEx", "duration", [("minExclusive", "-P1Y")]),
+    ("durEnum", "duration", [("enumeration", "P1D"), ("enumeration", "PT36H"), ("enumeration", "-P0D")]),
+    ("durRange", "duration", [("minInclusive", "PT1H"), ("maxExclusive", "P1DT1S")]),
+    ("durPat", "duration", [("pattern", "P[0-9]+D")]),
+    ("durMax2M", "durMax1M", [("maxExclusive", "P20D")]),
+    # Xerces' fQuotient divides as float: 62914619 minutes become an hour
+    # more and minute -1, so they exceed the equal bound
+    ("durQuirk", "duration", [("maxInclusive", "PT1048576H59M")]),
+    # years that wrap around the int range while days are added
+    ("durWrap", "duration", [("enumeration", "P2147481800Y33D")]),
 ]
 
 VALUES = {
@@ -144,6 +157,15 @@ VALUES = {
                "#a#b", "/rel/path", "mailto:info@example.org", "ä", "http://x/" + "y" * 20],
     "name": ["a", "a:b", ":a", "1a", "-a", "a-b.c", "_x", "é", "·a", "a·", "⁰", "a b", "",
              "̀a", "\U0001F600", "abc", "x1", "ABC", "xyz", "ab"],
+    "duration": ["P1Y2M3DT4H5M6.7S", "P1Y", "P1M", "P1D", "PT1H", "PT1M", "PT1S", "PT", "P", "", "-P1D", "+P1D",
+                 "P1D1M", "P1M1Y", "P1.5D", "PT1.5S", "PT.5S", "PT1.S", "PT1.2.3S", "PT1e3S", "P0D", "-P0D",
+                 "P2147483647Y", "P2147483648Y", "PT2147483647H", "P1DT", "P-1D", " P1D ", "p1d", "P1Y2MT", "P1W",
+                 "PT36H", "P1DT12H", "PT24H", "P30D", "P28D", "P29D", "P31D", "P58D", "P59D", "P60D", "PT2678400S",
+                 "PT2419200S", "P0.5Y", "PT1000000000000000000000S", "PT" + "9" * 400 + "S", "P1Y1Y", "PT1H1H",
+                 "-P1Y", "-P12M", "-P11M", "-P365D", "-P366D", "-PT1S", "PT59M", "PT60M", "PT3600S", "PT3599.999S",
+                 "P1DT1S", "P1DT0.5S", "PT86400S", "PT86401S", "PT1H0.0S", "P0Y0M0DT0H0M0S", "P2147483647M",
+                 "P2147483647D", "PT2147483647M", "PT99999999999S", "-P2147483647Y", "-P2147483647D",
+                 "P1Y2M3DT4H5M6S7", "PT1H2", "P1DT1H1M1.000S", "PT0.0000001S", "P00001D", "P1D ", "P 1D"],
     "language": ["de", "de-DE", "de-DE-x", "x-klingon", "toolonglang", "de-", "-de", "1de", "de-1999", ""],
 }
 
@@ -160,6 +182,10 @@ EXTRA = {
     "uriPatEnum": ["a b", "a  b", " a   b "],
     "uriLen4": ["a  b", "a b", " a b "],
     "b64enum": ["QUJD", "Q U J D", "QUJE", "QU JD"],
+    "durQuirk": ["PT62914619M", "PT62914618M", "PT62914620M", "PT1048576H59M", "PT1048576H58M",
+                 "PT3774873540S", "PT3774873539S", "PT3774873539.5S", "PT2147483647M", "PT16777217H"],
+    "durWrap": ["P2147481400Y146130D", "P2147481800Y33D", "P2147483000Y1000000D", "-P2147483000Y1000000D",
+                "P2147481800Y32D", "P2147483647Y2147483647D"],
     "floatMin1": ["1", "1.00000005960464477539062500000001", "1.000000059604644775390625",
                   "1.0000000596046447753906249", "1.000000059604644775390625e00000000000000000000", "10.00000059604644775390625e-1", "1.0000001", "0.99999997"],
     "len3": ["ab😀", "a😀", "😀😀"],
@@ -180,6 +206,7 @@ GROUP = {
     "float": "double", "double": "double", "dateTime": "dateTime", "time": "time", "date": "date",
     "gYearMonth": "gYearMonth", "gYear": "gYear", "gMonthDay": "gMonthDay", "gDay": "gDay", "gMonth": "gMonth",
     "hexBinary": "hexBinary", "base64Binary": "base64Binary", "anyURI": "anyURI", "QName": "qname",
+    "duration": "duration",
 }
 for t in ["integer", "nonPositiveInteger", "negativeInteger", "long", "int", "short", "byte", "nonNegativeInteger",
           "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "positiveInteger"]:
@@ -210,6 +237,24 @@ def values_for(type_id, rng):
         if GROUP[b] == "decimal":
             vals += VALUES["integer"]
     vals += EXTRA.get(type_id, [])
+    if GROUP.get(b) == "duration":
+        # random durations near the bounds of the facets above
+        for _ in range(60):
+            parts = "P"
+            if rng.random() < 0.4:
+                parts += "%dM" % rng.randint(0, 14)
+            if rng.random() < 0.7:
+                parts += "%dD" % rng.randint(0, 400)
+            t = ""
+            if rng.random() < 0.5:
+                t += "%dH" % rng.randint(0, 50)
+            if rng.random() < 0.3:
+                t += "%dS" % rng.randint(0, 90000)
+            if t:
+                parts += "T" + t
+            if parts == "P":
+                parts = "P0D"
+            vals.append(("-" if rng.random() < 0.2 else "") + parts)
     out = []
     for v in vals:
         if v not in out:

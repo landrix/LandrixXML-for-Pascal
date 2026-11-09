@@ -405,6 +405,14 @@ both the mark and an entry here):
 - A restriction that has or inherits a `length` may give `minLength` or
   `maxLength` only if its base type has the same one; the errata of XML
   Schema 1.0 allow more (`errF001`).
+- `xs:duration` follows Xerces: the numbers of years, months, days,
+  hours and minutes may not exceed 2147483647, seconds may start with the
+  point (`PT.5S`), and the order of durations is computed with Xerces'
+  arithmetic, whose int sums wrap around and whose quotients are floats,
+  so very large durations compare wrongly (62914619 minutes count as
+  more than 1048576 hours and 59 minutes, the same duration) (no test
+  of the suite covers these; in the source code the mark reads
+  `Xerces deviation, not in the test suite`).
 - `xsi:schemaLocation` and `xsi:noNamespaceSchemaLocation` hints in
   documents are never read: the schema is the one given to the loader, as
   with a preloaded schema in Xerces (the setup of the KoSIT validator), so
@@ -416,6 +424,9 @@ Differences from Xerces, also on purpose:
 
 - Every `xs:import` of a namespace is loaded; Xerces loads only the first
   one.
+- The seconds of dates, times and durations are exact decimals; Xerces
+  uses doubles, so values with more than about 15 significant digits may
+  compare differently.
 - The loader checks each schema document against the schema for schemas
   (attributes, their values, children and their order) and the facets of
   each simple type against each other and against its base type (as
@@ -463,9 +474,9 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 38,126
-  pass and 1,102 use a construct this library does not support (above
-  all `xs:duration` and `xs:NOTATION`); they are reported as unsupported,
+  load or be rejected, documents that must be valid or invalid) 39,029
+  pass and 199 use a construct this library does not support (above
+  all `xs:NOTATION`); they are reported as unsupported,
   never accepted silently. Of the 105 failures 30 are invalid schemas that
   load and 2 documents Xerces accepts too; 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline

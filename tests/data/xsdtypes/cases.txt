@@ -2575,3 +2575,1216 @@ qnameEnum		cvc-datatype-valid.1.2.1
 qnameEnum	ab	cvc-enumeration-valid
 qnameEnum	xmlns:a	cvc-enumeration-valid
 qnameEnum	hex:C3A974C3A9	cvc-enumeration-valid
+b-duration	P1Y2M3DT4H5M6.7S	
+b-duration	P1Y	
+b-duration	P1M	
+b-duration	P1D	
+b-duration	PT1H	
+b-duration	PT1M	
+b-duration	PT1S	
+b-duration	PT	cvc-datatype-valid.1.2.1
+b-duration	P	cvc-datatype-valid.1.2.1
+b-duration		cvc-datatype-valid.1.2.1
+b-duration	-P1D	
+b-duration	+P1D	cvc-datatype-valid.1.2.1
+b-duration	P1D1M	cvc-datatype-valid.1.2.1
+b-duration	P1M1Y	cvc-datatype-valid.1.2.1
+b-duration	P1.5D	cvc-datatype-valid.1.2.1
+b-duration	PT1.5S	
+b-duration	PT.5S	
+b-duration	PT1.S	cvc-datatype-valid.1.2.1
+b-duration	PT1.2.3S	cvc-datatype-valid.1.2.1
+b-duration	PT1e3S	cvc-datatype-valid.1.2.1
+b-duration	P0D	
+b-duration	-P0D	
+b-duration	P2147483647Y	
+b-duration	P2147483648Y	cvc-datatype-valid.1.2.1
+b-duration	PT2147483647H	
+b-duration	P1DT	cvc-datatype-valid.1.2.1
+b-duration	P-1D	cvc-datatype-valid.1.2.1
+b-duration	 P1D 	
+b-duration	p1d	cvc-datatype-valid.1.2.1
+b-duration	P1Y2MT	cvc-datatype-valid.1.2.1
+b-duration	P1W	cvc-datatype-valid.1.2.1
+b-duration	PT36H	
+b-duration	P1DT12H	
+b-duration	PT24H	
+b-duration	P30D	
+b-duration	P28D	
+b-duration	P29D	
+b-duration	P31D	
+b-duration	P58D	
+b-duration	P59D	
+b-duration	P60D	
+b-duration	PT2678400S	
+b-duration	PT2419200S	
+b-duration	P0.5Y	cvc-datatype-valid.1.2.1
+b-duration	PT1000000000000000000000S	
+b-duration	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-datatype-valid.1.2.1
+b-duration	P1Y1Y	cvc-datatype-valid.1.2.1
+b-duration	PT1H1H	cvc-datatype-valid.1.2.1
+b-duration	-P1Y	
+b-duration	-P12M	
+b-duration	-P11M	
+b-duration	-P365D	
+b-duration	-P366D	
+b-duration	-PT1S	
+b-duration	PT59M	
+b-duration	PT60M	
+b-duration	PT3600S	
+b-duration	PT3599.999S	
+b-duration	P1DT1S	
+b-duration	P1DT0.5S	
+b-duration	PT86400S	
+b-duration	PT86401S	
+b-duration	PT1H0.0S	
+b-duration	P0Y0M0DT0H0M0S	
+b-duration	P2147483647M	
+b-duration	P2147483647D	
+b-duration	PT2147483647M	
+b-duration	PT99999999999S	
+b-duration	-P2147483647Y	
+b-duration	-P2147483647D	
+b-duration	P1Y2M3DT4H5M6S7	cvc-datatype-valid.1.2.1
+b-duration	PT1H2	cvc-datatype-valid.1.2.1
+b-duration	P1DT1H1M1.000S	
+b-duration	PT0.0000001S	
+b-duration	P00001D	
+b-duration	P1D 	
+b-duration	P 1D	cvc-datatype-valid.1.2.1
+b-duration	P8M159DT89591S	
+b-duration	PT22H	
+b-duration	-P196DT6H	
+b-duration	P151D	
+b-duration	P8M159DT43H	
+b-duration	P7MT34H	
+b-duration	P331D	
+b-duration	P369D	
+b-duration	P264DT47H	
+b-duration	-P342D	
+b-duration	P6MT39H	
+b-duration	PT47H85032S	
+b-duration	P11M324D	
+b-duration	PT33993S	
+b-duration	P261DT37H	
+b-duration	P259DT12196S	
+b-duration	P106DT43770S	
+b-duration	P13M	
+b-duration	P4M365D	
+b-duration	P204DT50H80006S	
+b-duration	P9MT81586S	
+b-duration	PT17H82036S	
+b-duration	P297D	
+b-duration	P8M398DT45H	
+b-duration	-P105D	
+b-duration	-P7MT78317S	
+b-duration	P253D	
+b-duration	P140DT44H29106S	
+b-duration	P86DT37177S	
+b-duration	P366DT31H	
+b-duration	P2D	
+b-duration	PT48H	
+b-duration	P6M340D	
+b-duration	P10MT7975S	
+b-duration	-P14M60DT12H83560S	
+b-duration	P124DT37H	
+b-duration	P9M326DT46298S	
+b-duration	-P9MT12657S	
+b-duration	PT11956S	
+b-duration	-P50DT69660S	
+b-duration	P128DT4481S	
+b-duration	P4M66DT24H	
+b-duration	P6MT44389S	
+b-duration	P14M53DT28H	
+b-duration	P266D	
+b-duration	-P2M199DT45269S	
+b-duration	P4M	
+b-duration	-P5MT15972S	
+b-duration	P167D	
+b-duration	P379D	
+b-duration	PT33H	
+b-duration	P3M	
+b-duration	P237D	
+b-duration	P4M288DT7H53884S	
+b-duration	P1M269D	
+durMax1M	P1Y2M3DT4H5M6.7S	cvc-maxInclusive-valid
+durMax1M	P1Y	cvc-maxInclusive-valid
+durMax1M	P1M	
+durMax1M	P1D	
+durMax1M	PT1H	
+durMax1M	PT1M	
+durMax1M	PT1S	
+durMax1M	PT	cvc-datatype-valid.1.2.1
+durMax1M	P	cvc-datatype-valid.1.2.1
+durMax1M		cvc-datatype-valid.1.2.1
+durMax1M	-P1D	
+durMax1M	+P1D	cvc-datatype-valid.1.2.1
+durMax1M	P1D1M	cvc-datatype-valid.1.2.1
+durMax1M	P1M1Y	cvc-datatype-valid.1.2.1
+durMax1M	P1.5D	cvc-datatype-valid.1.2.1
+durMax1M	PT1.5S	
+durMax1M	PT.5S	
+durMax1M	PT1.S	cvc-datatype-valid.1.2.1
+durMax1M	PT1.2.3S	cvc-datatype-valid.1.2.1
+durMax1M	PT1e3S	cvc-datatype-valid.1.2.1
+durMax1M	P0D	
+durMax1M	-P0D	
+durMax1M	P2147483647Y	
+durMax1M	P2147483648Y	cvc-datatype-valid.1.2.1
+durMax1M	PT2147483647H	cvc-maxInclusive-valid
+durMax1M	P1DT	cvc-datatype-valid.1.2.1
+durMax1M	P-1D	cvc-datatype-valid.1.2.1
+durMax1M	 P1D 	
+durMax1M	p1d	cvc-datatype-valid.1.2.1
+durMax1M	P1Y2MT	cvc-datatype-valid.1.2.1
+durMax1M	P1W	cvc-datatype-valid.1.2.1
+durMax1M	PT36H	
+durMax1M	P1DT12H	
+durMax1M	PT24H	
+durMax1M	P30D	cvc-maxInclusive-valid
+durMax1M	P28D	cvc-maxInclusive-valid
+durMax1M	P29D	cvc-maxInclusive-valid
+durMax1M	P31D	cvc-maxInclusive-valid
+durMax1M	P58D	cvc-maxInclusive-valid
+durMax1M	P59D	cvc-maxInclusive-valid
+durMax1M	P60D	cvc-maxInclusive-valid
+durMax1M	PT2678400S	cvc-maxInclusive-valid
+durMax1M	PT2419200S	cvc-maxInclusive-valid
+durMax1M	P0.5Y	cvc-datatype-valid.1.2.1
+durMax1M	PT1000000000000000000000S	cvc-maxInclusive-valid
+durMax1M	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-datatype-valid.1.2.1
+durMax1M	P1Y1Y	cvc-datatype-valid.1.2.1
+durMax1M	PT1H1H	cvc-datatype-valid.1.2.1
+durMax1M	-P1Y	
+durMax1M	-P12M	
+durMax1M	-P11M	
+durMax1M	-P365D	
+durMax1M	-P366D	
+durMax1M	-PT1S	
+durMax1M	PT59M	
+durMax1M	PT60M	
+durMax1M	PT3600S	
+durMax1M	PT3599.999S	
+durMax1M	P1DT1S	
+durMax1M	P1DT0.5S	
+durMax1M	PT86400S	
+durMax1M	PT86401S	
+durMax1M	PT1H0.0S	
+durMax1M	P0Y0M0DT0H0M0S	
+durMax1M	P2147483647M	
+durMax1M	P2147483647D	
+durMax1M	PT2147483647M	cvc-maxInclusive-valid
+durMax1M	PT99999999999S	cvc-maxInclusive-valid
+durMax1M	-P2147483647Y	
+durMax1M	-P2147483647D	
+durMax1M	P1Y2M3DT4H5M6S7	cvc-datatype-valid.1.2.1
+durMax1M	PT1H2	cvc-datatype-valid.1.2.1
+durMax1M	P1DT1H1M1.000S	
+durMax1M	PT0.0000001S	
+durMax1M	P00001D	
+durMax1M	P1D 	
+durMax1M	P 1D	cvc-datatype-valid.1.2.1
+durMax1M	P13M221DT23H	cvc-maxInclusive-valid
+durMax1M	P102D	cvc-maxInclusive-valid
+durMax1M	P278DT63197S	cvc-maxInclusive-valid
+durMax1M	PT12H69728S	
+durMax1M	P206D	cvc-maxInclusive-valid
+durMax1M	P234DT19H	cvc-maxInclusive-valid
+durMax1M	P282DT26H	cvc-maxInclusive-valid
+durMax1M	-P322D	
+durMax1M	-P395DT83448S	
+durMax1M	P18DT25H86375S	
+durMax1M	PT47H	
+durMax1M	P12M181DT9H22554S	cvc-maxInclusive-valid
+durMax1M	P2M147D	cvc-maxInclusive-valid
+durMax1M	P6M221DT31H64405S	cvc-maxInclusive-valid
+durMax1M	-P32DT9H3425S	
+durMax1M	-P12MT46H392S	
+durMax1M	PT35H	
+durMax1M	PT6248S	
+durMax1M	P199DT28H66560S	cvc-maxInclusive-valid
+durMax1M	P9MT24H	cvc-maxInclusive-valid
+durMax1M	P4M274DT31H	cvc-maxInclusive-valid
+durMax1M	PT45H70849S	
+durMax1M	P14MT17H32289S	cvc-maxInclusive-valid
+durMax1M	P3M322D	cvc-maxInclusive-valid
+durMax1M	P211DT30H	cvc-maxInclusive-valid
+durMax1M	P5M123DT38H	cvc-maxInclusive-valid
+durMax1M	-P76DT20H	
+durMax1M	PT39H	
+durMax1M	-P2M115DT34H	
+durMax1M	P1M102D	cvc-maxInclusive-valid
+durMax1M	P12M156DT29427S	cvc-maxInclusive-valid
+durMax1M	-PT46H	
+durMax1M	-P2M394DT36H10141S	
+durMax1M	-P127DT3H	
+durMax1M	P368DT89082S	cvc-maxInclusive-valid
+durMax1M	P14M57DT50H	cvc-maxInclusive-valid
+durMax1M	PT43H	
+durMax1M	P201DT14H	cvc-maxInclusive-valid
+durMax1M	P8M123DT27H2619S	cvc-maxInclusive-valid
+durMax1M	-P8M64DT6H	
+durMax1M	P284D	cvc-maxInclusive-valid
+durMax1M	P4M67DT37H28346S	cvc-maxInclusive-valid
+durMax1M	PT18H50034S	
+durMax1M	PT18H	
+durMax1M	P4D	
+durMax1M	PT49H	
+durMax1M	-P5M310DT6H	
+durMax1M	P21D	
+durMax1M	P400D	cvc-maxInclusive-valid
+durMax1M	PT39H73709S	
+durMax1M	P20D	
+durMax1M	P10M395D	cvc-maxInclusive-valid
+durMax1M	P12MT44H79907S	cvc-maxInclusive-valid
+durMax1M	P10M262DT41H	cvc-maxInclusive-valid
+durMax1M	P298DT13H	cvc-maxInclusive-valid
+durMax1M	P11M127DT21H	cvc-maxInclusive-valid
+durMinEx	P1Y2M3DT4H5M6.7S	
+durMinEx	P1Y	
+durMinEx	P1M	
+durMinEx	P1D	
+durMinEx	PT1H	
+durMinEx	PT1M	
+durMinEx	PT1S	
+durMinEx	PT	cvc-datatype-valid.1.2.1
+durMinEx	P	cvc-datatype-valid.1.2.1
+durMinEx		cvc-datatype-valid.1.2.1
+durMinEx	-P1D	
+durMinEx	+P1D	cvc-datatype-valid.1.2.1
+durMinEx	P1D1M	cvc-datatype-valid.1.2.1
+durMinEx	P1M1Y	cvc-datatype-valid.1.2.1
+durMinEx	P1.5D	cvc-datatype-valid.1.2.1
+durMinEx	PT1.5S	
+durMinEx	PT.5S	
+durMinEx	PT1.S	cvc-datatype-valid.1.2.1
+durMinEx	PT1.2.3S	cvc-datatype-valid.1.2.1
+durMinEx	PT1e3S	cvc-datatype-valid.1.2.1
+durMinEx	P0D	
+durMinEx	-P0D	
+durMinEx	P2147483647Y	cvc-minExclusive-valid
+durMinEx	P2147483648Y	cvc-datatype-valid.1.2.1
+durMinEx	PT2147483647H	
+durMinEx	P1DT	cvc-datatype-valid.1.2.1
+durMinEx	P-1D	cvc-datatype-valid.1.2.1
+durMinEx	 P1D 	
+durMinEx	p1d	cvc-datatype-valid.1.2.1
+durMinEx	P1Y2MT	cvc-datatype-valid.1.2.1
+durMinEx	P1W	cvc-datatype-valid.1.2.1
+durMinEx	PT36H	
+durMinEx	P1DT12H	
+durMinEx	PT24H	
+durMinEx	P30D	
+durMinEx	P28D	
+durMinEx	P29D	
+durMinEx	P31D	
+durMinEx	P58D	
+durMinEx	P59D	
+durMinEx	P60D	
+durMinEx	PT2678400S	
+durMinEx	PT2419200S	
+durMinEx	P0.5Y	cvc-datatype-valid.1.2.1
+durMinEx	PT1000000000000000000000S	
+durMinEx	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-datatype-valid.1.2.1
+durMinEx	P1Y1Y	cvc-datatype-valid.1.2.1
+durMinEx	PT1H1H	cvc-datatype-valid.1.2.1
+durMinEx	-P1Y	cvc-minExclusive-valid
+durMinEx	-P12M	cvc-minExclusive-valid
+durMinEx	-P11M	
+durMinEx	-P365D	cvc-minExclusive-valid
+durMinEx	-P366D	cvc-minExclusive-valid
+durMinEx	-PT1S	
+durMinEx	PT59M	
+durMinEx	PT60M	
+durMinEx	PT3600S	
+durMinEx	PT3599.999S	
+durMinEx	P1DT1S	
+durMinEx	P1DT0.5S	
+durMinEx	PT86400S	
+durMinEx	PT86401S	
+durMinEx	PT1H0.0S	
+durMinEx	P0Y0M0DT0H0M0S	
+durMinEx	P2147483647M	cvc-minExclusive-valid
+durMinEx	P2147483647D	cvc-minExclusive-valid
+durMinEx	PT2147483647M	
+durMinEx	PT99999999999S	
+durMinEx	-P2147483647Y	cvc-minExclusive-valid
+durMinEx	-P2147483647D	cvc-minExclusive-valid
+durMinEx	P1Y2M3DT4H5M6S7	cvc-datatype-valid.1.2.1
+durMinEx	PT1H2	cvc-datatype-valid.1.2.1
+durMinEx	P1DT1H1M1.000S	
+durMinEx	PT0.0000001S	
+durMinEx	P00001D	
+durMinEx	P1D 	
+durMinEx	P 1D	cvc-datatype-valid.1.2.1
+durMinEx	P252D	
+durMinEx	P61D	
+durMinEx	P6M13D	
+durMinEx	P8MT9H68760S	
+durMinEx	P203D	
+durMinEx	P11M2DT55439S	
+durMinEx	P122DT34H	
+durMinEx	P9M111DT50H67588S	
+durMinEx	P334DT52188S	
+durMinEx	P10M45D	
+durMinEx	P6DT19H	
+durMinEx	P2M	
+durMinEx	P213D	
+durMinEx	P142DT9H36633S	
+durMinEx	P374DT9H33066S	
+durMinEx	P7M66DT9235S	
+durMinEx	P219DT18244S	
+durMinEx	P3M39DT42H53134S	
+durMinEx	P66D	
+durMinEx	P103D	
+durMinEx	-P363DT31H	
+durMinEx	P237DT39H	
+durMinEx	P29DT50H	
+durMinEx	P52DT27H	
+durMinEx	P8M362DT24H	
+durMinEx	P371DT7H	
+durMinEx	-P279DT83680S	
+durMinEx	P119D	
+durMinEx	-P50D	
+durMinEx	P12M109DT46H	
+durMinEx	P347D	
+durMinEx	P2M97D	
+durMinEx	-P10M	
+durMinEx	P312DT9H	
+durMinEx	P33D	
+durMinEx	P25D	
+durMinEx	P162D	
+durMinEx	P310D	
+durMinEx	PT75211S	
+durMinEx	P5M188DT48517S	
+durMinEx	P276DT32H	
+durMinEx	-PT9H	
+durMinEx	P5MT23H	
+durMinEx	P32DT34801S	
+durMinEx	P4M316DT45H35034S	
+durMinEx	-P8MT13H62969S	
+durMinEx	-PT71259S	
+durMinEx	P14M264DT28H	
+durMinEx	P5M83DT77116S	
+durMinEx	P94DT15042S	
+durMinEx	P369DT12H	
+durMinEx	-P250DT16H	
+durMinEx	P14M88DT33H58063S	
+durMinEx	-P200DT77898S	
+durMinEx	P297DT30H	
+durMinEx	P295D	
+durMinEx	P37DT67400S	
+durEnum	P1Y2M3DT4H5M6.7S	cvc-enumeration-valid
+durEnum	P1Y	cvc-enumeration-valid
+durEnum	P1M	cvc-enumeration-valid
+durEnum	P1D	
+durEnum	PT1H	cvc-enumeration-valid
+durEnum	PT1M	cvc-enumeration-valid
+durEnum	PT1S	cvc-enumeration-valid
+durEnum	PT	cvc-datatype-valid.1.2.1
+durEnum	P	cvc-datatype-valid.1.2.1
+durEnum		cvc-datatype-valid.1.2.1
+durEnum	-P1D	cvc-enumeration-valid
+durEnum	+P1D	cvc-datatype-valid.1.2.1
+durEnum	P1D1M	cvc-datatype-valid.1.2.1
+durEnum	P1M1Y	cvc-datatype-valid.1.2.1
+durEnum	P1.5D	cvc-datatype-valid.1.2.1
+durEnum	PT1.5S	cvc-enumeration-valid
+durEnum	PT.5S	cvc-enumeration-valid
+durEnum	PT1.S	cvc-datatype-valid.1.2.1
+durEnum	PT1.2.3S	cvc-datatype-valid.1.2.1
+durEnum	PT1e3S	cvc-datatype-valid.1.2.1
+durEnum	P0D	
+durEnum	-P0D	
+durEnum	P2147483647Y	cvc-enumeration-valid
+durEnum	P2147483648Y	cvc-datatype-valid.1.2.1
+durEnum	PT2147483647H	cvc-enumeration-valid
+durEnum	P1DT	cvc-datatype-valid.1.2.1
+durEnum	P-1D	cvc-datatype-valid.1.2.1
+durEnum	 P1D 	
+durEnum	p1d	cvc-datatype-valid.1.2.1
+durEnum	P1Y2MT	cvc-datatype-valid.1.2.1
+durEnum	P1W	cvc-datatype-valid.1.2.1
+durEnum	PT36H	
+durEnum	P1DT12H	
+durEnum	PT24H	
+durEnum	P30D	cvc-enumeration-valid
+durEnum	P28D	cvc-enumeration-valid
+durEnum	P29D	cvc-enumeration-valid
+durEnum	P31D	cvc-enumeration-valid
+durEnum	P58D	cvc-enumeration-valid
+durEnum	P59D	cvc-enumeration-valid
+durEnum	P60D	cvc-enumeration-valid
+durEnum	PT2678400S	cvc-enumeration-valid
+durEnum	PT2419200S	cvc-enumeration-valid
+durEnum	P0.5Y	cvc-datatype-valid.1.2.1
+durEnum	PT1000000000000000000000S	cvc-enumeration-valid
+durEnum	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-datatype-valid.1.2.1
+durEnum	P1Y1Y	cvc-datatype-valid.1.2.1
+durEnum	PT1H1H	cvc-datatype-valid.1.2.1
+durEnum	-P1Y	cvc-enumeration-valid
+durEnum	-P12M	cvc-enumeration-valid
+durEnum	-P11M	cvc-enumeration-valid
+durEnum	-P365D	cvc-enumeration-valid
+durEnum	-P366D	cvc-enumeration-valid
+durEnum	-PT1S	cvc-enumeration-valid
+durEnum	PT59M	cvc-enumeration-valid
+durEnum	PT60M	cvc-enumeration-valid
+durEnum	PT3600S	cvc-enumeration-valid
+durEnum	PT3599.999S	cvc-enumeration-valid
+durEnum	P1DT1S	cvc-enumeration-valid
+durEnum	P1DT0.5S	cvc-enumeration-valid
+durEnum	PT86400S	
+durEnum	PT86401S	cvc-enumeration-valid
+durEnum	PT1H0.0S	cvc-enumeration-valid
+durEnum	P0Y0M0DT0H0M0S	
+durEnum	P2147483647M	cvc-enumeration-valid
+durEnum	P2147483647D	cvc-enumeration-valid
+durEnum	PT2147483647M	cvc-enumeration-valid
+durEnum	PT99999999999S	cvc-enumeration-valid
+durEnum	-P2147483647Y	cvc-enumeration-valid
+durEnum	-P2147483647D	cvc-enumeration-valid
+durEnum	P1Y2M3DT4H5M6S7	cvc-datatype-valid.1.2.1
+durEnum	PT1H2	cvc-datatype-valid.1.2.1
+durEnum	P1DT1H1M1.000S	cvc-enumeration-valid
+durEnum	PT0.0000001S	cvc-enumeration-valid
+durEnum	P00001D	
+durEnum	P1D 	
+durEnum	P 1D	cvc-datatype-valid.1.2.1
+durEnum	P294D	cvc-enumeration-valid
+durEnum	P4M268DT48H	cvc-enumeration-valid
+durEnum	P4M387DT29H	cvc-enumeration-valid
+durEnum	P243D	cvc-enumeration-valid
+durEnum	P6M56DT50H	cvc-enumeration-valid
+durEnum	P193DT21H	cvc-enumeration-valid
+durEnum	P366DT7H	cvc-enumeration-valid
+durEnum	P12M209DT84417S	cvc-enumeration-valid
+durEnum	P12M	cvc-enumeration-valid
+durEnum	P14M236D	cvc-enumeration-valid
+durEnum	P21D	cvc-enumeration-valid
+durEnum	P3M368D	cvc-enumeration-valid
+durEnum	P11M227DT43H48596S	cvc-enumeration-valid
+durEnum	P12M162DT84649S	cvc-enumeration-valid
+durEnum	P5D	cvc-enumeration-valid
+durEnum	P3M	cvc-enumeration-valid
+durEnum	P5MT38H	cvc-enumeration-valid
+durEnum	-P14M34DT43H2757S	cvc-enumeration-valid
+durEnum	P8M9D	cvc-enumeration-valid
+durEnum	P9M128DT51308S	cvc-enumeration-valid
+durEnum	-P8MT20H	cvc-enumeration-valid
+durEnum	P10M94DT11H	cvc-enumeration-valid
+durEnum	P5MT28H5650S	cvc-enumeration-valid
+durEnum	-P45DT50H24263S	cvc-enumeration-valid
+durEnum	P11MT50H	cvc-enumeration-valid
+durEnum	P4M127D	cvc-enumeration-valid
+durEnum	P5M337D	cvc-enumeration-valid
+durEnum	P14M250D	cvc-enumeration-valid
+durEnum	P1MT17H	cvc-enumeration-valid
+durEnum	PT29H	cvc-enumeration-valid
+durEnum	-P189DT10H	cvc-enumeration-valid
+durEnum	-PT41H	cvc-enumeration-valid
+durEnum	P9M182DT62005S	cvc-enumeration-valid
+durEnum	P230D	cvc-enumeration-valid
+durEnum	-P2M17D	cvc-enumeration-valid
+durEnum	P5M181D	cvc-enumeration-valid
+durEnum	P61DT24H35505S	cvc-enumeration-valid
+durEnum	PT19H	cvc-enumeration-valid
+durEnum	P0M148DT12732S	cvc-enumeration-valid
+durEnum	P8MT14H75157S	cvc-enumeration-valid
+durEnum	P277D	cvc-enumeration-valid
+durEnum	P182DT4H30007S	cvc-enumeration-valid
+durEnum	-P3M248DT3H	cvc-enumeration-valid
+durEnum	P11MT41H	cvc-enumeration-valid
+durEnum	P7M26D	cvc-enumeration-valid
+durEnum	P340D	cvc-enumeration-valid
+durEnum	P134DT40136S	cvc-enumeration-valid
+durEnum	P83DT56549S	cvc-enumeration-valid
+durEnum	P393D	cvc-enumeration-valid
+durEnum	P165DT6H	cvc-enumeration-valid
+durEnum	PT28H63063S	cvc-enumeration-valid
+durEnum	P11M40DT66470S	cvc-enumeration-valid
+durEnum	P266D	cvc-enumeration-valid
+durEnum	P8M	cvc-enumeration-valid
+durEnum	P13M	cvc-enumeration-valid
+durEnum	P45DT22H17649S	cvc-enumeration-valid
+durRange	P1Y2M3DT4H5M6.7S	cvc-maxExclusive-valid
+durRange	P1Y	cvc-maxExclusive-valid
+durRange	P1M	cvc-maxExclusive-valid
+durRange	P1D	
+durRange	PT1H	
+durRange	PT1M	cvc-minInclusive-valid
+durRange	PT1S	cvc-minInclusive-valid
+durRange	PT	cvc-datatype-valid.1.2.1
+durRange	P	cvc-datatype-valid.1.2.1
+durRange		cvc-datatype-valid.1.2.1
+durRange	-P1D	cvc-minInclusive-valid
+durRange	+P1D	cvc-datatype-valid.1.2.1
+durRange	P1D1M	cvc-datatype-valid.1.2.1
+durRange	P1M1Y	cvc-datatype-valid.1.2.1
+durRange	P1.5D	cvc-datatype-valid.1.2.1
+durRange	PT1.5S	cvc-minInclusive-valid
+durRange	PT.5S	cvc-minInclusive-valid
+durRange	PT1.S	cvc-datatype-valid.1.2.1
+durRange	PT1.2.3S	cvc-datatype-valid.1.2.1
+durRange	PT1e3S	cvc-datatype-valid.1.2.1
+durRange	P0D	cvc-minInclusive-valid
+durRange	-P0D	cvc-minInclusive-valid
+durRange	P2147483647Y	cvc-minInclusive-valid
+durRange	P2147483648Y	cvc-datatype-valid.1.2.1
+durRange	PT2147483647H	cvc-maxExclusive-valid
+durRange	P1DT	cvc-datatype-valid.1.2.1
+durRange	P-1D	cvc-datatype-valid.1.2.1
+durRange	 P1D 	
+durRange	p1d	cvc-datatype-valid.1.2.1
+durRange	P1Y2MT	cvc-datatype-valid.1.2.1
+durRange	P1W	cvc-datatype-valid.1.2.1
+durRange	PT36H	cvc-maxExclusive-valid
+durRange	P1DT12H	cvc-maxExclusive-valid
+durRange	PT24H	
+durRange	P30D	cvc-maxExclusive-valid
+durRange	P28D	cvc-maxExclusive-valid
+durRange	P29D	cvc-maxExclusive-valid
+durRange	P31D	cvc-maxExclusive-valid
+durRange	P58D	cvc-maxExclusive-valid
+durRange	P59D	cvc-maxExclusive-valid
+durRange	P60D	cvc-maxExclusive-valid
+durRange	PT2678400S	cvc-maxExclusive-valid
+durRange	PT2419200S	cvc-maxExclusive-valid
+durRange	P0.5Y	cvc-datatype-valid.1.2.1
+durRange	PT1000000000000000000000S	cvc-maxExclusive-valid
+durRange	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-datatype-valid.1.2.1
+durRange	P1Y1Y	cvc-datatype-valid.1.2.1
+durRange	PT1H1H	cvc-datatype-valid.1.2.1
+durRange	-P1Y	cvc-minInclusive-valid
+durRange	-P12M	cvc-minInclusive-valid
+durRange	-P11M	cvc-minInclusive-valid
+durRange	-P365D	cvc-minInclusive-valid
+durRange	-P366D	cvc-minInclusive-valid
+durRange	-PT1S	cvc-minInclusive-valid
+durRange	PT59M	cvc-minInclusive-valid
+durRange	PT60M	
+durRange	PT3600S	
+durRange	PT3599.999S	cvc-minInclusive-valid
+durRange	P1DT1S	cvc-maxExclusive-valid
+durRange	P1DT0.5S	
+durRange	PT86400S	
+durRange	PT86401S	cvc-maxExclusive-valid
+durRange	PT1H0.0S	
+durRange	P0Y0M0DT0H0M0S	cvc-minInclusive-valid
+durRange	P2147483647M	cvc-minInclusive-valid
+durRange	P2147483647D	cvc-minInclusive-valid
+durRange	PT2147483647M	cvc-maxExclusive-valid
+durRange	PT99999999999S	cvc-maxExclusive-valid
+durRange	-P2147483647Y	cvc-minInclusive-valid
+durRange	-P2147483647D	cvc-minInclusive-valid
+durRange	P1Y2M3DT4H5M6S7	cvc-datatype-valid.1.2.1
+durRange	PT1H2	cvc-datatype-valid.1.2.1
+durRange	P1DT1H1M1.000S	cvc-maxExclusive-valid
+durRange	PT0.0000001S	cvc-minInclusive-valid
+durRange	P00001D	
+durRange	P1D 	
+durRange	P 1D	cvc-datatype-valid.1.2.1
+durRange	P119D	cvc-maxExclusive-valid
+durRange	-P3MT34350S	cvc-minInclusive-valid
+durRange	P2M379D	cvc-maxExclusive-valid
+durRange	P282DT33H	cvc-maxExclusive-valid
+durRange	PT9H	
+durRange	P6M335DT57614S	cvc-maxExclusive-valid
+durRange	P105DT46H70548S	cvc-maxExclusive-valid
+durRange	P229D	cvc-maxExclusive-valid
+durRange	-P250DT22H	cvc-minInclusive-valid
+durRange	-P397DT3H	cvc-minInclusive-valid
+durRange	P163DT47H7050S	cvc-maxExclusive-valid
+durRange	P6M259DT25H	cvc-maxExclusive-valid
+durRange	-P3M110D	cvc-minInclusive-valid
+durRange	P232DT23H	cvc-maxExclusive-valid
+durRange	P6M228DT45H	cvc-maxExclusive-valid
+durRange	P12M51DT28H13825S	cvc-maxExclusive-valid
+durRange	P253D	cvc-maxExclusive-valid
+durRange	P303D	cvc-maxExclusive-valid
+durRange	PT34H77920S	cvc-maxExclusive-valid
+durRange	P5M	cvc-maxExclusive-valid
+durRange	P5M338DT37828S	cvc-maxExclusive-valid
+durRange	P11M396DT24H	cvc-maxExclusive-valid
+durRange	P12MT8635S	cvc-maxExclusive-valid
+durRange	-P3MT27H46012S	cvc-minInclusive-valid
+durRange	-P273D	cvc-minInclusive-valid
+durRange	P6M277D	cvc-maxExclusive-valid
+durRange	-P3M84DT19227S	cvc-minInclusive-valid
+durRange	P68D	cvc-maxExclusive-valid
+durRange	P10DT11H65136S	cvc-maxExclusive-valid
+durRange	P10M272DT9H18070S	cvc-maxExclusive-valid
+durRange	P2D	cvc-maxExclusive-valid
+durRange	-P54D	cvc-minInclusive-valid
+durRange	P367D	cvc-maxExclusive-valid
+durRange	P220DT22H	cvc-maxExclusive-valid
+durRange	PT18982S	
+durRange	-P10M315DT6H69111S	cvc-minInclusive-valid
+durRange	PT15H	
+durRange	-PT59568S	cvc-minInclusive-valid
+durRange	-P30DT15H	cvc-minInclusive-valid
+durRange	PT9H61913S	cvc-maxExclusive-valid
+durRange	P65D	cvc-maxExclusive-valid
+durRange	P209DT33H	cvc-maxExclusive-valid
+durRange	-P1M303D	cvc-minInclusive-valid
+durRange	-P14MT41H	cvc-minInclusive-valid
+durRange	PT31H	cvc-maxExclusive-valid
+durRange	P20DT81320S	cvc-maxExclusive-valid
+durRange	-P14MT30H	cvc-minInclusive-valid
+durRange	-PT18H	cvc-minInclusive-valid
+durRange	P388D	cvc-maxExclusive-valid
+durRange	-P385D	cvc-minInclusive-valid
+durRange	P13MT40542S	cvc-maxExclusive-valid
+durRange	P54DT59653S	cvc-maxExclusive-valid
+durRange	P394DT4H	cvc-maxExclusive-valid
+durRange	-PT52617S	cvc-minInclusive-valid
+durRange	P326D	cvc-maxExclusive-valid
+durRange	-P7M301DT22231S	cvc-minInclusive-valid
+durPat	P1Y2M3DT4H5M6.7S	cvc-pattern-valid
+durPat	P1Y	cvc-pattern-valid
+durPat	P1M	cvc-pattern-valid
+durPat	P1D	
+durPat	PT1H	cvc-pattern-valid
+durPat	PT1M	cvc-pattern-valid
+durPat	PT1S	cvc-pattern-valid
+durPat	PT	cvc-pattern-valid
+durPat	P	cvc-pattern-valid
+durPat		cvc-pattern-valid
+durPat	-P1D	cvc-pattern-valid
+durPat	+P1D	cvc-pattern-valid
+durPat	P1D1M	cvc-pattern-valid
+durPat	P1M1Y	cvc-pattern-valid
+durPat	P1.5D	cvc-pattern-valid
+durPat	PT1.5S	cvc-pattern-valid
+durPat	PT.5S	cvc-pattern-valid
+durPat	PT1.S	cvc-pattern-valid
+durPat	PT1.2.3S	cvc-pattern-valid
+durPat	PT1e3S	cvc-pattern-valid
+durPat	P0D	
+durPat	-P0D	cvc-pattern-valid
+durPat	P2147483647Y	cvc-pattern-valid
+durPat	P2147483648Y	cvc-pattern-valid
+durPat	PT2147483647H	cvc-pattern-valid
+durPat	P1DT	cvc-pattern-valid
+durPat	P-1D	cvc-pattern-valid
+durPat	 P1D 	
+durPat	p1d	cvc-pattern-valid
+durPat	P1Y2MT	cvc-pattern-valid
+durPat	P1W	cvc-pattern-valid
+durPat	PT36H	cvc-pattern-valid
+durPat	P1DT12H	cvc-pattern-valid
+durPat	PT24H	cvc-pattern-valid
+durPat	P30D	
+durPat	P28D	
+durPat	P29D	
+durPat	P31D	
+durPat	P58D	
+durPat	P59D	
+durPat	P60D	
+durPat	PT2678400S	cvc-pattern-valid
+durPat	PT2419200S	cvc-pattern-valid
+durPat	P0.5Y	cvc-pattern-valid
+durPat	PT1000000000000000000000S	cvc-pattern-valid
+durPat	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-pattern-valid
+durPat	P1Y1Y	cvc-pattern-valid
+durPat	PT1H1H	cvc-pattern-valid
+durPat	-P1Y	cvc-pattern-valid
+durPat	-P12M	cvc-pattern-valid
+durPat	-P11M	cvc-pattern-valid
+durPat	-P365D	cvc-pattern-valid
+durPat	-P366D	cvc-pattern-valid
+durPat	-PT1S	cvc-pattern-valid
+durPat	PT59M	cvc-pattern-valid
+durPat	PT60M	cvc-pattern-valid
+durPat	PT3600S	cvc-pattern-valid
+durPat	PT3599.999S	cvc-pattern-valid
+durPat	P1DT1S	cvc-pattern-valid
+durPat	P1DT0.5S	cvc-pattern-valid
+durPat	PT86400S	cvc-pattern-valid
+durPat	PT86401S	cvc-pattern-valid
+durPat	PT1H0.0S	cvc-pattern-valid
+durPat	P0Y0M0DT0H0M0S	cvc-pattern-valid
+durPat	P2147483647M	cvc-pattern-valid
+durPat	P2147483647D	
+durPat	PT2147483647M	cvc-pattern-valid
+durPat	PT99999999999S	cvc-pattern-valid
+durPat	-P2147483647Y	cvc-pattern-valid
+durPat	-P2147483647D	cvc-pattern-valid
+durPat	P1Y2M3DT4H5M6S7	cvc-pattern-valid
+durPat	PT1H2	cvc-pattern-valid
+durPat	P1DT1H1M1.000S	cvc-pattern-valid
+durPat	PT0.0000001S	cvc-pattern-valid
+durPat	P00001D	
+durPat	P1D 	
+durPat	P 1D	cvc-pattern-valid
+durPat	-P0M271DT50H69902S	cvc-pattern-valid
+durPat	P180D	
+durPat	P127DT38H2852S	cvc-pattern-valid
+durPat	-PT4H88992S	cvc-pattern-valid
+durPat	PT26H	cvc-pattern-valid
+durPat	PT7778S	cvc-pattern-valid
+durPat	P111DT9H	cvc-pattern-valid
+durPat	P350D	
+durPat	P359DT13H	cvc-pattern-valid
+durPat	-P0MT34H	cvc-pattern-valid
+durPat	P151D	
+durPat	P3M59DT22H	cvc-pattern-valid
+durPat	P204D	
+durPat	PT8H50939S	cvc-pattern-valid
+durPat	P138DT27H13971S	cvc-pattern-valid
+durPat	P275D	
+durPat	P10MT23H	cvc-pattern-valid
+durPat	P12M361DT76377S	cvc-pattern-valid
+durPat	P200DT49H3688S	cvc-pattern-valid
+durPat	-P9M344DT29H80057S	cvc-pattern-valid
+durPat	-P23D	cvc-pattern-valid
+durPat	P167DT82267S	cvc-pattern-valid
+durPat	P119D	
+durPat	P4MT19H	cvc-pattern-valid
+durPat	-P10MT15H	cvc-pattern-valid
+durPat	P2M283D	cvc-pattern-valid
+durPat	P6MT2H	cvc-pattern-valid
+durPat	P14M112DT85419S	cvc-pattern-valid
+durPat	P1MT29H	cvc-pattern-valid
+durPat	P2M276DT0H28072S	cvc-pattern-valid
+durPat	P4M178DT3H1376S	cvc-pattern-valid
+durPat	-P105DT28H	cvc-pattern-valid
+durPat	P15DT8H	cvc-pattern-valid
+durPat	-P373DT14H	cvc-pattern-valid
+durPat	PT4H17973S	cvc-pattern-valid
+durPat	P133DT0H	cvc-pattern-valid
+durPat	P206D	
+durPat	P7M68DT3360S	cvc-pattern-valid
+durPat	P163DT26H	cvc-pattern-valid
+durPat	PT44H72793S	cvc-pattern-valid
+durPat	P4M111DT45H	cvc-pattern-valid
+durPat	PT34H	cvc-pattern-valid
+durPat	-P1M84DT25H	cvc-pattern-valid
+durPat	PT37H	cvc-pattern-valid
+durPat	P239D	
+durPat	PT21H	cvc-pattern-valid
+durPat	P298DT28H52963S	cvc-pattern-valid
+durPat	-P193D	cvc-pattern-valid
+durPat	P176DT26H	cvc-pattern-valid
+durPat	P56D	
+durPat	P171DT77255S	cvc-pattern-valid
+durPat	P292DT43H	cvc-pattern-valid
+durPat	-P11M256DT18H74121S	cvc-pattern-valid
+durPat	P112DT5H48755S	cvc-pattern-valid
+durPat	-P250D	cvc-pattern-valid
+durPat	P0M90D	cvc-pattern-valid
+durPat	P13M115DT45H57734S	cvc-pattern-valid
+durPat	P2M202DT20H70568S	cvc-pattern-valid
+durPat	P216DT16H	cvc-pattern-valid
+durMax2M	P1Y2M3DT4H5M6.7S	cvc-maxExclusive-valid
+durMax2M	P1Y	cvc-maxExclusive-valid
+durMax2M	P1M	cvc-maxExclusive-valid
+durMax2M	P1D	
+durMax2M	PT1H	
+durMax2M	PT1M	
+durMax2M	PT1S	
+durMax2M	PT	cvc-datatype-valid.1.2.1
+durMax2M	P	cvc-datatype-valid.1.2.1
+durMax2M		cvc-datatype-valid.1.2.1
+durMax2M	-P1D	
+durMax2M	+P1D	cvc-datatype-valid.1.2.1
+durMax2M	P1D1M	cvc-datatype-valid.1.2.1
+durMax2M	P1M1Y	cvc-datatype-valid.1.2.1
+durMax2M	P1.5D	cvc-datatype-valid.1.2.1
+durMax2M	PT1.5S	
+durMax2M	PT.5S	
+durMax2M	PT1.S	cvc-datatype-valid.1.2.1
+durMax2M	PT1.2.3S	cvc-datatype-valid.1.2.1
+durMax2M	PT1e3S	cvc-datatype-valid.1.2.1
+durMax2M	P0D	
+durMax2M	-P0D	
+durMax2M	P2147483647Y	
+durMax2M	P2147483648Y	cvc-datatype-valid.1.2.1
+durMax2M	PT2147483647H	cvc-maxExclusive-valid
+durMax2M	P1DT	cvc-datatype-valid.1.2.1
+durMax2M	P-1D	cvc-datatype-valid.1.2.1
+durMax2M	 P1D 	
+durMax2M	p1d	cvc-datatype-valid.1.2.1
+durMax2M	P1Y2MT	cvc-datatype-valid.1.2.1
+durMax2M	P1W	cvc-datatype-valid.1.2.1
+durMax2M	PT36H	
+durMax2M	P1DT12H	
+durMax2M	PT24H	
+durMax2M	P30D	cvc-maxExclusive-valid
+durMax2M	P28D	cvc-maxExclusive-valid
+durMax2M	P29D	cvc-maxExclusive-valid
+durMax2M	P31D	cvc-maxExclusive-valid
+durMax2M	P58D	cvc-maxExclusive-valid
+durMax2M	P59D	cvc-maxExclusive-valid
+durMax2M	P60D	cvc-maxExclusive-valid
+durMax2M	PT2678400S	cvc-maxExclusive-valid
+durMax2M	PT2419200S	cvc-maxExclusive-valid
+durMax2M	P0.5Y	cvc-datatype-valid.1.2.1
+durMax2M	PT1000000000000000000000S	cvc-maxExclusive-valid
+durMax2M	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-datatype-valid.1.2.1
+durMax2M	P1Y1Y	cvc-datatype-valid.1.2.1
+durMax2M	PT1H1H	cvc-datatype-valid.1.2.1
+durMax2M	-P1Y	
+durMax2M	-P12M	
+durMax2M	-P11M	
+durMax2M	-P365D	
+durMax2M	-P366D	
+durMax2M	-PT1S	
+durMax2M	PT59M	
+durMax2M	PT60M	
+durMax2M	PT3600S	
+durMax2M	PT3599.999S	
+durMax2M	P1DT1S	
+durMax2M	P1DT0.5S	
+durMax2M	PT86400S	
+durMax2M	PT86401S	
+durMax2M	PT1H0.0S	
+durMax2M	P0Y0M0DT0H0M0S	
+durMax2M	P2147483647M	
+durMax2M	P2147483647D	
+durMax2M	PT2147483647M	cvc-maxExclusive-valid
+durMax2M	PT99999999999S	cvc-maxExclusive-valid
+durMax2M	-P2147483647Y	
+durMax2M	-P2147483647D	
+durMax2M	P1Y2M3DT4H5M6S7	cvc-datatype-valid.1.2.1
+durMax2M	PT1H2	cvc-datatype-valid.1.2.1
+durMax2M	P1DT1H1M1.000S	
+durMax2M	PT0.0000001S	
+durMax2M	P00001D	
+durMax2M	P1D 	
+durMax2M	P 1D	cvc-datatype-valid.1.2.1
+durMax2M	P172DT61931S	cvc-maxExclusive-valid
+durMax2M	P220DT34H	cvc-maxExclusive-valid
+durMax2M	P211DT45523S	cvc-maxExclusive-valid
+durMax2M	P192DT22H	cvc-maxExclusive-valid
+durMax2M	-P135DT42H51094S	
+durMax2M	-PT1H63376S	
+durMax2M	P6M34DT35H	cvc-maxExclusive-valid
+durMax2M	P4M241D	cvc-maxExclusive-valid
+durMax2M	P163D	cvc-maxExclusive-valid
+durMax2M	P13M	cvc-maxExclusive-valid
+durMax2M	PT6926S	
+durMax2M	P6M303D	cvc-maxExclusive-valid
+durMax2M	P12MT26782S	cvc-maxExclusive-valid
+durMax2M	P270D	cvc-maxExclusive-valid
+durMax2M	P12DT9H51931S	
+durMax2M	-P173D	
+durMax2M	P0M93DT46H	cvc-maxExclusive-valid
+durMax2M	P348DT24H	cvc-maxExclusive-valid
+durMax2M	P375DT43H	cvc-maxExclusive-valid
+durMax2M	-P0M394D	
+durMax2M	P5D	
+durMax2M	P388D	cvc-maxExclusive-valid
+durMax2M	P49DT47H74113S	cvc-maxExclusive-valid
+durMax2M	P14M	cvc-maxExclusive-valid
+durMax2M	P11M146D	cvc-maxExclusive-valid
+durMax2M	P9M150D	cvc-maxExclusive-valid
+durMax2M	-PT37H	
+durMax2M	P6M284D	cvc-maxExclusive-valid
+durMax2M	-P315DT25H	
+durMax2M	-P324D	
+durMax2M	-P123DT10476S	
+durMax2M	PT33063S	
+durMax2M	P199D	cvc-maxExclusive-valid
+durMax2M	P9M87DT38H	cvc-maxExclusive-valid
+durMax2M	P166DT82439S	cvc-maxExclusive-valid
+durMax2M	-P0MT28H86867S	
+durMax2M	P4M318D	cvc-maxExclusive-valid
+durMax2M	P10M328DT65730S	cvc-maxExclusive-valid
+durMax2M	-P363DT27H	
+durMax2M	P4MT39H29225S	cvc-maxExclusive-valid
+durMax2M	P11MT8H	cvc-maxExclusive-valid
+durMax2M	P128DT18H	cvc-maxExclusive-valid
+durMax2M	P376DT22H196S	cvc-maxExclusive-valid
+durMax2M	P391DT33H	cvc-maxExclusive-valid
+durMax2M	P6M58D	cvc-maxExclusive-valid
+durMax2M	P139DT45H	cvc-maxExclusive-valid
+durMax2M	P113DT30H	cvc-maxExclusive-valid
+durMax2M	P0MT26330S	
+durMax2M	P352DT23H	cvc-maxExclusive-valid
+durMax2M	P0MT21H	
+durMax2M	PT25H	
+durMax2M	PT69614S	
+durMax2M	P12M274DT18H	cvc-maxExclusive-valid
+durMax2M	P2MT30H	cvc-maxExclusive-valid
+durQuirk	P1Y2M3DT4H5M6.7S	
+durQuirk	P1Y	
+durQuirk	P1M	
+durQuirk	P1D	
+durQuirk	PT1H	
+durQuirk	PT1M	
+durQuirk	PT1S	
+durQuirk	PT	cvc-datatype-valid.1.2.1
+durQuirk	P	cvc-datatype-valid.1.2.1
+durQuirk		cvc-datatype-valid.1.2.1
+durQuirk	-P1D	
+durQuirk	+P1D	cvc-datatype-valid.1.2.1
+durQuirk	P1D1M	cvc-datatype-valid.1.2.1
+durQuirk	P1M1Y	cvc-datatype-valid.1.2.1
+durQuirk	P1.5D	cvc-datatype-valid.1.2.1
+durQuirk	PT1.5S	
+durQuirk	PT.5S	
+durQuirk	PT1.S	cvc-datatype-valid.1.2.1
+durQuirk	PT1.2.3S	cvc-datatype-valid.1.2.1
+durQuirk	PT1e3S	cvc-datatype-valid.1.2.1
+durQuirk	P0D	
+durQuirk	-P0D	
+durQuirk	P2147483647Y	
+durQuirk	P2147483648Y	cvc-datatype-valid.1.2.1
+durQuirk	PT2147483647H	cvc-maxInclusive-valid
+durQuirk	P1DT	cvc-datatype-valid.1.2.1
+durQuirk	P-1D	cvc-datatype-valid.1.2.1
+durQuirk	 P1D 	
+durQuirk	p1d	cvc-datatype-valid.1.2.1
+durQuirk	P1Y2MT	cvc-datatype-valid.1.2.1
+durQuirk	P1W	cvc-datatype-valid.1.2.1
+durQuirk	PT36H	
+durQuirk	P1DT12H	
+durQuirk	PT24H	
+durQuirk	P30D	
+durQuirk	P28D	
+durQuirk	P29D	
+durQuirk	P31D	
+durQuirk	P58D	
+durQuirk	P59D	
+durQuirk	P60D	
+durQuirk	PT2678400S	
+durQuirk	PT2419200S	
+durQuirk	P0.5Y	cvc-datatype-valid.1.2.1
+durQuirk	PT1000000000000000000000S	cvc-maxInclusive-valid
+durQuirk	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-datatype-valid.1.2.1
+durQuirk	P1Y1Y	cvc-datatype-valid.1.2.1
+durQuirk	PT1H1H	cvc-datatype-valid.1.2.1
+durQuirk	-P1Y	
+durQuirk	-P12M	
+durQuirk	-P11M	
+durQuirk	-P365D	
+durQuirk	-P366D	
+durQuirk	-PT1S	
+durQuirk	PT59M	
+durQuirk	PT60M	
+durQuirk	PT3600S	
+durQuirk	PT3599.999S	
+durQuirk	P1DT1S	
+durQuirk	P1DT0.5S	
+durQuirk	PT86400S	
+durQuirk	PT86401S	
+durQuirk	PT1H0.0S	
+durQuirk	P0Y0M0DT0H0M0S	
+durQuirk	P2147483647M	
+durQuirk	P2147483647D	
+durQuirk	PT2147483647M	cvc-maxInclusive-valid
+durQuirk	PT99999999999S	cvc-maxInclusive-valid
+durQuirk	-P2147483647Y	
+durQuirk	-P2147483647D	
+durQuirk	P1Y2M3DT4H5M6S7	cvc-datatype-valid.1.2.1
+durQuirk	PT1H2	cvc-datatype-valid.1.2.1
+durQuirk	P1DT1H1M1.000S	
+durQuirk	PT0.0000001S	
+durQuirk	P00001D	
+durQuirk	P1D 	
+durQuirk	P 1D	cvc-datatype-valid.1.2.1
+durQuirk	PT62914619M	cvc-maxInclusive-valid
+durQuirk	PT62914618M	
+durQuirk	PT62914620M	cvc-maxInclusive-valid
+durQuirk	PT1048576H59M	
+durQuirk	PT1048576H58M	
+durQuirk	PT3774873540S	
+durQuirk	PT3774873539S	
+durQuirk	PT3774873539.5S	
+durQuirk	PT16777217H	cvc-maxInclusive-valid
+durQuirk	P4M	
+durQuirk	P13M155DT27H	
+durQuirk	P4M294DT19H37982S	
+durQuirk	PT43H	
+durQuirk	P14M267DT14261S	
+durQuirk	P5DT39H	
+durQuirk	-P16DT41H	
+durQuirk	P84DT31H	
+durQuirk	P194DT3H	
+durQuirk	P104D	
+durQuirk	PT15H	
+durQuirk	P0M133DT33113S	
+durQuirk	P152D	
+durQuirk	P344DT0H	
+durQuirk	P131DT44H22915S	
+durQuirk	P271DT53233S	
+durQuirk	P391D	
+durQuirk	-P14MT29108S	
+durQuirk	P340DT78096S	
+durQuirk	P10M131D	
+durQuirk	P9MT24808S	
+durQuirk	-P3M377DT10H	
+durQuirk	P4M325DT2H	
+durQuirk	PT23H	
+durQuirk	-P143DT80973S	
+durQuirk	P31DT4H	
+durQuirk	P172D	
+durQuirk	P220DT23H	
+durQuirk	-PT12599S	
+durQuirk	P13M222DT30040S	
+durQuirk	P68DT6H	
+durQuirk	PT40H	
+durQuirk	-P8M127DT73006S	
+durQuirk	-P13MT19H	
+durQuirk	P2M137DT25341S	
+durQuirk	P6M201D	
+durQuirk	P37DT24810S	
+durQuirk	P132D	
+durQuirk	P40DT17H74310S	
+durQuirk	PT16535S	
+durQuirk	P14M219DT28H	
+durQuirk	P9MT3H	
+durQuirk	P238D	
+durQuirk	P306DT38H13868S	
+durQuirk	P3M	
+durQuirk	P325D	
+durQuirk	-P0MT26H13796S	
+durQuirk	P6MT65007S	
+durQuirk	P13M330D	
+durQuirk	P321DT41H	
+durQuirk	-P13MT44H19184S	
+durQuirk	P47DT50264S	
+durQuirk	-P0M112D	
+durQuirk	P10M356DT30H	
+durQuirk	PT13H74699S	
+durQuirk	P45D	
+durWrap	P1Y2M3DT4H5M6.7S	cvc-enumeration-valid
+durWrap	P1Y	cvc-enumeration-valid
+durWrap	P1M	cvc-enumeration-valid
+durWrap	P1D	cvc-enumeration-valid
+durWrap	PT1H	cvc-enumeration-valid
+durWrap	PT1M	cvc-enumeration-valid
+durWrap	PT1S	cvc-enumeration-valid
+durWrap	PT	cvc-datatype-valid.1.2.1
+durWrap	P	cvc-datatype-valid.1.2.1
+durWrap		cvc-datatype-valid.1.2.1
+durWrap	-P1D	cvc-enumeration-valid
+durWrap	+P1D	cvc-datatype-valid.1.2.1
+durWrap	P1D1M	cvc-datatype-valid.1.2.1
+durWrap	P1M1Y	cvc-datatype-valid.1.2.1
+durWrap	P1.5D	cvc-datatype-valid.1.2.1
+durWrap	PT1.5S	cvc-enumeration-valid
+durWrap	PT.5S	cvc-enumeration-valid
+durWrap	PT1.S	cvc-datatype-valid.1.2.1
+durWrap	PT1.2.3S	cvc-datatype-valid.1.2.1
+durWrap	PT1e3S	cvc-datatype-valid.1.2.1
+durWrap	P0D	cvc-enumeration-valid
+durWrap	-P0D	cvc-enumeration-valid
+durWrap	P2147483647Y	cvc-enumeration-valid
+durWrap	P2147483648Y	cvc-datatype-valid.1.2.1
+durWrap	PT2147483647H	cvc-enumeration-valid
+durWrap	P1DT	cvc-datatype-valid.1.2.1
+durWrap	P-1D	cvc-datatype-valid.1.2.1
+durWrap	 P1D 	cvc-enumeration-valid
+durWrap	p1d	cvc-datatype-valid.1.2.1
+durWrap	P1Y2MT	cvc-datatype-valid.1.2.1
+durWrap	P1W	cvc-datatype-valid.1.2.1
+durWrap	PT36H	cvc-enumeration-valid
+durWrap	P1DT12H	cvc-enumeration-valid
+durWrap	PT24H	cvc-enumeration-valid
+durWrap	P30D	cvc-enumeration-valid
+durWrap	P28D	cvc-enumeration-valid
+durWrap	P29D	cvc-enumeration-valid
+durWrap	P31D	cvc-enumeration-valid
+durWrap	P58D	cvc-enumeration-valid
+durWrap	P59D	cvc-enumeration-valid
+durWrap	P60D	cvc-enumeration-valid
+durWrap	PT2678400S	cvc-enumeration-valid
+durWrap	PT2419200S	cvc-enumeration-valid
+durWrap	P0.5Y	cvc-datatype-valid.1.2.1
+durWrap	PT1000000000000000000000S	cvc-enumeration-valid
+durWrap	PT9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999S	cvc-datatype-valid.1.2.1
+durWrap	P1Y1Y	cvc-datatype-valid.1.2.1
+durWrap	PT1H1H	cvc-datatype-valid.1.2.1
+durWrap	-P1Y	cvc-enumeration-valid
+durWrap	-P12M	cvc-enumeration-valid
+durWrap	-P11M	cvc-enumeration-valid
+durWrap	-P365D	cvc-enumeration-valid
+durWrap	-P366D	cvc-enumeration-valid
+durWrap	-PT1S	cvc-enumeration-valid
+durWrap	PT59M	cvc-enumeration-valid
+durWrap	PT60M	cvc-enumeration-valid
+durWrap	PT3600S	cvc-enumeration-valid
+durWrap	PT3599.999S	cvc-enumeration-valid
+durWrap	P1DT1S	cvc-enumeration-valid
+durWrap	P1DT0.5S	cvc-enumeration-valid
+durWrap	PT86400S	cvc-enumeration-valid
+durWrap	PT86401S	cvc-enumeration-valid
+durWrap	PT1H0.0S	cvc-enumeration-valid
+durWrap	P0Y0M0DT0H0M0S	cvc-enumeration-valid
+durWrap	P2147483647M	cvc-enumeration-valid
+durWrap	P2147483647D	cvc-enumeration-valid
+durWrap	PT2147483647M	cvc-enumeration-valid
+durWrap	PT99999999999S	cvc-enumeration-valid
+durWrap	-P2147483647Y	cvc-enumeration-valid
+durWrap	-P2147483647D	cvc-enumeration-valid
+durWrap	P1Y2M3DT4H5M6S7	cvc-datatype-valid.1.2.1
+durWrap	PT1H2	cvc-datatype-valid.1.2.1
+durWrap	P1DT1H1M1.000S	cvc-enumeration-valid
+durWrap	PT0.0000001S	cvc-enumeration-valid
+durWrap	P00001D	cvc-enumeration-valid
+durWrap	P1D 	cvc-enumeration-valid
+durWrap	P 1D	cvc-datatype-valid.1.2.1
+durWrap	P2147481400Y146130D	cvc-enumeration-valid
+durWrap	P2147481800Y33D	
+durWrap	P2147483000Y1000000D	cvc-enumeration-valid
+durWrap	-P2147483000Y1000000D	cvc-enumeration-valid
+durWrap	P2147481800Y32D	cvc-enumeration-valid
+durWrap	P2147483647Y2147483647D	cvc-enumeration-valid
+durWrap	P11M278DT45H	cvc-enumeration-valid
+durWrap	PT47H52464S	cvc-enumeration-valid
+durWrap	PT18H46668S	cvc-enumeration-valid
+durWrap	P228D	cvc-enumeration-valid
+durWrap	P11M	cvc-enumeration-valid
+durWrap	P0M9D	cvc-enumeration-valid
+durWrap	P303D	cvc-enumeration-valid
+durWrap	P6DT48H	cvc-enumeration-valid
+durWrap	P197DT44H	cvc-enumeration-valid
+durWrap	P135DT9H	cvc-enumeration-valid
+durWrap	P9M	cvc-enumeration-valid
+durWrap	-P2M312D	cvc-enumeration-valid
+durWrap	P14M59DT2H	cvc-enumeration-valid
+durWrap	P14M4DT29H	cvc-enumeration-valid
+durWrap	P10M218D	cvc-enumeration-valid
+durWrap	-P137DT14H	cvc-enumeration-valid
+durWrap	-P0M237DT50H	cvc-enumeration-valid
+durWrap	-P11M198DT39H28598S	cvc-enumeration-valid
+durWrap	PT72905S	cvc-enumeration-valid
+durWrap	P8M397D	cvc-enumeration-valid
+durWrap	P52DT11H	cvc-enumeration-valid
+durWrap	PT4H83086S	cvc-enumeration-valid
+durWrap	-P5M220D	cvc-enumeration-valid
+durWrap	-P377DT44H43160S	cvc-enumeration-valid
+durWrap	P347DT17H	cvc-enumeration-valid
+durWrap	P9M338DT40H	cvc-enumeration-valid
+durWrap	P291D	cvc-enumeration-valid
+durWrap	P12M	cvc-enumeration-valid
+durWrap	-P356D	cvc-enumeration-valid
+durWrap	-PT26741S	cvc-enumeration-valid
+durWrap	P3M	cvc-enumeration-valid
+durWrap	P261DT20366S	cvc-enumeration-valid
+durWrap	-P0M136DT21H	cvc-enumeration-valid
+durWrap	P6M21D	cvc-enumeration-valid
+durWrap	P153D	cvc-enumeration-valid
+durWrap	P344DT43H	cvc-enumeration-valid
+durWrap	P322DT30H	cvc-enumeration-valid
+durWrap	P151DT29H	cvc-enumeration-valid
+durWrap	P236DT46H39435S	cvc-enumeration-valid
+durWrap	-P151D	cvc-enumeration-valid
+durWrap	P192D	cvc-enumeration-valid
+durWrap	P137DT22H	cvc-enumeration-valid
+durWrap	PT28H	cvc-enumeration-valid
+durWrap	-P2M	cvc-enumeration-valid
+durWrap	P7M362DT42H	cvc-enumeration-valid
+durWrap	PT87626S	cvc-enumeration-valid
+durWrap	P166DT43H	cvc-enumeration-valid
+durWrap	PT20H20579S	cvc-enumeration-valid
+durWrap	-P15D	cvc-enumeration-valid
+durWrap	P7M194D	cvc-enumeration-valid
+durWrap	P0M76DT27H87893S	cvc-enumeration-valid
+durWrap	P381DT21699S	cvc-enumeration-valid
+durWrap	P29DT20H	cvc-enumeration-valid
+durWrap	-P7M145DT35893S	cvc-enumeration-valid
+durWrap	P8M45DT17245S	cvc-enumeration-valid
+durWrap	P12M149DT16H83606S	cvc-enumeration-valid

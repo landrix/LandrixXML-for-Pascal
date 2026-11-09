@@ -348,7 +348,7 @@ begin
   CheckLoadError('<xs:element name="r" type="xs:ENTITIES"/>', xecUnsupported, 'xs:ENTITIES');
   CheckLoadError('<xs:element name="h" substitutionGroup="r"/><xs:element name="r" substitutionGroup="h"/>',
     xecSchema, 'circular substitution group');
-  CheckLoadError('<xs:element name="r" type="xs:duration"/>', xecUnsupported, 'xs:duration');
+  CheckLoadError('<xs:element name="r" type="xs:ENTITY"/>', xecUnsupported, 'xs:ENTITY');
   CheckLoadError('<xs:element name="r" type="missing"/>', xecSchema, 'unknown type');
   CheckLoadError('<xs:element name="r"/><xs:element name="r"/>', xecSchema, 'duplicate element');
   CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence><xs:element ref="nothing"/></xs:sequence></xs:complexType></xs:element>',
@@ -507,11 +507,11 @@ begin
       reported, never ignored }
     V.MaxErrors := 0;
     Xml := '<r xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">' +
-      '<a xsi:type="xs:duration">P1D</a></r>';
+      '<a xsi:type="xs:ENTITY">e</a></r>';
     Reader.LoadFromUtf8(Xml);
     Check(not V.ValidateReader(Reader), 'xsi:type');
     Check(V.ErrorCount > 0, 'an error for xsi:type');
-    CheckEqualsStr('unsupported', V.Errors[0].Code, 'xs:duration is unsupported');
+    CheckEqualsStr('unsupported', V.Errors[0].Code, 'xs:ENTITY is unsupported');
     for I := 0 to V.ErrorCount - 1 do
       Check(V.Errors[I].Code <> '', 'every error has a code');
   finally

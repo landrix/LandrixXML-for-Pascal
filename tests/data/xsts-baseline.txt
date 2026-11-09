@@ -543,6 +543,37 @@ atomic-float-enumeration-2: NISTSchema-SV-IV-atomic-float-enumeration-3 NISTXML-
 atomic-float-enumeration-3: NISTSchema-SV-IV-atomic-float-enumeration-4 NISTXML-SV-IV-atomic-float-enumeration-4-1 NISTXML-SV-IV-atomic-float-enumeration-4-2 NISTXML-SV-IV-atomic-float-enumeration-4-3 NISTXML-SV-IV-atomic-float-enumeration-4-4 NISTXML-SV-IV-atomic-float-enumeration-4-5
 atomic-float-enumeration-4: NISTSchema-SV-IV-atomic-float-enumeration-5 NISTXML-SV-IV-atomic-float-enumeration-5-1 NISTXML-SV-IV-atomic-float-enumeration-5-2 NISTXML-SV-IV-atomic-float-enumeration-5-3 NISTXML-SV-IV-atomic-float-enumeration-5-4 NISTXML-SV-IV-atomic-float-enumeration-5-5
 atomic-float-whiteSpace: NISTSchema-SV-IV-atomic-float-whiteSpace-1 NISTXML-SV-IV-atomic-float-whiteSpace-1-1 NISTXML-SV-IV-atomic-float-whiteSpace-1-2 NISTXML-SV-IV-atomic-float-whiteSpace-1-3 NISTXML-SV-IV-atomic-float-whiteSpace-1-4 NISTXML-SV-IV-atomic-float-whiteSpace-1-5 NISTXML-SV-IV-atomic-float-whiteSpace-1-6 NISTXML-SV-IV-atomic-float-whiteSpace-1-7 NISTXML-SV-IV-atomic-float-whiteSpace-1-8 NISTXML-SV-IV-atomic-float-whiteSpace-1-9 NISTXML-SV-IV-atomic-float-whiteSpace-1-10 NISTXML-SV-IV-atomic-float-whiteSpace-1-11 NISTXML-SV-IV-atomic-float-whiteSpace-1-12 NISTXML-SV-IV-atomic-float-whiteSpace-1-13 NISTXML-SV-IV-atomic-float-whiteSpace-1-14 NISTXML-SV-IV-atomic-float-whiteSpace-1-15
+atomic-duration-minExclusive: NISTSchema-SV-IV-atomic-duration-minExclusive-1 NISTXML-SV-IV-atomic-duration-minExclusive-1-1 NISTXML-SV-IV-atomic-duration-minExclusive-1-2 NISTXML-SV-IV-atomic-duration-minExclusive-1-3 NISTXML-SV-IV-atomic-duration-minExclusive-1-4 NISTXML-SV-IV-atomic-duration-minExclusive-1-5
+atomic-duration-minExclusive-1: NISTSchema-SV-IV-atomic-duration-minExclusive-2 NISTXML-SV-IV-atomic-duration-minExclusive-2-1 NISTXML-SV-IV-atomic-duration-minExclusive-2-2 NISTXML-SV-IV-atomic-duration-minExclusive-2-3 NISTXML-SV-IV-atomic-duration-minExclusive-2-4 NISTXML-SV-IV-atomic-duration-minExclusive-2-5
+atomic-duration-minExclusive-2: NISTSchema-SV-IV-atomic-duration-minExclusive-3 NISTXML-SV-IV-atomic-duration-minExclusive-3-1 NISTXML-SV-IV-atomic-duration-minExclusive-3-2 NISTXML-SV-IV-atomic-duration-minExclusive-3-3 NISTXML-SV-IV-atomic-duration-minExclusive-3-4 NISTXML-SV-IV-atomic-duration-minExclusive-3-5
+atomic-duration-minExclusive-3: NISTSchema-SV-IV-atomic-duration-minExclusive-4 NISTXML-SV-IV-atomic-duration-minExclusive-4-1 NISTXML-SV-IV-atomic-duration-minExclusive-4-2 NISTXML-SV-IV-atomic-duration-minExclusive-4-3 NISTXML-SV-IV-atomic-duration-minExclusive-4-4 NISTXML-SV-IV-atomic-duration-minExclusive-4-5
+atomic-duration-minExclusive-4: NISTSchema-SV-IV-atomic-duration-minExclusive-5 NISTXML-SV-IV-atomic-duration-minExclusive-5-1
+atomic-duration-minInclusive: NISTSchema-SV-IV-atomic-duration-minInclusive-1 NISTXML-SV-IV-atomic-duration-minInclusive-1-1 NISTXML-SV-IV-atomic-duration-minInclusive-1-2 NISTXML-SV-IV-atomic-duration-minInclusive-1-3 NISTXML-SV-IV-atomic-duration-minInclusive-1-4 NISTXML-SV-IV-atomic-duration-minInclusive-1-5
+atomic-duration-minInclusive-1: NISTSchema-SV-IV-atomic-duration-minInclusive-2 NISTXML-SV-IV-atomic-duration-minInclusive-2-1 NISTXML-SV-IV-atomic-duration-minInclusive-2-2 NISTXML-SV-IV-atomic-duration-minInclusive-2-3 NISTXML-SV-IV-atomic-duration-minInclusive-2-4 NISTXML-SV-IV-atomic-duration-minInclusive-2-5
+atomic-duration-minInclusive-2: NISTSchema-SV-IV-atomic-duration-minInclusive-3 NISTXML-SV-IV-atomic-duration-minInclusive-3-1 NISTXML-SV-IV-atomic-duration-minInclusive-3-2 NISTXML-SV-IV-atomic-duration-minInclusive-3-3 NISTXML-SV-IV-atomic-duration-minInclusive-3-4 NISTXML-SV-IV-atomic-duration-minInclusive-3-5
+atomic-duration-minInclusive-3: NISTSchema-SV-IV-atomic-duration-minInclusive-4 NISTXML-SV-IV-atomic-duration-minInclusive-4-1 NISTXML-SV-IV-atomic-duration-minInclusive-4-2 NISTXML-SV-IV-atomic-duration-minInclusive-4-3 NISTXML-SV-IV-atomic-duration-minInclusive-4-4 NISTXML-SV-IV-atomic-duration-minInclusive-4-5
+atomic-duration-minInclusive-4: NISTSchema-SV-IV-atomic-duration-minInclusive-5 NISTXML-SV-IV-atomic-duration-minInclusive-5-1
+atomic-duration-maxExclusive: NISTSchema-SV-IV-atomic-duration-maxExclusive-1 NISTXML-SV-IV-atomic-duration-maxExclusive-1-1
+atomic-duration-maxExclusive-1: NISTSchema-SV-IV-atomic-duration-maxExclusive-2 NISTXML-SV-IV-atomic-duration-maxExclusive-2-1 NISTXML-SV-IV-atomic-duration-maxExclusive-2-2 NISTXML-SV-IV-atomic-duration-maxExclusive-2-3 NISTXML-SV-IV-atomic-duration-maxExclusive-2-4 NISTXML-SV-IV-atomic-duration-maxExclusive-2-5
+atomic-duration-maxExclusive-2: NISTSchema-SV-IV-atomic-duration-maxExclusive-3 NISTXML-SV-IV-atomic-duration-maxExclusive-3-1 NISTXML-SV-IV-atomic-duration-maxExclusive-3-2 NISTXML-SV-IV-atomic-duration-maxExclusive-3-3 NISTXML-SV-IV-atomic-duration-maxExclusive-3-4 NISTXML-SV-IV-atomic-duration-maxExclusive-3-5
+atomic-duration-maxExclusive-3: NISTSchema-SV-IV-atomic-duration-maxExclusive-4 NISTXML-SV-IV-atomic-duration-maxExclusive-4-1 NISTXML-SV-IV-atomic-duration-maxExclusive-4-2 NISTXML-SV-IV-atomic-duration-maxExclusive-4-3 NISTXML-SV-IV-atomic-duration-maxExclusive-4-4 NISTXML-SV-IV-atomic-duration-maxExclusive-4-5
+atomic-duration-maxExclusive-4: NISTSchema-SV-IV-atomic-duration-maxExclusive-5 NISTXML-SV-IV-atomic-duration-maxExclusive-5-1 NISTXML-SV-IV-atomic-duration-maxExclusive-5-2 NISTXML-SV-IV-atomic-duration-maxExclusive-5-3 NISTXML-SV-IV-atomic-duration-maxExclusive-5-4 NISTXML-SV-IV-atomic-duration-maxExclusive-5-5
+atomic-duration-maxInclusive: NISTSchema-SV-IV-atomic-duration-maxInclusive-1 NISTXML-SV-IV-atomic-duration-maxInclusive-1-1
+atomic-duration-maxInclusive-1: NISTSchema-SV-IV-atomic-duration-maxInclusive-2 NISTXML-SV-IV-atomic-duration-maxInclusive-2-1 NISTXML-SV-IV-atomic-duration-maxInclusive-2-2 NISTXML-SV-IV-atomic-duration-maxInclusive-2-3 NISTXML-SV-IV-atomic-duration-maxInclusive-2-4 NISTXML-SV-IV-atomic-duration-maxInclusive-2-5
+atomic-duration-maxInclusive-2: NISTSchema-SV-IV-atomic-duration-maxInclusive-3 NISTXML-SV-IV-atomic-duration-maxInclusive-3-1 NISTXML-SV-IV-atomic-duration-maxInclusive-3-2 NISTXML-SV-IV-atomic-duration-maxInclusive-3-3 NISTXML-SV-IV-atomic-duration-maxInclusive-3-4 NISTXML-SV-IV-atomic-duration-maxInclusive-3-5
+atomic-duration-maxInclusive-3: NISTSchema-SV-IV-atomic-duration-maxInclusive-4 NISTXML-SV-IV-atomic-duration-maxInclusive-4-1 NISTXML-SV-IV-atomic-duration-maxInclusive-4-2 NISTXML-SV-IV-atomic-duration-maxInclusive-4-3 NISTXML-SV-IV-atomic-duration-maxInclusive-4-4 NISTXML-SV-IV-atomic-duration-maxInclusive-4-5
+atomic-duration-maxInclusive-4: NISTSchema-SV-IV-atomic-duration-maxInclusive-5 NISTXML-SV-IV-atomic-duration-maxInclusive-5-1 NISTXML-SV-IV-atomic-duration-maxInclusive-5-2 NISTXML-SV-IV-atomic-duration-maxInclusive-5-3 NISTXML-SV-IV-atomic-duration-maxInclusive-5-4 NISTXML-SV-IV-atomic-duration-maxInclusive-5-5
+atomic-duration-pattern: NISTSchema-SV-IV-atomic-duration-pattern-1 NISTXML-SV-IV-atomic-duration-pattern-1-1 NISTXML-SV-IV-atomic-duration-pattern-1-2 NISTXML-SV-IV-atomic-duration-pattern-1-3 NISTXML-SV-IV-atomic-duration-pattern-1-4 NISTXML-SV-IV-atomic-duration-pattern-1-5
+atomic-duration-pattern-1: NISTSchema-SV-IV-atomic-duration-pattern-2 NISTXML-SV-IV-atomic-duration-pattern-2-1 NISTXML-SV-IV-atomic-duration-pattern-2-2 NISTXML-SV-IV-atomic-duration-pattern-2-3 NISTXML-SV-IV-atomic-duration-pattern-2-4 NISTXML-SV-IV-atomic-duration-pattern-2-5
+atomic-duration-pattern-2: NISTSchema-SV-IV-atomic-duration-pattern-3 NISTXML-SV-IV-atomic-duration-pattern-3-1 NISTXML-SV-IV-atomic-duration-pattern-3-2 NISTXML-SV-IV-atomic-duration-pattern-3-3 NISTXML-SV-IV-atomic-duration-pattern-3-4 NISTXML-SV-IV-atomic-duration-pattern-3-5
+atomic-duration-pattern-3: NISTSchema-SV-IV-atomic-duration-pattern-4 NISTXML-SV-IV-atomic-duration-pattern-4-1 NISTXML-SV-IV-atomic-duration-pattern-4-2 NISTXML-SV-IV-atomic-duration-pattern-4-3 NISTXML-SV-IV-atomic-duration-pattern-4-4 NISTXML-SV-IV-atomic-duration-pattern-4-5
+atomic-duration-pattern-4: NISTSchema-SV-IV-atomic-duration-pattern-5 NISTXML-SV-IV-atomic-duration-pattern-5-1 NISTXML-SV-IV-atomic-duration-pattern-5-2 NISTXML-SV-IV-atomic-duration-pattern-5-3 NISTXML-SV-IV-atomic-duration-pattern-5-4 NISTXML-SV-IV-atomic-duration-pattern-5-5
+atomic-duration-enumeration: NISTSchema-SV-IV-atomic-duration-enumeration-1 NISTXML-SV-IV-atomic-duration-enumeration-1-1 NISTXML-SV-IV-atomic-duration-enumeration-1-2 NISTXML-SV-IV-atomic-duration-enumeration-1-3 NISTXML-SV-IV-atomic-duration-enumeration-1-4 NISTXML-SV-IV-atomic-duration-enumeration-1-5
+atomic-duration-enumeration-1: NISTSchema-SV-IV-atomic-duration-enumeration-2 NISTXML-SV-IV-atomic-duration-enumeration-2-1 NISTXML-SV-IV-atomic-duration-enumeration-2-2 NISTXML-SV-IV-atomic-duration-enumeration-2-3 NISTXML-SV-IV-atomic-duration-enumeration-2-4 NISTXML-SV-IV-atomic-duration-enumeration-2-5
+atomic-duration-enumeration-2: NISTSchema-SV-IV-atomic-duration-enumeration-3 NISTXML-SV-IV-atomic-duration-enumeration-3-1 NISTXML-SV-IV-atomic-duration-enumeration-3-2 NISTXML-SV-IV-atomic-duration-enumeration-3-3 NISTXML-SV-IV-atomic-duration-enumeration-3-4 NISTXML-SV-IV-atomic-duration-enumeration-3-5
+atomic-duration-enumeration-3: NISTSchema-SV-IV-atomic-duration-enumeration-4 NISTXML-SV-IV-atomic-duration-enumeration-4-1 NISTXML-SV-IV-atomic-duration-enumeration-4-2 NISTXML-SV-IV-atomic-duration-enumeration-4-3 NISTXML-SV-IV-atomic-duration-enumeration-4-4 NISTXML-SV-IV-atomic-duration-enumeration-4-5
+atomic-duration-enumeration-4: NISTSchema-SV-IV-atomic-duration-enumeration-5 NISTXML-SV-IV-atomic-duration-enumeration-5-1 NISTXML-SV-IV-atomic-duration-enumeration-5-2 NISTXML-SV-IV-atomic-duration-enumeration-5-3 NISTXML-SV-IV-atomic-duration-enumeration-5-4 NISTXML-SV-IV-atomic-duration-enumeration-5-5
+atomic-duration-whiteSpace: NISTSchema-SV-IV-atomic-duration-whiteSpace-1 NISTXML-SV-IV-atomic-duration-whiteSpace-1-1 NISTXML-SV-IV-atomic-duration-whiteSpace-1-2 NISTXML-SV-IV-atomic-duration-whiteSpace-1-3 NISTXML-SV-IV-atomic-duration-whiteSpace-1-4 NISTXML-SV-IV-atomic-duration-whiteSpace-1-5
 atomic-dateTime-minExclusive: NISTSchema-SV-IV-atomic-dateTime-minExclusive-1 NISTXML-SV-IV-atomic-dateTime-minExclusive-1-1 NISTXML-SV-IV-atomic-dateTime-minExclusive-1-2 NISTXML-SV-IV-atomic-dateTime-minExclusive-1-3 NISTXML-SV-IV-atomic-dateTime-minExclusive-1-4 NISTXML-SV-IV-atomic-dateTime-minExclusive-1-5
 atomic-dateTime-minExclusive-1: NISTSchema-SV-IV-atomic-dateTime-minExclusive-2 NISTXML-SV-IV-atomic-dateTime-minExclusive-2-1 NISTXML-SV-IV-atomic-dateTime-minExclusive-2-2 NISTXML-SV-IV-atomic-dateTime-minExclusive-2-3 NISTXML-SV-IV-atomic-dateTime-minExclusive-2-4 NISTXML-SV-IV-atomic-dateTime-minExclusive-2-5
 atomic-dateTime-minExclusive-2: NISTSchema-SV-IV-atomic-dateTime-minExclusive-3 NISTXML-SV-IV-atomic-dateTime-minExclusive-3-1 NISTXML-SV-IV-atomic-dateTime-minExclusive-3-2 NISTXML-SV-IV-atomic-dateTime-minExclusive-3-3 NISTXML-SV-IV-atomic-dateTime-minExclusive-3-4 NISTXML-SV-IV-atomic-dateTime-minExclusive-3-5
@@ -1343,6 +1374,16 @@ atomic-positiveInteger-totalDigits-6: NISTSchema-SV-II-atomic-positiveInteger-to
 atomic-positiveInteger-totalDigits-7: NISTSchema-SV-II-atomic-positiveInteger-totalDigits-3 NISTXML-SV-II-atomic-positiveInteger-totalDigits-3-1 NISTXML-SV-II-atomic-positiveInteger-totalDigits-3-2 NISTXML-SV-II-atomic-positiveInteger-totalDigits-3-3 NISTXML-SV-II-atomic-positiveInteger-totalDigits-3-4 NISTXML-SV-II-atomic-positiveInteger-totalDigits-3-5
 atomic-positiveInteger-totalDigits-8: NISTSchema-SV-II-atomic-positiveInteger-totalDigits-4 NISTXML-SV-II-atomic-positiveInteger-totalDigits-4-1 NISTXML-SV-II-atomic-positiveInteger-totalDigits-4-2 NISTXML-SV-II-atomic-positiveInteger-totalDigits-4-3 NISTXML-SV-II-atomic-positiveInteger-totalDigits-4-4 NISTXML-SV-II-atomic-positiveInteger-totalDigits-4-5
 atomic-positiveInteger-totalDigits-9: NISTSchema-SV-II-atomic-positiveInteger-totalDigits-5 NISTXML-SV-II-atomic-positiveInteger-totalDigits-5-1 NISTXML-SV-II-atomic-positiveInteger-totalDigits-5-2 NISTXML-SV-II-atomic-positiveInteger-totalDigits-5-3 NISTXML-SV-II-atomic-positiveInteger-totalDigits-5-4 NISTXML-SV-II-atomic-positiveInteger-totalDigits-5-5
+atomic-duration-minInclusive-5: NISTSchema-SV-II-atomic-duration-minInclusive-2 NISTXML-SV-II-atomic-duration-minInclusive-2-1 NISTXML-SV-II-atomic-duration-minInclusive-2-2 NISTXML-SV-II-atomic-duration-minInclusive-2-3 NISTXML-SV-II-atomic-duration-minInclusive-2-4 NISTXML-SV-II-atomic-duration-minInclusive-2-5
+atomic-duration-minInclusive-6: NISTSchema-SV-II-atomic-duration-minInclusive-3 NISTXML-SV-II-atomic-duration-minInclusive-3-1 NISTXML-SV-II-atomic-duration-minInclusive-3-2 NISTXML-SV-II-atomic-duration-minInclusive-3-3 NISTXML-SV-II-atomic-duration-minInclusive-3-4 NISTXML-SV-II-atomic-duration-minInclusive-3-5
+atomic-duration-minInclusive-7: NISTSchema-SV-II-atomic-duration-minInclusive-4 NISTXML-SV-II-atomic-duration-minInclusive-4-1 NISTXML-SV-II-atomic-duration-minInclusive-4-2 NISTXML-SV-II-atomic-duration-minInclusive-4-3 NISTXML-SV-II-atomic-duration-minInclusive-4-4 NISTXML-SV-II-atomic-duration-minInclusive-4-5
+atomic-duration-minInclusive-8: NISTSchema-SV-II-atomic-duration-minInclusive-5 NISTXML-SV-II-atomic-duration-minInclusive-5-1 NISTXML-SV-II-atomic-duration-minInclusive-5-2 NISTXML-SV-II-atomic-duration-minInclusive-5-3 NISTXML-SV-II-atomic-duration-minInclusive-5-4 NISTXML-SV-II-atomic-duration-minInclusive-5-5
+atomic-duration-minInclusive-9: NISTSchema-SV-II-atomic-duration-minInclusive-6 NISTXML-SV-II-atomic-duration-minInclusive-6-1 NISTXML-SV-II-atomic-duration-minInclusive-6-2 NISTXML-SV-II-atomic-duration-minInclusive-6-3 NISTXML-SV-II-atomic-duration-minInclusive-6-4 NISTXML-SV-II-atomic-duration-minInclusive-6-5
+atomic-duration-maxInclusive-5: NISTSchema-SV-II-atomic-duration-maxInclusive-1 NISTXML-SV-II-atomic-duration-maxInclusive-1-1 NISTXML-SV-II-atomic-duration-maxInclusive-1-2 NISTXML-SV-II-atomic-duration-maxInclusive-1-3 NISTXML-SV-II-atomic-duration-maxInclusive-1-4 NISTXML-SV-II-atomic-duration-maxInclusive-1-5
+atomic-duration-maxInclusive-6: NISTSchema-SV-II-atomic-duration-maxInclusive-2 NISTXML-SV-II-atomic-duration-maxInclusive-2-1 NISTXML-SV-II-atomic-duration-maxInclusive-2-2 NISTXML-SV-II-atomic-duration-maxInclusive-2-3 NISTXML-SV-II-atomic-duration-maxInclusive-2-4 NISTXML-SV-II-atomic-duration-maxInclusive-2-5
+atomic-duration-maxInclusive-7: NISTSchema-SV-II-atomic-duration-maxInclusive-3 NISTXML-SV-II-atomic-duration-maxInclusive-3-1 NISTXML-SV-II-atomic-duration-maxInclusive-3-2 NISTXML-SV-II-atomic-duration-maxInclusive-3-3 NISTXML-SV-II-atomic-duration-maxInclusive-3-4 NISTXML-SV-II-atomic-duration-maxInclusive-3-5
+atomic-duration-maxInclusive-8: NISTSchema-SV-II-atomic-duration-maxInclusive-4 NISTXML-SV-II-atomic-duration-maxInclusive-4-1 NISTXML-SV-II-atomic-duration-maxInclusive-4-2 NISTXML-SV-II-atomic-duration-maxInclusive-4-3 NISTXML-SV-II-atomic-duration-maxInclusive-4-4 NISTXML-SV-II-atomic-duration-maxInclusive-4-5
+atomic-duration-maxInclusive-9: NISTSchema-SV-II-atomic-duration-maxInclusive-5 NISTXML-SV-II-atomic-duration-maxInclusive-5-1 NISTXML-SV-II-atomic-duration-maxInclusive-5-2 NISTXML-SV-II-atomic-duration-maxInclusive-5-3 NISTXML-SV-II-atomic-duration-maxInclusive-5-4 NISTXML-SV-II-atomic-duration-maxInclusive-5-5
 atomic-dateTime-minInclusive-5: NISTSchema-SV-II-atomic-dateTime-minInclusive-2 NISTXML-SV-II-atomic-dateTime-minInclusive-2-1 NISTXML-SV-II-atomic-dateTime-minInclusive-2-2 NISTXML-SV-II-atomic-dateTime-minInclusive-2-3 NISTXML-SV-II-atomic-dateTime-minInclusive-2-4 NISTXML-SV-II-atomic-dateTime-minInclusive-2-5
 atomic-dateTime-minInclusive-6: NISTSchema-SV-II-atomic-dateTime-minInclusive-3 NISTXML-SV-II-atomic-dateTime-minInclusive-3-1 NISTXML-SV-II-atomic-dateTime-minInclusive-3-2 NISTXML-SV-II-atomic-dateTime-minInclusive-3-3 NISTXML-SV-II-atomic-dateTime-minInclusive-3-4 NISTXML-SV-II-atomic-dateTime-minInclusive-3-5
 atomic-dateTime-minInclusive-7: NISTSchema-SV-II-atomic-dateTime-minInclusive-4 NISTXML-SV-II-atomic-dateTime-minInclusive-4-1 NISTXML-SV-II-atomic-dateTime-minInclusive-4-2 NISTXML-SV-II-atomic-dateTime-minInclusive-4-3 NISTXML-SV-II-atomic-dateTime-minInclusive-4-4 NISTXML-SV-II-atomic-dateTime-minInclusive-4-5
@@ -1702,6 +1743,26 @@ atomic-positiveInteger-enumeration-6: NISTSchema-SV-II-atomic-positiveInteger-en
 atomic-positiveInteger-enumeration-7: NISTSchema-SV-II-atomic-positiveInteger-enumeration-3 NISTXML-SV-II-atomic-positiveInteger-enumeration-3-1 NISTXML-SV-II-atomic-positiveInteger-enumeration-3-2 NISTXML-SV-II-atomic-positiveInteger-enumeration-3-3 NISTXML-SV-II-atomic-positiveInteger-enumeration-3-4 NISTXML-SV-II-atomic-positiveInteger-enumeration-3-5
 atomic-positiveInteger-enumeration-8: NISTSchema-SV-II-atomic-positiveInteger-enumeration-4 NISTXML-SV-II-atomic-positiveInteger-enumeration-4-1 NISTXML-SV-II-atomic-positiveInteger-enumeration-4-2 NISTXML-SV-II-atomic-positiveInteger-enumeration-4-3 NISTXML-SV-II-atomic-positiveInteger-enumeration-4-4 NISTXML-SV-II-atomic-positiveInteger-enumeration-4-5
 atomic-positiveInteger-enumeration-9: NISTSchema-SV-II-atomic-positiveInteger-enumeration-5 NISTXML-SV-II-atomic-positiveInteger-enumeration-5-1 NISTXML-SV-II-atomic-positiveInteger-enumeration-5-2 NISTXML-SV-II-atomic-positiveInteger-enumeration-5-3 NISTXML-SV-II-atomic-positiveInteger-enumeration-5-4 NISTXML-SV-II-atomic-positiveInteger-enumeration-5-5
+atomic-duration-minExclusive-5: NISTSchema-SV-II-atomic-duration-minExclusive-1 NISTXML-SV-II-atomic-duration-minExclusive-1-1
+atomic-duration-minExclusive-6: NISTSchema-SV-II-atomic-duration-minExclusive-2 NISTXML-SV-II-atomic-duration-minExclusive-2-1 NISTXML-SV-II-atomic-duration-minExclusive-2-2 NISTXML-SV-II-atomic-duration-minExclusive-2-3 NISTXML-SV-II-atomic-duration-minExclusive-2-4 NISTXML-SV-II-atomic-duration-minExclusive-2-5
+atomic-duration-minExclusive-7: NISTSchema-SV-II-atomic-duration-minExclusive-3 NISTXML-SV-II-atomic-duration-minExclusive-3-1 NISTXML-SV-II-atomic-duration-minExclusive-3-2 NISTXML-SV-II-atomic-duration-minExclusive-3-3 NISTXML-SV-II-atomic-duration-minExclusive-3-4 NISTXML-SV-II-atomic-duration-minExclusive-3-5
+atomic-duration-minExclusive-8: NISTSchema-SV-II-atomic-duration-minExclusive-4 NISTXML-SV-II-atomic-duration-minExclusive-4-1 NISTXML-SV-II-atomic-duration-minExclusive-4-2 NISTXML-SV-II-atomic-duration-minExclusive-4-3 NISTXML-SV-II-atomic-duration-minExclusive-4-4 NISTXML-SV-II-atomic-duration-minExclusive-4-5
+atomic-duration-minExclusive-9: NISTSchema-SV-II-atomic-duration-minExclusive-5 NISTXML-SV-II-atomic-duration-minExclusive-5-1 NISTXML-SV-II-atomic-duration-minExclusive-5-2 NISTXML-SV-II-atomic-duration-minExclusive-5-3 NISTXML-SV-II-atomic-duration-minExclusive-5-4 NISTXML-SV-II-atomic-duration-minExclusive-5-5
+atomic-duration-maxExclusive-5: NISTSchema-SV-II-atomic-duration-maxExclusive-1 NISTXML-SV-II-atomic-duration-maxExclusive-1-1 NISTXML-SV-II-atomic-duration-maxExclusive-1-2 NISTXML-SV-II-atomic-duration-maxExclusive-1-3 NISTXML-SV-II-atomic-duration-maxExclusive-1-4 NISTXML-SV-II-atomic-duration-maxExclusive-1-5
+atomic-duration-maxExclusive-6: NISTSchema-SV-II-atomic-duration-maxExclusive-2 NISTXML-SV-II-atomic-duration-maxExclusive-2-1 NISTXML-SV-II-atomic-duration-maxExclusive-2-2 NISTXML-SV-II-atomic-duration-maxExclusive-2-3 NISTXML-SV-II-atomic-duration-maxExclusive-2-4 NISTXML-SV-II-atomic-duration-maxExclusive-2-5
+atomic-duration-maxExclusive-7: NISTSchema-SV-II-atomic-duration-maxExclusive-3 NISTXML-SV-II-atomic-duration-maxExclusive-3-1 NISTXML-SV-II-atomic-duration-maxExclusive-3-2 NISTXML-SV-II-atomic-duration-maxExclusive-3-3 NISTXML-SV-II-atomic-duration-maxExclusive-3-4 NISTXML-SV-II-atomic-duration-maxExclusive-3-5
+atomic-duration-maxExclusive-8: NISTSchema-SV-II-atomic-duration-maxExclusive-4 NISTXML-SV-II-atomic-duration-maxExclusive-4-1 NISTXML-SV-II-atomic-duration-maxExclusive-4-2 NISTXML-SV-II-atomic-duration-maxExclusive-4-3 NISTXML-SV-II-atomic-duration-maxExclusive-4-4 NISTXML-SV-II-atomic-duration-maxExclusive-4-5
+atomic-duration-maxExclusive-9: NISTSchema-SV-II-atomic-duration-maxExclusive-5 NISTXML-SV-II-atomic-duration-maxExclusive-5-1
+atomic-duration-pattern-5: NISTSchema-SV-II-atomic-duration-pattern-1 NISTXML-SV-II-atomic-duration-pattern-1-1 NISTXML-SV-II-atomic-duration-pattern-1-2 NISTXML-SV-II-atomic-duration-pattern-1-3 NISTXML-SV-II-atomic-duration-pattern-1-4 NISTXML-SV-II-atomic-duration-pattern-1-5
+atomic-duration-pattern-6: NISTSchema-SV-II-atomic-duration-pattern-2 NISTXML-SV-II-atomic-duration-pattern-2-1 NISTXML-SV-II-atomic-duration-pattern-2-2 NISTXML-SV-II-atomic-duration-pattern-2-3 NISTXML-SV-II-atomic-duration-pattern-2-4 NISTXML-SV-II-atomic-duration-pattern-2-5
+atomic-duration-pattern-7: NISTSchema-SV-II-atomic-duration-pattern-3 NISTXML-SV-II-atomic-duration-pattern-3-1 NISTXML-SV-II-atomic-duration-pattern-3-2 NISTXML-SV-II-atomic-duration-pattern-3-3 NISTXML-SV-II-atomic-duration-pattern-3-4 NISTXML-SV-II-atomic-duration-pattern-3-5
+atomic-duration-pattern-8: NISTSchema-SV-II-atomic-duration-pattern-4 NISTXML-SV-II-atomic-duration-pattern-4-1 NISTXML-SV-II-atomic-duration-pattern-4-2 NISTXML-SV-II-atomic-duration-pattern-4-3 NISTXML-SV-II-atomic-duration-pattern-4-4 NISTXML-SV-II-atomic-duration-pattern-4-5
+atomic-duration-pattern-9: NISTSchema-SV-II-atomic-duration-pattern-5 NISTXML-SV-II-atomic-duration-pattern-5-1 NISTXML-SV-II-atomic-duration-pattern-5-2 NISTXML-SV-II-atomic-duration-pattern-5-3 NISTXML-SV-II-atomic-duration-pattern-5-4 NISTXML-SV-II-atomic-duration-pattern-5-5
+atomic-duration-enumeration-5: NISTSchema-SV-II-atomic-duration-enumeration-1 NISTXML-SV-II-atomic-duration-enumeration-1-1 NISTXML-SV-II-atomic-duration-enumeration-1-2 NISTXML-SV-II-atomic-duration-enumeration-1-3 NISTXML-SV-II-atomic-duration-enumeration-1-4 NISTXML-SV-II-atomic-duration-enumeration-1-5
+atomic-duration-enumeration-6: NISTSchema-SV-II-atomic-duration-enumeration-2 NISTXML-SV-II-atomic-duration-enumeration-2-1 NISTXML-SV-II-atomic-duration-enumeration-2-2 NISTXML-SV-II-atomic-duration-enumeration-2-3 NISTXML-SV-II-atomic-duration-enumeration-2-4 NISTXML-SV-II-atomic-duration-enumeration-2-5
+atomic-duration-enumeration-7: NISTSchema-SV-II-atomic-duration-enumeration-3 NISTXML-SV-II-atomic-duration-enumeration-3-1 NISTXML-SV-II-atomic-duration-enumeration-3-2 NISTXML-SV-II-atomic-duration-enumeration-3-3 NISTXML-SV-II-atomic-duration-enumeration-3-4 NISTXML-SV-II-atomic-duration-enumeration-3-5
+atomic-duration-enumeration-8: NISTSchema-SV-II-atomic-duration-enumeration-4 NISTXML-SV-II-atomic-duration-enumeration-4-1 NISTXML-SV-II-atomic-duration-enumeration-4-2 NISTXML-SV-II-atomic-duration-enumeration-4-3 NISTXML-SV-II-atomic-duration-enumeration-4-4 NISTXML-SV-II-atomic-duration-enumeration-4-5
+atomic-duration-enumeration-9: NISTSchema-SV-II-atomic-duration-enumeration-5 NISTXML-SV-II-atomic-duration-enumeration-5-1 NISTXML-SV-II-atomic-duration-enumeration-5-2 NISTXML-SV-II-atomic-duration-enumeration-5-3 NISTXML-SV-II-atomic-duration-enumeration-5-4 NISTXML-SV-II-atomic-duration-enumeration-5-5
 atomic-dateTime-minExclusive-5: NISTSchema-SV-II-atomic-dateTime-minExclusive-1 NISTXML-SV-II-atomic-dateTime-minExclusive-1-1
 atomic-dateTime-minExclusive-6: NISTSchema-SV-II-atomic-dateTime-minExclusive-2 NISTXML-SV-II-atomic-dateTime-minExclusive-2-1 NISTXML-SV-II-atomic-dateTime-minExclusive-2-2 NISTXML-SV-II-atomic-dateTime-minExclusive-2-3 NISTXML-SV-II-atomic-dateTime-minExclusive-2-4 NISTXML-SV-II-atomic-dateTime-minExclusive-2-5
 atomic-dateTime-minExclusive-7: NISTSchema-SV-II-atomic-dateTime-minExclusive-3 NISTXML-SV-II-atomic-dateTime-minExclusive-3-1 NISTXML-SV-II-atomic-dateTime-minExclusive-3-2 NISTXML-SV-II-atomic-dateTime-minExclusive-3-3 NISTXML-SV-II-atomic-dateTime-minExclusive-3-4 NISTXML-SV-II-atomic-dateTime-minExclusive-3-5
@@ -2422,6 +2483,32 @@ list-float-enumeration-2: NISTSchema-SV-IV-list-float-enumeration-3 NISTXML-SV-I
 list-float-enumeration-3: NISTSchema-SV-IV-list-float-enumeration-4 NISTXML-SV-IV-list-float-enumeration-4-1 NISTXML-SV-IV-list-float-enumeration-4-2 NISTXML-SV-IV-list-float-enumeration-4-3 NISTXML-SV-IV-list-float-enumeration-4-4 NISTXML-SV-IV-list-float-enumeration-4-5
 list-float-enumeration-4: NISTSchema-SV-IV-list-float-enumeration-5 NISTXML-SV-IV-list-float-enumeration-5-1 NISTXML-SV-IV-list-float-enumeration-5-2 NISTXML-SV-IV-list-float-enumeration-5-3 NISTXML-SV-IV-list-float-enumeration-5-4 NISTXML-SV-IV-list-float-enumeration-5-5
 list-float-whiteSpace: NISTSchema-SV-IV-list-float-whiteSpace-1 NISTXML-SV-IV-list-float-whiteSpace-1-1 NISTXML-SV-IV-list-float-whiteSpace-1-2 NISTXML-SV-IV-list-float-whiteSpace-1-3 NISTXML-SV-IV-list-float-whiteSpace-1-4 NISTXML-SV-IV-list-float-whiteSpace-1-5
+list-duration-maxLength: NISTSchema-SV-IV-list-duration-maxLength-1 NISTXML-SV-IV-list-duration-maxLength-1-1 NISTXML-SV-IV-list-duration-maxLength-1-2 NISTXML-SV-IV-list-duration-maxLength-1-3 NISTXML-SV-IV-list-duration-maxLength-1-4 NISTXML-SV-IV-list-duration-maxLength-1-5
+list-duration-maxLength-1: NISTSchema-SV-IV-list-duration-maxLength-2 NISTXML-SV-IV-list-duration-maxLength-2-1 NISTXML-SV-IV-list-duration-maxLength-2-2 NISTXML-SV-IV-list-duration-maxLength-2-3 NISTXML-SV-IV-list-duration-maxLength-2-4 NISTXML-SV-IV-list-duration-maxLength-2-5
+list-duration-maxLength-2: NISTSchema-SV-IV-list-duration-maxLength-3 NISTXML-SV-IV-list-duration-maxLength-3-1 NISTXML-SV-IV-list-duration-maxLength-3-2 NISTXML-SV-IV-list-duration-maxLength-3-3 NISTXML-SV-IV-list-duration-maxLength-3-4 NISTXML-SV-IV-list-duration-maxLength-3-5
+list-duration-maxLength-3: NISTSchema-SV-IV-list-duration-maxLength-4 NISTXML-SV-IV-list-duration-maxLength-4-1 NISTXML-SV-IV-list-duration-maxLength-4-2 NISTXML-SV-IV-list-duration-maxLength-4-3 NISTXML-SV-IV-list-duration-maxLength-4-4 NISTXML-SV-IV-list-duration-maxLength-4-5
+list-duration-maxLength-4: NISTSchema-SV-IV-list-duration-maxLength-5 NISTXML-SV-IV-list-duration-maxLength-5-1 NISTXML-SV-IV-list-duration-maxLength-5-2 NISTXML-SV-IV-list-duration-maxLength-5-3 NISTXML-SV-IV-list-duration-maxLength-5-4 NISTXML-SV-IV-list-duration-maxLength-5-5
+list-duration-minLength: NISTSchema-SV-IV-list-duration-minLength-1 NISTXML-SV-IV-list-duration-minLength-1-1 NISTXML-SV-IV-list-duration-minLength-1-2 NISTXML-SV-IV-list-duration-minLength-1-3 NISTXML-SV-IV-list-duration-minLength-1-4 NISTXML-SV-IV-list-duration-minLength-1-5
+list-duration-minLength-1: NISTSchema-SV-IV-list-duration-minLength-2 NISTXML-SV-IV-list-duration-minLength-2-1 NISTXML-SV-IV-list-duration-minLength-2-2 NISTXML-SV-IV-list-duration-minLength-2-3 NISTXML-SV-IV-list-duration-minLength-2-4 NISTXML-SV-IV-list-duration-minLength-2-5
+list-duration-minLength-2: NISTSchema-SV-IV-list-duration-minLength-3 NISTXML-SV-IV-list-duration-minLength-3-1 NISTXML-SV-IV-list-duration-minLength-3-2 NISTXML-SV-IV-list-duration-minLength-3-3 NISTXML-SV-IV-list-duration-minLength-3-4 NISTXML-SV-IV-list-duration-minLength-3-5
+list-duration-minLength-3: NISTSchema-SV-IV-list-duration-minLength-4 NISTXML-SV-IV-list-duration-minLength-4-1 NISTXML-SV-IV-list-duration-minLength-4-2 NISTXML-SV-IV-list-duration-minLength-4-3 NISTXML-SV-IV-list-duration-minLength-4-4 NISTXML-SV-IV-list-duration-minLength-4-5
+list-duration-minLength-4: NISTSchema-SV-IV-list-duration-minLength-5 NISTXML-SV-IV-list-duration-minLength-5-1 NISTXML-SV-IV-list-duration-minLength-5-2 NISTXML-SV-IV-list-duration-minLength-5-3 NISTXML-SV-IV-list-duration-minLength-5-4 NISTXML-SV-IV-list-duration-minLength-5-5
+list-duration-length: NISTSchema-SV-IV-list-duration-length-1 NISTXML-SV-IV-list-duration-length-1-1 NISTXML-SV-IV-list-duration-length-1-2 NISTXML-SV-IV-list-duration-length-1-3 NISTXML-SV-IV-list-duration-length-1-4 NISTXML-SV-IV-list-duration-length-1-5
+list-duration-length-1: NISTSchema-SV-IV-list-duration-length-2 NISTXML-SV-IV-list-duration-length-2-1 NISTXML-SV-IV-list-duration-length-2-2 NISTXML-SV-IV-list-duration-length-2-3 NISTXML-SV-IV-list-duration-length-2-4 NISTXML-SV-IV-list-duration-length-2-5
+list-duration-length-2: NISTSchema-SV-IV-list-duration-length-3 NISTXML-SV-IV-list-duration-length-3-1 NISTXML-SV-IV-list-duration-length-3-2 NISTXML-SV-IV-list-duration-length-3-3 NISTXML-SV-IV-list-duration-length-3-4 NISTXML-SV-IV-list-duration-length-3-5
+list-duration-length-3: NISTSchema-SV-IV-list-duration-length-4 NISTXML-SV-IV-list-duration-length-4-1 NISTXML-SV-IV-list-duration-length-4-2 NISTXML-SV-IV-list-duration-length-4-3 NISTXML-SV-IV-list-duration-length-4-4 NISTXML-SV-IV-list-duration-length-4-5
+list-duration-length-4: NISTSchema-SV-IV-list-duration-length-5 NISTXML-SV-IV-list-duration-length-5-1 NISTXML-SV-IV-list-duration-length-5-2 NISTXML-SV-IV-list-duration-length-5-3 NISTXML-SV-IV-list-duration-length-5-4 NISTXML-SV-IV-list-duration-length-5-5
+list-duration-pattern: NISTSchema-SV-IV-list-duration-pattern-1 NISTXML-SV-IV-list-duration-pattern-1-1 NISTXML-SV-IV-list-duration-pattern-1-2 NISTXML-SV-IV-list-duration-pattern-1-3 NISTXML-SV-IV-list-duration-pattern-1-4 NISTXML-SV-IV-list-duration-pattern-1-5
+list-duration-pattern-1: NISTSchema-SV-IV-list-duration-pattern-2 NISTXML-SV-IV-list-duration-pattern-2-1 NISTXML-SV-IV-list-duration-pattern-2-2 NISTXML-SV-IV-list-duration-pattern-2-3 NISTXML-SV-IV-list-duration-pattern-2-4 NISTXML-SV-IV-list-duration-pattern-2-5
+list-duration-pattern-2: NISTSchema-SV-IV-list-duration-pattern-3 NISTXML-SV-IV-list-duration-pattern-3-1 NISTXML-SV-IV-list-duration-pattern-3-2 NISTXML-SV-IV-list-duration-pattern-3-3 NISTXML-SV-IV-list-duration-pattern-3-4 NISTXML-SV-IV-list-duration-pattern-3-5
+list-duration-pattern-3: NISTSchema-SV-IV-list-duration-pattern-4 NISTXML-SV-IV-list-duration-pattern-4-1 NISTXML-SV-IV-list-duration-pattern-4-2 NISTXML-SV-IV-list-duration-pattern-4-3 NISTXML-SV-IV-list-duration-pattern-4-4 NISTXML-SV-IV-list-duration-pattern-4-5
+list-duration-pattern-4: NISTSchema-SV-IV-list-duration-pattern-5 NISTXML-SV-IV-list-duration-pattern-5-1 NISTXML-SV-IV-list-duration-pattern-5-2 NISTXML-SV-IV-list-duration-pattern-5-3 NISTXML-SV-IV-list-duration-pattern-5-4 NISTXML-SV-IV-list-duration-pattern-5-5
+list-duration-enumeration: NISTSchema-SV-IV-list-duration-enumeration-1 NISTXML-SV-IV-list-duration-enumeration-1-1 NISTXML-SV-IV-list-duration-enumeration-1-2 NISTXML-SV-IV-list-duration-enumeration-1-3 NISTXML-SV-IV-list-duration-enumeration-1-4 NISTXML-SV-IV-list-duration-enumeration-1-5
+list-duration-enumeration-1: NISTSchema-SV-IV-list-duration-enumeration-2 NISTXML-SV-IV-list-duration-enumeration-2-1 NISTXML-SV-IV-list-duration-enumeration-2-2 NISTXML-SV-IV-list-duration-enumeration-2-3 NISTXML-SV-IV-list-duration-enumeration-2-4 NISTXML-SV-IV-list-duration-enumeration-2-5
+list-duration-enumeration-2: NISTSchema-SV-IV-list-duration-enumeration-3 NISTXML-SV-IV-list-duration-enumeration-3-1 NISTXML-SV-IV-list-duration-enumeration-3-2 NISTXML-SV-IV-list-duration-enumeration-3-3 NISTXML-SV-IV-list-duration-enumeration-3-4 NISTXML-SV-IV-list-duration-enumeration-3-5
+list-duration-enumeration-3: NISTSchema-SV-IV-list-duration-enumeration-4 NISTXML-SV-IV-list-duration-enumeration-4-1 NISTXML-SV-IV-list-duration-enumeration-4-2 NISTXML-SV-IV-list-duration-enumeration-4-3 NISTXML-SV-IV-list-duration-enumeration-4-4 NISTXML-SV-IV-list-duration-enumeration-4-5
+list-duration-enumeration-4: NISTSchema-SV-IV-list-duration-enumeration-5 NISTXML-SV-IV-list-duration-enumeration-5-1 NISTXML-SV-IV-list-duration-enumeration-5-2 NISTXML-SV-IV-list-duration-enumeration-5-3 NISTXML-SV-IV-list-duration-enumeration-5-4 NISTXML-SV-IV-list-duration-enumeration-5-5
+list-duration-whiteSpace: NISTSchema-SV-IV-list-duration-whiteSpace-1 NISTXML-SV-IV-list-duration-whiteSpace-1-1 NISTXML-SV-IV-list-duration-whiteSpace-1-2 NISTXML-SV-IV-list-duration-whiteSpace-1-3 NISTXML-SV-IV-list-duration-whiteSpace-1-4 NISTXML-SV-IV-list-duration-whiteSpace-1-5
 list-dateTime-maxLength: NISTSchema-SV-IV-list-dateTime-maxLength-1 NISTXML-SV-IV-list-dateTime-maxLength-1-1 NISTXML-SV-IV-list-dateTime-maxLength-1-2 NISTXML-SV-IV-list-dateTime-maxLength-1-3 NISTXML-SV-IV-list-dateTime-maxLength-1-4 NISTXML-SV-IV-list-dateTime-maxLength-1-5
 list-dateTime-maxLength-1: NISTSchema-SV-IV-list-dateTime-maxLength-2 NISTXML-SV-IV-list-dateTime-maxLength-2-1 NISTXML-SV-IV-list-dateTime-maxLength-2-2 NISTXML-SV-IV-list-dateTime-maxLength-2-3 NISTXML-SV-IV-list-dateTime-maxLength-2-4 NISTXML-SV-IV-list-dateTime-maxLength-2-5
 list-dateTime-maxLength-2: NISTSchema-SV-IV-list-dateTime-maxLength-3 NISTXML-SV-IV-list-dateTime-maxLength-3-1 NISTXML-SV-IV-list-dateTime-maxLength-3-2 NISTXML-SV-IV-list-dateTime-maxLength-3-3 NISTXML-SV-IV-list-dateTime-maxLength-3-4 NISTXML-SV-IV-list-dateTime-maxLength-3-5
@@ -3389,6 +3476,31 @@ list-float-enumeration-6: NISTSchema-SV-II-list-float-enumeration-2 NISTXML-SV-I
 list-float-enumeration-7: NISTSchema-SV-II-list-float-enumeration-3 NISTXML-SV-II-list-float-enumeration-3-1 NISTXML-SV-II-list-float-enumeration-3-2 NISTXML-SV-II-list-float-enumeration-3-3 NISTXML-SV-II-list-float-enumeration-3-4 NISTXML-SV-II-list-float-enumeration-3-5
 list-float-enumeration-8: NISTSchema-SV-II-list-float-enumeration-4 NISTXML-SV-II-list-float-enumeration-4-1 NISTXML-SV-II-list-float-enumeration-4-2 NISTXML-SV-II-list-float-enumeration-4-3 NISTXML-SV-II-list-float-enumeration-4-4 NISTXML-SV-II-list-float-enumeration-4-5
 list-float-enumeration-9: NISTSchema-SV-II-list-float-enumeration-5 NISTXML-SV-II-list-float-enumeration-5-1 NISTXML-SV-II-list-float-enumeration-5-2 NISTXML-SV-II-list-float-enumeration-5-3 NISTXML-SV-II-list-float-enumeration-5-4 NISTXML-SV-II-list-float-enumeration-5-5
+list-duration-maxLength-5: NISTSchema-SV-II-list-duration-maxLength-1 NISTXML-SV-II-list-duration-maxLength-1-1 NISTXML-SV-II-list-duration-maxLength-1-2 NISTXML-SV-II-list-duration-maxLength-1-3 NISTXML-SV-II-list-duration-maxLength-1-4 NISTXML-SV-II-list-duration-maxLength-1-5
+list-duration-maxLength-6: NISTSchema-SV-II-list-duration-maxLength-2 NISTXML-SV-II-list-duration-maxLength-2-1 NISTXML-SV-II-list-duration-maxLength-2-2 NISTXML-SV-II-list-duration-maxLength-2-3 NISTXML-SV-II-list-duration-maxLength-2-4 NISTXML-SV-II-list-duration-maxLength-2-5
+list-duration-maxLength-7: NISTSchema-SV-II-list-duration-maxLength-3 NISTXML-SV-II-list-duration-maxLength-3-1 NISTXML-SV-II-list-duration-maxLength-3-2 NISTXML-SV-II-list-duration-maxLength-3-3 NISTXML-SV-II-list-duration-maxLength-3-4 NISTXML-SV-II-list-duration-maxLength-3-5
+list-duration-maxLength-8: NISTSchema-SV-II-list-duration-maxLength-4 NISTXML-SV-II-list-duration-maxLength-4-1 NISTXML-SV-II-list-duration-maxLength-4-2 NISTXML-SV-II-list-duration-maxLength-4-3 NISTXML-SV-II-list-duration-maxLength-4-4 NISTXML-SV-II-list-duration-maxLength-4-5
+list-duration-maxLength-9: NISTSchema-SV-II-list-duration-maxLength-5 NISTXML-SV-II-list-duration-maxLength-5-1 NISTXML-SV-II-list-duration-maxLength-5-2 NISTXML-SV-II-list-duration-maxLength-5-3 NISTXML-SV-II-list-duration-maxLength-5-4 NISTXML-SV-II-list-duration-maxLength-5-5
+list-duration-minLength-5: NISTSchema-SV-II-list-duration-minLength-1 NISTXML-SV-II-list-duration-minLength-1-1 NISTXML-SV-II-list-duration-minLength-1-2 NISTXML-SV-II-list-duration-minLength-1-3 NISTXML-SV-II-list-duration-minLength-1-4 NISTXML-SV-II-list-duration-minLength-1-5
+list-duration-minLength-6: NISTSchema-SV-II-list-duration-minLength-2 NISTXML-SV-II-list-duration-minLength-2-1 NISTXML-SV-II-list-duration-minLength-2-2 NISTXML-SV-II-list-duration-minLength-2-3 NISTXML-SV-II-list-duration-minLength-2-4 NISTXML-SV-II-list-duration-minLength-2-5
+list-duration-minLength-7: NISTSchema-SV-II-list-duration-minLength-3 NISTXML-SV-II-list-duration-minLength-3-1 NISTXML-SV-II-list-duration-minLength-3-2 NISTXML-SV-II-list-duration-minLength-3-3 NISTXML-SV-II-list-duration-minLength-3-4 NISTXML-SV-II-list-duration-minLength-3-5
+list-duration-minLength-8: NISTSchema-SV-II-list-duration-minLength-4 NISTXML-SV-II-list-duration-minLength-4-1 NISTXML-SV-II-list-duration-minLength-4-2 NISTXML-SV-II-list-duration-minLength-4-3 NISTXML-SV-II-list-duration-minLength-4-4 NISTXML-SV-II-list-duration-minLength-4-5
+list-duration-minLength-9: NISTSchema-SV-II-list-duration-minLength-5 NISTXML-SV-II-list-duration-minLength-5-1 NISTXML-SV-II-list-duration-minLength-5-2 NISTXML-SV-II-list-duration-minLength-5-3 NISTXML-SV-II-list-duration-minLength-5-4 NISTXML-SV-II-list-duration-minLength-5-5
+list-duration-length-5: NISTSchema-SV-II-list-duration-length-1 NISTXML-SV-II-list-duration-length-1-1 NISTXML-SV-II-list-duration-length-1-2 NISTXML-SV-II-list-duration-length-1-3 NISTXML-SV-II-list-duration-length-1-4 NISTXML-SV-II-list-duration-length-1-5
+list-duration-length-6: NISTSchema-SV-II-list-duration-length-2 NISTXML-SV-II-list-duration-length-2-1 NISTXML-SV-II-list-duration-length-2-2 NISTXML-SV-II-list-duration-length-2-3 NISTXML-SV-II-list-duration-length-2-4 NISTXML-SV-II-list-duration-length-2-5
+list-duration-length-7: NISTSchema-SV-II-list-duration-length-3 NISTXML-SV-II-list-duration-length-3-1 NISTXML-SV-II-list-duration-length-3-2 NISTXML-SV-II-list-duration-length-3-3 NISTXML-SV-II-list-duration-length-3-4 NISTXML-SV-II-list-duration-length-3-5
+list-duration-length-8: NISTSchema-SV-II-list-duration-length-4 NISTXML-SV-II-list-duration-length-4-1 NISTXML-SV-II-list-duration-length-4-2 NISTXML-SV-II-list-duration-length-4-3 NISTXML-SV-II-list-duration-length-4-4 NISTXML-SV-II-list-duration-length-4-5
+list-duration-length-9: NISTSchema-SV-II-list-duration-length-5 NISTXML-SV-II-list-duration-length-5-1 NISTXML-SV-II-list-duration-length-5-2 NISTXML-SV-II-list-duration-length-5-3 NISTXML-SV-II-list-duration-length-5-4 NISTXML-SV-II-list-duration-length-5-5
+list-duration-pattern-5: NISTSchema-SV-II-list-duration-pattern-1 NISTXML-SV-II-list-duration-pattern-1-1 NISTXML-SV-II-list-duration-pattern-1-2 NISTXML-SV-II-list-duration-pattern-1-3 NISTXML-SV-II-list-duration-pattern-1-4 NISTXML-SV-II-list-duration-pattern-1-5
+list-duration-pattern-6: NISTSchema-SV-II-list-duration-pattern-2 NISTXML-SV-II-list-duration-pattern-2-1 NISTXML-SV-II-list-duration-pattern-2-2 NISTXML-SV-II-list-duration-pattern-2-3 NISTXML-SV-II-list-duration-pattern-2-4 NISTXML-SV-II-list-duration-pattern-2-5
+list-duration-pattern-7: NISTSchema-SV-II-list-duration-pattern-3 NISTXML-SV-II-list-duration-pattern-3-1 NISTXML-SV-II-list-duration-pattern-3-2 NISTXML-SV-II-list-duration-pattern-3-3 NISTXML-SV-II-list-duration-pattern-3-4 NISTXML-SV-II-list-duration-pattern-3-5
+list-duration-pattern-8: NISTSchema-SV-II-list-duration-pattern-4 NISTXML-SV-II-list-duration-pattern-4-1 NISTXML-SV-II-list-duration-pattern-4-2 NISTXML-SV-II-list-duration-pattern-4-3 NISTXML-SV-II-list-duration-pattern-4-4 NISTXML-SV-II-list-duration-pattern-4-5
+list-duration-pattern-9: NISTSchema-SV-II-list-duration-pattern-5 NISTXML-SV-II-list-duration-pattern-5-1 NISTXML-SV-II-list-duration-pattern-5-2 NISTXML-SV-II-list-duration-pattern-5-3 NISTXML-SV-II-list-duration-pattern-5-4 NISTXML-SV-II-list-duration-pattern-5-5
+list-duration-enumeration-5: NISTSchema-SV-II-list-duration-enumeration-1 NISTXML-SV-II-list-duration-enumeration-1-1 NISTXML-SV-II-list-duration-enumeration-1-2 NISTXML-SV-II-list-duration-enumeration-1-3 NISTXML-SV-II-list-duration-enumeration-1-4 NISTXML-SV-II-list-duration-enumeration-1-5
+list-duration-enumeration-6: NISTSchema-SV-II-list-duration-enumeration-2 NISTXML-SV-II-list-duration-enumeration-2-1 NISTXML-SV-II-list-duration-enumeration-2-2 NISTXML-SV-II-list-duration-enumeration-2-3 NISTXML-SV-II-list-duration-enumeration-2-4 NISTXML-SV-II-list-duration-enumeration-2-5
+list-duration-enumeration-7: NISTSchema-SV-II-list-duration-enumeration-3 NISTXML-SV-II-list-duration-enumeration-3-1 NISTXML-SV-II-list-duration-enumeration-3-2 NISTXML-SV-II-list-duration-enumeration-3-3 NISTXML-SV-II-list-duration-enumeration-3-4 NISTXML-SV-II-list-duration-enumeration-3-5
+list-duration-enumeration-8: NISTSchema-SV-II-list-duration-enumeration-4 NISTXML-SV-II-list-duration-enumeration-4-1 NISTXML-SV-II-list-duration-enumeration-4-2 NISTXML-SV-II-list-duration-enumeration-4-3 NISTXML-SV-II-list-duration-enumeration-4-4 NISTXML-SV-II-list-duration-enumeration-4-5
+list-duration-enumeration-9: NISTSchema-SV-II-list-duration-enumeration-5 NISTXML-SV-II-list-duration-enumeration-5-1 NISTXML-SV-II-list-duration-enumeration-5-2 NISTXML-SV-II-list-duration-enumeration-5-3 NISTXML-SV-II-list-duration-enumeration-5-4 NISTXML-SV-II-list-duration-enumeration-5-5
 list-dateTime-maxLength-5: NISTSchema-SV-II-list-dateTime-maxLength-1 NISTXML-SV-II-list-dateTime-maxLength-1-1 NISTXML-SV-II-list-dateTime-maxLength-1-2 NISTXML-SV-II-list-dateTime-maxLength-1-3 NISTXML-SV-II-list-dateTime-maxLength-1-4 NISTXML-SV-II-list-dateTime-maxLength-1-5
 list-dateTime-maxLength-6: NISTSchema-SV-II-list-dateTime-maxLength-2 NISTXML-SV-II-list-dateTime-maxLength-2-1 NISTXML-SV-II-list-dateTime-maxLength-2-2 NISTXML-SV-II-list-dateTime-maxLength-2-3 NISTXML-SV-II-list-dateTime-maxLength-2-4 NISTXML-SV-II-list-dateTime-maxLength-2-5
 list-dateTime-maxLength-7: NISTSchema-SV-II-list-dateTime-maxLength-3 NISTXML-SV-II-list-dateTime-maxLength-3-1 NISTXML-SV-II-list-dateTime-maxLength-3-2 NISTXML-SV-II-list-dateTime-maxLength-3-3 NISTXML-SV-II-list-dateTime-maxLength-3-4 NISTXML-SV-II-list-dateTime-maxLength-3-5
@@ -3764,6 +3876,16 @@ list-QName-length-6: NISTSchema-SV-II-list-QName-length-2 NISTXML-SV-II-list-QNa
 list-QName-length-7: NISTSchema-SV-II-list-QName-length-3 NISTXML-SV-II-list-QName-length-3-1 NISTXML-SV-II-list-QName-length-3-2 NISTXML-SV-II-list-QName-length-3-3 NISTXML-SV-II-list-QName-length-3-4 NISTXML-SV-II-list-QName-length-3-5
 list-QName-length-8: NISTSchema-SV-II-list-QName-length-4 NISTXML-SV-II-list-QName-length-4-1 NISTXML-SV-II-list-QName-length-4-2 NISTXML-SV-II-list-QName-length-4-3 NISTXML-SV-II-list-QName-length-4-4 NISTXML-SV-II-list-QName-length-4-5
 list-QName-length-9: NISTSchema-SV-II-list-QName-length-5 NISTXML-SV-II-list-QName-length-5-1 NISTXML-SV-II-list-QName-length-5-2 NISTXML-SV-II-list-QName-length-5-3 NISTXML-SV-II-list-QName-length-5-4 NISTXML-SV-II-list-QName-length-5-5
+union-duration-decimal-pattern: NISTSchema-SV-IV-union-duration-decimal-pattern-1 NISTXML-SV-IV-union-duration-decimal-pattern-1-1 NISTXML-SV-IV-union-duration-decimal-pattern-1-2 NISTXML-SV-IV-union-duration-decimal-pattern-1-3 NISTXML-SV-IV-union-duration-decimal-pattern-1-4 NISTXML-SV-IV-union-duration-decimal-pattern-1-5
+union-duration-decimal-pattern-1: NISTSchema-SV-IV-union-duration-decimal-pattern-2 NISTXML-SV-IV-union-duration-decimal-pattern-2-1 NISTXML-SV-IV-union-duration-decimal-pattern-2-2 NISTXML-SV-IV-union-duration-decimal-pattern-2-3 NISTXML-SV-IV-union-duration-decimal-pattern-2-4 NISTXML-SV-IV-union-duration-decimal-pattern-2-5
+union-duration-decimal-pattern-2: NISTSchema-SV-IV-union-duration-decimal-pattern-3 NISTXML-SV-IV-union-duration-decimal-pattern-3-1 NISTXML-SV-IV-union-duration-decimal-pattern-3-2 NISTXML-SV-IV-union-duration-decimal-pattern-3-3 NISTXML-SV-IV-union-duration-decimal-pattern-3-4 NISTXML-SV-IV-union-duration-decimal-pattern-3-5
+union-duration-decimal-pattern-3: NISTSchema-SV-IV-union-duration-decimal-pattern-4 NISTXML-SV-IV-union-duration-decimal-pattern-4-1 NISTXML-SV-IV-union-duration-decimal-pattern-4-2 NISTXML-SV-IV-union-duration-decimal-pattern-4-3 NISTXML-SV-IV-union-duration-decimal-pattern-4-4 NISTXML-SV-IV-union-duration-decimal-pattern-4-5
+union-duration-decimal-pattern-4: NISTSchema-SV-IV-union-duration-decimal-pattern-5 NISTXML-SV-IV-union-duration-decimal-pattern-5-1 NISTXML-SV-IV-union-duration-decimal-pattern-5-2 NISTXML-SV-IV-union-duration-decimal-pattern-5-3 NISTXML-SV-IV-union-duration-decimal-pattern-5-4 NISTXML-SV-IV-union-duration-decimal-pattern-5-5
+union-duration-decimal-enumeration: NISTSchema-SV-IV-union-duration-decimal-enumeration-1 NISTXML-SV-IV-union-duration-decimal-enumeration-1-1 NISTXML-SV-IV-union-duration-decimal-enumeration-1-2 NISTXML-SV-IV-union-duration-decimal-enumeration-1-3 NISTXML-SV-IV-union-duration-decimal-enumeration-1-4 NISTXML-SV-IV-union-duration-decimal-enumeration-1-5
+union-duration-decimal-enumeration-1: NISTSchema-SV-IV-union-duration-decimal-enumeration-2 NISTXML-SV-IV-union-duration-decimal-enumeration-2-1 NISTXML-SV-IV-union-duration-decimal-enumeration-2-2 NISTXML-SV-IV-union-duration-decimal-enumeration-2-3 NISTXML-SV-IV-union-duration-decimal-enumeration-2-4 NISTXML-SV-IV-union-duration-decimal-enumeration-2-5
+union-duration-decimal-enumeration-2: NISTSchema-SV-IV-union-duration-decimal-enumeration-3 NISTXML-SV-IV-union-duration-decimal-enumeration-3-1 NISTXML-SV-IV-union-duration-decimal-enumeration-3-2 NISTXML-SV-IV-union-duration-decimal-enumeration-3-3 NISTXML-SV-IV-union-duration-decimal-enumeration-3-4 NISTXML-SV-IV-union-duration-decimal-enumeration-3-5
+union-duration-decimal-enumeration-3: NISTSchema-SV-IV-union-duration-decimal-enumeration-4 NISTXML-SV-IV-union-duration-decimal-enumeration-4-1 NISTXML-SV-IV-union-duration-decimal-enumeration-4-2 NISTXML-SV-IV-union-duration-decimal-enumeration-4-3 NISTXML-SV-IV-union-duration-decimal-enumeration-4-4 NISTXML-SV-IV-union-duration-decimal-enumeration-4-5
+union-duration-decimal-enumeration-4: NISTSchema-SV-IV-union-duration-decimal-enumeration-5 NISTXML-SV-IV-union-duration-decimal-enumeration-5-1 NISTXML-SV-IV-union-duration-decimal-enumeration-5-2 NISTXML-SV-IV-union-duration-decimal-enumeration-5-3 NISTXML-SV-IV-union-duration-decimal-enumeration-5-4 NISTXML-SV-IV-union-duration-decimal-enumeration-5-5
 union-anyURI-float-pattern: NISTSchema-SV-IV-union-anyURI-float-pattern-1 NISTXML-SV-IV-union-anyURI-float-pattern-1-1 NISTXML-SV-IV-union-anyURI-float-pattern-1-2 NISTXML-SV-IV-union-anyURI-float-pattern-1-3 NISTXML-SV-IV-union-anyURI-float-pattern-1-4 NISTXML-SV-IV-union-anyURI-float-pattern-1-5
 union-anyURI-float-pattern-1: NISTSchema-SV-IV-union-anyURI-float-pattern-2 NISTXML-SV-IV-union-anyURI-float-pattern-2-1 NISTXML-SV-IV-union-anyURI-float-pattern-2-2 NISTXML-SV-IV-union-anyURI-float-pattern-2-3 NISTXML-SV-IV-union-anyURI-float-pattern-2-4 NISTXML-SV-IV-union-anyURI-float-pattern-2-5
 union-anyURI-float-pattern-2: NISTSchema-SV-IV-union-anyURI-float-pattern-3 NISTXML-SV-IV-union-anyURI-float-pattern-3-1 NISTXML-SV-IV-union-anyURI-float-pattern-3-2 NISTXML-SV-IV-union-anyURI-float-pattern-3-3 NISTXML-SV-IV-union-anyURI-float-pattern-3-4 NISTXML-SV-IV-union-anyURI-float-pattern-3-5
@@ -3794,6 +3916,16 @@ union-short-gYear-enumeration-1: NISTSchema-SV-IV-union-short-gYear-enumeration-
 union-short-gYear-enumeration-2: NISTSchema-SV-IV-union-short-gYear-enumeration-3 NISTXML-SV-IV-union-short-gYear-enumeration-3-1 NISTXML-SV-IV-union-short-gYear-enumeration-3-2 NISTXML-SV-IV-union-short-gYear-enumeration-3-3 NISTXML-SV-IV-union-short-gYear-enumeration-3-4 NISTXML-SV-IV-union-short-gYear-enumeration-3-5
 union-short-gYear-enumeration-3: NISTSchema-SV-IV-union-short-gYear-enumeration-4 NISTXML-SV-IV-union-short-gYear-enumeration-4-1 NISTXML-SV-IV-union-short-gYear-enumeration-4-2 NISTXML-SV-IV-union-short-gYear-enumeration-4-3 NISTXML-SV-IV-union-short-gYear-enumeration-4-4 NISTXML-SV-IV-union-short-gYear-enumeration-4-5
 union-short-gYear-enumeration-4: NISTSchema-SV-IV-union-short-gYear-enumeration-5 NISTXML-SV-IV-union-short-gYear-enumeration-5-1 NISTXML-SV-IV-union-short-gYear-enumeration-5-2 NISTXML-SV-IV-union-short-gYear-enumeration-5-3 NISTXML-SV-IV-union-short-gYear-enumeration-5-4 NISTXML-SV-IV-union-short-gYear-enumeration-5-5
+union-duration-decimal-pattern-5: NISTSchema-SV-II-union-duration-decimal-pattern-1 NISTXML-SV-II-union-duration-decimal-pattern-1-1 NISTXML-SV-II-union-duration-decimal-pattern-1-2 NISTXML-SV-II-union-duration-decimal-pattern-1-3 NISTXML-SV-II-union-duration-decimal-pattern-1-4 NISTXML-SV-II-union-duration-decimal-pattern-1-5
+union-duration-decimal-pattern-6: NISTSchema-SV-II-union-duration-decimal-pattern-2 NISTXML-SV-II-union-duration-decimal-pattern-2-1 NISTXML-SV-II-union-duration-decimal-pattern-2-2 NISTXML-SV-II-union-duration-decimal-pattern-2-3 NISTXML-SV-II-union-duration-decimal-pattern-2-4 NISTXML-SV-II-union-duration-decimal-pattern-2-5
+union-duration-decimal-pattern-7: NISTSchema-SV-II-union-duration-decimal-pattern-3 NISTXML-SV-II-union-duration-decimal-pattern-3-1 NISTXML-SV-II-union-duration-decimal-pattern-3-2 NISTXML-SV-II-union-duration-decimal-pattern-3-3 NISTXML-SV-II-union-duration-decimal-pattern-3-4 NISTXML-SV-II-union-duration-decimal-pattern-3-5
+union-duration-decimal-pattern-8: NISTSchema-SV-II-union-duration-decimal-pattern-4 NISTXML-SV-II-union-duration-decimal-pattern-4-1 NISTXML-SV-II-union-duration-decimal-pattern-4-2 NISTXML-SV-II-union-duration-decimal-pattern-4-3 NISTXML-SV-II-union-duration-decimal-pattern-4-4 NISTXML-SV-II-union-duration-decimal-pattern-4-5
+union-duration-decimal-pattern-9: NISTSchema-SV-II-union-duration-decimal-pattern-5 NISTXML-SV-II-union-duration-decimal-pattern-5-1 NISTXML-SV-II-union-duration-decimal-pattern-5-2 NISTXML-SV-II-union-duration-decimal-pattern-5-3 NISTXML-SV-II-union-duration-decimal-pattern-5-4 NISTXML-SV-II-union-duration-decimal-pattern-5-5
+union-duration-decimal-enumeration-5: NISTSchema-SV-II-union-duration-decimal-enumeration-1 NISTXML-SV-II-union-duration-decimal-enumeration-1-1 NISTXML-SV-II-union-duration-decimal-enumeration-1-2 NISTXML-SV-II-union-duration-decimal-enumeration-1-3 NISTXML-SV-II-union-duration-decimal-enumeration-1-4 NISTXML-SV-II-union-duration-decimal-enumeration-1-5
+union-duration-decimal-enumeration-6: NISTSchema-SV-II-union-duration-decimal-enumeration-2 NISTXML-SV-II-union-duration-decimal-enumeration-2-1 NISTXML-SV-II-union-duration-decimal-enumeration-2-2 NISTXML-SV-II-union-duration-decimal-enumeration-2-3 NISTXML-SV-II-union-duration-decimal-enumeration-2-4 NISTXML-SV-II-union-duration-decimal-enumeration-2-5
+union-duration-decimal-enumeration-7: NISTSchema-SV-II-union-duration-decimal-enumeration-3 NISTXML-SV-II-union-duration-decimal-enumeration-3-1 NISTXML-SV-II-union-duration-decimal-enumeration-3-2 NISTXML-SV-II-union-duration-decimal-enumeration-3-3 NISTXML-SV-II-union-duration-decimal-enumeration-3-4 NISTXML-SV-II-union-duration-decimal-enumeration-3-5
+union-duration-decimal-enumeration-8: NISTSchema-SV-II-union-duration-decimal-enumeration-4 NISTXML-SV-II-union-duration-decimal-enumeration-4-1 NISTXML-SV-II-union-duration-decimal-enumeration-4-2 NISTXML-SV-II-union-duration-decimal-enumeration-4-3 NISTXML-SV-II-union-duration-decimal-enumeration-4-4 NISTXML-SV-II-union-duration-decimal-enumeration-4-5
+union-duration-decimal-enumeration-9: NISTSchema-SV-II-union-duration-decimal-enumeration-5 NISTXML-SV-II-union-duration-decimal-enumeration-5-1 NISTXML-SV-II-union-duration-decimal-enumeration-5-2 NISTXML-SV-II-union-duration-decimal-enumeration-5-3 NISTXML-SV-II-union-duration-decimal-enumeration-5-4 NISTXML-SV-II-union-duration-decimal-enumeration-5-5
 union-anyURI-float-pattern-5: NISTSchema-SV-II-union-anyURI-float-pattern-1 NISTXML-SV-II-union-anyURI-float-pattern-1-1 NISTXML-SV-II-union-anyURI-float-pattern-1-2 NISTXML-SV-II-union-anyURI-float-pattern-1-3 NISTXML-SV-II-union-anyURI-float-pattern-1-4 NISTXML-SV-II-union-anyURI-float-pattern-1-5
 union-anyURI-float-pattern-6: NISTSchema-SV-II-union-anyURI-float-pattern-2 NISTXML-SV-II-union-anyURI-float-pattern-2-1 NISTXML-SV-II-union-anyURI-float-pattern-2-2 NISTXML-SV-II-union-anyURI-float-pattern-2-3 NISTXML-SV-II-union-anyURI-float-pattern-2-4 NISTXML-SV-II-union-anyURI-float-pattern-2-5
 union-anyURI-float-pattern-7: NISTSchema-SV-II-union-anyURI-float-pattern-3 NISTXML-SV-II-union-anyURI-float-pattern-3-1 NISTXML-SV-II-union-anyURI-float-pattern-3-2 NISTXML-SV-II-union-anyURI-float-pattern-3-3 NISTXML-SV-II-union-anyURI-float-pattern-3-4 NISTXML-SV-II-union-anyURI-float-pattern-3-5
@@ -5853,6 +5985,23 @@ double_minInclusive003_76: =
 double_minExclusive001_77: =
 double_minExclusive002_78: =
 double_minExclusive003_79: =
+duration_pattern001_80: =
+duration_enumeration001_81: =
+duration_enumeration002_82: =
+duration_enumeration003_83: =
+duration_enumeration004_84: =
+duration_maxInclusive001_85: =
+duration_maxInclusive002_86: =
+duration_maxInclusive003_87: =
+duration_maxExclusive001_88: =
+duration_maxExclusive002_89: =
+duration_minInclusive001_90: =
+duration_minInclusive002_91: =
+duration_minInclusive003_92: =
+duration_minInclusive004_93: =
+duration_minExclusive001_94: =
+duration_minExclusive002_95: =
+duration_minExclusive003_96: =
 dateTime_pattern001_97: =
 dateTime_enumeration001_98: =
 dateTime_enumeration002_99: =
@@ -6844,6 +6993,27 @@ double_minExclusive002_1099: = double_minExclusive002_1099.i
 double_minExclusive003_1100: = double_minExclusive003_1100.v
 double_minExclusive004_1101: = double_minExclusive004_1101.v
 double_minExclusive005_1102: = double_minExclusive005_1102.v
+duration_pattern001_1103: = duration_pattern001_1103.v
+duration_enumeration001_1104: = duration_enumeration001_1104.i
+duration_enumeration002_1105: = duration_enumeration002_1105.v
+duration_enumeration003_1106: = duration_enumeration003_1106.i
+duration_enumeration004_1107: = duration_enumeration004_1107.v
+duration_maxInclusive001_1108: = duration_maxInclusive001_1108.v
+duration_maxInclusive002_1109: = duration_maxInclusive002_1109.i
+duration_maxInclusive003_1110: = duration_maxInclusive003_1110.v
+duration_maxExclusive001_1111: = duration_maxExclusive001_1111.i
+duration_maxExclusive002_1112: = duration_maxExclusive002_1112.i
+duration_maxExclusive003_1113: = duration_maxExclusive003_1113.v
+duration_minInclusive001_1114: = duration_minInclusive001_1114.v
+duration_minInclusive002_1115: = duration_minInclusive002_1115.i
+duration_minInclusive003_1116: = duration_minInclusive003_1116.v
+duration_minInclusive004_1117: = duration_minInclusive004_1117.v
+duration_minInclusive005_1118: = duration_minInclusive005_1118.v
+duration_minExclusive001_1119: = duration_minExclusive001_1119.i
+duration_minExclusive002_1120: = duration_minExclusive002_1120.i
+duration_minExclusive003_1121: = duration_minExclusive003_1121.v
+duration_minExclusive004_1122: = duration_minExclusive004_1122.v
+duration_minExclusive005_1123: = duration_minExclusive005_1123.v
 dateTime_pattern001_1124: = dateTime_pattern001_1124.v
 dateTime_enumeration001_1125: = dateTime_enumeration001_1125.i
 dateTime_enumeration002_1126: = dateTime_enumeration002_1126.v
@@ -7648,6 +7818,33 @@ double027_1965: = double027_1965.v
 double028_1966: = double028_1966.v
 double029_1967: = double029_1967.i
 double030_1968: = double030_1968.v
+duration001_1969: = duration001_1969.i
+duration002_1970: = duration002_1970.v
+duration003_1971: = duration003_1971.v
+duration004_1972: = duration004_1972.v
+duration005_1973: = duration005_1973.v
+duration006_1974: = duration006_1974.v
+duration007_1975: = duration007_1975.v
+duration008_1976: = duration008_1976.i
+duration009_1977: = duration009_1977.v
+duration010_1978: = duration010_1978.i
+duration011_1979: = duration011_1979.i
+duration012_1980: = duration012_1980.v
+duration013_1981: = duration013_1981.i
+duration014_1982: = duration014_1982.v
+duration015_1983: = duration015_1983.i
+duration016_1984: = duration016_1984.v
+duration017_1985: = duration017_1985.v
+duration018_1986: = duration018_1986.v
+duration019_1987: = duration019_1987.v
+duration020_1988: = duration020_1988.v
+duration021_1989: = duration021_1989.i
+duration022_1990: = duration022_1990.v
+duration023_1991: = duration023_1991.v
+duration024_1992: = duration024_1992.v
+duration025_1993: = duration025_1993.v
+duration026_1994: = duration026_1994.v
+duration027_1995: = duration027_1995.v
 dateTime001_1999: = dateTime001_1999.i
 dateTime002_2000: = dateTime002_2000.v
 dateTime003_2001: = dateTime003_2001.v
@@ -8259,6 +8456,7 @@ errC009: =
 errE001: = errE001.v
 errE002: = errE002.v
 errE003: = errE003.v
+errE004: = errE004.i
 errE006: = errE006.v
 errE008: = errE008.v
 set msMeta/Group_w3c
@@ -11743,6 +11941,14 @@ reDC2: = reDC2.v
 reDC3: = reDC3.v
 reDC4: = reDC4.v
 reDC5: = reDC5.v
+reDD1: = reDD1.v
+reDD2: = reDD2.i
+reDD3: = reDD3.i
+reDD4: = reDD4.i
+reDD5: = reDD5.i
+reDD6: = reDD6.i
+reDD7: = reDD7.i
+reDD8: = reDD8.i
 reDE1: = reDE1.v
 reDE2: = reDE2.i
 reDE3: = reDE3.i
@@ -13377,6 +13583,8 @@ stC030: =
 stC031: =
 stC032: =
 stC033: =
+stC034: = stC034.i
+stC035: =
 stD001: =
 stD002: =
 stD003: =
@@ -13533,6 +13741,7 @@ stJ016: =
 stJ017: =
 stJ018: =
 stJ019: =
+stK001: =
 stK003: =
 stK004: =
 stK005: =

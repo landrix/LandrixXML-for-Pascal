@@ -1,0 +1,149 @@
+file a.xml
+error 2 16 cvc-maxInclusive-valid Value 'P31D' is not facet-valid with respect to maxInclusive 'P0Y1M0DT0H0M0S' for type 'Short'.
+error 2 16 cvc-attribute.3 The value 'P31D' of attribute 'a' on element 'root' is not valid with respect to its type, 'Short'.
+error 3 15 cvc-datatype-valid.1.2.1 'P1D1M' is not a valid value for 'duration'.
+error 3 15 cvc-type.3.1.3 The value 'P1D1M' of element 'd' is not valid.
+error 4 15 cvc-datatype-valid.1.2.1 'PT1.S' is not a valid value for 'duration'.
+error 4 15 cvc-type.3.1.3 The value 'PT1.S' of element 'd' is not valid.
+error 5 14 cvc-maxInclusive-valid Value 'P31D' is not facet-valid with respect to maxInclusive 'P0Y1M0DT0H0M0S' for type 'Short'.
+error 5 14 cvc-type.3.1.3 The value 'P31D' of element 's' is not valid.
+error 6 14 cvc-maxInclusive-valid Value 'P30D' is not facet-valid with respect to maxInclusive 'P0Y1M0DT0H0M0S' for type 'Short'.
+error 6 14 cvc-type.3.1.3 The value 'P30D' of element 's' is not valid.
+error 7 18 cvc-minExclusive-valid Value '-PT60.5S' is not facet-valid with respect to minExclusive '-P0Y0M0DT0H1M0S' for type 'Short'.
+error 7 18 cvc-type.3.1.3 The value '-PT60.5S' of element 's' is not valid.
+error 8 26 cvc-maxInclusive-valid Value 'P0Y1M0DT0H0M0.5S' is not facet-valid with respect to maxInclusive 'P0Y1M0DT0H0M0S' for type 'Short'.
+error 8 26 cvc-type.3.1.3 The value 'P0Y1M0DT0H0M0.5S' of element 's' is not valid.
+error 9 13 cvc-enumeration-valid Value 'P2D' is not facet-valid with respect to enumeration '[P0Y0M1DT0H0M0S, P0Y0M0DT0H90M0S]'. It must be a value from the enumeration.
+error 9 13 cvc-type.3.1.3 The value 'P2D' of element 'c' is not valid.
+error 10 15 cvc-elt.5.2.2.2.2 The value 'PT23H' of element 'f' does not match the {value constraint} value 'P0Y0M0DT24H0M0S'.
+error 11 13 cvc-elt.5.2.2.2.2 The value 'P1M' of element 'f' does not match the {value constraint} value 'P0Y0M0DT24H0M0S'.
+error 13 18 cvc-identity-constraint.4.1 Duplicate unique value [P0Y0M0DT24H0M0S] declared for identity constraint "u" of element "root".
+error 15 17 cvc-identity-constraint.4.1 Duplicate unique value [P0Y0M0DT0H0M0S] declared for identity constraint "u" of element "root".
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>1.005</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 6 15 cvc-datatype-valid.1.2.1 '1.005' is not a valid value for 'duration'.
+error 6 15 cvc-type.3.1.3 The value '1.005' of element 's' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  \n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <s>P20D</s><k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 12 6 cvc-complex-type.2.4.a Invalid content was found starting with element 's'. One of '{k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D" unknown="1"/>\n</root>\n
+error 13 29 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'k'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d unknown="1">P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 3 18 cvc-type.3.1.1 Element 'd' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  \n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  \n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <f> -P1D </f>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 4 16 cvc-elt.5.2.2.2.2 The value ' -P1D ' of element 'f' does not match the {value constraint} value 'P0Y0M0DT24H0M0S'.
+error 5 6 cvc-complex-type.2.4.a Invalid content was found starting with element 's'. One of '{f, k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <s>-PT59S</s><d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  \n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 3 19 cvc-complex-type.2.4.a Invalid content was found starting with element 'd'. One of '{s, c, f, k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>  a  b  </f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 9 18 cvc-datatype-valid.1.2.1 'a  b' is not a valid value for 'duration'.
+error 9 18 cvc-type.3.1.3 The value '  a  b  ' of element 'f' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  \n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/><k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 11 29 cvc-identity-constraint.4.1 Duplicate unique value [P0Y0M1DT0H0M0S] declared for identity constraint "u" of element "root".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d>999999999</d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 4 19 cvc-datatype-valid.1.2.1 '999999999' is not a valid value for 'duration'.
+error 4 19 cvc-type.3.1.3 The value '999999999' of element 'd' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  \n  <f>P1D</f><f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  \n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <s>PT24H</s>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>true</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 5 14 cvc-datatype-valid.1.2.1 'true' is not a valid value for 'duration'.
+error 5 14 cvc-type.3.1.3 The value 'true' of element 's' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  \n  <f>PT1440M</f><k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d unknown="1"> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 4 18 cvc-type.3.1.1 Element 'd' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <c id="P30D"/>\n</root>\n
+error 13 17 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{k}' is expected.
+error 13 17 cvc-type.3.1.1 Element 'c' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'id' was found.
+error 13 17 cvc-datatype-valid.1.2.1 '' is not a valid value for 'duration'.
+error 13 17 cvc-type.3.1.3 The value '' of element 'c' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f><f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>2026-13-01</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 6 20 cvc-datatype-valid.1.2.1 '2026-13-01' is not a valid value for 'duration'.
+error 6 20 cvc-type.3.1.3 The value '2026-13-01' of element 's' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D">x</k>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 11 20 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D">true</k>\n</root>\n
+error 13 24 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>x</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 3 11 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'duration'.
+error 3 11 cvc-type.3.1.3 The value 'x' of element 'd' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  \n  <k id="P1D"/>\n  <f>PT1440M</f><k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 12 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'f'. One of '{k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <c id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 11 16 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{f, k}' is expected.
+error 11 16 cvc-type.3.1.1 Element 'c' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'id' was found.
+error 11 16 cvc-datatype-valid.1.2.1 '' is not a valid value for 'duration'.
+error 11 16 cvc-type.3.1.3 The value '' of element 'c' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <k>P1D</k>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 9 13 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+error 10 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'f'. One of '{k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  \n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <c>PT24H</c><d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  \n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 4 18 cvc-complex-type.2.4.a Invalid content was found starting with element 'd'. One of '{c, f, k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <d>-PT59S</d>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 6 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'd'. One of '{s, c, f, k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>999999999</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 10 19 cvc-datatype-valid.1.2.1 '999999999' is not a valid value for 'duration'.
+error 10 19 cvc-type.3.1.3 The value '999999999' of element 'f' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="2001-02-30"/>\n</root>\n
+error 13 23 cvc-datatype-valid.1.2.1 '2001-02-30' is not a valid value for 'duration'.
+error 13 23 cvc-attribute.3 The value '2001-02-30' of attribute 'id' on element 'k' is not valid with respect to its type, 'duration'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <k>P20D</k>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 5 14 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+error 6 6 cvc-complex-type.2.4.a Invalid content was found starting with element 's'. One of '{k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  \n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <k id="P30D"/><s>P20D</s>\n  <s>-PT59S</s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  \n</root>\n
+error 5 20 cvc-complex-type.2.4.a Invalid content was found starting with element 's'. One of '{k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  \n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <c>PT24H</c><k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 11 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{f, k}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>-PT59S</s>\n  <c unknown="1">PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 7 18 cvc-type.3.1.1 Element 'c' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root a="P1D">\n  <d>P1Y2M3DT4H5M6.5S</d>\n  <d> -P1D </d>\n  <s>P20D</s>\n  <s>  a  b  </s>\n  <c>PT24H</c>\n  <c>PT1H30M</c>\n  <f>P1D</f>\n  <f>PT1440M</f>\n  <k id="P1D"/>\n  <k id="P1M"/>\n  <k id="P30D"/>\n</root>\n
+error 6 18 cvc-datatype-valid.1.2.1 'a  b' is not a valid value for 'duration'.
+error 6 18 cvc-type.3.1.3 The value '  a  b  ' of element 's' is not valid.

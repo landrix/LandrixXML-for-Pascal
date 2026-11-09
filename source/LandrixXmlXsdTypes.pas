@@ -34,11 +34,18 @@
   Built-in types: anySimpleType, string, normalizedString, token,
   language, Name, NCName, ID, IDREF, NMTOKEN, boolean, decimal, integer and
   its twelve derived types, float, double, dateTime, time, date,
-  gYearMonth, gYear, gMonthDay, gDay, gMonth, hexBinary, base64Binary,
-  anyURI, QName, and the list types NMTOKENS and IDREFS. Not supported
-  (LandrixXmlXsdBuiltinType returns nil, the schema loader reports
-  xecUnsupported): duration and its subtypes, NOTATION, ENTITY,
-  ENTITIES.
+  gYearMonth, gYear, gMonthDay, gDay, gMonth, duration, hexBinary,
+  base64Binary, anyURI, QName, and the list types NMTOKENS and IDREFS.
+  Not supported (LandrixXmlXsdBuiltinType returns nil, the schema loader
+  reports xecUnsupported): NOTATION, ENTITY, ENTITIES.
+
+  A duration is parsed and ordered as Xerces does: whole numbers up to
+  2147483647, seconds with a fraction (also ".5S"); the order adds both
+  durations to the four dates of XML Schema 1.0, 3.2.6.2 with Xerces'
+  arithmetic (Java int overflow and the float division of its fQuotient
+  included) and is defined only if all four agree, so P1M and P30D are
+  incomparable and not equal, P1D and PT24H are equal. The seconds are
+  exact decimals where Xerces uses doubles.
 
   A QName value is resolved with the namespace context given to Validate
   (TLandrixXmlXsdNamespaceContext): no prefix stands for the default
@@ -81,7 +88,7 @@ type
   TLandrixXmlXsdPrimitive = (
     xspAnySimpleType, xspString, xspBoolean, xspDecimal, xspFloat, xspDouble,
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth,
-    xspHexBinary, xspBase64Binary, xspAnyURI, xspQName
+    xspHexBinary, xspBase64Binary, xspAnyURI, xspQName, xspDuration
   );
 
   { Lexical rules of built-in types derived from string or decimal. }
@@ -140,7 +147,10 @@ type
     Length the number of items, Primitive is xspAnySimpleType. Otherwise
     Variety is xsvAtomic and Items is empty.
     For xspQName, NamespaceUri ('' for none) and LocalName are the
-    resolved name; Text keeps the lexical form with the prefix. }
+    resolved name; Text keeps the lexical form with the prefix.
+    For xspDuration, DateTime holds the fields as written (years, months,
+    days, hours, minutes, seconds), all of them negative for a negative
+    duration; HasTimeZone is False. }
   TLandrixXmlXsdValue = record
     Primitive: TLandrixXmlXsdPrimitive;
     Text: TLandrixXmlUtf8;
@@ -331,14 +341,15 @@ function LandrixXmlXsdBuiltinType(const LocalName: TLandrixXmlUtf8): TLandrixXml
 { A value as Xerces prints it in messages, its canonical form: a decimal
   with ".0" unless its type is an integer type, a boolean as true or
   false, float and double as 1.5E3 (zero as 0.0E1), dates and times with
-  a time zone moved to UTC ("2025-12-31Z"), hexBinary in upper case,
-  base64Binary without white space, other values in their normalized
-  lexical form. }
+  a time zone moved to UTC ("2025-12-31Z"), a duration with every field
+  ("P1Y0M2DT0H0M0S"), hexBinary in upper case, base64Binary without white
+  space, other values in their normalized lexical form. }
 function LandrixXmlXsdValueText(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
 
 { A key for comparing values as Xerces does for identity constraints:
   equal keys for equal values (0 and -0, all NaNs, the same instant in
-  different time zones), different keys for values of different
+  different time zones, durations Xerces finds equal such as P1D and
+  PT24H), different keys for values of different
   primitive types (integer types count as decimal). }
 function LandrixXmlXsdValueKey(const Value: TLandrixXmlXsdValue): TLandrixXmlUtf8;
 
@@ -1120,6 +1131,8 @@ begin
     end;
 end;
 
+function ParseDuration(const S: TLandrixXmlUtf8; out D: TLandrixXmlXsdDateTime): Boolean; forward;
+
 { The lexical check of a primitive type; Normalized is already white space
   processed. }
 function ParsePrimitive(Primitive: TLandrixXmlXsdPrimitive; Rule: TLandrixXmlXsdLexicalRule;
@@ -1179,6 +1192,8 @@ begin
       end;
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth:
       Result := ParseDateTimeKind(Normalized, Primitive, Value.DateTime);
+    xspDuration:
+      Result := ParseDuration(Normalized, Value.DateTime);
     xspHexBinary:
       begin
         if Length(Normalized) mod 2 <> 0 then
@@ -1227,6 +1242,475 @@ begin
   else
     Result := 0;
 end;
+
+{ ---------------------------------------------------------------------- }
+{ xs:duration (Xerces' DurationDV)                                        }
+{ ---------------------------------------------------------------------- }
+
+{ Java int arithmetic: the result wrapped to 32 bits }
+function Wrap32(X: Int64): Integer;
+begin
+  X := X and $FFFFFFFF;
+  if X >= $80000000 then
+    X := X - $100000000;
+  Result := Integer(X);
+end;
+
+{ Java's (float) of an int: rounded to 24 significant bits, ties to even }
+function JavaFloatOfInt(A: Integer): Int64;
+var
+  M, Q, R, Half: Int64;
+  Shift: Integer;
+begin
+  M := A;
+  if M < 0 then
+    M := -M;
+  Shift := 0;
+  while (M shr Shift) >= $1000000 do
+    Inc(Shift);
+  if Shift = 0 then
+  begin
+    Result := A;
+    Exit;
+  end;
+  Q := M shr Shift;
+  R := M - (Q shl Shift);
+  Half := Int64(1) shl (Shift - 1);
+  if (R > Half) or ((R = Half) and Odd(Q)) then
+    Inc(Q);
+  Result := Q shl Shift;
+  if A < 0 then
+    Result := -Result;
+end;
+
+{ Xerces' fQuotient(a, b): (int) Math.floor((float) a / b) with the float
+  rounding of Java (B > 0) }
+function JavaFloatFloorDiv(A, B: Integer): Integer;
+var
+  M, Num, Den, K, R, V: Int64;
+  E, S: Integer;
+  Negative: Boolean;
+begin
+  M := JavaFloatOfInt(A);
+  if M = 0 then
+  begin
+    Result := 0;
+    Exit;
+  end;
+  Negative := M < 0;
+  if Negative then
+    M := -M;
+  { E: 2^E <= M / B < 2^(E + 1) }
+  E := 0;
+  if M >= B then
+  begin
+    while (Int64(B) shl (E + 1)) <= M do
+      Inc(E);
+  end
+  else
+    while (M shl (-E)) < B do
+      Dec(E);
+  { the quotient rounded to 24 significant bits: K * 2^(E - 23) }
+  if E <= 23 then
+  begin
+    Num := M shl (23 - E);
+    Den := B;
+  end
+  else
+  begin
+    Num := M;
+    Den := Int64(B) shl (E - 23);
+  end;
+  K := Num div Den;
+  R := Num - K * Den;
+  if (2 * R > Den) or ((2 * R = Den) and Odd(K)) then
+    Inc(K);
+  { floor of K * 2^(E - 23), with the sign }
+  if E >= 23 then
+    V := K shl (E - 23)
+  else
+  begin
+    S := 23 - E;
+    if Negative then
+      V := (K + (Int64(1) shl S) - 1) shr S
+    else
+      V := K shr S;
+  end;
+  if Negative then
+    V := -V;
+  Result := Wrap32(V);
+end;
+
+{ Xerces' modulo(temp, low, high) and fQuotient(temp, low, high) }
+function XercesModulo(Temp, Low, High: Integer): Integer;
+var
+  A, B: Integer;
+begin
+  A := Wrap32(Int64(Temp) - Low);
+  B := High - Low;
+  Result := Wrap32(Int64(Wrap32(Int64(A) - Int64(Wrap32(Int64(JavaFloatFloorDiv(A, B)) * B)))) + Low);
+end;
+
+function XercesQuotient(Temp, Low, High: Integer): Integer;
+begin
+  Result := JavaFloatFloorDiv(Wrap32(Int64(Temp) - Low), High - Low);
+end;
+
+{ Xerces' mod(a, b, quotient) }
+function XercesMod(A, B, Quotient: Integer): Integer;
+begin
+  Result := Wrap32(Int64(A) - Int64(Wrap32(Int64(Quotient) * B)));
+end;
+
+function JavaLeapYear(Year: Integer): Boolean;
+begin
+  Result := (Year mod 4 = 0) and ((Year mod 100 <> 0) or (Year mod 400 = 0));
+end;
+
+{ Xerces' maxDayInMonthFor: any month other than 2, 4, 6, 9 and 11 (also
+  0) has 31 days }
+function JavaMaxDay(Year, Month: Integer): Integer;
+begin
+  if (Month = 4) or (Month = 6) or (Month = 9) or (Month = 11) then
+    Result := 30
+  else if Month = 2 then
+  begin
+    if JavaLeapYear(Year) then
+      Result := 29
+    else
+      Result := 28;
+  end
+  else
+    Result := 31;
+end;
+
+{ Xerces' addDuration: the duration D added to the day Year-Month-01
+  (time 00:00:00Z), as Xerces computes it with Java int arithmetic. A
+  loop step moves one month; whole 400-year cycles (146097 days) are
+  skipped at once, which gives the same result while the year cannot
+  wrap around.
+  Xerces deviation, not in the test suite: sums beyond the int range wrap
+  around, and the quotients of fQuotient are computed as floats, so very
+  large values compare wrongly (62914619 minutes exceed 1048576 hours and
+  59 minutes, the same duration); XML Schema 1.0 adds exactly }
+procedure AddDurationTo(const D: TLandrixXmlXsdDateTime; Year, Month: Integer; out R: TLandrixXmlXsdDateTime);
+var
+  Temp, Carry, MaxDay: Integer;
+  Quotient: TLandrixXmlDecimal;
+  Carry64: Int64;
+  Sixty: TLandrixXmlDecimal;
+begin
+  R.HasTimeZone := True;
+  R.TimeZone := 0;
+  Temp := Wrap32(Int64(Month) + D.Month);
+  R.Month := XercesModulo(Temp, 1, 13);
+  Carry := XercesQuotient(Temp, 1, 13);
+  R.Year := Wrap32(Int64(Wrap32(Int64(Year) + D.Year)) + Carry);
+  { seconds: (int) Math.floor(s / 60), saturated to the int range }
+  Sixty := LandrixXmlDecimalFromInt64(60);
+  Quotient := LandrixXmlDecimalIntegerQuotient(D.Second, Sixty);
+  if (LandrixXmlDecimalSign(D.Second) < 0) and
+    (LandrixXmlDecimalCompare(LandrixXmlDecimalMultiply(Quotient, Sixty), D.Second) <> 0) then
+    Quotient := LandrixXmlDecimalSubtract(Quotient, LandrixXmlDecimalFromInt64(1));
+  if not LandrixXmlDecimalTryToInt64(Quotient, Carry64) then
+  begin
+    if LandrixXmlDecimalSign(Quotient) < 0 then
+      Carry64 := -2147483647 - 1
+    else
+      Carry64 := 2147483647;
+  end
+  else if Carry64 > 2147483647 then
+    Carry64 := 2147483647
+  else if Carry64 < -2147483647 - 1 then
+    Carry64 := -2147483647 - 1;
+  Carry := Integer(Carry64);
+  R.Second := LandrixXmlDecimalSubtract(D.Second, LandrixXmlDecimalFromInt64(Wrap32(Int64(Carry) * 60)));
+  Temp := Wrap32(Int64(D.Minute) + Carry);
+  Carry := JavaFloatFloorDiv(Temp, 60);
+  R.Minute := XercesMod(Temp, 60, Carry);
+  Temp := Wrap32(Int64(D.Hour) + Carry);
+  Carry := JavaFloatFloorDiv(Temp, 24);
+  R.Hour := XercesMod(Temp, 24, Carry);
+  R.Day := Wrap32(Int64(Wrap32(Int64(1) + D.Day)) + Carry);
+  while True do
+  begin
+    { (not where the year could wrap around: the cycle breaks there) }
+    if (R.Day > 146097 + 31) and (R.Year < 2147483647 - 402) then
+    begin
+      R.Day := R.Day - 146097;
+      R.Year := Wrap32(Int64(R.Year) + 400);
+      Continue;
+    end;
+    if (R.Day < -146097 - 31) and (R.Year > -2147483647 + 402) then
+    begin
+      R.Day := R.Day + 146097;
+      R.Year := Wrap32(Int64(R.Year) - 400);
+      Continue;
+    end;
+    MaxDay := JavaMaxDay(R.Year, R.Month);
+    if R.Day < 1 then
+    begin
+      R.Day := R.Day + JavaMaxDay(R.Year, R.Month - 1);
+      Carry := -1;
+    end
+    else if R.Day > MaxDay then
+    begin
+      R.Day := R.Day - MaxDay;
+      Carry := 1;
+    end
+    else
+      Break;
+    Temp := R.Month + Carry;
+    R.Month := XercesModulo(Temp, 1, 13);
+    R.Year := Wrap32(Int64(R.Year) + XercesQuotient(Temp, 1, 13));
+  end;
+end;
+
+{ Xerces' compareOrder on the fields of two durations or added dates }
+function CompareFields(const A, B: TLandrixXmlXsdDateTime): Integer;
+begin
+  Result := CompareInt(A.Year, B.Year);
+  if Result = 0 then
+    Result := CompareInt(A.Month, B.Month);
+  if Result = 0 then
+    Result := CompareInt(A.Day, B.Day);
+  if Result = 0 then
+    Result := CompareInt(A.Hour, B.Hour);
+  if Result = 0 then
+    Result := CompareInt(A.Minute, B.Minute);
+  if Result = 0 then
+    Result := LandrixXmlDecimalCompare(A.Second, B.Second);
+end;
+
+const
+  { Xerces' reference dates for the order of durations (XML Schema 1.0,
+    3.2.6.2) }
+  DurationYears: array[0..3] of Integer = (1696, 1697, 1903, 1903);
+  DurationMonths: array[0..3] of Integer = (9, 2, 3, 7);
+
+{ Xerces' compareDates for durations (strict): equal fields, or the same
+  order after adding both to each of the four reference dates; otherwise
+  LandrixXmlXsdIncomparable }
+function CompareDuration(const A, B: TLandrixXmlXsdDateTime): Integer;
+var
+  I, Order: Integer;
+  RA, RB: TLandrixXmlXsdDateTime;
+begin
+  Result := CompareFields(A, B);
+  if Result = 0 then
+    Exit;
+  for I := 0 to 3 do
+  begin
+    AddDurationTo(A, DurationYears[I], DurationMonths[I], RA);
+    AddDurationTo(B, DurationYears[I], DurationMonths[I], RB);
+    Order := CompareFields(RA, RB);
+    if I = 0 then
+      Result := Order
+    else if Order <> Result then
+    begin
+      Result := 2;
+      Exit;
+    end;
+  end;
+end;
+
+{ Xerces' DurationDV.parse: at least one number with its designator, in
+  the order Y M D, then after T: H M S; whole numbers up to 2147483647;
+  seconds as digits with one point at most, not ending with it (".5" is
+  allowed), within the double range.
+  Xerces deviation, not in the test suite: the whole numbers are limited
+  to 2147483647 and seconds may start with the point; XML Schema 1.0
+  allows any number of digits and wants one before the point }
+function ParseDuration(const S: TLandrixXmlUtf8; out D: TLandrixXmlXsdDateTime): Boolean;
+var
+  Len, Start, Stop, EndDate, Negate, I, Dot: Integer;
+  Designator: Boolean;
+  Seconds: TLandrixXmlUtf8;
+  Dbl: TLandrixXmlDouble;
+
+  function IndexOf(From, Before: Integer; Ch: AnsiChar): Integer;
+  var
+    K: Integer;
+  begin
+    for K := From to Before - 1 do
+      if AnsiChar(S[K]) = Ch then
+      begin
+        Result := K;
+        Exit;
+      end;
+    Result := 0;
+  end;
+
+  { Xerces' parseInt: digits only (also none: the designator itself
+    fails), at most 2147483647 }
+  function TryInt(From, Before: Integer; out Value: Integer): Boolean;
+  var
+    K: Integer;
+    N: Int64;
+  begin
+    Result := False;
+    Value := 0;
+    N := 0;
+    K := From;
+    repeat
+      if (K > Len) or not (AnsiChar(S[K]) in ['0'..'9']) then
+        Exit;
+      N := N * 10 + (Ord(S[K]) - Ord('0'));
+      if N > 2147483647 then
+        Exit;
+      Inc(K);
+    until K >= Before;
+    Value := Integer(N);
+    Result := True;
+  end;
+
+begin
+  Result := False;
+  D.Year := 0;
+  D.Month := 0;
+  D.Day := 0;
+  D.Hour := 0;
+  D.Minute := 0;
+  D.Second := LandrixXmlDecimalZero;
+  D.HasTimeZone := False;
+  D.TimeZone := 0;
+  Len := Length(S);
+  if Len = 0 then
+    Exit;
+  Start := 1;
+  Negate := 1;
+  if S[1] = '-' then
+  begin
+    Negate := -1;
+    Start := 2;
+  end;
+  if (Start > Len) or (S[Start] <> 'P') then
+    Exit;
+  Inc(Start);
+  Designator := False;
+  EndDate := IndexOf(Start, Len + 1, 'T');
+  if EndDate = 0 then
+    EndDate := Len + 1;
+  Stop := IndexOf(Start, EndDate, 'Y');
+  if Stop <> 0 then
+  begin
+    if not TryInt(Start, Stop, D.Year) then
+      Exit;
+    D.Year := Negate * D.Year;
+    Start := Stop + 1;
+    Designator := True;
+  end;
+  Stop := IndexOf(Start, EndDate, 'M');
+  if Stop <> 0 then
+  begin
+    if not TryInt(Start, Stop, D.Month) then
+      Exit;
+    D.Month := Negate * D.Month;
+    Start := Stop + 1;
+    Designator := True;
+  end;
+  Stop := IndexOf(Start, EndDate, 'D');
+  if Stop <> 0 then
+  begin
+    if not TryInt(Start, Stop, D.Day) then
+      Exit;
+    D.Day := Negate * D.Day;
+    Start := Stop + 1;
+    Designator := True;
+  end;
+  if (EndDate = Len + 1) and (Start <> Len + 1) then
+    Exit;
+  if EndDate <> Len + 1 then
+  begin
+    { as Xerces: the character after the date part is skipped (it is the
+      T unless the date part has something left, which then fails) }
+    Inc(Start);
+    Stop := IndexOf(Start, Len + 1, 'H');
+    if Stop <> 0 then
+    begin
+      if not TryInt(Start, Stop, D.Hour) then
+        Exit;
+      D.Hour := Negate * D.Hour;
+      Start := Stop + 1;
+      Designator := True;
+    end;
+    Stop := IndexOf(Start, Len + 1, 'M');
+    if Stop <> 0 then
+    begin
+      if not TryInt(Start, Stop, D.Minute) then
+        Exit;
+      D.Minute := Negate * D.Minute;
+      Start := Stop + 1;
+      Designator := True;
+    end;
+    Stop := IndexOf(Start, Len + 1, 'S');
+    if Stop <> 0 then
+    begin
+      Dot := 0;
+      for I := Start to Stop - 1 do
+        if S[I] = '.' then
+          Dot := I
+        else if not (AnsiChar(S[I]) in ['0'..'9']) then
+          Exit;
+      if (Dot + 1 = Stop) or (Start = Stop) then
+        Exit;
+      Seconds := Copy(S, Start, Stop - Start);
+      { Java's Double.parseDouble: one point at most, finite }
+      if not LandrixXmlDoubleTryParse(Seconds, Dbl) or LandrixXmlDoubleIsInfinite(Dbl) then
+        Exit;
+      if not LandrixXmlTryParseDecimal(Seconds, D.Second) then
+        Exit;
+      if Negate < 0 then
+        D.Second := LandrixXmlDecimalNegate(D.Second);
+      Start := Stop + 1;
+      Designator := True;
+    end;
+    { nothing after the last designator, and not ending with T }
+    if (Start <> Len + 1) or (S[Start - 1] = 'T') then
+      Exit;
+  end;
+  Result := Designator;
+end;
+
+{ Xerces' canonical form of a duration (dateToString): every field, the
+  sign in front if any field is negative }
+function DurationText(const D: TLandrixXmlXsdDateTime): TLandrixXmlUtf8;
+
+  function Abs32(V: Integer): TLandrixXmlUtf8;
+  begin
+    if V < 0 then
+      Result := LandrixXmlStringToUtf8(IntToStr(-Int64(V)))
+    else
+      Result := LandrixXmlStringToUtf8(IntToStr(V));
+  end;
+
+begin
+  if (D.Year < 0) or (D.Month < 0) or (D.Day < 0) or (D.Hour < 0) or (D.Minute < 0) or
+    (LandrixXmlDecimalSign(D.Second) < 0) then
+    Result := '-P'
+  else
+    Result := 'P';
+  Result := Result + Abs32(D.Year) + 'Y' + Abs32(D.Month) + 'M' + Abs32(D.Day) + 'DT' + Abs32(D.Hour) + 'H' +
+    Abs32(D.Minute) + 'M' + LandrixXmlFormatDecimal(LandrixXmlDecimalAbs(D.Second)) + 'S';
+end;
+
+{ equal for durations Xerces finds equal: the dates of the four
+  reference sums }
+function DurationKey(const D: TLandrixXmlXsdDateTime): TLandrixXmlUtf8;
+var
+  I: Integer;
+  R: TLandrixXmlXsdDateTime;
+begin
+  Result := '';
+  for I := 0 to 3 do
+  begin
+    AddDurationTo(D, DurationYears[I], DurationMonths[I], R);
+    Result := Result + LandrixXmlStringToUtf8(IntToStr(R.Year) + ':' + IntToStr(R.Month) + ':' +
+      IntToStr(R.Day) + ':' + IntToStr(R.Hour) + ':' + IntToStr(R.Minute)) + ':' +
+      LandrixXmlFormatDecimal(R.Second) + ';';
+  end;
+end;
+
 
 { Minutes since an arbitrary origin, ignoring the time zone; days counted
   on the proleptic Gregorian calendar. }
@@ -1450,6 +1934,8 @@ begin
       Result := CompareInt(Ord(A.BooleanValue), Ord(B.BooleanValue));
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth:
       Result := CompareDateTime(A.DateTime, B.DateTime, A.Primitive);
+    xspDuration:
+      Result := CompareDuration(A.DateTime, B.DateTime);
     xspQName:
       if (A.NamespaceUri = B.NamespaceUri) and (A.LocalName = B.LocalName) then
         Result := 0;
@@ -2532,6 +3018,8 @@ begin
       Result := FloatingText(Value, False);
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth:
       Result := DateTimeText(Value);
+    xspDuration:
+      Result := DurationText(Value.DateTime);
     xspHexBinary:
       Result := AsciiUpper(Value.Text);
     xspBase64Binary:
@@ -2613,6 +3101,8 @@ begin
           IntToStr(D.Day) + ':' + IntToStr(D.Hour) + ':' + IntToStr(D.Minute)) + ':' +
           LandrixXmlFormatDecimal(D.Second);
       end;
+    xspDuration:
+      Result := DurationKey(Value.DateTime);
     xspBoolean, xspHexBinary, xspBase64Binary:
       Result := ValueTextAs(Value, False);
     xspQName:
@@ -2747,11 +3237,14 @@ begin
       Exit;
     end;
   end;
+  { the bounds of the most derived type that has an upper (lower) one:
+    Xerces inherits maxInclusive and maxExclusive only into a type that
+    has neither of them }
   { maxInclusive }
   T := Self;
-  while (T <> nil) and not T.FMaxInclusive.Present do
+  while (T <> nil) and not T.FMaxInclusive.Present and not T.FMaxExclusive.Present do
     T := T.FBase;
-  if T <> nil then
+  if (T <> nil) and T.FMaxInclusive.Present then
   begin
     C := LandrixXmlXsdCompareValues(Value, T.FMaxInclusive.Value);
     if (C = 1) or (C = LandrixXmlXsdIncomparable) then
@@ -2762,18 +3255,18 @@ begin
   end;
   { maxExclusive }
   T := Self;
-  while (T <> nil) and not T.FMaxExclusive.Present do
+  while (T <> nil) and not T.FMaxInclusive.Present and not T.FMaxExclusive.Present do
     T := T.FBase;
-  if (T <> nil) and (LandrixXmlXsdCompareValues(Value, T.FMaxExclusive.Value) <> -1) then
+  if (T <> nil) and T.FMaxExclusive.Present and (LandrixXmlXsdCompareValues(Value, T.FMaxExclusive.Value) <> -1) then
   begin
     SetError(Error, 'cvc-maxExclusive-valid', BoundMessage(Value, 'maxExclusive', T.FMaxExclusive, T, TypeName));
     Exit;
   end;
   { minInclusive }
   T := Self;
-  while (T <> nil) and not T.FMinInclusive.Present do
+  while (T <> nil) and not T.FMinInclusive.Present and not T.FMinExclusive.Present do
     T := T.FBase;
-  if T <> nil then
+  if (T <> nil) and T.FMinInclusive.Present then
   begin
     C := LandrixXmlXsdCompareValues(Value, T.FMinInclusive.Value);
     if (C = -1) or (C = LandrixXmlXsdIncomparable) then
@@ -2784,9 +3277,9 @@ begin
   end;
   { minExclusive }
   T := Self;
-  while (T <> nil) and not T.FMinExclusive.Present do
+  while (T <> nil) and not T.FMinInclusive.Present and not T.FMinExclusive.Present do
     T := T.FBase;
-  if (T <> nil) and (LandrixXmlXsdCompareValues(Value, T.FMinExclusive.Value) <> 1) then
+  if (T <> nil) and T.FMinExclusive.Present and (LandrixXmlXsdCompareValues(Value, T.FMinExclusive.Value) <> 1) then
   begin
     SetError(Error, 'cvc-minExclusive-valid', BoundMessage(Value, 'minExclusive', T.FMinExclusive, T, TypeName));
     Exit;
@@ -3144,6 +3637,7 @@ begin
   Add('gMonthDay', 'anySimpleType', xspGMonthDay, xwsCollapse, xslNone);
   Add('gDay', 'anySimpleType', xspGDay, xwsCollapse, xslNone);
   Add('gMonth', 'anySimpleType', xspGMonth, xwsCollapse, xslNone);
+  Add('duration', 'anySimpleType', xspDuration, xwsCollapse, xslNone);
   Add('hexBinary', 'anySimpleType', xspHexBinary, xwsCollapse, xslNone);
   Add('base64Binary', 'anySimpleType', xspBase64Binary, xwsCollapse, xslNone);
   Add('anyURI', 'anySimpleType', xspAnyURI, xwsCollapse, xslNone);

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root a="P1D">
+  <d>P1Y2M3DT4H5M6.5S</d>
+  <d> -P1D </d>
+  <s>P20D</s>
+  <s>-PT59S</s>
+  <c>PT24H</c>
+  <c>PT1H30M</c>
+  <f>P1D</f>
+  <f>PT1440M</f>
+  <k id="P1D"/>
+  <k id="P1M"/>
+  <k id="P30D"/>
+</root>
