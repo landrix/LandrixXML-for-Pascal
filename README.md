@@ -485,10 +485,10 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 39,222
-  pass and 3 use a construct this library does not support (the
-  extension of `xs:anyType`); they are reported as unsupported, never
-  accepted silently. Of the 108 failures
+  load or be rejected, documents that must be valid or invalid) 39,225
+  pass and none uses a construct this library does not support (such a
+  construct, a selector with an attribute step before its last step, is
+  reported as unsupported, never accepted silently). Of the 108 failures
   30 are invalid schemas that load, 2 documents Xerces accepts too and 3
   a schema that Xerces rejects as well (`vc014`); 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline

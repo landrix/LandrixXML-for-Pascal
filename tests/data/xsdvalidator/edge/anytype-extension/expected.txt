@@ -1,0 +1,98 @@
+file a.xml
+error 3 20 cvc-pattern-valid Value '1 2' is not facet-valid with respect to pattern '([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*' for type 'language'.
+error 3 20 cvc-attribute.3 The value '1 2' of attribute 'lang' on element 'free' is not valid with respect to its type, 'language'.
+error 3 36 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 3 36 cvc-type.3.1.3 The value 'x' of element 'known' is not valid.
+error 4 22 cvc-complex-type.4 Attribute 'id' must appear on element 'strict'.
+error 6 19 cvc-id.2 There are multiple occurrences of ID value 's1'.
+error 6 19 cvc-attribute.3 The value 's1' of attribute 'id' on element 'strict' is not valid with respect to its type, 'ID'.
+error 6 51 cvc-datatype-valid.1.2.1 'y' is not a valid value for 'integer'.
+error 6 51 cvc-type.3.1.3 The value 'y' of element 'known' is not valid.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar>1.005</bar></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="-5"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de">words<o:anything/></strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text  <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known unknown="1">1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+error 3 65 cvc-type.3.1.1 Element 'known' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text  <known>1</known><foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar>-1</bar></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free unknown="1"/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de">words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <strict lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</strict>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+error 3 43 cvc-complex-type.4 Attribute 'id' must appear on element 'strict'.
+error 4 10 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:t":free}'. One of '{"urn:t":strict}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  \n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known>  more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything>x</o:anything>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"/> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <strict id="s1" lang="de"><o:anything/>words</strict><free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  \n</root>\n
+error 3 94 cvc-complex-type.2.4.a Invalid content was found starting with element '{"urn:t":free}'. One of '{"urn:t":strict}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar unknown="1"/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar>  a  b  </bar></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/><free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  \n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free><free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">true<known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y" unknown="1">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="x"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  \n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de" unknown="1"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything>2026-13-01</o:anything>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/>  a  b  </foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything>-1</o:anything>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>999999999</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <free id="s1" lang="de"><o:anything/>words</free>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict><strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+error 5 82 cvc-id.2 There are multiple occurrences of ID value 's1'.
+error 5 82 cvc-attribute.3 The value 's1' of attribute 'id' on element 'strict' is not valid with respect to its type, 'ID'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <foo a="1"><bar/></foo><known>1</known>  more</free>\n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  <free>true</free>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>\n  \n  <free/><strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<root xmlns="urn:t" xmlns:o="urn:other">\n  \n  <free/>\n  <strict id="s1" lang="de"><o:anything/>words</strict>\n</root>\n

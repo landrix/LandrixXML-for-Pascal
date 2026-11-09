@@ -345,8 +345,8 @@ procedure TestLoadErrors;
 begin
   CheckLoadError('<xs:simpleType name="l"><xs:list itemType="xs:int"/></xs:simpleType>' +
     '<xs:simpleType name="ll"><xs:list itemType="l"/></xs:simpleType>', xecSchema, 'a list of lists');
-  CheckLoadError('<xs:complexType name="c"><xs:complexContent><xs:extension base="xs:anyType"/>' +
-    '</xs:complexContent></xs:complexType>', xecUnsupported, 'extending xs:anyType');
+  CheckLoadError('<xs:element name="r"><xs:unique name="u"><xs:selector xpath="a/@b/c"/>' +
+    '<xs:field xpath="."/></xs:unique></xs:element>', xecUnsupported, 'an attribute step inside a selector');
   CheckLoadError('<xs:element name="h" substitutionGroup="r"/><xs:element name="r" substitutionGroup="h"/>',
     xecSchema, 'circular substitution group');
   CheckLoadError('<xs:element name="r" type="xs:error"/>', xecSchema, 'no built-in type');

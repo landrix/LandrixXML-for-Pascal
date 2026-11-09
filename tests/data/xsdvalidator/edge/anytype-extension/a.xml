@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="urn:t">
+  <free lang="1 2"><known>x</known></free>
+  <strict lang="en"/>
+  <strict id="s1"/>
+  <strict id="s1"><known>2</known><known>y</known></strict>
+</root>

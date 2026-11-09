@@ -30,10 +30,12 @@
   the content and attributes are taken as written (the target schemas
   are valid for Xerces). Constructs the validator does not support raise
   ELandrixXmlError with xecUnsupported and the file and line, also when
-  they are declared but not used: the extension of xs:anyType. Other
-  schema errors raise xecSchema; a name of the XML Schema namespace that is no built-in type
-  is src-resolve.4.2 (without an import of that namespace) or
-  src-resolve, as in Xerces.
+  they are declared but not used: a selector with an attribute step
+  before its last step. Other schema errors raise xecSchema; a name of
+  the XML Schema namespace that is no built-in type is src-resolve.4.2
+  (without an import of that namespace) or src-resolve, as in Xerces.
+  An extension of xs:anyType has its content (any element, laxly
+  assessed, mixed) and the union with its attribute wildcard.
 
   Notation declarations are checked as Xerces does (a public or a system
   identifier, PublicSystemOnNotation) and are not part of the schema
@@ -2778,6 +2780,15 @@ begin
   Own.Free;
 end;
 
+{ The particle of xs:anyType, built afresh: a sequence of any element,
+  laxly assessed }
+function AnyTypeParticle(AnyType: TLandrixXmlXsdComplexType): TLandrixXmlXsdParticle;
+begin
+  Result := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 1);
+  Result.Add(TLandrixXmlXsdParticle.CreateWildcard(xncAny, nil, AnyType.AttributeWildcard, 0,
+    LandrixXmlXsdUnbounded));
+end;
+
 { The content particle of a complex type, built afresh (also the base
   type's for an extension), nil for empty content. }
 function TLoader.EffectiveParticle(Doc: TSchemaDoc; TypeNode: TLandrixXmlNode): TLandrixXmlXsdParticle;
@@ -2824,9 +2835,12 @@ begin
     Result := Own;
     Exit;
   end;
-  { extension: the base type's content, then the own one }
+  { extension: the base type's content, then the own one; that of
+    xs:anyType is a sequence of any element, laxly assessed }
   BaseParticle := nil;
-  if BasePending <> nil then
+  if (Ns = LandrixXmlXsdNamespace) and (LocalName = 'anyType') then
+    BaseParticle := AnyTypeParticle(FSet.AnyType)
+  else if BasePending <> nil then
   begin
     Saved := FCurrent;
     FCurrent := BasePending;
@@ -3295,8 +3309,6 @@ begin
     else if not IsExtension and (xdRestriction in Final) then
       FailCheck(Doc.FileName, Child, 'derivation-ok-restriction.1', 'the final of ' + Esc(LocalName) +
         ' forbids the restriction ' + Esc(T.DisplayName));
-    if (BaseType = FSet.AnyType) and IsExtension and not IsSimpleContent then
-      Unsupported(Doc, Derivation, 'extending xs:anyType');
   end;
   T.BaseComplex := BaseType;
   T.BaseSimple := BaseSimple;
@@ -3459,6 +3471,14 @@ begin
           end;
         end;
       end;
+    end
+    else if IsExtension and (BaseType = FSet.AnyType) then
+    begin
+      { an extension of xs:anyType: the union with its wildcard }
+      if Wildcard = nil then
+        Wildcard := BaseType.AttributeWildcard
+      else
+        Wildcard := CombineWildcards(Wildcard, BaseType.AttributeWildcard, True, Doc, Derivation);
     end;
     for I := 0 to Integer(Items.Count) - 1 do
     begin
@@ -4497,17 +4517,22 @@ begin
     QNameAttr(Doc, Derivation, 'base', Ns, LocalName);
     BasePending := FindPending(pkComplexType, Ns, LocalName, TypeNode);
   end;
-  if BasePending = nil then
+  if IsXs(Derivation, 'extension') and (Ns = LandrixXmlXsdNamespace) and (LocalName = 'anyType') then
+    BaseParticle := AnyTypeParticle(FSet.AnyType)
+  else if BasePending = nil then
   begin
     Result := OwnParticle(Doc, Derivation, Mixed);
     Exit;
-  end;
-  Saved := FCurrent;
-  FCurrent := BasePending;
-  try
-    BaseParticle := TypeParticle(BasePending.Doc, BasePending.Node);
-  finally
-    FCurrent := Saved;
+  end
+  else
+  begin
+    Saved := FCurrent;
+    FCurrent := BasePending;
+    try
+      BaseParticle := TypeParticle(BasePending.Doc, BasePending.Node);
+    finally
+      FCurrent := Saved;
+    end;
   end;
   try
     Own := OwnParticle(Doc, Derivation, Mixed);

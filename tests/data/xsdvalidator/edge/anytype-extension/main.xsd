@@ -1,0 +1,25 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:t="urn:t" targetNamespace="urn:t" elementFormDefault="qualified">
+  <xs:complexType name="Free">
+    <xs:complexContent mixed="false">
+      <xs:extension base="xs:anyType">
+        <xs:attribute name="lang" type="xs:language"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Strict">
+    <xs:complexContent>
+      <xs:extension base="t:Free">
+        <xs:attribute name="id" type="xs:ID" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="free" type="t:Free" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="strict" type="t:Strict" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="known" type="xs:int"/>
+</xs:schema>

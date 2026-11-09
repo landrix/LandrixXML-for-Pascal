@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="urn:t" xmlns:o="urn:other">
+  <free lang="en" o:extra="x" plain="y">text <known>1</known> <foo a="1"><bar/></foo> more</free>
+  <free/>
+  <strict id="s1" lang="de"><o:anything/>words</strict>
+</root>
