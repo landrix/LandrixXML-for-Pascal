@@ -1,0 +1,41 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:notation name="gif" public="image/gif"/>
+  <xs:notation name="png" system="viewer"/>
+  <xs:notation name="jpeg" public="image/jpeg" system="viewer"/>
+  <xs:simpleType name="Image">
+    <xs:restriction base="xs:NOTATION">
+      <xs:enumeration value="gif"/>
+      <xs:enumeration value="png"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Gif">
+    <xs:restriction base="Image">
+      <xs:enumeration value="gif"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="i" type="Image" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="g" type="Gif" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="f" type="Image" fixed="png" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="l" minOccurs="0" maxOccurs="unbounded">
+          <xs:simpleType>
+            <xs:list itemType="xs:NOTATION"/>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element name="d" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="k" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="n" type="Image"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="a" type="Image"/>
+    </xs:complexType>
+    <xs:unique name="u">
+      <xs:selector xpath="k"/>
+      <xs:field xpath="@n"/>
+    </xs:unique>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root a="jpeg" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="urn:p">
+  <i>p:gif</i>
+  <i>jpeg</i>
+  <i>q:gif</i>
+  <i>1gif</i>
+  <g>png</g>
+  <f>gif</f>
+  <f> png </f>
+  <l>gif q:other</l>
+  <d xsi:type="p:NOTATION">gif</d>
+  <k n="gif"/>
+  <k n=" gif "/>
+</root>

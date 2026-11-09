@@ -249,7 +249,7 @@ begin
   Check(Str <> nil, 'token known');
   Check(LandrixXmlXsdBuiltinType('duration') <> nil, 'duration known');
   Check(LandrixXmlXsdBuiltinType('ENTITY') = nil, 'ENTITY not supported');
-  Check(LandrixXmlXsdBuiltinType('NOTATION') = nil, 'NOTATION not supported');
+  Check(LandrixXmlXsdBuiltinType('NOTATION') <> nil, 'NOTATION known');
   CheckFacetError(Bool, xsfEnumeration, 'true', xecInvalidArgument, 'enumeration on boolean');
   CheckFacetError(Str, xsfTotalDigits, '3', xecInvalidArgument, 'totalDigits on a string');
   CheckFacetError(Dec, xsfMaxLength, '3', xecInvalidArgument, 'maxLength on a decimal');

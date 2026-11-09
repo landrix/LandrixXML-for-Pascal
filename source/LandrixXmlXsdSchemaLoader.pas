@@ -30,9 +30,16 @@
   the content and attributes are taken as written (the target schemas
   are valid for Xerces). Constructs the validator does not support raise
   ELandrixXmlError with xecUnsupported and the file and line, also when
-  they are declared but not used: xs:notation, the extension of
-  xs:anyType, and the built-in types LandrixXmlXsdTypes lacks. Other
-  schema errors raise xecSchema.
+  they are declared but not used: the extension of xs:anyType and the
+  built-in types LandrixXmlXsdTypes lacks. Other schema errors raise
+  xecSchema.
+
+  Notation declarations are checked as Xerces does (a public or a system
+  identifier, PublicSystemOnNotation) and are not part of the schema
+  set: they serve the enumeration of a NOTATION type, whose values must
+  name declared notations (src-resolve). An element or attribute
+  declaration whose type is atomic and derived from xs:NOTATION needs an
+  enumeration on that type or a base (enumeration-required-notation).
 
   Substitution groups: the element particles of a content model get the
   members of the substitution group of their declaration as substitutes
@@ -306,7 +313,8 @@ type
     Imports: TLandrixXmlUtf8Array;
   end;
 
-  TPendingKind = (pkElement, pkAttribute, pkComplexType, pkSimpleType, pkGroup, pkAttributeGroup);
+  TPendingKind = (pkElement, pkAttribute, pkComplexType, pkSimpleType, pkGroup, pkAttributeGroup,
+    pkNotation);
   TPendingState = (psNew, psResolving, psDone);
 
   { A global declaration or definition found in a schema document, built
@@ -406,6 +414,8 @@ type
     FSkipped: TStringList;
     { the documents checked against the schema for schemas }
     FCheckedFiles: TStringList;
+    { the simple types with an enumeration facet of their own }
+    FEnumerated: TList;
     FCurrent: TPending;
     { the element declarations whose types are being built: a group
       reference is circular only within the same element }
@@ -431,6 +441,8 @@ type
     procedure CheckAttributeGroupRestriction(P: TPending; Items: TObjectList; Wildcard: TLandrixXmlXsdWildcard);
     function GroupAsType(const Name: TLandrixXmlUtf8; Items: TObjectList;
       Wildcard: TLandrixXmlXsdWildcard): TLandrixXmlXsdComplexType;
+    procedure CheckAllowedNamespace(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value,
+      NamespaceUri: TLandrixXmlUtf8; XsdAllowed: Boolean);
     function ResolveQName(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value: TLandrixXmlUtf8;
       out NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
     function QNameAttr(Doc: TSchemaDoc; Node: TLandrixXmlNode; const AttrName: TLandrixXmlUtf8;
@@ -459,6 +471,11 @@ type
     function BuildSimpleType(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Name: TLandrixXmlUtf8;
       P: TPending): TLandrixXmlXsdSimpleType;
     procedure AddFacets(Doc: TSchemaDoc; Restriction: TLandrixXmlNode; T: TLandrixXmlXsdSimpleType);
+    procedure ResolveNotation(P: TPending);
+    procedure CheckNotationEnumeration(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value: TLandrixXmlUtf8;
+      Context: TLandrixXmlXsdNamespaceContext);
+    procedure CheckNotationType(Doc: TSchemaDoc; Node: TLandrixXmlNode; const What, Name: TLandrixXmlUtf8;
+      T: TLandrixXmlXsdSimpleType);
     function CreateComplexType(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Name: TLandrixXmlUtf8;
       P: TPending): TLandrixXmlXsdComplexType;
     procedure FillComplexType(T: TLandrixXmlXsdComplexType; Doc: TSchemaDoc; Node: TLandrixXmlNode;
@@ -703,6 +720,7 @@ begin
   FSkipped := TStringList.Create;
   FCheckedFiles := TStringList.Create;
   FCheckedFiles.CaseSensitive := True;
+  FEnumerated := TList.Create;
 end;
 
 destructor TLoader.Destroy;
@@ -731,6 +749,7 @@ begin
   FSubGroups.Free;
   FSkipped.Free;
   FCheckedFiles.Free;
+  FEnumerated.Free;
   FSet.Free;
   inherited Destroy;
 end;
@@ -1019,7 +1038,7 @@ begin
     else if Name = 'attributeGroup' then
       Collect(Result, Child, pkAttributeGroup)
     else if Name = 'notation' then
-      Unsupported(Result, Child, 'xs:notation')
+      Collect(Result, Child, pkNotation)
     else
       Fail(Result, Child, 'unexpected element "' + Esc(Child.NameUtf8) + '"');
     Child := Child.NextSiblingElement;
@@ -1323,16 +1342,23 @@ begin
   if (NamespaceUri = '') and Doc.Chameleon then
     NamespaceUri := Doc.TargetNamespace;
   Result := LocalName <> '';
-  { src-resolve.4: a document refers to its own target namespace, to the
-    built-in types and to the namespaces it imports itself }
-  if Result and (NamespaceUri <> Doc.TargetNamespace) and (NamespaceUri <> LandrixXmlXsdNamespace) and
+  if Result then
+    CheckAllowedNamespace(Doc, Node, S, NamespaceUri, True);
+end;
+
+{ src-resolve.4: a document refers to its own target namespace, to the
+  namespaces it imports itself and, if XsdAllowed, to the built-in types }
+procedure TLoader.CheckAllowedNamespace(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value,
+  NamespaceUri: TLandrixXmlUtf8; XsdAllowed: Boolean);
+begin
+  if (NamespaceUri <> Doc.TargetNamespace) and (not XsdAllowed or (NamespaceUri <> LandrixXmlXsdNamespace)) and
     not InSet(NamespaceUri, Doc.Imports) then
   begin
     if NamespaceUri = '' then
-      FailCheck(Doc.FileName, Node, 'src-resolve.4.1', 'the reference ' + Esc(S) + ' has no namespace, but ' +
+      FailCheck(Doc.FileName, Node, 'src-resolve.4.1', 'the reference ' + Esc(Value) + ' has no namespace, but ' +
         'the document has a target namespace and does not import the absent namespace')
     else
-      FailCheck(Doc.FileName, Node, 'src-resolve.4.2', 'the reference ' + Esc(S) + ' is in the namespace "' +
+      FailCheck(Doc.FileName, Node, 'src-resolve.4.2', 'the reference ' + Esc(Value) + ' is in the namespace "' +
         Esc(NamespaceUri) + '", which the document does not import');
   end;
 end;
@@ -1565,6 +1591,8 @@ begin
     D.ValueConstraint := xvcFixed;
     D.ConstraintValue := FixedValue;
   end;
+  if D.ComplexType = nil then
+    CheckNotationType(Doc, Node, 'element', Name, D.SimpleType);
   if (D.ValueConstraint <> xvcNone) or (D.SubstitutionGroup <> nil) then
   begin
     Check := TElementValueCheck.Create;
@@ -1659,6 +1687,9 @@ begin
   end;
   if D.SimpleType = nil then
     D.SimpleType := LandrixXmlXsdBuiltinType('anySimpleType');
+  if Attr(Node, 'default', Value) and Attr(Node, 'fixed', Value) then
+    FailCheck(Doc.FileName, Node, 'src-attribute.1', 'attribute ' + Esc(Name) + ' has both default and fixed');
+  CheckNotationType(Doc, Node, 'attribute', Name, D.SimpleType);
   if Name = 'xmlns' then
     FailCheck(Doc.FileName, Node, 'no-xmlns', 'an attribute declaration cannot be named xmlns');
   if D.NamespaceUri = XsiNamespace then
@@ -2004,7 +2035,52 @@ var
   LocalName, Value: TLandrixXmlUtf8;
   Facet: TLandrixXmlXsdFacet;
   Context: TNodeContext;
+  Seen: TStringList;
 begin
+  { the enumeration of a NOTATION type names notations; Xerces resolves
+    them before it checks any facet, in document order with its check of
+    facets given twice, and stops at the first element that is no facet
+    (traverseFacets; the attributes of a simple content restriction) }
+  if (T.Base <> nil) and (T.Base.Variety = xsvAtomic) and (T.Base.Primitive = xspNotation) then
+  begin
+    Seen := TStringList.Create;
+    Seen.CaseSensitive := True;
+    try
+      Child := Restriction.FirstChildElement;
+      while Child <> nil do
+      begin
+        LocalName := Child.LocalNameUtf8;
+        if IsXs(Child, 'enumeration') then
+        begin
+          if Attr(Child, 'value', Value) then
+          begin
+            Context := TNodeContext.Create(Child);
+            try
+              CheckNotationEnumeration(Doc, Child, Value, Context);
+            finally
+              Context.Free;
+            end;
+          end;
+        end
+        else if IsXs(Child, 'length') or IsXs(Child, 'minLength') or IsXs(Child, 'maxLength') or
+          IsXs(Child, 'whiteSpace') or IsXs(Child, 'maxInclusive') or IsXs(Child, 'maxExclusive') or
+          IsXs(Child, 'minInclusive') or IsXs(Child, 'minExclusive') or IsXs(Child, 'totalDigits') or
+          IsXs(Child, 'fractionDigits') then
+        begin
+          if Seen.IndexOf(LandrixXmlUtf8ToString(LocalName)) >= 0 then
+            FailCheck(Doc.FileName, Child, 'src-single-facet-value', 'the facet ' + Esc(LocalName) +
+              ' is given twice');
+          Seen.Add(LandrixXmlUtf8ToString(LocalName));
+        end
+        else if not IsXs(Child, 'pattern') and not IsXs(Child, 'annotation') and
+          not IsXs(Child, 'simpleType') then
+          Break;
+        Child := Child.NextSiblingElement;
+      end;
+    finally
+      Seen.Free;
+    end;
+  end;
   Child := Restriction.FirstChildElement;
   while Child <> nil do
   begin
@@ -2048,6 +2124,9 @@ begin
       finally
         Context.Free;
       end;
+      if (Facet = xsfEnumeration) and ((FEnumerated.Count = 0) or
+        (FEnumerated[Integer(FEnumerated.Count) - 1] <> Pointer(T))) then
+        FEnumerated.Add(T);
     except
       on E: ELandrixXmlError do
       begin
@@ -2061,6 +2140,58 @@ begin
     end;
     Child := Child.NextSiblingElement;
   end;
+end;
+
+{ A notation declaration, checked once (Xerces' XSDNotationTraverser) }
+procedure TLoader.ResolveNotation(P: TPending);
+var
+  Value: TLandrixXmlUtf8;
+begin
+  if P.State = psDone then
+    Exit;
+  P.State := psDone;
+  if not Attr(P.Node, 'public', Value) and not Attr(P.Node, 'system', Value) then
+    FailCheck(P.Doc.FileName, P.Node, 'PublicSystemOnNotation', 'the notation ' +
+      QualifiedText(P.NamespaceUri, P.Name) + ' needs a public or a system attribute');
+end;
+
+{ An enumeration value of a type derived from xs:NOTATION names a notation
+  declaration (Xerces' traverseFacets): the QName is resolved in the
+  facet's namespace context, an invalid one reported as QName errors }
+procedure TLoader.CheckNotationEnumeration(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value: TLandrixXmlUtf8;
+  Context: TLandrixXmlXsdNamespaceContext);
+var
+  Name: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+  P: TPending;
+begin
+  if not LandrixXmlXsdBuiltinType('QName').Validate(Value, Context, Name, Error) then
+    FailCheck(Doc.FileName, Node, Error.Code, Error.Message);
+  CheckAllowedNamespace(Doc, Node, Name.Text, Name.NamespaceUri, False);
+  P := FindPending(pkNotation, Name.NamespaceUri, Name.LocalName);
+  if P = nil then
+    FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('notation', Name.NamespaceUri, Name.LocalName));
+  ResolveNotation(P);
+end;
+
+{ Xerces' checkNotationType: a declaration whose type is atomic and
+  derived from xs:NOTATION needs an enumeration on the type or a base }
+procedure TLoader.CheckNotationType(Doc: TSchemaDoc; Node: TLandrixXmlNode; const What, Name: TLandrixXmlUtf8;
+  T: TLandrixXmlXsdSimpleType);
+var
+  B: TLandrixXmlXsdSimpleType;
+begin
+  if (T = nil) or (T.Variety <> xsvAtomic) or (T.Primitive <> xspNotation) then
+    Exit;
+  B := T;
+  while B <> nil do
+  begin
+    if FEnumerated.IndexOf(B) >= 0 then
+      Exit;
+    B := B.Base;
+  end;
+  FailCheck(Doc.FileName, Node, 'enumeration-required-notation', 'the type ' + T.DisplayName + ' of ' +
+    Esc(What) + ' ' + Esc(Name) + ' is derived from NOTATION and needs an enumeration');
 end;
 
 { A named complex type. A reference (an element's type) only needs the
@@ -2863,14 +2994,17 @@ begin
 end;
 
 { Java's equals of two atomic actual values of Xerces: string, anyURI
-  and anySimpleType values are all strings there, the others compare as
-  values }
+  and anySimpleType values are all strings there, QName and NOTATION
+  values are both QName objects, the others compare as values }
 function SameAtomic(const A, B: TLandrixXmlXsdValue): Boolean;
 const
   StringLike = [xspAnySimpleType, xspString, xspAnyURI];
+  QNameLike = [xspQName, xspNotation];
 begin
   if (A.Primitive in StringLike) and (B.Primitive in StringLike) then
     Result := A.Text = B.Text
+  else if (A.Primitive in QNameLike) and (B.Primitive in QNameLike) then
+    Result := (A.NamespaceUri = B.NamespaceUri) and (A.LocalName = B.LocalName)
   else
     Result := LandrixXmlXsdCompareValues(A, B) = 0;
 end;
@@ -4784,6 +4918,8 @@ begin
             Items.Free;
           end;
         end;
+      pkNotation:
+        ResolveNotation(P);
     end;
     Inc(I);
   end;

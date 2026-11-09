@@ -150,8 +150,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   content and skips its value and content checks (cvc-elt.3); both
   attributes are validated as QName and boolean. A key field matching an
   element of a nillable declaration is an error, as in Xerces
-  (cvc-identity-constraint.4.2.3). An `xsi:type` naming `xs:duration`,
-  `xs:NOTATION`, `xs:ENTITY` or `xs:ENTITIES` is reported as unsupported.
+  (cvc-identity-constraint.4.2.3). An `xsi:type` naming `xs:ENTITY` or
+  `xs:ENTITIES` is reported as unsupported.
   The derivation data is public: `TLandrixXmlXsdDerivation` moved to
   `LandrixXmlXsdTypes` and gained `xdList`, `xdUnion` and
   `xdSubstitution`, with the set `TLandrixXmlXsdDerivations`;
@@ -200,6 +200,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   identity constraints. Fixed: a type that sets one of maxInclusive and
   maxExclusive (or minInclusive and minExclusive) no longer also checks
   the other one inherited from its base, as in Xerces.
+  Notation declarations and `xs:NOTATION` are supported as Xerces does
+  (new primitive `xspNotation`, a value resolved like a QName): a
+  notation needs a public or a system identifier (PublicSystemOnNotation),
+  the enumeration of a NOTATION type must name declared notations
+  (src-resolve), and an element or attribute declaration of an atomic
+  NOTATION type needs an enumeration (enumeration-required-notation).
+  Length facets do not apply, as for QName; messages name the validator
+  'QName', as Xerces does.
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs
@@ -372,7 +380,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 39,029 of 39,336 applicable XSD 1.0 tests pass, 199
+  the CI checks: 39,152 of 39,336 applicable XSD 1.0 tests pass, 76
   use constructs that are not supported.
 - The places where the XML Schema validator follows Xerces instead of the
   specification on purpose are tagged `Xerces deviation:` with the test

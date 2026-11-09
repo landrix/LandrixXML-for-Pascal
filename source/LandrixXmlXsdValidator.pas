@@ -44,8 +44,8 @@
   A member of a substitution group takes the place of its head in a
   content model and is validated with its own declaration; an element
   whose declaration is abstract is reported (cvc-elt.2).
-  An xsi:type naming a built-in type that is not supported (NOTATION,
-  ENTITY, ENTITIES) is reported with the code "unsupported"
+  An xsi:type naming a built-in type that is not supported (ENTITY,
+  ENTITIES) is reported with the code "unsupported"
   (never silently accepted). Default values are used for validation but
   never written into the document. }
 
@@ -1311,8 +1311,8 @@ begin
       NewCT := FSchema.AnyType
     else
       NewST := LandrixXmlXsdBuiltinType(Value.LocalName);
-    if (NewCT = nil) and (NewST = nil) and ((Value.LocalName = 'NOTATION') or
-      (Value.LocalName = 'ENTITY') or (Value.LocalName = 'ENTITIES')) then
+    if (NewCT = nil) and (NewST = nil) and ((Value.LocalName = 'ENTITY') or
+      (Value.LocalName = 'ENTITIES')) then
     begin
       Report('unsupported', 'xsi:type ' + Q(Text) + ' names a type that is not supported (element ' + Q(Name) + ').',
         Line, Column, Decl);

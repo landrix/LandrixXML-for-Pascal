@@ -35,9 +35,9 @@
   language, Name, NCName, ID, IDREF, NMTOKEN, boolean, decimal, integer and
   its twelve derived types, float, double, dateTime, time, date,
   gYearMonth, gYear, gMonthDay, gDay, gMonth, duration, hexBinary,
-  base64Binary, anyURI, QName, and the list types NMTOKENS and IDREFS.
-  Not supported (LandrixXmlXsdBuiltinType returns nil, the schema loader
-  reports xecUnsupported): NOTATION, ENTITY, ENTITIES.
+  base64Binary, anyURI, QName, NOTATION, and the list types NMTOKENS and
+  IDREFS. Not supported (LandrixXmlXsdBuiltinType returns nil, the schema
+  loader reports xecUnsupported): ENTITY, ENTITIES.
 
   A duration is parsed and ordered as Xerces does: whole numbers up to
   2147483647, seconds with a fraction (also ".5S"); the order adds both
@@ -51,7 +51,8 @@
   (TLandrixXmlXsdNamespaceContext): no prefix stands for the default
   namespace, an undeclared prefix is the error UndeclaredPrefix. Two
   QNames are equal if namespace and local name are; the length facets do
-  not apply to them (Xerces).
+  not apply to them (Xerces). A NOTATION value is checked as a QName (the
+  schema loader makes sure that its enumeration names notations).
 
   A restriction of a union may have pattern and enumeration facets
   (Xerces): the patterns apply to the value with collapsed white space,
@@ -88,7 +89,8 @@ type
   TLandrixXmlXsdPrimitive = (
     xspAnySimpleType, xspString, xspBoolean, xspDecimal, xspFloat, xspDouble,
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth,
-    xspHexBinary, xspBase64Binary, xspAnyURI, xspQName, xspDuration
+    xspHexBinary, xspBase64Binary, xspAnyURI, xspQName, xspDuration,
+    xspNotation
   );
 
   { Lexical rules of built-in types derived from string or decimal. }
@@ -146,8 +148,8 @@ type
     accepted the item), Text the whole value with collapsed white space,
     Length the number of items, Primitive is xspAnySimpleType. Otherwise
     Variety is xsvAtomic and Items is empty.
-    For xspQName, NamespaceUri ('' for none) and LocalName are the
-    resolved name; Text keeps the lexical form with the prefix.
+    For xspQName and xspNotation, NamespaceUri ('' for none) and LocalName
+    are the resolved name; Text keeps the lexical form with the prefix.
     For xspDuration, DateTime holds the fields as written (years, months,
     days, hours, minutes, seconds), all of them negative for a negative
     duration; HasTimeZone is False. }
@@ -1211,7 +1213,7 @@ begin
       end;
     xspAnyURI:
       Result := IsValidUri(Normalized);
-    xspQName:
+    xspQName, xspNotation:
       begin
         { an optional prefix before the first colon (Xerces), both parts
           NCNames; the prefix is resolved by the caller }
@@ -1936,7 +1938,7 @@ begin
       Result := CompareDateTime(A.DateTime, B.DateTime, A.Primitive);
     xspDuration:
       Result := CompareDuration(A.DateTime, B.DateTime);
-    xspQName:
+    xspQName, xspNotation:
       if (A.NamespaceUri = B.NamespaceUri) and (A.LocalName = B.LocalName) then
         Result := 0;
   else
@@ -2526,7 +2528,7 @@ begin
       of a list are checked by the caller) }
     xspAnySimpleType:
       Result := False;
-    xspString, xspHexBinary, xspBase64Binary, xspAnyURI, xspQName:
+    xspString, xspHexBinary, xspBase64Binary, xspAnyURI, xspQName, xspNotation:
       Result := Facet in [xsfLength, xsfMinLength, xsfMaxLength, xsfPattern, xsfEnumeration, xsfWhiteSpace];
     xspBoolean:
       Result := Facet in [xsfPattern, xsfWhiteSpace];
@@ -3105,7 +3107,7 @@ begin
       Result := DurationKey(Value.DateTime);
     xspBoolean, xspHexBinary, xspBase64Binary:
       Result := ValueTextAs(Value, False);
-    xspQName:
+    xspQName, xspNotation:
       Result := LandrixXmlStringToUtf8(IntToStr(Integer(Length(Value.NamespaceUri)))) + ':' +
         Value.NamespaceUri + Value.LocalName;
   else
@@ -3157,8 +3159,8 @@ var
 begin
   Result := False;
   TypeName := DisplayName;
-  { Xerces checks no length facets for QName values }
-  if (Value.Variety <> xsvList) and (Value.Primitive = xspQName) then
+  { Xerces checks no length facets for QName and NOTATION values }
+  if (Value.Variety <> xsvList) and (Value.Primitive in [xspQName, xspNotation]) then
     T := nil
   else
     T := Self;
@@ -3333,7 +3335,10 @@ begin
   T := Self;
   while not T.FBuiltin do
     T := T.FBase;
-  if T.FLexicalRule = xslInteger then
+  { Xerces checks NOTATION values with its QName validator }
+  if T.FPrimitive = xspNotation then
+    Result := 'QName'
+  else if T.FLexicalRule = xslInteger then
     Result := 'integer'
   else if T.FLexicalRule = xslNCName then
     Result := 'NCName'
@@ -3504,7 +3509,7 @@ begin
         ValidatorName + '''.');
     Exit;
   end;
-  if FPrimitive = xspQName then
+  if FPrimitive in [xspQName, xspNotation] then
   begin
     { the prefix in the namespace context; none: the default namespace }
     Colon := ColonIndex(Normalized);
@@ -3632,6 +3637,7 @@ begin
   Add('time', 'anySimpleType', xspTime, xwsCollapse, xslNone);
   Add('date', 'anySimpleType', xspDate, xwsCollapse, xslNone);
   Add('QName', 'anySimpleType', xspQName, xwsCollapse, xslNone);
+  Add('NOTATION', 'anySimpleType', xspNotation, xwsCollapse, xslNone);
   Add('gYearMonth', 'anySimpleType', xspGYearMonth, xwsCollapse, xslNone);
   Add('gYear', 'anySimpleType', xspGYear, xwsCollapse, xslNone);
   Add('gMonthDay', 'anySimpleType', xspGMonthDay, xwsCollapse, xslNone);
