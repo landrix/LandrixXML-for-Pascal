@@ -158,6 +158,9 @@ type
     FContexts: array of Integer;
     FContextCount: Integer;
     FGlobal: TObject;
+    { the namespace context of QName values: the reader's, or that of the
+      current DOM element }
+    FValueContext: TLandrixXmlXsdNamespaceContext;
     FMapStack: TObjectList;
     FIdcLine: Integer;
     FIdcColumn: Integer;
@@ -217,6 +220,28 @@ type
   end;
 
 implementation
+
+type
+  { the namespace declarations in scope at the current element: those of
+    the DOM node if there is one, else those of the reader }
+  TValueContext = class(TLandrixXmlXsdNamespaceContext)
+  public
+    Reader: TLandrixXmlReader;
+    Node: TLandrixXmlNode;
+    function LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
+      override;
+  end;
+
+function TValueContext.LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
+begin
+  NamespaceUri := '';
+  if Node <> nil then
+    Result := Node.LookupNamespace(Prefix, NamespaceUri)
+  else if Reader <> nil then
+    Result := Reader.LookupNamespace(Prefix, NamespaceUri)
+  else
+    Result := False;
+end;
 
 { Names and values are quoted whole, as Xerces does. }
 function Q(const S: TLandrixXmlUtf8): string;
@@ -981,6 +1006,7 @@ begin
   FIds := TLandrixXmlXsdNameMap.Create;
   FExpected := TList.Create;
   FMaxErrors := 1000;
+  FValueContext := TValueContext.Create;
   FIdType := LandrixXmlXsdBuiltinType('ID');
   FIdRefType := LandrixXmlXsdBuiltinType('IDREF');
   FStores := TObjectList.Create(True);
@@ -1001,6 +1027,7 @@ begin
   FGlobal.Free;
   FStoreIndex.Free;
   FStores.Free;
+  FValueContext.Free;
   inherited Destroy;
 end;
 
@@ -1209,7 +1236,6 @@ var
   Use: TLandrixXmlXsdAttributeUse;
   Decl: TLandrixXmlXsdAttributeDecl;
   Value: TLandrixXmlXsdValue;
-  Fixed: TLandrixXmlXsdValue;
   Error: TLandrixXmlXsdError;
   Present: Boolean;
   Wildcard: TLandrixXmlXsdWildcard;
@@ -1265,7 +1291,7 @@ begin
       else
         WildId := Decl.Name;
     end;
-    Valid := Decl.SimpleType.Validate(FAttrs[I].Value, Value, Error);
+    Valid := Decl.SimpleType.Validate(FAttrs[I].Value, FValueContext, Value, Error);
     if not Valid then
       Report(Error.Code, Error.Message, Line, Column, Decl)
     else
@@ -1278,13 +1304,12 @@ begin
       Continue;
     end;
     { the declaration's fixed value, then the use's own (Xerces' order) }
-    if (Decl.ValueConstraint = xvcFixed) and Decl.SimpleType.Validate(Decl.ConstraintValue, Fixed, Error) and
-      (LandrixXmlXsdCompareValues(Value, Fixed) <> 0) then
+    if (Decl.ValueConstraint = xvcFixed) and (LandrixXmlXsdCompareValues(Value, Decl.ConstraintActual) <> 0) then
       Report('cvc-attribute.4', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
         ' on element ' + Q(F.Name) + ' is not valid with respect to its fixed {value constraint}. ' +
         'The attribute must have a value of ' + Q(Decl.ConstraintValue) + '.', Line, Column, Decl);
     if (Use <> nil) and (Use.ValueConstraint = xvcFixed) and
-      Decl.SimpleType.Validate(Use.ConstraintValue, Fixed, Error) and (LandrixXmlXsdCompareValues(Value, Fixed) <> 0) then
+      (LandrixXmlXsdCompareValues(Value, Use.ConstraintActual) <> 0) then
       Report('cvc-complex-type.3.1', 'Value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
         ' of element ' + Q(F.Name) + ' is not valid with respect to the corresponding attribute use. Attribute ' +
         Q(FAttrs[I].Name) + ' has a fixed value of ' + Q(Use.ConstraintValue) + '.', Line, Column, Decl);
@@ -1338,7 +1363,6 @@ var
   S: TLandrixXmlUtf8;
   Present: Boolean;
   Value: TLandrixXmlXsdValue;
-  Error: TLandrixXmlXsdError;
 begin
   if T = nil then
     Exit;
@@ -1346,9 +1370,15 @@ begin
   begin
     Use := T.Attributes[I];
     if Use.ValueConstraint <> xvcNone then
-      S := Use.ConstraintValue
+    begin
+      S := Use.ConstraintValue;
+      Value := Use.ConstraintActual;
+    end
     else if Use.Decl.ValueConstraint <> xvcNone then
-      S := Use.Decl.ConstraintValue
+    begin
+      S := Use.Decl.ConstraintValue;
+      Value := Use.Decl.ConstraintActual;
+    end
     else
       Continue;
     Present := False;
@@ -1366,9 +1396,11 @@ begin
       SetLength(FAttrValid, FAttrCount);
       SetLength(FAttrValues, FAttrCount);
     end;
-    { Xerces deviation: idZ012. A default or fixed value is validated but
-      not registered as an ID or IDREF }
-    FAttrValid[FAttrCount - 1] := Use.Decl.SimpleType.Validate(S, Value, Error);
+    { as Xerces: the value the schema loader validated, in the namespace
+      context of the schema (identity constraints use it).
+      Xerces deviation: idZ012. A default or fixed value is not registered
+      as an ID or IDREF }
+    FAttrValid[FAttrCount - 1] := True;
     FAttrValues[FAttrCount - 1] := Value;
   end;
 end;
@@ -1389,6 +1421,7 @@ var
 begin
   if Stopped then
     Exit;
+  TValueContext(FValueContext).Node := Node;
   Parent := FDepth - 1;
   Mode := xfmValidate;
   Decl := nil;
@@ -1527,7 +1560,7 @@ var
   F: TLandrixXmlXsdFrame;
   T: TLandrixXmlXsdSimpleType;
   Decl: TLandrixXmlXsdElementDecl;
-  Value, Fixed: TLandrixXmlXsdValue;
+  Value: TLandrixXmlXsdValue;
   Error: TLandrixXmlXsdError;
   S: TLandrixXmlUtf8;
   Issues: TLandrixXmlXsdContentIssues;
@@ -1564,7 +1597,8 @@ begin
         S := Decl.ConstraintValue
       else
         S := FBuffer;
-      Valid := T.Validate(S, Value, Error);
+      TValueContext(FValueContext).Node := F.Node;
+      Valid := T.Validate(S, FValueContext, Value, Error);
       if not Valid then
         Report(Error.Code, Error.Message, Line, Column, F.Decl)
       else
@@ -1584,13 +1618,21 @@ begin
         FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Value);
         FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Value);
       end;
+      { as Xerces: an applied default gives identity constraints the value
+        the schema loader validated (in the schema's namespace context),
+        whatever the check in the document's context found }
+      if UseDefault then
+      begin
+        FFrames[FDepth - 1].ValueKnown := True;
+        FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Decl.ConstraintActual);
+        FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Decl.ConstraintActual);
+      end;
       if IsFixed then
       begin
         if F.HasChild then
           Report('cvc-elt.5.2.2.1', 'Element ' + Q(F.Name) + ' must have no element information item [children].',
             Line, Column, Decl);
-        if Valid and T.Validate(Decl.ConstraintValue, Fixed, Error) and
-          (LandrixXmlXsdCompareValues(Value, Fixed) <> 0) then
+        if Valid and (LandrixXmlXsdCompareValues(Value, Decl.ConstraintActual) <> 0) then
           Report('cvc-elt.5.2.2.2.2', 'The value ' + Q(S) + ' of element ' + Q(F.Name) +
             ' does not match the {value constraint} value ' + Q(Decl.ConstraintValue) + '.', Line, Column, Decl);
       end;
@@ -1785,6 +1827,7 @@ begin
   Reset;
   EndLine := 0;
   EndColumn := 0;
+  TValueContext(FValueContext).Reader := Reader;
   while Reader.Read do
   begin
     case Reader.TokenType of
@@ -1815,6 +1858,7 @@ begin
       Break;
   end;
   EndDocument(EndLine, EndColumn);
+  TValueContext(FValueContext).Reader := nil;
   Result := FErrors.Count = 0;
 end;
 
@@ -1825,6 +1869,7 @@ var
   Root: TLandrixXmlNode;
 begin
   Reset;
+  TValueContext(FValueContext).Reader := nil;
   Root := Document.Root;
   Node := Root;
   while (Node <> nil) and not Stopped do

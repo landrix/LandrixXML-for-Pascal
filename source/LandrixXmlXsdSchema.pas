@@ -67,12 +67,17 @@ type
     FSimpleType: TLandrixXmlXsdSimpleType;
     FValueConstraint: TLandrixXmlXsdValueConstraint;
     FConstraintValue: TLandrixXmlUtf8;
+    FConstraintActual: TLandrixXmlXsdValue;
     FGlobal: Boolean;
   public
     property SimpleType: TLandrixXmlXsdSimpleType read FSimpleType write FSimpleType;
     property ValueConstraint: TLandrixXmlXsdValueConstraint read FValueConstraint write FValueConstraint;
     { the default or fixed value as written }
     property ConstraintValue: TLandrixXmlUtf8 read FConstraintValue write FConstraintValue;
+    { the value of ConstraintValue, validated by the schema loader in the
+      namespace context of the schema (fixed values compare with it); set
+      whenever ValueConstraint is not xvcNone }
+    property ConstraintActual: TLandrixXmlXsdValue read FConstraintActual write FConstraintActual;
     property Global: Boolean read FGlobal write FGlobal;
   end;
 
@@ -83,6 +88,7 @@ type
     FRequired: Boolean;
     FValueConstraint: TLandrixXmlXsdValueConstraint;
     FConstraintValue: TLandrixXmlUtf8;
+    FConstraintActual: TLandrixXmlXsdValue;
   public
     property Decl: TLandrixXmlXsdAttributeDecl read FDecl write FDecl;
     property Required: Boolean read FRequired write FRequired;
@@ -90,6 +96,9 @@ type
       reference); the declaration's is in Decl }
     property ValueConstraint: TLandrixXmlXsdValueConstraint read FValueConstraint write FValueConstraint;
     property ConstraintValue: TLandrixXmlUtf8 read FConstraintValue write FConstraintValue;
+    { the value of ConstraintValue as the schema loader validated it; set
+      whenever ValueConstraint is not xvcNone }
+    property ConstraintActual: TLandrixXmlXsdValue read FConstraintActual write FConstraintActual;
   end;
 
   TLandrixXmlXsdContentType = (xctEmpty, xctSimple, xctElementOnly, xctMixed);
@@ -176,6 +185,7 @@ type
     FComplexType: TLandrixXmlXsdComplexType;
     FValueConstraint: TLandrixXmlXsdValueConstraint;
     FConstraintValue: TLandrixXmlUtf8;
+    FConstraintActual: TLandrixXmlXsdValue;
     FGlobal: Boolean;
     FConstraints: TList;
     function GetConstraintCount: Integer;
@@ -189,6 +199,11 @@ type
     property ComplexType: TLandrixXmlXsdComplexType read FComplexType write FComplexType;
     property ValueConstraint: TLandrixXmlXsdValueConstraint read FValueConstraint write FValueConstraint;
     property ConstraintValue: TLandrixXmlUtf8 read FConstraintValue write FConstraintValue;
+    { the value of ConstraintValue, validated by the schema loader in the
+      namespace context of the schema (a fixed value compares with it, an
+      applied default gives it to identity constraints); set whenever
+      ValueConstraint is not xvcNone }
+    property ConstraintActual: TLandrixXmlXsdValue read FConstraintActual write FConstraintActual;
     property Global: Boolean read FGlobal write FGlobal;
     property ConstraintCount: Integer read GetConstraintCount;
     property Constraints[Index: Integer]: TLandrixXmlXsdIdentityConstraint read GetConstraint;

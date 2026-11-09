@@ -1026,6 +1026,32 @@ atomic-anyURI-enumeration-2: NISTSchema-SV-IV-atomic-anyURI-enumeration-3 NISTXM
 atomic-anyURI-enumeration-3: NISTSchema-SV-IV-atomic-anyURI-enumeration-4 NISTXML-SV-IV-atomic-anyURI-enumeration-4-1 NISTXML-SV-IV-atomic-anyURI-enumeration-4-2 NISTXML-SV-IV-atomic-anyURI-enumeration-4-3 NISTXML-SV-IV-atomic-anyURI-enumeration-4-4 NISTXML-SV-IV-atomic-anyURI-enumeration-4-5
 atomic-anyURI-enumeration-4: NISTSchema-SV-IV-atomic-anyURI-enumeration-5 NISTXML-SV-IV-atomic-anyURI-enumeration-5-1 NISTXML-SV-IV-atomic-anyURI-enumeration-5-2 NISTXML-SV-IV-atomic-anyURI-enumeration-5-3 NISTXML-SV-IV-atomic-anyURI-enumeration-5-4 NISTXML-SV-IV-atomic-anyURI-enumeration-5-5
 atomic-anyURI-whiteSpace: NISTSchema-SV-IV-atomic-anyURI-whiteSpace-1 NISTXML-SV-IV-atomic-anyURI-whiteSpace-1-1 NISTXML-SV-IV-atomic-anyURI-whiteSpace-1-2 NISTXML-SV-IV-atomic-anyURI-whiteSpace-1-3 NISTXML-SV-IV-atomic-anyURI-whiteSpace-1-4 NISTXML-SV-IV-atomic-anyURI-whiteSpace-1-5
+atomic-QName-maxLength: NISTSchema-SV-IV-atomic-QName-maxLength-1 NISTXML-SV-IV-atomic-QName-maxLength-1-1 NISTXML-SV-IV-atomic-QName-maxLength-1-2 NISTXML-SV-IV-atomic-QName-maxLength-1-3 NISTXML-SV-IV-atomic-QName-maxLength-1-4 NISTXML-SV-IV-atomic-QName-maxLength-1-5
+atomic-QName-maxLength-1: NISTSchema-SV-IV-atomic-QName-maxLength-2 NISTXML-SV-IV-atomic-QName-maxLength-2-1 NISTXML-SV-IV-atomic-QName-maxLength-2-2 NISTXML-SV-IV-atomic-QName-maxLength-2-3 NISTXML-SV-IV-atomic-QName-maxLength-2-4 NISTXML-SV-IV-atomic-QName-maxLength-2-5
+atomic-QName-maxLength-2: NISTSchema-SV-IV-atomic-QName-maxLength-3 NISTXML-SV-IV-atomic-QName-maxLength-3-1 NISTXML-SV-IV-atomic-QName-maxLength-3-2 NISTXML-SV-IV-atomic-QName-maxLength-3-3 NISTXML-SV-IV-atomic-QName-maxLength-3-4 NISTXML-SV-IV-atomic-QName-maxLength-3-5
+atomic-QName-maxLength-3: NISTSchema-SV-IV-atomic-QName-maxLength-4 NISTXML-SV-IV-atomic-QName-maxLength-4-1 NISTXML-SV-IV-atomic-QName-maxLength-4-2 NISTXML-SV-IV-atomic-QName-maxLength-4-3 NISTXML-SV-IV-atomic-QName-maxLength-4-4 NISTXML-SV-IV-atomic-QName-maxLength-4-5
+atomic-QName-maxLength-4: NISTSchema-SV-IV-atomic-QName-maxLength-5 NISTXML-SV-IV-atomic-QName-maxLength-5-1 NISTXML-SV-IV-atomic-QName-maxLength-5-2 NISTXML-SV-IV-atomic-QName-maxLength-5-3 NISTXML-SV-IV-atomic-QName-maxLength-5-4 NISTXML-SV-IV-atomic-QName-maxLength-5-5
+atomic-QName-minLength: NISTSchema-SV-IV-atomic-QName-minLength-1 NISTXML-SV-IV-atomic-QName-minLength-1-1 NISTXML-SV-IV-atomic-QName-minLength-1-2 NISTXML-SV-IV-atomic-QName-minLength-1-3 NISTXML-SV-IV-atomic-QName-minLength-1-4 NISTXML-SV-IV-atomic-QName-minLength-1-5
+atomic-QName-minLength-1: NISTSchema-SV-IV-atomic-QName-minLength-2 NISTXML-SV-IV-atomic-QName-minLength-2-1 NISTXML-SV-IV-atomic-QName-minLength-2-2 NISTXML-SV-IV-atomic-QName-minLength-2-3 NISTXML-SV-IV-atomic-QName-minLength-2-4 NISTXML-SV-IV-atomic-QName-minLength-2-5
+atomic-QName-minLength-2: NISTSchema-SV-IV-atomic-QName-minLength-3 NISTXML-SV-IV-atomic-QName-minLength-3-1 NISTXML-SV-IV-atomic-QName-minLength-3-2 NISTXML-SV-IV-atomic-QName-minLength-3-3 NISTXML-SV-IV-atomic-QName-minLength-3-4 NISTXML-SV-IV-atomic-QName-minLength-3-5
+atomic-QName-minLength-3: NISTSchema-SV-IV-atomic-QName-minLength-4 NISTXML-SV-IV-atomic-QName-minLength-4-1 NISTXML-SV-IV-atomic-QName-minLength-4-2 NISTXML-SV-IV-atomic-QName-minLength-4-3 NISTXML-SV-IV-atomic-QName-minLength-4-4 NISTXML-SV-IV-atomic-QName-minLength-4-5
+atomic-QName-minLength-4: NISTSchema-SV-IV-atomic-QName-minLength-5 NISTXML-SV-IV-atomic-QName-minLength-5-1 NISTXML-SV-IV-atomic-QName-minLength-5-2 NISTXML-SV-IV-atomic-QName-minLength-5-3 NISTXML-SV-IV-atomic-QName-minLength-5-4 NISTXML-SV-IV-atomic-QName-minLength-5-5
+atomic-QName-length: NISTSchema-SV-IV-atomic-QName-length-1 NISTXML-SV-IV-atomic-QName-length-1-1 NISTXML-SV-IV-atomic-QName-length-1-2 NISTXML-SV-IV-atomic-QName-length-1-3 NISTXML-SV-IV-atomic-QName-length-1-4 NISTXML-SV-IV-atomic-QName-length-1-5
+atomic-QName-length-1: NISTSchema-SV-IV-atomic-QName-length-2 NISTXML-SV-IV-atomic-QName-length-2-1 NISTXML-SV-IV-atomic-QName-length-2-2 NISTXML-SV-IV-atomic-QName-length-2-3 NISTXML-SV-IV-atomic-QName-length-2-4 NISTXML-SV-IV-atomic-QName-length-2-5
+atomic-QName-length-2: NISTSchema-SV-IV-atomic-QName-length-3 NISTXML-SV-IV-atomic-QName-length-3-1 NISTXML-SV-IV-atomic-QName-length-3-2 NISTXML-SV-IV-atomic-QName-length-3-3 NISTXML-SV-IV-atomic-QName-length-3-4 NISTXML-SV-IV-atomic-QName-length-3-5
+atomic-QName-length-3: NISTSchema-SV-IV-atomic-QName-length-4 NISTXML-SV-IV-atomic-QName-length-4-1 NISTXML-SV-IV-atomic-QName-length-4-2 NISTXML-SV-IV-atomic-QName-length-4-3 NISTXML-SV-IV-atomic-QName-length-4-4 NISTXML-SV-IV-atomic-QName-length-4-5
+atomic-QName-length-4: NISTSchema-SV-IV-atomic-QName-length-5 NISTXML-SV-IV-atomic-QName-length-5-1 NISTXML-SV-IV-atomic-QName-length-5-2 NISTXML-SV-IV-atomic-QName-length-5-3 NISTXML-SV-IV-atomic-QName-length-5-4 NISTXML-SV-IV-atomic-QName-length-5-5
+atomic-QName-pattern: NISTSchema-SV-IV-atomic-QName-pattern-1 NISTXML-SV-IV-atomic-QName-pattern-1-1 NISTXML-SV-IV-atomic-QName-pattern-1-2 NISTXML-SV-IV-atomic-QName-pattern-1-3 NISTXML-SV-IV-atomic-QName-pattern-1-4 NISTXML-SV-IV-atomic-QName-pattern-1-5
+atomic-QName-pattern-1: NISTSchema-SV-IV-atomic-QName-pattern-2 NISTXML-SV-IV-atomic-QName-pattern-2-1 NISTXML-SV-IV-atomic-QName-pattern-2-2 NISTXML-SV-IV-atomic-QName-pattern-2-3 NISTXML-SV-IV-atomic-QName-pattern-2-4 NISTXML-SV-IV-atomic-QName-pattern-2-5
+atomic-QName-pattern-2: NISTSchema-SV-IV-atomic-QName-pattern-3 NISTXML-SV-IV-atomic-QName-pattern-3-1 NISTXML-SV-IV-atomic-QName-pattern-3-2 NISTXML-SV-IV-atomic-QName-pattern-3-3 NISTXML-SV-IV-atomic-QName-pattern-3-4 NISTXML-SV-IV-atomic-QName-pattern-3-5
+atomic-QName-pattern-3: NISTSchema-SV-IV-atomic-QName-pattern-4 NISTXML-SV-IV-atomic-QName-pattern-4-1 NISTXML-SV-IV-atomic-QName-pattern-4-2 NISTXML-SV-IV-atomic-QName-pattern-4-3 NISTXML-SV-IV-atomic-QName-pattern-4-4 NISTXML-SV-IV-atomic-QName-pattern-4-5
+atomic-QName-pattern-4: NISTSchema-SV-IV-atomic-QName-pattern-5 NISTXML-SV-IV-atomic-QName-pattern-5-1 NISTXML-SV-IV-atomic-QName-pattern-5-2 NISTXML-SV-IV-atomic-QName-pattern-5-3 NISTXML-SV-IV-atomic-QName-pattern-5-4 NISTXML-SV-IV-atomic-QName-pattern-5-5
+atomic-QName-enumeration: NISTSchema-SV-IV-atomic-QName-enumeration-1 NISTXML-SV-IV-atomic-QName-enumeration-1-1 NISTXML-SV-IV-atomic-QName-enumeration-1-2 NISTXML-SV-IV-atomic-QName-enumeration-1-3 NISTXML-SV-IV-atomic-QName-enumeration-1-4 NISTXML-SV-IV-atomic-QName-enumeration-1-5
+atomic-QName-enumeration-1: NISTSchema-SV-IV-atomic-QName-enumeration-2 NISTXML-SV-IV-atomic-QName-enumeration-2-1 NISTXML-SV-IV-atomic-QName-enumeration-2-2 NISTXML-SV-IV-atomic-QName-enumeration-2-3 NISTXML-SV-IV-atomic-QName-enumeration-2-4 NISTXML-SV-IV-atomic-QName-enumeration-2-5
+atomic-QName-enumeration-2: NISTSchema-SV-IV-atomic-QName-enumeration-3 NISTXML-SV-IV-atomic-QName-enumeration-3-1 NISTXML-SV-IV-atomic-QName-enumeration-3-2 NISTXML-SV-IV-atomic-QName-enumeration-3-3 NISTXML-SV-IV-atomic-QName-enumeration-3-4 NISTXML-SV-IV-atomic-QName-enumeration-3-5
+atomic-QName-enumeration-3: NISTSchema-SV-IV-atomic-QName-enumeration-4 NISTXML-SV-IV-atomic-QName-enumeration-4-1 NISTXML-SV-IV-atomic-QName-enumeration-4-2 NISTXML-SV-IV-atomic-QName-enumeration-4-3 NISTXML-SV-IV-atomic-QName-enumeration-4-4 NISTXML-SV-IV-atomic-QName-enumeration-4-5
+atomic-QName-enumeration-4: NISTSchema-SV-IV-atomic-QName-enumeration-5 NISTXML-SV-IV-atomic-QName-enumeration-5-1 NISTXML-SV-IV-atomic-QName-enumeration-5-2 NISTXML-SV-IV-atomic-QName-enumeration-5-3 NISTXML-SV-IV-atomic-QName-enumeration-5-4 NISTXML-SV-IV-atomic-QName-enumeration-5-5
+atomic-QName-whiteSpace: NISTSchema-SV-IV-atomic-QName-whiteSpace-1 NISTXML-SV-IV-atomic-QName-whiteSpace-1-1 NISTXML-SV-IV-atomic-QName-whiteSpace-1-2 NISTXML-SV-IV-atomic-QName-whiteSpace-1-3 NISTXML-SV-IV-atomic-QName-whiteSpace-1-4 NISTXML-SV-IV-atomic-QName-whiteSpace-1-5
 atomic-boolean-pattern: NISTSchema-SV-IV-atomic-boolean-pattern-1 NISTXML-SV-IV-atomic-boolean-pattern-1-1 NISTXML-SV-IV-atomic-boolean-pattern-1-2 NISTXML-SV-IV-atomic-boolean-pattern-1-3 NISTXML-SV-IV-atomic-boolean-pattern-1-4 NISTXML-SV-IV-atomic-boolean-pattern-1-5
 atomic-boolean-pattern-1: NISTSchema-SV-IV-atomic-boolean-pattern-2 NISTXML-SV-IV-atomic-boolean-pattern-2-1 NISTXML-SV-IV-atomic-boolean-pattern-2-2 NISTXML-SV-IV-atomic-boolean-pattern-2-3 NISTXML-SV-IV-atomic-boolean-pattern-2-4 NISTXML-SV-IV-atomic-boolean-pattern-2-5
 atomic-boolean-pattern-2: NISTSchema-SV-IV-atomic-boolean-pattern-3 NISTXML-SV-IV-atomic-boolean-pattern-3-1 NISTXML-SV-IV-atomic-boolean-pattern-3-2 NISTXML-SV-IV-atomic-boolean-pattern-3-3 NISTXML-SV-IV-atomic-boolean-pattern-3-4 NISTXML-SV-IV-atomic-boolean-pattern-3-5
@@ -2862,6 +2888,32 @@ list-anyURI-enumeration-2: NISTSchema-SV-IV-list-anyURI-enumeration-3 NISTXML-SV
 list-anyURI-enumeration-3: NISTSchema-SV-IV-list-anyURI-enumeration-4 NISTXML-SV-IV-list-anyURI-enumeration-4-1 NISTXML-SV-IV-list-anyURI-enumeration-4-2 NISTXML-SV-IV-list-anyURI-enumeration-4-3 NISTXML-SV-IV-list-anyURI-enumeration-4-4 NISTXML-SV-IV-list-anyURI-enumeration-4-5
 list-anyURI-enumeration-4: NISTSchema-SV-IV-list-anyURI-enumeration-5 NISTXML-SV-IV-list-anyURI-enumeration-5-1 NISTXML-SV-IV-list-anyURI-enumeration-5-2 NISTXML-SV-IV-list-anyURI-enumeration-5-3 NISTXML-SV-IV-list-anyURI-enumeration-5-4 NISTXML-SV-IV-list-anyURI-enumeration-5-5
 list-anyURI-whiteSpace: NISTSchema-SV-IV-list-anyURI-whiteSpace-1 NISTXML-SV-IV-list-anyURI-whiteSpace-1-1 NISTXML-SV-IV-list-anyURI-whiteSpace-1-2 NISTXML-SV-IV-list-anyURI-whiteSpace-1-3 NISTXML-SV-IV-list-anyURI-whiteSpace-1-4 NISTXML-SV-IV-list-anyURI-whiteSpace-1-5
+list-QName-maxLength: NISTSchema-SV-IV-list-QName-maxLength-1 NISTXML-SV-IV-list-QName-maxLength-1-1 NISTXML-SV-IV-list-QName-maxLength-1-2 NISTXML-SV-IV-list-QName-maxLength-1-3 NISTXML-SV-IV-list-QName-maxLength-1-4 NISTXML-SV-IV-list-QName-maxLength-1-5
+list-QName-maxLength-1: NISTSchema-SV-IV-list-QName-maxLength-2 NISTXML-SV-IV-list-QName-maxLength-2-1 NISTXML-SV-IV-list-QName-maxLength-2-2 NISTXML-SV-IV-list-QName-maxLength-2-3 NISTXML-SV-IV-list-QName-maxLength-2-4 NISTXML-SV-IV-list-QName-maxLength-2-5
+list-QName-maxLength-2: NISTSchema-SV-IV-list-QName-maxLength-3 NISTXML-SV-IV-list-QName-maxLength-3-1 NISTXML-SV-IV-list-QName-maxLength-3-2 NISTXML-SV-IV-list-QName-maxLength-3-3 NISTXML-SV-IV-list-QName-maxLength-3-4 NISTXML-SV-IV-list-QName-maxLength-3-5
+list-QName-maxLength-3: NISTSchema-SV-IV-list-QName-maxLength-4 NISTXML-SV-IV-list-QName-maxLength-4-1 NISTXML-SV-IV-list-QName-maxLength-4-2 NISTXML-SV-IV-list-QName-maxLength-4-3 NISTXML-SV-IV-list-QName-maxLength-4-4 NISTXML-SV-IV-list-QName-maxLength-4-5
+list-QName-maxLength-4: NISTSchema-SV-IV-list-QName-maxLength-5 NISTXML-SV-IV-list-QName-maxLength-5-1 NISTXML-SV-IV-list-QName-maxLength-5-2 NISTXML-SV-IV-list-QName-maxLength-5-3 NISTXML-SV-IV-list-QName-maxLength-5-4 NISTXML-SV-IV-list-QName-maxLength-5-5
+list-QName-minLength: NISTSchema-SV-IV-list-QName-minLength-1 NISTXML-SV-IV-list-QName-minLength-1-1 NISTXML-SV-IV-list-QName-minLength-1-2 NISTXML-SV-IV-list-QName-minLength-1-3 NISTXML-SV-IV-list-QName-minLength-1-4 NISTXML-SV-IV-list-QName-minLength-1-5
+list-QName-minLength-1: NISTSchema-SV-IV-list-QName-minLength-2 NISTXML-SV-IV-list-QName-minLength-2-1 NISTXML-SV-IV-list-QName-minLength-2-2 NISTXML-SV-IV-list-QName-minLength-2-3 NISTXML-SV-IV-list-QName-minLength-2-4 NISTXML-SV-IV-list-QName-minLength-2-5
+list-QName-minLength-2: NISTSchema-SV-IV-list-QName-minLength-3 NISTXML-SV-IV-list-QName-minLength-3-1 NISTXML-SV-IV-list-QName-minLength-3-2 NISTXML-SV-IV-list-QName-minLength-3-3 NISTXML-SV-IV-list-QName-minLength-3-4 NISTXML-SV-IV-list-QName-minLength-3-5
+list-QName-minLength-3: NISTSchema-SV-IV-list-QName-minLength-4 NISTXML-SV-IV-list-QName-minLength-4-1 NISTXML-SV-IV-list-QName-minLength-4-2 NISTXML-SV-IV-list-QName-minLength-4-3 NISTXML-SV-IV-list-QName-minLength-4-4 NISTXML-SV-IV-list-QName-minLength-4-5
+list-QName-minLength-4: NISTSchema-SV-IV-list-QName-minLength-5 NISTXML-SV-IV-list-QName-minLength-5-1 NISTXML-SV-IV-list-QName-minLength-5-2 NISTXML-SV-IV-list-QName-minLength-5-3 NISTXML-SV-IV-list-QName-minLength-5-4 NISTXML-SV-IV-list-QName-minLength-5-5
+list-QName-length: NISTSchema-SV-IV-list-QName-length-1 NISTXML-SV-IV-list-QName-length-1-1 NISTXML-SV-IV-list-QName-length-1-2 NISTXML-SV-IV-list-QName-length-1-3 NISTXML-SV-IV-list-QName-length-1-4 NISTXML-SV-IV-list-QName-length-1-5
+list-QName-length-1: NISTSchema-SV-IV-list-QName-length-2 NISTXML-SV-IV-list-QName-length-2-1 NISTXML-SV-IV-list-QName-length-2-2 NISTXML-SV-IV-list-QName-length-2-3 NISTXML-SV-IV-list-QName-length-2-4 NISTXML-SV-IV-list-QName-length-2-5
+list-QName-length-2: NISTSchema-SV-IV-list-QName-length-3 NISTXML-SV-IV-list-QName-length-3-1 NISTXML-SV-IV-list-QName-length-3-2 NISTXML-SV-IV-list-QName-length-3-3 NISTXML-SV-IV-list-QName-length-3-4 NISTXML-SV-IV-list-QName-length-3-5
+list-QName-length-3: NISTSchema-SV-IV-list-QName-length-4 NISTXML-SV-IV-list-QName-length-4-1 NISTXML-SV-IV-list-QName-length-4-2 NISTXML-SV-IV-list-QName-length-4-3 NISTXML-SV-IV-list-QName-length-4-4 NISTXML-SV-IV-list-QName-length-4-5
+list-QName-length-4: NISTSchema-SV-IV-list-QName-length-5 NISTXML-SV-IV-list-QName-length-5-1 NISTXML-SV-IV-list-QName-length-5-2 NISTXML-SV-IV-list-QName-length-5-3 NISTXML-SV-IV-list-QName-length-5-4 NISTXML-SV-IV-list-QName-length-5-5
+list-QName-pattern: NISTSchema-SV-IV-list-QName-pattern-1 NISTXML-SV-IV-list-QName-pattern-1-1 NISTXML-SV-IV-list-QName-pattern-1-2 NISTXML-SV-IV-list-QName-pattern-1-3 NISTXML-SV-IV-list-QName-pattern-1-4 NISTXML-SV-IV-list-QName-pattern-1-5
+list-QName-pattern-1: NISTSchema-SV-IV-list-QName-pattern-2 NISTXML-SV-IV-list-QName-pattern-2-1 NISTXML-SV-IV-list-QName-pattern-2-2 NISTXML-SV-IV-list-QName-pattern-2-3 NISTXML-SV-IV-list-QName-pattern-2-4 NISTXML-SV-IV-list-QName-pattern-2-5
+list-QName-pattern-2: NISTSchema-SV-IV-list-QName-pattern-3 NISTXML-SV-IV-list-QName-pattern-3-1 NISTXML-SV-IV-list-QName-pattern-3-2 NISTXML-SV-IV-list-QName-pattern-3-3 NISTXML-SV-IV-list-QName-pattern-3-4 NISTXML-SV-IV-list-QName-pattern-3-5
+list-QName-pattern-3: NISTSchema-SV-IV-list-QName-pattern-4 NISTXML-SV-IV-list-QName-pattern-4-1 NISTXML-SV-IV-list-QName-pattern-4-2 NISTXML-SV-IV-list-QName-pattern-4-3 NISTXML-SV-IV-list-QName-pattern-4-4 NISTXML-SV-IV-list-QName-pattern-4-5
+list-QName-pattern-4: NISTSchema-SV-IV-list-QName-pattern-5 NISTXML-SV-IV-list-QName-pattern-5-1 NISTXML-SV-IV-list-QName-pattern-5-2 NISTXML-SV-IV-list-QName-pattern-5-3 NISTXML-SV-IV-list-QName-pattern-5-4 NISTXML-SV-IV-list-QName-pattern-5-5
+list-QName-enumeration: NISTSchema-SV-IV-list-QName-enumeration-1 NISTXML-SV-IV-list-QName-enumeration-1-1 NISTXML-SV-IV-list-QName-enumeration-1-2 NISTXML-SV-IV-list-QName-enumeration-1-3 NISTXML-SV-IV-list-QName-enumeration-1-4 NISTXML-SV-IV-list-QName-enumeration-1-5
+list-QName-enumeration-1: NISTSchema-SV-IV-list-QName-enumeration-2 NISTXML-SV-IV-list-QName-enumeration-2-1 NISTXML-SV-IV-list-QName-enumeration-2-2 NISTXML-SV-IV-list-QName-enumeration-2-3 NISTXML-SV-IV-list-QName-enumeration-2-4 NISTXML-SV-IV-list-QName-enumeration-2-5
+list-QName-enumeration-2: NISTSchema-SV-IV-list-QName-enumeration-3 NISTXML-SV-IV-list-QName-enumeration-3-1 NISTXML-SV-IV-list-QName-enumeration-3-2 NISTXML-SV-IV-list-QName-enumeration-3-3 NISTXML-SV-IV-list-QName-enumeration-3-4 NISTXML-SV-IV-list-QName-enumeration-3-5
+list-QName-enumeration-3: NISTSchema-SV-IV-list-QName-enumeration-4 NISTXML-SV-IV-list-QName-enumeration-4-1 NISTXML-SV-IV-list-QName-enumeration-4-2 NISTXML-SV-IV-list-QName-enumeration-4-3 NISTXML-SV-IV-list-QName-enumeration-4-4 NISTXML-SV-IV-list-QName-enumeration-4-5
+list-QName-enumeration-4: NISTSchema-SV-IV-list-QName-enumeration-5 NISTXML-SV-IV-list-QName-enumeration-5-1 NISTXML-SV-IV-list-QName-enumeration-5-2 NISTXML-SV-IV-list-QName-enumeration-5-3 NISTXML-SV-IV-list-QName-enumeration-5-4 NISTXML-SV-IV-list-QName-enumeration-5-5
+list-QName-whiteSpace: NISTSchema-SV-IV-list-QName-whiteSpace-1 NISTXML-SV-IV-list-QName-whiteSpace-1-1 NISTXML-SV-IV-list-QName-whiteSpace-1-2 NISTXML-SV-IV-list-QName-whiteSpace-1-3 NISTXML-SV-IV-list-QName-whiteSpace-1-4 NISTXML-SV-IV-list-QName-whiteSpace-1-5
 list-boolean-maxLength: NISTSchema-SV-IV-list-boolean-maxLength-1 NISTXML-SV-IV-list-boolean-maxLength-1-1 NISTXML-SV-IV-list-boolean-maxLength-1-2 NISTXML-SV-IV-list-boolean-maxLength-1-3 NISTXML-SV-IV-list-boolean-maxLength-1-4 NISTXML-SV-IV-list-boolean-maxLength-1-5
 list-boolean-maxLength-1: NISTSchema-SV-IV-list-boolean-maxLength-2 NISTXML-SV-IV-list-boolean-maxLength-2-1 NISTXML-SV-IV-list-boolean-maxLength-2-2 NISTXML-SV-IV-list-boolean-maxLength-2-3 NISTXML-SV-IV-list-boolean-maxLength-2-4 NISTXML-SV-IV-list-boolean-maxLength-2-5
 list-boolean-maxLength-2: NISTSchema-SV-IV-list-boolean-maxLength-3 NISTXML-SV-IV-list-boolean-maxLength-3-1 NISTXML-SV-IV-list-boolean-maxLength-3-2 NISTXML-SV-IV-list-boolean-maxLength-3-3 NISTXML-SV-IV-list-boolean-maxLength-3-4 NISTXML-SV-IV-list-boolean-maxLength-3-5
@@ -3695,6 +3747,21 @@ list-language-length-6: NISTSchema-SV-II-list-language-length-2 NISTXML-SV-II-li
 list-language-length-7: NISTSchema-SV-II-list-language-length-3 NISTXML-SV-II-list-language-length-3-1 NISTXML-SV-II-list-language-length-3-2 NISTXML-SV-II-list-language-length-3-3 NISTXML-SV-II-list-language-length-3-4 NISTXML-SV-II-list-language-length-3-5
 list-language-length-8: NISTSchema-SV-II-list-language-length-4 NISTXML-SV-II-list-language-length-4-1 NISTXML-SV-II-list-language-length-4-2 NISTXML-SV-II-list-language-length-4-3 NISTXML-SV-II-list-language-length-4-4 NISTXML-SV-II-list-language-length-4-5
 list-language-length-9: NISTSchema-SV-II-list-language-length-5 NISTXML-SV-II-list-language-length-5-1 NISTXML-SV-II-list-language-length-5-2 NISTXML-SV-II-list-language-length-5-3 NISTXML-SV-II-list-language-length-5-4 NISTXML-SV-II-list-language-length-5-5
+list-QName-maxLength-5: NISTSchema-SV-II-list-QName-maxLength-1 NISTXML-SV-II-list-QName-maxLength-1-1 NISTXML-SV-II-list-QName-maxLength-1-2 NISTXML-SV-II-list-QName-maxLength-1-3 NISTXML-SV-II-list-QName-maxLength-1-4 NISTXML-SV-II-list-QName-maxLength-1-5
+list-QName-maxLength-6: NISTSchema-SV-II-list-QName-maxLength-2 NISTXML-SV-II-list-QName-maxLength-2-1 NISTXML-SV-II-list-QName-maxLength-2-2 NISTXML-SV-II-list-QName-maxLength-2-3 NISTXML-SV-II-list-QName-maxLength-2-4 NISTXML-SV-II-list-QName-maxLength-2-5
+list-QName-maxLength-7: NISTSchema-SV-II-list-QName-maxLength-3 NISTXML-SV-II-list-QName-maxLength-3-1 NISTXML-SV-II-list-QName-maxLength-3-2 NISTXML-SV-II-list-QName-maxLength-3-3 NISTXML-SV-II-list-QName-maxLength-3-4 NISTXML-SV-II-list-QName-maxLength-3-5
+list-QName-maxLength-8: NISTSchema-SV-II-list-QName-maxLength-4 NISTXML-SV-II-list-QName-maxLength-4-1 NISTXML-SV-II-list-QName-maxLength-4-2 NISTXML-SV-II-list-QName-maxLength-4-3 NISTXML-SV-II-list-QName-maxLength-4-4 NISTXML-SV-II-list-QName-maxLength-4-5
+list-QName-maxLength-9: NISTSchema-SV-II-list-QName-maxLength-5 NISTXML-SV-II-list-QName-maxLength-5-1 NISTXML-SV-II-list-QName-maxLength-5-2 NISTXML-SV-II-list-QName-maxLength-5-3 NISTXML-SV-II-list-QName-maxLength-5-4 NISTXML-SV-II-list-QName-maxLength-5-5
+list-QName-minLength-5: NISTSchema-SV-II-list-QName-minLength-1 NISTXML-SV-II-list-QName-minLength-1-1 NISTXML-SV-II-list-QName-minLength-1-2 NISTXML-SV-II-list-QName-minLength-1-3 NISTXML-SV-II-list-QName-minLength-1-4 NISTXML-SV-II-list-QName-minLength-1-5
+list-QName-minLength-6: NISTSchema-SV-II-list-QName-minLength-2 NISTXML-SV-II-list-QName-minLength-2-1 NISTXML-SV-II-list-QName-minLength-2-2 NISTXML-SV-II-list-QName-minLength-2-3 NISTXML-SV-II-list-QName-minLength-2-4 NISTXML-SV-II-list-QName-minLength-2-5
+list-QName-minLength-7: NISTSchema-SV-II-list-QName-minLength-3 NISTXML-SV-II-list-QName-minLength-3-1 NISTXML-SV-II-list-QName-minLength-3-2 NISTXML-SV-II-list-QName-minLength-3-3 NISTXML-SV-II-list-QName-minLength-3-4 NISTXML-SV-II-list-QName-minLength-3-5
+list-QName-minLength-8: NISTSchema-SV-II-list-QName-minLength-4 NISTXML-SV-II-list-QName-minLength-4-1 NISTXML-SV-II-list-QName-minLength-4-2 NISTXML-SV-II-list-QName-minLength-4-3 NISTXML-SV-II-list-QName-minLength-4-4 NISTXML-SV-II-list-QName-minLength-4-5
+list-QName-minLength-9: NISTSchema-SV-II-list-QName-minLength-5 NISTXML-SV-II-list-QName-minLength-5-1 NISTXML-SV-II-list-QName-minLength-5-2 NISTXML-SV-II-list-QName-minLength-5-3 NISTXML-SV-II-list-QName-minLength-5-4 NISTXML-SV-II-list-QName-minLength-5-5
+list-QName-length-5: NISTSchema-SV-II-list-QName-length-1 NISTXML-SV-II-list-QName-length-1-1 NISTXML-SV-II-list-QName-length-1-2 NISTXML-SV-II-list-QName-length-1-3 NISTXML-SV-II-list-QName-length-1-4 NISTXML-SV-II-list-QName-length-1-5
+list-QName-length-6: NISTSchema-SV-II-list-QName-length-2 NISTXML-SV-II-list-QName-length-2-1 NISTXML-SV-II-list-QName-length-2-2 NISTXML-SV-II-list-QName-length-2-3 NISTXML-SV-II-list-QName-length-2-4 NISTXML-SV-II-list-QName-length-2-5
+list-QName-length-7: NISTSchema-SV-II-list-QName-length-3 NISTXML-SV-II-list-QName-length-3-1 NISTXML-SV-II-list-QName-length-3-2 NISTXML-SV-II-list-QName-length-3-3 NISTXML-SV-II-list-QName-length-3-4 NISTXML-SV-II-list-QName-length-3-5
+list-QName-length-8: NISTSchema-SV-II-list-QName-length-4 NISTXML-SV-II-list-QName-length-4-1 NISTXML-SV-II-list-QName-length-4-2 NISTXML-SV-II-list-QName-length-4-3 NISTXML-SV-II-list-QName-length-4-4 NISTXML-SV-II-list-QName-length-4-5
+list-QName-length-9: NISTSchema-SV-II-list-QName-length-5 NISTXML-SV-II-list-QName-length-5-1 NISTXML-SV-II-list-QName-length-5-2 NISTXML-SV-II-list-QName-length-5-3 NISTXML-SV-II-list-QName-length-5-4 NISTXML-SV-II-list-QName-length-5-5
 union-anyURI-float-pattern: NISTSchema-SV-IV-union-anyURI-float-pattern-1 NISTXML-SV-IV-union-anyURI-float-pattern-1-1 NISTXML-SV-IV-union-anyURI-float-pattern-1-2 NISTXML-SV-IV-union-anyURI-float-pattern-1-3 NISTXML-SV-IV-union-anyURI-float-pattern-1-4 NISTXML-SV-IV-union-anyURI-float-pattern-1-5
 union-anyURI-float-pattern-1: NISTSchema-SV-IV-union-anyURI-float-pattern-2 NISTXML-SV-IV-union-anyURI-float-pattern-2-1 NISTXML-SV-IV-union-anyURI-float-pattern-2-2 NISTXML-SV-IV-union-anyURI-float-pattern-2-3 NISTXML-SV-IV-union-anyURI-float-pattern-2-4 NISTXML-SV-IV-union-anyURI-float-pattern-2-5
 union-anyURI-float-pattern-2: NISTSchema-SV-IV-union-anyURI-float-pattern-3 NISTXML-SV-IV-union-anyURI-float-pattern-3-1 NISTXML-SV-IV-union-anyURI-float-pattern-3-2 NISTXML-SV-IV-union-anyURI-float-pattern-3-3 NISTXML-SV-IV-union-anyURI-float-pattern-3-4 NISTXML-SV-IV-union-anyURI-float-pattern-3-5
@@ -3765,6 +3832,7 @@ test007: test test.1.v test.6.v test.2.n test.3.n test.4.n test.5.n test.7.n tes
 test008: test test.1.n test.10.n test.11.n test.12.n test.5.n test.7.n test.8.n test.9.n test.2.v test.3.v test.4.v test.6.v
 test009: test test.13.n test.8.n test.1.v test.10.v test.11.v test.12.v test.2.v test.3.v test.4.v test.5.v test.6.v test.7.v test.9.v
 identitytestsuitetest001: test test.1.v test.2.n
+identitytestsuitetest002: test test.1.v test.2.v test.3.n
 identitytestsuitetest003: test test.1.v test.2.v test.3.n
 identitytestsuitetest004: test test.1.v test.2.n test.3.n
 idc004.nogen: = idc004.nogen.n00 idc004.nogen.n01 idc004.nogen.n02 idc004.nogen.n03 idc004.nogen.v00
@@ -4394,6 +4462,7 @@ addB008: =
 addB009: =
 addB010: =
 addB011: = addB011.i
+addB012: = addB012.v
 addB013: = addB013.i
 addB016: =
 addB017: =
@@ -4440,6 +4509,8 @@ addB060: =
 addB061: =
 addB065: =
 addB066: = addB066.i
+addB067: = addB067.v
+addB068: = addB068.i
 addB069: = addB069.i
 addB070: =
 addB070a: =
@@ -4593,6 +4664,7 @@ isDefault060_2: =
 isDefault069: =
 isDefault070: = isDefault070.i
 isDefault071: = isDefault071.v
+isDefault072: = isDefault072.v
 isDefault073: = isDefault073.v
 isDefault074: = isDefault074.v
 isDefault075: = isDefault075.v
@@ -5871,16 +5943,26 @@ anyURI_enumeration001_276: =
 anyURI_enumeration002_277: =
 QName_length001_278: =
 QName_length002_279: =
+QName_length003_280: =
 QName_length004_281: =
 QName_length005_282: =
+QName_length006_283: =
+QName_length007_284: =
 QName_minLength001_285: =
 QName_minLength002_286: =
+QName_minLength003_287: =
 QName_minLength004_288: =
 QName_minLength005_289: =
+QName_minLength006_290: =
+QName_minLength007_291: =
 QName_maxLength001_292: =
 QName_maxLength002_293: =
+QName_maxLength003_294: =
 QName_maxLength004_295: =
 QName_maxLength005_296: =
+QName_pattern001_297: =
+QName_enumeration001_298: =
+QName_enumeration002_299: =
 NOTATION_length001_300: =
 NOTATION_length002_301: =
 NOTATION_length004_303: =
@@ -6883,6 +6965,21 @@ anyURI_b002_1353: = anyURI_b002_1353.v
 anyURI_b004_1354: =
 anyURI_b005_1355: = anyURI_b005_1355.i
 anyURI_b006_1356: =
+QName_length001_1357: = QName_length001_1357.i
+QName_length002_1358: = QName_length002_1358.v
+QName_length003_1359: = QName_length003_1359.i
+QName_minLength001_1360: = QName_minLength001_1360.v
+QName_minLength002_1361: = QName_minLength002_1361.v
+QName_minLength003_1362: = QName_minLength003_1362.i
+QName_minLength004_1363: = QName_minLength004_1363.v
+QName_maxLength001_1364: = QName_maxLength001_1364.i
+QName_maxLength002_1365: = QName_maxLength002_1365.v
+QName_maxLength003_1366: = QName_maxLength003_1366.v
+QName_pattern001_1367: = QName_pattern001_1367.v
+QName_enumeration001_1368: = QName_enumeration001_1368.i
+QName_enumeration002_1369: = QName_enumeration002_1369.v
+QName_enumeration003_1370: = QName_enumeration003_1370.i
+QName_enumeration004_1371: = QName_enumeration004_1371.v
 normalizedString_length001_1387: = normalizedString_length001_1387.i
 normalizedString_length002_1388: = normalizedString_length002_1388.v
 normalizedString_length003_1389: = normalizedString_length003_1389.i
@@ -7544,6 +7641,17 @@ anyURI008_2080: = anyURI008_2080.v
 anyURI009_2081: = anyURI009_2081.v
 anyURI010_2082: = anyURI010_2082.v
 anyURI011_2083: = anyURI011_2083.v
+QName001_2084: = QName001_2084.i
+QName002_2085: = QName002_2085.v
+QName003_2086: = QName003_2086.v
+QName004_2087: = QName004_2087.i
+QName005_2088: = QName005_2088.i
+QName006_2089: = QName006_2089.v
+QName007_2090: = QName007_2090.i
+QName008_2091: = QName008_2091.i
+QName009_2092: =
+QName010_2093: = QName010_2093.i
+QName011_2094: = QName011_2094.i
 normalizedString001_2095: = normalizedString001_2095.v
 normalizedString002_2096: = normalizedString002_2096.v
 normalizedString003_2097: = normalizedString003_2097.v
@@ -7690,6 +7798,7 @@ positiveInteger003_2237: = positiveInteger003_2237.i
 positiveInteger004_2238: = positiveInteger004_2238.v
 positiveInteger005_2239: = positiveInteger005_2239.v
 ID_test64335_2240: = ID_test64335_2240.v
+dtZ100507_2242: =
 dtZ107447_2243: = dtZ107447_2243.v
 dtZ107447_1_2244: = dtZ107447_1_2244.v
 dtZ107447_a_2245: =
@@ -11257,6 +11366,7 @@ reDC1: = reDC1.v
 reDC2: = reDC2.v
 reDC3: = reDC3.v
 reDC4: = reDC4.v
+reDC5: = reDC5.v
 reDE1: = reDE1.v
 reDE2: = reDE2.i
 reDE3: = reDE3.i
@@ -12938,12 +13048,17 @@ ste074v: = ste074v.v
 stE075: = stE075.i
 stE076: = stE076.i
 stE077: = stE077.v
+stE078: = stE078.i
+stE079: = stE079.v
 stE080: = stE080.v
 stE081: = stE081.v
 stE082: = stE082.i
 stE090: = stE090.v
 stE091: = stE091.v
 stE092: = stE092.v
+stE093: = stE093.v
+stE094: = stE094.v
+stE095: = stE095.i
 stE096: = stE096.v
 stE097: = stE097.i
 ste098: = ste098.i
@@ -13089,6 +13204,7 @@ stZ038: =
 stZ039: = stZ039.i
 stZ040: = stZ040.v
 stZ041: =
+stZ042: =
 stZ067: =
 stZ068: =
 stZ069: =

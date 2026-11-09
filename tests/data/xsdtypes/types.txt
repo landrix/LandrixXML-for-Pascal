@@ -87,3 +87,6 @@ u-dec-str	union	b-decimal	string
 u-dec-str-enum	u-dec-str	enumeration=1.0	enumeration=abc
 u-str-dec	union	string	b-decimal
 u-str-dec-enum	u-str-dec	enumeration=1.0	enumeration=abc
+b-QName	QName
+qnameLen	QName	length=1	pattern=[a-z:]+
+qnameEnum	QName	enumeration=a	enumeration=xml:lang

@@ -396,6 +396,8 @@ both the mark and an entry here):
   member types, so the facets of a restricted union are dropped there
   (no test of the suite covers this; in the source code the mark reads
   `Xerces deviation, not in the test suite`).
+- The prefix `xmlns` is bound in QName values, as `xml` is, so
+  `xmlns:xsi` is a valid `xs:QName` (`QName009_2092`).
 - A restriction that has or inherits a `length` may give `minLength` or
   `maxLength` only if its base type has the same one; the errata of XML
   Schema 1.0 allow more (`errF001`).
@@ -456,12 +458,12 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 36,594
-  pass and 2,643 use a construct this library does not support (above
-  all `xs:duration`, `xs:QName`, `xs:all`, substitution
+  load or be rejected, documents that must be valid or invalid) 37,083
+  pass and 2,153 use a construct this library does not support (above
+  all `xs:duration`, `xs:all`, substitution
   groups, `xs:NOTATION`, `xsi:type`); they are reported as unsupported,
-  never accepted silently. Of the 96 failures 30 are invalid schemas that
-  load, as in Xerces; 3 more stop at the resource
+  never accepted silently. Of the 97 failures 30 are invalid schemas that
+  load and 1 a document Xerces accepts too; 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline
   for the CI.
 - The XML Schema reference data (simple types, validator cases, content

@@ -248,7 +248,7 @@ begin
   Dec := LandrixXmlXsdBuiltinType('decimal');
   Check(Str <> nil, 'token known');
   Check(LandrixXmlXsdBuiltinType('duration') = nil, 'duration not supported');
-  Check(LandrixXmlXsdBuiltinType('QName') = nil, 'QName not supported');
+  Check(LandrixXmlXsdBuiltinType('NOTATION') = nil, 'NOTATION not supported');
   CheckFacetError(Bool, xsfEnumeration, 'true', xecInvalidArgument, 'enumeration on boolean');
   CheckFacetError(Str, xsfTotalDigits, '3', xecInvalidArgument, 'totalDigits on a string');
   CheckFacetError(Dec, xsfMaxLength, '3', xecInvalidArgument, 'maxLength on a decimal');
@@ -416,6 +416,70 @@ begin
     'minInclusive-less-than-equal-to-maxInclusive', 'indeterminate date bounds');
   CheckConsistency('NMTOKENS', 'maxLength=2', 'length=3', 'length-minLength-maxLength.2.1',
     'length of a list above the base maxLength');
+end;
+
+type
+  { p and x bound to urn:p, the default namespace to urn:d }
+  TTestContext = class(TLandrixXmlXsdNamespaceContext)
+  public
+    function LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
+      override;
+  end;
+
+function TTestContext.LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
+begin
+  Result := True;
+  if (Prefix = 'p') or (Prefix = 'x') then
+    NamespaceUri := 'urn:p'
+  else if Prefix = '' then
+    NamespaceUri := 'urn:d'
+  else
+  begin
+    NamespaceUri := '';
+    Result := False;
+  end;
+end;
+
+procedure TestQName;
+var
+  QN, R: TLandrixXmlXsdSimpleType;
+  Context: TTestContext;
+  V, W: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+begin
+  QN := LandrixXmlXsdBuiltinType('QName');
+  Check(QN <> nil, 'QName known');
+  Context := TTestContext.Create;
+  R := TLandrixXmlXsdSimpleType.CreateRestriction(QN, '', U('r'));
+  try
+    Check(QN.Validate(U(' p:a '), Context, V, Error), 'prefixed QName');
+    CheckEqualsUtf8(U('urn:p'), V.NamespaceUri, 'namespace of p:a');
+    CheckEqualsUtf8(U('a'), V.LocalName, 'local name of p:a');
+    CheckEqualsUtf8(U('p:a'), LandrixXmlXsdValueText(V), 'text of p:a');
+    Check(QN.Validate(U('a'), Context, W, Error), 'QName without prefix');
+    CheckEqualsUtf8(U('urn:d'), W.NamespaceUri, 'default namespace');
+    Check(LandrixXmlXsdCompareValues(V, W) = LandrixXmlXsdIncomparable, 'p:a and a differ');
+    Check(QN.Validate(U('x:a'), Context, W, Error), 'other prefix');
+    CheckEquals(0, LandrixXmlXsdCompareValues(V, W), 'p:a equals x:a');
+    CheckEqualsUtf8(LandrixXmlXsdValueKey(V), LandrixXmlXsdValueKey(W), 'same key for p:a and x:a');
+    Check(not QN.Validate(U('q:a'), Context, W, Error), 'undeclared prefix');
+    CheckEqualsStr('UndeclaredPrefix', Error.Code, 'code of an undeclared prefix');
+    Check(not QN.Validate(U('p:a'), W, Error), 'no context');
+    CheckEqualsStr('UndeclaredPrefix', Error.Code, 'code without context');
+    Check(QN.Validate(U('a'), W, Error) and (W.NamespaceUri = ''), 'no prefix, no context');
+    Check(not QN.Validate(U('p:1a'), Context, W, Error), 'local part not an NCName');
+    CheckEqualsStr('cvc-datatype-valid.1.2.1', Error.Code, 'code of an invalid QName');
+    Check(not QN.Validate(U(':a'), Context, W, Error), 'empty prefix');
+    { the enumeration resolves in its own context; length does not count }
+    R.AddFacet(xsfEnumeration, U('x:a'), Context, False);
+    R.AddFacet(xsfLength, U('1'));
+    Check(R.Validate(U('p:a'), Context, W, Error), 'enumeration by expanded name');
+    Check(not R.Validate(U('a'), Context, W, Error), 'other namespace not in the enumeration');
+    CheckEqualsStr('cvc-enumeration-valid', Error.Code, 'code of the enumeration');
+  finally
+    R.Free;
+    Context.Free;
+  end;
 end;
 
 procedure TestUnionFacets;
@@ -588,6 +652,7 @@ begin
   RegisterTest('XsdTypes.FacetRules', TestFacetRules);
   RegisterTest('XsdTypes.FacetConsistency', TestFacetConsistency);
   RegisterTest('XsdTypes.UnionFacets', TestUnionFacets);
+  RegisterTest('XsdTypes.QName', TestQName);
   RegisterTest('XsdTypes.CompareValues', TestCompareValues);
   RegisterTest('XsdTypes.ValueFields', TestValueFields);
   RegisterTest('XsdTypes.Lists', TestLists);

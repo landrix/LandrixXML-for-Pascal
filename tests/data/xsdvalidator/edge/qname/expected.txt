@@ -1,0 +1,19 @@
+file a.xml
+error 1 64 UndeclaredPrefix Cannot resolve 'u:a' as a QName: the prefix 'u' is not declared.
+error 1 64 cvc-type.3.1.3 The value 'u:a' of element 'q' is not valid.
+error 1 84 UndeclaredPrefix Cannot resolve 's:a' as a QName: the prefix 's' is not declared.
+error 1 84 cvc-type.3.1.3 The value 's:a' of element 'e' is not valid.
+error 1 114 cvc-enumeration-valid Value 's:a' is not facet-valid with respect to enumeration '[s:a, d:b]'. It must be a value from the enumeration.
+error 1 114 cvc-type.3.1.3 The value 's:a' of element 'e' is not valid.
+error 1 148 cvc-enumeration-valid Value 'b' is not facet-valid with respect to enumeration '[s:a, d:b]'. It must be a value from the enumeration.
+error 1 148 cvc-type.3.1.3 The value 'b' of element 'e' is not valid.
+error 1 184 cvc-elt.5.2.2.2.2 The value 'p:a' of element 'f' does not match the {value constraint} value 's:a'.
+error 1 188 UndeclaredPrefix Cannot resolve 's:a' as a QName: the prefix 's' is not declared.
+error 1 188 cvc-type.3.1.3 The value 's:a' of element 'f' is not valid.
+error 1 211 UndeclaredPrefix Cannot resolve 'u:x' as a QName: the prefix 'u' is not declared.
+error 1 211 cvc-type.3.1.3 The value 'p:a xml:lang u:x' of element 'l' is not valid.
+
+file b.xml
+error 1 19 UndeclaredPrefix Cannot resolve 'x:y' as a QName: the prefix 'x' is not declared.
+error 1 19 cvc-attribute.3 The value 'x:y' of attribute 'a' on element 'R' is not valid with respect to its type, 'QName'.
+error 1 19 cvc-complex-type.3.1 Value 'z' of attribute 'g' of element 'R' is not valid with respect to the corresponding attribute use. Attribute 'g' has a fixed value of 's:z'.

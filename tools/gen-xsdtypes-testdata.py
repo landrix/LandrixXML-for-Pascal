@@ -105,6 +105,11 @@ TYPES = [
     ("u-dec-str-enum", "u-dec-str", [("enumeration", "1.0"), ("enumeration", "abc")]),
     ("u-str-dec", "union", ["string", "b-decimal"]),
     ("u-str-dec-enum", "u-str-dec", [("enumeration", "1.0"), ("enumeration", "abc")]),
+    # QName: no namespace declarations in the document (xml is always
+    # bound); length facets do not apply to QName values
+    ("b-QName", "QName", []),
+    ("qnameLen", "QName", [("length", "1"), ("pattern", "[a-z:]+")]),
+    ("qnameEnum", "QName", [("enumeration", "a"), ("enumeration", "xml:lang")]),
 ]
 
 VALUES = {
@@ -118,6 +123,8 @@ VALUES = {
                "1e", "e1", "1.5E+3", "-1e3", "-1001", "3.4028235e38", "3.4028236e38", "1e-46", "1.4e-45",
                "0x1", "100", "1e2", "abc"],
     "boolean": ["true", "false", "1", "0", "TRUE", "yes", " true ", ""],
+    "qname": ["a", " a ", "p:a", "xml:lang", "xml:a", "a:b:c", ":a", "a:", "1a", "_x", "a b", "", "ab", "xmlns:a",
+              "été"],
     "dateTime": ["2026-10-21T12:00:00", "2026-10-21T24:00:00", "2026-10-21T24:00:01", "2026-10-21T12:00:00Z",
                  "2026-10-21T12:00:00.123+02:00", "2026-10-21T12:00", "2026-10-21", "0000-01-01T00:00:00",
                  "-0001-01-01T00:00:00", "12026-10-21T00:00:00", "02026-10-21T00:00:00", "2026-10-21T12:60:00",
@@ -172,7 +179,7 @@ GROUP = {
     "NCName": "name", "ID": "name", "IDREF": "name", "NMTOKEN": "name", "boolean": "boolean", "decimal": "decimal",
     "float": "double", "double": "double", "dateTime": "dateTime", "time": "time", "date": "date",
     "gYearMonth": "gYearMonth", "gYear": "gYear", "gMonthDay": "gMonthDay", "gDay": "gDay", "gMonth": "gMonth",
-    "hexBinary": "hexBinary", "base64Binary": "base64Binary", "anyURI": "anyURI",
+    "hexBinary": "hexBinary", "base64Binary": "base64Binary", "anyURI": "anyURI", "QName": "qname",
 }
 for t in ["integer", "nonPositiveInteger", "negativeInteger", "long", "int", "short", "byte", "nonNegativeInteger",
           "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "positiveInteger"]:

@@ -11,7 +11,8 @@
  *
  *   file TAB line TAB column TAB code TAB message
  *
- * where code is the leading "cvc-..." identifier of the message. Messages
+ * where code is the leading identifier of the message ("cvc-...", or a
+ * Xerces key such as "UndeclaredPrefix"). Messages
  * are English and UTF-8 encoded; control characters appear as U+XXXX.
  * If the JDK's validator throws a runtime exception for a document (it
  * does when an element exceeds a counted maxOccurs), the line reads
@@ -92,7 +93,7 @@ public class XsdOracle {
         String message = escapeControls(e.getMessage() == null ? "" : e.getMessage());
         String code = "";
         int colon = message.indexOf(':');
-        if (message.startsWith("cvc-") && colon > 0) {
+        if (colon > 0 && message.substring(0, colon).matches("[A-Za-z][A-Za-z0-9.-]*")) {
             code = message.substring(0, colon);
             message = message.substring(colon + 1).trim();
         }

@@ -99,25 +99,43 @@ implementation
 const
   XsiNamespace = 'http://www.w3.org/2001/XMLSchema-instance';
 
+type
+  { the namespace declarations in scope at a node of a schema document }
+  TNodeContext = class(TLandrixXmlXsdNamespaceContext)
+  private
+    FNode: TLandrixXmlNode;
+  public
+    constructor Create(Node: TLandrixXmlNode);
+    function LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
+      override;
+  end;
+
+constructor TNodeContext.Create(Node: TLandrixXmlNode);
+begin
+  inherited Create;
+  FNode := Node;
+end;
+
+function TNodeContext.LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
+begin
+  Result := FNode.LookupNamespace(Prefix, NamespaceUri);
+end;
+
 { Xerces' checkDefaultValid: the value and then its canonical form must
-  be valid for the type }
-function ValidTwice(T: TLandrixXmlXsdSimpleType; const Text: TLandrixXmlUtf8;
+  be valid for the type; QName prefixes resolve at Node }
+function ValidTwice(T: TLandrixXmlXsdSimpleType; const Text: TLandrixXmlUtf8; Node: TLandrixXmlNode;
   out Canonical: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
 var
   Value: TLandrixXmlXsdValue;
+  Context: TNodeContext;
 begin
-  Result := T.Validate(Text, Value, Error) and T.Validate(LandrixXmlXsdValueText(Value), Canonical, Error);
-end;
-
-{ as Xerces: the values after the second validation (of the canonical
-  forms) are compared }
-function SameAttributeValue(Decl: TLandrixXmlXsdAttributeDecl; const A, B: TLandrixXmlUtf8): Boolean;
-var
-  VA, VB: TLandrixXmlXsdValue;
-  Error: TLandrixXmlXsdError;
-begin
-  Result := ValidTwice(Decl.SimpleType, A, VA, Error) and ValidTwice(Decl.SimpleType, B, VB, Error) and
-    (LandrixXmlXsdCompareValues(VA, VB) = 0);
+  Context := TNodeContext.Create(Node);
+  try
+    Result := T.Validate(Text, Context, Value, Error) and
+      T.Validate(LandrixXmlXsdValueText(Value), Context, Canonical, Error);
+  finally
+    Context.Free;
+  end;
 end;
 
 { ---------------------------------------------------------------------- }
@@ -306,6 +324,7 @@ type
     Prohibited: Boolean;
     ValueConstraint: TLandrixXmlXsdValueConstraint;
     ConstraintValue: TLandrixXmlUtf8;
+    ConstraintActual: TLandrixXmlXsdValue;
   end;
 
   { an element declaration with a value constraint, checked when every
@@ -454,8 +473,8 @@ type
       IsField: Boolean): TLandrixXmlXsdPaths;
     procedure ResolveAll;
     procedure CheckElementValue(Check: TElementValueCheck);
-    procedure CheckAttributeValue(Doc: TSchemaDoc; Node: TLandrixXmlNode; Decl: TLandrixXmlXsdAttributeDecl;
-      const Value: TLandrixXmlUtf8);
+    function CheckAttributeValue(Doc: TSchemaDoc; Node: TLandrixXmlNode; Decl: TLandrixXmlXsdAttributeDecl;
+      const Value: TLandrixXmlUtf8): TLandrixXmlXsdValue;
     procedure CheckElementsConsistent(Doc: TSchemaDoc; Node: TLandrixXmlNode; Particle: TLandrixXmlXsdParticle;
       Seen: TLandrixXmlXsdNameMap);
     function OwnParticle(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Mixed: Boolean): TLandrixXmlXsdParticle;
@@ -1148,6 +1167,7 @@ begin
     Use.Required := Item.Required;
     Use.ValueConstraint := Item.ValueConstraint;
     Use.ConstraintValue := Item.ConstraintValue;
+    Use.ConstraintActual := Item.ConstraintActual;
     Result.AddAttribute(Use);
   end;
   Result.AttributeWildcard := Wildcard;
@@ -1572,7 +1592,7 @@ begin
     D.ConstraintValue := Value;
   end;
   if D.ValueConstraint <> xvcNone then
-    CheckAttributeValue(Doc, Node, D, D.ConstraintValue);
+    D.ConstraintActual := CheckAttributeValue(Doc, Node, D, D.ConstraintValue);
   if P <> nil then
     P.State := psDone;
   Result := D;
@@ -1938,6 +1958,7 @@ var
   Child: TLandrixXmlNode;
   LocalName, Value: TLandrixXmlUtf8;
   Facet: TLandrixXmlXsdFacet;
+  Context: TNodeContext;
 begin
   Child := Restriction.FirstChildElement;
   while Child <> nil do
@@ -1976,7 +1997,12 @@ begin
     if not Attr(Child, 'value', Value) then
       Fail(Doc, Child, 'facet ' + Esc(LocalName) + ' without a value');
     try
-      T.AddFacet(Facet, Value, BoolAttr(Child, 'fixed'));
+      Context := TNodeContext.Create(Child);
+      try
+        T.AddFacet(Facet, Value, Context, BoolAttr(Child, 'fixed'));
+      finally
+        Context.Free;
+      end;
     except
       on E: ELandrixXmlError do
       begin
@@ -2697,9 +2723,11 @@ begin
           ' has a default, so its use must be optional');
       if Item.ValueConstraint <> xvcNone then
       begin
-        CheckAttributeValue(Doc, Child, Item.Decl, Item.ConstraintValue);
+        { as Xerces: the values after the second validation (of the
+          canonical forms) are compared }
+        Item.ConstraintActual := CheckAttributeValue(Doc, Child, Item.Decl, Item.ConstraintValue);
         if (Item.Decl.ValueConstraint = xvcFixed) and ((Item.ValueConstraint <> xvcFixed) or
-          not SameAttributeValue(Item.Decl, Item.ConstraintValue, Item.Decl.ConstraintValue)) then
+          (LandrixXmlXsdCompareValues(Item.ConstraintActual, Item.Decl.ConstraintActual) <> 0)) then
           FailCheck(Doc.FileName, Child, 'au-props-correct.2', 'the use of attribute ' + Esc(Item.Decl.Name) +
             ' must have the fixed value ' + Esc(Item.Decl.ConstraintValue) + ' of its declaration');
       end;
@@ -2784,6 +2812,8 @@ begin
   Result.DateTime := Item.DateTime;
   Result.Variety := xsvAtomic;
   Result.Items := nil;
+  Result.NamespaceUri := Item.NamespaceUri;
+  Result.LocalName := Item.LocalName;
 end;
 
 { Java's equals of two actual values; lists (ListData.equals) item by
@@ -2808,17 +2838,6 @@ begin
   Result := True;
 end;
 
-{ as Xerces: the fixed values are compared after the second validation,
-  each with its own type, by Java's equals of the actual values }
-function SameFixedValue(TA: TLandrixXmlXsdSimpleType; const A: TLandrixXmlUtf8;
-  TB: TLandrixXmlXsdSimpleType; const B: TLandrixXmlUtf8): Boolean;
-var
-  VA, VB: TLandrixXmlXsdValue;
-  Error: TLandrixXmlXsdError;
-begin
-  Result := ValidTwice(TA, A, VA, Error) and ValidTwice(TB, B, VB, Error) and SameActualValue(VA, VB);
-end;
-
 { Xerces' validRestrictionOf for the attributes of a restriction (XML
   Schema 1.0, derivation-ok-restriction 2 to 4): Items are the own uses,
   prohibited ones included, Wildcard the own wildcard }
@@ -2829,7 +2848,8 @@ var
   Item: TAttributeItem;
   BaseUse: TLandrixXmlXsdAttributeUse;
   BaseConstraint, OwnConstraint: TLandrixXmlXsdValueConstraint;
-  BaseValue, OwnValue: TLandrixXmlUtf8;
+  BaseValue: TLandrixXmlUtf8;
+  BaseActual, OwnActual: TLandrixXmlXsdValue;
   Prefix: string;
 begin
   Prefix := 'the restriction ' + Esc(T.DisplayName) + ' of ' + Esc(BaseType.DisplayName) + ': ';
@@ -2859,24 +2879,28 @@ begin
     { the effective value constraints: of the use, else of the declaration }
     BaseConstraint := BaseUse.ValueConstraint;
     BaseValue := BaseUse.ConstraintValue;
+    BaseActual := BaseUse.ConstraintActual;
     if BaseConstraint = xvcNone then
     begin
       BaseConstraint := BaseUse.Decl.ValueConstraint;
       BaseValue := BaseUse.Decl.ConstraintValue;
+      BaseActual := BaseUse.Decl.ConstraintActual;
     end;
     OwnConstraint := Item.ValueConstraint;
-    OwnValue := Item.ConstraintValue;
+    OwnActual := Item.ConstraintActual;
     if OwnConstraint = xvcNone then
     begin
       OwnConstraint := Item.Decl.ValueConstraint;
-      OwnValue := Item.Decl.ConstraintValue;
+      OwnActual := Item.Decl.ConstraintActual;
     end;
     if BaseConstraint = xvcFixed then
     begin
       if OwnConstraint <> xvcFixed then
         FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.3.a', Prefix + 'the attribute ' +
           Esc(Item.Decl.Name) + ' must be fixed as in the base');
-      if not SameFixedValue(Item.Decl.SimpleType, OwnValue, BaseUse.Decl.SimpleType, BaseValue) then
+      { as Xerces: the values after the second validation, each with its
+        own type, by Java's equals }
+      if not SameActualValue(OwnActual, BaseActual) then
         FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.3.b', Prefix + 'the attribute ' +
           Esc(Item.Decl.Name) + ' must have the fixed value ' + Esc(BaseValue) + ' of the base');
     end;
@@ -3170,6 +3194,7 @@ begin
           Use.Required := BaseType.Attributes[I].Required;
           Use.ValueConstraint := BaseType.Attributes[I].ValueConstraint;
           Use.ConstraintValue := BaseType.Attributes[I].ConstraintValue;
+          Use.ConstraintActual := BaseType.Attributes[I].ConstraintActual;
           T.AddAttribute(Use);
         end;
         { an extension has the union of the wildcards }
@@ -3198,6 +3223,7 @@ begin
             Use.Required := BaseType.Attributes[I].Required;
             Use.ValueConstraint := BaseType.Attributes[I].ValueConstraint;
             Use.ConstraintValue := BaseType.Attributes[I].ConstraintValue;
+            Use.ConstraintActual := BaseType.Attributes[I].ConstraintActual;
             T.AddAttribute(Use);
           end;
         end;
@@ -3218,6 +3244,7 @@ begin
       Use.Required := Item.Required;
       Use.ValueConstraint := Item.ValueConstraint;
       Use.ConstraintValue := Item.ConstraintValue;
+      Use.ConstraintActual := Item.ConstraintActual;
       T.AddAttribute(Use);
     end;
     T.AttributeWildcard := Wildcard;
@@ -3459,13 +3486,12 @@ end;
 
 { a-props-correct.2 (reported with the code of the failed check, as
   Xerces reports it first) and a-props-correct.3 }
-procedure TLoader.CheckAttributeValue(Doc: TSchemaDoc; Node: TLandrixXmlNode; Decl: TLandrixXmlXsdAttributeDecl;
-  const Value: TLandrixXmlUtf8);
+function TLoader.CheckAttributeValue(Doc: TSchemaDoc; Node: TLandrixXmlNode; Decl: TLandrixXmlXsdAttributeDecl;
+  const Value: TLandrixXmlUtf8): TLandrixXmlXsdValue;
 var
-  Canonical: TLandrixXmlXsdValue;
   Error: TLandrixXmlXsdError;
 begin
-  if not ValidTwice(Decl.SimpleType, Value, Canonical, Error) then
+  if not ValidTwice(Decl.SimpleType, Value, Node, Result, Error) then
     FailCheck(Doc.FileName, Node, Error.Code, 'the value ' + Esc(Value) + ' of attribute ' + Esc(Decl.Name) +
       ' is not valid for its type: ' + Error.Message);
   if Decl.SimpleType.IsIdType then
@@ -3504,7 +3530,9 @@ begin
     end;
   end;
   if Valid then
-    Valid := ValidTwice(T, D.ConstraintValue, Canonical, Error);
+    Valid := ValidTwice(T, D.ConstraintValue, Check.Node, Canonical, Error);
+  if Valid then
+    D.ConstraintActual := Canonical;
   if not Valid then
     FailCheck(Check.Doc.FileName, Check.Node, 'e-props-correct.2', 'the value ' + Esc(D.ConstraintValue) +
       ' of element ' + Esc(D.Name) + ' is not valid for its type');
@@ -3675,19 +3703,15 @@ end;
   element has a simple value, the strings otherwise; a base with mixed
   content has string values }
 function SameElementValue(D, B: TLandrixXmlXsdElementDecl): Boolean;
-var
-  DT, BT: TLandrixXmlXsdSimpleType;
 begin
-  DT := ElementValueType(D);
-  if DT = nil then
+  if ElementValueType(D) = nil then
   begin
     Result := D.ConstraintValue = B.ConstraintValue;
     Exit;
   end;
-  BT := ElementValueType(B);
-  if BT = nil then
-    BT := LandrixXmlXsdBuiltinType('string');
-  Result := SameFixedValue(DT, D.ConstraintValue, BT, B.ConstraintValue);
+  { the actual values the loader stored, each validated with its own
+    type (string for mixed content) }
+  Result := SameActualValue(D.ConstraintActual, B.ConstraintActual);
 end;
 
 { the particle of Parent's model group child, an empty one as nil, and

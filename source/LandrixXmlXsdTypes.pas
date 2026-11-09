@@ -35,10 +35,16 @@
   language, Name, NCName, ID, IDREF, NMTOKEN, boolean, decimal, integer and
   its twelve derived types, float, double, dateTime, time, date,
   gYearMonth, gYear, gMonthDay, gDay, gMonth, hexBinary, base64Binary,
-  anyURI, and the list types NMTOKENS and IDREFS. Not supported
+  anyURI, QName, and the list types NMTOKENS and IDREFS. Not supported
   (LandrixXmlXsdBuiltinType returns nil, the schema loader reports
-  xecUnsupported): duration and its subtypes, QName, NOTATION, ENTITY,
+  xecUnsupported): duration and its subtypes, NOTATION, ENTITY,
   ENTITIES.
+
+  A QName value is resolved with the namespace context given to Validate
+  (TLandrixXmlXsdNamespaceContext): no prefix stands for the default
+  namespace, an undeclared prefix is the error UndeclaredPrefix. Two
+  QNames are equal if namespace and local name are; the length facets do
+  not apply to them (Xerces).
 
   A restriction of a union may have pattern and enumeration facets
   (Xerces): the patterns apply to the value with collapsed white space,
@@ -75,7 +81,7 @@ type
   TLandrixXmlXsdPrimitive = (
     xspAnySimpleType, xspString, xspBoolean, xspDecimal, xspFloat, xspDouble,
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth,
-    xspHexBinary, xspBase64Binary, xspAnyURI
+    xspHexBinary, xspBase64Binary, xspAnyURI, xspQName
   );
 
   { Lexical rules of built-in types derived from string or decimal. }
@@ -116,6 +122,8 @@ type
     DoubleValue: TLandrixXmlDouble;
     BooleanValue: Boolean;
     DateTime: TLandrixXmlXsdDateTime;
+    NamespaceUri: TLandrixXmlUtf8;
+    LocalName: TLandrixXmlUtf8;
   end;
 
   TLandrixXmlXsdAtomicValueArray = array of TLandrixXmlXsdAtomicValue;
@@ -130,7 +138,9 @@ type
     (MemberType: the item type, or the member of a union item type that
     accepted the item), Text the whole value with collapsed white space,
     Length the number of items, Primitive is xspAnySimpleType. Otherwise
-    Variety is xsvAtomic and Items is empty. }
+    Variety is xsvAtomic and Items is empty.
+    For xspQName, NamespaceUri ('' for none) and LocalName are the
+    resolved name; Text keeps the lexical form with the prefix. }
   TLandrixXmlXsdValue = record
     Primitive: TLandrixXmlXsdPrimitive;
     Text: TLandrixXmlUtf8;
@@ -143,6 +153,8 @@ type
     DateTime: TLandrixXmlXsdDateTime;
     Variety: TLandrixXmlXsdVariety;
     Items: TLandrixXmlXsdAtomicValueArray;
+    NamespaceUri: TLandrixXmlUtf8;
+    LocalName: TLandrixXmlUtf8;
   end;
 
   { A failed check: Code is the Xerces code ("cvc-pattern-valid"),
@@ -154,6 +166,15 @@ type
 
   TLandrixXmlXsdSimpleTypeArray = array of TLandrixXmlXsdSimpleType;
   TLandrixXmlXsdValueArray = array of TLandrixXmlXsdValue;
+
+  { The namespace declarations in scope where a value occurs, to resolve
+    the prefixes of QName values. Prefix '' asks for the default
+    namespace; False if the prefix is not declared. }
+  TLandrixXmlXsdNamespaceContext = class
+  public
+    function LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
+      virtual; abstract;
+  end;
 
   { A bound of a range facet. }
   TLandrixXmlXsdBound = record
@@ -203,14 +224,15 @@ type
     function IsTrimmedType: Boolean;
     function CheckPatterns(const Value: TLandrixXmlXsdValue; const TypeName: string;
       out Error: TLandrixXmlXsdError): Boolean;
-    function ParseFacetValue(const Text: TLandrixXmlUtf8; const Code: string): TLandrixXmlXsdValue;
+    function ParseFacetValue(const Text: TLandrixXmlUtf8; const Code: string;
+      Context: TLandrixXmlXsdNamespaceContext): TLandrixXmlXsdValue;
     function ParseBound(Facet: TLandrixXmlXsdFacet; const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
-    function ValidateList(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
-      out Error: TLandrixXmlXsdError): Boolean;
+    function ValidateList(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+      out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
     function GetMemberCount: Integer;
     function GetMember(Index: Integer): TLandrixXmlXsdSimpleType;
-    function ValidateLexical(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
-      out Error: TLandrixXmlXsdError): Boolean;
+    function ValidateLexical(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+      out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
   public
     { A built-in type; used by the unit itself. }
     constructor CreateBuiltin(const Name: TLandrixXmlUtf8; Base: TLandrixXmlXsdSimpleType;
@@ -239,9 +261,20 @@ type
       CreateList or CreateUnion (facets of a list or union go on a
       restriction of it). A union allows pattern and enumeration. }
     procedure AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8; Fixed: Boolean = False);
-    { Checks Text (an element or attribute value as written). }
+      overload;
+    { As above; Context resolves the prefixes of QName values in the facet
+      value (an enumeration), nil for none. }
+    procedure AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8;
+      Context: TLandrixXmlXsdNamespaceContext; Fixed: Boolean); overload;
+    { Checks Text (an element or attribute value as written) without a
+      namespace context: a QName with a prefix other than xml and xmlns
+      is invalid (UndeclaredPrefix), one without has no namespace. }
     function Validate(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
-      out Error: TLandrixXmlXsdError): Boolean;
+      out Error: TLandrixXmlXsdError): Boolean; overload;
+    { Checks Text; Context resolves the prefixes of QName values (also in
+      lists and unions), nil for none. }
+    function Validate(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+      out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean; overload;
     property NamespaceUri: TLandrixXmlUtf8 read FNamespaceUri;
     property Name: TLandrixXmlUtf8 read FName;
     { For an anonymous type: the name messages use, as the schema loader
@@ -1054,6 +1087,20 @@ begin
   Result := True;
 end;
 
+{ The position of the first colon in S, 0 if there is none. }
+function ColonIndex(const S: TLandrixXmlUtf8): Integer;
+var
+  I: Integer;
+begin
+  Result := 0;
+  for I := 1 to Length(S) do
+    if S[I] = ':' then
+    begin
+      Result := I;
+      Exit;
+    end;
+end;
+
 { The lexical check of a primitive type; Normalized is already white space
   processed. }
 function ParsePrimitive(Primitive: TLandrixXmlXsdPrimitive; Rule: TLandrixXmlXsdLexicalRule;
@@ -1076,6 +1123,8 @@ begin
   Value.DateTime.Second := LandrixXmlDecimalZero;
   Value.DateTime.HasTimeZone := False;
   Value.DateTime.TimeZone := 0;
+  Value.NamespaceUri := '';
+  Value.LocalName := '';
   case Primitive of
     xspAnySimpleType, xspString:
       case Rule of
@@ -1128,6 +1177,21 @@ begin
       end;
     xspAnyURI:
       Result := IsValidUri(Normalized);
+    xspQName:
+      begin
+        { an optional prefix before the first colon (Xerces), both parts
+          NCNames; the prefix is resolved by the caller }
+        I := ColonIndex(Normalized);
+        if I > 1 then
+        begin
+          if not IsNameKind(Copy(Normalized, 1, I - 1), xslNCName) then
+            Exit;
+          Value.LocalName := Copy(Normalized, I + 1, MaxInt);
+        end
+        else
+          Value.LocalName := Normalized;
+        Result := IsNameKind(Value.LocalName, xslNCName);
+      end;
   end;
 end;
 
@@ -1275,6 +1339,8 @@ begin
   Item.DoubleValue := Value.DoubleValue;
   Item.BooleanValue := Value.BooleanValue;
   Item.DateTime := Value.DateTime;
+  Item.NamespaceUri := Value.NamespaceUri;
+  Item.LocalName := Value.LocalName;
 end;
 
 function ValueOfItem(const Item: TLandrixXmlXsdAtomicValue): TLandrixXmlXsdValue;
@@ -1290,6 +1356,8 @@ begin
   Result.DateTime := Item.DateTime;
   Result.Variety := xsvAtomic;
   Result.Items := nil;
+  Result.NamespaceUri := Item.NamespaceUri;
+  Result.LocalName := Item.LocalName;
 end;
 
 { The kind of a list value as Xerces compares it (ValidatedInfo
@@ -1363,6 +1431,9 @@ begin
       Result := CompareInt(Ord(A.BooleanValue), Ord(B.BooleanValue));
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth:
       Result := CompareDateTime(A.DateTime, B.DateTime, A.Primitive);
+    xspQName:
+      if (A.NamespaceUri = B.NamespaceUri) and (A.LocalName = B.LocalName) then
+        Result := 0;
   else
     { strings, URIs, binary: equality only, by the normalized lexical
       form (binary values compare case-insensitively for hex) }
@@ -1591,12 +1662,12 @@ end;
 { Code is the constraint code to report, '' for the code of the failed
   check of the base type. }
 function TLandrixXmlXsdSimpleType.ParseFacetValue(const Text: TLandrixXmlUtf8;
-  const Code: string): TLandrixXmlXsdValue;
+  const Code: string; Context: TLandrixXmlXsdNamespaceContext): TLandrixXmlXsdValue;
 var
   Error: TLandrixXmlXsdError;
 begin
   { a facet value must be valid for the base type }
-  if not FBase.Validate(Text, Result, Error) then
+  if not FBase.Validate(Text, Context, Result, Error) then
   begin
     if Code <> '' then
       Error.Code := Code;
@@ -1683,7 +1754,7 @@ var
   Inclusive, Exclusive, Bound: TLandrixXmlXsdBound;
   Error: TLandrixXmlXsdError;
 begin
-  if not FBase.ValidateLexical(Text, Result, Error) then
+  if not FBase.ValidateLexical(Text, nil, Result, Error) then
     InvalidFacetValue(Text, Error);
   BaseBounds(Facet in [xsfMaxInclusive, xsfMaxExclusive], Inclusive, Exclusive);
   Bound.Present := True;
@@ -1902,7 +1973,7 @@ begin
       of a list are checked by the caller) }
     xspAnySimpleType:
       Result := False;
-    xspString, xspHexBinary, xspBase64Binary, xspAnyURI:
+    xspString, xspHexBinary, xspBase64Binary, xspAnyURI, xspQName:
       Result := Facet in [xsfLength, xsfMinLength, xsfMaxLength, xsfPattern, xsfEnumeration, xsfWhiteSpace];
     xspBoolean:
       Result := Facet in [xsfPattern, xsfWhiteSpace];
@@ -1918,6 +1989,12 @@ end;
 
 procedure TLandrixXmlXsdSimpleType.AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8;
   Fixed: Boolean);
+begin
+  AddFacet(Facet, Value, nil, Fixed);
+end;
+
+procedure TLandrixXmlXsdSimpleType.AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8;
+  Context: TLandrixXmlXsdNamespaceContext; Fixed: Boolean);
 var
   V: TLandrixXmlXsdValue;
   Mode: TLandrixXmlXsdWhiteSpace;
@@ -1952,7 +2029,7 @@ begin
       end;
     xsfEnumeration:
       begin
-        V := ParseFacetValue(Value, 'enumeration-valid-restriction');
+        V := ParseFacetValue(Value, 'enumeration-valid-restriction', Context);
         if FEnumerationCount = Length(FEnumeration) then
           SetLength(FEnumeration, 2 * FEnumerationCount + 8);
         FEnumeration[FEnumerationCount] := V;
@@ -2471,6 +2548,9 @@ begin
       end;
     xspBoolean, xspHexBinary, xspBase64Binary:
       Result := ValueTextAs(Value, False);
+    xspQName:
+      Result := LandrixXmlStringToUtf8(IntToStr(Integer(Length(Value.NamespaceUri)))) + ':' +
+        Value.NamespaceUri + Value.LocalName;
   else
     Result := Value.Text;
   end;
@@ -2513,15 +2593,20 @@ end;
 function TLandrixXmlXsdSimpleType.CheckFacets(const Value: TLandrixXmlXsdValue;
   out Error: TLandrixXmlXsdError): Boolean;
 var
-  T: TLandrixXmlXsdSimpleType;
+  T, Start: TLandrixXmlXsdSimpleType;
   I, C, Digits: Integer;
   Found: Boolean;
   TypeName: string;
 begin
   Result := False;
   TypeName := DisplayName;
+  { Xerces checks no length facets for QName values }
+  if (Value.Variety <> xsvList) and (Value.Primitive = xspQName) then
+    T := nil
+  else
+    T := Self;
   { maxLength }
-  T := Self;
+  Start := T;
   while (T <> nil) and (T.FMaxLength < 0) do
     T := T.FBase;
   if (T <> nil) and (Value.Length > T.FMaxLength) then
@@ -2530,7 +2615,7 @@ begin
     Exit;
   end;
   { minLength }
-  T := Self;
+  T := Start;
   while (T <> nil) and (T.FMinLength < 0) do
     T := T.FBase;
   if (T <> nil) and (Value.Length < T.FMinLength) then
@@ -2539,7 +2624,7 @@ begin
     Exit;
   end;
   { length }
-  T := Self;
+  T := Start;
   while (T <> nil) and (T.FLength < 0) do
     T := T.FBase;
   if (T <> nil) and (Value.Length <> T.FLength) then
@@ -2698,8 +2783,8 @@ end;
 
 { As Xerces: the patterns on the whole value, each item, then the facets
   of the list. }
-function TLandrixXmlXsdSimpleType.ValidateList(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
-  out Error: TLandrixXmlXsdError): Boolean;
+function TLandrixXmlXsdSimpleType.ValidateList(const Text: TLandrixXmlUtf8;
+  Context: TLandrixXmlXsdNamespaceContext; out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
 var
   Normalized, Token: TLandrixXmlUtf8;
   T: TLandrixXmlXsdSimpleType;
@@ -2717,6 +2802,8 @@ begin
   Value.Length := 0;
   Value.Variety := xsvList;
   Value.Items := nil;
+  Value.NamespaceUri := '';
+  Value.LocalName := '';
   T := Self;
   while T <> nil do
   begin
@@ -2733,7 +2820,7 @@ begin
       Inc(I);
     Token := Copy(Normalized, Start, I - Start);
     Inc(I);
-    if not FItemType.Validate(Token, Item, Error) then
+    if not FItemType.Validate(Token, Context, Item, Error) then
       Exit;
     if Count = Length(Value.Items) then
       SetLength(Value.Items, 2 * Count + 4);
@@ -2747,6 +2834,12 @@ end;
 
 function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
   out Error: TLandrixXmlXsdError): Boolean;
+begin
+  Result := Validate(Text, nil, Value, Error);
+end;
+
+function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+  out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
 var
   I: Integer;
   MemberError: TLandrixXmlXsdError;
@@ -2759,7 +2852,7 @@ begin
   Value.Items := nil;
   if FVariety = xsvList then
   begin
-    Result := ValidateList(Text, Value, Error);
+    Result := ValidateList(Text, Context, Value, Error);
     Exit;
   end;
   if FVariety = xsvUnion then
@@ -2773,6 +2866,8 @@ begin
       Value.RawText := Text;
       Value.MemberType := nil;
       Value.Length := 0;
+      Value.NamespaceUri := '';
+      Value.LocalName := '';
       T := Self;
       while T <> nil do
       begin
@@ -2782,7 +2877,7 @@ begin
       end;
     end;
     for I := 0 to Integer(Length(FMembers)) - 1 do
-      if FMembers[I].Validate(Text, Value, MemberError) then
+      if FMembers[I].Validate(Text, Context, Value, MemberError) then
       begin
         Result := CheckFacets(Value, Error);
         Exit;
@@ -2793,15 +2888,16 @@ begin
       DisplayName + '''.');
     Exit;
   end;
-  Result := ValidateLexical(Text, Value, Error) and CheckFacets(Value, Error);
+  Result := ValidateLexical(Text, Context, Value, Error) and CheckFacets(Value, Error);
 end;
 
 { An atomic value up to the facets other than patterns: white space, the
   patterns of all types and the lexical form (Xerces' getActualValue). }
-function TLandrixXmlXsdSimpleType.ValidateLexical(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
-  out Error: TLandrixXmlXsdError): Boolean;
+function TLandrixXmlXsdSimpleType.ValidateLexical(const Text: TLandrixXmlUtf8;
+  Context: TLandrixXmlXsdNamespaceContext; out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
 var
-  Normalized: TLandrixXmlUtf8;
+  Normalized, Prefix, Uri: TLandrixXmlUtf8;
+  Colon: Integer;
   T: TLandrixXmlXsdSimpleType;
   TypeName: string;
   Found: Boolean;
@@ -2824,6 +2920,8 @@ begin
   Value.Text := Normalized;
   Value.RawText := Text;
   Value.MemberType := Self;
+  Value.NamespaceUri := '';
+  Value.LocalName := '';
   T := Self;
   while T <> nil do
   begin
@@ -2845,6 +2943,34 @@ begin
       SetError(Error, 'cvc-datatype-valid.1.2.1', Quote(Normalized) + ' is not a valid value for ''' +
         ValidatorName + '''.');
     Exit;
+  end;
+  if FPrimitive = xspQName then
+  begin
+    { the prefix in the namespace context; none: the default namespace }
+    Colon := ColonIndex(Normalized);
+    if Colon > 1 then
+      Prefix := Copy(Normalized, 1, Colon - 1)
+    else
+      Prefix := '';
+    if (Context = nil) or not Context.LookupNamespace(Prefix, Uri) then
+    begin
+      { xml and xmlns are always bound (Namespaces in XML 1.0, section 3).
+        Xerces deviation: QName009_2092. So xmlns:xsi is a valid QName,
+        though no declaration can bind the prefix xmlns }
+      if Prefix = 'xml' then
+        Uri := LandrixXmlNamespaceXml
+      else if Prefix = 'xmlns' then
+        Uri := LandrixXmlNamespaceXmlns
+      else if Prefix <> '' then
+      begin
+        SetError(Error, 'UndeclaredPrefix', 'Cannot resolve ' + Quote(Normalized) +
+          ' as a QName: the prefix ' + Quote(Prefix) + ' is not declared.');
+        Exit;
+      end
+      else
+        Uri := '';
+    end;
+    Value.NamespaceUri := Uri;
   end;
   Result := True;
 end;
@@ -2945,6 +3071,7 @@ begin
   Add('dateTime', 'anySimpleType', xspDateTime, xwsCollapse, xslNone);
   Add('time', 'anySimpleType', xspTime, xwsCollapse, xslNone);
   Add('date', 'anySimpleType', xspDate, xwsCollapse, xslNone);
+  Add('QName', 'anySimpleType', xspQName, xwsCollapse, xslNone);
   Add('gYearMonth', 'anySimpleType', xspGYearMonth, xwsCollapse, xslNone);
   Add('gYear', 'anySimpleType', xspGYear, xwsCollapse, xslNone);
   Add('gMonthDay', 'anySimpleType', xspGMonthDay, xwsCollapse, xslNone);

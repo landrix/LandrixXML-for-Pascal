@@ -2530,3 +2530,48 @@ u-str-dec-enum	abc
 u-str-dec-enum	 abc	cvc-enumeration-valid
 u-str-dec-enum	7	cvc-enumeration-valid
 u-str-dec-enum	1e0	cvc-enumeration-valid
+b-QName	a	
+b-QName	 a 	
+b-QName	p:a	UndeclaredPrefix
+b-QName	xml:lang	
+b-QName	xml:a	
+b-QName	a:b:c	cvc-datatype-valid.1.2.1
+b-QName	:a	cvc-datatype-valid.1.2.1
+b-QName	a:	cvc-datatype-valid.1.2.1
+b-QName	1a	cvc-datatype-valid.1.2.1
+b-QName	_x	
+b-QName	a b	cvc-datatype-valid.1.2.1
+b-QName		cvc-datatype-valid.1.2.1
+b-QName	ab	
+b-QName	xmlns:a	
+b-QName	hex:C3A974C3A9	
+qnameLen	a	
+qnameLen	 a 	
+qnameLen	p:a	UndeclaredPrefix
+qnameLen	xml:lang	
+qnameLen	xml:a	
+qnameLen	a:b:c	cvc-datatype-valid.1.2.1
+qnameLen	:a	cvc-datatype-valid.1.2.1
+qnameLen	a:	cvc-datatype-valid.1.2.1
+qnameLen	1a	cvc-pattern-valid
+qnameLen	_x	cvc-pattern-valid
+qnameLen	a b	cvc-pattern-valid
+qnameLen		cvc-pattern-valid
+qnameLen	ab	
+qnameLen	xmlns:a	
+qnameLen	hex:C3A974C3A9	cvc-pattern-valid
+qnameEnum	a	
+qnameEnum	 a 	
+qnameEnum	p:a	UndeclaredPrefix
+qnameEnum	xml:lang	
+qnameEnum	xml:a	cvc-enumeration-valid
+qnameEnum	a:b:c	cvc-datatype-valid.1.2.1
+qnameEnum	:a	cvc-datatype-valid.1.2.1
+qnameEnum	a:	cvc-datatype-valid.1.2.1
+qnameEnum	1a	cvc-datatype-valid.1.2.1
+qnameEnum	_x	cvc-enumeration-valid
+qnameEnum	a b	cvc-datatype-valid.1.2.1
+qnameEnum		cvc-datatype-valid.1.2.1
+qnameEnum	ab	cvc-enumeration-valid
+qnameEnum	xmlns:a	cvc-enumeration-valid
+qnameEnum	hex:C3A974C3A9	cvc-enumeration-valid
