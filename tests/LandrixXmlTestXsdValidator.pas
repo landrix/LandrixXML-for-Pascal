@@ -345,10 +345,11 @@ procedure TestLoadErrors;
 begin
   CheckLoadError('<xs:simpleType name="l"><xs:list itemType="xs:int"/></xs:simpleType>' +
     '<xs:simpleType name="ll"><xs:list itemType="l"/></xs:simpleType>', xecSchema, 'a list of lists');
-  CheckLoadError('<xs:element name="r" type="xs:ENTITIES"/>', xecUnsupported, 'xs:ENTITIES');
+  CheckLoadError('<xs:complexType name="c"><xs:complexContent><xs:extension base="xs:anyType"/>' +
+    '</xs:complexContent></xs:complexType>', xecUnsupported, 'extending xs:anyType');
   CheckLoadError('<xs:element name="h" substitutionGroup="r"/><xs:element name="r" substitutionGroup="h"/>',
     xecSchema, 'circular substitution group');
-  CheckLoadError('<xs:element name="r" type="xs:ENTITY"/>', xecUnsupported, 'xs:ENTITY');
+  CheckLoadError('<xs:element name="r" type="xs:error"/>', xecSchema, 'no built-in type');
   CheckLoadError('<xs:element name="r" type="missing"/>', xecSchema, 'unknown type');
   CheckLoadError('<xs:element name="r"/><xs:element name="r"/>', xecSchema, 'duplicate element');
   CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence><xs:element ref="nothing"/></xs:sequence></xs:complexType></xs:element>',
@@ -481,9 +482,11 @@ var
   Reader: TLandrixXmlReader;
   I: Integer;
   Xml: TLandrixXmlUtf8;
+  Doc: TLandrixXmlDocument;
 begin
   FileName := TempSchema('<xs:element name="r"><xs:complexType><xs:sequence>' +
-    '<xs:element name="a" type="xs:int" maxOccurs="unbounded"/></xs:sequence></xs:complexType></xs:element>');
+    '<xs:element name="a" type="xs:int" maxOccurs="unbounded"/><xs:element name="e" type="xs:ENTITY" minOccurs="0"/>' +
+    '</xs:sequence></xs:complexType></xs:element>');
   S := LandrixXmlXsdLoadSchema(FileName);
   V := TLandrixXmlXsdValidator.Create(S);
   Reader := TLandrixXmlReader.Create;
@@ -503,17 +506,69 @@ begin
     V.ValidateReader(Reader);
     CheckEquals(1, V.ErrorCount, 'limited');
     Check(V.Truncated, 'truncated');
-    { an xsi:type naming a built-in type that is not supported is
-      reported, never ignored }
+    { an ENTITY value names an unparsed entity of the internal subset,
+      also when the document is loaded first }
     V.MaxErrors := 0;
     Xml := '<r xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">' +
-      '<a xsi:type="xs:ENTITY">e</a></r>';
+      '<a>1</a><e>e</e></r>';
     Reader.LoadFromUtf8(Xml);
-    Check(not V.ValidateReader(Reader), 'xsi:type');
-    Check(V.ErrorCount > 0, 'an error for xsi:type');
-    CheckEqualsStr('unsupported', V.Errors[0].Code, 'xs:ENTITY is unsupported');
+    Check(not V.ValidateReader(Reader), 'ENTITY');
+    Check(V.ErrorCount > 0, 'an error for ENTITY');
+    CheckEqualsStr('UndeclaredEntity', V.Errors[0].Code, 'no unparsed entity e');
     for I := 0 to V.ErrorCount - 1 do
       Check(V.Errors[I].Code <> '', 'every error has a code');
+    Xml := '<!DOCTYPE r [<!ENTITY e SYSTEM "e.gif" NDATA gif><!NOTATION gif SYSTEM "v">]>' + Xml;
+    Reader.LoadFromUtf8(Xml);
+    Check(V.ValidateReader(Reader), 'unparsed entity e');
+    Doc := TLandrixXmlDocument.Create;
+    try
+      Doc.LoadFromUtf8(Xml);
+      Check(V.ValidateDocument(Doc), 'unparsed entity e in a document');
+    finally
+      Doc.Free;
+    end;
+    { a parameter entity that refers to itself is not well-formed; one that
+      expands exponentially stops at the limit; both only matter when an
+      ENTITY value is checked }
+    Reader.LoadFromUtf8('<!DOCTYPE r [<!ENTITY % p "%p;%p;"> %p;]><r><a>1</a></r>');
+    Check(V.ValidateReader(Reader), 'no ENTITY value');
+    Reader.LoadFromUtf8('<!DOCTYPE r [<!ENTITY % p "%p;%p;"> %p;]><r><a>1</a><e>e</e></r>');
+    try
+      V.ValidateReader(Reader);
+      FailNotRaised('recursive parameter entity');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecSyntax), Ord(E.Code), 'recursive parameter entity');
+    end;
+    Doc := TLandrixXmlDocument.Create;
+    try
+      Doc.LoadFromUtf8('<!DOCTYPE r [<!ENTITY % p "%p;%p;"> %p;]><r><a>1</a><e>e</e></r>');
+      try
+        V.ValidateDocument(Doc);
+        FailNotRaised('recursive parameter entity in a document');
+      except
+        on E: ELandrixXmlError do
+          CheckEquals(Ord(xecSyntax), Ord(E.Code), 'recursive parameter entity in a document');
+      end;
+    finally
+      Doc.Free;
+    end;
+    Reader.LoadFromUtf8('<!DOCTYPE r [<!ENTITY % a "<!ENTITY e SYSTEM ''e.gif'' NDATA gif>">' +
+      '<!ENTITY % b "%a;%a;%a;%a;%a;%a;%a;%a;%a;%a;"><!ENTITY % c "%b;%b;%b;%b;%b;%b;%b;%b;%b;%b;">' +
+      '<!ENTITY % d "%c;%c;%c;%c;%c;%c;%c;%c;%c;%c;"><!ENTITY % f "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;">' +
+      '<!ENTITY % g "%f;%f;%f;%f;%f;%f;%f;%f;%f;%f;"><!ENTITY % h "%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;">' +
+      '<!ENTITY % i "%h;%h;%h;%h;%h;%h;%h;%h;%h;%h;"><!ENTITY % j "%i;%i;%i;%i;%i;%i;%i;%i;%i;%i;">' +
+      '<!ENTITY % k "%j;%j;%j;%j;%j;%j;%j;%j;%j;%j;"> %k;]><r><a>1</a><e>e</e></r>');
+    try
+      V.ValidateReader(Reader);
+      FailNotRaised('exponential parameter entities');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecLimit), Ord(E.Code), 'exponential parameter entities');
+    end;
+    Reader.LoadFromUtf8('<!DOCTYPE r [<!ENTITY % a "<!ENTITY e SYSTEM ''e.gif'' NDATA gif>">' +
+      '<!ENTITY % b "%a;%a;"> %b;]><r><a>1</a><e>e</e></r>');
+    Check(V.ValidateReader(Reader), 'nested parameter entities');
   finally
     Reader.Free;
     V.Free;

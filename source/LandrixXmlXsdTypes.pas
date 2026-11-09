@@ -32,12 +32,13 @@
   length facets (counting items) and enumeration.
 
   Built-in types: anySimpleType, string, normalizedString, token,
-  language, Name, NCName, ID, IDREF, NMTOKEN, boolean, decimal, integer and
+  language, Name, NCName, ID, IDREF, ENTITY, NMTOKEN, boolean, decimal, integer and
   its twelve derived types, float, double, dateTime, time, date,
   gYearMonth, gYear, gMonthDay, gDay, gMonth, duration, hexBinary,
-  base64Binary, anyURI, QName, NOTATION, and the list types NMTOKENS and
-  IDREFS. Not supported (LandrixXmlXsdBuiltinType returns nil, the schema
-  loader reports xecUnsupported): ENTITY, ENTITIES.
+  base64Binary, anyURI, QName, NOTATION, and the list types NMTOKENS,
+  IDREFS and ENTITIES. An ENTITY value is checked here as an NCName; that
+  it names an unparsed entity of the document is checked by the
+  validator, as ID and IDREF values are.
 
   A duration is parsed and ordered as Xerces does: whole numbers up to
   2147483647, seconds with a fraction (also ".5S"); the order adds both
@@ -3302,12 +3303,14 @@ end;
 var
   IdTypeCache: TLandrixXmlXsdSimpleType = nil;
   IdRefTypeCache: TLandrixXmlXsdSimpleType = nil;
+  EntityTypeCache: TLandrixXmlXsdSimpleType = nil;
 
 function TLandrixXmlXsdSimpleType.IsTrimmedType: Boolean;
 begin
   if FPrimitive = xspString then
     Result := ((IdTypeCache <> nil) and IsDerivedFrom(IdTypeCache)) or
-      ((IdRefTypeCache <> nil) and IsDerivedFrom(IdRefTypeCache))
+      ((IdRefTypeCache <> nil) and IsDerivedFrom(IdRefTypeCache)) or
+      ((EntityTypeCache <> nil) and IsDerivedFrom(EntityTypeCache))
   else
     Result := not (FPrimitive in [xspAnySimpleType, xspBase64Binary]);
 end;
@@ -3615,6 +3618,7 @@ begin
   Add('NCName', 'Name', xspString, xwsCollapse, xslNCName);
   Add('ID', 'NCName', xspString, xwsCollapse, xslNCName);
   Add('IDREF', 'NCName', xspString, xwsCollapse, xslNCName);
+  Add('ENTITY', 'NCName', xspString, xwsCollapse, xslNCName);
   Add('NMTOKEN', 'token', xspString, xwsCollapse, xslNmToken);
   Add('boolean', 'anySimpleType', xspBoolean, xwsCollapse, xslNone);
   Add('decimal', 'anySimpleType', xspDecimal, xwsCollapse, xslNone);
@@ -3649,6 +3653,7 @@ begin
   Add('anyURI', 'anySimpleType', xspAnyURI, xwsCollapse, xslNone);
   AddList('NMTOKENS', 'NMTOKEN');
   AddList('IDREFS', 'IDREF');
+  AddList('ENTITIES', 'ENTITY');
 end;
 
 function LandrixXmlXsdBuiltinType(const LocalName: TLandrixXmlUtf8): TLandrixXmlXsdSimpleType;
@@ -3661,6 +3666,7 @@ initialization
   CreateBuiltinTypes;
   IdTypeCache := Find('ID');
   IdRefTypeCache := Find('IDREF');
+  EntityTypeCache := Find('ENTITY');
 
 finalization
   BuiltinTypes.Free;

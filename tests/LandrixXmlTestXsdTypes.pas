@@ -248,7 +248,9 @@ begin
   Dec := LandrixXmlXsdBuiltinType('decimal');
   Check(Str <> nil, 'token known');
   Check(LandrixXmlXsdBuiltinType('duration') <> nil, 'duration known');
-  Check(LandrixXmlXsdBuiltinType('ENTITY') = nil, 'ENTITY not supported');
+  Check(LandrixXmlXsdBuiltinType('ENTITY') <> nil, 'ENTITY known');
+  Check(LandrixXmlXsdBuiltinType('ENTITIES') <> nil, 'ENTITIES known');
+  Check(LandrixXmlXsdBuiltinType('error') = nil, 'xs:error unknown');
   Check(LandrixXmlXsdBuiltinType('NOTATION') <> nil, 'NOTATION known');
   CheckFacetError(Bool, xsfEnumeration, 'true', xecInvalidArgument, 'enumeration on boolean');
   CheckFacetError(Str, xsfTotalDigits, '3', xecInvalidArgument, 'totalDigits on a string');
@@ -674,7 +676,8 @@ begin
     Check(LandrixXmlXsdBuiltinType('NMTOKENS').Variety = xsvList, 'NMTOKENS');
     Check(not LandrixXmlXsdBuiltinType('IDREFS').Validate(U(' '), W, Error), 'IDREFS needs an item');
     CheckEqualsStr('cvc-minLength-valid', Error.Code, 'IDREFS minLength');
-    Check(LandrixXmlXsdBuiltinType('ENTITIES') = nil, 'ENTITIES is not supported');
+    Check(not LandrixXmlXsdBuiltinType('ENTITIES').Validate(U(' '), W, Error), 'ENTITIES needs an item');
+    Check(LandrixXmlXsdBuiltinType('ENTITIES').Validate(U('a b'), W, Error), 'ENTITIES of NCNames');
     { a list of lists, or of a union with a list member }
     UL := TLandrixXmlXsdSimpleType.CreateUnion([LandrixXmlXsdBuiltinType('int'), L], '', U('ul'));
     try

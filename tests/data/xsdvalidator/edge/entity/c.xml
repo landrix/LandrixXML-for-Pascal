@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc [
+  <!ENTITY % decl "<!ENTITY pic SYSTEM 'pic.gif' NDATA GIF>">
+  <!ENTITY % decl "<!ENTITY other SYSTEM 'other.gif' NDATA GIF>">
+  <!ENTITY % deep '<!ENTITY deep PUBLIC "-//X//Deep" "deep.gif" NDATA GIF>'>
+  <!ENTITY % unused "<!ENTITY never SYSTEM 'never.gif' NDATA GIF>">
+  <!ENTITY % external SYSTEM "external.ent">
+  %decl;
+  %deep;
+  <!ENTITY % refs "<!ENTITY p&#105;x SYSTEM 'pix.gif' NDATA GIF>&#x3C;!ENTITY hexed SYSTEM 'h.gif' NDATA GIF&#62;">
+  %refs;
+  <!NOTATION GIF SYSTEM "viewer">
+]>
+<doc a="pic">
+  <e>deep</e>
+  <e>other</e>
+  <e>never</e>
+  <l>pic deep pix hexed</l>
+</doc>

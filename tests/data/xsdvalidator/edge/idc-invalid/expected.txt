@@ -1,0 +1,137 @@
+file a.xml
+error 3 13 cvc-datatype-valid.1.2.1 'a' is not a valid value for 'integer'.
+error 3 13 cvc-attribute.3 The value 'a' of attribute 'v' on element 'x' is not valid with respect to its type, 'int'.
+error 4 13 cvc-datatype-valid.1.2.1 'b' is not a valid value for 'integer'.
+error 4 13 cvc-attribute.3 The value 'b' of attribute 'v' on element 'x' is not valid with respect to its type, 'int'.
+error 6 13 cvc-id.2 There are multiple occurrences of ID value 'q'.
+error 6 13 cvc-attribute.3 The value 'q' of attribute 'v' on element 'i' is not valid with respect to its type, 'ID'.
+error 6 13 cvc-identity-constraint.4.1 Duplicate unique value [q] declared for identity constraint "ui" of element "doc".
+error 8 11 cvc-id.2 There are multiple occurrences of ID value 'q'.
+error 8 11 cvc-type.3.1.3 The value 'q' of element 'e' is not valid.
+error 9 11 cvc-id.2 There are multiple occurrences of ID value 'q'.
+error 9 11 cvc-type.3.1.3 The value 'q' of element 'e' is not valid.
+error 9 11 cvc-identity-constraint.4.1 Duplicate unique value [q] declared for identity constraint "ue" of element "doc".
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <i>t</i>\n</doc>\n
+error 8 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'i'. One of '{e}' is expected.
+error 8 11 cvc-complex-type.2.1 Element 'i' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <i v="q"/><x v="2"/>\n  \n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 4 23 cvc-complex-type.2.4.a Invalid content was found starting with element 'x'. One of '{i, e}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q">999999999</i>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 5 25 cvc-complex-type.2.1 Element 'i' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  \n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  \n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2" unknown="1"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 4 25 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'x'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  \n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <x v="2"/><e>t</e>\n</doc>\n
+error 8 13 cvc-complex-type.2.4.a Invalid content was found starting with element 'x'. One of '{e}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e unknown="1">t</e>\n</doc>\n
+error 8 18 cvc-type.3.1.1 Element 'e' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q">  a  b  </i>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 5 24 cvc-complex-type.2.1 Element 'i' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2">true</x>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 4 20 cvc-complex-type.2.1 Element 'x' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="r"/><i v="q"/>\n  \n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/><x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 3 23 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "ux" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  \n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <e v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 6 13 cvc-type.3.1.1 Element 'e' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'v' was found.
+error 6 13 cvc-datatype-valid.1.2.1 '' is not a valid value for 'NCName'.
+error 6 13 cvc-type.3.1.3 The value '' of element 'e' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v=""/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 6 12 cvc-datatype-valid.1.2.1 '' is not a valid value for 'NCName'.
+error 6 12 cvc-attribute.3 The value '' of attribute 'v' on element 'i' is not valid with respect to its type, 'ID'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="0"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <e>s</e><i v="r"/>\n  \n  <e>t</e>\n</doc>\n
+error 6 21 cvc-complex-type.2.4.a Invalid content was found starting with element 'i'. One of '{e}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r">2026-13-01</i>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 6 26 cvc-complex-type.2.1 Element 'i' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="2"/><x v="1"/>\n  \n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <i v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 4 13 cvc-datatype-valid.1.2.1 '2' is not a valid value for 'NCName'.
+error 4 13 cvc-attribute.3 The value '2' of attribute 'v' on element 'i' is not valid with respect to its type, 'ID'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <e>s</e><x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  \n  <e>t</e>\n</doc>\n
+error 4 21 cvc-complex-type.2.4.a Invalid content was found starting with element 'x'. One of '{e}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r" unknown="1"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 6 25 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'i'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="x"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 3 13 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 3 13 cvc-attribute.3 The value 'x' of attribute 'v' on element 'x' is not valid with respect to its type, 'int'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e unknown="1">s</e>\n  <e>t</e>\n</doc>\n
+error 7 18 cvc-type.3.1.1 Element 'e' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <x>s</x>\n  <e>t</e>\n</doc>\n
+error 7 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'x'. One of '{i, e}' is expected.
+error 7 11 cvc-complex-type.2.1 Element 'x' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  \n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <e v="2"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 4 13 cvc-type.3.1.1 Element 'e' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'v' was found.
+error 4 13 cvc-datatype-valid.1.2.1 '' is not a valid value for 'NCName'.
+error 4 13 cvc-type.3.1.3 The value '' of element 'e' is not valid.
+error 5 13 cvc-complex-type.2.4.a Invalid content was found starting with element 'i'. One of '{e}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/><i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 5 23 cvc-id.2 There are multiple occurrences of ID value 'q'.
+error 5 23 cvc-attribute.3 The value 'q' of attribute 'v' on element 'i' is not valid with respect to its type, 'ID'.
+error 5 23 cvc-identity-constraint.4.1 Duplicate unique value [q] declared for identity constraint "ui" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2">1.005</x>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 4 21 cvc-complex-type.2.1 Element 'x' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="2001-02-30"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 6 22 cvc-datatype-valid.1.2.1 '2001-02-30' is not a valid value for 'NCName'.
+error 6 22 cvc-attribute.3 The value '2001-02-30' of attribute 'v' on element 'i' is not valid with respect to its type, 'ID'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  \n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="-5"/>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2">x</x>\n  <i v="q"/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 4 17 cvc-complex-type.2.1 Element 'x' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v=""/>\n  <i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 5 12 cvc-datatype-valid.1.2.1 '' is not a valid value for 'NCName'.
+error 5 12 cvc-attribute.3 The value '' of attribute 'v' on element 'i' is not valid with respect to its type, 'ID'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <x v="1"/>\n  <x v="2"/>\n  <i v="q"/>\n  <i v="r"/><i v="r"/>\n  <e>s</e>\n  <e>t</e>\n</doc>\n
+error 6 23 cvc-id.2 There are multiple occurrences of ID value 'r'.
+error 6 23 cvc-attribute.3 The value 'r' of attribute 'v' on element 'i' is not valid with respect to its type, 'ID'.
+error 6 23 cvc-identity-constraint.4.1 Duplicate unique value [r] declared for identity constraint "ui" of element "doc".

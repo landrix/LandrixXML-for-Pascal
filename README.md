@@ -402,6 +402,9 @@ both the mark and an entry here):
   `Xerces deviation, not in the test suite`).
 - The prefix `xmlns` is bound in QName values, as `xml` is, so
   `xmlns:xsi` is a valid `xs:QName` (`QName009_2092`).
+- The versioning attributes of XML Schema 1.1 (`vc:typeAvailable` and
+  the like) are not read, so a reference to a type that only XML Schema
+  1.1 has (`xs:error`) is an error (`vc014`).
 - A restriction that has or inherits a `length` may give `minLength` or
   `maxLength` only if its base type has the same one; the errata of XML
   Schema 1.0 allow more (`errF001`).
@@ -427,6 +430,14 @@ Differences from Xerces, also on purpose:
 - The seconds of dates, times and durations are exact decimals; Xerces
   uses doubles, so values with more than about 15 significant digits may
   compare differently.
+- An `xs:ENTITY` value must name an unparsed entity declared in the
+  internal subset of the document's DOCTYPE (also through an internal
+  parameter entity); the external subset is never
+  read (no DTD processing), so an entity declared only there is reported
+  as undeclared, and attribute defaults of the DTD are not added. The
+  internal subset is read when the first ENTITY value is checked: a
+  parameter entity that refers to itself raises `xecSyntax`, one that
+  nests deeper than 64 levels or expands to more than 1 MiB `xecLimit`.
 - The loader checks each schema document against the schema for schemas
   (attributes, their values, children and their order) and the facets of
   each simple type against each other and against its base type (as
@@ -474,11 +485,12 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 39,152
-  pass and 76 use a construct this library does not support (above
-  all `xs:ENTITY`); they are reported as unsupported,
-  never accepted silently. Of the 105 failures 30 are invalid schemas that
-  load and 2 documents Xerces accepts too; 3 more stop at the resource
+  load or be rejected, documents that must be valid or invalid) 39,188
+  pass and 37 use a construct this library does not support (above
+  all unusual XPath expressions in identity constraints); they are
+  reported as unsupported, never accepted silently. Of the 108 failures
+  30 are invalid schemas that load, 2 documents Xerces accepts too and 3
+  a schema that Xerces rejects as well (`vc014`); 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline
   for the CI.
 - The XML Schema reference data (simple types, validator cases, content

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc [
+  <!ENTITY pic SYSTEM "pic.gif" NDATA GIF>
+  <!ENTITY pic SYSTEM "other.gif">
+  <!ENTITY text "parsed">
+  <!ENTITY file SYSTEM "file.xml">
+  <!ENTITY late "x">
+  <!ENTITY late SYSTEM "late.gif" NDATA GIF>
+  <!ENTITY % param SYSTEM "param.gif">
+  <!-- <!ENTITY hidden SYSTEM "h.gif" NDATA GIF> -->
+  <?pi <!ENTITY pinned SYSTEM "p.gif" NDATA GIF> ?>
+  <!ENTITY quoted "<!ENTITY fake SYSTEM 'f.gif' NDATA GIF>">
+  <!ENTITY tricky SYSTEM "]> 'x" NDATA GIF>
+  <!NOTATION GIF SYSTEM "viewer">
+]>
+<doc a="text">
+  <e/>
+  <e>file</e>
+  <e>1pic</e>
+  <e>a  b</e>
+  <p>pic</p>
+  <p>map</p>
+  <l>pic late</l>
+  <l>hidden pic param</l>
+  <l> </l>
+  <u>pinned</u>
+  <u>fake</u>
+  <u>tricky</u>
+  <k id="pic"/>
+  <k id="pic"/>
+</doc>

@@ -1,0 +1,31 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="doc">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="x" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="v" type="xs:int"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="i" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="v" type="xs:ID"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="e" type="xs:ID" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+    <xs:unique name="ux">
+      <xs:selector xpath="x"/>
+      <xs:field xpath="@v"/>
+    </xs:unique>
+    <xs:unique name="ui">
+      <xs:selector xpath="i"/>
+      <xs:field xpath="@v"/>
+    </xs:unique>
+    <xs:unique name="ue">
+      <xs:selector xpath="e"/>
+      <xs:field xpath="."/>
+    </xs:unique>
+  </xs:element>
+</xs:schema>

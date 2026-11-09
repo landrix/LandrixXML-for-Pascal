@@ -1,0 +1,782 @@
+file a.xml
+error 16 15 UndeclaredEntity Entity 'text' is not declared.
+error 16 15 cvc-attribute.3 The value 'text' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 18 14 UndeclaredEntity Entity 'file' is not declared.
+error 18 14 cvc-type.3.1.3 The value 'file' of element 'e' is not valid.
+error 19 14 cvc-datatype-valid.1.2.1 '1pic' is not a valid value for 'NCName'.
+error 19 14 cvc-type.3.1.3 The value '1pic' of element 'e' is not valid.
+error 20 14 cvc-datatype-valid.1.2.1 'a  b' is not a valid value for 'NCName'.
+error 20 14 cvc-type.3.1.3 The value 'a  b' of element 'e' is not valid.
+error 22 13 cvc-pattern-valid Value 'map' is not facet-valid with respect to pattern 'p.*' for type 'Picture'.
+error 22 13 cvc-type.3.1.3 The value 'map' of element 'p' is not valid.
+error 23 18 UndeclaredEntity Entity 'late' is not declared.
+error 23 18 cvc-type.3.1.3 The value 'pic late' of element 'l' is not valid.
+error 24 26 UndeclaredEntity Entity 'param' is not declared.
+error 24 26 cvc-type.3.1.3 The value 'hidden pic param' of element 'l' is not valid.
+error 25 11 cvc-minLength-valid Value '' with length = '0' is not facet-valid with respect to minLength '1' for type 'ENTITIES'.
+error 25 11 cvc-type.3.1.3 The value ' ' of element 'l' is not valid.
+error 26 16 UndeclaredEntity Entity 'pinned' is not declared.
+error 26 16 cvc-type.3.1.3 The value 'pinned' of element 'u' is not valid.
+error 27 14 UndeclaredEntity Entity 'fake' is not declared.
+error 27 14 cvc-type.3.1.3 The value 'fake' of element 'u' is not valid.
+error 30 16 cvc-identity-constraint.4.1 Duplicate unique value [pic] declared for identity constraint "q" of element "doc".
+
+file b.xml
+error 2 14 UndeclaredEntity Entity 'pic' is not declared.
+error 2 14 cvc-attribute.3 The value 'pic' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 13 UndeclaredEntity Entity 'pic' is not declared.
+error 3 13 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 7 UndeclaredEntity Entity 'pic' is not declared.
+error 4 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 5 13 UndeclaredEntity Entity 'pic' is not declared.
+error 5 13 cvc-type.3.1.3 The value 'pic' of element 'l' is not valid.
+
+file c.xml
+error 16 15 UndeclaredEntity Entity 'other' is not declared.
+error 16 15 cvc-type.3.1.3 The value 'other' of element 'e' is not valid.
+error 17 15 UndeclaredEntity Entity 'never' is not declared.
+error 17 15 cvc-type.3.1.3 The value 'never' of element 'e' is not valid.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic">true</k>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 15 UndeclaredEntity Entity 'pic' is not declared.
+error 9 15 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 9 23 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <p/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 cvc-pattern-valid Value '' is not facet-valid with respect to pattern 'p.*' for type 'Picture'.
+error 3 7 cvc-type.3.1.3 The value '' of element 'p' is not valid.
+error 4 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{p, l, u, k}' is expected.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic" unknown="1"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 28 UndeclaredEntity Entity 'pic' is not declared.
+error 9 28 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 9 28 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'k'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p><p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 5 27 UndeclaredEntity Entity 'photo' is not declared.
+error 5 27 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  \n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <e id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{u, k}' is expected.
+error 9 16 cvc-type.3.1.1 Element 'e' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'id' was found.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  \n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <e/><k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 7 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{k}' is expected.
+error 10 7 UndeclaredEntity Entity 'pic' is not declared.
+error 10 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 10 20 UndeclaredEntity Entity 'map' is not declared.
+error 10 20 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l><l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 6 43 UndeclaredEntity Entity 'photo' is not declared.
+error 6 43 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <p>12</p>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 7 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'p'. One of '{l, u, k}' is expected.
+error 7 12 cvc-pattern-valid Value '12' is not facet-valid with respect to pattern 'p.*' for type 'Picture'.
+error 7 12 cvc-type.3.1.3 The value '12' of element 'p' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <k id="map"/><l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  \n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 16 UndeclaredEntity Entity 'map' is not declared.
+error 6 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 6 19 cvc-complex-type.2.4.a Invalid content was found starting with element 'l'. One of '{k}' is expected.
+error 6 36 UndeclaredEntity Entity 'photo' is not declared.
+error 6 36 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  \n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="-5"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 15 cvc-datatype-valid.1.2.1 '-5' is not a valid value for 'NCName'.
+error 9 15 cvc-attribute.3 The value '-5' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  \n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <l>12</l>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 7 12 cvc-datatype-valid.1.2.1 '12' is not a valid value for 'NCName'.
+error 7 12 cvc-type.3.1.3 The value '12' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  \n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <u>12</u><p>photo</p>\n  <l>pic map photo</l>\n  \n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 cvc-complex-type.2.4.a Invalid content was found starting with element 'p'. One of '{u, k}' is expected.
+error 5 24 UndeclaredEntity Entity 'photo' is not declared.
+error 5 24 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e></e>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 10 UndeclaredEntity Entity 'pic' is not declared.
+error 3 10 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e unknown="1"/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 19 cvc-type.3.1.1 Element 'e' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+error 3 19 UndeclaredEntity Entity 'pic' is not declared.
+error 3 19 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map">999999999</k>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 15 UndeclaredEntity Entity 'map' is not declared.
+error 10 15 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 28 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u unknown="1">pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 18 cvc-type.3.1.1 Element 'u' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+error 8 25 UndeclaredEntity Entity 'pic' is not declared.
+error 8 25 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  \n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map">x</k>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 15 UndeclaredEntity Entity 'map' is not declared.
+error 10 15 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 20 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e>true</e>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 14 UndeclaredEntity Entity 'true' is not declared.
+error 3 14 cvc-type.3.1.3 The value 'true' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/><k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 29 UndeclaredEntity Entity 'map' is not declared.
+error 10 29 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 29 cvc-identity-constraint.4.1 Duplicate unique value [map] declared for identity constraint "q" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/><k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 9 29 UndeclaredEntity Entity 'pic' is not declared.
+error 9 29 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 9 29 cvc-identity-constraint.4.1 Duplicate unique value [pic] declared for identity constraint "q" of element "doc".
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <k>pic</k>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <u>pic</u><p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  \n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 13 UndeclaredEntity Entity 'pic' is not declared.
+error 5 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 5 16 cvc-complex-type.2.4.a Invalid content was found starting with element 'p'. One of '{u, k}' is expected.
+error 5 25 UndeclaredEntity Entity 'photo' is not declared.
+error 5 25 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  \n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <e> map </e><u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{u, k}' is expected.
+error 8 15 UndeclaredEntity Entity 'map' is not declared.
+error 8 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 8 25 UndeclaredEntity Entity 'pic' is not declared.
+error 8 25 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u><u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/><e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 3 11 UndeclaredEntity Entity 'pic' is not declared.
+error 3 11 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>  a  b  </u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 18 cvc-datatype-valid.1.2.3 '  a  b  ' is not a valid value of union type '#AnonType_udoc'.
+error 8 18 cvc-type.3.1.3 The value '  a  b  ' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map">  a  b  </k>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 15 UndeclaredEntity Entity 'map' is not declared.
+error 10 15 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 27 cvc-complex-type.2.1 Element 'k' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"></k>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 15 UndeclaredEntity Entity 'pic' is not declared.
+error 9 15 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <k id="map"/><e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  \n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 16 UndeclaredEntity Entity 'map' is not declared.
+error 4 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 4 19 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{k}' is expected.
+error 4 28 UndeclaredEntity Entity 'map' is not declared.
+error 4 28 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u unknown="1">12</u>\n  <u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 7 18 cvc-type.3.1.1 Element 'u' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  \n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u><u>pic</u>\n  <k id="pic"/>\n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 7 UndeclaredEntity Entity 'pic' is not declared.
+error 3 7 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 8 23 UndeclaredEntity Entity 'pic' is not declared.
+error 8 23 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 9 16 UndeclaredEntity Entity 'pic' is not declared.
+error 9 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc a="map">\n  <k id="pic"/><e/>\n  <e> map </e>\n  <p>photo</p>\n  <l>pic map photo</l>\n  <u>12</u>\n  <u>pic</u>\n  \n  <k id="map"/>\n</doc>\n
+error 2 14 UndeclaredEntity Entity 'map' is not declared.
+error 2 14 cvc-attribute.3 The value 'map' of attribute 'a' on element 'doc' is not valid with respect to its type, 'ENTITY'.
+error 3 16 UndeclaredEntity Entity 'pic' is not declared.
+error 3 16 cvc-attribute.3 The value 'pic' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.
+error 3 20 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{k}' is expected.
+error 3 20 UndeclaredEntity Entity 'pic' is not declared.
+error 3 20 cvc-type.3.1.3 The value 'pic' of element 'e' is not valid.
+error 4 15 UndeclaredEntity Entity 'map' is not declared.
+error 4 15 cvc-type.3.1.3 The value ' map ' of element 'e' is not valid.
+error 5 15 UndeclaredEntity Entity 'photo' is not declared.
+error 5 15 cvc-type.3.1.3 The value 'photo' of element 'p' is not valid.
+error 6 23 UndeclaredEntity Entity 'photo' is not declared.
+error 6 23 cvc-type.3.1.3 The value 'pic map photo' of element 'l' is not valid.
+error 8 13 UndeclaredEntity Entity 'pic' is not declared.
+error 8 13 cvc-type.3.1.3 The value 'pic' of element 'u' is not valid.
+error 10 16 UndeclaredEntity Entity 'map' is not declared.
+error 10 16 cvc-attribute.3 The value 'map' of attribute 'id' on element 'k' is not valid with respect to its type, 'ENTITY'.

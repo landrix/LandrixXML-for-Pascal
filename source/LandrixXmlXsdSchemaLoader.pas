@@ -30,9 +30,10 @@
   the content and attributes are taken as written (the target schemas
   are valid for Xerces). Constructs the validator does not support raise
   ELandrixXmlError with xecUnsupported and the file and line, also when
-  they are declared but not used: the extension of xs:anyType and the
-  built-in types LandrixXmlXsdTypes lacks. Other schema errors raise
-  xecSchema.
+  they are declared but not used: the extension of xs:anyType. Other
+  schema errors raise xecSchema; a name of the XML Schema namespace that is no built-in type
+  is src-resolve.4.2 (without an import of that namespace) or
+  src-resolve, as in Xerces.
 
   Notation declarations are checked as Xerces does (a public or a system
   identifier, PublicSystemOnNotation) and are not part of the schema
@@ -1792,7 +1793,11 @@ begin
     begin
       if LocalName = 'anyType' then
         Fail(Doc, Node, 'xs:anyType is not a simple type');
-      Unsupported(Doc, Node, 'the type xs:' + Esc(LocalName));
+      { Xerces deviation: vc014. Another name is no type: only the built-in
+        types are taken from the XML Schema namespace without an import
+        (versioning attributes such as vc:typeAvailable are not read) }
+      CheckAllowedNamespace(Doc, Node, 'xs:' + LocalName, NamespaceUri, False);
+      FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('type', NamespaceUri, LocalName));
     end;
     Exit;
   end;

@@ -44,9 +44,12 @@
   A member of a substitution group takes the place of its head in a
   content model and is validated with its own declaration; an element
   whose declaration is abstract is reported (cvc-elt.2).
-  An xsi:type naming a built-in type that is not supported (ENTITY,
-  ENTITIES) is reported with the code "unsupported"
-  (never silently accepted). Default values are used for validation but
+  An ENTITY value (also an item of ENTITIES or of a list or union) must
+  name an unparsed entity declared in the internal subset of the
+  document's DOCTYPE (<!ENTITY name SYSTEM "uri" NDATA notation>, also
+  through internal parameter entities; the first declaration of a name
+  counts), else UndeclaredEntity, as in Xerces; the external subset is
+  never read. Default values are used for validation but
   never written into the document. }
 
 unit LandrixXmlXsdValidator;
@@ -154,6 +157,12 @@ type
     FExpected: TList;
     FIdType: TLandrixXmlXsdSimpleType;
     FIdRefType: TLandrixXmlXsdSimpleType;
+    FEntityType: TLandrixXmlXsdSimpleType;
+    { the unparsed entities of the document, read from FDocType when the
+      first ENTITY value is checked }
+    FEntities: TLandrixXmlXsdNameMap;
+    FDocType: TLandrixXmlUtf8;
+    FEntitiesRead: Boolean;
     FQNameType: TLandrixXmlXsdSimpleType;
     FBooleanType: TLandrixXmlXsdSimpleType;
     FAttrValues: TLandrixXmlXsdValueArray;
@@ -220,11 +229,15 @@ type
       as when reading. True if there is no error. }
     function ValidateFile(const FileName: string): Boolean;
     { Validates the document that Reader is about to read (Read is called
-      until the end). }
+      until the end); malformed XML raises ELandrixXmlError. }
     function ValidateReader(Reader: TLandrixXmlReader): Boolean;
     { Validates a loaded document. The positions are the starts of the
       nodes, and every error has the element it belongs to as Node. }
     function ValidateDocument(Document: TLandrixXmlDocument): Boolean;
+    { All three read the unparsed entities of the DOCTYPE's internal subset
+      when the first ENTITY value is checked: a parameter entity that
+      refers to itself raises ELandrixXmlError xecSyntax, nesting deeper
+      than 64 levels or expanding to more than 1 MiB xecLimit. }
     property ErrorCount: Integer read GetErrorCount;
     property Errors[Index: Integer]: TLandrixXmlXsdValidationError read GetError;
     { at most this many errors are collected (0 = no limit, the default
@@ -262,6 +275,296 @@ end;
 function Q(const S: TLandrixXmlUtf8): string;
 begin
   Result := '''' + LandrixXmlEscapeForMessage(S, MaxInt) + '''';
+end;
+
+function IsDtdSpace(C: AnsiChar): Boolean;
+begin
+  Result := (C = ' ') or (C = #9) or (C = #10) or (C = #13);
+end;
+
+procedure SkipDtdSpace(const S: TLandrixXmlUtf8; var I: Integer);
+begin
+  while (I <= Integer(Length(S))) and IsDtdSpace(AnsiChar(S[I])) do
+    Inc(I);
+end;
+
+{ a quoted literal at I: moves I behind it; Value is its content }
+procedure ReadDtdLiteral(const S: TLandrixXmlUtf8; var I: Integer; out Value: TLandrixXmlUtf8);
+var
+  Quote: AnsiChar;
+  Start: Integer;
+begin
+  Value := '';
+  if (I > Integer(Length(S))) or ((S[I] <> '"') and (S[I] <> '''')) then
+    Exit;
+  Quote := AnsiChar(S[I]);
+  Inc(I);
+  Start := I;
+  while (I <= Integer(Length(S))) and (AnsiChar(S[I]) <> Quote) do
+    Inc(I);
+  Value := Copy(S, Start, I - Start);
+  Inc(I);
+end;
+
+procedure SkipDtdLiteral(const S: TLandrixXmlUtf8; var I: Integer);
+var
+  Value: TLandrixXmlUtf8;
+begin
+  ReadDtdLiteral(S, I, Value);
+end;
+
+{ a name or keyword at I, up to white space, a quote, ';' or the end of
+  the declaration }
+function DtdToken(const S: TLandrixXmlUtf8; var I: Integer): TLandrixXmlUtf8;
+var
+  Start: Integer;
+begin
+  Start := I;
+  while (I <= Integer(Length(S))) and not IsDtdSpace(AnsiChar(S[I])) and (S[I] <> '>') and (S[I] <> '"') and
+    (S[I] <> '''') and (S[I] <> ';') do
+    Inc(I);
+  Result := Copy(S, Start, I - Start);
+end;
+
+function DtdAt(const S: TLandrixXmlUtf8; I: Integer; const Text: TLandrixXmlUtf8): Boolean;
+var
+  K: Integer;
+begin
+  Result := False;
+  if I + Integer(Length(Text)) - 1 > Integer(Length(S)) then
+    Exit;
+  for K := 1 to Integer(Length(Text)) do
+    if S[I + K - 1] <> Text[K] then
+      Exit;
+  Result := True;
+end;
+
+{ the replacement text of an entity literal: character references are
+  replaced (XML 1.0, 4.5); other references stay as written }
+function DtdReplacementText(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I, J, K, Digit, Len, Count: Integer;
+  Code: Cardinal;
+  Hex, Ok: Boolean;
+  Buffer: array[0..7] of AnsiChar;
+begin
+  { a reference is never shorter than its UTF-8 encoding }
+  Result := '';
+  SetLength(Result, Length(S));
+  Count := 0;
+  I := 1;
+  while I <= Integer(Length(S)) do
+  begin
+    if DtdAt(S, I, '&#') then
+    begin
+      J := I + 2;
+      Hex := (J <= Integer(Length(S))) and (S[J] = 'x');
+      if Hex then
+        Inc(J);
+      Code := 0;
+      Ok := False;
+      while (J <= Integer(Length(S))) and (Code <= $10FFFF) do
+      begin
+        Digit := -1;
+        if (S[J] >= '0') and (S[J] <= '9') then
+          Digit := Ord(S[J]) - Ord('0')
+        else if Hex and (S[J] >= 'a') and (S[J] <= 'f') then
+          Digit := Ord(S[J]) - Ord('a') + 10
+        else if Hex and (S[J] >= 'A') and (S[J] <= 'F') then
+          Digit := Ord(S[J]) - Ord('A') + 10;
+        if Digit < 0 then
+          Break;
+        if Hex then
+          Code := Code * 16 + Cardinal(Digit)
+        else
+          Code := Code * 10 + Cardinal(Digit);
+        Ok := True;
+        Inc(J);
+      end;
+      if Ok and (J <= Integer(Length(S))) and (S[J] = ';') and (Code <= $10FFFF) then
+      begin
+        Len := LandrixXmlEncodeUtf8(Code, @Buffer[0]);
+        for K := 0 to Len - 1 do
+        begin
+          Inc(Count);
+          Result[Count] := Buffer[K];
+        end;
+        I := J + 1;
+        Continue;
+      end;
+    end;
+    Inc(Count);
+    Result[Count] := S[I];
+    Inc(I);
+  end;
+  SetLength(Result, Count);
+end;
+
+type
+  { a parameter entity: the replacement text of an internal one; Active
+    while its text is scanned (a reference to itself is not followed) }
+  TDtdParameter = class
+    External: Boolean;
+    Active: Boolean;
+    Value: TLandrixXmlUtf8;
+  end;
+
+const
+  { the replacement text scanned at most for a DOCTYPE, in bytes, and the
+    nesting of parameter entity references followed }
+  DtdScanBudget = 1048576;
+  DtdMaxDepth = 64;
+
+{ The markup declarations of S from I on, up to a ']' or the end:
+  <!ENTITY name ExternalID NDATA notation> is an unparsed entity, the
+  first declaration of a name counts (XML 1.0, 4.2); a reference to an
+  internal parameter entity scans its replacement text; one that refers
+  to itself raises xecSyntax (not well-formed, as Xerces finds), nesting
+  deeper than DtdMaxDepth or beyond Budget (bytes of replacement text
+  still to scan) raises xecLimit; comments, processing instructions and
+  literals are skipped. }
+procedure ScanDtdDeclarations(const S: TLandrixXmlUtf8; I: Integer; Declared, Unparsed, Parameters: TLandrixXmlXsdNameMap;
+  Owned: TObjectList; Depth: Integer; var Budget: Integer);
+var
+  N: Integer;
+  Name, Keyword: TLandrixXmlUtf8;
+  IsUnparsed: Boolean;
+  P: TDtdParameter;
+begin
+  N := Integer(Length(S));
+  while (I <= N) and (S[I] <> ']') do
+  begin
+    if DtdAt(S, I, '<!--') then
+    begin
+      Inc(I, 4);
+      while (I <= N) and not DtdAt(S, I, '-->') do
+        Inc(I);
+      Inc(I, 3);
+    end
+    else if DtdAt(S, I, '<?') then
+    begin
+      Inc(I, 2);
+      while (I <= N) and not DtdAt(S, I, '?>') do
+        Inc(I);
+      Inc(I, 2);
+    end
+    else if S[I] = '%' then
+    begin
+      Inc(I);
+      Name := DtdToken(S, I);
+      if (I <= N) and (S[I] = ';') then
+        Inc(I);
+      P := TDtdParameter(Parameters.Find('', Name));
+      if (P <> nil) and not P.External then
+      begin
+        if P.Active then
+          raise ELandrixXmlError.CreateCode(xecSyntax, 'The parameter entity "%' +
+            LandrixXmlEscapeForMessage(Name, 64) + ';" refers to itself');
+        if (Depth >= DtdMaxDepth) or (Budget < Integer(Length(P.Value))) then
+          raise ELandrixXmlError.CreateCode(xecLimit, 'The parameter entities of the document type ' +
+            'declaration nest deeper than ' + IntToStr(DtdMaxDepth) + ' or expand to more than ' +
+            IntToStr(DtdScanBudget) + ' bytes');
+        Dec(Budget, Integer(Length(P.Value)));
+        P.Active := True;
+        try
+          ScanDtdDeclarations(P.Value, 1, Declared, Unparsed, Parameters, Owned, Depth + 1, Budget);
+        finally
+          P.Active := False;
+        end;
+      end;
+    end
+    else if S[I] = '<' then
+    begin
+      if DtdAt(S, I, '<!ENTITY') and (I + 8 <= N) and IsDtdSpace(AnsiChar(S[I + 8])) then
+      begin
+        Inc(I, 8);
+        SkipDtdSpace(S, I);
+        if (I <= N) and (S[I] = '%') then
+        begin
+          { a parameter entity: an internal one is kept for its references }
+          Inc(I);
+          SkipDtdSpace(S, I);
+          Name := DtdToken(S, I);
+          SkipDtdSpace(S, I);
+          if Parameters.Find('', Name) = nil then
+          begin
+            { an external one is declared, but never read }
+            P := TDtdParameter.Create;
+            Owned.Add(P);
+            P.External := (I > N) or ((S[I] <> '"') and (S[I] <> ''''));
+            if not P.External then
+            begin
+              ReadDtdLiteral(S, I, P.Value);
+              P.Value := DtdReplacementText(P.Value);
+            end;
+            Parameters.Add('', Name, P);
+          end;
+        end
+        else if I <= N then
+        begin
+          Name := DtdToken(S, I);
+          SkipDtdSpace(S, I);
+          IsUnparsed := False;
+          if (I <= N) and (S[I] <> '"') and (S[I] <> '''') then
+          begin
+            Keyword := DtdToken(S, I);
+            SkipDtdSpace(S, I);
+            SkipDtdLiteral(S, I);
+            if Keyword = 'PUBLIC' then
+            begin
+              SkipDtdSpace(S, I);
+              SkipDtdLiteral(S, I);
+            end;
+            SkipDtdSpace(S, I);
+            IsUnparsed := DtdToken(S, I) = 'NDATA';
+          end;
+          if Declared.Add('', Name, Declared) and IsUnparsed then
+            Unparsed.Add('', Name, Unparsed);
+        end;
+      end;
+      { the rest of the declaration }
+      while (I <= N) and (S[I] <> '>') do
+        if (S[I] = '"') or (S[I] = '''') then
+          SkipDtdLiteral(S, I)
+        else
+          Inc(I);
+      Inc(I);
+    end
+    else
+      Inc(I);
+  end;
+end;
+
+{ The unparsed entities declared in the internal subset of a DOCTYPE
+  (Content: everything after the document type name, as the reader gives
+  it; well-formed), also through internal parameter entities. }
+procedure CollectUnparsedEntities(const Content: TLandrixXmlUtf8; Unparsed: TLandrixXmlXsdNameMap);
+var
+  Declared, Parameters: TLandrixXmlXsdNameMap;
+  Owned: TObjectList;
+  I, N, Budget: Integer;
+begin
+  N := Integer(Length(Content));
+  I := 1;
+  { the external ID before the subset may contain '[' in a literal }
+  while (I <= N) and (Content[I] <> '[') do
+    if (Content[I] = '"') or (Content[I] = '''') then
+      SkipDtdLiteral(Content, I)
+    else
+      Inc(I);
+  if I > N then
+    Exit;
+  Declared := TLandrixXmlXsdNameMap.Create;
+  Parameters := TLandrixXmlXsdNameMap.Create;
+  Owned := TObjectList.Create(True);
+  try
+    Budget := DtdScanBudget;
+    ScanDtdDeclarations(Content, I + 1, Declared, Unparsed, Parameters, Owned, 0, Budget);
+  finally
+    Owned.Free;
+    Parameters.Free;
+    Declared.Free;
+  end;
 end;
 
 function IsSpaceText(const S: TLandrixXmlUtf8): Boolean;
@@ -1032,6 +1335,8 @@ begin
   FValueContext := TValueContext.Create;
   FIdType := LandrixXmlXsdBuiltinType('ID');
   FIdRefType := LandrixXmlXsdBuiltinType('IDREF');
+  FEntityType := LandrixXmlXsdBuiltinType('ENTITY');
+  FEntities := TLandrixXmlXsdNameMap.Create;
   FQNameType := LandrixXmlXsdBuiltinType('QName');
   FBooleanType := LandrixXmlXsdBuiltinType('boolean');
   FStores := TObjectList.Create(True);
@@ -1046,6 +1351,7 @@ begin
   FErrors.Free;
   FStates.Free;
   FIds.Free;
+  FEntities.Free;
   FExpected.Free;
   FMatchers.Free;
   FMapStack.Free;
@@ -1073,6 +1379,10 @@ begin
   FDepth := 0;
   FIds.Free;
   FIds := TLandrixXmlXsdNameMap.Create;
+  FEntities.Free;
+  FEntities := TLandrixXmlXsdNameMap.Create;
+  FDocType := '';
+  FEntitiesRead := False;
   FIdRefs := nil;
   FIdRefCount := 0;
   FBuffer := '';
@@ -1239,6 +1549,20 @@ begin
       SetLength(FIdRefs, 2 * FIdRefCount + 8);
     FIdRefs[FIdRefCount] := Text;
     Inc(FIdRefCount);
+  end
+  else if Member.IsDerivedFrom(FEntityType) then
+  begin
+    if not FEntitiesRead then
+    begin
+      FEntitiesRead := True;
+      CollectUnparsedEntities(FDocType, FEntities);
+    end;
+    if FEntities.Find('', Text) = nil then
+    begin
+      AddError('UndeclaredEntity', 'Entity ' + Q(Text) + ' is not declared.', Line, Column, CurrentPath, '', 0,
+        nil);
+      Result := False;
+    end;
   end;
 end;
 
@@ -1311,13 +1635,6 @@ begin
       NewCT := FSchema.AnyType
     else
       NewST := LandrixXmlXsdBuiltinType(Value.LocalName);
-    if (NewCT = nil) and (NewST = nil) and ((Value.LocalName = 'ENTITY') or
-      (Value.LocalName = 'ENTITIES')) then
-    begin
-      Report('unsupported', 'xsi:type ' + Q(Text) + ' names a type that is not supported (element ' + Q(Name) + ').',
-        Line, Column, Decl);
-      Exit;
-    end;
   end;
   if (NewCT = nil) and (NewST = nil) then
   begin
@@ -1477,8 +1794,14 @@ begin
     Valid := Decl.SimpleType.Validate(FAttrs[I].Value, FValueContext, Value, Error);
     if not Valid then
       Report(Error.Code, Error.Message, Line, Column, Decl)
-    else
-      Valid := CheckIdValue(Decl.SimpleType, Value, Line, Column);
+    else if not CheckIdValue(Decl.SimpleType, Value, Line, Column) then
+    begin
+      { as Xerces: a value that fails the ID or ENTITY rules is still the
+        value of identity constraints }
+      Valid := False;
+      FAttrValid[I] := True;
+      FAttrValues[I] := Value;
+    end;
     if not Valid then
     begin
       Report('cvc-attribute.3', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
@@ -1840,8 +2163,15 @@ begin
       Valid := T.Validate(S, FValueContext, Value, Error);
       if not Valid then
         Report(Error.Code, Error.Message, Line, Column, F.Decl)
-      else
-        Valid := CheckIdValue(T, Value, Line, Column);
+      else if not CheckIdValue(T, Value, Line, Column) then
+      begin
+        { as Xerces: a value that fails the ID or ENTITY rules is still the
+          value of identity constraints }
+        Valid := False;
+        FFrames[FDepth - 1].ValueKnown := True;
+        FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Value);
+        FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Value);
+      end;
       if not Valid then
       begin
         if IsSimpleType then
@@ -2091,8 +2421,10 @@ begin
         Text(Reader.ValueUtf8, Reader.IsWhitespace);
       xttCData:
         Text(Reader.ValueUtf8, IsSpaceText(Reader.ValueUtf8));
+      xttDocumentType:
+        FDocType := Reader.ValueUtf8;
     else
-      { comments, processing instructions, the document type }
+      { comments and processing instructions }
     end;
     if Stopped then
       Break;
@@ -2110,6 +2442,13 @@ var
 begin
   Reset;
   TValueContext(FValueContext).Reader := nil;
+  Node := Document.FirstChild;
+  while Node <> nil do
+  begin
+    if Node.NodeType = xntDocumentType then
+      FDocType := Node.ValueUtf8;
+    Node := Node.NextSibling;
+  end;
   Root := Document.Root;
   Node := Root;
   while (Node <> nil) and not Stopped do

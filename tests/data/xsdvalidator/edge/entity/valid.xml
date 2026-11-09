@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc [
+  <!ENTITY pic SYSTEM "pic.gif" NDATA GIF>
+  <!ENTITY photo PUBLIC "-//Example//Photo" 'photo.gif' NDATA GIF>
+  <!ENTITY map SYSTEM "map.png" NDATA PNG>
+  <!NOTATION GIF SYSTEM "viewer">
+  <!NOTATION PNG PUBLIC "image/png">
+]>
+<doc a="map">
+  <e/>
+  <e> map </e>
+  <p>photo</p>
+  <l>pic map photo</l>
+  <u>12</u>
+  <u>pic</u>
+  <k id="pic"/>
+  <k id="map"/>
+</doc>
