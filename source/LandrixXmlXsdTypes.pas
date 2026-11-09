@@ -182,6 +182,12 @@ type
     Value: TLandrixXmlXsdValue;
   end;
 
+  { A derivation step; as a set, the derivations a final or block forbids
+    (the final, disallowed substitutions and prohibited substitutions of
+    XML Schema). }
+  TLandrixXmlXsdDerivation = (xdRestriction, xdExtension, xdList, xdUnion, xdSubstitution);
+  TLandrixXmlXsdDerivations = set of TLandrixXmlXsdDerivation;
+
   TLandrixXmlXsdSimpleType = class
   private
     FNamespaceUri: TLandrixXmlUtf8;
@@ -195,6 +201,7 @@ type
     FMembers: TLandrixXmlXsdSimpleTypeArray;
     FItemType: TLandrixXmlXsdSimpleType;
     FBuiltin: Boolean;
+    FFinal: TLandrixXmlXsdDerivations;
     { own facets (not inherited) }
     FLength: Integer;
     FMinLength: Integer;
@@ -231,6 +238,8 @@ type
       out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
     function GetMemberCount: Integer;
     function GetMember(Index: Integer): TLandrixXmlXsdSimpleType;
+    procedure SetFinal(Value: TLandrixXmlXsdDerivations);
+    function DerivedFromMember(Union: TLandrixXmlXsdSimpleType; Block: TLandrixXmlXsdDerivations): Boolean;
     function ValidateLexical(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
       out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
   public
@@ -289,12 +298,22 @@ type
     property LexicalRule: TLandrixXmlXsdLexicalRule read FLexicalRule;
     property WhiteSpace: TLandrixXmlXsdWhiteSpace read FWhiteSpace;
     property Builtin: Boolean read FBuiltin;
+    { The derivations the type's final forbids (its final attribute or the
+      finalDefault of its schema document, as the schema loader sets it);
+      empty for the built-in types, whose final cannot be set
+      (ELandrixXmlError xecInvalidOperation). }
+    property Final: TLandrixXmlXsdDerivations read FFinal write SetFinal;
     { The name Xerces uses for the type in messages: the name, the
       AnonymousName, or #AnonType_ and the name of the nearest named base. }
     function DisplayName: string;
     { True if AType is this type or one of its base types (to recognize ID
       and IDREF values). }
     function IsDerivedFrom(AType: TLandrixXmlXsdSimpleType): Boolean;
+    { True if the type is Base or validly derived from it without the
+      derivations in Block (Type Derivation OK (Simple), as Xerces'
+      checkSimpleDerivationOk: also through the members of a union Base,
+      and a list or union from anySimpleType). }
+    function DerivationOk(Base: TLandrixXmlXsdSimpleType; Block: TLandrixXmlXsdDerivations): Boolean;
     { True if the type is xs:ID or derived from it, a list of such items or
       a union with such a member (Xerces' isIDType). }
     function IsIdType: Boolean;
@@ -1603,6 +1622,54 @@ begin
     Result := '#AnonType_' + LandrixXmlUtf8ToString(T.FName)
   else
     Result := '#AnonType';
+end;
+
+procedure TLandrixXmlXsdSimpleType.SetFinal(Value: TLandrixXmlXsdDerivations);
+begin
+  if FBuiltin then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'The final of a built-in type cannot be set');
+  FFinal := Value;
+end;
+
+function TLandrixXmlXsdSimpleType.DerivationOk(Base: TLandrixXmlXsdSimpleType;
+  Block: TLandrixXmlXsdDerivations): Boolean;
+var
+  AnySimple: TLandrixXmlXsdSimpleType;
+begin
+  Result := True;
+  if Self = Base then
+    Exit;
+  Result := False;
+  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
+  if (Self = AnySimple) or (FBase = nil) or (Base = nil) or (xdRestriction in Block) or
+    (xdRestriction in FBase.FFinal) then
+    Exit;
+  if FBase = Base then
+    Result := True
+  else if (FBase <> AnySimple) and FBase.DerivationOk(Base, Block) then
+    Result := True
+  else if (FVariety <> xsvAtomic) and (Base = AnySimple) then
+    Result := True
+  else if Base.Variety = xsvUnion then
+    Result := DerivedFromMember(Base, Block);
+end;
+
+{ Xerces' checkSimpleDerivation 2.2.4, with the members of nested unions }
+function TLandrixXmlXsdSimpleType.DerivedFromMember(Union: TLandrixXmlXsdSimpleType;
+  Block: TLandrixXmlXsdDerivations): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  for I := 0 to Union.MemberCount - 1 do
+    if Union.Members[I].Variety = xsvUnion then
+    begin
+      if DerivedFromMember(Union.Members[I], Block) then
+        Exit;
+    end
+    else if DerivationOk(Union.Members[I], Block) then
+      Exit;
+  Result := False;
 end;
 
 function TLandrixXmlXsdSimpleType.IsDerivedFrom(AType: TLandrixXmlXsdSimpleType): Boolean;

@@ -33,6 +33,7 @@ uses
   LandrixXmlBase,
   LandrixXmlReader,
   LandrixXmlDom,
+  LandrixXmlXsdTypes,
   LandrixXmlXsdSchema,
   LandrixXmlXsdSchemaLoader,
   LandrixXmlXsdValidator,
@@ -380,6 +381,59 @@ end;
 
 { A keyref whose key ended in a sibling: Xerces has no cvc code for it and
   names the constraint by its Java object, so this is checked here. }
+{ The derivation data and checks of the schema components (used for
+  xsi:type), on the schema of the edge case xsi-type. }
+procedure TestTypeDerivation;
+var
+  S: TLandrixXmlXsdSchemaSet;
+  B, E, R, BX, SC: TLandrixXmlXsdComplexType;
+  Dec, Int, Str, AnySimple: TLandrixXmlXsdSimpleType;
+  Decl: TLandrixXmlXsdElementDecl;
+  NS: TLandrixXmlUtf8;
+begin
+  S := LandrixXmlXsdLoadSchema(CaseFolder('edge' + PathDelim + 'xsi-type') + 'main.xsd');
+  try
+    NS := U('urn:t');
+    B := S.FindComplexType(NS, U('B'));
+    E := S.FindComplexType(NS, U('E'));
+    R := S.FindComplexType(NS, U('R'));
+    BX := S.FindComplexType(NS, U('BX'));
+    SC := S.FindComplexType(NS, U('SC'));
+    Dec := LandrixXmlXsdBuiltinType('decimal');
+    Int := LandrixXmlXsdBuiltinType('int');
+    Str := LandrixXmlXsdBuiltinType('string');
+    AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
+    Check(BX.Block = [xdExtension], 'block of a complex type');
+    Check(B.Block = [], 'no block');
+    Check(S.FindComplexType(NS, U('EE')).Final = [xdRestriction, xdExtension], 'final #all of a complex type');
+    Check(B.Final = [], 'no final');
+    Decl := S.FindElement(NS, U('Root'));
+    Check(not Decl.Nillable and (Decl.Block = []), 'element without nillable and block');
+    Check(S.TypeDerivationOk(nil, E, nil, B, []), 'extension');
+    Check(not S.TypeDerivationOk(nil, E, nil, B, [xdExtension]), 'extension blocked');
+    Check(S.TypeDerivationOk(nil, R, nil, B, [xdExtension]), 'restriction');
+    Check(not S.TypeDerivationOk(nil, B, nil, E, []), 'base from derived');
+    Check(S.TypeDerivationOk(nil, B, nil, S.AnyType, []), 'complex from anyType');
+    Check(not S.TypeDerivationOk(nil, S.AnyType, nil, B, []), 'anyType from complex');
+    Check(S.TypeDerivationOk(nil, SC, Dec, nil, []), 'simple content from its simple base');
+    Check(S.TypeDerivationOk(Int, nil, Dec, nil, []), 'int from decimal');
+    Check(not S.TypeDerivationOk(Int, nil, Dec, nil, [xdRestriction]), 'restriction blocked');
+    Check(not S.TypeDerivationOk(Str, nil, Dec, nil, []), 'string from decimal');
+    Check(S.TypeDerivationOk(Int, nil, nil, S.AnyType, []), 'simple from anyType');
+    Check(not S.TypeDerivationOk(Int, nil, nil, B, []), 'simple from complex');
+    Check(S.TypeDerivationOk(AnySimple, nil, nil, S.AnyType, []), 'anySimpleType from anyType');
+    try
+      S.TypeDerivationOk(Int, B, Dec, nil, []);
+      FailNotRaised('ELandrixXmlError for two derived types');
+    except
+      on Ex: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(Ex.Code), 'two derived types');
+    end;
+  finally
+    S.Free;
+  end;
+end;
+
 procedure TestKeyRefOutOfScope;
 var
   FileName: string;
@@ -451,13 +505,15 @@ begin
     V.ValidateReader(Reader);
     CheckEquals(1, V.ErrorCount, 'limited');
     Check(V.Truncated, 'truncated');
-    { xsi:type is reported, never ignored }
+    { an xsi:type naming a built-in type that is not supported is
+      reported, never ignored }
     V.MaxErrors := 0;
-    Xml := '<r xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a xsi:type="xs:int">1</a></r>';
+    Xml := '<r xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">' +
+      '<a xsi:type="xs:duration">P1D</a></r>';
     Reader.LoadFromUtf8(Xml);
     Check(not V.ValidateReader(Reader), 'xsi:type');
     Check(V.ErrorCount > 0, 'an error for xsi:type');
-    CheckEqualsStr('unsupported', V.Errors[0].Code, 'xsi:type is unsupported');
+    CheckEqualsStr('unsupported', V.Errors[0].Code, 'xs:duration is unsupported');
     for I := 0 to V.ErrorCount - 1 do
       Check(V.Errors[I].Code <> '', 'every error has a code');
   finally
@@ -735,6 +791,7 @@ begin
   RegisterTest('XsdValidator.Values', TestValues);
   RegisterTest('XsdValidator.EdgeCases', TestEdgeCases);
   RegisterTest('XsdValidator.KeyRefOutOfScope', TestKeyRefOutOfScope);
+  RegisterTest('XsdValidator.TypeDerivation', TestTypeDerivation);
   RegisterTest('XsdValidator.LoadErrors', TestLoadErrors);
   RegisterTest('XsdValidator.LargeOccurs', TestLargeOccurs);
   RegisterTest('XsdValidator.Unresolved', TestUnresolved);

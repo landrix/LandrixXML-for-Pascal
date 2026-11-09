@@ -346,6 +346,9 @@ both the mark and an entry here):
   value of the schema is not checked as a reference, and a key field that
   selects an attribute matched by a lax or skip wildcard is accepted
   (`idZ012`, `idZ015`).
+- A field `@*` matches the first attribute of an element only, so an
+  element with two attributes (one of them `xsi:nil`) gives one value
+  (`idL100`).
 - An element whose content model is an empty `xs:choice` may be empty
   (`complex022`).
 - A prohibited attribute use with a fixed value (`use="prohibited"
@@ -405,7 +408,8 @@ both the mark and an entry here):
   documents are never read: the schema is the one given to the loader, as
   with a preloaded schema in Xerces (the setup of the KoSIT validator), so
   tests that rely on hints fail (`schA1`, `ctL021`, `attgD034`,
-  `particlesB013`, ElemDecl `targetNS00101m1_p`).
+  `particlesB013`, ElemDecl `targetNS00101m1_p`,
+  `ST_targetNS00101m2_p`).
 
 Differences from Xerces, also on purpose:
 
@@ -458,12 +462,12 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 37,083
-  pass and 2,153 use a construct this library does not support (above
+  load or be rejected, documents that must be valid or invalid) 37,295
+  pass and 1,939 use a construct this library does not support (above
   all `xs:duration`, `xs:all`, substitution
-  groups, `xs:NOTATION`, `xsi:type`); they are reported as unsupported,
-  never accepted silently. Of the 97 failures 30 are invalid schemas that
-  load and 1 a document Xerces accepts too; 3 more stop at the resource
+  groups, `xs:NOTATION`); they are reported as unsupported,
+  never accepted silently. Of the 99 failures 30 are invalid schemas that
+  load and 2 documents Xerces accepts too; 3 more stop at the resource
   limit of the content model check. The passing tests are a baseline
   for the CI.
 - The XML Schema reference data (simple types, validator cases, content

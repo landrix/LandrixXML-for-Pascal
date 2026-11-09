@@ -1,0 +1,67 @@
+file a.xml
+error 3 33 cvc-complex-type.2.4.b The content of element 'b' is not complete. One of '{"urn:t":y}' is expected.
+error 4 22 cvc-complex-type.2.4.b The content of element 'b' is not complete. One of '{"urn:t":x}' is expected.
+error 6 23 cvc-elt.4.3 Type 't:BX' is not validly derived from the type definition, 'B', of element 'b'.
+error 7 24 cvc-elt.4.3 Type 'xs:int' is not validly derived from the type definition, 'B', of element 'b'.
+error 8 25 cvc-elt.4.2 Cannot resolve 't:Nope' to a type definition for element 'b'.
+error 9 22 UndeclaredPrefix Cannot resolve 'u:E' as a QName: the prefix 'u' is not declared.
+error 9 22 cvc-elt.4.1 The value 'u:E' of attribute 'http://www.w3.org/2001/XMLSchema-instance,type' of element 'b' is not a valid QName.
+error 9 22 UndeclaredPrefix Cannot resolve 'u:E' as a QName: the prefix 'u' is not declared.
+error 9 22 cvc-attribute.3 The value 'u:E' of attribute 'xsi:type' on element 'b' is not valid with respect to its type, 'QName'.
+error 10 21 cvc-datatype-valid.1.2.1 '1x' is not a valid value for 'QName'.
+error 10 21 cvc-elt.4.1 The value '1x' of attribute 'http://www.w3.org/2001/XMLSchema-instance,type' of element 'b' is not a valid QName.
+error 10 21 cvc-datatype-valid.1.2.1 '1x' is not a valid value for 'QName'.
+error 10 21 cvc-attribute.3 The value '1x' of attribute 'xsi:type' on element 'b' is not valid with respect to its type, 'QName'.
+error 12 28 cvc-complex-type.3.2.2 Attribute 'b' is not allowed to appear in element 'b'.
+error 13 28 cvc-elt.4.3 Type 'xs:anyType' is not validly derived from the type definition, 'B', of element 'b'.
+error 14 22 cvc-elt.4.3 Type 't:E' is not validly derived from the type definition, 'B', of element 'bx'.
+error 15 23 cvc-elt.4.3 Type 't:EE' is not validly derived from the type definition, 'B', of element 'bx'.
+error 17 22 cvc-elt.4.3 Type 't:R' is not validly derived from the type definition, 'B', of element 'br'.
+error 20 22 cvc-elt.4.3 Type 't:E' is not validly derived from the type definition, 'B', of element 'ba'.
+error 21 25 cvc-elt.4.3 Type 't:BXE' is not validly derived from the type definition, 'BX', of element 'tx'.
+error 23 7 cvc-type.2 The type definition cannot be abstract for element ab.
+error 25 23 cvc-type.2 The type definition cannot be abstract for element ab.
+error 26 39 cvc-datatype-valid.1.2.1 '1.5' is not a valid value for 'integer'.
+error 26 39 cvc-type.3.1.3 The value '1.5' of element 'dec' is not valid.
+error 29 29 cvc-elt.4.3 Type 'xs:string' is not validly derived from the type definition, 'decimal', of element 'dec'.
+error 31 31 cvc-elt.4.3 Type 'xs:integer' is not validly derived from the type definition, 'decimal', of element 'decr'.
+error 35 27 cvc-elt.4.3 Type 'xs:string' is not validly derived from the type definition, 'U', of element 'u'.
+error 36 30 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 36 30 cvc-type.3.1.3 The value '1 2 x' of element 's' is not valid.
+error 37 26 cvc-datatype-valid.1.2.3 'x' is not a valid value of union type 'U'.
+error 37 26 cvc-type.3.1.3 The value 'x' of element 's' is not valid.
+error 39 33 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 39 33 cvc-type.3.1.3 The value 'x' of element 'any' is not valid.
+error 41 31 cvc-maxInclusive-valid Value '11' is not facet-valid with respect to maxInclusive '10.0' for type '#AnonType_SCR'.
+error 41 31 cvc-complex-type.2.2 Element 'sc' must have no element [children], and the value must be valid.
+error 42 29 cvc-elt.4.3 Type 'xs:decimal' is not validly derived from the type definition, 'SC', of element 'sc'.
+error 43 26 cvc-elt.5.1.1 {value constraint} '5.0' of element 'fx' is not a valid default value for type 'int'.
+error 43 26 cvc-datatype-valid.1.2.1 '5.0' is not a valid value for 'integer'.
+error 43 26 cvc-type.3.1.3 The value '5.0' of element 'fx' is not valid.
+error 45 31 cvc-elt.5.2.2.2.2 The value '6' of element 'fx' does not match the {value constraint} value '5.0'.
+error 46 26 cvc-elt.5.1.1 {value constraint} '5.5' of element 'dd' is not a valid default value for type 'int'.
+error 46 26 cvc-datatype-valid.1.2.1 '5.5' is not a valid value for 'integer'.
+error 46 26 cvc-type.3.1.3 The value '5.5' of element 'dd' is not valid.
+error 49 25 cvc-elt.5.1.1 {value constraint} 'v' of element 'bf' is not a valid default value for type 'MXR'.
+error 52 33 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 52 33 cvc-type.3.1.3 The value 'x' of element 'l:w' is not valid.
+error 53 29 cvc-datatype-valid.1.2.1 'z' is not a valid value for 'integer'.
+error 53 29 cvc-attribute.3 The value 'z' of attribute 'a' on element 'l:w' is not valid with respect to its type, 'int'.
+error 53 37 cvc-datatype-valid.1.2.1 'y' is not a valid value for 'integer'.
+error 53 37 cvc-type.3.1.3 The value 'y' of element 'x' is not valid.
+error 54 27 cvc-elt.4.2 Cannot resolve 't:Nope' to a type definition for element 'l:w'.
+error 56 33 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 56 33 cvc-type.3.1.3 The value 'x' of element 's:w' is not valid.
+error 57 26 cvc-elt.4.2 Cannot resolve 't:Nope' to a type definition for element 's:w'.
+
+file b.xml
+error 1 145 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 1 145 cvc-attribute.3 The value 'x' of attribute 'a' on element 'Unknown' is not valid with respect to its type, 'int'.
+error 1 157 cvc-datatype-valid.1.2.1 'y' is not a valid value for 'integer'.
+error 1 157 cvc-type.3.1.3 The value 'y' of element 't:x' is not valid.
+error 1 163 cvc-complex-type.2.4.d Invalid content was found starting with element 't:z'. No child element is expected at this point.
+
+file c.xml
+error 1 141 cvc-type.3.1.2 Element 'Unknown' is a simple type, so it must have no element information item [children].
+error 1 141 cvc-datatype-valid.1.2.1 '' is not a valid value for 'integer'.
+error 1 141 cvc-type.3.1.3 The value '' of element 'Unknown' is not valid.

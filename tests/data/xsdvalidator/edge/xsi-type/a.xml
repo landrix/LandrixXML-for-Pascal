@@ -1,0 +1,58 @@
+<Root xmlns="urn:t" xmlns:t="urn:t" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:l="urn:lax" xmlns:k="urn:skip" xmlns:s="urn:strict">
+  <b xsi:type="t:E" a="1" b="2"><x>1</x><y>2</y></b>
+  <b xsi:type="t:E"><x>1</x></b>
+  <b xsi:type="t:R"/>
+  <b xsi:type="t:EE"><y>3</y></b>
+  <b xsi:type="t:BX"/>
+  <b xsi:type="xs:int">1</b>
+  <b xsi:type="t:Nope"/>
+  <b xsi:type="u:E"/>
+  <b xsi:type="1x"/>
+  <b xsi:type=" t:E "><y>1</y></b>
+  <b xsi:type="t:B" b="1"/>
+  <b xsi:type="xs:anyType"><q/></b>
+  <bx xsi:type="t:E"><y>1</y></bx>
+  <bx xsi:type="t:EE"><y>1</y></bx>
+  <bx xsi:type="t:R"><x>1</x></bx>
+  <br xsi:type="t:R"><x>1</x></br>
+  <br xsi:type="t:E"><y>1</y></br>
+  <ba xsi:type="t:B"/>
+  <ba xsi:type="t:E"><y>1</y></ba>
+  <tx xsi:type="t:BXE"/>
+  <tx xsi:type="t:BXR"/>
+  <ab><x>1</x></ab>
+  <ab xsi:type="t:AC"><x>1</x></ab>
+  <ab xsi:type="t:A"/>
+  <dec xsi:type="xs:integer">1.5</dec>
+  <dec xsi:type="xs:int">7</dec>
+  <dec xsi:type="t:D">7.5</dec>
+  <dec xsi:type="xs:string">a</dec>
+  <dec xsi:type="t:SC">1</dec>
+  <decr xsi:type="xs:integer">1</decr>
+  <u xsi:type="xs:int">5</u>
+  <u xsi:type="xs:boolean">true</u>
+  <u xsi:type="xs:short">5</u>
+  <u xsi:type="xs:string">5</u>
+  <s xsi:type="t:L">1 2 x</s>
+  <s xsi:type="t:U">x</s>
+  <s xsi:type="xs:anySimpleType">x</s>
+  <any xsi:type="xs:int">x</any>
+  <any xsi:type="t:B"><x>1</x></any>
+  <sc xsi:type="t:SCR">11</sc>
+  <sc xsi:type="xs:decimal">1</sc>
+  <fx xsi:type="xs:int"/>
+  <fx xsi:type="xs:int">5</fx>
+  <fx xsi:type="xs:int">6</fx>
+  <dd xsi:type="xs:int"/>
+  <dd xsi:type="xs:int">2</dd>
+  <bf/>
+  <bf xsi:type="t:MXR"/>
+  <bf xsi:type="t:MXR"><x>1</x></bf>
+  <bf xsi:type="t:MX"/>
+  <l:w xsi:type="xs:int">x</l:w>
+  <l:w xsi:type="t:B" a="z"><x>y</x></l:w>
+  <l:w xsi:type="t:Nope"/>
+  <k:w xsi:type="xs:int">x</k:w>
+  <s:w xsi:type="xs:int">x</s:w>
+  <s:w xsi:type="t:Nope">x</s:w>
+</Root>

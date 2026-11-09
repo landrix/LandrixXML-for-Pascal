@@ -280,11 +280,6 @@ end;
 { ---------------------------------------------------------------------- }
 
 type
-  { the derivations a final or block attribute (or finalDefault,
-    blockDefault) forbids; substitution only in block }
-  TDerivationKind = (dkExtension, dkRestriction, dkList, dkUnion, dkSubstitution);
-  TDerivationKinds = set of TDerivationKind;
-
   TSchemaDoc = class
     FileName: string;
     Root: TLandrixXmlNode;
@@ -292,8 +287,8 @@ type
     Chameleon: Boolean;
     ElementQualified: Boolean;
     AttributeQualified: Boolean;
-    FinalDefault: TDerivationKinds;
-    BlockDefault: TDerivationKinds;
+    FinalDefault: TLandrixXmlXsdDerivations;
+    BlockDefault: TLandrixXmlXsdDerivations;
     { the namespaces of the document's xs:import elements ('' for one
       without namespace), loaded or not }
     Imports: TLandrixXmlUtf8Array;
@@ -335,17 +330,6 @@ type
     Node: TLandrixXmlNode;
   end;
 
-  { the final of a type, if it is not empty }
-  TFinalEntry = class
-    Final: TDerivationKinds;
-  end;
-
-  { the nillable and block of an element declaration }
-  TElementEntry = class
-    Nillable: Boolean;
-    Block: TDerivationKinds;
-  end;
-
   { a complex type whose content is checked when every type is complete,
     as in Xerces' fullSchemaChecking: the consistency of the element
     declarations and the Unique Particle Attribution of its model (if
@@ -383,12 +367,6 @@ type
     FIdentity: TLandrixXmlXsdNameMap;
     FFixups: TObjectList;
     FValueChecks: TObjectList;
-    { TFinalEntry by PointerKey of the type }
-    FFinals: TLandrixXmlXsdNameMap;
-    FFinalEntries: TObjectList;
-    { TElementEntry by PointerKey of the element declaration (the entries
-      are owned by FFinalEntries) }
-    FElementEntries: TLandrixXmlXsdNameMap;
     FTypeChecks: TObjectList;
     { the skipped documents: namespace, tab, description }
     FSkipped: TStringList;
@@ -435,11 +413,8 @@ type
     procedure ResolveTypeRef(Doc: TSchemaDoc; Node: TLandrixXmlNode; const AttrName: TLandrixXmlUtf8;
       out Simple: TLandrixXmlXsdSimpleType; out Complex: TLandrixXmlXsdComplexType; out Pending: TPending);
     procedure SetFinal(Component: TObject; Doc: TSchemaDoc; Node: TLandrixXmlNode);
-    function FinalOf(Component: TObject): TDerivationKinds;
-    function SimpleDerivationOk(D, B: TLandrixXmlXsdSimpleType; Block: TDerivationKinds): Boolean;
-    function DerivedFromMember(D, U: TLandrixXmlXsdSimpleType; Block: TDerivationKinds): Boolean;
     procedure CheckSimpleBase(Doc: TSchemaDoc; Node, TypeNode: TLandrixXmlNode; const Name: TLandrixXmlUtf8;
-      Base: TLandrixXmlXsdSimpleType; Kind: TDerivationKind);
+      Base: TLandrixXmlXsdSimpleType; Kind: TLandrixXmlXsdDerivation);
     function SimpleTypeRef(Doc: TSchemaDoc; Node: TLandrixXmlNode; const NamespaceUri,
       LocalName: TLandrixXmlUtf8; SelfOwner: TLandrixXmlNode = nil): TLandrixXmlXsdSimpleType;
     function BuildElement(Doc: TSchemaDoc; Node: TLandrixXmlNode; Global: Boolean;
@@ -479,8 +454,6 @@ type
       Seen: TLandrixXmlXsdNameMap);
     function OwnParticle(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Mixed: Boolean): TLandrixXmlXsdParticle;
     function TypeParticle(Doc: TSchemaDoc; TypeNode: TLandrixXmlNode): TLandrixXmlXsdParticle;
-    function ComplexDerivationOk(D: TLandrixXmlXsdComplexType; BaseSimple: TLandrixXmlXsdSimpleType;
-      BaseComplex: TLandrixXmlXsdComplexType; Block: TDerivationKinds): Boolean;
     function ElementTypeDerivationOk(D, B: TLandrixXmlXsdElementDecl): Boolean;
     function NameAndTypeOk(D, B: TLandrixXmlXsdParticle; out Code: string): Boolean;
     function ParticleRestricts(D, B: TLandrixXmlXsdParticle; CheckWildcardOccurs: Boolean;
@@ -580,12 +553,23 @@ begin
   Result := LandrixXmlStringToUtf8(Format('%p', [P]));
 end;
 
+{ the final of a simple or complex type; empty for nil }
+function FinalOf(Component: TObject): TLandrixXmlXsdDerivations;
+begin
+  if Component is TLandrixXmlXsdSimpleType then
+    Result := TLandrixXmlXsdSimpleType(Component).Final
+  else if Component is TLandrixXmlXsdComplexType then
+    Result := TLandrixXmlXsdComplexType(Component).Final
+  else
+    Result := [];
+end;
+
 { The value of a final or finalDefault attribute; #all stands for every
   derivation.
   Xerces deviation, not in the test suite: the final of a simple type
   keeps extension (from #all or from finalDefault), so it forbids simple
   content extending the type; XML Schema 1.0 drops it }
-function ParseDerivations(const Value: TLandrixXmlUtf8): TDerivationKinds;
+function ParseDerivations(const Value: TLandrixXmlUtf8): TLandrixXmlXsdDerivations;
 var
   I, Start: Integer;
   Token: TLandrixXmlUtf8;
@@ -601,28 +585,28 @@ begin
       Inc(I);
     Token := Copy(Value, Start, I - Start);
     if Token = '#all' then
-      Result := [dkExtension, dkRestriction, dkList, dkUnion]
+      Result := [xdExtension, xdRestriction, xdList, xdUnion]
     else if Token = 'extension' then
-      Include(Result, dkExtension)
+      Include(Result, xdExtension)
     else if Token = 'restriction' then
-      Include(Result, dkRestriction)
+      Include(Result, xdRestriction)
     else if Token = 'list' then
-      Include(Result, dkList)
+      Include(Result, xdList)
     else if Token = 'union' then
-      Include(Result, dkUnion)
+      Include(Result, xdUnion)
     else if Token = 'substitution' then
-      Include(Result, dkSubstitution);
+      Include(Result, xdSubstitution);
   end;
 end;
 
 { The value of a block or blockDefault attribute; #all stands for
   extension, restriction and substitution (Xerces) }
-function ParseBlock(const Value: TLandrixXmlUtf8): TDerivationKinds;
+function ParseBlock(const Value: TLandrixXmlUtf8): TLandrixXmlXsdDerivations;
 begin
   if Trimmed(Value) = '#all' then
-    Result := [dkExtension, dkRestriction, dkSubstitution]
+    Result := [xdExtension, xdRestriction, xdSubstitution]
   else
-    Result := ParseDerivations(Value) * [dkExtension, dkRestriction, dkSubstitution];
+    Result := ParseDerivations(Value) * [xdExtension, xdRestriction, xdSubstitution];
 end;
 
 { --- TLoader ------------------------------------------------------------ }
@@ -644,9 +628,6 @@ begin
   FIdentity := TLandrixXmlXsdNameMap.Create;
   FFixups := TObjectList.Create(True);
   FValueChecks := TObjectList.Create(True);
-  FFinals := TLandrixXmlXsdNameMap.Create;
-  FFinalEntries := TObjectList.Create(True);
-  FElementEntries := TLandrixXmlXsdNameMap.Create;
   FTypeChecks := TObjectList.Create(True);
   FSkipped := TStringList.Create;
   FCheckedFiles := TStringList.Create;
@@ -670,9 +651,6 @@ begin
   FIdentity.Free;
   FFixups.Free;
   FValueChecks.Free;
-  FFinals.Free;
-  FFinalEntries.Free;
-  FElementEntries.Free;
   FTypeChecks.Free;
   FSkipped.Free;
   FCheckedFiles.Free;
@@ -1381,7 +1359,6 @@ var
   Qualified, HasDefault, HasFixed: Boolean;
   DefaultValue, FixedValue: TLandrixXmlUtf8;
   Check: TElementValueCheck;
-  Entry: TElementEntry;
 begin
   if not AttrTrimmed(Node, 'name', Name) or (Name = '') then
     Fail(Doc, Node, 'an element declaration without a name');
@@ -1393,14 +1370,11 @@ begin
   FSet.Own(D);
   D.Name := Name;
   D.Global := Global;
-  Entry := TElementEntry.Create;
-  FFinalEntries.Add(Entry);
-  Entry.Nillable := BoolAttr(Node, 'nillable');
+  D.Nillable := BoolAttr(Node, 'nillable');
   if Attr(Node, 'block', Value) then
-    Entry.Block := ParseBlock(Value)
+    D.Block := ParseBlock(Value)
   else
-    Entry.Block := Doc.BlockDefault;
-  FElementEntries.Put('', PointerKey(D), Entry);
+    D.Block := Doc.BlockDefault;
   D.SchemaFile := Doc.FileName;
   D.SchemaLine := Node.Line;
   if Global then
@@ -1605,8 +1579,7 @@ end;
 procedure TLoader.SetFinal(Component: TObject; Doc: TSchemaDoc; Node: TLandrixXmlNode);
 var
   Value: TLandrixXmlUtf8;
-  Final: TDerivationKinds;
-  Entry: TFinalEntry;
+  Final: TLandrixXmlXsdDerivations;
 begin
   if Attr(Node, 'final', Value) then
     Final := ParseDerivations(Value)
@@ -1614,71 +1587,23 @@ begin
     Final := Doc.FinalDefault;
   if Final = [] then
     Exit;
-  Entry := TFinalEntry.Create;
-  FFinalEntries.Add(Entry);
-  Entry.Final := Final;
-  FFinals.Put('', PointerKey(Component), Entry);
+  if Component is TLandrixXmlXsdSimpleType then
+    TLandrixXmlXsdSimpleType(Component).Final := Final
+  else
+    { as Xerces: list and union mean nothing for a complex type }
+    TLandrixXmlXsdComplexType(Component).Final := Final * [xdExtension, xdRestriction];
 end;
 
-{ empty for the built-in types }
-function TLoader.FinalOf(Component: TObject): TDerivationKinds;
-var
-  Entry: TObject;
-begin
-  Result := [];
-  if Component = nil then
-    Exit;
-  Entry := FFinals.Find('', PointerKey(Component));
-  if Entry <> nil then
-    Result := TFinalEntry(Entry).Final;
-end;
 
-{ Xerces' checkSimpleDerivationOk: D is B or validly derived from it;
-  Block holds the derivations that must not be used }
-function TLoader.SimpleDerivationOk(D, B: TLandrixXmlXsdSimpleType; Block: TDerivationKinds): Boolean;
-var
-  AnySimple: TLandrixXmlXsdSimpleType;
-begin
-  Result := True;
-  if D = B then
-    Exit;
-  Result := False;
-  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
-  if (D = AnySimple) or (D.Base = nil) or (dkRestriction in Block) or (dkRestriction in FinalOf(D.Base)) then
-    Exit;
-  if D.Base = B then
-    Result := True
-  else if (D.Base <> AnySimple) and SimpleDerivationOk(D.Base, B, Block) then
-    Result := True
-  else if (D.Variety <> xsvAtomic) and (B = AnySimple) then
-    Result := True
-  else if B.Variety = xsvUnion then
-    Result := DerivedFromMember(D, B, Block);
-end;
 
 { D is validly derived from a member of the union U; a member that is a
   union counts by its own members (Xerces expands them) }
-function TLoader.DerivedFromMember(D, U: TLandrixXmlXsdSimpleType; Block: TDerivationKinds): Boolean;
-var
-  I: Integer;
-begin
-  Result := True;
-  for I := 0 to U.MemberCount - 1 do
-    if U.Members[I].Variety = xsvUnion then
-    begin
-      if DerivedFromMember(D, U.Members[I], Block) then
-        Exit;
-    end
-    else if SimpleDerivationOk(D, U.Members[I], Block) then
-      Exit;
-  Result := False;
-end;
 
 { Xerces' findDTValidator: the base of a restriction, the item type of a
   list or a member of a union, given by name, must allow the use; Name
   and TypeNode are those of the type being built }
 procedure TLoader.CheckSimpleBase(Doc: TSchemaDoc; Node, TypeNode: TLandrixXmlNode; const Name: TLandrixXmlUtf8;
-  Base: TLandrixXmlXsdSimpleType; Kind: TDerivationKind);
+  Base: TLandrixXmlXsdSimpleType; Kind: TLandrixXmlXsdDerivation);
 var
   TypeName: string;
 begin
@@ -1686,16 +1611,16 @@ begin
     TypeName := Esc(Name)
   else
     TypeName := Esc(AnonymousTypeName(TypeNode));
-  if (Kind = dkRestriction) and (Base = LandrixXmlXsdBuiltinType('anySimpleType')) and
+  if (Kind = xdRestriction) and (Base = LandrixXmlXsdBuiltinType('anySimpleType')) and
     ((Doc.TargetNamespace <> LandrixXmlXsdNamespace) or (LandrixXmlXsdBuiltinType(Name) = nil)) then
     FailCheck(Doc.FileName, Node, 'cos-st-restricts.1.1', 'the type ' + TypeName +
       ' is atomic, so its base cannot be xs:anySimpleType');
   if Kind in FinalOf(Base) then
     case Kind of
-      dkRestriction:
+      xdRestriction:
         FailCheck(Doc.FileName, Node, 'st-props-correct.3', 'the final of ' + Base.DisplayName +
           ' forbids the restriction ' + TypeName);
-      dkList:
+      xdList:
         FailCheck(Doc.FileName, Node, 'cos-st-restricts.2.3.1.1', 'the final of ' + Base.DisplayName +
           ' forbids its use as the item type of the list ' + TypeName);
     else
@@ -1821,7 +1746,7 @@ begin
     if QNameAttr(Doc, Child, 'base', Ns, LocalName) then
     begin
       Base := SimpleTypeRef(Doc, Child, Ns, LocalName, Node);
-      CheckSimpleBase(Doc, Child, Node, Name, Base, dkRestriction);
+      CheckSimpleBase(Doc, Child, Node, Name, Base, xdRestriction);
     end;
     Sub := Child.FirstChildElement;
     while IsXs(Sub, 'annotation') do
@@ -1861,7 +1786,7 @@ begin
           Item := Copy(Value, Start, I - Start);
           ResolveQName(Doc, Child, Item, Ns, LocalName);
           Member := SimpleTypeRef(Doc, Child, Ns, LocalName);
-          CheckSimpleBase(Doc, Child, Node, Name, Member, dkUnion);
+          CheckSimpleBase(Doc, Child, Node, Name, Member, xdUnion);
           AddUnionMember(Members, Member);
         end;
       end;
@@ -1894,7 +1819,7 @@ begin
     if QNameAttr(Doc, Child, 'itemType', Ns, LocalName) then
     begin
       ItemType := SimpleTypeRef(Doc, Child, Ns, LocalName);
-      CheckSimpleBase(Doc, Child, Node, Name, ItemType, dkList);
+      CheckSimpleBase(Doc, Child, Node, Name, ItemType, xdList);
     end;
     Sub := Child.FirstChildElement;
     while IsXs(Sub, 'annotation') do
@@ -2872,7 +2797,7 @@ begin
     if BaseUse.Required and not Item.Required then
       FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.1', Prefix + 'the attribute ' +
         Esc(Item.Decl.Name) + ' is required in the base');
-    if not SimpleDerivationOk(Item.Decl.SimpleType, BaseUse.Decl.SimpleType, FinalOf(BaseUse.Decl.SimpleType)) then
+    if not Item.Decl.SimpleType.DerivationOk(BaseUse.Decl.SimpleType, BaseUse.Decl.SimpleType.Final) then
       FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.2', Prefix + 'the type ' +
         Item.Decl.SimpleType.DisplayName + ' of attribute ' + Esc(Item.Decl.Name) +
         ' is not validly derived from ' + BaseUse.Decl.SimpleType.DisplayName);
@@ -2928,6 +2853,7 @@ function TLoader.CreateComplexType(Doc: TSchemaDoc; Node: TLandrixXmlNode; const
   P: TPending): TLandrixXmlXsdComplexType;
 var
   T: TLandrixXmlXsdComplexType;
+  Value: TLandrixXmlUtf8;
 begin
   T := TLandrixXmlXsdComplexType.Create;
   FSet.Own(T);
@@ -2943,6 +2869,10 @@ begin
   T.SchemaLine := Node.Line;
   T.Abstract := BoolAttr(Node, 'abstract');
   SetFinal(T, Doc, Node);
+  if Attr(Node, 'block', Value) then
+    T.Block := ParseBlock(Value) * [xdExtension, xdRestriction]
+  else
+    T.Block := Doc.BlockDefault * [xdExtension, xdRestriction];
   if P <> nil then
   begin
     P.Component := T;
@@ -3006,7 +2936,7 @@ var
   Item: TAttributeItem;
   Use: TLandrixXmlXsdAttributeUse;
   Found, CheckModel: Boolean;
-  Final: TDerivationKinds;
+  Final: TLandrixXmlXsdDerivations;
   Local: TLandrixXmlXsdSimpleType;
   IdName: TLandrixXmlUtf8;
   Check: TTypeCheck;
@@ -3069,10 +2999,10 @@ begin
       Final := FinalOf(BaseSimple)
     else
       Final := FinalOf(BaseType);
-    if IsExtension and (dkExtension in Final) then
+    if IsExtension and (xdExtension in Final) then
       FailCheck(Doc.FileName, Child, 'cos-ct-extends.1.1', 'the final of ' + Esc(LocalName) +
         ' forbids the extension ' + Esc(T.DisplayName))
-    else if not IsExtension and (dkRestriction in Final) then
+    else if not IsExtension and (xdRestriction in Final) then
       FailCheck(Doc.FileName, Child, 'derivation-ok-restriction.1', 'the final of ' + Esc(LocalName) +
         ' forbids the restriction ' + Esc(T.DisplayName));
     if (BaseType = FSet.AnyType) and IsExtension and not IsSimpleContent then
@@ -3108,7 +3038,7 @@ begin
       if IsXs(Sub, 'simpleType') then
       begin
         Local := BuildSimpleType(Doc, Sub, '', nil);
-        if (Simple <> nil) and not SimpleDerivationOk(Local, Simple, FinalOf(Simple)) then
+        if (Simple <> nil) and not Local.DerivationOk(Simple, Simple.Final) then
           FailCheck(Doc.FileName, Sub, 'derivation-ok-restriction.5.2.2.1', 'the simple type of ' +
             Esc(T.DisplayName) + ' is not validly derived from ' + Simple.DisplayName +
             ', the simple content of the base');
@@ -3792,75 +3722,13 @@ begin
   end;
 end;
 
-{ Xerces' checkComplexDerivation: D is the base (BaseSimple or
-  BaseComplex) or derived from it without the derivations in Block }
-function TLoader.ComplexDerivationOk(D: TLandrixXmlXsdComplexType; BaseSimple: TLandrixXmlXsdSimpleType;
-  BaseComplex: TLandrixXmlXsdComplexType; Block: TDerivationKinds): Boolean;
-var
-  AnySimple: TLandrixXmlXsdSimpleType;
-begin
-  Result := True;
-  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
-  while D <> nil do
-  begin
-    if D = BaseComplex then
-      Exit;
-    if ((D.Derivation = xdExtension) and (dkExtension in Block)) or
-      ((D.Derivation = xdRestriction) and (dkRestriction in Block)) then
-      Break;
-    if D.BaseComplex <> nil then
-    begin
-      if D.BaseComplex = BaseComplex then
-        Exit;
-      if D.BaseComplex = FSet.AnyType then
-        Break;
-      D := D.BaseComplex;
-    end
-    else
-    begin
-      if D.BaseSimple = nil then
-        Break;
-      if D.BaseSimple = BaseSimple then
-        Exit;
-      if D.BaseSimple = AnySimple then
-        Break;
-      if BaseComplex <> nil then
-      begin
-        if BaseComplex <> FSet.AnyType then
-          Break;
-        BaseSimple := AnySimple;
-      end;
-      Result := SimpleDerivationOk(D.BaseSimple, BaseSimple, Block);
-      Exit;
-    end;
-  end;
-  Result := False;
-end;
 
 { Xerces' checkTypeDerivationOk for the types of two element
   declarations, without extension, list and union }
 function TLoader.ElementTypeDerivationOk(D, B: TLandrixXmlXsdElementDecl): Boolean;
-var
-  AnySimple, BaseSimple: TLandrixXmlXsdSimpleType;
 begin
-  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
-  if D.ComplexType = FSet.AnyType then
-    Result := B.ComplexType = FSet.AnyType
-  else if D.SimpleType <> nil then
-  begin
-    BaseSimple := B.SimpleType;
-    if D.SimpleType = AnySimple then
-      Result := (B.ComplexType = FSet.AnyType) or (BaseSimple = AnySimple)
-    else
-    begin
-      if B.ComplexType = FSet.AnyType then
-        BaseSimple := AnySimple;
-      Result := (BaseSimple <> nil) and SimpleDerivationOk(D.SimpleType, BaseSimple,
-        [dkExtension, dkList, dkUnion]);
-    end;
-  end
-  else
-    Result := ComplexDerivationOk(D.ComplexType, B.SimpleType, B.ComplexType, [dkExtension, dkList, dkUnion]);
+  Result := FSet.TypeDerivationOk(D.SimpleType, D.ComplexType, B.SimpleType, B.ComplexType,
+    [xdExtension, xdList, xdUnion]);
 end;
 
 { Xerces' checkNameAndTypeOK for two element particles; the identity
@@ -3868,16 +3736,13 @@ end;
 function TLoader.NameAndTypeOk(D, B: TLandrixXmlXsdParticle; out Code: string): Boolean;
 var
   DE, BE: TLandrixXmlXsdElementDecl;
-  DEntry, BEntry: TElementEntry;
 begin
   Result := False;
   DE := TLandrixXmlXsdElementDecl(D.Decl);
   BE := TLandrixXmlXsdElementDecl(B.Decl);
-  DEntry := TElementEntry(FElementEntries.Find('', PointerKey(DE)));
-  BEntry := TElementEntry(FElementEntries.Find('', PointerKey(BE)));
   if (DE.Name <> BE.Name) or (DE.NamespaceUri <> BE.NamespaceUri) then
     Code := 'rcase-NameAndTypeOK.1'
-  else if DEntry.Nillable and not BEntry.Nillable then
+  else if DE.Nillable and not BE.Nillable then
     Code := 'rcase-NameAndTypeOK.2'
   else if not OccursWithin(D.MinOccurs, D.MaxOccurs, B.MinOccurs, B.MaxOccurs) then
     Code := 'rcase-NameAndTypeOK.3'
@@ -3885,7 +3750,7 @@ begin
     Code := 'rcase-NameAndTypeOK.4.a'
   else if (BE.ValueConstraint = xvcFixed) and not SameElementValue(DE, BE) then
     Code := 'rcase-NameAndTypeOK.4.b'
-  else if not (BEntry.Block <= DEntry.Block) then
+  else if not (BE.Block <= DE.Block) then
     Code := 'rcase-NameAndTypeOK.6'
   else if not ElementTypeDerivationOk(DE, BE) then
     Code := 'rcase-NameAndTypeOK.7'

@@ -66,8 +66,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   positions as Xerces reports them when reading, paths such as
   `/Invoice/cac:InvoiceLine[2]/cbc:ID[1]` and the schema file and line of
   each error. Unsupported constructs are rejected at load time
-  (`xecUnsupported`), invalid schemas raise the new code `xecSchema`;
-  `xsi:type` and `xsi:nil` in documents are reported as unsupported.
+  (`xecUnsupported`), invalid schemas raise the new code `xecSchema`.
   Each schema document is checked against the rules of the schema for
   schemas (the attributes of each schema element and their value types,
   its children and their order, no character data outside annotations,
@@ -141,6 +140,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   attribute declarations and attribute uses; the validator compares fixed
   values with it. `tools/XsdOracle.java` takes any leading Xerces key of
   a message as its code.
+  `xsi:type` and `xsi:nil` in documents are validated as Xerces does:
+  the type named by
+  `xsi:type` replaces the declared one and must derive from it without
+  the derivations the declaration and its type block (cvc-elt.4); with
+  `xsi:type` an element without declaration is validated with that type
+  instead of laxly; a default value must also be valid for the type
+  (cvc-elt.5.1.1); `xsi:nil="true"` on a nillable element requires empty
+  content and skips its value and content checks (cvc-elt.3); both
+  attributes are validated as QName and boolean. A key field matching an
+  element of a nillable declaration is an error, as in Xerces
+  (cvc-identity-constraint.4.2.3). An `xsi:type` naming `xs:duration`,
+  `xs:NOTATION`, `xs:ENTITY` or `xs:ENTITIES` is reported as unsupported.
+  The derivation data is public: `TLandrixXmlXsdDerivation` moved to
+  `LandrixXmlXsdTypes` and gained `xdList`, `xdUnion` and
+  `xdSubstitution`, with the set `TLandrixXmlXsdDerivations`;
+  `TLandrixXmlXsdSimpleType.Final` and `DerivationOk`,
+  `TLandrixXmlXsdComplexType.Final` and `Block`,
+  `TLandrixXmlXsdElementDecl.Nillable` and `Block`, and
+  `TLandrixXmlXsdSchemaSet.TypeDerivationOk`. The `block` attribute of
+  complex types is read.
   List types (`xs:list`, the built-in `NMTOKENS` and `IDREFS`) are
   validated as Xerces does: patterns on the whole value, then each item,
   then the length facets (counting items) and enumeration; IDs and IDREFs
@@ -313,7 +332,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tools/run-xsts.py` and `tests/LandrixXmlXsts.dpr`: the W3C XML Schema
   Test Suite (pinned revision, downloaded on first use) against the XML
   Schema loader and validator, with a baseline of the passing tests that
-  the CI checks: 37,083 of 39,336 applicable XSD 1.0 tests pass, 2,153
+  the CI checks: 37,295 of 39,336 applicable XSD 1.0 tests pass, 1,939
   use constructs that are not supported.
 - The places where the XML Schema validator follows Xerces instead of the
   specification on purpose are tagged `Xerces deviation:` with the test

@@ -1,0 +1,116 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:t="urn:t" targetNamespace="urn:t" elementFormDefault="qualified">
+  <xs:complexType name="B">
+    <xs:sequence>
+      <xs:element name="x" type="xs:int" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="a" type="xs:int"/>
+  </xs:complexType>
+  <xs:complexType name="E">
+    <xs:complexContent>
+      <xs:extension base="t:B">
+        <xs:sequence>
+          <xs:element name="y" type="xs:int"/>
+        </xs:sequence>
+        <xs:attribute name="b" type="xs:int"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="R">
+    <xs:complexContent>
+      <xs:restriction base="t:B">
+        <xs:sequence>
+          <xs:element name="x" type="xs:int"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="EE" final="#all">
+    <xs:complexContent>
+      <xs:extension base="t:E"/>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BX" block="extension">
+    <xs:sequence>
+      <xs:element name="x" type="xs:int" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="BXE">
+    <xs:complexContent>
+      <xs:extension base="t:BX"/>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BXR">
+    <xs:complexContent>
+      <xs:restriction base="t:BX"/>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="A" abstract="true">
+    <xs:sequence>
+      <xs:element name="x" type="xs:int" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="AC">
+    <xs:complexContent>
+      <xs:extension base="t:A"/>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="SC">
+    <xs:simpleContent>
+      <xs:extension base="xs:decimal"/>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="SCR">
+    <xs:simpleContent>
+      <xs:restriction base="t:SC">
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="MX" mixed="true">
+    <xs:sequence>
+      <xs:element name="x" type="xs:int" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="MXR">
+    <xs:complexContent>
+      <xs:restriction base="t:MX">
+        <xs:sequence>
+          <xs:element name="x" type="xs:int" minOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="D">
+    <xs:restriction base="xs:decimal"/>
+  </xs:simpleType>
+  <xs:simpleType name="U">
+    <xs:union memberTypes="xs:int xs:boolean"/>
+  </xs:simpleType>
+  <xs:simpleType name="L">
+    <xs:list itemType="xs:int"/>
+  </xs:simpleType>
+  <xs:element name="Root">
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element name="b" type="t:B"/>
+        <xs:element name="bx" type="t:B" block="extension"/>
+        <xs:element name="br" type="t:B" block="restriction"/>
+        <xs:element name="ba" type="t:B" block="#all"/>
+        <xs:element name="tx" type="t:BX"/>
+        <xs:element name="ab" type="t:A"/>
+        <xs:element name="dec" type="xs:decimal"/>
+        <xs:element name="decr" type="xs:decimal" block="restriction"/>
+        <xs:element name="u" type="t:U"/>
+        <xs:element name="s" type="xs:anySimpleType"/>
+        <xs:element name="any"/>
+        <xs:element name="sc" type="t:SC"/>
+        <xs:element name="fx" type="xs:decimal" fixed="5"/>
+        <xs:element name="dd" type="xs:decimal" default="5.5"/>
+        <xs:element name="bf" type="t:MX" default="v"/>
+        <xs:any namespace="urn:lax" processContents="lax"/>
+        <xs:any namespace="urn:skip" processContents="skip"/>
+        <xs:any namespace="urn:strict" processContents="strict"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

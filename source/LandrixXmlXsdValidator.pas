@@ -39,9 +39,12 @@
   has no cvc code for it); the message names the constraint where Xerces
   prints a Java object name such as "KeyRef@4f47d241".
 
-  Not supported, reported as an error with the code "unsupported" (never
-  silently accepted): xsi:type and xsi:nil in documents. Default values
-  are used for validation but never written into the document. }
+  xsi:type replaces the declared type (cvc-elt.4), xsi:nil marks an
+  element of a nillable declaration as empty (cvc-elt.3), as in Xerces.
+  An xsi:type naming a built-in type that is not supported (duration,
+  NOTATION, ENTITY, ENTITIES) is reported with the code "unsupported"
+  (never silently accepted). Default values are used for validation but
+  never written into the document. }
 
 unit LandrixXmlXsdValidator;
 
@@ -116,6 +119,8 @@ type
     HasChild: Boolean;
     HasText: Boolean;
     HasNonSpaceText: Boolean;
+    { xsi:nil="true" on an element of a nillable declaration }
+    Nilled: Boolean;
     Node: TLandrixXmlNode;
     Children: TLandrixXmlXsdChildCounts;
     ChildKinds: Integer;
@@ -146,6 +151,8 @@ type
     FExpected: TList;
     FIdType: TLandrixXmlXsdSimpleType;
     FIdRefType: TLandrixXmlXsdSimpleType;
+    FQNameType: TLandrixXmlXsdSimpleType;
+    FBooleanType: TLandrixXmlXsdSimpleType;
     FAttrValues: TLandrixXmlXsdValueArray;
     FAttrValid: array of Boolean;
     { the text of the current element as Xerces buffers it }
@@ -181,6 +188,11 @@ type
     procedure EndElement(Line, Column: Integer);
     procedure EndDocument(Line, Column: Integer);
     procedure CheckAttributes(var F: TLandrixXmlXsdFrame; Line, Column: Integer);
+    function FindXsi(const LocalName: TLandrixXmlUtf8; out Value: TLandrixXmlUtf8): Boolean;
+    procedure ApplyXsiType(const Text, Name: TLandrixXmlUtf8; Decl: TLandrixXmlXsdElementDecl;
+      var CT: TLandrixXmlXsdComplexType; var ST: TLandrixXmlXsdSimpleType; Line, Column: Integer);
+    function DefaultValidFor(CT: TLandrixXmlXsdComplexType; ST: TLandrixXmlXsdSimpleType;
+      const Text: TLandrixXmlUtf8): Boolean;
     procedure AddDefaultAttributes(T: TLandrixXmlXsdComplexType);
     function CheckIdValue(T: TLandrixXmlXsdSimpleType; const Value: TLandrixXmlXsdValue; Line, Column: Integer): Boolean;
     function CheckIdItem(Member: TLandrixXmlXsdSimpleType; const Text: TLandrixXmlUtf8;
@@ -654,6 +666,8 @@ begin
                 FieldMatched(M, '', 'null');
             end;
           end;
+          { Xerces deviation: idL100. A step @* matches the first attribute
+            only, so a second one (also xsi:nil) is no second value }
           Break;
         end;
       if (M.Matched[I] and IdcMatched) <> IdcMatched then
@@ -705,6 +719,12 @@ begin
         IdcError('cvc-id.3', 'A field of identity constraint ''' + LandrixXmlEscapeForMessage(M.Constraint.Name,
           MaxInt) + ''' matched element ''' + LandrixXmlEscapeForMessage(M.Store.ElementName, MaxInt) +
           ''', but this element does not have a simple type.', M.Constraint);
+      { as Xerces (KeyMatchesNillable): a key field matching an element of
+        a nillable declaration, nilled or not }
+      if (M.Constraint.Kind = xikKey) and (FFrames[Top].Decl <> nil) and FFrames[Top].Decl.Nillable then
+        IdcError('cvc-identity-constraint.4.2.3', 'Element "' + LandrixXmlEscapeForMessage(M.Store.ElementName,
+          MaxInt) + '" has the key "' + LandrixXmlEscapeForMessage(M.Constraint.Name, MaxInt) +
+          '" which matches an element which has nillable set to true.', M.Constraint);
       if FFrames[Top].ValueKnown then
         FieldMatched(M, FFrames[Top].ValueKey, FFrames[Top].ValueText)
       else
@@ -1009,6 +1029,8 @@ begin
   FValueContext := TValueContext.Create;
   FIdType := LandrixXmlXsdBuiltinType('ID');
   FIdRefType := LandrixXmlXsdBuiltinType('IDREF');
+  FQNameType := LandrixXmlXsdBuiltinType('QName');
+  FBooleanType := LandrixXmlXsdBuiltinType('boolean');
   FStores := TObjectList.Create(True);
   FStoreIndex := TLandrixXmlXsdNameMap.Create;
   FMatchers := TObjectList.Create(True);
@@ -1218,13 +1240,145 @@ begin
 end;
 
 { The xsi attributes every element may have. Xerces deviation: schA1,
-  ctL021, attgD034, particlesB013, targetNS00101m1_p. The location hints
-  are allowed but never read (the schema is the one given, as a
-  preloaded schema in Xerces). }
+  ctL021, attgD034, particlesB013, targetNS00101m1_p, ST_targetNS00101m2_p.
+  The location hints are allowed but never read (the schema is the one
+  given, as a preloaded schema in Xerces), so an xsi:type naming a type
+  of a hinted schema cannot be resolved. }
 function IsXsiBuiltin(const A: TLandrixXmlXsdEventAttribute): Boolean;
 begin
   Result := (A.NamespaceUri = LandrixXmlXsiNamespace) and ((A.LocalName = 'type') or (A.LocalName = 'nil') or
     (A.LocalName = 'schemaLocation') or (A.LocalName = 'noNamespaceSchemaLocation'));
+end;
+
+{ S without leading and trailing XML white space }
+function TrimSpace(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  First, Last: Integer;
+begin
+  First := 1;
+  Last := Integer(Length(S));
+  while (First <= Last) and (S[First] in [#9, #10, #13, ' ']) do
+    Inc(First);
+  while (Last >= First) and (S[Last] in [#9, #10, #13, ' ']) do
+    Dec(Last);
+  Result := Copy(S, First, Last - First + 1);
+end;
+
+{ the value of the attribute xsi:LocalName of the current element }
+function TLandrixXmlXsdValidator.FindXsi(const LocalName: TLandrixXmlUtf8; out Value: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  for I := 0 to FAttrCount - 1 do
+    if (FAttrs[I].NamespaceUri = LandrixXmlXsiNamespace) and (FAttrs[I].LocalName = LocalName) then
+    begin
+      Value := FAttrs[I].Value;
+      Result := True;
+      Exit;
+    end;
+  Value := '';
+  Result := False;
+end;
+
+{ Xerces' getAndCheckXsiType: the type named by xsi:type replaces CT or
+  ST if it can be found; it must be validly derived from the declared
+  type without the derivations the declaration and its type block }
+procedure TLandrixXmlXsdValidator.ApplyXsiType(const Text, Name: TLandrixXmlUtf8; Decl: TLandrixXmlXsdElementDecl;
+  var CT: TLandrixXmlXsdComplexType; var ST: TLandrixXmlXsdSimpleType; Line, Column: Integer);
+var
+  Value: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+  NewCT: TLandrixXmlXsdComplexType;
+  NewST: TLandrixXmlXsdSimpleType;
+  Block: TLandrixXmlXsdDerivations;
+  TypeName: string;
+begin
+  if not FQNameType.Validate(Text, FValueContext, Value, Error) then
+  begin
+    Report(Error.Code, Error.Message, Line, Column, Decl);
+    Report('cvc-elt.4.1', 'The value ' + Q(Text) + ' of attribute ''' + LandrixXmlXsiNamespace + ',type'' of element ' +
+      Q(Name) + ' is not a valid QName.', Line, Column, Decl);
+    Exit;
+  end;
+  NewCT := nil;
+  NewST := nil;
+  if Value.NamespaceUri = LandrixXmlXsdNamespace then
+  begin
+    if Value.LocalName = 'anyType' then
+      NewCT := FSchema.AnyType
+    else
+      NewST := LandrixXmlXsdBuiltinType(Value.LocalName);
+    if (NewCT = nil) and (NewST = nil) and ((Value.LocalName = 'duration') or (Value.LocalName = 'NOTATION') or
+      (Value.LocalName = 'ENTITY') or (Value.LocalName = 'ENTITIES')) then
+    begin
+      Report('unsupported', 'xsi:type ' + Q(Text) + ' names a type that is not supported (element ' + Q(Name) + ').',
+        Line, Column, Decl);
+      Exit;
+    end;
+  end;
+  if (NewCT = nil) and (NewST = nil) then
+  begin
+    NewCT := FSchema.FindComplexType(Value.NamespaceUri, Value.LocalName);
+    if NewCT = nil then
+      NewST := FSchema.FindSimpleType(Value.NamespaceUri, Value.LocalName);
+  end;
+  if (NewCT = nil) and (NewST = nil) then
+  begin
+    Report('cvc-elt.4.2', 'Cannot resolve ' + Q(Text) + ' to a type definition for element ' + Q(Name) + '.', Line,
+      Column, Decl);
+    Exit;
+  end;
+  { without a declaration there is no type to derive from }
+  if Decl <> nil then
+  begin
+    Block := Decl.Block;
+    if CT <> nil then
+      Block := Block + CT.Block;
+    if not FSchema.TypeDerivationOk(NewST, NewCT, ST, CT, Block) then
+    begin
+      if CT <> nil then
+        TypeName := LandrixXmlEscapeForMessage(CT.DisplayName, MaxInt)
+      else
+        TypeName := ST.DisplayName;
+      Report('cvc-elt.4.3', 'Type ' + Q(Text) + ' is not validly derived from the type definition, ''' + TypeName +
+        ''', of element ' + Q(Name) + '.', Line, Column, Decl);
+    end;
+  end;
+  CT := NewCT;
+  ST := NewST;
+end;
+
+{ Xerces' ElementDefaultValidImmediate: Text (a default in canonical
+  form) is valid for the simple type or the simple content, or the
+  content is mixed and emptiable }
+function TLandrixXmlXsdValidator.DefaultValidFor(CT: TLandrixXmlXsdComplexType; ST: TLandrixXmlXsdSimpleType;
+  const Text: TLandrixXmlUtf8): Boolean;
+var
+  Value: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+  Issues: TLandrixXmlXsdContentIssues;
+  State: TLandrixXmlXsdContentState;
+begin
+  Issues := nil;
+  if (ST = nil) and (CT.ContentType = xctSimple) then
+    ST := CT.SimpleType;
+  if ST <> nil then
+    Result := ST.Validate(Text, FValueContext, Value, Error)
+  else if CT.ContentType <> xctMixed then
+    Result := False
+  else if CT.Model = nil then
+    Result := True
+  else
+  begin
+    State := TLandrixXmlXsdContentState.Create;
+    try
+      State.Start(CT.Model);
+      Issues := State.Finish;
+      Result := Length(Issues) = 0;
+    finally
+      State.Free;
+    end;
+  end;
 end;
 
 { The attributes of the element in F, in document order, then the missing
@@ -1241,6 +1395,7 @@ var
   Wildcard: TLandrixXmlXsdWildcard;
   Valid: Boolean;
   WildId, UseId: TLandrixXmlUtf8;
+  XsiType: TLandrixXmlXsdSimpleType;
 begin
   T := F.ComplexType;
   { the first attribute matched by the wildcard whose type is ID: a second
@@ -1250,7 +1405,32 @@ begin
   for I := 0 to FAttrCount - 1 do
   begin
     if IsXsiBuiltin(FAttrs[I]) then
+    begin
+      { as Xerces: xsi:type is a QName, xsi:nil a boolean; the location
+        hints are not looked at }
+      if FAttrs[I].LocalName = 'type' then
+        XsiType := FQNameType
+      else if FAttrs[I].LocalName = 'nil' then
+        XsiType := FBooleanType
+      else
+        XsiType := nil;
+      if XsiType <> nil then
+      begin
+        if XsiType.Validate(FAttrs[I].Value, FValueContext, Value, Error) then
+        begin
+          FAttrValid[I] := True;
+          FAttrValues[I] := Value;
+        end
+        else
+        begin
+          Report(Error.Code, Error.Message, Line, Column, F.Decl);
+          Report('cvc-attribute.3', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
+            ' on element ' + Q(F.Name) + ' is not valid with respect to its type, ''' + XsiType.DisplayName + '''.',
+            Line, Column, F.Decl);
+        end;
+      end;
       Continue;
+    end;
     if F.SimpleType <> nil then
     begin
       Report('cvc-type.3.1.1', 'Element ' + Q(F.Name) + ' is a simple type, so it cannot have attributes, ' +
@@ -1418,10 +1598,13 @@ var
   Step: TLandrixXmlUtf8;
   CT: TLandrixXmlXsdComplexType;
   ST: TLandrixXmlXsdSimpleType;
+  HasXsiType: Boolean;
+  XsiType, XsiNil, S: TLandrixXmlUtf8;
 begin
   if Stopped then
     Exit;
   TValueContext(FValueContext).Node := Node;
+  HasXsiType := FindXsi('type', XsiType);
   Parent := FDepth - 1;
   Mode := xfmValidate;
   Decl := nil;
@@ -1462,7 +1645,9 @@ begin
     if (Mode = xfmValidate) and (Decl = nil) then
     begin
       Decl := FSchema.FindElement(NamespaceUri, LocalName);
-      if Decl = nil then
+      { as Xerces: an xsi:type gives the element a type, so there is no
+        error and no lax assessment }
+      if (Decl = nil) and not HasXsiType then
       begin
         if Parent < 0 then
           AddError('cvc-elt.1.a', 'Cannot find the declaration of element ' + Q(Name) + '.', Line, Column,
@@ -1490,6 +1675,7 @@ begin
   FFrames[FDepth].HasChild := False;
   FFrames[FDepth].HasText := False;
   FFrames[FDepth].HasNonSpaceText := False;
+  FFrames[FDepth].Nilled := False;
   FFrames[FDepth].ChildKinds := 0;
   FFrames[FDepth].State := nil;
   FFrames[FDepth].ComplexType := nil;
@@ -1509,6 +1695,8 @@ begin
     CT := FSchema.AnyType;
     ST := nil;
   end;
+  if HasXsiType and (Mode = xfmValidate) then
+    ApplyXsiType(XsiType, Name, Decl, CT, ST, Line, Column);
   FFrames[FDepth - 1].ComplexType := CT;
   FFrames[FDepth - 1].SimpleType := ST;
   FAppendBuffer := ((Decl <> nil) and (Decl.ValueConstraint = xvcFixed)) or (ST <> nil) or
@@ -1520,14 +1708,27 @@ begin
   end;
   for I := 0 to FAttrCount - 1 do
     FAttrValid[I] := False;
-  for I := 0 to FAttrCount - 1 do
-    if (FAttrs[I].NamespaceUri = LandrixXmlXsiNamespace) and
-      ((FAttrs[I].LocalName = 'type') or (FAttrs[I].LocalName = 'nil')) then
-      Report('unsupported', 'xsi:' + LandrixXmlEscapeForMessage(FAttrs[I].LocalName, 20) +
-        ' is not supported (element ' + Q(Name) + ').', Line, Column, Decl);
   if (CT <> nil) and CT.Abstract then
     Report('cvc-type.2', 'The type definition cannot be abstract for element ' +
       LandrixXmlEscapeForMessage(Name, MaxInt) + '.', Line, Column, Decl);
+  { Xerces' getXsiNil, only with a declaration }
+  if (Decl <> nil) and FindXsi('nil', XsiNil) then
+  begin
+    if not Decl.Nillable then
+      Report('cvc-elt.3.1', 'Attribute ''' + LandrixXmlXsiNamespace + ',nil'' must not appear on element ' + Q(Name) +
+        ', because the {nillable} property of ' + Q(Name) + ' is false.', Line, Column, Decl)
+    else
+    begin
+      S := TrimSpace(XsiNil);
+      if (S = 'true') or (S = '1') then
+      begin
+        if Decl.ValueConstraint = xvcFixed then
+          Report('cvc-elt.3.2.2', 'There must be no fixed {value constraint} for element ' + Q(Name) + ', because ''' +
+            LandrixXmlXsiNamespace + ',nil'' is specified.', Line, Column, Decl);
+        FFrames[FDepth - 1].Nilled := True;
+      end;
+    end;
+  end;
   CheckAttributes(FFrames[FDepth - 1], Line, Column);
   if ST = nil then
     AddDefaultAttributes(CT);
@@ -1566,7 +1767,9 @@ var
   Issues: TLandrixXmlXsdContentIssues;
   I: Integer;
   Code, Message: string;
-  IsSimpleType, Valid, UseDefault, IsFixed: Boolean;
+  IsSimpleType, Valid, UseDefault, IsFixed, Nilled: Boolean;
+  DefaultText: TLandrixXmlUtf8;
+  TypeName: string;
 begin
   Issues := nil;
   if Stopped or (FDepth = 0) then
@@ -1575,14 +1778,43 @@ begin
   if F.Mode <> xfmSkip then
   begin
     Decl := F.Decl;
+    Nilled := F.Nilled;
+    if Nilled and (F.HasChild or F.HasText) then
+      Report('cvc-elt.3.2.1', 'Element ' + Q(F.Name) + ' cannot have character or element information [children], ' +
+        'because ''' + LandrixXmlXsiNamespace + ',nil'' is specified.', Line, Column, Decl);
     { the value constraint applies to an element without any content }
-    UseDefault := (Decl <> nil) and (Decl.ValueConstraint <> xvcNone) and not F.HasChild and not F.HasText;
-    IsFixed := (Decl <> nil) and (Decl.ValueConstraint = xvcFixed) and not UseDefault;
+    UseDefault := (Decl <> nil) and (Decl.ValueConstraint <> xvcNone) and not F.HasChild and not F.HasText and
+      not Nilled;
+    IsFixed := (Decl <> nil) and (Decl.ValueConstraint = xvcFixed) and not UseDefault and not Nilled;
+    TValueContext(FValueContext).Node := F.Node;
+    DefaultText := '';
+    if UseDefault then
+    begin
+      { as Xerces: the canonical form of the value; with an xsi:type it
+        must be a valid default for that type too }
+      DefaultText := LandrixXmlXsdValueText(Decl.ConstraintActual);
+      if ((F.SimpleType <> Decl.SimpleType) or (F.ComplexType <> Decl.ComplexType)) and
+        not DefaultValidFor(F.ComplexType, F.SimpleType, DefaultText) then
+      begin
+        if F.SimpleType <> nil then
+          TypeName := F.SimpleType.DisplayName
+        else
+          TypeName := LandrixXmlEscapeForMessage(F.ComplexType.DisplayName, MaxInt);
+        Report('cvc-elt.5.1.1', '{value constraint} ' + Q(DefaultText) + ' of element ' + Q(F.Name) +
+          ' is not a valid default value for type ''' + TypeName + '''.', Line, Column, Decl);
+      end;
+    end;
     T := F.SimpleType;
     IsSimpleType := T <> nil;
     if (T = nil) and (F.ComplexType.ContentType = xctSimple) then
       T := F.ComplexType.SimpleType;
-    if T <> nil then
+    if (T <> nil) and Nilled then
+    begin
+      if F.HasChild and IsSimpleType then
+        Report('cvc-type.3.1.2', 'Element ' + Q(F.Name) + ' is a simple type, so it must have no element ' +
+          'information item [children].', Line, Column, F.Decl);
+    end
+    else if T <> nil then
     begin
       if F.HasChild then
       begin
@@ -1594,10 +1826,9 @@ begin
             'value must be valid.', Line, Column, F.ComplexType);
       end;
       if UseDefault then
-        S := Decl.ConstraintValue
+        S := DefaultText
       else
         S := FBuffer;
-      TValueContext(FValueContext).Node := F.Node;
       Valid := T.Validate(S, FValueContext, Value, Error);
       if not Valid then
         Report(Error.Code, Error.Message, Line, Column, F.Decl)
@@ -1634,10 +1865,11 @@ begin
             Line, Column, Decl);
         if Valid and (LandrixXmlXsdCompareValues(Value, Decl.ConstraintActual) <> 0) then
           Report('cvc-elt.5.2.2.2.2', 'The value ' + Q(S) + ' of element ' + Q(F.Name) +
-            ' does not match the {value constraint} value ' + Q(Decl.ConstraintValue) + '.', Line, Column, Decl);
+            ' does not match the {value constraint} value ' + Q(LandrixXmlXsdValueText(Decl.ConstraintActual)) + '.',
+            Line, Column, Decl);
       end;
     end
-    else
+    else if not Nilled then
     begin
       case F.ComplexType.ContentType of
         xctEmpty:

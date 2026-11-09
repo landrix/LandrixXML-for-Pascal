@@ -482,6 +482,55 @@ begin
   end;
 end;
 
+{ DerivationOk and Final of simple types }
+procedure TestSimpleDerivation;
+var
+  Dec, Int, Bool, Str, AnySimple: TLandrixXmlXsdSimpleType;
+  D, U2, L, X: TLandrixXmlXsdSimpleType;
+begin
+  Dec := LandrixXmlXsdBuiltinType('decimal');
+  Int := LandrixXmlXsdBuiltinType('int');
+  Bool := LandrixXmlXsdBuiltinType('boolean');
+  Str := LandrixXmlXsdBuiltinType('string');
+  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
+  Check(Int.DerivationOk(Int, [xdRestriction]), 'a type from itself');
+  Check(Int.DerivationOk(Dec, []), 'int from decimal');
+  Check(not Int.DerivationOk(Dec, [xdRestriction]), 'restriction blocked');
+  Check(not Dec.DerivationOk(Int, []), 'decimal from int');
+  Check(not Str.DerivationOk(Dec, []), 'string from decimal');
+  Check(Int.Final = [], 'no final on a built-in type');
+  try
+    Int.Final := [xdRestriction];
+    FailNotRaised('ELandrixXmlError for the final of a built-in type');
+  except
+    on E: ELandrixXmlError do
+      CheckEquals(Ord(xecInvalidOperation), Ord(E.Code), 'final of a built-in type');
+  end;
+  D := TLandrixXmlXsdSimpleType.CreateRestriction(Int, '', U('d'));
+  U2 := TLandrixXmlXsdSimpleType.CreateUnion([Bool, Dec], '', U('u'));
+  L := TLandrixXmlXsdSimpleType.CreateList('', U('l'), Int);
+  try
+    Check(D.DerivationOk(Dec, []), 'through two restrictions');
+    Check(D.DerivationOk(U2, []), 'through a member of a union');
+    Check(not Str.DerivationOk(U2, []), 'string is no member of the union');
+    Check(L.DerivationOk(AnySimple, []), 'a list from anySimpleType');
+    Check(not L.DerivationOk(Int, []), 'a list from its item type');
+    D.Final := [xdRestriction];
+    Check(D.Final = [xdRestriction], 'final set');
+    X := TLandrixXmlXsdSimpleType.CreateRestriction(D, '', U('x'));
+    try
+      Check(not X.DerivationOk(Int, []), 'the final of the base forbids the restriction');
+      Check(not X.DerivationOk(D, []), 'not even from the base itself (Xerces 2.1 first)');
+    finally
+      X.Free;
+    end;
+  finally
+    L.Free;
+    U2.Free;
+    D.Free;
+  end;
+end;
+
 procedure TestUnionFacets;
 var
   U1, R: TLandrixXmlXsdSimpleType;
@@ -653,6 +702,7 @@ begin
   RegisterTest('XsdTypes.FacetConsistency', TestFacetConsistency);
   RegisterTest('XsdTypes.UnionFacets', TestUnionFacets);
   RegisterTest('XsdTypes.QName', TestQName);
+  RegisterTest('XsdTypes.SimpleDerivation', TestSimpleDerivation);
   RegisterTest('XsdTypes.CompareValues', TestCompareValues);
   RegisterTest('XsdTypes.ValueFields', TestValueFields);
   RegisterTest('XsdTypes.Lists', TestLists);

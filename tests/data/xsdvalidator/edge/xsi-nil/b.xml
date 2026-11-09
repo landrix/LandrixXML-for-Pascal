@@ -1,0 +1,5 @@
+<R xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <k><v>1</v><v xsi:nil="true"/><v>2</v></k>
+  <k><v xsi:nil="true"/><v xsi:nil="true"/></k>
+  <u><v>1</v><v xsi:nil="true"/><v xsi:nil="true"/><v>1</v></u>
+</R>

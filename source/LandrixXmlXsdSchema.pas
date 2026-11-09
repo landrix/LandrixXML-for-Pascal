@@ -102,7 +102,6 @@ type
   end;
 
   TLandrixXmlXsdContentType = (xctEmpty, xctSimple, xctElementOnly, xctMixed);
-  TLandrixXmlXsdDerivation = (xdRestriction, xdExtension);
 
   TLandrixXmlXsdComplexType = class(TLandrixXmlXsdComponent)
   private
@@ -111,6 +110,8 @@ type
     FBaseSimple: TLandrixXmlXsdSimpleType;
     FDerivation: TLandrixXmlXsdDerivation;
     FAbstract: Boolean;
+    FFinal: TLandrixXmlXsdDerivations;
+    FBlock: TLandrixXmlXsdDerivations;
     FContentType: TLandrixXmlXsdContentType;
     FSimpleType: TLandrixXmlXsdSimpleType;
     FModel: TLandrixXmlXsdContentModel;
@@ -131,8 +132,16 @@ type
       derived from one }
     property BaseComplex: TLandrixXmlXsdComplexType read FBaseComplex write FBaseComplex;
     property BaseSimple: TLandrixXmlXsdSimpleType read FBaseSimple write FBaseSimple;
+    { xdRestriction or xdExtension }
     property Derivation: TLandrixXmlXsdDerivation read FDerivation write FDerivation;
     property Abstract: Boolean read FAbstract write FAbstract;
+    { the derivations the type's final forbids (extension, restriction):
+      the final attribute or the finalDefault of the schema document }
+    property Final: TLandrixXmlXsdDerivations read FFinal write FFinal;
+    { the derivations an xsi:type must not use (prohibited substitutions:
+      extension, restriction): the block attribute or the blockDefault of
+      the schema document }
+    property Block: TLandrixXmlXsdDerivations read FBlock write FBlock;
     property ContentType: TLandrixXmlXsdContentType read FContentType write FContentType;
     { the type of the text of simple content }
     property SimpleType: TLandrixXmlXsdSimpleType read FSimpleType write FSimpleType;
@@ -187,6 +196,8 @@ type
     FConstraintValue: TLandrixXmlUtf8;
     FConstraintActual: TLandrixXmlXsdValue;
     FGlobal: Boolean;
+    FNillable: Boolean;
+    FBlock: TLandrixXmlXsdDerivations;
     FConstraints: TList;
     function GetConstraintCount: Integer;
     function GetConstraint(Index: Integer): TLandrixXmlXsdIdentityConstraint;
@@ -205,6 +216,11 @@ type
       ValueConstraint is not xvcNone }
     property ConstraintActual: TLandrixXmlXsdValue read FConstraintActual write FConstraintActual;
     property Global: Boolean read FGlobal write FGlobal;
+    property Nillable: Boolean read FNillable write FNillable;
+    { the derivations an xsi:type (and a substitution) must not use
+      (disallowed substitutions: extension, restriction, substitution):
+      the block attribute or the blockDefault of the schema document }
+    property Block: TLandrixXmlXsdDerivations read FBlock write FBlock;
     property ConstraintCount: Integer read GetConstraintCount;
     property Constraints[Index: Integer]: TLandrixXmlXsdIdentityConstraint read GetConstraint;
   end;
@@ -242,11 +258,22 @@ type
     FFiles: TStringList;
     FWarnings: TStringList;
     FEntryFile: string;
+    function ComplexDerivationOk(Derived: TLandrixXmlXsdComplexType; BaseSimple: TLandrixXmlXsdSimpleType;
+      BaseComplex: TLandrixXmlXsdComplexType; Block: TLandrixXmlXsdDerivations): Boolean;
   public
     constructor Create;
     destructor Destroy; override;
     { Takes ownership of a component, simple type or content model. }
     procedure Own(AObject: TObject);
+    { True if the derived type is the base type or validly derived from it
+      without the derivations in Block (Type Derivation OK, as Xerces'
+      checkTypeDerivationOk). A type is given as a simple or a complex
+      type: exactly one of DerivedSimple and DerivedComplex, and one of
+      BaseSimple and BaseComplex, is not nil (else ELandrixXmlError
+      xecInvalidArgument). AnyType of this set is the ur-type. }
+    function TypeDerivationOk(DerivedSimple: TLandrixXmlXsdSimpleType; DerivedComplex: TLandrixXmlXsdComplexType;
+      BaseSimple: TLandrixXmlXsdSimpleType; BaseComplex: TLandrixXmlXsdComplexType;
+      Block: TLandrixXmlXsdDerivations): Boolean;
     function FindElement(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlXsdElementDecl;
     function FindAttribute(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlXsdAttributeDecl;
     function FindComplexType(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlXsdComplexType;
@@ -558,6 +585,75 @@ function TLandrixXmlXsdSchemaSet.FindSimpleType(const NamespaceUri,
   LocalName: TLandrixXmlUtf8): TLandrixXmlXsdSimpleType;
 begin
   Result := TLandrixXmlXsdSimpleType(FSimpleTypes.Find(NamespaceUri, LocalName));
+end;
+
+{ Xerces' checkComplexDerivation: Derived is the base (BaseSimple or
+  BaseComplex) or derived from it without the derivations in Block }
+function TLandrixXmlXsdSchemaSet.ComplexDerivationOk(Derived: TLandrixXmlXsdComplexType;
+  BaseSimple: TLandrixXmlXsdSimpleType; BaseComplex: TLandrixXmlXsdComplexType;
+  Block: TLandrixXmlXsdDerivations): Boolean;
+var
+  AnySimple: TLandrixXmlXsdSimpleType;
+  D: TLandrixXmlXsdComplexType;
+begin
+  Result := True;
+  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
+  D := Derived;
+  while D <> nil do
+  begin
+    if D = BaseComplex then
+      Exit;
+    if ((D.Derivation = xdExtension) and (xdExtension in Block)) or
+      ((D.Derivation = xdRestriction) and (xdRestriction in Block)) then
+      Break;
+    if D.BaseComplex <> nil then
+    begin
+      if D.BaseComplex = BaseComplex then
+        Exit;
+      if D.BaseComplex = FAnyType then
+        Break;
+      D := D.BaseComplex;
+    end
+    else
+    begin
+      if D.BaseSimple = nil then
+        Break;
+      if D.BaseSimple = BaseSimple then
+        Exit;
+      if D.BaseSimple = AnySimple then
+        Break;
+      if BaseComplex <> nil then
+      begin
+        if BaseComplex <> FAnyType then
+          Break;
+        BaseSimple := AnySimple;
+      end;
+      Result := D.BaseSimple.DerivationOk(BaseSimple, Block);
+      Exit;
+    end;
+  end;
+  Result := False;
+end;
+
+function TLandrixXmlXsdSchemaSet.TypeDerivationOk(DerivedSimple: TLandrixXmlXsdSimpleType;
+  DerivedComplex: TLandrixXmlXsdComplexType; BaseSimple: TLandrixXmlXsdSimpleType;
+  BaseComplex: TLandrixXmlXsdComplexType; Block: TLandrixXmlXsdDerivations): Boolean;
+var
+  AnySimple: TLandrixXmlXsdSimpleType;
+begin
+  if ((DerivedSimple = nil) = (DerivedComplex = nil)) or ((BaseSimple = nil) = (BaseComplex = nil)) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'TypeDerivationOk needs one derived and one base type');
+  AnySimple := LandrixXmlXsdBuiltinType('anySimpleType');
+  if DerivedComplex = FAnyType then
+    Result := BaseComplex = FAnyType
+  else if DerivedSimple = nil then
+    Result := ComplexDerivationOk(DerivedComplex, BaseSimple, BaseComplex, Block)
+  else if DerivedSimple = AnySimple then
+    Result := (BaseComplex = FAnyType) or (BaseSimple = AnySimple)
+  else if BaseComplex = nil then
+    Result := DerivedSimple.DerivationOk(BaseSimple, Block)
+  else
+    Result := (BaseComplex = FAnyType) and DerivedSimple.DerivationOk(AnySimple, Block);
 end;
 
 end.
