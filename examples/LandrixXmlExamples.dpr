@@ -23,7 +23,13 @@ uses
   LandrixXmlWriter,
   LandrixXmlDom,
   LandrixXmlConvert,
-  LandrixXmlSchematron;
+  LandrixXmlSchematron,
+  LandrixXmlXsdSchema,
+  LandrixXmlXsdSchemaLoader,
+  LandrixXmlXsdValidator,
+  LandrixXmlXPathTree,
+  LandrixXmlXPath,
+  LandrixXmlXPathEval;
 
 const
   NsInvoice = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';
@@ -213,11 +219,11 @@ begin
     Expect(False, SchFile + ' exists already');
     Exit;
   end;
-  SaveText(SchFile, LandrixXmlStringToUtf8(InvoiceSchematron));
   Rules := TLandrixXmlSchematronRules.Create;
   Validator := nil;
   Doc := TLandrixXmlDocument.Create;
   try
+    SaveText(SchFile, LandrixXmlStringToUtf8(InvoiceSchematron));
     Rules.LoadFromSchematronFile(SchFile);   { e.g. 'invoice.sch' }
     Validator := TLandrixXmlSchematronValidator.Create(Rules);
     Doc.LoadFromUtf8(Xml);              { or Validator.ValidateFile('invoice.xml') }
@@ -235,6 +241,124 @@ begin
     Validator.Free;
     Rules.Free;
     DeleteFile(SchFile);
+  end;
+end;
+
+{ --- validating with an XML Schema --------------------------------------- }
+
+const
+  NsOrder = 'urn:example:order';
+
+  OrderSchema =
+    '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="' + NsOrder + '"' +
+    ' xmlns="' + NsOrder + '" elementFormDefault="qualified">' +
+    '<xs:element name="Order"><xs:complexType><xs:sequence>' +
+    '<xs:element name="ID" type="xs:string"/>' +
+    '<xs:element name="Date" type="xs:date"/>' +
+    '<xs:element name="Item" maxOccurs="unbounded"><xs:complexType><xs:sequence>' +
+    '<xs:element name="Name" type="xs:string"/>' +
+    '<xs:element name="Qty" type="xs:decimal"/>' +
+    '</xs:sequence></xs:complexType></xs:element>' +
+    '</xs:sequence></xs:complexType></xs:element></xs:schema>';
+
+  { 30 February does not exist, and "two" is no decimal }
+  WrongOrder =
+    '<Order xmlns="' + NsOrder + '">'#10 +
+    '  <ID>A-17</ID>'#10 +
+    '  <Date>2026-02-30</Date>'#10 +
+    '  <Item><Name>Screws</Name><Qty>two</Qty></Item>'#10 +
+    '</Order>';
+
+  GoodOrder =
+    '<Order xmlns="' + NsOrder + '">' +
+    '<ID>A-18</ID><Date>2026-03-02</Date>' +
+    '<Item><Name>Screws</Name><Qty>12.5</Qty></Item>' +
+    '<Item><Name>Nuts</Name><Qty>3</Qty></Item>' +
+    '</Order>';
+
+procedure ValidateOrder;
+const
+  XsdFile = 'landrixxml-example-order.xsd';
+var
+  Schema: TLandrixXmlXsdSchemaSet;
+  Validator: TLandrixXmlXsdValidator;
+  Doc: TLandrixXmlDocument;
+  Valid: Boolean;
+  I: Integer;
+  Codes: string;
+begin
+  { never overwrite a file of the same name }
+  if FileExists(XsdFile) then
+  begin
+    Expect(False, XsdFile + ' exists already');
+    Exit;
+  end;
+  Schema := nil;
+  Validator := nil;
+  Doc := TLandrixXmlDocument.Create;
+  try
+    SaveText(XsdFile, LandrixXmlStringToUtf8(OrderSchema));
+    { an invalid schema raises ELandrixXmlXsdSchemaError (ConstraintCode,
+      SchemaFile, Line, Column) }
+    Schema := LandrixXmlXsdLoadSchema(XsdFile);   { e.g. 'order.xsd' }
+    Validator := TLandrixXmlXsdValidator.Create(Schema);
+    Doc.LoadFromString(WrongOrder);
+    Valid := Validator.ValidateDocument(Doc);   { or ValidateFile('order.xml') }
+    Codes := '';
+    for I := 0 to Validator.ErrorCount - 1 do
+    begin
+      { Line 3, Column 3 (DOM: where the element starts),
+        cvc-datatype-valid.1.2.1, "'2026-02-30' is not a valid value for
+        'date'." }
+      Codes := Codes + IntToStr(Validator.Errors[I].Line) + ':' + Validator.Errors[I].Code + ' ';
+    end;
+    Expect(not Valid and (Codes = '3:cvc-datatype-valid.1.2.1 3:cvc-type.3.1.3 ' +
+      '4:cvc-datatype-valid.1.2.1 4:cvc-type.3.1.3 '), 'schema errors');
+    Doc.LoadFromString(GoodOrder);
+    Expect(Validator.ValidateDocument(Doc) and (Validator.ErrorCount = 0), 'valid order');
+  finally
+    Doc.Free;
+    Validator.Free;
+    Schema.Free;
+    DeleteFile(XsdFile);
+  end;
+end;
+
+{ --- querying with XPath ------------------------------------------------- }
+
+procedure QueryOrder;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context: TLandrixXmlXPathStaticContext;
+  Total, Names: TLandrixXmlXPathExpression;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Found: TLandrixXmlXPathResult;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Total := nil;
+  Names := nil;
+  Evaluator := nil;
+  Found := nil;
+  try
+    Tree.LoadFromUtf8(LandrixXmlStringToUtf8(GoodOrder));   { or LoadFromFile, LoadFromDocument }
+    Context.AddNamespace('o', NsOrder);
+    { compiled once, evaluated as often as needed; errors raise
+      ELandrixXmlXPathError with the XPath error code }
+    Total := TLandrixXmlXPathExpression.Create('sum(/o:Order/o:Item/o:Qty)', Context);
+    Names := TLandrixXmlXPathExpression.Create('/o:Order/o:Item[o:Qty > 5]/o:Name', Context);
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    { node 0 is the document node }
+    Expect(Evaluator.EvaluateString(Total, 0) = '15.5', 'XPath sum');
+    Found := Evaluator.Evaluate(Names, 0);
+    Expect((Found.Count = 1) and (Found.StringValueUtf8(0) = 'Screws'), 'XPath nodes');
+  finally
+    Found.Free;
+    Evaluator.Free;
+    Names.Free;
+    Total.Free;
+    Context.Free;
+    Tree.Free;
   end;
 end;
 
@@ -274,6 +398,8 @@ begin
   Xml := BuildDocument;
   Expect(Pos('<Qty>12.500</Qty>', LandrixXmlUtf8ToString(Xml)) > 0, 'built document');
   ValidateInvoice(WriteInvoice);
+  ValidateOrder;
+  QueryOrder;
   HandleErrors;
   if Failures = 0 then
     WriteLn('all examples ok');

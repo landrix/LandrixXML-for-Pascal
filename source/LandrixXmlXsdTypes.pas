@@ -1571,7 +1571,7 @@ var
     repeat
       if (K > Len) or not (AnsiChar(S[K]) in ['0'..'9']) then
         Exit;
-      N := N * 10 + (Ord(S[K]) - Ord('0'));
+      N := N * 10 + Ord(S[K]) - Ord('0');
       if N > 2147483647 then
         Exit;
       Inc(K);

@@ -5,7 +5,36 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-10
+
+Native XML Schema and Schematron validation, as optional units: the
+reader, writer, DOM and conversion units of 0.2.0 do not depend on them
+and are unchanged in their API.
+
+- XML Schema 1.0 validation (`LandrixXmlXsdTypes`, `LandrixXmlXsdContent`,
+  `LandrixXmlXsdSchema`, `LandrixXmlXsdSchemaLoader`,
+  `LandrixXmlXsdValidator`) with the verdicts, error codes, messages and
+  order of Xerces in the Java runtime (the validator behind KoSIT and
+  Mustang); the deliberate differences from the specification are listed
+  in the README. W3C XML Schema Test Suite: 39,225 of 39,336 applicable
+  tests pass.
+- XPath 2.0 (`LandrixXmlXPathTree`, `LandrixXmlXPath`,
+  `LandrixXmlXPathEval`) in two profiles, the specification and Saxon HE,
+  and Schematron (`LandrixXmlSchematron`, `LandrixXmlSchematronCompiler`)
+  with SVRL output: EN16931, XRechnung, Peppol BIS and Factur-X give the
+  same results as the KoSIT validator with Saxon (KoSIT test suite: 86 of
+  86 equal).
+- Building blocks: exact decimal arithmetic (`LandrixXmlDecimal`),
+  `xs:double`/`xs:float` in software (`LandrixXmlDouble`), XSD and XPath
+  regular expressions (`LandrixXmlRegex`), Unicode categories and
+  normalization (`LandrixXmlUnicode`, `LandrixXmlNormalize`), SHA-256
+  (`LandrixXmlSha256`).
+
+The details follow.
+
 ### Added
+- Examples for XML Schema validation and XPath queries in
+  `examples/LandrixXmlExamples.dpr` and the README; `SECURITY.md`.
 - `THIRD-PARTY-NOTICES.md` with `LICENSES/Unicode-3.0.txt` and
   `LICENSES/Apache-2.0.txt`: the sources of the generated tables (Unicode
   Character Database, XML 1.0 character classes, Saxon case mappings), the
@@ -852,6 +881,7 @@ First release.
   copies must be rejected cleanly, and `tools/check-local.py` cross-checks
   the classification with expat.
 
-[Unreleased]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/landrix/LandrixXML-for-Pascal/releases/tag/v0.1.0

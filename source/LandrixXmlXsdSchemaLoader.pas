@@ -1263,6 +1263,8 @@ begin
       if CountSelfReferences(Doc, Node, 'attributeGroup', Name) > 1 then
         FailCheck(Doc.FileName, Node, 'src-redefine.7.1', 'the redefinition of ' + Target +
           ' refers to itself more than once');
+  else
+    { elements, attributes and notations cannot be redefined }
   end;
 end;
 
@@ -2489,6 +2491,8 @@ begin
       end
       else
         Result := not InSet(Super.Namespaces[0], Sub.Namespaces) and not InSet('', Sub.Namespaces);
+  else
+    { xncAny: only a subset of another any, handled above }
   end;
 end;
 
@@ -2711,7 +2715,7 @@ begin
     N := High(Integer)
   else
     for I := 1 to Length(Digits) do
-      N := N * 10 + (Ord(Digits[I]) - Ord('0'));
+      N := N * 10 + Ord(Digits[I]) - Ord('0');
   if N > High(Integer) then
     N := High(Integer);
   Result := Integer(N);

@@ -4,7 +4,7 @@ A small, fast and dependency-free XML library for **Delphi 6 through
 Delphi 13** and **Free Pascal 3.2+**: a pull reader, a streaming writer, a
 DOM and locale-independent conversion helpers for XML Schema values.
 
-> **Status:** version 0.2.0. The API may still change in details before
+> **Status:** version 0.3.0. The API may still change in details before
 > 1.0; see the [CHANGELOG](CHANGELOG.md).
 
 ## Features
@@ -53,7 +53,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlXsdSchemaLoader` | loads XML Schema documents (include, import, redefine), optional validation unit |
 | `LandrixXmlXsdValidator` | validates documents (reader or DOM) against a loaded schema, optional validation unit |
 | `LandrixXmlXPathTree` | read-only document tree for XPath (from reader or DOM), optional validation unit |
-| `LandrixXmlXPath` | XPath 2.0 parser (the subset the e-invoice rule sets use), optional validation unit |
+| `LandrixXmlXPath` | XPath 2.0 parser and static context, optional validation unit |
 | `LandrixXmlXPathEval` | evaluates XPath 2.0 expressions on the tree, as XPath 2.0 specifies or as Saxon HE runs them (two profiles), optional validation unit |
 | `LandrixXmlSchematron` | Schematron validation (EN16931, XRechnung, Peppol BIS, Factur-X), SVRL output, optional validation unit |
 | `LandrixXmlSchematronCompiler` | compiles ISO Schematron (`.sch`) into rule files, optional validation unit |
@@ -187,6 +187,41 @@ end;
 `AddElement('prefix:name')` resolves the prefix through the declarations in
 scope; `AddElement(Uri, Prefix, LocalName)` declares it where needed.
 
+### Validating with an XML Schema
+
+```pascal
+Schema := LandrixXmlXsdLoadSchema('order.xsd');   { include, import, redefine }
+try
+  Validator := TLandrixXmlXsdValidator.Create(Schema);
+  try
+    if not Validator.ValidateFile('order.xml') then
+      for I := 0 to Validator.ErrorCount - 1 do
+        WriteLn(Validator.Errors[I].Line, ':', Validator.Errors[I].Column, ' ',
+          Validator.Errors[I].Code, ' ', Validator.Errors[I].Message);
+        { 3:26 cvc-datatype-valid.1.2.1 '2026-02-30' is not a valid value for 'date'. }
+  finally
+    Validator.Free;
+  end;
+finally
+  Schema.Free;
+end;
+```
+
+The errors carry the codes and messages of Xerces, the validator of the
+Java runtime behind the KoSIT and Mustang validators, with the position
+(`ValidateFile` and `ValidateReader`: where Xerces reports it, with the
+column counted in code points where Xerces counts UTF-16 units, so it
+differs after a character outside the BMP on the same line;
+`ValidateDocument`: the start of the element), a path such as
+`/Order/Item[1]/Qty[1]` and the declaration concerned. A schema that
+breaks an XML Schema rule (or a document that is no schema) raises
+`ELandrixXmlXsdSchemaError` with `ConstraintCode` and the schema file and
+position; a schema document that is not well-formed raises the reader's
+`ELandrixXmlError`, and a construct the loader does not support
+`ELandrixXmlError` with `xecUnsupported` (it is never ignored);
+`ELandrixXmlError` is the base class of all of them. A loaded schema set is read-only and can be
+shared by validators in several threads.
+
 ### Validating with Schematron
 
 ```pascal
@@ -227,6 +262,34 @@ expression, each with file and line; the reader's errors for malformed
 XML; a file that cannot be opened raises the RTL's stream error. A loaded
 `TLandrixXmlSchematronRules` is read-only and can be shared by validators
 in several threads; each validator belongs to one thread.
+
+### Querying with XPath
+
+```pascal
+Tree := TLandrixXmlXPathTree.Create;   { read-only, from a file, reader or DOM }
+Context := TLandrixXmlXPathStaticContext.Create;
+try
+  Tree.LoadFromFile('order.xml');
+  Context.AddNamespace('o', 'urn:example:order');
+  Expr := TLandrixXmlXPathExpression.Create('sum(/o:Order/o:Item/o:Qty)', Context);
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  try
+    WriteLn(Evaluator.EvaluateString(Expr, 0));   { node 0: the document node }
+  finally
+    Evaluator.Free;
+    Expr.Free;
+  end;
+finally
+  Context.Free;
+  Tree.Free;
+end;
+```
+
+`Evaluate` returns the items (nodes and atomic values) as a
+`TLandrixXmlXPathResult`; `EvaluateBoolean` and `EvaluateSequence` are
+the other forms. An expression is compiled once and can be evaluated
+any number of times; errors raise `ELandrixXmlXPathError` with the XPath
+error code.
 
 ### Errors
 

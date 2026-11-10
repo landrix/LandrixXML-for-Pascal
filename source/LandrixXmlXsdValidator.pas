@@ -2372,7 +2372,7 @@ begin
   SetLength(Sizes, Capacity);
   for I := 0 to Count - 1 do
   begin
-    B := Integer(Hashes[I] and (Capacity - 1));
+    B := Integer(Hashes[I] and (Int64(Capacity) - 1));
     Inc(Sizes[B]);
     if ((Sizes[B] > 8) and (Capacity < 64)) or (I + 1 > Capacity div 4 * 3) then
     begin
@@ -2385,12 +2385,12 @@ begin
       Sizes := nil;
       SetLength(Sizes, Capacity);
       for J := 0 to I do
-        Inc(Sizes[Integer(Hashes[J] and (Capacity - 1))]);
+        Inc(Sizes[Integer(Hashes[J] and (Int64(Capacity) - 1))]);
     end;
   end;
   SetLength(Keys, Count);
   for I := 0 to Count - 1 do
-    Keys[I] := (Hashes[I] and (Capacity - 1)) * Count + I;
+    Keys[I] := (Hashes[I] and (Int64(Capacity) - 1)) * Count + I;
   SortKeys(Keys);
   for I := 0 to Count - 1 do
     AddError('cvc-id.1', 'There is no ID/IDREF binding for IDREF ' + Q(Missing[Integer(Keys[I] mod Count)]) + '.', Line,
