@@ -1286,21 +1286,10 @@ begin
   else
     { no collation argument }
   end;
+  { not, true, false, boolean, count, exists, empty, string,
+    string-length, normalize-space, upper-case and lower-case: see
+    CallFunctionInto }
   case Id of
-    xfnNot:
-      Result := BooleanSeq(not SequenceBoolean(Arg(0)));
-    xfnTrue:
-      Result := BooleanSeq(True);
-    xfnFalse:
-      Result := BooleanSeq(False);
-    xfnBoolean:
-      Result := BooleanSeq(SequenceBoolean(Arg(0)));
-    xfnCount:
-      Result := SingleSeq(IntegerItemOf(Arg(0).Count));
-    xfnExists:
-      Result := BooleanSeq(Arg(0).Count > 0);
-    xfnEmpty:
-      Result := BooleanSeq(Arg(0).Count = 0);
     xfnSum, xfnAvg:
       begin
         A := Atomize(Arg(0));
@@ -1437,33 +1426,6 @@ begin
           Item.Kind := xikString;
         Result := SingleSeq(Item);
       end;
-    xfnString:
-      begin
-        if ArgCount = 0 then
-          A := ContextSeq
-        else
-          A := Arg(0);
-        if A.Count > 1 then
-          Fail('XPTY0004', Name + ': more than one item');
-        if A.Count = 0 then
-          Result := LandrixXmlXPathStringItem('')
-        else
-          Result := LandrixXmlXPathStringItem(StringOf(A.Items[0]));
-      end;
-    xfnStringLength, xfnNormalizeSpace:
-      begin
-        if ArgCount = 0 then
-        begin
-          A := ContextSeq;
-          S := StringOf(A.Items[0]);
-        end
-        else
-          S := StrArg(0);
-        if Id = xfnStringLength then
-          Result := SingleSeq(IntegerItemOf(CodePointLength(S)))
-        else
-          Result := LandrixXmlXPathStringItem(NormalizeSpace(S));
-      end;
     xfnConcat:
       begin
         S := '';
@@ -1556,10 +1518,6 @@ begin
         T := StrArg(1);
         Result := BooleanSeq((Length(T) <= Length(S)) and (Copy(S, Length(S) - Length(T) + 1, Length(T)) = T));
       end;
-    xfnUpperCase:
-      Result := LandrixXmlXPathStringItem(MapCase(StrArg(0), True));
-    xfnLowerCase:
-      Result := LandrixXmlXPathStringItem(MapCase(StrArg(0), False));
     xfnTranslate:
       begin
         CPs := LandrixXmlUtf8ToCodePoints(StrArg(0));
@@ -2416,5 +2374,7 @@ begin
           { every constructor function is listed above }
         end;
       end;
+  else
+    { the functions of CallFunctionInto }
   end;
 end;

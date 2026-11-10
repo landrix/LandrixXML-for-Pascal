@@ -278,6 +278,14 @@ type
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure IntersectExceptInto(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure CallBooleanFunction(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure CallStringFunction(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure CallContextSeq(Id: TLandrixXmlXPathFunctionId; Context: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    function CallStrArg(Index, K: Integer; Context, Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlUtf8;
     procedure CallFunctionInto(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalSequenceExpr(Index: Integer; Context: Integer; Position, Size: Integer;
@@ -2728,10 +2736,149 @@ begin
   Output := EvalIntersectExcept(Index, Context, Position, Size, ContextItem);
 end;
 
+{ The most frequent functions of the rule sets (not, count, exists,
+  normalize-space, string-length, ...) have methods of their own: the
+  frame of CallFunction, with its many temporaries and the function name
+  for messages, is only set up for the others. }
 procedure TLandrixXmlXPathEvaluator.CallFunctionInto(Index: Integer; Context: Integer; Position, Size: Integer;
   const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
 begin
+  if FNodes[Index].Op >= 0 then
+    case TLandrixXmlXPathFunctionId(FNodes[Index].Op) of
+      xfnNot, xfnTrue, xfnFalse, xfnBoolean, xfnCount, xfnExists, xfnEmpty:
+        begin
+          CallBooleanFunction(Index, Context, Position, Size, ContextItem, Output);
+          Exit;
+        end;
+      xfnString, xfnStringLength, xfnNormalizeSpace, xfnUpperCase, xfnLowerCase:
+        begin
+          CallStringFunction(Index, Context, Position, Size, ContextItem, Output);
+          Exit;
+        end;
+    else
+      { the others below }
+    end;
   Output := CallFunction(Index, Context, Position, Size, ContextItem);
+end;
+
+{ The message of a failed call, outside the callers so that it is no
+  temporary there }
+procedure FailCall(Id: TLandrixXmlXPathFunctionId; const Code, Detail: string);
+begin
+  Fail(Code, LandrixXmlXPathFunctionName(Id) + '()' + Detail);
+end;
+
+{ not, true, false, boolean, count, exists, empty }
+procedure TLandrixXmlXPathEvaluator.CallBooleanFunction(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  Id: TLandrixXmlXPathFunctionId;
+  A: TLandrixXmlXPathSequence;
+begin
+  Id := TLandrixXmlXPathFunctionId(FNodes[Index].Op);
+  case Id of
+    xfnTrue:
+      Output := BooleanSeq(True);
+    xfnFalse:
+      Output := BooleanSeq(False);
+  else
+    A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+    case Id of
+      xfnNot:
+        Output := BooleanSeq(not SequenceBoolean(A));
+      xfnBoolean:
+        Output := BooleanSeq(SequenceBoolean(A));
+      xfnCount:
+        Output := SingleSeq(IntegerItemOf(A.Count));
+      xfnExists:
+        Output := BooleanSeq(A.Count > 0);
+    else
+      Output := BooleanSeq(A.Count = 0);
+    end;
+  end;
+end;
+
+{ The context item of a function without argument }
+procedure TLandrixXmlXPathEvaluator.CallContextSeq(Id: TLandrixXmlXPathFunctionId; Context: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+begin
+  if ContextItem.Count > 0 then
+    Output := ContextItem
+  else if Context >= 0 then
+    NodeItemInto(Context, Output)
+  else
+  begin
+    FailCall(Id, 'XPDY0002', ': the context item is absent');
+    Output.Items := nil;
+    Output.Count := 0;
+  end;
+end;
+
+{ An xs:string? argument: '' for the empty sequence }
+function TLandrixXmlXPathEvaluator.CallStrArg(Index, K: Integer; Context, Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlUtf8;
+var
+  Id: TLandrixXmlXPathFunctionId;
+  V: TLandrixXmlXPathSequence;
+begin
+  Id := TLandrixXmlXPathFunctionId(FNodes[Index].Op);
+  V := Atomize(Eval(FNodes[Index].Children[K], Context, Position, Size, ContextItem));
+  if V.Count > 1 then
+    FailCall(Id, 'XPTY0004', ': argument ' + IntToStr(K + 1) + ' has more than one item');
+  Result := '';
+  if V.Count = 0 then
+    Exit;
+  if not IsStringLike(V.Items[0].Kind) then
+    FailCall(Id, 'XPTY0004', ': argument ' + IntToStr(K + 1) + ' is ' + KindName(V.Items[0].Kind) +
+      ', not xs:string');
+  Result := V.Items[0].Text;
+end;
+
+{ string, string-length, normalize-space, upper-case, lower-case }
+procedure TLandrixXmlXPathEvaluator.CallStringFunction(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  Id: TLandrixXmlXPathFunctionId;
+  A: TLandrixXmlXPathSequence;
+  S: TLandrixXmlUtf8;
+  ArgCount: Integer;
+begin
+  Id := TLandrixXmlXPathFunctionId(FNodes[Index].Op);
+  ArgCount := Integer(Length(FNodes[Index].Children));
+  { written by CallContextSeq; the compiler is to see it set }
+  A.Count := 0;
+  case Id of
+    xfnString:
+      begin
+        if ArgCount = 0 then
+          CallContextSeq(Id, Context, ContextItem, A)
+        else
+          A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+        if A.Count > 1 then
+          FailCall(Id, 'XPTY0004', ': more than one item');
+        if A.Count = 0 then
+          Output := LandrixXmlXPathStringItem('')
+        else
+          Output := LandrixXmlXPathStringItem(StringOf(A.Items[0]));
+      end;
+    xfnStringLength, xfnNormalizeSpace:
+      begin
+        if ArgCount = 0 then
+        begin
+          CallContextSeq(Id, Context, ContextItem, A);
+          S := StringOf(A.Items[0]);
+        end
+        else
+          S := CallStrArg(Index, 0, Context, Position, Size, ContextItem);
+        if Id = xfnStringLength then
+          Output := SingleSeq(IntegerItemOf(CodePointLength(S)))
+        else
+          Output := LandrixXmlXPathStringItem(NormalizeSpace(S));
+      end;
+  else
+    Output := LandrixXmlXPathStringItem(MapCase(CallStrArg(Index, 0, Context, Position, Size, ContextItem),
+      Id = xfnUpperCase));
+  end;
 end;
 
 procedure TLandrixXmlXPathEvaluator.EvalSequenceExpr(Index: Integer; Context: Integer; Position, Size: Integer;
