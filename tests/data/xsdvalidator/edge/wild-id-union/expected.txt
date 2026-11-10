@@ -1,0 +1,10 @@
+file ids.xml
+error 1 27 cvc-complex-type.5.1 In element 'w', attribute 'gu' is a Wild ID. But there is already a Wild ID 'gl'. There can be only one.
+error 1 47 cvc-complex-type.5.1 In element 'w', attribute 'gr' is a Wild ID. But there is already a Wild ID 'gu'. There can be only one.
+error 1 67 cvc-complex-type.5.1 In element 'w', attribute 'gi' is a Wild ID. But there is already a Wild ID 'gr'. There can be only one.
+error 1 121 cvc-complex-type.5.1 In element 'w', attribute 'gl' is a Wild ID. But there is already a Wild ID 'gu'. There can be only one.
+error 1 140 cvc-complex-type.5.2 In element 'd', attribute 'gu' is a Wild ID. But there is already an attribute 'i' derived from ID among the {attribute uses}.
+error 1 158 cvc-complex-type.5.2 In element 'd', attribute 'gl' is a Wild ID. But there is already an attribute 'i' derived from ID among the {attribute uses}.
+error 1 180 cvc-complex-type.5.2 In element 'l', attribute 'gr' is a Wild ID. But there is already an attribute 'i' derived from ID among the {attribute uses}.
+
+file uses.xml

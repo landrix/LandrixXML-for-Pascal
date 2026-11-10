@@ -446,6 +446,13 @@ both the mark and an entry here):
   duplicates; XML Schema gives an invalid value no actual value (no test
   of the suite covers this; in the source code the mark reads
   `Xerces deviation, not in the test suite`).
+- An attribute matched by an attribute wildcard is a wild ID also when
+  its type is a list of ID items or a union with an ID member type, as
+  Xerces' notion of an ID type, so a second one is cvc-complex-type.5.1
+  and one beside such an attribute use cvc-complex-type.5.2; XML Schema
+  1.0 counts only `xs:ID` and types derived from it (no test of the suite
+  covers this; in the source code the mark reads `Xerces deviation, not in
+  the test suite`).
 - `xsi:schemaLocation` and `xsi:noNamespaceSchemaLocation` hints in
   documents are never read: the schema is the one given to the loader, as
   with a preloaded schema in Xerces (the setup of the KoSIT validator), so

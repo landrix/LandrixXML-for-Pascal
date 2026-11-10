@@ -1720,7 +1720,10 @@ begin
   T := F.ComplexType;
   { the first attribute matched by the wildcard whose type is ID: a second
     one (cvc-complex-type.5.1) or an ID among the attribute uses
-    (cvc-complex-type.5.2) is an error, checked as Xerces does }
+    (cvc-complex-type.5.2) is an error, checked as Xerces does. Xerces
+    deviation, not in the test suite: as Xerces' isIDType, a list of ID
+    items and a union with an ID member count as ID types too, the
+    specification asks for xs:ID and types derived from it only. }
   WildId := '';
   for I := 0 to FAttrCount - 1 do
   begin
@@ -1782,7 +1785,7 @@ begin
           Q(F.Name) + '.', Line, Column, Wildcard);
       Continue;
     end;
-    if (Use = nil) and Decl.SimpleType.IsDerivedFrom(FIdType) then
+    if (Use = nil) and Decl.SimpleType.IsIdType then
     begin
       if WildId <> '' then
         Report('cvc-complex-type.5.1', 'In element ' + Q(F.Name) + ', attribute ' + Q(Decl.Name) +
@@ -1837,7 +1840,7 @@ begin
   begin
     UseId := '';
     for I := 0 to T.AttributeCount - 1 do
-      if (UseId = '') and T.Attributes[I].Decl.SimpleType.IsDerivedFrom(FIdType) then
+      if (UseId = '') and T.Attributes[I].Decl.SimpleType.IsIdType then
         UseId := T.Attributes[I].Decl.Name;
     if UseId <> '' then
       Report('cvc-complex-type.5.2', 'In element ' + Q(F.Name) + ', attribute ' + Q(WildId) +

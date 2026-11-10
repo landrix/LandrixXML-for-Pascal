@@ -648,6 +648,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   facet fails (see the method's comment for lists and unions).
 
 ### Fixed
+- XML Schema: an attribute matched by an attribute wildcard whose type is
+  a list of ID items or a union with an ID member type counts as a wild ID
+  (cvc-complex-type.5.1, 5.2), as in Xerces.
 - XML Schema: the errors of the schema for schemas carry the code Xerces
   reports for the schema element they occur in: s4s-elt-invalid-content.1
   (or .2 for missing content) in xs:schema and the parts of a complex
