@@ -1,0 +1,14 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="Short">
+    <xs:restriction base="xs:string"><xs:maxLength value="3"/></xs:restriction>
+  </xs:simpleType>
+  <xs:element name="doc">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="e" type="xs:string" default="pic" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="f" type="xs:string" default="1x" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="g" type="xs:string" default="long" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
