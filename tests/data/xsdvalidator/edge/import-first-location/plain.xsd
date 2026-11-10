@@ -1,0 +1,1 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:include schemaLocation="cham.xsd"/><xs:element name="p" type="nope"/></xs:schema>

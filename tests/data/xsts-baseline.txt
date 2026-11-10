@@ -13553,14 +13553,12 @@ schF5: = schF5.v
 schF6: =
 schG1: = schG1.v
 schG2: = schG2.v
-schG3: schG3.v
 schG4: = schG4.v
 schG5: = schG5.v
 schG7: = schG7.v
 schG8: = schG8.v
 schG9: =
 schG10: =
-schG12: schG12.v
 schG13: =
 schG15: =
 schH1: =

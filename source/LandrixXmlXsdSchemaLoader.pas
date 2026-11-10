@@ -468,6 +468,7 @@ type
       Ids: TLandrixXmlXsdNameMap);
     procedure CheckSchemaText(const FileName: string; Node: TLandrixXmlNode);
     procedure CheckSchemaDocument(const FileName: string; Root: TLandrixXmlNode);
+    function HasNamespaceDocument(const NamespaceUri: TLandrixXmlUtf8): Boolean;
     function LoadDocument(const FileName: string; Including: TSchemaDoc; IsImport: Boolean;
       const ImportNamespace: TLandrixXmlUtf8; Node: TLandrixXmlNode): TSchemaDoc;
     procedure Collect(Doc: TSchemaDoc; Node: TLandrixXmlNode; Kind: TPendingKind);
@@ -958,17 +959,33 @@ begin
   FSet := nil;
 end;
 
+{ True if a document loaded or being loaded has the target namespace
+  NamespaceUri (Xerces: a grammar for it exists or is being built) }
+function TLoader.HasNamespaceDocument(const NamespaceUri: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to Integer(FDocs.Count) - 1 do
+    if TSchemaDoc(FDocs[I]).TargetNamespace = NamespaceUri then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
 function TLoader.LoadDocument(const FileName: string; Including: TSchemaDoc; IsImport: Boolean;
   const ImportNamespace: TLandrixXmlUtf8; Node: TLandrixXmlNode): TSchemaDoc;
 var
   Dom: TLandrixXmlDocument;
   Root, Child: TLandrixXmlNode;
   Tns, Effective, Value, Location, Ns: TLandrixXmlUtf8;
-  HasTns, HasNs, HasLocation: Boolean;
+  HasTns, HasNs, HasLocation, Again: Boolean;
   Key: TLandrixXmlUtf8;
   Name: TLandrixXmlUtf8;
   Target: string;
   Redefined: TSchemaDoc;
+  I: Integer;
 begin
   Dom := LoadDom(FileName);
   Root := Dom.Root;
@@ -1045,16 +1062,29 @@ begin
           '" of the import is the target namespace of the importing document');
       { Xerces deviation: schZ014_a, schZ014_b. namespace="" is accepted
         and stands for no namespace }
+      Again := False;
+      for I := 0 to Integer(Length(Result.Imports)) - 1 do
+        if Result.Imports[I] = Ns then
+          Again := True;
       SetLength(Result.Imports, Length(Result.Imports) + 1);
       Result.Imports[High(Result.Imports)] := Ns;
       HasLocation := AttrTrimmed(Child, 'schemaLocation', Location);
       if not HasLocation then
         Location := '';
-      Target := ExistingFile(FResolver.Resolve(Result.FileName, Location, Ns, True));
-      if Target = '' then
-        Skip(Result, Child, 'import', Ns, Location, HasLocation)
-      else
-        LoadDocument(Target, Result, True, Ns, Child);
+      { Xerces deviation: schG3, schG12. As Xerces without
+        honour-all-schemaLocations: a namespace that this document
+        imported before (even if that import loaded nothing) or that a
+        document loaded or being loaded already has is not imported again,
+        whatever the location (also a document without target namespace
+        that a chameleon include brought into another namespace) }
+      if not Again and not HasNamespaceDocument(Ns) then
+      begin
+        Target := ExistingFile(FResolver.Resolve(Result.FileName, Location, Ns, True));
+        if Target = '' then
+          Skip(Result, Child, 'import', Ns, Location, HasLocation)
+        else
+          LoadDocument(Target, Result, True, Ns, Child);
+      end;
     end
     else if Name = 'redefine' then
     begin

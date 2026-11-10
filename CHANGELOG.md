@@ -648,6 +648,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   facet fails (see the method's comment for lists and unions).
 
 ### Fixed
+- XML Schema: an import of a namespace that a document loaded or being
+  loaded already has, or that the same document imported before (even
+  without loading anything), is skipped, whatever its location, as in Xerces
+  (without honour-all-schemaLocations, the setting of the KoSIT
+  validator); before, every location was loaded, so a schema could load
+  that Xerces rejects and the other way round (also src-import.1.2 for
+  a document included chameleon-style and reached again through such an
+  import).
 - XML Schema: an attribute matched by an attribute wildcard whose type is
   a list of ID items or a union with an ID member type counts as a wild ID
   (cvc-complex-type.5.1, 5.2), as in Xerces.

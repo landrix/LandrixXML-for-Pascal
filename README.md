@@ -340,6 +340,12 @@ both the mark and an entry here):
   `maxExclusive="1"` on `positiveInteger` is accepted though no value is
   left (`positiveInteger_maxExclusive001_1834`,
   `positiveInteger_maxExclusive002_1835`).
+- An `xs:import` of a namespace that a schema document loaded or being
+  loaded already has, or that the same document imported before, is
+  skipped, whatever its `schemaLocation`, as in
+  Xerces without honour-all-schemaLocations (the setting of the KoSIT
+  validator); the suite expects the components of every location
+  (`schG3`, `schG12`).
 - An `xs:import` with `namespace=""` is accepted (`schZ014_a`,
   `schZ014_b`).
 - An `IDREF`/`IDREFS` attribute value supplied by a default or fixed
@@ -522,11 +528,11 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 39,227
+  load or be rejected, documents that must be valid or invalid) 39,225
   pass and none uses a construct this library does not support (such a
   construct, a selector with an attribute step before its last step, is
-  reported as unsupported, never accepted silently). Of the 106 failures,
-  102 are the cases of the list above, where the result of Xerces is
+  reported as unsupported, never accepted silently). Of the 108 failures,
+  104 are the cases of the list above, where the result of Xerces is
   given on purpose; 3 are XML 1.1 documents, read with the rules of
   XML 1.0 (`xv003`, `xv006`, `xv008`); and one has a schema whose
   verdict the suite itself disputes (`ste110`, a circular union, which
