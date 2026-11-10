@@ -647,6 +647,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   holds a value after a failed check, as Xerces computes one before a
   facet fails (see the method's comment for lists and unions).
 
+### Changed
+- XPath evaluation needs less time per expression node: the evaluator
+  dispatches each node kind to a method of its own, so a call no longer
+  initialises and finalises the temporaries of all other kinds, and a
+  general comparison of two string-like values skips the conversion
+  step. The Factur-X 1.09.2 EXTENDED rules take about 45 % less time on
+  the 22 local EXTENDED documents (Free Pascal, native ARM64); results
+  are unchanged.
+
 ### Fixed
 - XML Schema: an import of a namespace that a document loaded or being
   loaded already has, or that the same document imported before (even

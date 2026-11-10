@@ -863,6 +863,12 @@ begin
 end;
 function DoubleToInteger(const D: TLandrixXmlDouble; Xp20: Boolean): TLandrixXmlDecimal; forward;
 
+{ Outside CompareAtomic, so that its message is no temporary there }
+procedure FailCompare(AKind, BKind: TLandrixXmlXPathItemKind);
+begin
+  Fail('XPTY0004', 'cannot compare ' + KindName(AKind) + ' with ' + KindName(BKind));
+end;
+
 { Compares two atomic values of comparable types (after the conversions of
   general or value comparisons); Tz is the implicit time zone. }
 function CompareAtomic(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
@@ -888,7 +894,7 @@ begin
     Order := CompareQNames(A, B, Op)
   else
   begin
-    Fail('XPTY0004', 'cannot compare ' + KindName(A.Kind) + ' with ' + KindName(B.Kind));
+    FailCompare(A.Kind, B.Kind);
     Order := 0;
   end;
   Result := Holds(Order, Op);
@@ -901,10 +907,11 @@ begin
   Result := CompareAtomic(A, B, Op, Xp20, Tz);
 end;
 
-{ The conversions of a general comparison for one pair. }
+{ The conversions of a general comparison for one pair, where an
+  untypedAtomic meets a value that is not a string. }
 { Expr: the expression being evaluated, whose namespaces a cast of an
   untypedAtomic to xs:QName uses (Saxon profile). }
-function ComparePair(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
+function ComparePairConverted(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
   Tz: Integer; Expr: TLandrixXmlXPathExpression): Boolean;
 var
   X, Y: TLandrixXmlXPathItem;
@@ -953,6 +960,20 @@ begin
       end;
   end;
   Result := CompareAtomic(X, Y, Op, Xp20, Tz);
+end;
+
+{ One pair of a general comparison: an untypedAtomic beside a string (or
+  another untypedAtomic) is compared as it is, without the copies and
+  conversions of ComparePairConverted (the common case of attribute and
+  element values compared with strings). }
+function ComparePair(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
+  Tz: Integer; Expr: TLandrixXmlXPathExpression): Boolean;
+begin
+  if ((A.Kind = xikUntypedAtomic) and not IsStringLike(B.Kind)) or
+    ((B.Kind = xikUntypedAtomic) and not IsStringLike(A.Kind)) then
+    Result := ComparePairConverted(A, B, Op, Xp20, Tz, Expr)
+  else
+    Result := CompareAtomic(A, B, Op, Xp20, Tz);
 end;
 
 function GeneralCompare(const A, B: TLandrixXmlXPathSequence; Op: TLandrixXmlXPathCompare;

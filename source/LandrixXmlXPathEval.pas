@@ -265,6 +265,43 @@ type
     procedure WriteLocal(Slot: Integer; const Value: TLandrixXmlXPathSequence);
     function Eval(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    procedure EvalInto(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalLiteral(Index: Integer; var Output: TLandrixXmlXPathSequence);
+    procedure ReadVariableInto(Slot: Integer; var Output: TLandrixXmlXPathSequence);
+    procedure NodeItemInto(Node: Integer; var Output: TLandrixXmlXPathSequence);
+    procedure StepInto(Index: Integer; Node: Integer; Axis: TLandrixXmlXPathAxis;
+      var Output: TLandrixXmlXPathSequence);
+    procedure CachedInto(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure PathInto(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure IntersectExceptInto(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure CallFunctionInto(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalSequenceExpr(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalFilter(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalForSomeEvery(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalIf(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalAndOr(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalGeneralCompare(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalOperator(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalUnion(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalNodeCompare(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalInstanceTreat(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalCast(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     function EvalStep(Index: Integer; Node: Integer; Axis: TLandrixXmlXPathAxis): TLandrixXmlXPathSequence;
     function EvalIntersectExcept(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
@@ -2552,67 +2589,66 @@ begin
   end;
 end;
 
+{ The value of node Index. Only the dispatch is here, in EvalInto: the
+  kinds whose evaluation needs temporary sequences, items or strings have
+  methods of their own that write the value into Output, so that a call
+  does not initialise and finalise the temporaries of every other kind
+  (most calls are steps, variables, literals and comparisons in
+  predicates). }
 function TLandrixXmlXPathEvaluator.Eval(Index: Integer; Context: Integer; Position, Size: Integer;
   const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+begin
+  { the result is initialised by the caller (a managed type); Count is
+    set so that the compiler sees it written }
+  Result.Count := 0;
+  EvalInto(Index, Context, Position, Size, ContextItem, Result);
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalInto(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
 var
   N: ^TLandrixXmlXPathAstNode;
-  A, B: TLandrixXmlXPathSequence;
-  I: Integer;
-  Left, Right: Boolean;
-  LeftError: ELandrixXmlXPathError;
-  LeftRaised: Boolean;
-  ErrCode, ErrMsg: string;
-  Mark, Split: Integer;
 begin
   { a pattern's steps (not their predicates) are not kept: their value is
     not that of the expression }
   if (FCache <> nil) and (Context >= 0) and (Index <> FBypass) and not FPattern and
     TExpressionCache(FCache).Flags[Index] then
   begin
-    Result := CachedEval(Index, Context, Position, Size, ContextItem);
+    CachedInto(Index, Context, Position, Size, ContextItem, Output);
     Exit;
   end;
   FBypass := -1;
   N := @FNodes[Index];
   case N^.Kind of
     xakSequence:
-      begin
-        Result := LandrixXmlXPathEmpty;
-        for I := 0 to Integer(High(N^.Children)) do
-        begin
-          A := Eval(FNodes[Index].Children[I], Context, Position, Size, ContextItem);
-          AppendAll(Result, A);
-        end;
-      end;
+      EvalSequenceExpr(Index, Context, Position, Size, ContextItem, Output);
     xakEmpty:
-      Result := LandrixXmlXPathEmpty;
-    xakString:
-      Result := LandrixXmlXPathStringItem(N^.Text);
-    xakInteger:
-      Result := SingleSeq(IntegerItem(N^.Decimal));
-    xakDecimal:
-      Result := SingleSeq(DecimalItem(N^.Decimal));
-    xakDouble:
-      Result := SingleSeq(DoubleItem(N^.DoubleValue));
+      begin
+        Output.Items := nil;
+        Output.Count := 0;
+      end;
+    xakString, xakInteger, xakDecimal, xakDouble:
+      EvalLiteral(Index, Output);
     xakVariable:
-      Result := ReadVariable(N^.Slot);
+      ReadVariableInto(N^.Slot, Output);
     xakContextItem:
       begin
         if ContextItem.Count > 0 then
-          Result := ContextItem
+          Output := ContextItem
         else if Context >= 0 then
-          Result := LandrixXmlXPathNodeItem(Context)
+          NodeItemInto(Context, Output)
         else
         begin
           Fail('XPDY0002', 'the context item is absent');
-          Result := LandrixXmlXPathEmpty;
+          Output.Items := nil;
+          Output.Count := 0;
         end;
       end;
     xakRoot:
       begin
         if Context < 0 then
           Fail('XPDY0002', 'the context item for "/" is absent or not a node');
-        Result := LandrixXmlXPathNodeItem(RootOf(Context));
+        NodeItemInto(RootOf(Context), Output);
       end;
     xakStep:
       begin
@@ -2621,231 +2657,373 @@ begin
           Fail('XPTY0020', 'the context item for an axis step is not a node');
         if Context < 0 then
           Fail('XPDY0002', 'the context item for an axis step is absent');
-        Result := EvalStep(Index, Context, N^.Axis);
+        StepInto(Index, Context, N^.Axis, Output);
       end;
     xakPath:
-      Result := EvalPath(Index, Context, Position, Size, ContextItem);
+      PathInto(Index, Context, Position, Size, ContextItem, Output);
     xakFilter:
-      begin
-        { what the input leaves unknown goes to the predicates, which
-          resolve it or pass it on }
-        Mark := FMinFailed;
-        FMinFailed := MaxInt;
-        try
-          A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
-        finally
-          Split := FMinFailed;
-          FMinFailed := Mark;
-        end;
-        Result := ApplyPredicates(FNodes[Index].Predicates, A, Split);
-      end;
+      EvalFilter(Index, Context, Position, Size, ContextItem, Output);
     xakFor, xakSome, xakEvery:
-      begin
-        Result := LandrixXmlXPathEmpty;
-        Left := EvalQuantified(Index, 0, Context, Position, Size, ContextItem, N^.Kind, Result);
-        case FNodes[Index].Kind of
-          xakSome:
-            Result := BooleanSeq(Left);
-          xakEvery:
-            Result := BooleanSeq(not Left);
-        else
-          { for: the collected items }
-        end;
-      end;
+      EvalForSomeEvery(Index, Context, Position, Size, ContextItem, Output);
     xakIf:
-      begin
-        A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
-        if SequenceBoolean(A) then
-          Result := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem)
-        else
-          Result := Eval(FNodes[Index].Children[2], Context, Position, Size, ContextItem);
-      end;
+      EvalIf(Index, Context, Position, Size, ContextItem, Output);
     xakAnd, xakOr:
-      begin
-        { like Saxon: an error in one operand does not matter if the other
-          one decides }
-        LeftError := nil;
-        LeftRaised := False;
-        Left := False;
-        ErrCode := '';
-        ErrMsg := '';
-        try
-          Left := SequenceBoolean(Eval(N^.Children[0], Context, Position, Size, ContextItem));
-        except
-          on E: ELandrixXmlXPathError do
-          begin
-            LeftError := E;
-            LeftRaised := E is ELandrixXmlXPathRaised;
-            ErrCode := E.XPathCode;
-            ErrMsg := Copy(E.Message, Length(E.XPathCode) + 3, MaxInt);
-          end;
-        end;
-        if (LeftError = nil) and (Left = (FNodes[Index].Kind = xakOr)) then
-        begin
-          Result := BooleanSeq(Left);
-          Exit;
-        end;
-        Right := SequenceBoolean(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        if LeftError <> nil then
-        begin
-          if Right = (FNodes[Index].Kind = xakOr) then
-          begin
-            Result := BooleanSeq(Right);
-            Exit;
-          end;
-          if LeftRaised then
-            raise ELandrixXmlXPathRaised.CreateXPath(ErrCode, ErrMsg)
-          else
-            raise ELandrixXmlXPathError.CreateXPath(ErrCode, ErrMsg);
-        end;
-        Result := BooleanSeq(Right);
-      end;
+      EvalAndOr(Index, Context, Position, Size, ContextItem, Output);
     xakGeneralCompare:
-      begin
-        A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
-        B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        Result := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op), Xp20, FImplicitTimeZone,
-          FExpr));
-      end;
-    xakValueCompare:
-      begin
-        A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
-        B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        if (A.Count = 0) or (B.Count = 0) then
-          Result := LandrixXmlXPathEmpty
-        else
-        begin
-          if (A.Count > 1) or (B.Count > 1) then
-            Fail('XPTY0004', 'a value comparison needs single items');
-          Result := BooleanSeq(ValueCompare(A.Items[0], B.Items[0], TLandrixXmlXPathCompare(FNodes[Index].Op),
-            Xp20, FImplicitTimeZone));
-        end;
-      end;
-    xakRange:
-      begin
-        A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
-        B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        Result := RangeOf(A, B, Xp20);
-      end;
-    xakArithmetic:
-      begin
-        A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
-        B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
-        if (A.Count = 0) or (B.Count = 0) then
-          Result := LandrixXmlXPathEmpty
-        else
-        begin
-          if (A.Count > 1) or (B.Count > 1) then
-            Fail('XPTY0004', 'arithmetic needs single items');
-          Result := SingleSeq(Arithmetic(A.Items[0], B.Items[0], TLandrixXmlXPathArithmetic(FNodes[Index].Op), Xp20,
-            FImplicitTimeZone));
-        end;
-      end;
-    xakNegate, xakUnaryPlus:
-      begin
-        A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
-        if A.Count = 0 then
-          Result := LandrixXmlXPathEmpty
-        else
-        begin
-          if A.Count > 1 then
-            Fail('XPTY0004', 'a unary minus needs a single item');
-          Result := SingleSeq(UnaryOp(A.Items[0], FNodes[Index].Kind = xakNegate, Xp20));
-        end;
-      end;
+      EvalGeneralCompare(Index, Context, Position, Size, ContextItem, Output);
+    xakValueCompare, xakRange, xakArithmetic, xakNegate, xakUnaryPlus:
+      EvalOperator(Index, Context, Position, Size, ContextItem, Output);
     xakUnion:
-      begin
-        Mark := FFailedCount;
-        A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
-        Split := FFailedCount;
-        B := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem);
-        for I := 0 to A.Count - 1 do
-          if A.Items[I].Kind <> xikNode then
-            Fail('XPTY0004', 'the operands of "|" must be nodes');
-        for I := 0 to B.Count - 1 do
-          if B.Items[I].Kind <> xikNode then
-            Fail('XPTY0004', 'the operands of "|" must be nodes');
-        { a pattern: a node the left side failed on does not match, as
-          Saxon tries the branches in order }
-        if FPattern and (Split > Mark) then
-          B := WithoutFailed(B, Mark, Split);
-        { a new sequence: A may be the storage of a variable }
-        Result := LandrixXmlXPathEmpty;
-        AppendAll(Result, A);
-        AppendAll(Result, B);
-        SortNodes(Result);
-      end;
+      EvalUnion(Index, Context, Position, Size, ContextItem, Output);
     xakIntersectExcept:
-      Result := EvalIntersectExcept(Index, Context, Position, Size, ContextItem);
+      IntersectExceptInto(Index, Context, Position, Size, ContextItem, Output);
     xakNodeCompare:
-      begin
-        A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
-        B := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem);
-        if (A.Count = 0) or (B.Count = 0) then
-          Result := LandrixXmlXPathEmpty
-        else
-        begin
-          if (A.Count > 1) or (B.Count > 1) or (A.Items[0].Kind <> xikNode) or (B.Items[0].Kind <> xikNode) then
-            Fail('XPTY0004', 'a node comparison needs single nodes');
-          { node numbers are in document order, also across documents }
-          case TLandrixXmlXPathCompare(FNodes[Index].Op) of
-            xpcLt: Result := BooleanSeq(A.Items[0].Node < B.Items[0].Node);
-            xpcGt: Result := BooleanSeq(A.Items[0].Node > B.Items[0].Node);
-          else
-            Result := BooleanSeq(A.Items[0].Node = B.Items[0].Node);
-          end;
-        end;
-      end;
-    xakInstanceOf:
-      begin
-        A := Eval(N^.Children[0], Context, Position, Size, ContextItem);
-        N := @FNodes[Index];
-        Result := BooleanSeq(SequenceMatches(A, N^.SequenceType));
-      end;
-    xakTreat:
-      begin
-        Result := Eval(N^.Children[0], Context, Position, Size, ContextItem);
-        N := @FNodes[Index];
-        if not SequenceMatches(Result, N^.SequenceType) then
-          Fail('XPDY0050', 'treat as ' + LandrixXmlXPathSequenceTypeName(N^.SequenceType) +
-            ': the value does not match');
-      end;
+      EvalNodeCompare(Index, Context, Position, Size, ContextItem, Output);
+    xakInstanceOf, xakTreat:
+      EvalInstanceTreat(Index, Context, Position, Size, ContextItem, Output);
     xakCast, xakCastable:
-      begin
-        A := Atomize(Eval(N^.Children[0], Context, Position, Size, ContextItem));
-        N := @FNodes[Index];
-        if N^.Kind = xakCastable then
-        begin
-          if A.Count = 0 then
-            Result := BooleanSeq(N^.AllowEmpty)
-          else if A.Count > 1 then
-            Result := BooleanSeq(False)
-          else if N^.AtomicType = xikQName then
-            Result := BooleanSeq(CastableToQName(A.Items[0], FExpr, Xp20, FNodes[N^.Children[0]].Kind = xakString))
-          else
-            Result := BooleanSeq(Castable(A.Items[0], N^.AtomicType, Xp20));
-        end
-        else if A.Count = 0 then
-        begin
-          if not N^.AllowEmpty then
-            Fail('XPTY0004', 'an empty sequence cannot be cast to ' + LandrixXmlXPathAtomicTypeName(N^.AtomicType));
-          Result := LandrixXmlXPathEmpty;
-        end
-        else
-        begin
-          if A.Count > 1 then
-            Fail('XPTY0004', 'a sequence of several items cannot be cast');
-          if N^.AtomicType = xikQName then
-            Result := SingleSeq(CastToQName(A.Items[0], FExpr, Xp20, FNodes[N^.Children[0]].Kind = xakString))
-          else
-            Result := SingleSeq(CastTo(A.Items[0], N^.AtomicType, Xp20));
-        end;
-      end;
+      EvalCast(Index, Context, Position, Size, ContextItem, Output);
     xakFunction:
-      Result := CallFunction(Index, Context, Position, Size, ContextItem);
+      CallFunctionInto(Index, Context, Position, Size, ContextItem, Output);
   else
     Fail('FOER0000', 'expression kind not supported');
-    Result := LandrixXmlXPathEmpty;
+    Output.Items := nil;
+    Output.Count := 0;
+  end;
+end;
+
+{ The calls of EvalInto that go through a function: each has its
+  temporary result here, not in EvalInto. }
+procedure TLandrixXmlXPathEvaluator.CachedInto(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+begin
+  Output := CachedEval(Index, Context, Position, Size, ContextItem);
+end;
+
+procedure TLandrixXmlXPathEvaluator.ReadVariableInto(Slot: Integer; var Output: TLandrixXmlXPathSequence);
+begin
+  Output := ReadVariable(Slot);
+end;
+
+procedure TLandrixXmlXPathEvaluator.NodeItemInto(Node: Integer; var Output: TLandrixXmlXPathSequence);
+begin
+  Output := LandrixXmlXPathNodeItem(Node);
+end;
+
+procedure TLandrixXmlXPathEvaluator.StepInto(Index: Integer; Node: Integer; Axis: TLandrixXmlXPathAxis;
+  var Output: TLandrixXmlXPathSequence);
+begin
+  Output := EvalStep(Index, Node, Axis);
+end;
+
+procedure TLandrixXmlXPathEvaluator.PathInto(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+begin
+  Output := EvalPath(Index, Context, Position, Size, ContextItem);
+end;
+
+procedure TLandrixXmlXPathEvaluator.IntersectExceptInto(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+begin
+  Output := EvalIntersectExcept(Index, Context, Position, Size, ContextItem);
+end;
+
+procedure TLandrixXmlXPathEvaluator.CallFunctionInto(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+begin
+  Output := CallFunction(Index, Context, Position, Size, ContextItem);
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalSequenceExpr(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A: TLandrixXmlXPathSequence;
+  I: Integer;
+begin
+  Output := LandrixXmlXPathEmpty;
+  for I := 0 to Integer(High(FNodes[Index].Children)) do
+  begin
+    A := Eval(FNodes[Index].Children[I], Context, Position, Size, ContextItem);
+    AppendAll(Output, A);
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalLiteral(Index: Integer; var Output: TLandrixXmlXPathSequence);
+var
+  N: ^TLandrixXmlXPathAstNode;
+begin
+  N := @FNodes[Index];
+  case N^.Kind of
+    xakString:
+      Output := LandrixXmlXPathStringItem(N^.Text);
+    xakInteger:
+      Output := SingleSeq(IntegerItem(N^.Decimal));
+    xakDecimal:
+      Output := SingleSeq(DecimalItem(N^.Decimal));
+  else
+    Output := SingleSeq(DoubleItem(N^.DoubleValue));
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalFilter(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A: TLandrixXmlXPathSequence;
+  Mark, Split: Integer;
+begin
+  { what the input leaves unknown goes to the predicates, which resolve
+    it or pass it on }
+  Mark := FMinFailed;
+  FMinFailed := MaxInt;
+  try
+    A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+  finally
+    Split := FMinFailed;
+    FMinFailed := Mark;
+  end;
+  Output := ApplyPredicates(FNodes[Index].Predicates, A, Split);
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalForSomeEvery(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  Left: Boolean;
+begin
+  Output := LandrixXmlXPathEmpty;
+  Left := EvalQuantified(Index, 0, Context, Position, Size, ContextItem, FNodes[Index].Kind, Output);
+  case FNodes[Index].Kind of
+    xakSome:
+      Output := BooleanSeq(Left);
+    xakEvery:
+      Output := BooleanSeq(not Left);
+  else
+    { for: the collected items }
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalIf(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A: TLandrixXmlXPathSequence;
+begin
+  A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+  if SequenceBoolean(A) then
+    Output := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem)
+  else
+    Output := Eval(FNodes[Index].Children[2], Context, Position, Size, ContextItem);
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalAndOr(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  Left, Right: Boolean;
+  LeftError: ELandrixXmlXPathError;
+  LeftRaised: Boolean;
+  ErrCode, ErrMsg: string;
+begin
+  { like Saxon: an error in one operand does not matter if the other one
+    decides }
+  LeftError := nil;
+  LeftRaised := False;
+  Left := False;
+  ErrCode := '';
+  ErrMsg := '';
+  try
+    Left := SequenceBoolean(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
+  except
+    on E: ELandrixXmlXPathError do
+    begin
+      LeftError := E;
+      LeftRaised := E is ELandrixXmlXPathRaised;
+      ErrCode := E.XPathCode;
+      ErrMsg := Copy(E.Message, Length(E.XPathCode) + 3, MaxInt);
+    end;
+  end;
+  if (LeftError = nil) and (Left = (FNodes[Index].Kind = xakOr)) then
+  begin
+    Output := BooleanSeq(Left);
+    Exit;
+  end;
+  Right := SequenceBoolean(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
+  if LeftError <> nil then
+  begin
+    if Right = (FNodes[Index].Kind = xakOr) then
+    begin
+      Output := BooleanSeq(Right);
+      Exit;
+    end;
+    if LeftRaised then
+      raise ELandrixXmlXPathRaised.CreateXPath(ErrCode, ErrMsg)
+    else
+      raise ELandrixXmlXPathError.CreateXPath(ErrCode, ErrMsg);
+  end;
+  Output := BooleanSeq(Right);
+end;
+
+{ "=", "!=", "<", ...: in a procedure of its own, as the most frequent
+  operator in predicates }
+procedure TLandrixXmlXPathEvaluator.EvalGeneralCompare(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A, B: TLandrixXmlXPathSequence;
+begin
+  A := Atomize(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
+  B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
+  Output := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op), Xp20, FImplicitTimeZone,
+    FExpr));
+end;
+
+{ The value comparisons, the range and the arithmetic operators }
+procedure TLandrixXmlXPathEvaluator.EvalOperator(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A, B: TLandrixXmlXPathSequence;
+begin
+  A := Atomize(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
+  if FNodes[Index].Kind in [xakNegate, xakUnaryPlus] then
+  begin
+    if A.Count = 0 then
+      Output := LandrixXmlXPathEmpty
+    else
+    begin
+      if A.Count > 1 then
+        Fail('XPTY0004', 'a unary minus needs a single item');
+      Output := SingleSeq(UnaryOp(A.Items[0], FNodes[Index].Kind = xakNegate, Xp20));
+    end;
+    Exit;
+  end;
+  B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
+  case FNodes[Index].Kind of
+    xakValueCompare:
+      if (A.Count = 0) or (B.Count = 0) then
+        Output := LandrixXmlXPathEmpty
+      else
+      begin
+        if (A.Count > 1) or (B.Count > 1) then
+          Fail('XPTY0004', 'a value comparison needs single items');
+        Output := BooleanSeq(ValueCompare(A.Items[0], B.Items[0], TLandrixXmlXPathCompare(FNodes[Index].Op),
+          Xp20, FImplicitTimeZone));
+      end;
+    xakRange:
+      Output := RangeOf(A, B, Xp20);
+  else
+    if (A.Count = 0) or (B.Count = 0) then
+      Output := LandrixXmlXPathEmpty
+    else
+    begin
+      if (A.Count > 1) or (B.Count > 1) then
+        Fail('XPTY0004', 'arithmetic needs single items');
+      Output := SingleSeq(Arithmetic(A.Items[0], B.Items[0], TLandrixXmlXPathArithmetic(FNodes[Index].Op), Xp20,
+        FImplicitTimeZone));
+    end;
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalUnion(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A, B: TLandrixXmlXPathSequence;
+  I, Mark, Split: Integer;
+begin
+  Mark := FFailedCount;
+  A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+  Split := FFailedCount;
+  B := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem);
+  for I := 0 to A.Count - 1 do
+    if A.Items[I].Kind <> xikNode then
+      Fail('XPTY0004', 'the operands of "|" must be nodes');
+  for I := 0 to B.Count - 1 do
+    if B.Items[I].Kind <> xikNode then
+      Fail('XPTY0004', 'the operands of "|" must be nodes');
+  { a pattern: a node the left side failed on does not match, as Saxon
+    tries the branches in order }
+  if FPattern and (Split > Mark) then
+    B := WithoutFailed(B, Mark, Split);
+  { a new sequence: A may be the storage of a variable }
+  Output := LandrixXmlXPathEmpty;
+  AppendAll(Output, A);
+  AppendAll(Output, B);
+  SortNodes(Output);
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalNodeCompare(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A, B: TLandrixXmlXPathSequence;
+begin
+  A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+  B := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem);
+  if (A.Count = 0) or (B.Count = 0) then
+    Output := LandrixXmlXPathEmpty
+  else
+  begin
+    if (A.Count > 1) or (B.Count > 1) or (A.Items[0].Kind <> xikNode) or (B.Items[0].Kind <> xikNode) then
+      Fail('XPTY0004', 'a node comparison needs single nodes');
+    { node numbers are in document order, also across documents }
+    case TLandrixXmlXPathCompare(FNodes[Index].Op) of
+      xpcLt: Output := BooleanSeq(A.Items[0].Node < B.Items[0].Node);
+      xpcGt: Output := BooleanSeq(A.Items[0].Node > B.Items[0].Node);
+    else
+      Output := BooleanSeq(A.Items[0].Node = B.Items[0].Node);
+    end;
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalInstanceTreat(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A: TLandrixXmlXPathSequence;
+  N: ^TLandrixXmlXPathAstNode;
+begin
+  if FNodes[Index].Kind = xakInstanceOf then
+  begin
+    A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+    N := @FNodes[Index];
+    Output := BooleanSeq(SequenceMatches(A, N^.SequenceType));
+  end
+  else
+  begin
+    Output := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+    N := @FNodes[Index];
+    if not SequenceMatches(Output, N^.SequenceType) then
+      Fail('XPDY0050', 'treat as ' + LandrixXmlXPathSequenceTypeName(N^.SequenceType) +
+        ': the value does not match');
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalCast(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A: TLandrixXmlXPathSequence;
+  N: ^TLandrixXmlXPathAstNode;
+begin
+  A := Atomize(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
+  N := @FNodes[Index];
+  if N^.Kind = xakCastable then
+  begin
+    if A.Count = 0 then
+      Output := BooleanSeq(N^.AllowEmpty)
+    else if A.Count > 1 then
+      Output := BooleanSeq(False)
+    else if N^.AtomicType = xikQName then
+      Output := BooleanSeq(CastableToQName(A.Items[0], FExpr, Xp20, FNodes[N^.Children[0]].Kind = xakString))
+    else
+      Output := BooleanSeq(Castable(A.Items[0], N^.AtomicType, Xp20));
+  end
+  else if A.Count = 0 then
+  begin
+    if not N^.AllowEmpty then
+      Fail('XPTY0004', 'an empty sequence cannot be cast to ' + LandrixXmlXPathAtomicTypeName(N^.AtomicType));
+    Output := LandrixXmlXPathEmpty;
+  end
+  else
+  begin
+    if A.Count > 1 then
+      Fail('XPTY0004', 'a sequence of several items cannot be cast');
+    if N^.AtomicType = xikQName then
+      Output := SingleSeq(CastToQName(A.Items[0], FExpr, Xp20, FNodes[N^.Children[0]].Kind = xakString))
+    else
+      Output := SingleSeq(CastTo(A.Items[0], N^.AtomicType, Xp20));
   end;
 end;
 
