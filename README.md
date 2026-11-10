@@ -416,6 +416,15 @@ both the mark and an entry here):
   more than 1048576 hours and 59 minutes, the same duration) (no test
   of the suite covers these; in the source code the mark reads
   `Xerces deviation, not in the test suite`).
+- An `xs:time` of 24:00:00 is 00:00:00 of the next day, as Xerces gives
+  every time the same placeholder date: it differs from 00:00:00 and
+  comes after 23:59:59 (in enumerations, ranges, fixed values and
+  identity constraints), and a default or fixed value of 24:00:00
+  becomes 00:00:00 (its canonical form); XML Schema 1.0 makes 24:00:00
+  the same time of day as 00:00:00. For `xs:dateTime` both agree:
+  T24:00:00 equals 00:00:00 of the next day (no test of the suite covers
+  this; in the source code the mark reads `Xerces deviation, not in the
+  test suite`).
 - A value that fails a facet other than pattern is still the value of
   identity constraints (a failed list item gives its own value, or that
   of the item before it; a union no member type matches gives that of

@@ -2711,7 +2711,11 @@ end;
 { The fields of a date or time value as Xerces keeps them: missing parts
   get its placeholders (year 2000, month 1, day 1, or 15 for xs:time),
   24:00:00 is the start of the next day, and a value with a time zone is
-  moved to UTC the way Xerces' normalize does it. }
+  moved to UTC the way Xerces' normalize does it.
+  Xerces deviation, not in the test suite: so xs:time 24:00:00 is
+  00:00:00 of the day after the placeholder, unequal to 00:00:00 and
+  after 23:59:59, where XML Schema 1.0 makes it the same time of day as
+  00:00:00. }
 function XercesDateTime(const Value: TLandrixXmlXsdValue): TLandrixXmlXsdDateTime;
 var
   Kind: TLandrixXmlXsdPrimitive;
