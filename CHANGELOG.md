@@ -648,6 +648,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   facet fails (see the method's comment for lists and unions).
 
 ### Fixed
+- XML Schema: two identity constraints of the same name (in one target
+  namespace) are sch-props-correct.2, as in Xerces, instead of an error
+  without a constraint code.
 - XML Schema identity constraints use the value of a field whose value
   failed a facet other than pattern (also through a list item or a union
   member), as Xerces does, so two equal invalid values are also a

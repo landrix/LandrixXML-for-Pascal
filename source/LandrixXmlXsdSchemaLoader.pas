@@ -4114,7 +4114,8 @@ begin
   else
     C.Kind := xikKeyRef;
   if not FIdentity.Add(C.NamespaceUri, C.Name, C) then
-    Fail(Doc, Node, 'duplicate identity constraint ' + QualifiedText(C.NamespaceUri, C.Name));
+    FailCheck(Doc.FileName, Node, 'sch-props-correct.2', 'duplicate identity constraint ' +
+      QualifiedText(C.NamespaceUri, C.Name));
   Fields := nil;
   HasSelector := False;
   Child := Node.FirstChildElement;
