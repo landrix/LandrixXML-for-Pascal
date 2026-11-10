@@ -648,6 +648,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   facet fails (see the method's comment for lists and unions).
 
 ### Fixed
+- XML Schema: the errors of the schema for schemas carry the code Xerces
+  reports for the schema element they occur in: s4s-elt-invalid-content.1
+  (or .2 for missing content) in xs:schema and the parts of a complex
+  type, s4s-elt-must-match.1 (or .2) elsewhere, src-annotation in
+  xs:annotation; xs:list, xs:union and the xs:restriction of a simple type
+  report src-simple-type.2.a, 2.b, 3.a, 3.b and
+  src-union-memberTypes-or-simpleTypes before the rest of their content,
+  as Xerces does. A duplicate attribute is ct-props-correct.4 in a complex
+  type and ag-props-correct.2 in an attribute group (was without a code),
+  also for a duplicate inside a referenced attribute group; a prohibited
+  attribute use is never a duplicate, as in Xerces (a complex type with a
+  prohibited and a normal use of the same attribute was rejected).
+  Character data in a schema element is reported before any other error
+  of the schema document, as Xerces reports it while reading it.
 - XML Schema: fixed values of an attribute use and its declaration, and
   of a restriction and its base, compare as Xerces does, also date and
   time values of different types (a fixed 2026-11-04 of a union of

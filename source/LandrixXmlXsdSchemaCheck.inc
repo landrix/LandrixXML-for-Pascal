@@ -14,9 +14,12 @@
   local element or attribute with ref has the attributes of a
   reference only.
   The errors carry the code Xerces reports (s4s-att-not-allowed,
-  s4s-att-must-appear, s4s-att-invalid-value, s4s-elt-must-match.1,
-  s4s-elt-invalid-content.1, s4s-elt-character). Included in the
-  implementation section.
+  s4s-att-must-appear, s4s-att-invalid-value, s4s-elt-must-match.1 and
+  .2, s4s-elt-invalid-content.1 and .2, s4s-elt-character,
+  src-annotation, and the rules on the first child of xs:list,
+  xs:union and xs:restriction of a simple type that Xerces checks
+  before the rest of the content). Included in the implementation
+  section.
   Xerces deviation: vc001, vc002, vc024. The version attributes
   (vc:minVersion and the like) are not evaluated, so XSD 1.1 elements
   they would exclude are errors. }
@@ -525,25 +528,28 @@ begin
   end;
 end;
 
-{ True if Name occurs anywhere in the content model. }
-function SchemaContentMentions(const Content, Name: TLandrixXmlUtf8): Boolean;
-var
-  P, Start: Integer;
+{ The code of content that does not match the rule of Kind, as the
+  traverser of Xerces for that schema element reports it: the schema
+  document and the parts of a complex type report invalid content (.2
+  for missing content), the others a mismatch (.2 for missing content),
+  xs:annotation src-annotation. }
+function SchemaContentCode(const Kind: TLandrixXmlUtf8; Missing: Boolean): string;
 begin
-  P := 1;
-  while P <= Length(Content) do
+  if Kind = 'annotation' then
+    Result := 'src-annotation'
+  else if (Kind = 'schema') or (Kind = 'complexType.top') or (Kind = 'complexType.local') or
+    (Kind = 'simpleContent') or (Kind = 'complexContent') or (Kind = 'restriction.sc') or
+    (Kind = 'extension.sc') or (Kind = 'restriction.cc') or (Kind = 'extension.cc') then
   begin
-    Start := P;
-    while (P <= Length(Content)) and not (AnsiChar(Content[P]) in ['|', ';', '/', '?', '*', '+']) do
-      Inc(P);
-    if Copy(Content, Start, P - Start) = Name then
-    begin
-      Result := True;
-      Exit;
-    end;
-    Inc(P);
-  end;
-  Result := False;
+    if Missing then
+      Result := 's4s-elt-invalid-content.2'
+    else
+      Result := 's4s-elt-invalid-content.1';
+  end
+  else if Missing then
+    Result := 's4s-elt-must-match.2'
+  else
+    Result := 's4s-elt-must-match.1';
 end;
 
 function IsBlank(const S: TLandrixXmlUtf8): Boolean;
@@ -565,6 +571,47 @@ begin
     Node.Line, Node.Column);
 end;
 
+{ As Xerces' simple type traverser, before the rest of the content: the
+  first child after one annotation is a local simple type exactly if the
+  base (xs:restriction) or item type (xs:list) is not given by its
+  attribute; a union needs member types or a local simple type. True if
+  both are given: Xerces resolves the type of the attribute first
+  (src-resolve), so the schema loader reports it (src-simple-type.2.a
+  or 3.a after the type) and the content is not checked here. }
+function TLoader.CheckSimpleTypeChild(const FileName: string; Node: TLandrixXmlNode;
+  const Kind: TLandrixXmlUtf8): Boolean;
+var
+  First: TLandrixXmlNode;
+  HasLocal: Boolean;
+  Value: TLandrixXmlUtf8;
+begin
+  Result := False;
+  First := Node.FirstChildElement;
+  if IsXs(First, 'annotation') then
+    First := First.NextSiblingElement;
+  HasLocal := IsXs(First, 'simpleType');
+  if Kind = 'union' then
+  begin
+    if not HasLocal and (not Attr(Node, 'memberTypes', Value) or
+      (LandrixXmlXsdNormalizeWhiteSpace(Value, xwsCollapse) = '')) then
+      FailCheck(FileName, Node, 'src-union-memberTypes-or-simpleTypes', 'xs:union needs member types or a ' +
+        'local simple type');
+    Exit;
+  end;
+  if Kind = 'list' then
+  begin
+    Result := HasLocal and (Node.AttributeIndex('', 'itemType') >= 0);
+    if not HasLocal and (Node.AttributeIndex('', 'itemType') < 0) then
+      FailCheck(FileName, Node, 'src-simple-type.3.b', 'xs:list needs an itemType attribute or a local simple ' +
+        'type');
+    Exit;
+  end;
+  Result := HasLocal and (Node.AttributeIndex('', 'base') >= 0);
+  if not HasLocal and (Node.AttributeIndex('', 'base') < 0) then
+    FailCheck(FileName, Node, 'src-simple-type.2.b', 'xs:restriction needs a base attribute or a local simple ' +
+      'type');
+end;
+
 procedure TLoader.CheckSchemaNode(const FileName: string; Node: TLandrixXmlNode;
   const AKind: TLandrixXmlUtf8; Ids: TLandrixXmlXsdNameMap);
 var
@@ -572,7 +619,7 @@ var
   Rule: TSchemaRule;
   I, P, Count, Bad: Integer;
   Ns, Name, TypeName, Value, Item, Where: TLandrixXmlUtf8;
-  Child: TLandrixXmlNode;
+  Child, Lead: TLandrixXmlNode;
   Names: TLandrixXmlUtf8Array;
   Elements: array of TLandrixXmlNode;
 begin
@@ -633,6 +680,16 @@ begin
   end;
   if Rule.Content = '*' then
     Exit;
+  { as Xerces: a leading annotation before the rest of the content (not
+    in xs:annotation, where it is invalid content) }
+  Lead := Node.FirstChildElement;
+  if IsXs(Lead, 'annotation') and (Kind <> 'annotation') then
+    CheckSchemaNode(FileName, Lead, 'annotation', Ids)
+  else
+    Lead := nil;
+  if ((Kind = 'list') or (Kind = 'union') or (Kind = 'restriction.simple')) and
+    CheckSimpleTypeChild(FileName, Node, Kind) then
+    Exit;
   { the children }
   Count := 0;
   Names := nil;
@@ -643,7 +700,7 @@ begin
     if Child.NodeType = xntElement then
     begin
       if Child.NamespaceUriUtf8 <> LandrixXmlXsdNamespace then
-        FailCheck(FileName, Child, 's4s-elt-invalid-content.1', 'the element "' + Esc(Child.NameUtf8) +
+        FailCheck(FileName, Child, SchemaContentCode(Kind, False), 'the element "' + Esc(Child.NameUtf8) +
           '" is not allowed in ' + Esc(Where));
       if Count = Length(Names) then
       begin
@@ -660,18 +717,33 @@ begin
   end;
   Bad := MatchSchemaContent(Rule.Content, Names, Count);
   if Bad >= Count then
-    FailCheck(FileName, Node, 's4s-elt-must-match.1', 'the content of ' + Esc(Where) + ' is incomplete')
+    FailCheck(FileName, Node, SchemaContentCode(Kind, True), 'the content of ' + Esc(Where) + ' is incomplete')
   else if Bad >= 0 then
-  begin
-    if SchemaContentMentions(Rule.Content, Names[Bad]) then
-      FailCheck(FileName, Elements[Bad], 's4s-elt-must-match.1', 'xs:' + Esc(Names[Bad]) +
-        ' is misplaced or occurs too often in ' + Esc(Where))
-    else
-      FailCheck(FileName, Elements[Bad], 's4s-elt-invalid-content.1', 'xs:' + Esc(Names[Bad]) +
-        ' is not allowed in ' + Esc(Where));
-  end;
+    FailCheck(FileName, Elements[Bad], SchemaContentCode(Kind, False), 'xs:' + Esc(Names[Bad]) +
+      ' is not allowed here in ' + Esc(Where));
   for I := 0 to Count - 1 do
-    CheckSchemaNode(FileName, Elements[I], SchemaKindOf(Names[I], Kind), Ids);
+    if Elements[I] <> Lead then
+      CheckSchemaNode(FileName, Elements[I], SchemaKindOf(Names[I], Kind), Ids);
+end;
+
+{ Character data in Node and the elements below it, in document order,
+  except below the children of xs:annotation (its own character data
+  counts): Xerces reports it while it reads the schema document, so
+  before any other error of it. }
+procedure TLoader.CheckSchemaText(const FileName: string; Node: TLandrixXmlNode);
+var
+  Child: TLandrixXmlNode;
+begin
+  Child := Node.FirstChild;
+  while Child <> nil do
+  begin
+    if ((Child.NodeType = xntText) or (Child.NodeType = xntCData)) and not IsBlank(Child.ValueUtf8) then
+      FailCheck(FileName, Node, 's4s-elt-character', 'character data is not allowed in ' +
+        Esc(Node.NameUtf8))
+    else if (Child.NodeType = xntElement) and not IsXs(Node, 'annotation') then
+      CheckSchemaText(FileName, Child);
+    Child := Child.NextSibling;
+  end;
 end;
 
 { Once per file: a document included under several target namespaces is
@@ -683,6 +755,7 @@ begin
   if FCheckedFiles.IndexOf(FileIdentity(FileName)) >= 0 then
     Exit;
   FCheckedFiles.Add(FileIdentity(FileName));
+  CheckSchemaText(FileName, Root);
   Ids := TLandrixXmlXsdNameMap.Create;
   try
     CheckSchemaNode(FileName, Root, 'schema', Ids);

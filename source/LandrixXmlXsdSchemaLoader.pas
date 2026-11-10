@@ -446,6 +446,9 @@ type
       the element declarations met are built afterwards (Xerces traverses
       the elements of a global component's particles after it) }
     FTypeDepth: Integer;
+    { True while the attributes of an attribute group are collected, false
+      for those of a complex type (the code of a duplicate) }
+    FInAttributeGroup: Boolean;
     FDeferred: TObjectList;
     FDraining: Boolean;
     { the named complex types filled while the deferred elements are
@@ -459,8 +462,11 @@ type
       const NamespaceUri, Location: TLandrixXmlUtf8; Warn: Boolean);
     procedure CheckDirective(Doc: TSchemaDoc; Node: TLandrixXmlNode);
     procedure FailCheck(const FileName: string; Node: TLandrixXmlNode; const Code, Msg: string);
+    function CheckSimpleTypeChild(const FileName: string; Node: TLandrixXmlNode;
+      const Kind: TLandrixXmlUtf8): Boolean;
     procedure CheckSchemaNode(const FileName: string; Node: TLandrixXmlNode; const AKind: TLandrixXmlUtf8;
       Ids: TLandrixXmlXsdNameMap);
+    procedure CheckSchemaText(const FileName: string; Node: TLandrixXmlNode);
     procedure CheckSchemaDocument(const FileName: string; Root: TLandrixXmlNode);
     function LoadDocument(const FileName: string; Including: TSchemaDoc; IsImport: Boolean;
       const ImportNamespace: TLandrixXmlUtf8; Node: TLandrixXmlNode): TSchemaDoc;
@@ -531,6 +537,10 @@ type
       BaseType: TLandrixXmlXsdComplexType; Items: TObjectList; Wildcard: TLandrixXmlXsdWildcard);
     procedure CollectAttributes(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Items: TObjectList;
       var Wildcard: TLandrixXmlXsdWildcard);
+    procedure CollectOwnAttributes(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Items: TObjectList;
+      var Wildcard: TLandrixXmlXsdWildcard; InGroup: Boolean);
+    procedure CheckNewAttribute(Doc: TSchemaDoc; Node: TLandrixXmlNode; Items: TObjectList;
+      Item: TAttributeItem; Count: Integer);
     function BuildIdentity(Doc: TSchemaDoc; Node: TLandrixXmlNode): TLandrixXmlXsdIdentityConstraint;
     function ParsePaths(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Expr: TLandrixXmlUtf8;
       IsField: Boolean): TLandrixXmlXsdPaths;
@@ -1244,7 +1254,7 @@ begin
     FCurrent := P.Original;
     try
       BaseWildcard := nil;
-      CollectAttributes(P.Original.Doc, P.Original.Node, BaseItems, BaseWildcard);
+      CollectOwnAttributes(P.Original.Doc, P.Original.Node, BaseItems, BaseWildcard, True);
     finally
       FCurrent := Saved;
     end;
@@ -1972,11 +1982,12 @@ begin
     if IsXs(Sub, 'simpleType') then
     begin
       if Base <> nil then
-        Fail(Doc, Sub, 'a restriction with both a base attribute and a local simple type');
+        FailCheck(Doc.FileName, Sub, 'src-simple-type.2.a', 'a restriction with both a base attribute and a ' +
+          'local simple type');
       Base := BuildSimpleType(Doc, Sub, '', nil);
     end;
     if Base = nil then
-      Fail(Doc, Child, 'a restriction without a base type');
+      FailCheck(Doc.FileName, Child, 'src-simple-type.2.b', 'a restriction without a base type');
     if Name <> '' then
       Ns2 := Doc.TargetNamespace
     else
@@ -2017,11 +2028,12 @@ begin
         AddUnionMember(Members, BuildSimpleType(Doc, Sub, '', nil));
       end
       else if not IsXs(Sub, 'annotation') then
-        Fail(Doc, Sub, 'unexpected element "' + Esc(Sub.NameUtf8) + '" in xs:union');
+        FailCheck(Doc.FileName, Sub, 's4s-elt-must-match.1', 'unexpected element "' + Esc(Sub.NameUtf8) +
+          '" in xs:union');
       Sub := Sub.NextSiblingElement;
     end;
     if Length(Members) = 0 then
-      Fail(Doc, Child, 'a union without member types');
+      FailCheck(Doc.FileName, Child, 'src-union-memberTypes-or-simpleTypes', 'a union without member types');
     if Name <> '' then
       Ns2 := Doc.TargetNamespace
     else
@@ -2045,14 +2057,16 @@ begin
     if IsXs(Sub, 'simpleType') then
     begin
       if ItemType <> nil then
-        Fail(Doc, Sub, 'a list with both an itemType attribute and a local simple type');
+        FailCheck(Doc.FileName, Sub, 'src-simple-type.3.a', 'a list with both an itemType attribute and a ' +
+          'local simple type');
       ItemType := BuildSimpleType(Doc, Sub, '', nil);
       Sub := Sub.NextSiblingElement;
     end;
     if Sub <> nil then
-      Fail(Doc, Sub, 'unexpected element "' + Esc(Sub.NameUtf8) + '" in xs:list');
+      FailCheck(Doc.FileName, Sub, 's4s-elt-must-match.1', 'unexpected element "' + Esc(Sub.NameUtf8) +
+        '" in xs:list');
     if ItemType = nil then
-      Fail(Doc, Child, 'a list without an item type');
+      FailCheck(Doc.FileName, Child, 'src-simple-type.3.b', 'a list without an item type');
     if Name <> '' then
       Ns2 := Doc.TargetNamespace
     else
@@ -3129,8 +3143,53 @@ begin
   Result := True;
 end;
 
+{ CollectAttributes for the attributes of a complex type or (InGroup) of
+  an attribute group: a duplicate is ct-props-correct.4 or
+  ag-props-correct.2, as Xerces reports it for the component being
+  built, also when it comes from a referenced attribute group }
+procedure TLoader.CollectOwnAttributes(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Items: TObjectList;
+  var Wildcard: TLandrixXmlXsdWildcard; InGroup: Boolean);
+var
+  Saved: Boolean;
+begin
+  Saved := FInAttributeGroup;
+  FInAttributeGroup := InGroup;
+  try
+    CollectAttributes(Doc, Parent, Items, Wildcard);
+  finally
+    FInAttributeGroup := Saved;
+  end;
+end;
+
+{ Item, an attribute use at Node, against the first Count of
+  Items: a duplicate is ag-props-correct.2 in an attribute group,
+  ct-props-correct.4 in a complex type. As in Xerces, a prohibited use
+  is never a duplicate, nor has one (it is kept apart from the others). }
+procedure TLoader.CheckNewAttribute(Doc: TSchemaDoc; Node: TLandrixXmlNode; Items: TObjectList;
+  Item: TAttributeItem; Count: Integer);
+var
+  I: Integer;
+  Other: TAttributeItem;
+begin
+  for I := 0 to Count - 1 do
+  begin
+    Other := TAttributeItem(Items[I]);
+    if (Other.Decl.Name = Item.Decl.Name) and (Other.Decl.NamespaceUri = Item.Decl.NamespaceUri) and
+      not Item.Prohibited and not Other.Prohibited then
+    begin
+      if FInAttributeGroup then
+        FailCheck(Doc.FileName, Node, 'ag-props-correct.2', 'duplicate attribute ' +
+          QualifiedText(Item.Decl.NamespaceUri, Item.Decl.Name))
+      else
+        FailCheck(Doc.FileName, Node, 'ct-props-correct.4', 'duplicate attribute ' +
+          QualifiedText(Item.Decl.NamespaceUri, Item.Decl.Name));
+    end;
+  end;
+end;
+
 { Attribute uses, prohibitions and the wildcard below Parent, attribute
-  groups expanded. }
+  groups expanded: a referenced group is collected (and checked) on its
+  own first, as Xerces builds it as a component of its own. }
 procedure TLoader.CollectAttributes(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Items: TObjectList;
   var Wildcard: TLandrixXmlXsdWildcard);
 var
@@ -3139,7 +3198,8 @@ var
   Ns, LocalName, Value: TLandrixXmlUtf8;
   P, Saved: TPending;
   W, GroupWildcard: TLandrixXmlXsdWildcard;
-  I, Before: Integer;
+  GroupItems: TObjectList;
+  I: Integer;
 begin
   Child := Parent.FirstChildElement;
   while Child <> nil do
@@ -3219,13 +3279,7 @@ begin
           FailCheck(Doc.FileName, Child, 'au-props-correct.2', 'the use of attribute ' + Esc(Item.Decl.Name) +
             ' must have the fixed value ' + Esc(Item.Decl.ConstraintValue) + ' of its declaration');
       end;
-      { a prohibited use in an attribute group is dropped later, so it is
-        no duplicate }
-      for I := 0 to Integer(Items.Count) - 2 do
-        if (TAttributeItem(Items[I]).Decl.Name = Item.Decl.Name) and
-          (TAttributeItem(Items[I]).Decl.NamespaceUri = Item.Decl.NamespaceUri) and
-          not (IsXs(Parent, 'attributeGroup') and (Item.Prohibited or TAttributeItem(Items[I]).Prohibited)) then
-          Fail(Doc, Child, 'duplicate attribute ' + QualifiedText(Item.Decl.NamespaceUri, Item.Decl.Name));
+      CheckNewAttribute(Doc, Child, Items, Item, Integer(Items.Count) - 1);
     end
     else if IsXs(Child, 'attributeGroup') then
     begin
@@ -3243,19 +3297,35 @@ begin
       FCurrent := P;
       P.State := psResolving;
       GroupWildcard := nil;
-      Before := Integer(Items.Count);
+      { the items move to Items one by one; the rest is freed below }
+      GroupItems := TObjectList.Create(False);
       try
-        CollectAttributes(P.Doc, P.Node, Items, GroupWildcard);
+        try
+          CollectOwnAttributes(P.Doc, P.Node, GroupItems, GroupWildcard, True);
+        finally
+          P.State := psDone;
+          FCurrent := Saved;
+        end;
+        { an attribute group has no prohibited attribute uses (XML Schema
+          1.0, 3.6.2; Xerces drops them too): they neither remove an
+          attribute of the base type nor stand for one }
+        for I := 0 to Integer(GroupItems.Count) - 1 do
+        begin
+          Item := TAttributeItem(GroupItems[I]);
+          GroupItems[I] := nil;
+          if Item.Prohibited then
+            Item.Free
+          else
+          begin
+            Items.Add(Item);
+            CheckNewAttribute(Doc, Child, Items, Item, Integer(Items.Count) - 1);
+          end;
+        end;
       finally
-        P.State := psDone;
-        FCurrent := Saved;
+        for I := 0 to Integer(GroupItems.Count) - 1 do
+          GroupItems[I].Free;
+        GroupItems.Free;
       end;
-      { an attribute group has no prohibited attribute uses (XML Schema 1.0,
-        3.6.2; Xerces drops them too): they neither remove an attribute
-        of the base type nor stand for one }
-      for I := Integer(Items.Count) - 1 downto Before do
-        if TAttributeItem(Items[I]).Prohibited then
-          Items.Delete(I);
       { the wildcards of the groups and the own one are intersected }
       if Wildcard = nil then
         Wildcard := GroupWildcard
@@ -3632,7 +3702,7 @@ begin
   Items := TObjectList.Create(True);
   try
     Wildcard := nil;
-    CollectAttributes(Doc, Derivation, Items, Wildcard);
+    CollectOwnAttributes(Doc, Derivation, Items, Wildcard, False);
     if (BaseType <> nil) and (BaseType <> FSet.AnyType) then
     begin
       if IsExtension then
@@ -3695,7 +3765,7 @@ begin
       if Item.Prohibited then
         Continue;
       if IsExtension and (T.FindAttribute(Item.Decl.NamespaceUri, Item.Decl.Name) <> nil) then
-        Fail(Doc, Derivation, 'the extension redeclares the attribute ' +
+        FailCheck(Doc.FileName, Derivation, 'ct-props-correct.4', 'the extension redeclares the attribute ' +
           QualifiedText(Item.Decl.NamespaceUri, Item.Decl.Name));
       Use := TLandrixXmlXsdAttributeUse.Create;
       Use.Decl := Item.Decl;
@@ -5423,7 +5493,7 @@ begin
           FCurrent := P;
           try
             Wildcard := nil;
-            CollectAttributes(P.Doc, P.Node, Items, Wildcard);
+            CollectOwnAttributes(P.Doc, P.Node, Items, Wildcard, True);
             if (P.Original <> nil) and
               (CountSelfReferences(P.Doc, P.Node, 'attributeGroup', P.Name) = 0) then
               CheckAttributeGroupRestriction(P, Items, Wildcard);
