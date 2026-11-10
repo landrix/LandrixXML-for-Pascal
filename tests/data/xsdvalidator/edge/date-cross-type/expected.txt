@@ -1,0 +1,137 @@
+file a.xml
+error 2 27 cvc-elt.5.2.2.2.2 The value '2026-11-04T00:00:00' of element 'a' does not match the {value constraint} value '2026-11-04'.
+error 3 27 cvc-elt.5.2.2.2.2 The value '2026-11-04T00:00:01' of element 'a' does not match the {value constraint} value '2026-11-04'.
+error 4 27 cvc-enumeration-valid Value '2026-11-04T00:00:00' is not facet-valid with respect to enumeration '[2026-11-04]'. It must be a value from the enumeration.
+error 4 27 cvc-type.3.1.3 The value '2026-11-04T00:00:00' of element 'b' is not valid.
+error 7 20 cvc-complex-type.3.1 Value '2026-11-04' of attribute 'v' of element 'd' is not valid with respect to the corresponding attribute use. Attribute 'v' has a fixed value of '2026-11-04T00:00:00'.
+error 8 27 cvc-elt.5.2.2.2.2 The value '2000-01-15T00:00:00' of element 'e' does not match the {value constraint} value '00:00:00'.
+error 9 18 cvc-elt.5.2.2.2.2 The value '2026-01-01' of element 'f' does not match the {value constraint} value '2026'.
+error 10 27 cvc-elt.5.2.2.2.2 The value '2026-01-01T00:00:00' of element 'f' does not match the {value constraint} value '2026'.
+error 11 28 cvc-elt.5.2.2.2.2 The value '2026-11-04T00:00:00Z' of element 'g' does not match the {value constraint} value '2026-11-04Z'.
+error 12 27 cvc-elt.5.2.2.2.2 The value '2026-11-04T00:00:00' of element 'g' does not match the {value constraint} value '2026-11-04Z'.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f><f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<a>2026-11-04</a><e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 8 4 cvc-complex-type.2.4.a Invalid content was found starting with element 'a'. One of '{d, e, f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<e>2026-11-04</e>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 5 18 cvc-elt.5.2.2.2.2 The value '2026-11-04' of element 'e' does not match the {value constraint} value '00:00:00'.
+error 6 4 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{e, f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b unknown="1">2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 4 16 cvc-type.3.1.1 Element 'b' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e unknown="1">00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 8 16 cvc-type.3.1.1 Element 'e' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<a v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 7 29 cvc-complex-type.2.4.a Invalid content was found starting with element 'a'. One of '{c, d, e, f, g}' is expected.
+error 7 29 cvc-type.3.1.1 Element 'a' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'v' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g unknown="1">2026-11-04Z</g>\n</doc>\n
+error 10 16 cvc-type.3.1.1 Element 'g' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a unknown="1">2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 3 16 cvc-type.3.1.1 Element 'a' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>-1</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 4 10 cvc-datatype-valid.1.2.3 '-1' is not a valid value of union type 'UE'.
+error 4 10 cvc-type.3.1.3 The value '-1' of element 'b' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>x</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 6 9 cvc-datatype-valid.1.2.3 'x' is not a valid value of union type 'U'.
+error 6 9 cvc-type.3.1.3 The value 'x' of element 'c' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00">2026-13-01</d>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 7 42 cvc-complex-type.2.1 Element 'd' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<a>2026-11-04</a><c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 6 4 cvc-complex-type.2.4.a Invalid content was found starting with element 'a'. One of '{c, d, e, f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<c>2026-11-05T00:00:00</c><a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 3 30 cvc-complex-type.2.4.a Invalid content was found starting with element 'a'. One of '{c, d, e, f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c unknown="1">2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 6 16 cvc-type.3.1.1 Element 'c' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>2026-13-01</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 8 18 cvc-datatype-valid.1.2.3 '2026-13-01' is not a valid value of union type 'V'.
+error 8 18 cvc-type.3.1.3 The value '2026-13-01' of element 'e' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n\n<b>2026-11-04</b>\n<a>2026-11-04</a><c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 5 4 cvc-complex-type.2.4.a Invalid content was found starting with element 'a'. One of '{b, c, d, e, f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00" unknown="1"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 7 41 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'd'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>-1</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 9 10 cvc-datatype-valid.1.2.3 '-1' is not a valid value of union type 'V'.
+error 9 10 cvc-type.3.1.3 The value '-1' of element 'f' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<b>00:00:00</b>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 8 4 cvc-complex-type.2.4.a Invalid content was found starting with element 'b'. One of '{d, e, f, g}' is expected.
+error 8 16 cvc-datatype-valid.1.2.3 '00:00:00' is not a valid value of union type 'UE'.
+error 8 16 cvc-type.3.1.3 The value '00:00:00' of element 'b' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<d v="2026-11-04T00:00:00"/><c>2026-11-05T00:00:00</c>\n\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 6 32 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{d, e, f, g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b><b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>-1</g>\n</doc>\n
+error 10 10 cvc-datatype-valid.1.2.3 '-1' is not a valid value of union type 'U'.
+error 10 10 cvc-type.3.1.3 The value '-1' of element 'g' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a><a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v=""/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 7 10 cvc-datatype-valid.1.2.3 '' is not a valid value of union type 'U'.
+error 7 10 cvc-attribute.3 The value '' of attribute 'v' on element 'd' is not valid with respect to its type, 'U'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>x</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 5 9 cvc-datatype-valid.1.2.3 'x' is not a valid value of union type 'U'.
+error 5 9 cvc-type.3.1.3 The value 'x' of element 'c' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/><d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n\n<a>2026-11-04</a><b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<c>2026-11-04</c>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 4 4 cvc-complex-type.2.4.a Invalid content was found starting with element 'b'. One of '{c, d, e, f, g}' is expected.
+error 5 18 cvc-identity-constraint.4.1 Duplicate unique value [2026-11-04] declared for identity constraint "uc" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<c v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 7 29 cvc-type.3.1.1 Element 'c' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'v' was found.
+error 7 29 cvc-datatype-valid.1.2.3 '' is not a valid value of union type 'U'.
+error 7 29 cvc-type.3.1.3 The value '' of element 'c' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<g>2026-11-04</g>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 4 18 cvc-elt.5.2.2.2.2 The value '2026-11-04' of element 'g' does not match the {value constraint} value '2026-11-04Z'.
+error 5 4 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{g}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>2026-11-04</b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<e>2026-11-04Z</e>\n</doc>\n
+error 10 4 cvc-complex-type.2.4.a Invalid content was found starting with element 'e'. One of '{f, g}' is expected.
+error 10 19 cvc-elt.5.2.2.2.2 The value '2026-11-04Z' of element 'e' does not match the {value constraint} value '00:00:00'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<a>2026-11-04</a>\n<b>  a  b  </b>\n<c>2026-11-04</c>\n<c>2026-11-05T00:00:00</c>\n<d v="2026-11-04T00:00:00"/>\n<e>00:00:00</e>\n<f>2026</f>\n<g>2026-11-04Z</g>\n</doc>\n
+error 4 16 cvc-datatype-valid.1.2.3 '  a  b  ' is not a valid value of union type 'UE'.
+error 4 16 cvc-type.3.1.3 The value '  a  b  ' of element 'b' is not valid.

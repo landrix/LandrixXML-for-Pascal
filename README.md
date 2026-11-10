@@ -416,6 +416,20 @@ both the mark and an entry here):
   more than 1048576 hours and 59 minutes, the same duration) (no test
   of the suite covers these; in the source code the mark reads
   `Xerces deviation, not in the test suite`).
+- Fixed values in a schema (an attribute use against its declaration, a
+  restriction against its base) compare as Java's equals of Xerces'
+  values, so date and time values of different types are equal if their
+  fields are, with Xerces' placeholders for the missing ones (year 2000,
+  month 1, day 1, or 15 for `xs:time`): in a union of `xs:date` and
+  `xs:dateTime` a fixed 2026-11-04 may be restricted to
+  2026-11-04T00:00:00. The comparison is one-sided as in Xerces: when the
+  value of the declaration or the base is a `gMonth` or `gMonthDay` the
+  year is not compared, for a `gDay` or `xs:time` neither year nor month
+  (a fixed `--01` may be restricted to 2026-01-01, not the other way
+  round). In documents (fixed values, enumerations, identity constraints)
+  such values stay different, as in XML Schema 1.0 (no test of the suite
+  covers this; in the source code the mark reads `Xerces deviation, not in
+  the test suite`).
 - An `xs:time` of 24:00:00 is 00:00:00 of the next day, as Xerces gives
   every time the same placeholder date: it differs from 00:00:00 and
   comes after 23:59:59 (in enumerations, ranges, fixed values and

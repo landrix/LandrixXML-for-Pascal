@@ -648,6 +648,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   facet fails (see the method's comment for lists and unions).
 
 ### Fixed
+- XML Schema: fixed values of an attribute use and its declaration, and
+  of a restriction and its base, compare as Xerces does, also date and
+  time values of different types (a fixed 2026-11-04 of a union of
+  xs:date and xs:dateTime may be restricted to 2026-11-04T00:00:00).
 - XML Schema: two identity constraints of the same name (in one target
   namespace) are sch-props-correct.2, as in Xerces, instead of an error
   without a constraint code.

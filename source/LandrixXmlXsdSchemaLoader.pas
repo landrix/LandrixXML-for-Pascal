@@ -118,6 +118,9 @@ function LandrixXmlXsdLoadSchema(const FileName: string;
 
 implementation
 
+uses
+  LandrixXmlDecimal;
+
 const
   XsiNamespace = 'http://www.w3.org/2001/XMLSchema-instance';
 
@@ -3015,6 +3018,117 @@ begin
   end;
 end;
 
+{ A date or time value as the dateTime Xerces keeps for it: the missing
+  parts get its placeholders (year 2000, month 1, day 1, or 15 for
+  xs:time) }
+function AsXercesDateTime(const Value: TLandrixXmlXsdValue): TLandrixXmlXsdValue;
+begin
+  Result := Value;
+  if not (Value.Primitive in [xspDateTime, xspDate, xspGYearMonth, xspGYear]) then
+    Result.DateTime.Year := 2000;
+  if Result.DateTime.Month = 0 then
+    Result.DateTime.Month := 1;
+  if Result.DateTime.Day = 0 then
+  begin
+    if Value.Primitive = xspTime then
+      Result.DateTime.Day := 15
+    else
+      Result.DateTime.Day := 1;
+  end;
+  Result.Primitive := xspDateTime;
+  Result.MemberType := nil;
+end;
+
+{ Xerces' DateTimeData.equals of two date or time values of different
+  types: the time zone marks must agree, then compareOrder compares the
+  fields from the year on, but from the month on if A is a gMonth or
+  gMonthDay and from the day on if A is a gDay or a time (Xerces'
+  position of A).
+  The values are those of the canonical forms, so a time zone is UTC
+  already. }
+function SameDateFields(const A, B: TLandrixXmlXsdValue): Boolean;
+var
+  L, R: TLandrixXmlXsdValue;
+begin
+  Result := False;
+  L := AsXercesDateTime(A);
+  R := AsXercesDateTime(B);
+  if (L.DateTime.HasTimeZone <> R.DateTime.HasTimeZone) or (L.DateTime.TimeZone <> R.DateTime.TimeZone) then
+    Exit;
+  if not (A.Primitive in [xspGMonth, xspGMonthDay, xspGDay, xspTime]) and (L.DateTime.Year <> R.DateTime.Year) then
+    Exit;
+  if not (A.Primitive in [xspGDay, xspTime]) and (L.DateTime.Month <> R.DateTime.Month) then
+    Exit;
+  Result := (L.DateTime.Day = R.DateTime.Day) and (L.DateTime.Hour = R.DateTime.Hour) and
+    (L.DateTime.Minute = R.DateTime.Minute) and
+    (LandrixXmlDecimalCompare(L.DateTime.Second, R.DateTime.Second) = 0);
+end;
+
+{ Java's equals of two atomic actual values of Xerces, A.equals(B):
+  string, anyURI and anySimpleType values are all strings there, QName
+  and NOTATION values are both QName objects, date and time values of
+  two of the eight types compare by their fields (SameDateFields), the
+  others compare as values.
+  Xerces deviation, not in the test suite: so a fixed value 2026-11-04
+  of a union of xs:date and xs:dateTime may be restricted to
+  2026-11-04T00:00:00, though values of different primitive types are
+  never equal in XML Schema 1.0. }
+function SameAtomic(const A, B: TLandrixXmlXsdValue): Boolean;
+const
+  StringLike = [xspAnySimpleType, xspString, xspAnyURI];
+  QNameLike = [xspQName, xspNotation];
+  DateLike = [xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth];
+begin
+  if (A.Primitive in StringLike) and (B.Primitive in StringLike) then
+    Result := A.Text = B.Text
+  else if (A.Primitive in QNameLike) and (B.Primitive in QNameLike) then
+    Result := (A.NamespaceUri = B.NamespaceUri) and (A.LocalName = B.LocalName)
+  else if (A.Primitive <> B.Primitive) and (A.Primitive in DateLike) and (B.Primitive in DateLike) then
+    Result := SameDateFields(A, B)
+  else
+    Result := LandrixXmlXsdCompareValues(A, B) = 0;
+end;
+
+function ItemValue(const Item: TLandrixXmlXsdAtomicValue): TLandrixXmlXsdValue;
+begin
+  Result.Primitive := Item.Primitive;
+  Result.Text := Item.Text;
+  Result.RawText := Item.RawText;
+  Result.MemberType := Item.MemberType;
+  Result.Length := Item.Length;
+  Result.DecimalValue := Item.DecimalValue;
+  Result.DoubleValue := Item.DoubleValue;
+  Result.BooleanValue := Item.BooleanValue;
+  Result.DateTime := Item.DateTime;
+  Result.Variety := xsvAtomic;
+  Result.Items := nil;
+  Result.NamespaceUri := Item.NamespaceUri;
+  Result.LocalName := Item.LocalName;
+end;
+
+{ Java's equals of two actual values, A.equals(B) (A is the value of the
+  declaration or the base, as Xerces compares); lists (ListData.equals)
+  item by item, whatever the item types }
+function SameActualValue(const A, B: TLandrixXmlXsdValue): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if (A.Variety = xsvList) <> (B.Variety = xsvList) then
+    Exit;
+  if A.Variety <> xsvList then
+  begin
+    Result := SameAtomic(A, B);
+    Exit;
+  end;
+  if Length(A.Items) <> Length(B.Items) then
+    Exit;
+  for I := 0 to Integer(Length(A.Items)) - 1 do
+    if not SameAtomic(ItemValue(A.Items[I]), ItemValue(B.Items[I])) then
+      Exit;
+  Result := True;
+end;
+
 { Attribute uses, prohibitions and the wildcard below Parent, attribute
   groups expanded. }
 procedure TLoader.CollectAttributes(Doc: TSchemaDoc; Parent: TLandrixXmlNode; Items: TObjectList;
@@ -3098,10 +3212,10 @@ begin
       if Item.ValueConstraint <> xvcNone then
       begin
         { as Xerces: the values after the second validation (of the
-          canonical forms) are compared }
+          canonical forms) are compared with Java's equals }
         Item.ConstraintActual := CheckAttributeValue(Doc, Child, Item.Decl, Item.ConstraintValue);
         if (Item.Decl.ValueConstraint = xvcFixed) and ((Item.ValueConstraint <> xvcFixed) or
-          (LandrixXmlXsdCompareValues(Item.ConstraintActual, Item.Decl.ConstraintActual) <> 0)) then
+          not SameActualValue(Item.Decl.ConstraintActual, Item.ConstraintActual)) then
           FailCheck(Doc.FileName, Child, 'au-props-correct.2', 'the use of attribute ' + Esc(Item.Decl.Name) +
             ' must have the fixed value ' + Esc(Item.Decl.ConstraintValue) + ' of its declaration');
       end;
@@ -3158,61 +3272,6 @@ begin
     end;
     Child := Child.NextSiblingElement;
   end;
-end;
-
-{ Java's equals of two atomic actual values of Xerces: string, anyURI
-  and anySimpleType values are all strings there, QName and NOTATION
-  values are both QName objects, the others compare as values }
-function SameAtomic(const A, B: TLandrixXmlXsdValue): Boolean;
-const
-  StringLike = [xspAnySimpleType, xspString, xspAnyURI];
-  QNameLike = [xspQName, xspNotation];
-begin
-  if (A.Primitive in StringLike) and (B.Primitive in StringLike) then
-    Result := A.Text = B.Text
-  else if (A.Primitive in QNameLike) and (B.Primitive in QNameLike) then
-    Result := (A.NamespaceUri = B.NamespaceUri) and (A.LocalName = B.LocalName)
-  else
-    Result := LandrixXmlXsdCompareValues(A, B) = 0;
-end;
-
-function ItemValue(const Item: TLandrixXmlXsdAtomicValue): TLandrixXmlXsdValue;
-begin
-  Result.Primitive := Item.Primitive;
-  Result.Text := Item.Text;
-  Result.RawText := Item.RawText;
-  Result.MemberType := Item.MemberType;
-  Result.Length := Item.Length;
-  Result.DecimalValue := Item.DecimalValue;
-  Result.DoubleValue := Item.DoubleValue;
-  Result.BooleanValue := Item.BooleanValue;
-  Result.DateTime := Item.DateTime;
-  Result.Variety := xsvAtomic;
-  Result.Items := nil;
-  Result.NamespaceUri := Item.NamespaceUri;
-  Result.LocalName := Item.LocalName;
-end;
-
-{ Java's equals of two actual values; lists (ListData.equals) item by
-  item, whatever the item types }
-function SameActualValue(const A, B: TLandrixXmlXsdValue): Boolean;
-var
-  I: Integer;
-begin
-  Result := False;
-  if (A.Variety = xsvList) <> (B.Variety = xsvList) then
-    Exit;
-  if A.Variety <> xsvList then
-  begin
-    Result := SameAtomic(A, B);
-    Exit;
-  end;
-  if Length(A.Items) <> Length(B.Items) then
-    Exit;
-  for I := 0 to Integer(Length(A.Items)) - 1 do
-    if not SameAtomic(ItemValue(A.Items[I]), ItemValue(B.Items[I])) then
-      Exit;
-  Result := True;
 end;
 
 { Xerces' validRestrictionOf for the attributes of a restriction (XML
@@ -3277,7 +3336,7 @@ begin
           Esc(Item.Decl.Name) + ' must be fixed as in the base');
       { as Xerces: the values after the second validation, each with its
         own type, by Java's equals }
-      if not SameActualValue(OwnActual, BaseActual) then
+      if not SameActualValue(BaseActual, OwnActual) then
         FailCheck(Doc.FileName, Node, 'derivation-ok-restriction.2.1.3.b', Prefix + 'the attribute ' +
           Esc(Item.Decl.Name) + ' must have the fixed value ' + Esc(BaseValue) + ' of the base');
     end;
@@ -4604,7 +4663,7 @@ begin
   end;
   { the actual values the loader stored, each validated with its own
     type (string for mixed content) }
-  Result := SameActualValue(D.ConstraintActual, B.ConstraintActual);
+  Result := SameActualValue(B.ConstraintActual, D.ConstraintActual);
 end;
 
 { the particle of Parent's model group child, an empty one as nil, and
