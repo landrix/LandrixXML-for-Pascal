@@ -110,7 +110,7 @@ const
     (Kind: 'compositor.top'; Attributes: 'id=ID'; Content: 'annotation?;element|group|choice|sequence|any*'),
     (Kind: 'all'; Attributes: 'minOccurs=zeroOrOne maxOccurs=one id=ID'; Content: 'annotation?;element*'),
     (Kind: 'all.top'; Attributes: 'id=ID'; Content: 'annotation?;element*'),
-    { Xerces deviation: s3_10_1ii08, s3_10_6ii01, s3_10_6ii02, s3_10_6ii04.
+    { Xerces deviation: s3_10_1ii08, s3_10_1ii09, s3_10_6ii01, s3_10_6ii02, s3_10_6ii04.
       No notNamespace and notQName (XSD 1.1) on the wildcards }
     (Kind: 'any';
      Attributes: 'namespace=namespaceList processContents=processContents ' + OccursAttributes + ' id=ID';

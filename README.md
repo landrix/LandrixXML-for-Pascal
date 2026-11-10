@@ -366,7 +366,7 @@ both the mark and an entry here):
   evaluated, so XSD 1.1 constructs they would exclude are errors (`vc001`,
   `vc002`, `vc024`).
 - The XSD 1.1 wildcard attributes `notNamespace` and `notQName` are errors
-  (`s3_10_1ii08`, `s3_10_6ii01`, `s3_10_6ii02`, `s3_10_6ii04`).
+  (`s3_10_1ii08`, `s3_10_1ii09`, `s3_10_6ii01`, `s3_10_6ii02`, `s3_10_6ii04`).
 - A default or fixed value is not allowed on an element whose type is a
   union with an `ID` member, as for `ID` itself (`stE072`); a complex type
   with `ID` content does not count (Xerces never marks one).
@@ -384,7 +384,7 @@ both the mark and an entry here):
 - A component that two documents redefine (two `xs:redefine` of the
   same document) is an error (`sch-props-correct.2`), as Xerces sees
   two components of the same name; the suite expects the schema to load
-  (`schU3`).
+  (`schU3`, `schU4`, `schU5`).
 - The particles of a restriction are checked as Xerces checks them, so
   some restrictions the suite expects to load are rejected: a sequence
   whose only element has `maxOccurs="0"` stays an empty sequence, which
@@ -485,14 +485,17 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 39,225
+  load or be rejected, documents that must be valid or invalid) 39,227
   pass and none uses a construct this library does not support (such a
   construct, a selector with an attribute step before its last step, is
-  reported as unsupported, never accepted silently). Of the 108 failures
-  30 are invalid schemas that load, 2 documents Xerces accepts too and 3
-  a schema that Xerces rejects as well (`vc014`); 3 more stop at the resource
-  limit of the content model check. The passing tests are a baseline
-  for the CI.
+  reported as unsupported, never accepted silently). Of the 106 failures,
+  102 are the cases of the list above, where the result of Xerces is
+  given on purpose; 3 are XML 1.1 documents, read with the rules of
+  XML 1.0 (`xv003`, `xv006`, `xv008`); and one has a schema whose
+  verdict the suite itself disputes (`ste110`, a circular union, which
+  XML Schema 1.0 and Xerces reject). 3 more stop at the resource limit
+  of the content model check. The passing tests are a baseline for the
+  CI.
 - The XML Schema reference data (simple types, validator cases, content
   models, Unique Particle Attribution, the schema rules in
   `tests/data/xsdschema/rules.txt`) comes from the validator of the Java

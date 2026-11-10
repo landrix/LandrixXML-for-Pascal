@@ -378,6 +378,22 @@ type
     BasePending: TPending;
   end;
 
+  { an element declaration whose type is built once the complex types
+    being filled are complete }
+  TDeferredElement = class
+    Decl: TLandrixXmlXsdElementDecl;
+    Doc: TSchemaDoc;
+    Node: TLandrixXmlNode;
+    { the component being built when the element was }
+    Current: TPending;
+    { an element of an all group with other bounds than 0 or 1: reported
+      after the type, as Xerces does (cos-all-limited.2) }
+    BoundsFile: string;
+    BoundsNode: TLandrixXmlNode;
+    { its type is built }
+    Done: Boolean;
+  end;
+
   TKeyRefFixup = class
     Constraint: TLandrixXmlXsdIdentityConstraint;
     NamespaceUri: TLandrixXmlUtf8;
@@ -423,6 +439,16 @@ type
     { the element declarations whose types are being built: a group
       reference is circular only within the same element }
     FElementDepth: Integer;
+    { the complex types being filled; while there are any, the types of
+      the element declarations met are built afterwards (Xerces traverses
+      the elements of a global component's particles after it) }
+    FTypeDepth: Integer;
+    FDeferred: TObjectList;
+    FDraining: Boolean;
+    { the named complex types filled while the deferred elements are
+      built: only their elements are deferred then (Xerces has traversed
+      the global components before, and builds the others at once) }
+    FDrainNamed: Integer;
     procedure Fail(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Msg: string);
     procedure Unsupported(Doc: TSchemaDoc; Node: TLandrixXmlNode; const What: string);
     function LoadDom(const FileName: string): TLandrixXmlDocument;
@@ -484,6 +510,11 @@ type
     procedure FillComplexType(T: TLandrixXmlXsdComplexType; Doc: TSchemaDoc; Node: TLandrixXmlNode;
       P: TPending);
     function BuildComplexType(Doc: TSchemaDoc; Node: TLandrixXmlNode): TLandrixXmlXsdComplexType;
+    procedure FillTypeDeferring(T: TLandrixXmlXsdComplexType; Doc: TSchemaDoc; Node: TLandrixXmlNode;
+      P: TPending);
+    procedure FinishElement(D: TLandrixXmlXsdElementDecl; Doc: TSchemaDoc; Node: TLandrixXmlNode);
+    procedure FinishDeferred(First: Integer);
+    function Deferring: Boolean;
     function WildcardFor(Doc: TSchemaDoc; Node: TLandrixXmlNode): TLandrixXmlXsdWildcard;
     function CombineWildcards(A, B: TLandrixXmlXsdWildcard; Union: Boolean; Doc: TSchemaDoc;
       Node: TLandrixXmlNode): TLandrixXmlXsdWildcard;
@@ -713,6 +744,7 @@ begin
   FIdentity := TLandrixXmlXsdNameMap.Create;
   FFixups := TObjectList.Create(True);
   FValueChecks := TObjectList.Create(True);
+  FDeferred := TObjectList.Create(True);
   FTypeChecks := TObjectList.Create(True);
   FGlobalElements := TList.Create;
   FHeadChain := TList.Create;
@@ -743,6 +775,7 @@ begin
   FIdentity.Free;
   FFixups.Free;
   FValueChecks.Free;
+  FDeferred.Free;
   FTypeChecks.Free;
   FGlobalElements.Free;
   FHeadChain.Free;
@@ -1287,7 +1320,7 @@ begin
     { the component is redefined already, other than by the redefined
       document itself (a chain of redefinitions): twice in this document
       or by another redefine of the same document.
-      Xerces deviation: schU3 }
+      Xerces deviation: schU3, schU4, schU5 }
     if (Original.Original <> nil) and (Original.Doc <> Redefined) then
       FailCheck(Doc.FileName, Child, 'sch-props-correct.2', 'duplicate global declaration of ' +
         QualifiedText(Doc.TargetNamespace, Name));
@@ -1458,15 +1491,10 @@ function TLoader.BuildElement(Doc: TSchemaDoc; Node: TLandrixXmlNode; Global: Bo
 var
   D: TLandrixXmlXsdElementDecl;
   Name, Value, Form: TLandrixXmlUtf8;
-  Child: TLandrixXmlNode;
-  Simple: TLandrixXmlXsdSimpleType;
-  Complex: TLandrixXmlXsdComplexType;
-  TypePending: TPending;
-  Qualified, HasDefault, HasFixed: Boolean;
-  DefaultValue, FixedValue, HeadNs, HeadName: TLandrixXmlUtf8;
-  Check: TElementValueCheck;
+  Qualified: Boolean;
+  HeadNs, HeadName: TLandrixXmlUtf8;
   HeadPending: TPending;
-  SavedChain: TList;
+  Deferred: TDeferredElement;
 begin
   if not AttrTrimmed(Node, 'name', Name) or (Name = '') then
     Fail(Doc, Node, 'an element declaration without a name');
@@ -1530,6 +1558,37 @@ begin
       FHeadChain.Delete(Integer(FHeadChain.Count) - 1);
     end;
   end;
+  if Deferring then
+  begin
+    Deferred := TDeferredElement.Create;
+    FDeferred.Add(Deferred);
+    Deferred.Decl := D;
+    Deferred.Doc := Doc;
+    Deferred.Node := Node;
+    Deferred.Current := FCurrent;
+  end
+  else
+    FinishElement(D, Doc, Node);
+  if P <> nil then
+    P.State := psDone;
+  Result := D;
+end;
+
+{ The type of an element declaration, its identity constraints and its
+  value constraint }
+procedure TLoader.FinishElement(D: TLandrixXmlXsdElementDecl; Doc: TSchemaDoc; Node: TLandrixXmlNode);
+var
+  Name, Value: TLandrixXmlUtf8;
+  Child: TLandrixXmlNode;
+  Simple: TLandrixXmlXsdSimpleType;
+  Complex: TLandrixXmlXsdComplexType;
+  TypePending: TPending;
+  HasDefault, HasFixed: Boolean;
+  DefaultValue, FixedValue: TLandrixXmlUtf8;
+  Check: TElementValueCheck;
+  SavedChain: TList;
+begin
+  Name := D.Name;
   { the type: a group referenced again inside it is not circular (the
     element ends the recursion, it is declared already); heads met in it
     start a chain of their own }
@@ -1604,9 +1663,6 @@ begin
     Check.Doc := Doc;
     Check.Node := Node;
   end;
-  if P <> nil then
-    P.State := psDone;
-  Result := D;
 end;
 
 { --- attributes ---------------------------------------------------------- }
@@ -1848,7 +1904,8 @@ var
   Saved: TPending;
 begin
   if P.State = psResolving then
-    Fail(P.Doc, P.Node, 'circular definition of the type ' + QualifiedText(P.NamespaceUri, P.Name));
+    FailCheck(P.Doc.FileName, P.Node, 'st-props-correct.2', 'circular definition of the type ' +
+      QualifiedText(P.NamespaceUri, P.Name));
   if P.Component <> nil then
   begin
     Result := TLandrixXmlXsdSimpleType(P.Component);
@@ -2213,11 +2270,12 @@ begin
   if not NeedComplete or (P.State = psDone) then
     Exit;
   if P.State = psResolving then
-    Fail(P.Doc, P.Node, 'circular derivation of the type ' + QualifiedText(P.NamespaceUri, P.Name));
+    FailCheck(P.Doc.FileName, P.Node, 'ct-props-correct.3', 'circular derivation of the type ' +
+      QualifiedText(P.NamespaceUri, P.Name));
   Saved := FCurrent;
   FCurrent := P;
   try
-    FillComplexType(Result, P.Doc, P.Node, P);
+    FillTypeDeferring(Result, P.Doc, P.Node, P);
   finally
     FCurrent := Saved;
   end;
@@ -2227,7 +2285,76 @@ end;
 function TLoader.BuildComplexType(Doc: TSchemaDoc; Node: TLandrixXmlNode): TLandrixXmlXsdComplexType;
 begin
   Result := CreateComplexType(Doc, Node, '', nil);
-  FillComplexType(Result, Doc, Node, nil);
+  FillTypeDeferring(Result, Doc, Node, nil);
+end;
+
+{ Fills a complex type; the element declarations met meanwhile get their
+  types when the outermost complex type is complete, so that a type
+  derived from one being filled (through an element of its content) is
+  not circular, as in Xerces }
+procedure TLoader.FillTypeDeferring(T: TLandrixXmlXsdComplexType; Doc: TSchemaDoc; Node: TLandrixXmlNode;
+  P: TPending);
+var
+  Saved: TPending;
+begin
+  Inc(FTypeDepth);
+  if FDraining and (P <> nil) then
+    Inc(FDrainNamed);
+  try
+    FillComplexType(T, Doc, Node, P);
+  finally
+    if FDraining and (P <> nil) then
+      Dec(FDrainNamed);
+    Dec(FTypeDepth);
+  end;
+  if (FTypeDepth > 0) or FDraining then
+    Exit;
+  FDraining := True;
+  Saved := FCurrent;
+  try
+    FinishDeferred(0);
+    FDeferred.Clear;
+  finally
+    FCurrent := Saved;
+    FDraining := False;
+  end;
+end;
+
+{ Whether the types of the element declarations met now are built later }
+function TLoader.Deferring: Boolean;
+begin
+  Result := (FTypeDepth > 0) and (not FDraining or (FDrainNamed > 0));
+end;
+
+{ Builds the types of the deferred elements from First on. The elements
+  that the type of one defers come right after it, before the bounds of
+  that element and the elements after it, as Xerces stops deferring while
+  it traverses the local elements. }
+procedure TLoader.FinishDeferred(First: Integer);
+var
+  I, Last: Integer;
+  Deferred: TDeferredElement;
+begin
+  Last := Integer(FDeferred.Count);
+  for I := First to Last - 1 do
+  begin
+    Deferred := TDeferredElement(FDeferred[I]);
+    FCurrent := Deferred.Current;
+    { an entry without a declaration only holds the bounds of a later
+      reference to a deferred element }
+    if Deferred.Decl <> nil then
+      FinishElement(Deferred.Decl, Deferred.Doc, Deferred.Node);
+    Deferred.Done := True;
+    if Integer(FDeferred.Count) > Last then
+    begin
+      FinishDeferred(Last);
+      while Integer(FDeferred.Count) > Last do
+        FDeferred.Delete(Integer(FDeferred.Count) - 1);
+    end;
+    if Deferred.BoundsNode <> nil then
+      FailCheck(Deferred.BoundsFile, Deferred.BoundsNode, 'cos-all-limited.2', 'an element of an all group ' +
+        'has maxOccurs other than 0 or 1');
+  end;
 end;
 
 function TLoader.WildcardFor(Doc: TSchemaDoc; Node: TLandrixXmlNode): TLandrixXmlXsdWildcard;
@@ -2576,7 +2703,8 @@ function TLoader.BuildCompositor(Doc: TSchemaDoc; Node: TLandrixXmlNode; MinOccu
 var
   Child: TLandrixXmlNode;
   Sub: TLandrixXmlXsdParticle;
-  SubMin, SubMax: Integer;
+  SubMin, SubMax, I, Found, Before: Integer;
+  Entry: TDeferredElement;
 begin
   if IsXs(Node, 'all') then
     Result := TLandrixXmlXsdParticle.CreateGroup(xpkAll, MinOccurs, MaxOccurs)
@@ -2595,18 +2723,38 @@ begin
     begin
       if not IsXs(Child, 'annotation') then
       begin
+        Before := Integer(FDeferred.Count);
         Sub := BuildParticle(Doc, Child);
         { cos-all-limited.2, after the element (Xerces checks the bounds
-          once it is traversed): an element of an all group occurs at
-          most once (maxOccurs 0 drops it) }
+          once it is traversed, so after a type built later): an element
+          of an all group occurs at most once (maxOccurs 0 drops it) }
         if Result.Kind = xpkAll then
         begin
           ParseOccurs(Self, Doc, Child, SubMin, SubMax);
           if (SubMax <> 1) and (SubMax <> 0) then
           begin
+            { while elements are deferred, the bounds are reported at the
+              place of this particle in the queue: after the type of an
+              element it deferred itself, else in an entry of their own }
+            Found := -1;
+            for I := Before to Integer(FDeferred.Count) - 1 do
+              if (Sub.Decl <> nil) and (TDeferredElement(FDeferred[I]).Decl = Sub.Decl) then
+                Found := I;
             Sub.Free;
-            FailCheck(Doc.FileName, Child, 'cos-all-limited.2', 'an element of an all group has maxOccurs ' +
-              'other than 0 or 1');
+            Sub := nil;
+            if not Deferring then
+              FailCheck(Doc.FileName, Child, 'cos-all-limited.2', 'an element of an all group has maxOccurs ' +
+                'other than 0 or 1');
+            if Found >= 0 then
+              Entry := TDeferredElement(FDeferred[Found])
+            else
+            begin
+              Entry := TDeferredElement.Create;
+              FDeferred.Add(Entry);
+              Entry.Current := FCurrent;
+            end;
+            Entry.BoundsFile := Doc.FileName;
+            Entry.BoundsNode := Child;
           end;
         end;
         { cos-all-limited.1.2: a reference to an all group inside a

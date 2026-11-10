@@ -655,6 +655,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   itself inside an element declaration of its own is no longer a circular
   reference; a complex-content extension without particles of a type with
   simple content keeps that simple content (it was rejected).
+- XML Schema: a complex type derived from a type whose content contains
+  the element that holds it (a local element whose anonymous type restricts
+  or extends the enclosing type, or a referenced element whose type does)
+  is no longer a circular derivation. As in Xerces, the types of the
+  element declarations met while a complex type is built are built once
+  it is complete. A circular derivation now reports Xerces' codes
+  `ct-props-correct.3` (complex types) and `st-props-correct.2` (simple
+  types).
 - XML Schema: an include or a redefine of nothing but annotations whose
   document cannot be found (a missing file, an http location, a catalog
   entry naming a missing file) is skipped as XML Schema 1.0 allows and as
