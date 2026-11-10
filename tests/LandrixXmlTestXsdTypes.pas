@@ -698,6 +698,75 @@ begin
   end;
 end;
 
+{ HasValue: the value Xerces has computed when a later check fails }
+procedure TestHasValue;
+var
+  Small, Code, Color, L, R, U1, U2: TLandrixXmlXsdSimpleType;
+  V: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+  HasValue: Boolean;
+begin
+  Small := TLandrixXmlXsdSimpleType.CreateRestriction(LandrixXmlXsdBuiltinType('int'), '', U('small'));
+  Code := nil;
+  Color := nil;
+  L := nil;
+  R := nil;
+  U1 := nil;
+  U2 := nil;
+  try
+    Small.AddFacet(xsfMaxInclusive, U('100'));
+    Check(Small.Validate(U('5'), nil, V, Error, HasValue), 'a valid value');
+    Check(HasValue, 'a valid value has its value');
+    Check(not Small.Validate(U('150'), nil, V, Error, HasValue), 'maxInclusive');
+    CheckEqualsStr('cvc-maxInclusive-valid', Error.Code, 'the facet''s error');
+    Check(HasValue, 'a facet failure keeps the value');
+    CheckEqualsUtf8(U('150'), LandrixXmlXsdValueText(V), 'the value');
+    Check(not Small.Validate(U('x'), nil, V, Error, HasValue), 'not an int');
+    Check(not HasValue, 'a lexical failure has no value');
+    Code := TLandrixXmlXsdSimpleType.CreateRestriction(LandrixXmlXsdBuiltinType('string'), '', U('code'));
+    Code.AddFacet(xsfPattern, U('[A-Z]+'));
+    Code.AddFacet(xsfLength, U('3'));
+    Check(not Code.Validate(U('abc'), nil, V, Error, HasValue), 'pattern');
+    Check(not HasValue, 'a pattern failure has no value');
+    Check(not Code.Validate(U('ABCD'), nil, V, Error, HasValue), 'length');
+    Check(HasValue, 'a length failure keeps the value');
+    { lists: the whole list, else the last item that had a value }
+    L := TLandrixXmlXsdSimpleType.CreateList('', U('l'), Small);
+    R := TLandrixXmlXsdSimpleType.CreateRestriction(L, '', U('pair'));
+    R.AddFacet(xsfLength, U('2'));
+    Check(not R.Validate(U('1 2 3'), nil, V, Error, HasValue), 'list length');
+    Check(HasValue and (V.Variety = xsvList) and (V.Length = 3), 'the list value');
+    Check(not R.Validate(U('1 200'), nil, V, Error, HasValue), 'an item over maxInclusive');
+    Check(HasValue and (V.Variety = xsvAtomic), 'the item''s value');
+    CheckEqualsUtf8(U('200'), LandrixXmlXsdValueText(V), 'the failed item');
+    Check(not R.Validate(U('1 x'), nil, V, Error, HasValue), 'an item that is no int');
+    Check(HasValue, 'the item before');
+    CheckEqualsUtf8(U('1'), LandrixXmlXsdValueText(V), 'the last item with a value');
+    Check(not R.Validate(U('x 1'), nil, V, Error, HasValue), 'the first item is no int');
+    Check(not HasValue, 'no item had a value');
+    { unions: the last member type that had a value }
+    Color := TLandrixXmlXsdSimpleType.CreateRestriction(LandrixXmlXsdBuiltinType('string'), '', U('color'));
+    Color.AddFacet(xsfEnumeration, U('red'));
+    U1 := TLandrixXmlXsdSimpleType.CreateUnion([Small, Color], '', U('u1'));
+    Check(not U1.Validate(U('200'), nil, V, Error, HasValue), 'no member matches');
+    CheckEqualsStr('cvc-datatype-valid.1.2.3', Error.Code, 'the union''s error');
+    Check(HasValue and (V.MemberType = Color), 'the value of the last member');
+    U2 := TLandrixXmlXsdSimpleType.CreateUnion([LandrixXmlXsdBuiltinType('boolean'), Small], '', U('u2'));
+    Check(not U2.Validate(U('200'), nil, V, Error, HasValue), 'no member matches either');
+    Check(HasValue and (V.MemberType = Small), 'the only member with a value');
+    Check(not U2.Validate(U('x'), nil, V, Error, HasValue), 'no member has a value');
+    Check(not HasValue, 'no value');
+  finally
+    U2.Free;
+    U1.Free;
+    Color.Free;
+    R.Free;
+    L.Free;
+    Code.Free;
+    Small.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XsdTypes.GeneratedData', TestGeneratedData);
@@ -710,6 +779,7 @@ begin
   RegisterTest('XsdTypes.CompareValues', TestCompareValues);
   RegisterTest('XsdTypes.ValueFields', TestValueFields);
   RegisterTest('XsdTypes.Lists', TestLists);
+  RegisterTest('XsdTypes.HasValue', TestHasValue);
 end;
 
 end.

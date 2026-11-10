@@ -416,6 +416,13 @@ both the mark and an entry here):
   more than 1048576 hours and 59 minutes, the same duration) (no test
   of the suite covers these; in the source code the mark reads
   `Xerces deviation, not in the test suite`).
+- A value that fails a facet other than pattern is still the value of
+  identity constraints (a failed list item gives its own value, or that
+  of the item before it; a union no member type matches gives that of
+  the last member type that had one), so equal invalid values are
+  duplicates; XML Schema gives an invalid value no actual value (no test
+  of the suite covers this; in the source code the mark reads
+  `Xerces deviation, not in the test suite`).
 - `xsi:schemaLocation` and `xsi:noNamespaceSchemaLocation` hints in
   documents are never read: the schema is the one given to the loader, as
   with a preloaded schema in Xerces (the setup of the KoSIT validator), so

@@ -1,0 +1,235 @@
+file l1.xml
+error 2 11 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 11 cvc-type.3.1.3 The value '1 x' of element 'l' is not valid.
+error 2 21 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 21 cvc-type.3.1.3 The value '1 x' of element 'l' is not valid.
+error 2 21 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "ul" of element "doc".
+
+file l2.xml
+error 2 11 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 11 cvc-type.3.1.3 The value 'x 1' of element 'l' is not valid.
+error 2 21 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 21 cvc-type.3.1.3 The value 'x 1' of element 'l' is not valid.
+
+file l3.xml
+error 2 13 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 13 cvc-type.3.1.3 The value '1 200' of element 'l' is not valid.
+error 2 25 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 25 cvc-type.3.1.3 The value '3 200' of element 'l' is not valid.
+error 2 25 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "ul" of element "doc".
+
+file l4.xml
+error 2 13 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 13 cvc-type.3.1.3 The value '200 1' of element 'l' is not valid.
+error 2 25 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 25 cvc-type.3.1.3 The value '200 3' of element 'l' is not valid.
+error 2 25 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "ul" of element "doc".
+
+file l5.xml
+error 2 15 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 15 cvc-type.3.1.3 The value '200 300' of element 'l' is not valid.
+error 2 25 cvc-maxInclusive-valid Value '300' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 25 cvc-type.3.1.3 The value '300' of element 'l' is not valid.
+
+file m1.xml
+error 2 13 cvc-pattern-valid Value '2 200' is not facet-valid with respect to pattern '1.*' for type 'LP'.
+error 2 13 cvc-type.3.1.3 The value '2 200' of element 'm' is not valid.
+error 2 25 cvc-pattern-valid Value '2 200' is not facet-valid with respect to pattern '1.*' for type 'LP'.
+error 2 25 cvc-type.3.1.3 The value '2 200' of element 'm' is not valid.
+
+file u1.xml
+error 2 11 cvc-datatype-valid.1.2.3 '200' is not a valid value of union type 'U1'.
+error 2 11 cvc-type.3.1.3 The value '200' of element 'u' is not valid.
+error 2 22 cvc-datatype-valid.1.2.3 '0200' is not a valid value of union type 'U1'.
+error 2 22 cvc-type.3.1.3 The value '0200' of element 'u' is not valid.
+
+file u2.xml
+error 2 12 cvc-datatype-valid.1.2.3 'blue' is not a valid value of union type 'U1'.
+error 2 12 cvc-type.3.1.3 The value 'blue' of element 'u' is not valid.
+error 2 23 cvc-datatype-valid.1.2.3 'blue' is not a valid value of union type 'U1'.
+error 2 23 cvc-type.3.1.3 The value 'blue' of element 'u' is not valid.
+error 2 23 cvc-identity-constraint.4.1 Duplicate unique value [blue] declared for identity constraint "uu" of element "doc".
+
+file v1.xml
+error 2 11 cvc-datatype-valid.1.2.3 '200' is not a valid value of union type 'U2'.
+error 2 11 cvc-type.3.1.3 The value '200' of element 'v' is not valid.
+error 2 22 cvc-datatype-valid.1.2.3 '0200' is not a valid value of union type 'U2'.
+error 2 22 cvc-type.3.1.3 The value '0200' of element 'v' is not valid.
+error 2 22 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "uv" of element "doc".
+
+file valid.xml
+
+file w1.xml
+error 2 11 cvc-datatype-valid.1.2.3 'x' is not a valid value of union type 'U3'.
+error 2 11 cvc-type.3.1.3 The value '1 x' of element 'w' is not valid.
+error 2 21 cvc-datatype-valid.1.2.3 'x' is not a valid value of union type 'U3'.
+error 2 21 cvc-type.3.1.3 The value '1 x' of element 'w' is not valid.
+error 2 21 cvc-identity-constraint.4.1 Duplicate unique value [1] declared for identity constraint "uw" of element "doc".
+
+file w2.xml
+error 2 13 cvc-datatype-valid.1.2.3 '200' is not a valid value of union type 'U3'.
+error 2 13 cvc-type.3.1.3 The value '1 200' of element 'w' is not valid.
+error 2 26 cvc-datatype-valid.1.2.3 '0200' is not a valid value of union type 'U3'.
+error 2 26 cvc-type.3.1.3 The value '3 0200' of element 'w' is not valid.
+error 2 26 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "uw" of element "doc".
+
+file x1.xml
+error 2 17 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 17 cvc-type.3.1.3 The value 'x' of element 'x' is not valid.
+error 2 25 cvc-identity-constraint.4.1 Duplicate unique value [5] declared for identity constraint "ux" of element "doc".
+
+file x2.xml
+error 2 11 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 11 cvc-type.3.1.3 The value '150' of element 'x' is not valid.
+error 2 19 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 19 cvc-type.3.1.3 The value 'x' of element 'x' is not valid.
+error 2 27 cvc-datatype-valid.1.2.1 'y' is not a valid value for 'integer'.
+error 2 27 cvc-type.3.1.3 The value 'y' of element 'x' is not valid.
+
+file y1.xml
+error 2 15 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 15 cvc-attribute.3 The value '1 200' of attribute 'a' on element 'y' is not valid with respect to its type, 'L'.
+error 2 29 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 29 cvc-attribute.3 The value '2 200' of attribute 'a' on element 'y' is not valid with respect to its type, 'L'.
+error 2 29 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "uy" of element "doc".
+
+file y2.xml
+error 2 19 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 2 19 cvc-attribute.3 The value '150' of attribute 'b' on element 'y' is not valid with respect to its type, 'Small'.
+error 2 19 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 19 cvc-attribute.3 The value 'x' of attribute 'a' on element 'y' is not valid with respect to its type, 'L'.
+error 2 29 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 2 29 cvc-attribute.3 The value 'x' of attribute 'a' on element 'y' is not valid with respect to its type, 'L'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><m>1 5</m><u>5</u><u>red</u><v>true</v><l>3</l><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 53 cvc-complex-type.2.4.a Invalid content was found starting with element 'l'. One of '{v, w, x, y}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x unknown="1">5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 86 cvc-type.3.1.1 Element 'x' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>3</l><m>1 5</m><u>5</u><u>red</u><l>1 2</l><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 40 cvc-complex-type.2.4.a Invalid content was found starting with element 'l'. One of '{u, v, w, x, y}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l unknown="1">3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 26 cvc-type.3.1.1 Element 'l' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><u>true</u><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 58 cvc-datatype-valid.1.2.3 'true' is not a valid value of union type 'U1'.
+error 3 58 cvc-type.3.1.3 The value 'true' of element 'u' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>999999999</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 53 cvc-datatype-valid.1.2.3 '999999999' is not a valid value of union type 'U1'.
+error 3 53 cvc-type.3.1.3 The value '999999999' of element 'u' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y b="7"/>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><w>true</w><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>  a  b  </l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 26 cvc-datatype-valid.1.2.1 'a' is not a valid value for 'integer'.
+error 3 26 cvc-type.3.1.3 The value '  a  b  ' of element 'l' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>true</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 82 cvc-datatype-valid.1.2.1 'true' is not a valid value for 'integer'.
+error 3 82 cvc-type.3.1.3 The value 'true' of element 'x' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>  a  b  </v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 62 cvc-datatype-valid.1.2.3 '  a  b  ' is not a valid value of union type 'U2'.
+error 3 62 cvc-type.3.1.3 The value '  a  b  ' of element 'v' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7" unknown="1"/>\n</doc>\n
+error 3 109 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'y'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><u>5</u><y a="1 2" b="7"/>\n</doc>\n
+error 3 74 cvc-complex-type.2.4.a Invalid content was found starting with element 'u'. One of '{w, x, y}' is expected.
+error 3 79 cvc-identity-constraint.4.1 Duplicate unique value [5] declared for identity constraint "uu" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 84 cvc-identity-constraint.4.1 Duplicate unique value [1 true] declared for identity constraint "uw" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 27 cvc-identity-constraint.4.1 Duplicate unique value [3] declared for identity constraint "ul" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>999999999</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 17 cvc-maxInclusive-valid Value '999999999' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 3 17 cvc-type.3.1.3 The value '999999999' of element 'l' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 87 cvc-identity-constraint.4.1 Duplicate unique value [5] declared for identity constraint "ux" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><y a="1 2" b="7"/><u>red</u><v>true</v><w>1 true</w><x>5</x>\n</doc>\n
+error 3 58 cvc-complex-type.2.4.a Invalid content was found starting with element 'u'. One of '{y}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><v>true</v><m>1 5</m><u>5</u><u>red</u><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 33 cvc-complex-type.2.4.a Invalid content was found starting with element 'm'. One of '{v, w, x, y}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1.005</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 13 cvc-datatype-valid.1.2.1 '1.005' is not a valid value for 'integer'.
+error 3 13 cvc-type.3.1.3 The value '1.005' of element 'l' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 57 cvc-identity-constraint.4.1 Duplicate unique value [red] declared for identity constraint "uu" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><l>5</l><y a="1 2" b="7"/>\n</doc>\n
+error 3 74 cvc-complex-type.2.4.a Invalid content was found starting with element 'l'. One of '{w, x, y}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 21 cvc-identity-constraint.4.1 Duplicate unique value [1 2] declared for identity constraint "ul" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><m>5</m><y a="1 2" b="7"/>\n</doc>\n
+error 3 74 cvc-complex-type.2.4.a Invalid content was found starting with element 'm'. One of '{w, x, y}' is expected.
+error 3 79 cvc-pattern-valid Value '5' is not facet-valid with respect to pattern '1.*' for type 'LP'.
+error 3 79 cvc-type.3.1.3 The value '5' of element 'm' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 39 cvc-identity-constraint.4.1 Duplicate unique value [1 5] declared for identity constraint "um" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>3</l><l>1 2</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w unknown="1">1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 73 cvc-type.3.1.1 Element 'w' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><x>5</x><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 40 cvc-complex-type.2.4.a Invalid content was found starting with element 'u'. One of '{x, y}' is expected.
+error 3 79 cvc-identity-constraint.4.1 Duplicate unique value [5] declared for identity constraint "ux" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><u a="1 2" b="7"/>\n</doc>\n
+error 3 97 cvc-complex-type.2.4.a Invalid content was found starting with element 'u'. One of '{x, y}' is expected.
+error 3 97 cvc-type.3.1.1 Element 'u' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'a' was found.
+error 3 97 cvc-type.3.1.1 Element 'u' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'b' was found.
+error 3 97 cvc-datatype-valid.1.2.3 '' is not a valid value of union type 'U1'.
+error 3 97 cvc-type.3.1.3 The value '' of element 'u' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x></x><y a="1 2" b="7"/>\n</doc>\n
+error 3 78 cvc-datatype-valid.1.2.1 '' is not a valid value for 'integer'.
+error 3 78 cvc-type.3.1.3 The value '' of element 'x' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v unknown="1">true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 62 cvc-type.3.1.1 Element 'v' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><w a="1 2" b="7"/>\n</doc>\n
+error 3 97 cvc-complex-type.2.4.a Invalid content was found starting with element 'w'. One of '{x, y}' is expected.
+error 3 97 cvc-type.3.1.1 Element 'w' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'a' was found.
+error 3 97 cvc-type.3.1.1 Element 'w' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'b' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 69 cvc-identity-constraint.4.1 Duplicate unique value [true] declared for identity constraint "uv" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><l>1 true</l><x>5</x><y a="1 2" b="7"/>\n</doc>\n
+error 3 61 cvc-complex-type.2.4.a Invalid content was found starting with element 'l'. One of '{v, w, x, y}' is expected.
+error 3 71 cvc-datatype-valid.1.2.1 'true' is not a valid value for 'integer'.
+error 3 71 cvc-type.3.1.3 The value '1 true' of element 'l' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n<l>1 2</l><l>3</l><m>1 5</m><u>5</u><u>red</u><v>true</v><w>1 true</w><x>5</x><y a="1 2" b="2001-02-30"/>\n</doc>\n
+error 3 106 cvc-datatype-valid.1.2.1 '2001-02-30' is not a valid value for 'integer'.
+error 3 106 cvc-attribute.3 The value '2001-02-30' of attribute 'b' on element 'y' is not valid with respect to its type, 'Small'.

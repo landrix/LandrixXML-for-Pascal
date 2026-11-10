@@ -1,0 +1,213 @@
+file a.xml
+error 3 13 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 3 13 cvc-type.3.1.3 The value '150' of element 's' is not valid.
+error 4 13 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 4 13 cvc-type.3.1.3 The value '150' of element 's' is not valid.
+error 4 13 cvc-identity-constraint.4.1 Duplicate unique value [150] declared for identity constraint "us" of element "doc".
+error 5 11 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 5 11 cvc-type.3.1.3 The value 'x' of element 's' is not valid.
+error 6 11 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 6 11 cvc-type.3.1.3 The value 'x' of element 's' is not valid.
+error 7 11 cvc-minInclusive-valid Value '0' is not facet-valid with respect to minInclusive '1' for type 'Smaller'.
+error 7 11 cvc-type.3.1.3 The value '0' of element 't' is not valid.
+error 8 11 cvc-minInclusive-valid Value '0' is not facet-valid with respect to minInclusive '1' for type 'Smaller'.
+error 8 11 cvc-type.3.1.3 The value '0' of element 't' is not valid.
+error 8 11 cvc-identity-constraint.4.1 Duplicate unique value [0] declared for identity constraint "ut" of element "doc".
+error 9 13 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Smaller'.
+error 9 13 cvc-type.3.1.3 The value '200' of element 't' is not valid.
+error 10 13 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Smaller'.
+error 10 13 cvc-type.3.1.3 The value '200' of element 't' is not valid.
+error 10 13 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "ut" of element "doc".
+error 11 15 cvc-enumeration-valid Value 'green' is not facet-valid with respect to enumeration '[red, blue]'. It must be a value from the enumeration.
+error 11 15 cvc-type.3.1.3 The value 'green' of element 'c' is not valid.
+error 12 15 cvc-enumeration-valid Value 'green' is not facet-valid with respect to enumeration '[red, blue]'. It must be a value from the enumeration.
+error 12 15 cvc-type.3.1.3 The value 'green' of element 'c' is not valid.
+error 12 15 cvc-identity-constraint.4.1 Duplicate unique value [green] declared for identity constraint "uc" of element "doc".
+error 13 14 cvc-length-valid Value 'ABCD' with length = '4' is not facet-valid with respect to length '3' for type 'Code'.
+error 13 14 cvc-type.3.1.3 The value 'ABCD' of element 'k' is not valid.
+error 14 14 cvc-length-valid Value 'ABCD' with length = '4' is not facet-valid with respect to length '3' for type 'Code'.
+error 14 14 cvc-type.3.1.3 The value 'ABCD' of element 'k' is not valid.
+error 14 14 cvc-identity-constraint.4.1 Duplicate unique value [ABCD] declared for identity constraint "uk" of element "doc".
+error 15 13 cvc-pattern-valid Value 'abc' is not facet-valid with respect to pattern '[A-Z]+' for type 'Code'.
+error 15 13 cvc-type.3.1.3 The value 'abc' of element 'k' is not valid.
+error 16 13 cvc-pattern-valid Value 'abc' is not facet-valid with respect to pattern '[A-Z]+' for type 'Code'.
+error 16 13 cvc-type.3.1.3 The value 'abc' of element 'k' is not valid.
+error 17 15 cvc-totalDigits-valid Value '12.34' has 4 total digits, but the number of total digits has been limited to 3.
+error 17 15 cvc-type.3.1.3 The value '12.34' of element 'p' is not valid.
+error 18 15 cvc-totalDigits-valid Value '12.34' has 4 total digits, but the number of total digits has been limited to 3.
+error 18 15 cvc-type.3.1.3 The value '12.34' of element 'p' is not valid.
+error 18 15 cvc-identity-constraint.4.1 Duplicate unique value [12.34] declared for identity constraint "up" of element "doc".
+error 19 13 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '127' for type 'byte'.
+error 19 13 cvc-type.3.1.3 The value '200' of element 'b' is not valid.
+error 20 13 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '127' for type 'byte'.
+error 20 13 cvc-type.3.1.3 The value '200' of element 'b' is not valid.
+error 20 13 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "ub" of element "doc".
+error 21 15 cvc-length-valid Value '1 2 3' with length = '3' is not facet-valid with respect to length '2' for type 'Pair'.
+error 21 15 cvc-type.3.1.3 The value '1 2 3' of element 'l' is not valid.
+error 22 15 cvc-length-valid Value '1 2 3' with length = '3' is not facet-valid with respect to length '2' for type 'Pair'.
+error 22 15 cvc-type.3.1.3 The value '1 2 3' of element 'l' is not valid.
+error 22 15 cvc-identity-constraint.4.1 Duplicate unique value [1 2 3] declared for identity constraint "ul" of element "doc".
+error 23 15 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 23 15 cvc-type.3.1.3 The value '1 200' of element 'l' is not valid.
+error 24 15 cvc-maxInclusive-valid Value '200' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 24 15 cvc-type.3.1.3 The value '1 200' of element 'l' is not valid.
+error 24 15 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "ul" of element "doc".
+error 25 11 cvc-enumeration-valid Value '6' is not facet-valid with respect to enumeration '[5, true]'. It must be a value from the enumeration.
+error 25 11 cvc-type.3.1.3 The value '6' of element 'u' is not valid.
+error 26 11 cvc-enumeration-valid Value '6' is not facet-valid with respect to enumeration '[5, true]'. It must be a value from the enumeration.
+error 26 11 cvc-type.3.1.3 The value '6' of element 'u' is not valid.
+error 26 11 cvc-identity-constraint.4.1 Duplicate unique value [6] declared for identity constraint "uu" of element "doc".
+error 27 15 cvc-enumeration-valid Value 'false' is not facet-valid with respect to enumeration '[5, true]'. It must be a value from the enumeration.
+error 27 15 cvc-type.3.1.3 The value 'false' of element 'u' is not valid.
+error 28 15 cvc-enumeration-valid Value 'false' is not facet-valid with respect to enumeration '[5, true]'. It must be a value from the enumeration.
+error 28 15 cvc-type.3.1.3 The value 'false' of element 'u' is not valid.
+error 28 15 cvc-identity-constraint.4.1 Duplicate unique value [false] declared for identity constraint "uu" of element "doc".
+error 29 13 cvc-datatype-valid.1.2.3 '200' is not a valid value of union type 'Either'.
+error 29 13 cvc-type.3.1.3 The value '200' of element 'u' is not valid.
+error 30 13 cvc-datatype-valid.1.2.3 '200' is not a valid value of union type 'Either'.
+error 30 13 cvc-type.3.1.3 The value '200' of element 'u' is not valid.
+error 30 13 cvc-identity-constraint.4.1 Duplicate unique value [200] declared for identity constraint "uu" of element "doc".
+error 31 15 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 31 15 cvc-attribute.3 The value '150' of attribute 'v' on element 'a' is not valid with respect to its type, 'Small'.
+error 32 15 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 32 15 cvc-attribute.3 The value '150' of attribute 'v' on element 'a' is not valid with respect to its type, 'Small'.
+error 32 15 cvc-identity-constraint.4.2.2 Duplicate key value [150] declared for identity constraint "ka" of element "doc".
+error 33 13 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 33 13 cvc-type.3.1.3 The value '150' of element 'r' is not valid.
+error 34 13 cvc-maxInclusive-valid Value '300' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 34 13 cvc-type.3.1.3 The value '300' of element 'r' is not valid.
+error 35 7 cvc-identity-constraint.4.3 Key 'rr' with value '300' not found for identity constraint of element 'doc'.
+
+file b.xml
+error 3 15 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 3 15 cvc-attribute.3 The value '150' of attribute 'v' on element 'a' is not valid with respect to its type, 'Small'.
+error 4 13 cvc-maxInclusive-valid Value '150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 4 13 cvc-type.3.1.3 The value '150' of element 'r' is not valid.
+error 5 14 cvc-maxInclusive-valid Value '0150' is not facet-valid with respect to maxInclusive '100' for type 'Small'.
+error 5 14 cvc-type.3.1.3 The value '0150' of element 'r' is not valid.
+
+file valid.xml
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <l>1 2</l><s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  \n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 4 16 cvc-complex-type.2.4.a Invalid content was found starting with element 's'. One of '{l, u, a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <u v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 14 13 cvc-type.3.1.1 Element 'u' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'v' was found.
+error 14 13 cvc-datatype-valid.1.2.3 '' is not a valid value of union type 'Either'.
+error 14 13 cvc-type.3.1.3 The value '' of element 'u' is not valid.
+error 17 7 cvc-identity-constraint.4.3 Key 'rr' with value '5' not found for identity constraint of element 'doc'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  \n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <c>red</c><u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 12 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{l, u, a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  \n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s><s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 4 19 cvc-identity-constraint.4.1 Duplicate unique value [6] declared for identity constraint "us" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  \n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k unknown="1">ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 8 18 cvc-type.3.1.1 Element 'k' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <p>5</p>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 12 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'p'. One of '{l, u, a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>x</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 5 11 cvc-datatype-valid.1.2.1 'x' is not a valid value for 'integer'.
+error 5 11 cvc-type.3.1.3 The value 'x' of element 't' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>-1</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5">-1</a>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 14 18 cvc-complex-type.2.1 Element 'a' must have no character or element information item [children], because the type's content type is empty.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>-1</r>\n</doc>\n
+error 17 7 cvc-identity-constraint.4.3 Key 'rr' with value '-1' not found for identity constraint of element 'doc'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  \n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  \n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <c>red</c><a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 14 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{u, a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  \n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <c>7</c>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 5 11 cvc-enumeration-valid Value '7' is not facet-valid with respect to enumeration '[red, blue]'. It must be a value from the enumeration.
+error 5 11 cvc-type.3.1.3 The value '7' of element 'c' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  \n  <r>5</r>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="2001-02-30"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 14 22 cvc-datatype-valid.1.2.1 '2001-02-30' is not a valid value for 'integer'.
+error 14 22 cvc-attribute.3 The value '2001-02-30' of attribute 'v' on element 'a' is not valid with respect to its type, 'Small'.
+error 17 7 cvc-identity-constraint.4.3 Key 'rr' with value '5' not found for identity constraint of element 'doc'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.005</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 9 15 cvc-totalDigits-valid Value '1.005' has 4 total digits, but the number of total digits has been limited to 3.
+error 9 15 cvc-type.3.1.3 The value '1.005' of element 'p' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u unknown="1">true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 13 18 cvc-type.3.1.1 Element 'u' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p><p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 9 23 cvc-identity-constraint.4.1 Duplicate unique value [1.5] declared for identity constraint "up" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="-5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 17 7 cvc-identity-constraint.4.3 Key 'rr' with value '5' not found for identity constraint of element 'doc'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  \n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <p>1.5</p><a v="6"/>\n  <r>5</r>\n</doc>\n
+error 15 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'p'. One of '{a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l unknown="1">1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 11 18 cvc-type.3.1.1 Element 'l' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <a>1.5</a>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 9 13 cvc-complex-type.2.1 Element 'a' must have no character or element information item [children], because the type's content type is empty.
+error 9 13 cvc-identity-constraint.4.2.1.a Element "doc" has no value for the key "ka".
+error 10 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'b'. One of '{a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u><u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 12 19 cvc-identity-constraint.4.1 Duplicate unique value [5] declared for identity constraint "uu" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/><a v="6"/>\n  <r>5</r>\n</doc>\n
+error 15 23 cvc-identity-constraint.4.2.2 Duplicate key value [6] declared for identity constraint "ka" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <t>5</t>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 4 6 cvc-complex-type.2.4.a Invalid content was found starting with element 's'. One of '{t, c, k, p, b, l, u, a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c><c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 6 23 cvc-identity-constraint.4.1 Duplicate unique value [red] declared for identity constraint "uc" of element "doc".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6" unknown="1"/>\n  <r>5</r>\n</doc>\n
+error 15 25 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'a'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <a v="5"/><c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  \n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 7 16 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>1.005</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 6 15 cvc-enumeration-valid Value '1.005' is not facet-valid with respect to enumeration '[red, blue]'. It must be a value from the enumeration.
+error 6 15 cvc-type.3.1.3 The value '1.005' of element 'c' is not valid.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  \n  <a v="6"/>\n  <a v="5"/><r>5</r>\n</doc>\n
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5" unknown="1"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 14 25 cvc-complex-type.3.2.2 Attribute 'unknown' is not allowed to appear in element 'a'.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <l>6</l>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n
+error 4 11 cvc-length-valid Value '6' with length = '1' is not facet-valid with respect to length '2' for type 'Pair'.
+error 4 11 cvc-type.3.1.3 The value '6' of element 'l' is not valid.
+error 5 6 cvc-complex-type.2.4.a Invalid content was found starting with element 't'. One of '{l, u, a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  \n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <c>red</c><a v="6"/>\n  <r>5</r>\n</doc>\n
+error 15 6 cvc-complex-type.2.4.a Invalid content was found starting with element 'c'. One of '{a, r}' is expected.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r unknown="1">5</r>\n</doc>\n
+error 16 18 cvc-type.3.1.1 Element 'r' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'unknown' was found.
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>1.5</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a/>\n  <r>5</r>\n</doc>\n
+error 15 7 cvc-identity-constraint.4.2.1.a Element "doc" has no value for the key "ka".
+
+text <?xml version="1.0" encoding="UTF-8"?>\n<doc>\n  <s>5</s>\n  <s>6</s>\n  <t>7</t>\n  <c>red</c>\n  <c>blue</c>\n  <k>ABC</k>\n  <p>-1</p>\n  <b>10</b>\n  <l>1 2</l>\n  <u>5</u>\n  <u>true</u>\n  <a v="5"/>\n  <a v="6"/>\n  <r>5</r>\n</doc>\n

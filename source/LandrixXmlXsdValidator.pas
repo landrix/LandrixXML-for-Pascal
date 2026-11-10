@@ -1713,7 +1713,7 @@ var
   Error: TLandrixXmlXsdError;
   Present: Boolean;
   Wildcard: TLandrixXmlXsdWildcard;
-  Valid: Boolean;
+  Valid, HasValue: Boolean;
   WildId, UseId: TLandrixXmlUtf8;
   XsiType: TLandrixXmlXsdSimpleType;
 begin
@@ -1791,9 +1791,18 @@ begin
       else
         WildId := Decl.Name;
     end;
-    Valid := Decl.SimpleType.Validate(FAttrs[I].Value, FValueContext, Value, Error);
+    Valid := Decl.SimpleType.Validate(FAttrs[I].Value, FValueContext, Value, Error, HasValue);
     if not Valid then
-      Report(Error.Code, Error.Message, Line, Column, Decl)
+    begin
+      Report(Error.Code, Error.Message, Line, Column, Decl);
+      { as Xerces: the value computed before a facet failed is still the
+        value of identity constraints }
+      if HasValue then
+      begin
+        FAttrValid[I] := True;
+        FAttrValues[I] := Value;
+      end;
+    end
     else if not CheckIdValue(Decl.SimpleType, Value, Line, Column) then
     begin
       { as Xerces: a value that fails the ID or ENTITY rules is still the
@@ -2098,7 +2107,7 @@ var
   Issues: TLandrixXmlXsdContentIssues;
   I: Integer;
   Code, Message: string;
-  IsSimpleType, Valid, UseDefault, IsFixed, Nilled: Boolean;
+  IsSimpleType, Valid, UseDefault, IsFixed, Nilled, HasValue: Boolean;
   DefaultText: TLandrixXmlUtf8;
   TypeName: string;
 begin
@@ -2160,9 +2169,19 @@ begin
         S := DefaultText
       else
         S := FBuffer;
-      Valid := T.Validate(S, FValueContext, Value, Error);
+      Valid := T.Validate(S, FValueContext, Value, Error, HasValue);
       if not Valid then
-        Report(Error.Code, Error.Message, Line, Column, F.Decl)
+      begin
+        Report(Error.Code, Error.Message, Line, Column, F.Decl);
+        { as Xerces: the value computed before a facet failed is still the
+          value of identity constraints }
+        if HasValue then
+        begin
+          FFrames[FDepth - 1].ValueKnown := True;
+          FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Value);
+          FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Value);
+        end;
+      end
       else if not CheckIdValue(T, Value, Line, Column) then
       begin
         { as Xerces: a value that fails the ID or ENTITY rules is still the

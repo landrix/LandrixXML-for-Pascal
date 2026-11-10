@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doc>
+  <s>5</s>
+  <s>6</s>
+  <t>7</t>
+  <c>red</c>
+  <c>blue</c>
+  <k>ABC</k>
+  <p>1.5</p>
+  <b>10</b>
+  <l>1 2</l>
+  <u>5</u>
+  <u>true</u>
+  <a v="5"/>
+  <a v="6"/>
+  <r>5</r>
+</doc>

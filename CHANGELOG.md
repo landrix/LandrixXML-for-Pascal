@@ -643,8 +643,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - New error code `xecArithmetic` (division by zero, exponent out of range).
 - `tools/gen-decimal-testdata.py`: generates the decimal test cases and
   optionally checks them against Saxon.
+- `TLandrixXmlXsdSimpleType.Validate` with `out HasValue`: whether Value
+  holds a value after a failed check, as Xerces computes one before a
+  facet fails (see the method's comment for lists and unions).
 
 ### Fixed
+- XML Schema identity constraints use the value of a field whose value
+  failed a facet other than pattern (also through a list item or a union
+  member), as Xerces does, so two equal invalid values are also a
+  duplicate.
 - XML Schema (found with the W3C XML Schema Test Suite, checked against
   Xerces): `use="prohibited"` in an attribute group is ignored, as XML
   Schema 1.0 drops prohibited attribute uses from attribute groups (it

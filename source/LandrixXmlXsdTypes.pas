@@ -248,7 +248,7 @@ type
       Context: TLandrixXmlXsdNamespaceContext): TLandrixXmlXsdValue;
     function ParseBound(Facet: TLandrixXmlXsdFacet; const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
     function ValidateList(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
-      out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
+      out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError; out HasValue: Boolean): Boolean;
     function GetMemberCount: Integer;
     function GetMember(Index: Integer): TLandrixXmlXsdSimpleType;
     procedure SetFinal(Value: TLandrixXmlXsdDerivations);
@@ -290,13 +290,26 @@ type
       Context: TLandrixXmlXsdNamespaceContext; Fixed: Boolean); overload;
     { Checks Text (an element or attribute value as written) without a
       namespace context: a QName with a prefix other than xml and xmlns
-      is invalid (UndeclaredPrefix), one without has no namespace. }
+      is invalid (UndeclaredPrefix), one without has no namespace. After
+      a False result Value is unspecified. }
     function Validate(const Text: TLandrixXmlUtf8; out Value: TLandrixXmlXsdValue;
       out Error: TLandrixXmlXsdError): Boolean; overload;
     { Checks Text; Context resolves the prefixes of QName values (also in
-      lists and unions), nil for none. }
+      lists and unions), nil for none. After a False result Value is
+      unspecified. }
     function Validate(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
       out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean; overload;
+    { As above; HasValue tells whether Value is defined. It is True on
+      success and after a failure that came after Xerces had computed a
+      value, which its identity constraints then use: the value itself if
+      only a facet other than pattern failed (also one of a list or of a
+      restricted union), the value of the last list item that had one if
+      an item failed, and the value of the last member type that had one
+      if no member type of a union matched. False if the lexical form or
+      a pattern failed before any value was computed. }
+    function Validate(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+      out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError; out HasValue: Boolean): Boolean;
+      overload;
     property NamespaceUri: TLandrixXmlUtf8 read FNamespaceUri;
     property Name: TLandrixXmlUtf8 read FName;
     { For an anonymous type: the name messages use, as the schema loader
@@ -3350,17 +3363,21 @@ begin
 end;
 
 { As Xerces: the patterns on the whole value, each item, then the facets
-  of the list. }
+  of the list. Items alternate between two records, so the value of the
+  item before a failed one is still at hand (see HasValue at Validate). }
 function TLandrixXmlXsdSimpleType.ValidateList(const Text: TLandrixXmlUtf8;
-  Context: TLandrixXmlXsdNamespaceContext; out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
+  Context: TLandrixXmlXsdNamespaceContext; out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError;
+  out HasValue: Boolean): Boolean;
 var
   Normalized, Token: TLandrixXmlUtf8;
   T: TLandrixXmlXsdSimpleType;
-  Item: TLandrixXmlXsdValue;
-  I, Start, Count: Integer;
+  Items: array[0..1] of TLandrixXmlXsdValue;
+  I, Start, Count, K: Integer;
   TypeName: string;
+  ItemHasValue: Boolean;
 begin
   Result := False;
+  HasValue := False;
   Normalized := LandrixXmlXsdNormalizeWhiteSpace(Text, xwsCollapse);
   TypeName := DisplayName;
   Value.Primitive := xspAnySimpleType;
@@ -3380,6 +3397,7 @@ begin
     T := T.FBase;
   end;
   Count := 0;
+  K := 0;
   I := 1;
   while I <= Length(Normalized) do
   begin
@@ -3388,15 +3406,29 @@ begin
       Inc(I);
     Token := Copy(Normalized, Start, I - Start);
     Inc(I);
-    if not FItemType.Validate(Token, Context, Item, Error) then
+    if not FItemType.Validate(Token, Context, Items[K], Error, ItemHasValue) then
+    begin
+      if ItemHasValue then
+      begin
+        Value := Items[K];
+        HasValue := True;
+      end
+      else if Count > 0 then
+      begin
+        Value := Items[1 - K];
+        HasValue := True;
+      end;
       Exit;
+    end;
     if Count = Length(Value.Items) then
       SetLength(Value.Items, 2 * Count + 4);
-    AtomicFromValue(Item, Value.Items[Count]);
+    AtomicFromValue(Items[K], Value.Items[Count]);
     Inc(Count);
+    K := 1 - K;
   end;
   SetLength(Value.Items, Count);
   Value.Length := Count;
+  HasValue := True;
   Result := CheckFacets(Value, Error);
 end;
 
@@ -3409,18 +3441,35 @@ end;
 function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
   out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError): Boolean;
 var
+  HasValue: Boolean;
+begin
+  Result := Validate(Text, Context, Value, Error, HasValue);
+end;
+
+{ HasValue follows Xerces' ValidatedInfo, whose actual value is set
+  whenever a lexical stage succeeds (an atomic value, a whole list) and
+  kept when a later check fails; a failed list item or union member
+  leaves the last one set.
+  Xerces deviation, not in the test suite: XML Schema gives an invalid
+  value no actual value, so identity constraints would not see it. }
+function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+  out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError; out HasValue: Boolean): Boolean;
+var
   I: Integer;
   MemberError: TLandrixXmlXsdError;
   T: TLandrixXmlXsdSimpleType;
+  Last: TLandrixXmlXsdValue;
+  MemberHasValue: Boolean;
 begin
   Result := False;
+  HasValue := False;
   Error.Code := '';
   Error.Message := '';
   Value.Variety := xsvAtomic;
   Value.Items := nil;
   if FVariety = xsvList then
   begin
-    Result := ValidateList(Text, Context, Value, Error);
+    Result := ValidateList(Text, Context, Value, Error, HasValue);
     Exit;
   end;
   if FVariety = xsvUnion then
@@ -3445,18 +3494,32 @@ begin
       end;
     end;
     for I := 0 to Integer(Length(FMembers)) - 1 do
-      if FMembers[I].Validate(Text, Context, Value, MemberError) then
+    begin
+      if FMembers[I].Validate(Text, Context, Value, MemberError, MemberHasValue) then
       begin
+        HasValue := True;
         Result := CheckFacets(Value, Error);
         Exit;
       end;
-    Value.RawText := Text;
-    Value.MemberType := nil;
+      if MemberHasValue then
+      begin
+        Last := Value;
+        HasValue := True;
+      end;
+    end;
+    if HasValue then
+      Value := Last
+    else
+    begin
+      Value.RawText := Text;
+      Value.MemberType := nil;
+    end;
     SetError(Error, 'cvc-datatype-valid.1.2.3', Quote(Text) + ' is not a valid value of union type ''' +
       DisplayName + '''.');
     Exit;
   end;
-  Result := ValidateLexical(Text, Context, Value, Error) and CheckFacets(Value, Error);
+  HasValue := ValidateLexical(Text, Context, Value, Error);
+  Result := HasValue and CheckFacets(Value, Error);
 end;
 
 { An atomic value up to the facets other than patterns: white space, the

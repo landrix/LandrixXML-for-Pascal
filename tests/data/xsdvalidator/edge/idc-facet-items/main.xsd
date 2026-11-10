@@ -1,0 +1,38 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="Small">
+    <xs:restriction base="xs:int"><xs:maxInclusive value="100"/></xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Color">
+    <xs:restriction base="xs:string"><xs:enumeration value="red"/></xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="L"><xs:list itemType="Small"/></xs:simpleType>
+  <xs:simpleType name="LP">
+    <xs:restriction base="L"><xs:pattern value="1.*"/></xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="U1"><xs:union memberTypes="Small Color"/></xs:simpleType>
+  <xs:simpleType name="U2"><xs:union memberTypes="xs:boolean Small"/></xs:simpleType>
+  <xs:simpleType name="U3"><xs:union memberTypes="Small xs:boolean"/></xs:simpleType>
+  <xs:simpleType name="UL"><xs:list itemType="U3"/></xs:simpleType>
+  <xs:element name="doc">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="l" type="L" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="m" type="LP" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="u" type="U1" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="v" type="U2" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="w" type="UL" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="x" type="Small" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="y" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType><xs:attribute name="a" type="L"/><xs:attribute name="b" type="Small"/></xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+    <xs:unique name="ul"><xs:selector xpath="l"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="um"><xs:selector xpath="m"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="uu"><xs:selector xpath="u"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="uv"><xs:selector xpath="v"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="uw"><xs:selector xpath="w"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="ux"><xs:selector xpath="x"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="uy"><xs:selector xpath="y"/><xs:field xpath="@a"/></xs:unique>
+  </xs:element>
+</xs:schema>

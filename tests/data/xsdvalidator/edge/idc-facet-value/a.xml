@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doc>
+  <s>150</s>
+  <s>150</s>
+  <s>x</s>
+  <s>x</s>
+  <t>0</t>
+  <t>0</t>
+  <t>200</t>
+  <t>200</t>
+  <c>green</c>
+  <c>green</c>
+  <k>ABCD</k>
+  <k>ABCD</k>
+  <k>abc</k>
+  <k>abc</k>
+  <p>12.34</p>
+  <p>12.34</p>
+  <b>200</b>
+  <b>200</b>
+  <l>1 2 3</l>
+  <l>1 2 3</l>
+  <l>1 200</l>
+  <l>1 200</l>
+  <u>6</u>
+  <u>6</u>
+  <u>false</u>
+  <u>false</u>
+  <u>200</u>
+  <u>200</u>
+  <a v="150"/>
+  <a v="150"/>
+  <r>150</r>
+  <r>300</r>
+</doc>

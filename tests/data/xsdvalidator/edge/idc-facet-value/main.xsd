@@ -1,0 +1,76 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="Small">
+    <xs:restriction base="xs:int">
+      <xs:maxInclusive value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Smaller">
+    <xs:restriction base="Small">
+      <xs:minInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Color">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="red"/>
+      <xs:enumeration value="blue"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Code">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]+"/>
+      <xs:length value="3"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Price">
+    <xs:restriction base="xs:decimal">
+      <xs:totalDigits value="3"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Pair">
+    <xs:restriction>
+      <xs:simpleType>
+        <xs:list itemType="Small"/>
+      </xs:simpleType>
+      <xs:length value="2"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="Either">
+    <xs:restriction>
+      <xs:simpleType>
+        <xs:union memberTypes="Small xs:boolean"/>
+      </xs:simpleType>
+      <xs:enumeration value="5"/>
+      <xs:enumeration value="true"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="doc">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="s" type="Small" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="t" type="Smaller" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="c" type="Color" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="k" type="Code" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="p" type="Price" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="b" type="xs:byte" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="l" type="Pair" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="u" type="Either" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="a" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:attribute name="v" type="Small"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="r" type="Small" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+    <xs:unique name="us"><xs:selector xpath="s"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="ut"><xs:selector xpath="t"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="uc"><xs:selector xpath="c"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="uk"><xs:selector xpath="k"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="up"><xs:selector xpath="p"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="ub"><xs:selector xpath="b"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="ul"><xs:selector xpath="l"/><xs:field xpath="."/></xs:unique>
+    <xs:unique name="uu"><xs:selector xpath="u"/><xs:field xpath="."/></xs:unique>
+    <xs:key name="ka"><xs:selector xpath="a"/><xs:field xpath="@v"/></xs:key>
+    <xs:keyref name="rr" refer="ka"><xs:selector xpath="r"/><xs:field xpath="."/></xs:keyref>
+  </xs:element>
+</xs:schema>
