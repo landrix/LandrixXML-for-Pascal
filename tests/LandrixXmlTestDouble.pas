@@ -358,6 +358,75 @@ begin
   end;
 end;
 
+{ Integers below 10^15 (10^7 for a float) are packed directly; each is
+  checked against the same number with sixteen fraction zeros, which
+  takes the general path (a negative decimal exponent). }
+procedure TestExactIntegers;
+const
+  Zeros = '.0000000000000000';
+var
+  Digits: array of string;
+  D: string;
+  I, L, Seed: Integer;
+
+  procedure Same(const Short, Long: string; Float: Boolean);
+  var
+    A, B: TLandrixXmlDouble;
+  begin
+    if Float then
+    begin
+      A := LandrixXmlDoubleParseFloat(U(Short));
+      B := LandrixXmlDoubleParseFloat(U(Long));
+    end
+    else
+    begin
+      A := LandrixXmlDoubleParse(U(Short));
+      B := LandrixXmlDoubleParse(U(Long));
+    end;
+    Check(A.Bits = B.Bits, Short + ' as ' + Long);
+  end;
+
+begin
+  Check(Dbl('1').Bits = Int64($3FF0000000000000), '1');
+  Check(Dbl('15').Bits = Int64($402E000000000000), '15');
+  Check(Dbl('999999999999999').Bits = Int64($430C6BF52633FFF8), '10^15 - 1');
+  Check(Dbl('123e5').Bits = Int64($416775DC00000000), '123e5');
+  Check(LandrixXmlDoubleParseFloat(U('9999999')).Bits = Int64($416312CFE0000000), 'float 9999999');
+  Check(LandrixXmlDoubleFromInt64(15).Bits = Dbl('15').Bits, 'FromInt64');
+  Check(LandrixXmlDoubleFromInt64(-15).Bits = Dbl('-15').Bits, 'FromInt64, negative');
+  Check(LandrixXmlDoubleFromDecimal(LandrixXmlParseDecimal(U('1500'))).Bits = Dbl('1500').Bits, 'FromDecimal');
+  { digit strings of each length (no IntToStr of Int64: see the x87 notes) }
+  Digits := nil;
+  Seed := 12345;
+  for L := 1 to 16 do
+    for I := 1 to 20 do
+    begin
+      D := '';
+      while Length(D) < L do
+      begin
+        Seed := (Seed * 1103 + 12345) mod 65536;
+        if (D = '') and (Seed mod 10 = 0) then
+          D := D + '1'
+        else
+          D := D + Chr(Ord('0') + Seed mod 10);
+      end;
+      SetLength(Digits, Integer(Length(Digits)) + 1);
+      Digits[Integer(High(Digits))] := D;
+    end;
+  SetLength(Digits, Integer(Length(Digits)) + 4);
+  Digits[Integer(High(Digits)) - 3] := '999999999999999';
+  Digits[Integer(High(Digits)) - 2] := '100000000000000';
+  Digits[Integer(High(Digits)) - 1] := '9999999';
+  Digits[Integer(High(Digits))] := '16777216';
+  for I := 0 to Integer(High(Digits)) do
+  begin
+    Same(Digits[I], Digits[I] + Zeros, False);
+    Same('-' + Digits[I], '-' + Digits[I] + Zeros, False);
+    Same(Digits[I], Digits[I] + Zeros, True);
+    Same(Digits[I] + 'e2', Digits[I] + '00' + Zeros, False);
+  end;
+end;
+
 { Very long inputs: the exponent limit depends on the input length, and
   only 800 significant digits are kept. }
 procedure TestLongInputs;
@@ -437,6 +506,7 @@ begin
   RegisterTest('Double.NoExtendedRange', TestNoExtendedRange);
   RegisterTest('Double.SaxonFormatting', TestSaxonFormatting);
   RegisterTest('Double.Parsing', TestParsing);
+  RegisterTest('Double.ExactIntegers', TestExactIntegers);
   RegisterTest('Double.LongInputs', TestLongInputs);
   RegisterTest('Double.Conversions', TestConversions);
   RegisterTest('Double.Rounding', TestRounding);

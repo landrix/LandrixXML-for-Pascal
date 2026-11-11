@@ -20,6 +20,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `LandrixXmlDom`: copies names without `Move`. FPC 3.2.4 on aarch64-darwin
   reported note 6058 ("Move ... marked as inline is not inlined") there in
   the builds of some consuming projects, despite `{$WARN 6058 OFF}`.
+- `LandrixXmlDouble`: integers below 10^15 (below 10^7 for xs:float) are
+  converted to a double directly instead of through a big-integer
+  division; the result is the same. An XPath comparison such as
+  `cl[@id = 15]`, which converts every `@id` and the integer this way,
+  is about five times faster.
 
 ## [0.3.0] - 2026-11-10
 

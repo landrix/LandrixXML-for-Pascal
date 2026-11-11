@@ -706,10 +706,30 @@ end;
 function NearestDouble(Negative: Boolean; const N: TBig; DigitCount, E: Integer; Float: Boolean): Int64;
 var
   Num, Den, Q, R: TBig;
-  S: Integer;
+  S, L: Integer;
+  V, T: Int64;
 begin
   Num := nil;
   Den := nil;
+  { an integer below 10^15 < 2^53 (10^7 < 2^24 for a float) is exact:
+    packed directly, without the division below }
+  if (E >= 0) and (DigitCount + E <= 15) and (not Float or (DigitCount + E <= 7)) then
+  begin
+    V := BigToInt64(N);
+    for S := 1 to E do
+      V := V * 10;
+    L := 0;
+    T := V;
+    while T > 0 do
+    begin
+      Inc(L);
+      T := T shr 1;
+    end;
+    Result := (Int64(L + 1022) shl 52) or ((V shl (53 - L)) and FractionMask);
+    if Negative then
+      Result := Result or SignMask;
+    Exit;
+  end;
   { N * 10^E < 10^(DigitCount + E) }
   if DigitCount + E > 310 then
   begin
