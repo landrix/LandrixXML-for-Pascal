@@ -820,6 +820,154 @@ begin
   end;
 end;
 
+{ Steps "name[@attribute = value]" go through an index of the children
+  (more than a few of them, a value that does not depend on the focus):
+  each result is checked against the same predicate with "and true()",
+  which the evaluator does not index. }
+procedure TestKeyedSteps;
+var
+  Tree, Codes: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Context: TLandrixXmlXPathStaticContext;
+  Expr: TLandrixXmlXPathExpression;
+  Xml: string;
+  I, S: Integer;
+
+  function Run(const X: string): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(X), Context);
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0));
+  end;
+
+  { the error code, '' if none }
+  function Code(const X: string): string;
+  begin
+    Result := '';
+    try
+      Run(X);
+    except
+      on E: ELandrixXmlXPathError do
+        Result := E.XPathCode;
+    end;
+  end;
+
+  { Path is "...[@v = Value]..." with the placeholder # for the predicate's
+    end: once as it is, once with "and true()" }
+  procedure Same(const Path, Expected: string);
+  var
+    P: Integer;
+    Plain, Keyed: string;
+  begin
+    P := Pos('#', Path);
+    Keyed := Copy(Path, 1, P - 1) + Copy(Path, P + 1, MaxInt);
+    Plain := Copy(Path, 1, P - 1) + ' and true()' + Copy(Path, P + 1, MaxInt);
+    CheckEqualsStr(Expected, Run(Keyed), Keyed);
+    CheckEqualsStr(Expected, Run(Plain), Plain);
+  end;
+
+  procedure SameCode(const Path, Expected: string);
+  var
+    P: Integer;
+  begin
+    P := Pos('#', Path);
+    CheckEqualsStr(Expected, Code(Copy(Path, 1, P - 1) + Copy(Path, P + 1, MaxInt)), Path);
+    CheckEqualsStr(Expected, Code(Copy(Path, 1, P - 1) + ' and true()' + Copy(Path, P + 1, MaxInt)),
+      Path + ' and true()');
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Codes := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Expr := nil;
+  try
+    { e1 .. e20 with v = a b c d e a b ... (e7 without v, e3 with a child
+      e of its own), then an empty v, a v in a namespace and other names }
+    Xml := '<r xmlns:p="urn:p">';
+    for I := 1 to 20 do
+      if I = 7 then
+        Xml := Xml + '<e n="7"/><f v="a" n="f7"/>'
+      else if I = 3 then
+        Xml := Xml + '<e v="c" n="3"><e v="c" n="99"/></e>'
+      else
+        Xml := Xml + '<e v="' + Chr(Ord('a') + (I - 1) mod 5) + '" n="' + IntToStr(I) + '"/>';
+    Xml := Xml + '<e v="" n="21"/><e p:v="a" n="22"/><e v="12" n="23"/></r>';
+    Tree.LoadFromUtf8(U(Xml));
+    S := Context.DeclareVariable(U('s'));
+    Evaluator.SetGlobalCount(1);
+    Evaluator.BindString(S, U('b'));
+
+    Same('/r/e[@v = ''a''#]/@n', '1 6 11 16');
+    Same('/r/e[''a'' = @v#]/@n', '1 6 11 16');
+    Same('/r/e[@v = ''none''#]/@n', '');
+    Same('/r/e[@v = ''''#]/@n', '21');
+    Same('/r/e[@v = ()#]/@n', '');
+    Same('/r/e[@v = (''c'', ''a'', ''c'')#]/@n', '1 3 6 8 11 13 16 18');
+    Same('/r/e[@v = $s#]/@n', '2 12 17');
+    Evaluator.BindString(S, U('d'));
+    Same('/r/e[@v = $s#]/@n', '4 9 14 19');
+    Evaluator.BindString(S, U('b'));
+    Same('/r/e[@v = xs:untypedAtomic(''d'')#]/@n', '4 9 14 19');
+    Same('/r/e[@v = xs:anyURI(''e'')#]/@n', '5 10 15 20');
+    Same('for $x in (''d'', ''b'') return string-join(/r/e[@v = $x#]/@n, '','')', '4,9,14,19 2,12,17');
+    { later predicates count among the matches }
+    Same('/r/e[@v = ''a''#][2]/@n', '6');
+    Same('/r/e[@v = ''a''#][last()]/@n', '16');
+    Same('/r/e[@v = (''a'', ''b'')#][position() > 5]/@n', '16 17');
+    Same('/r/e[@v = ''c''#]/e/@n', '99');
+    { a few children: as usual }
+    Same('/r/e/e[@v = ''c''#]/@n', '99');
+    { a value of the focus or of the root: as usual }
+    Same('/r/e[@v = /r/f/@v#]/@n', '1 6 11 16');
+    Same('/r/e[@v = @n#]/@n', '');
+    Same('/r/e[@v = ../f/@v#]/@n', '1 6 11 16');
+    { numbers compare as numbers: an error for the letters }
+    SameCode('/r/e[@v = 12#]/@n', 'FORG0001');
+    SameCode('/r/e[@v = error()#]/@n', 'FOER0000');
+    { no child of that name: the value is not evaluated }
+    SameCode('/r/none[@v = error()#]/@n', '');
+    { a document added to the evaluator }
+    Xml := '<codes>';
+    for I := 1 to 30 do
+      Xml := Xml + '<c v="k' + IntToStr(I mod 10) + '" n="' + IntToStr(I) + '"/>';
+    Xml := Xml + '</codes>';
+    Codes.LoadFromUtf8(U(Xml));
+    Evaluator.AddDocument(U('codes.xml'), Codes);
+    Same('document(''codes.xml'')/codes/c[@v = ''k3''#]/@n', '3 13 23');
+    Same('document(''codes.xml'')/codes/c[@v = /r/e[@n = ''4'']/@n#]/@n', '');
+    Same('/r/e[@v = ''a''#]/@n', '1 6 11 16');
+    { more parents than the evaluator keeps indexes for }
+    Xml := '<codes><g>';
+    for I := 1 to 20 do
+      Xml := Xml + '<c v="' + Chr(Ord('a') + I mod 2) + '"/>';
+    Xml := Xml + '</g>';
+    for I := 1 to 4100 do
+      Xml := Xml + '<g><c v="a"/></g>';
+    Xml := Xml + '</codes>';
+    Codes.LoadFromUtf8(U(Xml));
+    Evaluator.ClearCache;
+    Same('count(document(''codes.xml'')/codes/g/c[@v = ''a''#])', '4110');
+    Same('count(document(''codes.xml'')/codes/g[1]/c[@v = ''b''#])', '10');
+    { the index belongs to the tree as it was }
+    Xml := '<r>';
+    for I := 1 to 20 do
+      Xml := Xml + '<e v="x" n="' + IntToStr(I) + '"/>';
+    Xml := Xml + '<e v="a" n="21"/></r>';
+    Tree.LoadFromUtf8(U(Xml));
+    Evaluator.ClearCache;
+    Same('/r/e[@v = ''a''#]/@n', '21');
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    Context.Free;
+    Codes.Free;
+    Tree.Free;
+  end;
+end;
+
 { deep-equal across two trees and on documents nested deeper than the
   stack would allow for one call per level. }
 procedure TestDeepEqual;
@@ -1573,6 +1721,7 @@ begin
   RegisterTest('XPathEval.KeptValues', TestKeptValues);
   RegisterTest('XPathEval.Patterns', TestPatterns);
   RegisterTest('XPathEval.Documents', TestDocuments);
+  RegisterTest('XPathEval.KeyedSteps', TestKeyedSteps);
   RegisterTest('XPathEval.DeepEqual', TestDeepEqual);
   RegisterTest('XPathEval.ResolveUri', TestResolveUri);
   RegisterTest('XPathEval.BaseUri', TestBaseUri);

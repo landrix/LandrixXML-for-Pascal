@@ -25,6 +25,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   division; the result is the same. An XPath comparison such as
   `cl[@id = 15]`, which converts every `@id` and the integer this way,
   is about five times faster.
+- `LandrixXmlXPathEval`: a child step `name[@attribute = value]` whose
+  value does not depend on the focus (a literal, a variable, a path from
+  `document()`) finds its matches through an index of the children by
+  that attribute, built on first use per parent with at least 16 such
+  children, if the values are strings or untypedAtomic. The Factur-X
+  code list checks (`.../cl[@id=N]/enumeration[@value=$v]`) no longer
+  scan the list. Together with the faster integer conversion the
+  Factur-X 1.09.2 EXTENDED rules take about 40 % of the time before.
 
 ## [0.3.0] - 2026-11-10
 

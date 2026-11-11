@@ -54,6 +54,10 @@
   the same totals on every line of an invoice. Binding a global variable
   or SetGlobalCount drops the kept values; ClearCache too, which is needed
   only when the tree is loaded again while the evaluator lives.
+  A child step name[@attribute = value] whose value does not depend on
+  the focus (the code lists of the rule sets) goes through an index of
+  the parent's children by that attribute, built on first use; it
+  depends only on the trees, ClearCache and AddDocument drop it.
 
   Further documents: AddDocument gives document(Uri) a tree (the XSLT
   function, with the URI as the only argument, as Schematron rules use it
@@ -225,6 +229,10 @@ type
     FCache: TObject;
     { the node being computed for its entry, so that Eval does not look again }
     FBypass: Integer;
+    { the indexes of the steps "name[@attribute = value]" (TKeyIndex, owned
+      by FKeyIndexes, found by FKeyTable); forgotten with the node numbers }
+    FKeyIndexes: TObjectList;
+    FKeyTable: array of TObject;
     { EnterExpression calls not yet left }
     FNesting: Integer;
     { EvaluatePattern: the predicates of the steps being evaluated drop the
@@ -250,6 +258,9 @@ type
     function CachedEval(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure DropCachedValues;
+    procedure DropKeyIndexes;
+    function FindKeyIndex(Parent, ChildName, AttributeName: Integer): TObject;
+    function KeyedStep(Index, Node: Integer; var Output: TLandrixXmlXPathSequence): Boolean;
     { EvaluateSequence without the copy, for read-only use }
     function EvaluateShared(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlXPathSequence;
     procedure EnterExpression(Expr: TLandrixXmlXPathExpression; out SavedExpr: TLandrixXmlXPathExpression;
@@ -416,6 +427,39 @@ type
     { the value is that of the evaluator's own tree (a rooted path): from a
       node of another tree it is computed without being kept }
     RootOnly: array of Boolean;
+    { a child step whose first predicate is "@attribute = value" with a
+      value that does not depend on the focus: the attribute step and the
+      value (-1 if the step is not one) }
+    KeyAttribute: array of Integer;
+    KeyValue: array of Integer;
+  end;
+
+  { The element children of one parent with one name, by the value of one
+    of their attributes (see KeyedStep). Children without the attribute
+    are not in it. }
+  TKeyIndex = class
+  public
+    { the parent (node number) and the expanded names in its tree }
+    Parent: Integer;
+    ChildName: Integer;
+    AttributeName: Integer;
+    { False: too few children, the step is evaluated as usual }
+    Indexed: Boolean;
+    { the distinct values: the first and the last child with Values[K]
+      (positions in Nodes); Marks for KeyedStep }
+    Values: array of TLandrixXmlUtf8;
+    FirstOf: array of Integer;
+    LastOf: array of Integer;
+    Marks: array of Boolean;
+    ValueCount: Integer;
+    { open addressing over Values: value index + 1, 0 = free }
+    Table: array of Integer;
+    { the children (node numbers) in document order; NextOf the position of
+      the next child with the same value (-1 for none) }
+    Nodes: array of Integer;
+    NextOf: array of Integer;
+    { the value's index (-1 if absent); Add: append it if absent }
+    function Find(const Value: TLandrixXmlUtf8; Add: Boolean): Integer;
   end;
 
   { xdRoot: the root of the context node's tree ("/a") }
@@ -969,11 +1013,13 @@ begin
   FCurrentNode := -1;
   FRegexes := TObjectList.Create(True);
   FCaches := TObjectList.Create(True);
+  FKeyIndexes := TObjectList.Create(True);
   FBypass := -1;
 end;
 
 destructor TLandrixXmlXPathEvaluator.Destroy;
 begin
+  FKeyIndexes.Free;
   FCaches.Free;
   FRegexes.Free;
   inherited Destroy;
@@ -1122,14 +1168,50 @@ begin
     MarkOutermost(Nodes, Nodes[Index].Predicates[I], Free[Index], Free, Flags);
 end;
 
+{ A step "name[@attribute = value][...]" on the child axis whose value
+  depends neither on the focus nor on the root of its tree (a string
+  literal, a variable, a path from document()): Attribute and Value
+  receive the attribute step and the value, otherwise -1. A number
+  literal compares as a number: never indexed. }
+procedure FindKey(const Nodes: TLandrixXmlXPathAstNodes; Index, GlobalCount, FirstLocalSlot: Integer;
+  var Free, Rooted: array of Boolean; out Attribute, Value: Integer);
+var
+  P, Side, A, B: Integer;
+begin
+  Attribute := -1;
+  Value := -1;
+  if (Nodes[Index].Kind <> xakStep) or (Nodes[Index].Axis <> xaxChild) or (Nodes[Index].NodeTest <> xntName) or
+    (Length(Nodes[Index].Predicates) = 0) then
+    Exit;
+  P := Nodes[Index].Predicates[0];
+  if (Nodes[P].Kind <> xakGeneralCompare) or (TLandrixXmlXPathCompare(Nodes[P].Op) <> xpcEq) or
+    (Length(Nodes[P].Children) <> 2) then
+    Exit;
+  for Side := 0 to 1 do
+  begin
+    A := Nodes[P].Children[Side];
+    B := Nodes[P].Children[1 - Side];
+    if (Nodes[A].Kind = xakStep) and (Nodes[A].Axis = xaxAttribute) and (Nodes[A].NodeTest = xntName) and
+      (Length(Nodes[A].Predicates) = 0) and not (Nodes[B].Kind in [xakInteger, xakDecimal, xakDouble]) and
+      (Dependencies(Nodes, B, GlobalCount, FirstLocalSlot, Free, Rooted) * [xdFocus, xdRoot] = []) then
+    begin
+      Attribute := A;
+      Value := B;
+      Exit;
+    end;
+  end;
+end;
+
 function TLandrixXmlXPathEvaluator.FindCache(Expr: TLandrixXmlXPathExpression): TObject;
 var
   H, Mask, I, J, Count: Integer;
   C: TExpressionCache;
-  Free: array of Boolean;
+  Free, KeyFree, KeyRooted: array of Boolean;
 begin
   Result := nil;
   Free := nil;
+  KeyFree := nil;
+  KeyRooted := nil;
   if (Expr = nil) or (Expr.NodeCount = 0) then
     Exit;
   if Length(FCacheTable) = 0 then
@@ -1187,6 +1269,14 @@ begin
       Inc(J);
     end;
   end;
+  { Free and C.Flags are set; the key search only needs scratch arrays }
+  SetLength(C.KeyAttribute, Count);
+  SetLength(C.KeyValue, Count);
+  SetLength(KeyFree, Count);
+  SetLength(KeyRooted, Count);
+  for I := 0 to Count - 1 do
+    FindKey(Expr.NodeArray, I, FGlobalCount, Expr.FirstLocalSlot, KeyFree, KeyRooted, C.KeyAttribute[I],
+      C.KeyValue[I]);
   FCacheTable[H] := C;
   Result := C;
   { at most half full; the entries of a freed expression stay (an
@@ -1337,6 +1427,8 @@ var
   K: Integer;
   Next: Int64;
 begin
+  { the node numbers change: the indexes hold them }
+  DropKeyIndexes;
   SetLength(FDocBases, Length(FDocTrees));
   Next := FTree.Count;
   for K := 0 to Integer(High(FDocTrees)) do
@@ -2254,6 +2346,247 @@ begin
   Result := Current;
 end;
 
+{ --- indexes of the steps "name[@attribute = value]" --------------------- }
+
+const
+  { fewer or more children of that name: the step is evaluated as usual
+    (the upper limit keeps the table size below MaxInt) }
+  MinKeyedChildren = 16;
+  MaxKeyedChildren = 1 shl 28;
+  { more indexes than that in one evaluator: start again }
+  MaxKeyIndexes = 4096;
+
+function TKeyIndex.Find(const Value: TLandrixXmlUtf8; Add: Boolean): Integer;
+var
+  H, Mask: Integer;
+begin
+  Mask := Integer(Length(Table)) - 1;
+  if Value = '' then
+    H := Integer(LandrixXmlHashSeed and Cardinal(Mask))
+  else
+    H := Integer(LandrixXmlHashBytes(PAnsiChar(Value), Length(Value), LandrixXmlHashSeed) and Cardinal(Mask));
+  while Table[H] <> 0 do
+  begin
+    Result := Table[H] - 1;
+    if Values[Result] = Value then
+      Exit;
+    H := (H + 1) and Mask;
+  end;
+  Result := -1;
+  if not Add then
+    Exit;
+  { the table has more slots than children, Values one per child }
+  Result := ValueCount;
+  Inc(ValueCount);
+  Values[Result] := Value;
+  FirstOf[Result] := -1;
+  LastOf[Result] := -1;
+  Marks[Result] := False;
+  Table[H] := Result + 1;
+end;
+
+procedure TLandrixXmlXPathEvaluator.DropKeyIndexes;
+begin
+  if FKeyIndexes <> nil then
+    FKeyIndexes.Clear;
+  FKeyTable := nil;
+end;
+
+{ The index of the children named ChildName of Parent by their attribute
+  AttributeName, built on first use. }
+function TLandrixXmlXPathEvaluator.FindKeyIndex(Parent, ChildName, AttributeName: Integer): TObject;
+var
+  H, Mask, I, J, A, K, Count, Size, Local, Base: Integer;
+  X: TKeyIndex;
+  T: TLandrixXmlXPathTree;
+
+  function Slot: Integer;
+  begin
+    Result := Integer((Cardinal(Parent) xor (Cardinal(ChildName) shl 11) xor (Cardinal(AttributeName) shl 21)) and
+      Cardinal(Mask));
+  end;
+
+begin
+  if Length(FKeyTable) = 0 then
+    SetLength(FKeyTable, 64);
+  Mask := Integer(Length(FKeyTable)) - 1;
+  H := Slot;
+  while FKeyTable[H] <> nil do
+  begin
+    X := TKeyIndex(FKeyTable[H]);
+    if (X.Parent = Parent) and (X.ChildName = ChildName) and (X.AttributeName = AttributeName) then
+    begin
+      Result := X;
+      Exit;
+    end;
+    H := (H + 1) and Mask;
+  end;
+  if FKeyIndexes.Count >= MaxKeyIndexes then
+  begin
+    DropKeyIndexes;
+    SetLength(FKeyTable, 64);
+    Mask := 63;
+    H := Slot;
+  end;
+  X := TKeyIndex.Create;
+  FKeyIndexes.Add(X);
+  FKeyTable[H] := X;
+  Result := X;
+  X.Parent := Parent;
+  X.ChildName := ChildName;
+  X.AttributeName := AttributeName;
+  X.Indexed := False;
+  X.ValueCount := 0;
+  T := TreeOf(Parent, Base);
+  Local := Parent - Base;
+  Count := 0;
+  I := T.FirstChild(Local);
+  while I >= 0 do
+  begin
+    if (T.Kind[I] = xnkElement) and (T.ExpandedName[I] = ChildName) then
+      Inc(Count);
+    I := T.NextSibling[I];
+  end;
+  if (Count >= MinKeyedChildren) and (Count <= MaxKeyedChildren) then
+  begin
+    Size := 64;
+    while Size < 2 * Count do
+      Size := 2 * Size;
+    SetLength(X.Table, Size);
+    for I := 0 to Size - 1 do
+      X.Table[I] := 0;
+    SetLength(X.Values, Count);
+    SetLength(X.FirstOf, Count);
+    SetLength(X.LastOf, Count);
+    SetLength(X.Marks, Count);
+    SetLength(X.Nodes, Count);
+    SetLength(X.NextOf, Count);
+    J := 0;
+    I := T.FirstChild(Local);
+    while I >= 0 do
+    begin
+      if (T.Kind[I] = xnkElement) and (T.ExpandedName[I] = ChildName) then
+      begin
+        A := I + 1;
+        while (A <= I + T.AttributeCount[I]) and
+          not ((T.Kind[A] = xnkAttribute) and (T.ExpandedName[A] = AttributeName)) do
+          Inc(A);
+        if A <= I + T.AttributeCount[I] then
+        begin
+          K := X.Find(T.StringValueUtf8(A), True);
+          X.Nodes[J] := I + Base;
+          X.NextOf[J] := -1;
+          if X.LastOf[K] >= 0 then
+            X.NextOf[X.LastOf[K]] := J
+          else
+            X.FirstOf[K] := J;
+          X.LastOf[K] := J;
+          Inc(J);
+        end;
+      end;
+      I := T.NextSibling[I];
+    end;
+    X.Indexed := True;
+  end;
+  { at most half full }
+  if 2 * FKeyIndexes.Count > Length(FKeyTable) then
+  begin
+    Count := 2 * Integer(Length(FKeyTable));
+    FKeyTable := nil;
+    SetLength(FKeyTable, Count);
+    Mask := Count - 1;
+    for I := 0 to Integer(FKeyIndexes.Count) - 1 do
+    begin
+      X := TKeyIndex(FKeyIndexes[I]);
+      Parent := X.Parent;
+      ChildName := X.ChildName;
+      AttributeName := X.AttributeName;
+      H := Slot;
+      while FKeyTable[H] <> nil do
+        H := (H + 1) and Mask;
+      FKeyTable[H] := X;
+    end;
+  end;
+end;
+
+{ The child step Index from Node through its index, if FindKey found the
+  form "name[@attribute = value]" (see TExpressionCache.KeyAttribute).
+  The predicate is true for a child exactly when the string of its
+  attribute equals one of the values, if they are all strings or
+  untypedAtomic (attributes are untypedAtomic; a general comparison of an
+  untypedAtomic with a string compares the code points). Returns False
+  (and the step is evaluated as usual) for other values, unknown names
+  and parents with few such children. The value does not depend on the
+  focus, so it is evaluated once instead of once per child; it is only
+  evaluated for a parent with at least MinKeyedChildren children of that
+  name (the usual evaluation evaluates it for each of them), so an error
+  in it is raised exactly when the usual evaluation raises it too. }
+function TLandrixXmlXPathEvaluator.KeyedStep(Index, Node: Integer; var Output: TLandrixXmlXPathSequence): Boolean;
+var
+  C: TExpressionCache;
+  T: TLandrixXmlXPathTree;
+  X: TKeyIndex;
+  Keys: TLandrixXmlXPathSequence;
+  Item: TLandrixXmlXPathItem;
+  Base, ChildName, AttributeName, I, J, K, Found: Integer;
+  Hit: array of Integer;
+  Rest: array of Integer;
+begin
+  Result := False;
+  Hit := nil;
+  Rest := nil;
+  C := TExpressionCache(FCache);
+  T := TreeOf(Node, Base);
+  ChildName := T.FindExpandedName(FNodes[Index].NamespaceUri, FNodes[Index].LocalName);
+  AttributeName := T.FindExpandedName(FNodes[C.KeyAttribute[Index]].NamespaceUri,
+    FNodes[C.KeyAttribute[Index]].LocalName);
+  if (ChildName < 0) or (AttributeName < 0) then
+    Exit;
+  if not TKeyIndex(FindKeyIndex(Node, ChildName, AttributeName)).Indexed then
+    Exit;
+  Keys := Atomize(Eval(C.KeyValue[Index], Node, 1, 1, LandrixXmlXPathEmpty));
+  for I := 0 to Keys.Count - 1 do
+    if not IsStringLike(Keys.Items[I].Kind) then
+      Exit;
+  { the evaluation of the value may have started the indexes again }
+  X := TKeyIndex(FindKeyIndex(Node, ChildName, AttributeName));
+  SetLength(Hit, Keys.Count);
+  Found := 0;
+  for I := 0 to Keys.Count - 1 do
+  begin
+    K := X.Find(Keys.Items[I].Text, False);
+    if (K >= 0) and not X.Marks[K] then
+    begin
+      X.Marks[K] := True;
+      Hit[Found] := K;
+      Inc(Found);
+    end;
+  end;
+  Output := LandrixXmlXPathEmpty;
+  InitItem(Item, xikNode);
+  for I := 0 to Found - 1 do
+  begin
+    X.Marks[Hit[I]] := False;
+    J := X.FirstOf[Hit[I]];
+    while J >= 0 do
+    begin
+      Item.Node := X.Nodes[J];
+      LandrixXmlXPathAppend(Output, Item);
+      J := X.NextOf[J];
+    end;
+  end;
+  if Found > 1 then
+    SortNodes(Output);
+  if Length(FNodes[Index].Predicates) > 1 then
+  begin
+    SetLength(Rest, Length(FNodes[Index].Predicates) - 1);
+    for I := 0 to Integer(High(Rest)) do
+      Rest[I] := FNodes[Index].Predicates[I + 1];
+    Output := ApplyPredicates(Rest, Output, MaxInt);
+  end;
+  Result := True;
+end;
+
 { The step Index from Node; Axis is the step's own axis, or descendant
   for a child step that follows "//" (see TExpressionCache.Fuse). }
 function TLandrixXmlXPathEvaluator.EvalStep(Index: Integer; Node: Integer;
@@ -2320,6 +2653,12 @@ var
   end;
 
 begin
+  { the result is initialised by the caller (a managed type); Count is
+    set so that the compiler sees it written }
+  Result.Count := 0;
+  if (Axis = xaxChild) and not FPattern and (FCache <> nil) and
+    (TExpressionCache(FCache).KeyAttribute[Index] >= 0) and KeyedStep(Index, Node, Result) then
+    Exit;
   T := TreeOf(Node, Base);
   Node := Node - Base;
   N := @FNodes[Index];
