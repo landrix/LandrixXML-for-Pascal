@@ -5,6 +5,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+- `LandrixXmlNormalize`: `LandrixXmlIsNormalizedUtf8` and
+  `LandrixXmlIsNormalizedCodePoints` tell exactly whether a text is in a
+  normalization form (the Unicode quick check, and a normalization only
+  when it answers "maybe"). The code point variant rejects values that
+  are not Unicode scalar values with `xecInvalidUnicode`. The constant
+  `LandrixXmlNormalizeUnicodeVersion` names the Unicode version of the
+  normalization data (15.0.0); characters assigned later pass through
+  unchanged. Every line of the Unicode file NormalizationTest.txt also
+  checks the new functions.
+- `LandrixXmlNormalize`: an input or a result of more than `MaxInt` code
+  points raises `xecLimit` instead of overflowing the Integer
+  arithmetic (64-bit only).
+
 ## [0.3.0] - 2026-11-10
 
 Native XML Schema and Schematron validation, as optional units: the

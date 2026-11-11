@@ -344,6 +344,26 @@ def check_deviations(root, violations):
             violations.append(Violation(path, line, "tagged deviation %s is not listed in README.md" % name))
 
 
+def check_normalize_version(root, violations):
+    """LandrixXmlNormalizeUnicodeVersion must name the version of the
+    generated normalization data."""
+    unit = os.path.join(root, "source", "LandrixXmlNormalize.pas")
+    data = os.path.join(root, "source", "LandrixXmlNormalizeData.inc")
+    for path in (unit, data):
+        if not os.path.exists(path):
+            violations.append(Violation(path, 0, "file missing"))
+            return
+    with open(unit, encoding="latin-1") as f:
+        declared = re.search(r"LandrixXmlNormalizeUnicodeVersion\s*=\s*'([^']*)'", f.read())
+    with open(data, encoding="latin-1") as f:
+        generated = re.search(r"Unicode normalization data, version (\S+) ", f.read())
+    if not declared or not generated:
+        violations.append(Violation(unit, 0, "Unicode version of the normalization data not found"))
+    elif declared.group(1) != generated.group(1):
+        violations.append(Violation(unit, 0, "LandrixXmlNormalizeUnicodeVersion is %s, the data is %s"
+                                    % (declared.group(1), generated.group(1))))
+
+
 def main(argv):
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     paths = argv[1:] or [os.path.join(root, d) for d in ("source", "tests", "samples", "examples")]
@@ -362,6 +382,7 @@ def main(argv):
         check_file(f, violations)
     if not argv[1:]:
         check_deviations(root, violations)
+        check_normalize_version(root, violations)
     for v in violations:
         print(v)
     print("check-forbidden: %d file(s), %d violation(s)" % (len(files), len(violations)))

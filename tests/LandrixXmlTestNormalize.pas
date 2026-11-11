@@ -164,8 +164,9 @@ end;
 { Checks the invariants of NormalizationTest.txt for one line:
   NFC: c2 = NFC(c1) = NFC(c2) = NFC(c3), c4 = NFC(c4) = NFC(c5);
   NFD: c3 = NFD(c1) = NFD(c2) = NFD(c3), c5 = NFD(c4) = NFD(c5);
-  NFKC: c4 = NFKC(c1..c5); NFKD: c5 = NFKD(c1..c5); and the UTF-8 form
-  gives the same as the code point form. }
+  NFKC: c4 = NFKC(c1..c5); NFKD: c5 = NFKD(c1..c5); the UTF-8 form
+  gives the same as the code point form; and a column counts as
+  normalized exactly when it equals its normalization. }
 procedure CheckLine(const Columns: TColumns; const Where: string);
 const
   { per form and source column (0-based): the expected column }
@@ -179,6 +180,7 @@ var
   F, K: Integer;
   Actual: TLandrixXmlCodePoints;
   Utf8: TLandrixXmlUtf8;
+  Same: Boolean;
 begin
   for K := 0 to 4 do
     Points[K] := ParseCodePoints(Columns[K]);
@@ -191,6 +193,12 @@ begin
       Utf8 := LandrixXmlNormalizeUtf8(LandrixXmlCodePointsToUtf8(Points[K], 0, Integer(Length(Points[K]))), Forms[F]);
       CheckEqualsStr(HexText(Points[Expected[F][K]]), HexText(LandrixXmlUtf8ToCodePoints(Utf8)),
         Where + ': UTF-8 ' + FormNames[F] + ' of column ' + IntToStr(K + 1) + ' (' + Columns[K] + ')');
+      Same := HexText(Points[K]) = HexText(Points[Expected[F][K]]);
+      Check(LandrixXmlIsNormalizedCodePoints(Points[K], Forms[F]) = Same,
+        Where + ': is ' + FormNames[F] + ' of column ' + IntToStr(K + 1) + ' (' + Columns[K] + ')');
+      Check(LandrixXmlIsNormalizedUtf8(LandrixXmlCodePointsToUtf8(Points[K], 0, Integer(Length(Points[K]))),
+        Forms[F]) = Same,
+        Where + ': UTF-8 is ' + FormNames[F] + ' of column ' + IntToStr(K + 1) + ' (' + Columns[K] + ')');
     end;
 end;
 
@@ -237,6 +245,70 @@ begin
       Raised := E.Code = xecInvalidUnicode;
   end;
   Check(Raised, 'malformed UTF-8');
+end;
+
+{ True if LandrixXmlIsNormalizedCodePoints raises ELandrixXmlError
+  xecInvalidUnicode with the given Offset for CodePoints. }
+function RaisesInvalidCodePoints(const CodePoints: TLandrixXmlCodePoints;
+  Offset: Integer): Boolean;
+begin
+  Result := False;
+  try
+    LandrixXmlIsNormalizedCodePoints(CodePoints, xnfNfc);
+  except
+    on E: ELandrixXmlError do
+      Result := (E.Code = xecInvalidUnicode) and (E.Offset = Offset);
+  end;
+end;
+
+{ The exact check: "maybe" cases of the quick check that are normalized
+  and that are not, values that are not scalar values, and malformed
+  UTF-8 after a part that is already not normalized. }
+procedure TestIsNormalized;
+var
+  Points: TLandrixXmlCodePoints;
+  S: TLandrixXmlUtf8;
+  Raised: Boolean;
+begin
+  Points := nil;
+  Check(LandrixXmlIsNormalizedCodePoints(Points, xnfNfd), 'empty array');
+  Check(LandrixXmlIsNormalizedUtf8('', xnfNfc), 'empty string');
+  Check(LandrixXmlIsNormalizedUtf8(LandrixXmlStringToUtf8('plain ASCII'), xnfNfkd), 'ASCII');
+  { U+0301 and U+1161 are NFC_QC=Maybe }
+  Check(LandrixXmlIsNormalizedCodePoints(ParseCodePoints('0301 0061'), xnfNfc), 'maybe, normalized');
+  Check(LandrixXmlIsNormalizedCodePoints(ParseCodePoints('0062 1161'), xnfNfkc), 'jamo V, normalized');
+  Check(not LandrixXmlIsNormalizedCodePoints(ParseCodePoints('1100 1161'), xnfNfc), 'jamo L V, not NFC');
+  Check(not LandrixXmlIsNormalizedCodePoints(ParseCodePoints('0041 0301'), xnfNfc), 'maybe, not NFC');
+  Check(LandrixXmlIsNormalizedCodePoints(ParseCodePoints('0041 0301'), xnfNfd), 'is NFD');
+  Check(not LandrixXmlIsNormalizedCodePoints(ParseCodePoints('0061 0302 0323'), xnfNfd), 'not in canonical order');
+  Check(not LandrixXmlIsNormalizedCodePoints(ParseCodePoints('0061 0302 0323'), xnfNfc), 'not in canonical order, NFC');
+  Check(not LandrixXmlIsNormalizedCodePoints(ParseCodePoints('00C5'), xnfNfd), 'quick check no');
+  Check(not LandrixXmlIsNormalizedUtf8(Utf8Of('FB01'), xnfNfkc), 'UTF-8, not NFKC');
+  Check(LandrixXmlIsNormalizedUtf8(Utf8Of('FB01'), xnfNfc), 'UTF-8, NFC');
+  SetLength(Points, 3);
+  Points[0] := $61;
+  Points[1] := $301;
+  Points[2] := -1;
+  Check(RaisesInvalidCodePoints(Points, 2), 'negative value');
+  Points[2] := $D800;
+  Check(RaisesInvalidCodePoints(Points, 2), 'surrogate');
+  Points[0] := $110000;
+  Check(RaisesInvalidCodePoints(Points, 0), 'above U+10FFFF');
+  Points[0] := $10FFFF;
+  Points[2] := $DFFF;
+  Check(RaisesInvalidCodePoints(Points, 2), 'last surrogate');
+  { U+00C5 alone already answers NFD with no; a lead byte without its
+    continuation byte follows }
+  S := Utf8Of('00C5');
+  S := S + Copy(S, 1, 1);
+  Raised := False;
+  try
+    LandrixXmlIsNormalizedUtf8(S, xnfNfd);
+  except
+    on E: ELandrixXmlError do
+      Raised := E.Code = xecInvalidUnicode;
+  end;
+  Check(Raised, 'malformed UTF-8 after a part that is not normalized');
 end;
 
 procedure TestUnicodeSuite;
@@ -292,6 +364,8 @@ begin
         Actual := LandrixXmlNormalizeCodePoints(One, Forms[F]);
         if (Integer(Length(Actual)) <> 1) or (Actual[0] <> Cp) then
           Fail(FormNames[F] + ' of ' + IntToHex(Cp, 4) + ' is ' + HexText(Actual));
+        if not LandrixXmlIsNormalizedCodePoints(One, Forms[F]) then
+          Fail(IntToHex(Cp, 4) + ' is not ' + FormNames[F]);
       end;
     end;
 end;
@@ -300,6 +374,7 @@ procedure Register;
 begin
   RegisterTest('Normalize.Sample', TestSample);
   RegisterTest('Normalize.Utf8', TestUtf8);
+  RegisterTest('Normalize.IsNormalized', TestIsNormalized);
   RegisterTest('Normalize.UnicodeSuite', TestUnicodeSuite);
 end;
 

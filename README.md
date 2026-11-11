@@ -46,7 +46,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlDouble` | `xs:double` and `xs:float` in software (IEEE 754 bit pattern, Saxon-compatible string value), optional validation unit |
 | `LandrixXmlRegex` | XSD and XPath regular expressions, linear-time matching, optional validation unit |
 | `LandrixXmlUnicode` | Unicode 6.2.0 general categories, code point strings, optional validation unit |
-| `LandrixXmlNormalize` | Unicode normalization NFC, NFD, NFKC, NFKD (Unicode 15.0.0), optional validation unit |
+| `LandrixXmlNormalize` | Unicode normalization NFC, NFD, NFKC, NFKD and the exact check whether a text is normalized (Unicode 15.0.0), optional validation unit |
 | `LandrixXmlXsdTypes` | XML Schema simple types and facets, optional validation unit |
 | `LandrixXmlXsdContent` | XML Schema content models (sequence, choice, occurrence bounds, wildcards), optional validation unit |
 | `LandrixXmlXsdSchema` | loaded XML Schema components, optional validation unit |

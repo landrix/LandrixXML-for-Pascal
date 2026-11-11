@@ -22,17 +22,38 @@ uses
   LandrixXmlBase,
   LandrixXmlUnicode;
 
+const
+  { The Unicode version of the normalization data. Code points assigned
+    in a later version count as unassigned: they pass through unchanged
+    and do not make a text unnormalized. }
+  LandrixXmlNormalizeUnicodeVersion = '15.0.0';
+
 type
   TLandrixXmlNormalizationForm = (xnfNfc, xnfNfd, xnfNfkc, xnfNfkd);
 
 { CodePoints in normalization form Form (a new array). Code points that
-  are not assigned pass through unchanged. }
+  are not assigned pass through unchanged, and so do values that are not
+  Unicode scalar values (negative, surrogates, above $10FFFF): this
+  function does not check them. More than MaxInt code points (input or
+  result) raise ELandrixXmlError xecLimit. }
 function LandrixXmlNormalizeCodePoints(const CodePoints: TLandrixXmlCodePoints;
   Form: TLandrixXmlNormalizationForm): TLandrixXmlCodePoints;
 { S (strictly valid UTF-8, else ELandrixXmlError xecInvalidUnicode) in
   normalization form Form; S itself when it is already normalized. }
 function LandrixXmlNormalizeUtf8(const S: TLandrixXmlUtf8;
   Form: TLandrixXmlNormalizationForm): TLandrixXmlUtf8;
+{ True if CodePoints is in normalization form Form, that is
+  LandrixXmlNormalizeCodePoints would return it unchanged. A value that
+  is not a Unicode scalar value (negative, a surrogate, above $10FFFF)
+  raises ELandrixXmlError xecInvalidUnicode; its Offset is the index in
+  CodePoints. More than MaxInt code points raise xecLimit. }
+function LandrixXmlIsNormalizedCodePoints(const CodePoints: TLandrixXmlCodePoints;
+  Form: TLandrixXmlNormalizationForm): Boolean;
+{ True if S is in normalization form Form. S must be strictly valid
+  UTF-8 as a whole, else ELandrixXmlError xecInvalidUnicode, even when an
+  earlier part already shows that S is not normalized. }
+function LandrixXmlIsNormalizedUtf8(const S: TLandrixXmlUtf8;
+  Form: TLandrixXmlNormalizationForm): Boolean;
 
 implementation
 
@@ -59,6 +80,11 @@ const
 
   { runs of non-starters up to this length are sorted by insertion }
   ShortRun = 16;
+
+  { results of QuickCheck }
+  QcYes = 0;
+  QcNo = 1;
+  QcMaybe = 2;
 
 function CombiningClass(CodePoint: Integer): Integer;
 var
@@ -163,22 +189,32 @@ begin
   end;
 end;
 
-{ True if CodePoints is in form Form by the quick check (a "maybe" counts
-  as not normalized). }
+{ The quick check of UAX #15 for CodePoints and Form: QcYes, QcNo or
+  QcMaybe (only NFC and NFKC; then only a normalization can tell). }
 function QuickCheck(const CodePoints: TLandrixXmlCodePoints;
-  Form: TLandrixXmlNormalizationForm): Boolean;
+  Form: TLandrixXmlNormalizationForm): Integer;
 var
-  I, C, Ccc, LastCcc, Mask: Integer;
+  I, C, Ccc, LastCcc, Flags, NoMask, MaybeMask: Integer;
 begin
+  MaybeMask := 0;
   case Form of
-    xnfNfc: Mask := NormQcNfcNo or NormQcNfcMaybe;
-    xnfNfd: Mask := NormQcNfdNo;
-    xnfNfkc: Mask := NormQcNfkcNo or NormQcNfkcMaybe;
+    xnfNfc:
+      begin
+        NoMask := NormQcNfcNo;
+        MaybeMask := NormQcNfcMaybe;
+      end;
+    xnfNfd: NoMask := NormQcNfdNo;
+    xnfNfkc:
+      begin
+        NoMask := NormQcNfkcNo;
+        MaybeMask := NormQcNfkcMaybe;
+      end;
   else
-    Mask := NormQcNfkdNo;
+    NoMask := NormQcNfkdNo;
   end;
-  Result := False;
+  Result := QcNo;
   LastCcc := 0;
+  Flags := 0;
   for I := 0 to Integer(Length(CodePoints)) - 1 do
   begin
     C := CodePoints[I];
@@ -190,14 +226,19 @@ begin
       Ccc := 0;
       if C >= $300 then
         Ccc := CombiningClass(C);
+      { every normalization form is in canonical order }
       if (Ccc <> 0) and (LastCcc > Ccc) then
         Exit;
-      if QuickCheckFlags(C) and Mask <> 0 then
+      Flags := Flags or (QuickCheckFlags(C) and (NoMask or MaybeMask));
+      if Flags and NoMask <> 0 then
         Exit;
       LastCcc := Ccc;
     end;
   end;
-  Result := True;
+  if Flags <> 0 then
+    Result := QcMaybe
+  else
+    Result := QcYes;
 end;
 
 { Sorts Points[Lo..Hi - 1] stably by the combining classes Classes. }
@@ -267,7 +308,13 @@ var
   begin
     if N >= Capacity then
     begin
-      Capacity := Capacity * 2 + 16;
+      { grow without overflowing Integer }
+      if Capacity <= (MaxInt - 16) div 2 then
+        Capacity := Capacity * 2 + 16
+      else if Capacity < MaxInt then
+        Capacity := MaxInt
+      else
+        raise ELandrixXmlError.CreateCode(xecLimit, 'Normalized text is too long');
       SetLength(Points, Capacity);
     end;
     Points[N] := CodePoint;
@@ -281,7 +328,10 @@ begin
   Count := Integer(Length(CodePoints));
   Compatible := Form in [xnfNfkc, xnfNfkd];
   { decomposition }
-  Capacity := Count + Count div 2 + 16;
+  if Count <= (MaxInt - 16) div 2 then
+    Capacity := Count + Count div 2 + 16
+  else
+    Capacity := Count;
   SetLength(Points, Capacity);
   N := 0;
   for I := 0 to Count - 1 do
@@ -373,13 +423,75 @@ begin
   Result := Points;
 end;
 
+{ Raises xecLimit for an array that Integer cannot index (64-bit only). }
+procedure CheckLength(const CodePoints: TLandrixXmlCodePoints);
+begin
+  if Int64(Length(CodePoints)) > MaxInt then
+    raise ELandrixXmlError.CreateCode(xecLimit, 'Too many code points');
+end;
+
 function LandrixXmlNormalizeCodePoints(const CodePoints: TLandrixXmlCodePoints;
   Form: TLandrixXmlNormalizationForm): TLandrixXmlCodePoints;
 begin
-  if QuickCheck(CodePoints, Form) then
+  CheckLength(CodePoints);
+  if QuickCheck(CodePoints, Form) = QcYes then
     Result := Copy(CodePoints, 0, Integer(Length(CodePoints)))
   else
     Result := Normalize(CodePoints, Form);
+end;
+
+{ True if CodePoints (Unicode scalar values) is in form Form. }
+function IsNormalized(const CodePoints: TLandrixXmlCodePoints;
+  Form: TLandrixXmlNormalizationForm): Boolean;
+var
+  Normalized: TLandrixXmlCodePoints;
+  I: Integer;
+begin
+  Normalized := nil;
+  case QuickCheck(CodePoints, Form) of
+    QcYes: Result := True;
+    QcNo: Result := False;
+  else
+    Normalized := Normalize(CodePoints, Form);
+    Result := False;
+    if Length(Normalized) <> Length(CodePoints) then
+      Exit;
+    for I := 0 to Integer(Length(CodePoints)) - 1 do
+      if Normalized[I] <> CodePoints[I] then
+        Exit;
+    Result := True;
+  end;
+end;
+
+function LandrixXmlIsNormalizedCodePoints(const CodePoints: TLandrixXmlCodePoints;
+  Form: TLandrixXmlNormalizationForm): Boolean;
+var
+  I, C: Integer;
+begin
+  CheckLength(CodePoints);
+  for I := 0 to Integer(Length(CodePoints)) - 1 do
+  begin
+    C := CodePoints[I];
+    if (C < 0) or (C > $10FFFF) or ((C >= $D800) and (C <= $DFFF)) then
+      raise ELandrixXmlError.CreateAt(xecInvalidUnicode,
+        'Not a Unicode scalar value: ' + IntToStr(C), 0, 0, I);
+  end;
+  Result := IsNormalized(CodePoints, Form);
+end;
+
+function LandrixXmlIsNormalizedUtf8(const S: TLandrixXmlUtf8;
+  Form: TLandrixXmlNormalizationForm): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  I := 1;
+  while (I <= Length(S)) and (Ord(S[I]) < $80) do
+    Inc(I);
+  if I > Length(S) then
+    Exit;
+  { decodes (and checks) the whole of S before any answer }
+  Result := IsNormalized(LandrixXmlUtf8ToCodePoints(S), Form);
 end;
 
 function LandrixXmlNormalizeUtf8(const S: TLandrixXmlUtf8;
@@ -397,7 +509,7 @@ begin
   if I > Length(S) then
     Exit;
   CodePoints := LandrixXmlUtf8ToCodePoints(S);
-  if QuickCheck(CodePoints, Form) then
+  if QuickCheck(CodePoints, Form) = QcYes then
     Exit;
   Normalized := Normalize(CodePoints, Form);
   Result := LandrixXmlCodePointsToUtf8(Normalized, 0, Integer(Length(Normalized)));
