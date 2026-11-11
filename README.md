@@ -591,7 +591,7 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 39,225
+  load or be rejected, documents that must be valid or invalid) 39,228
   pass and none uses a construct this library does not support (such a
   construct, a selector with an attribute step before its last step, is
   reported as unsupported, never accepted silently). Of the 108 failures,
@@ -599,9 +599,8 @@ Differences from Xerces, also on purpose:
   given on purpose; 3 are XML 1.1 documents, read with the rules of
   XML 1.0 (`xv003`, `xv006`, `xv008`); and one has a schema whose
   verdict the suite itself disputes (`ste110`, a circular union, which
-  XML Schema 1.0 and Xerces reject). 3 more stop at the resource limit
-  of the content model check. The passing tests are a baseline for the
-  CI.
+  XML Schema 1.0 and Xerces reject). The passing tests are a baseline
+  for the CI.
 - The XML Schema reference data (simple types, validator cases, content
   models, Unique Particle Attribution, the schema rules in
   `tests/data/xsdschema/rules.txt`) comes from the validator of the Java

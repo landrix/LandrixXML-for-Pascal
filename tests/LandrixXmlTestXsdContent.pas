@@ -667,6 +667,37 @@ begin
   end;
 end;
 
+{ Nested repetitions as in XSTS particlesZ036: every a can continue a+,
+  start another iteration of the sequence or of the choice. Configurations
+  that another one covers are merged, so thousands of children neither
+  hit the exploration limit nor change the verdicts and messages. }
+procedure TestNestedRepetitions;
+var
+  Model: TLandrixXmlXsdContentModel;
+  Children: string;
+  I: Integer;
+begin
+  Children := '';
+  for I := 1 to 5000 do
+    Children := Children + 'a,';
+  Model := ParseModel('C(S(a{1,u}){1,100000000} b){1,100000}');
+  try
+    CheckEqualsStr('', Evaluate(Model, Children + 'b'), '5000 a, then b');
+    CheckEqualsStr('', Evaluate(Model, 'b,' + Children + 'a'), 'b, then 5001 a');
+    Check(Pos('cvc-complex-type.2.4.a', Evaluate(Model, Children + 'c')) > 0, 'c after 5000 a');
+  finally
+    Model.Free;
+  end;
+  { a lower bound above one: fewer iterations are not covered }
+  Model := ParseModel('S(S(a{1,u}){3,5})');
+  try
+    CheckEqualsStr('', Evaluate(Model, 'a,a,a,a'), 'three iterations possible');
+    Check(Evaluate(Model, 'a,a') <> '', 'two a cannot make three iterations');
+  finally
+    Model.Free;
+  end;
+end;
+
 { tests/data/xsdcontent/upa.txt: random models and the verdict of Xerces'
   Unique Particle Attribution check (tools/gen-xsdcontent-testdata.py
   --upa) }
@@ -832,6 +863,7 @@ begin
   RegisterTest('XsdContent.FailureRecovery', TestFailureRecovery);
   RegisterTest('XsdContent.Wildcards', TestWildcards);
   RegisterTest('XsdContent.ManyLeaves', TestManyLeaves);
+  RegisterTest('XsdContent.NestedRepetitions', TestNestedRepetitions);
   RegisterTest('XsdContent.UniqueParticleAttribution', TestUniqueParticleAttribution);
   RegisterTest('XsdContent.WildcardOverlap', TestWildcardOverlap);
   RegisterTest('XsdContent.UpaLimit', TestUpaLimit);

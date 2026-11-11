@@ -1832,16 +1832,24 @@ begin
   end;
 end;
 
-function SameConfig(const A, B: TLandrixXmlXsdContentFrames; Len: Integer): Boolean;
+{ True if configuration A can do everything B can: the same particles at
+  the same positions, and every count of A equal to that of B, or lower
+  but at least the lower bound of its particle (A then has the same ways
+  to leave and more room to repeat). Without Lower the counts must be
+  equal. }
+function Covers(const A, B: TLandrixXmlXsdContentFrames; Len: Integer; Lower: Boolean): Boolean;
 var
   I: Integer;
 begin
+  Result := False;
   for I := 0 to Len - 1 do
-    if (A[I].Particle <> B[I].Particle) or (A[I].Count <> B[I].Count) or (A[I].Index <> B[I].Index) then
-    begin
-      Result := False;
+  begin
+    if (A[I].Particle <> B[I].Particle) or (A[I].Index <> B[I].Index) then
       Exit;
-    end;
+    if A[I].Count <> B[I].Count then
+      if not Lower or (A[I].Count > B[I].Count) or (A[I].Count < A[I].Particle.FEffectiveMin) then
+        Exit;
+  end;
   Result := True;
 end;
 
@@ -1950,15 +1958,37 @@ begin
         FNext[K][Top].Count := Clamped(P, FCur[Top].Count + 1);
         for I := 0 to Len - 1 do
           FNext[K][I].Fresh := False;
+        { a configuration another one covers adds nothing; one the new one
+          covers is dropped. Nested repetitions (a+ inside a repeated
+          group) would otherwise keep every split of the children between
+          the counters. In the repeating mode only equal ones are merged:
+          its messages report the counts of the first configuration. }
         Duplicate := False;
         for I := 0 to K - 1 do
-          if (FNextLens[I] = Len) and SameConfig(FNext[I], FNext[K], Len) then
+          if (FNextLens[I] = Len) and Covers(FNext[I], FNext[K], Len, not FModel.FRepeatingMode) then
           begin
             Duplicate := True;
             Break;
           end;
         if Duplicate then
-          Dec(FNextCount);
+          Dec(FNextCount)
+        else if not FModel.FRepeatingMode then
+        begin
+          J := 0;
+          for I := 0 to K do
+            if (I = K) or (FNextLens[I] <> Len) or not Covers(FNext[K], FNext[I], Len, True) then
+            begin
+              if J <> I then
+              begin
+                Swap := FNext[J];
+                FNext[J] := FNext[I];
+                FNext[I] := Swap;
+                FNextLens[J] := FNextLens[I];
+              end;
+              Inc(J);
+            end;
+          FNextCount := J;
+        end;
         if Result = nil then
           Result := P
         else if Result <> P then

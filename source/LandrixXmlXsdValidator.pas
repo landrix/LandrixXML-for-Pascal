@@ -2467,8 +2467,19 @@ end;
 { The text of Span; Last if it has the same bytes (namespace names repeat,
   so they are not copied for every element), which then becomes Last. }
 function SameOrNew(const Span: TLandrixXmlSpan; var Last: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I: Integer;
+  Same: Boolean;
 begin
-  if (Span.Len <> Length(Last)) or ((Span.Len > 0) and not CompareMem(Span.P, Pointer(Last), Span.Len)) then
+  { compared byte by byte: CompareMem is inline in FPC and leads to notes }
+  Same := Span.Len = Length(Last);
+  I := 0;
+  while Same and (I < Span.Len) do
+  begin
+    Same := Span.P[I] = Last[I + 1];
+    Inc(I);
+  end;
+  if not Same then
     Last := LandrixXmlSpanToUtf8(Span);
   Result := Last;
 end;

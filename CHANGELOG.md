@@ -41,6 +41,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   itself when nothing changes; text the validator does not look at is
   no longer copied. A 50 MB GAEB DA XML 3.3 file (X83) takes about two
   thirds of the time before.
+- XML Schema content models: of the configurations a child leaves, those
+  another one covers (same position, counts no higher and already at
+  their lower bounds) are dropped. Nested repetitions such as
+  `(a+){1,100000000}` in a repeated choice no longer stop with `xecLimit`
+  "Content model too ambiguous to check" after a minute; the three XSTS
+  tests `particlesZ036_b1`, `_b2` and `_c` pass, and the whole XSTS run
+  takes 45 seconds instead of 4.5 minutes.
 
 ## [0.3.0] - 2026-11-10
 
