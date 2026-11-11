@@ -417,10 +417,7 @@ function SpanStr(P: PAnsiChar; Len: Integer): TLandrixXmlUtf8;
 begin
   Result := '';
   if Len > 0 then
-  begin
-    SetLength(Result, Len);
-    Move(P^, PAnsiChar(Result)^, Len);
-  end;
+    SetString(Result, P, Len);
 end;
 
 function SameBuf(P1: PAnsiChar; Len1: Integer; const S: TLandrixXmlUtf8): Boolean;
@@ -447,17 +444,6 @@ begin
     Result := S[I] = A[I];
     Inc(I);
   end;
-end;
-
-function Join(const A, B: TLandrixXmlUtf8; Sep: AnsiChar): TLandrixXmlUtf8;
-begin
-  Result := '';
-  SetLength(Result, Length(A) + 1 + Length(B));
-  if A <> '' then
-    Move(PAnsiChar(A)^, PAnsiChar(Result)^, Length(A));
-  PAnsiChar(Result)[Length(A)] := Sep;
-  if B <> '' then
-    Move(PAnsiChar(B)^, PAnsiChar(Result)[Length(A) + 1], Length(B));
 end;
 
 procedure RaiseOp(const Msg: string);
@@ -717,7 +703,7 @@ begin
   N.FLocalName := SpanStr(LocalP, LocalLen);
   N.FNamespaceUri := SpanStr(UriP, UriLen);
   if PrefixLen > 0 then
-    N.FQualifiedName := Join(N.FPrefix, N.FLocalName, ':')
+    N.FQualifiedName := N.FPrefix + ':' + N.FLocalName
   else
     N.FQualifiedName := N.FLocalName;
   N.FHash := H;

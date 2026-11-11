@@ -17,6 +17,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `LandrixXmlNormalize`: an input or a result of more than `MaxInt` code
   points raises `xecLimit` instead of overflowing the Integer
   arithmetic (64-bit only).
+- `LandrixXmlDom`: copies names without `Move`. FPC 3.2.4 on aarch64-darwin
+  reported note 6058 ("Move ... marked as inline is not inlined") there in
+  the builds of some consuming projects, despite `{$WARN 6058 OFF}`.
 
 ## [0.3.0] - 2026-11-10
 
