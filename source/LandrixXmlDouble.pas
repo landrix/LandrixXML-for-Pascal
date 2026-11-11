@@ -725,7 +725,7 @@ begin
       Inc(L);
       T := T shr 1;
     end;
-    Result := (Int64(L + 1022) shl 52) or ((V shl (53 - L)) and FractionMask);
+    Result := ((Int64(L) + 1022) shl 52) or ((V shl (53 - L)) and FractionMask);
     if Negative then
       Result := Result or SignMask;
     Exit;

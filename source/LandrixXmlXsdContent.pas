@@ -962,7 +962,7 @@ begin
       Slot := (Slot + 1) and Mask;
     FNameSlots[Slot] := E;
   end;
-  N := Length(FNameLeaves[E]);
+  N := Integer(Length(FNameLeaves[E]));
   for I := 0 to N - 1 do
     if FNameLeaves[E][I] = Leaf then
       Exit;
