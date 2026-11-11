@@ -218,6 +218,16 @@ begin
   CheckEqualsUtf8(U('  a  b '), LandrixXmlXsdNormalizeWhiteSpace(U(#9' a'#10' b'#13), xwsReplace), 'replace');
   CheckEqualsUtf8(U(#9'a'), LandrixXmlXsdNormalizeWhiteSpace(U(#9'a'), xwsPreserve), 'preserve');
   CheckEqualsUtf8(U(''), LandrixXmlXsdNormalizeWhiteSpace(U('   '), xwsCollapse), 'only spaces');
+  { the cases a value is returned unchanged and those just beside them }
+  CheckEqualsUtf8(U('a b'), LandrixXmlXsdNormalizeWhiteSpace(U('a b'), xwsCollapse), 'collapse, nothing to do');
+  CheckEqualsUtf8(U('a'), LandrixXmlXsdNormalizeWhiteSpace(U(' a'), xwsCollapse), 'collapse, leading space');
+  CheckEqualsUtf8(U('a'), LandrixXmlXsdNormalizeWhiteSpace(U('a '), xwsCollapse), 'collapse, trailing space');
+  CheckEqualsUtf8(U('a b'), LandrixXmlXsdNormalizeWhiteSpace(U('a  b'), xwsCollapse), 'collapse, two spaces');
+  CheckEqualsUtf8(U('a b'), LandrixXmlXsdNormalizeWhiteSpace(U('a'#10'b'), xwsCollapse), 'collapse, line feed');
+  CheckEqualsUtf8(U(''), LandrixXmlXsdNormalizeWhiteSpace(U(' '), xwsCollapse), 'collapse, one space');
+  CheckEqualsUtf8(U(''), LandrixXmlXsdNormalizeWhiteSpace(U(''), xwsCollapse), 'collapse, empty');
+  CheckEqualsUtf8(U('  a  '), LandrixXmlXsdNormalizeWhiteSpace(U('  a  '), xwsReplace), 'replace, nothing to do');
+  CheckEqualsUtf8(U('a '), LandrixXmlXsdNormalizeWhiteSpace(U('a'#13), xwsReplace), 'replace, carriage return');
 end;
 
 procedure CheckFacetError(Base: TLandrixXmlXsdSimpleType; Facet: TLandrixXmlXsdFacet;

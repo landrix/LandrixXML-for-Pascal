@@ -33,6 +33,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   code list checks (`.../cl[@id=N]/enumeration[@value=$v]`) no longer
   scan the list. Together with the faster integer conversion the
   Factur-X 1.09.2 EXTENDED rules take about 40 % of the time before.
+- XML Schema validation is faster on large documents, with the same
+  results: the content model finds the particles that can take a child
+  through a name table and bit sets instead of comparing names; values,
+  identity constraint keys, error paths and type names are built only
+  where they are used; white space normalization returns the value
+  itself when nothing changes; text the validator does not look at is
+  no longer copied. A 50 MB GAEB DA XML 3.3 file (X83) takes about two
+  thirds of the time before.
 
 ## [0.3.0] - 2026-11-10
 

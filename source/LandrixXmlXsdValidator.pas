@@ -117,8 +117,10 @@ type
     Name: TLandrixXmlUtf8;
     NamespaceUri: TLandrixXmlUtf8;
     LocalName: TLandrixXmlUtf8;
-    PathStep: TLandrixXmlUtf8;
-    { the element's validated value, for identity constraint fields }
+    { the position among the siblings of the same name (0 at the root) }
+    PathIndex: Integer;
+    { the element's validated value, for identity constraint fields (the
+      key and text only while a matcher is active) }
     ValueKnown: Boolean;
     ValueKey: TLandrixXmlUtf8;
     ValueText: TLandrixXmlUtf8;
@@ -190,22 +192,29 @@ type
     procedure AddError(const Code, Message: string; Line, Column: Integer;
       const Path: TLandrixXmlUtf8; const SchemaFile: string; SchemaLine: Integer; Node: TLandrixXmlNode);
     function CurrentPath: TLandrixXmlUtf8;
-    function ChildPathStep(const NamespaceUri, LocalName, Name: TLandrixXmlUtf8): TLandrixXmlUtf8;
+    function ChildIndex(const NamespaceUri, LocalName: TLandrixXmlUtf8): Integer;
+    procedure KeepValue(const Value: TLandrixXmlXsdValue);
     procedure Report(const Code, Message: string; Line, Column: Integer; Component: TLandrixXmlXsdComponent);
     procedure ClearAttributes;
     procedure AddAttribute(const NamespaceUri, LocalName, Name, Value: TLandrixXmlUtf8);
     procedure StartElement(const NamespaceUri, LocalName, Name: TLandrixXmlUtf8; Line, Column: Integer;
       Node: TLandrixXmlNode);
+    function TextSeen(IsWhitespace: Boolean): Boolean;
     procedure Text(const Value: TLandrixXmlUtf8; IsWhitespace: Boolean);
     procedure EndElement(Line, Column: Integer);
     procedure EndDocument(Line, Column: Integer);
     procedure CheckAttributes(var F: TLandrixXmlXsdFrame; Line, Column: Integer);
+    procedure CheckAttribute(var F: TLandrixXmlXsdFrame; I, Line, Column: Integer; KeepValues: Boolean;
+      var WildId: TLandrixXmlUtf8);
+    procedure CheckSimpleContent(T: TLandrixXmlXsdSimpleType; IsSimpleType, UseDefault, IsFixed: Boolean;
+      const DefaultText: TLandrixXmlUtf8; Line, Column: Integer);
     function FindXsi(const LocalName: TLandrixXmlUtf8; out Value: TLandrixXmlUtf8): Boolean;
     procedure ApplyXsiType(const Text, Name: TLandrixXmlUtf8; Decl: TLandrixXmlXsdElementDecl;
       var CT: TLandrixXmlXsdComplexType; var ST: TLandrixXmlXsdSimpleType; Line, Column: Integer);
     function DefaultValidFor(CT: TLandrixXmlXsdComplexType; ST: TLandrixXmlXsdSimpleType;
       const Text: TLandrixXmlUtf8): Boolean;
     procedure AddDefaultAttributes(T: TLandrixXmlXsdComplexType);
+    procedure AddDefaultAttribute(Use: TLandrixXmlXsdAttributeUse);
     function CheckIdValue(T: TLandrixXmlXsdSimpleType; const Value: TLandrixXmlXsdValue; Line, Column: Integer): Boolean;
     function CheckIdItem(Member: TLandrixXmlXsdSimpleType; const Text: TLandrixXmlUtf8;
       Line, Column: Integer): Boolean;
@@ -1428,26 +1437,34 @@ begin
   FErrors.Add(E);
 end;
 
+{ The step of an element in error paths: the name, and below the root its
+  position among the siblings of the same name. }
+function PathStep(const Name: TLandrixXmlUtf8; Index: Integer): TLandrixXmlUtf8;
+begin
+  if Index = 0 then
+    Result := Name
+  else
+    Result := Name + '[' + LandrixXmlStringToUtf8(IntToStr(Index)) + ']';
+end;
+
 function TLandrixXmlXsdValidator.CurrentPath: TLandrixXmlUtf8;
 var
   I: Integer;
 begin
   Result := '';
   for I := 0 to FDepth - 1 do
-    Result := Result + '/' + FFrames[I].PathStep;
+    Result := Result + '/' + PathStep(FFrames[I].Name, FFrames[I].PathIndex);
 end;
 
-{ Counts the child in the current element and gives its path step. }
-function TLandrixXmlXsdValidator.ChildPathStep(const NamespaceUri, LocalName,
-  Name: TLandrixXmlUtf8): TLandrixXmlUtf8;
+{ Counts the child in the current element and gives its position among
+  the siblings of the same name (0 for the root). }
+function TLandrixXmlXsdValidator.ChildIndex(const NamespaceUri, LocalName: TLandrixXmlUtf8): Integer;
 var
   I, N, P: Integer;
 begin
+  Result := 0;
   if FDepth = 0 then
-  begin
-    Result := Name;
     Exit;
-  end;
   N := 0;
   P := FDepth - 1;
   for I := 0 to FFrames[P].ChildKinds - 1 do
@@ -1468,7 +1485,20 @@ begin
     Inc(FFrames[P].ChildKinds);
     N := 1;
   end;
-  Result := Name + '[' + LandrixXmlStringToUtf8(IntToStr(N)) + ']';
+  Result := N;
+end;
+
+{ The value of the element at the top of the stack for identity constraint
+  fields; the key and the text are built only while a matcher can take
+  them (the matchers that end with the element are in FMatchers). }
+procedure TLandrixXmlXsdValidator.KeepValue(const Value: TLandrixXmlXsdValue);
+begin
+  FFrames[FDepth - 1].ValueKnown := True;
+  if FMatchers.Count > 0 then
+  begin
+    FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Value);
+    FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Value);
+  end;
 end;
 
 procedure TLandrixXmlXsdValidator.Report(const Code, Message: string; Line, Column: Integer;
@@ -1708,16 +1738,14 @@ var
   I, J: Integer;
   T: TLandrixXmlXsdComplexType;
   Use: TLandrixXmlXsdAttributeUse;
-  Decl: TLandrixXmlXsdAttributeDecl;
-  Value: TLandrixXmlXsdValue;
-  Error: TLandrixXmlXsdError;
   Present: Boolean;
-  Wildcard: TLandrixXmlXsdWildcard;
-  Valid, HasValue: Boolean;
   WildId, UseId: TLandrixXmlUtf8;
-  XsiType: TLandrixXmlXsdSimpleType;
+  KeepValues: Boolean;
 begin
   T := F.ComplexType;
+  { the values are read only by identity constraint fields: those of the
+    active matchers and of the element's own constraints }
+  KeepValues := (FMatchers.Count > 0) or ((F.Decl <> nil) and (F.Decl.ConstraintCount > 0));
   { the first attribute matched by the wildcard whose type is ID: a second
     one (cvc-complex-type.5.1) or an ID among the attribute uses
     (cvc-complex-type.5.2) is an error, checked as Xerces does. Xerces
@@ -1726,114 +1754,7 @@ begin
     specification asks for xs:ID and types derived from it only. }
   WildId := '';
   for I := 0 to FAttrCount - 1 do
-  begin
-    if IsXsiBuiltin(FAttrs[I]) then
-    begin
-      { as Xerces: xsi:type is a QName, xsi:nil a boolean; the location
-        hints are not looked at }
-      if FAttrs[I].LocalName = 'type' then
-        XsiType := FQNameType
-      else if FAttrs[I].LocalName = 'nil' then
-        XsiType := FBooleanType
-      else
-        XsiType := nil;
-      if XsiType <> nil then
-      begin
-        if XsiType.Validate(FAttrs[I].Value, FValueContext, Value, Error) then
-        begin
-          FAttrValid[I] := True;
-          FAttrValues[I] := Value;
-        end
-        else
-        begin
-          Report(Error.Code, Error.Message, Line, Column, F.Decl);
-          Report('cvc-attribute.3', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
-            ' on element ' + Q(F.Name) + ' is not valid with respect to its type, ''' + XsiType.DisplayName + '''.',
-            Line, Column, F.Decl);
-        end;
-      end;
-      Continue;
-    end;
-    if F.SimpleType <> nil then
-    begin
-      Report('cvc-type.3.1.1', 'Element ' + Q(F.Name) + ' is a simple type, so it cannot have attributes, ' +
-        'excepting those whose namespace name is identical to ''http://www.w3.org/2001/XMLSchema-instance'' ' +
-        'and whose [local name] is one of ''type'', ''nil'', ''schemaLocation'' or ''noNamespaceSchemaLocation''. ' +
-        'However, the attribute, ' + Q(FAttrs[I].Name) + ' was found.', Line, Column, F.Decl);
-      Continue;
-    end;
-    Use := T.FindAttribute(FAttrs[I].NamespaceUri, FAttrs[I].LocalName);
-    Decl := nil;
-    Wildcard := nil;
-    if Use <> nil then
-      Decl := Use.Decl
-    else
-    begin
-      { no attribute use: the wildcard; a declaration if it asks for one }
-      Wildcard := T.AttributeWildcard;
-      if (Wildcard <> nil) and Wildcard.Allows(FAttrs[I].NamespaceUri) and
-        (Wildcard.ProcessContents <> xpcSkip) then
-        Decl := FSchema.FindAttribute(FAttrs[I].NamespaceUri, FAttrs[I].LocalName);
-    end;
-    if Decl = nil then
-    begin
-      if Wildcard = nil then
-        Report('cvc-complex-type.3.2.2', 'Attribute ' + Q(FAttrs[I].Name) + ' is not allowed to appear in element ' +
-          Q(F.Name) + '.', Line, Column, T)
-      else if not Wildcard.Allows(FAttrs[I].NamespaceUri) or (Wildcard.ProcessContents = xpcStrict) then
-        Report('cvc-complex-type.3.2.2', 'Attribute ' + Q(FAttrs[I].Name) + ' is not allowed to appear in element ' +
-          Q(F.Name) + '.', Line, Column, Wildcard);
-      Continue;
-    end;
-    if (Use = nil) and Decl.SimpleType.IsIdType then
-    begin
-      if WildId <> '' then
-        Report('cvc-complex-type.5.1', 'In element ' + Q(F.Name) + ', attribute ' + Q(Decl.Name) +
-          ' is a Wild ID. But there is already a Wild ID ' + Q(WildId) + '. There can be only one.', Line, Column,
-          Decl)
-      else
-        WildId := Decl.Name;
-    end;
-    Valid := Decl.SimpleType.Validate(FAttrs[I].Value, FValueContext, Value, Error, HasValue);
-    if not Valid then
-    begin
-      Report(Error.Code, Error.Message, Line, Column, Decl);
-      { as Xerces: the value computed before a facet failed is still the
-        value of identity constraints }
-      if HasValue then
-      begin
-        FAttrValid[I] := True;
-        FAttrValues[I] := Value;
-      end;
-    end
-    else if not CheckIdValue(Decl.SimpleType, Value, Line, Column) then
-    begin
-      { as Xerces: a value that fails the ID or ENTITY rules is still the
-        value of identity constraints }
-      Valid := False;
-      FAttrValid[I] := True;
-      FAttrValues[I] := Value;
-    end;
-    if not Valid then
-    begin
-      Report('cvc-attribute.3', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
-        ' on element ' + Q(F.Name) + ' is not valid with respect to its type, ''' +
-        Decl.SimpleType.DisplayName + '''.', Line, Column, Decl);
-      Continue;
-    end;
-    { the declaration's fixed value, then the use's own (Xerces' order) }
-    if (Decl.ValueConstraint = xvcFixed) and (LandrixXmlXsdCompareValues(Value, Decl.ConstraintActual) <> 0) then
-      Report('cvc-attribute.4', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
-        ' on element ' + Q(F.Name) + ' is not valid with respect to its fixed {value constraint}. ' +
-        'The attribute must have a value of ' + Q(Decl.ConstraintValue) + '.', Line, Column, Decl);
-    if (Use <> nil) and (Use.ValueConstraint = xvcFixed) and
-      (LandrixXmlXsdCompareValues(Value, Use.ConstraintActual) <> 0) then
-      Report('cvc-complex-type.3.1', 'Value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
-        ' of element ' + Q(F.Name) + ' is not valid with respect to the corresponding attribute use. Attribute ' +
-        Q(FAttrs[I].Name) + ' has a fixed value of ' + Q(Use.ConstraintValue) + '.', Line, Column, Decl);
-    FAttrValid[I] := True;
-    FAttrValues[I] := Value;
-  end;
+    CheckAttribute(F, I, Line, Column, KeepValues, WildId);
   if T = nil then
     Exit;
   if WildId <> '' then
@@ -1871,6 +1792,132 @@ begin
   end;
 end;
 
+{ Attribute I of the element in F (CheckAttributes). }
+procedure TLandrixXmlXsdValidator.CheckAttribute(var F: TLandrixXmlXsdFrame; I, Line, Column: Integer;
+  KeepValues: Boolean; var WildId: TLandrixXmlUtf8);
+var
+  T: TLandrixXmlXsdComplexType;
+  Use: TLandrixXmlXsdAttributeUse;
+  Decl: TLandrixXmlXsdAttributeDecl;
+  Value: TLandrixXmlXsdValue;
+  Error: TLandrixXmlXsdError;
+  Wildcard: TLandrixXmlXsdWildcard;
+  Valid, HasValue: Boolean;
+  XsiType: TLandrixXmlXsdSimpleType;
+begin
+  T := F.ComplexType;
+  if IsXsiBuiltin(FAttrs[I]) then
+  begin
+    { as Xerces: xsi:type is a QName, xsi:nil a boolean; the location
+      hints are not looked at }
+    if FAttrs[I].LocalName = 'type' then
+      XsiType := FQNameType
+    else if FAttrs[I].LocalName = 'nil' then
+      XsiType := FBooleanType
+    else
+      XsiType := nil;
+    if XsiType <> nil then
+    begin
+      if XsiType.Validate(FAttrs[I].Value, FValueContext, Value, Error) then
+      begin
+        FAttrValid[I] := True;
+        if KeepValues then
+          FAttrValues[I] := Value;
+      end
+      else
+      begin
+        Report(Error.Code, Error.Message, Line, Column, F.Decl);
+        Report('cvc-attribute.3', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
+          ' on element ' + Q(F.Name) + ' is not valid with respect to its type, ''' + XsiType.DisplayName + '''.',
+          Line, Column, F.Decl);
+      end;
+    end;
+    Exit;
+  end;
+  if F.SimpleType <> nil then
+  begin
+    Report('cvc-type.3.1.1', 'Element ' + Q(F.Name) + ' is a simple type, so it cannot have attributes, ' +
+      'excepting those whose namespace name is identical to ''http://www.w3.org/2001/XMLSchema-instance'' ' +
+      'and whose [local name] is one of ''type'', ''nil'', ''schemaLocation'' or ''noNamespaceSchemaLocation''. ' +
+      'However, the attribute, ' + Q(FAttrs[I].Name) + ' was found.', Line, Column, F.Decl);
+    Exit;
+  end;
+  Use := T.FindAttribute(FAttrs[I].NamespaceUri, FAttrs[I].LocalName);
+  Decl := nil;
+  Wildcard := nil;
+  if Use <> nil then
+    Decl := Use.Decl
+  else
+  begin
+    { no attribute use: the wildcard; a declaration if it asks for one }
+    Wildcard := T.AttributeWildcard;
+    if (Wildcard <> nil) and Wildcard.Allows(FAttrs[I].NamespaceUri) and
+      (Wildcard.ProcessContents <> xpcSkip) then
+      Decl := FSchema.FindAttribute(FAttrs[I].NamespaceUri, FAttrs[I].LocalName);
+  end;
+  if Decl = nil then
+  begin
+    if Wildcard = nil then
+      Report('cvc-complex-type.3.2.2', 'Attribute ' + Q(FAttrs[I].Name) + ' is not allowed to appear in element ' +
+        Q(F.Name) + '.', Line, Column, T)
+    else if not Wildcard.Allows(FAttrs[I].NamespaceUri) or (Wildcard.ProcessContents = xpcStrict) then
+      Report('cvc-complex-type.3.2.2', 'Attribute ' + Q(FAttrs[I].Name) + ' is not allowed to appear in element ' +
+        Q(F.Name) + '.', Line, Column, Wildcard);
+    Exit;
+  end;
+  if (Use = nil) and Decl.SimpleType.IsIdType then
+  begin
+    if WildId <> '' then
+      Report('cvc-complex-type.5.1', 'In element ' + Q(F.Name) + ', attribute ' + Q(Decl.Name) +
+        ' is a Wild ID. But there is already a Wild ID ' + Q(WildId) + '. There can be only one.', Line, Column,
+        Decl)
+    else
+      WildId := Decl.Name;
+  end;
+  Valid := Decl.SimpleType.Validate(FAttrs[I].Value, FValueContext, Value, Error, HasValue);
+  if not Valid then
+  begin
+    Report(Error.Code, Error.Message, Line, Column, Decl);
+    { as Xerces: the value computed before a facet failed is still the
+      value of identity constraints }
+    if HasValue then
+    begin
+      FAttrValid[I] := True;
+      if KeepValues then
+        FAttrValues[I] := Value;
+    end;
+  end
+  else if not CheckIdValue(Decl.SimpleType, Value, Line, Column) then
+  begin
+    { as Xerces: a value that fails the ID or ENTITY rules is still the
+      value of identity constraints }
+    Valid := False;
+    FAttrValid[I] := True;
+    if KeepValues then
+      FAttrValues[I] := Value;
+  end;
+  if not Valid then
+  begin
+    Report('cvc-attribute.3', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
+      ' on element ' + Q(F.Name) + ' is not valid with respect to its type, ''' +
+      Decl.SimpleType.DisplayName + '''.', Line, Column, Decl);
+    Exit;
+  end;
+  { the declaration's fixed value, then the use's own (Xerces' order) }
+  if (Decl.ValueConstraint = xvcFixed) and (LandrixXmlXsdCompareValues(Value, Decl.ConstraintActual) <> 0) then
+    Report('cvc-attribute.4', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
+      ' on element ' + Q(F.Name) + ' is not valid with respect to its fixed {value constraint}. ' +
+      'The attribute must have a value of ' + Q(Decl.ConstraintValue) + '.', Line, Column, Decl);
+  if (Use <> nil) and (Use.ValueConstraint = xvcFixed) and
+    (LandrixXmlXsdCompareValues(Value, Use.ConstraintActual) <> 0) then
+    Report('cvc-complex-type.3.1', 'Value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
+      ' of element ' + Q(F.Name) + ' is not valid with respect to the corresponding attribute use. Attribute ' +
+      Q(FAttrs[I].Name) + ' has a fixed value of ' + Q(Use.ConstraintValue) + '.', Line, Column, Decl);
+  FAttrValid[I] := True;
+  if KeepValues then
+    FAttrValues[I] := Value;
+end;
+
 { Absent attributes with a default or fixed value, appended after the
   given ones for the identity constraints (Xerces adds them to the
   attributes its matchers see). }
@@ -1878,26 +1925,14 @@ procedure TLandrixXmlXsdValidator.AddDefaultAttributes(T: TLandrixXmlXsdComplexT
 var
   I, J: Integer;
   Use: TLandrixXmlXsdAttributeUse;
-  S: TLandrixXmlUtf8;
   Present: Boolean;
-  Value: TLandrixXmlXsdValue;
 begin
   if T = nil then
     Exit;
   for I := 0 to T.AttributeCount - 1 do
   begin
     Use := T.Attributes[I];
-    if Use.ValueConstraint <> xvcNone then
-    begin
-      S := Use.ConstraintValue;
-      Value := Use.ConstraintActual;
-    end
-    else if Use.Decl.ValueConstraint <> xvcNone then
-    begin
-      S := Use.Decl.ConstraintValue;
-      Value := Use.Decl.ConstraintActual;
-    end
-    else
+    if (Use.ValueConstraint = xvcNone) and (Use.Decl.ValueConstraint = xvcNone) then
       Continue;
     Present := False;
     for J := 0 to FAttrCount - 1 do
@@ -1906,21 +1941,32 @@ begin
         Present := True;
         Break;
       end;
-    if Present then
-      Continue;
-    AddAttribute(Use.Decl.NamespaceUri, Use.Decl.Name, Use.Decl.Name, S);
-    if Length(FAttrValid) < FAttrCount then
-    begin
-      SetLength(FAttrValid, FAttrCount);
-      SetLength(FAttrValues, FAttrCount);
-    end;
-    { as Xerces: the value the schema loader validated, in the namespace
-      context of the schema (identity constraints use it).
-      Xerces deviation: idZ012. A default or fixed value is not registered
-      as an ID or IDREF }
-    FAttrValid[FAttrCount - 1] := True;
-    FAttrValues[FAttrCount - 1] := Value;
+    if not Present then
+      AddDefaultAttribute(Use);
   end;
+end;
+
+{ The default or fixed value of an absent attribute: that of the use, else
+  that of the declaration. As Xerces: the value the schema loader
+  validated, in the namespace context of the schema (identity constraints
+  use it). Xerces deviation: idZ012. A default or fixed value is not
+  registered as an ID or IDREF. }
+procedure TLandrixXmlXsdValidator.AddDefaultAttribute(Use: TLandrixXmlXsdAttributeUse);
+begin
+  if Use.ValueConstraint <> xvcNone then
+    AddAttribute(Use.Decl.NamespaceUri, Use.Decl.Name, Use.Decl.Name, Use.ConstraintValue)
+  else
+    AddAttribute(Use.Decl.NamespaceUri, Use.Decl.Name, Use.Decl.Name, Use.Decl.ConstraintValue);
+  if Length(FAttrValid) < FAttrCount then
+  begin
+    SetLength(FAttrValid, FAttrCount);
+    SetLength(FAttrValues, FAttrCount);
+  end;
+  FAttrValid[FAttrCount - 1] := True;
+  if Use.ValueConstraint <> xvcNone then
+    FAttrValues[FAttrCount - 1] := Use.ConstraintActual
+  else
+    FAttrValues[FAttrCount - 1] := Use.Decl.ConstraintActual;
 end;
 
 procedure TLandrixXmlXsdValidator.StartElement(const NamespaceUri, LocalName, Name: TLandrixXmlUtf8;
@@ -1933,7 +1979,7 @@ var
   Issue: TLandrixXmlXsdContentIssue;
   Code, Message: string;
   Wildcard: TLandrixXmlXsdWildcard;
-  Step: TLandrixXmlUtf8;
+  Index: Integer;
   CT: TLandrixXmlXsdComplexType;
   ST: TLandrixXmlXsdSimpleType;
   HasXsiType: Boolean;
@@ -1947,7 +1993,7 @@ begin
   Mode := xfmValidate;
   Decl := nil;
   Wildcard := nil;
-  Step := ChildPathStep(NamespaceUri, LocalName, Name);
+  Index := ChildIndex(NamespaceUri, LocalName);
   if (Parent >= 0) and (FFrames[Parent].Mode = xfmSkip) then
     Mode := xfmSkip
   else
@@ -1963,7 +2009,7 @@ begin
           FFrames[Parent].State.Expected(FExpected);
           LandrixXmlXsdContentIssueText(Issue, Name, NamespaceUri, LocalName, FFrames[Parent].Name, FExpected,
             False, Code, Message);
-          AddError(Code, Message, Line, Column, CurrentPath + '/' + Step, FFrames[Parent].ComplexType.SchemaFile,
+          AddError(Code, Message, Line, Column, CurrentPath + '/' + PathStep(Name, Index), FFrames[Parent].ComplexType.SchemaFile,
             FFrames[Parent].ComplexType.SchemaLine, Node);
         end;
         if Particle <> nil then
@@ -1991,10 +2037,10 @@ begin
       begin
         if Parent < 0 then
           AddError('cvc-elt.1.a', 'Cannot find the declaration of element ' + Q(Name) + '.', Line, Column,
-            '/' + Step, '', 0, Node)
+            '/' + PathStep(Name, Index), '', 0, Node)
         else if (Wildcard <> nil) and (Wildcard.ProcessContents = xpcStrict) then
           AddError('cvc-complex-type.2.4.c', 'The matching wildcard is strict, but no declaration can be ' +
-            'found for element ' + Q(Name) + '.', Line, Column, CurrentPath + '/' + Step,
+            'found for element ' + Q(Name) + '.', Line, Column, CurrentPath + '/' + PathStep(Name, Index),
             Wildcard.SchemaFile, Wildcard.SchemaLine, Node);
         Mode := xfmLax;
       end;
@@ -2011,7 +2057,7 @@ begin
   FFrames[FDepth].Name := Name;
   FFrames[FDepth].NamespaceUri := NamespaceUri;
   FFrames[FDepth].LocalName := LocalName;
-  FFrames[FDepth].PathStep := Step;
+  FFrames[FDepth].PathIndex := Index;
   FFrames[FDepth].HasChild := False;
   FFrames[FDepth].HasText := False;
   FFrames[FDepth].HasNonSpaceText := False;
@@ -2083,11 +2129,14 @@ begin
   end;
 end;
 
-procedure TLandrixXmlXsdValidator.Text(const Value: TLandrixXmlUtf8; IsWhitespace: Boolean);
+{ Notes non-empty text in the current element; True if the text itself
+  is needed (the element's text is buffered). }
+function TLandrixXmlXsdValidator.TextSeen(IsWhitespace: Boolean): Boolean;
 var
   I: Integer;
 begin
-  if Stopped or (FDepth = 0) or (Value = '') then
+  Result := False;
+  if Stopped or (FDepth = 0) then
     Exit;
   I := FDepth - 1;
   if FFrames[I].Mode = xfmSkip then
@@ -2095,172 +2144,175 @@ begin
   FFrames[I].HasText := True;
   if not IsWhitespace then
     FFrames[I].HasNonSpaceText := True;
-  if FAppendBuffer then
+  Result := FAppendBuffer;
+end;
+
+procedure TLandrixXmlXsdValidator.Text(const Value: TLandrixXmlUtf8; IsWhitespace: Boolean);
+begin
+  if (Value <> '') and TextSeen(IsWhitespace) then
     FBuffer := FBuffer + Value;
 end;
 
-procedure TLandrixXmlXsdValidator.EndElement(Line, Column: Integer);
+{ The value of an element with a simple type or simple content (T) when
+  it ends (EndElement). }
+procedure TLandrixXmlXsdValidator.CheckSimpleContent(T: TLandrixXmlXsdSimpleType; IsSimpleType, UseDefault,
+  IsFixed: Boolean; const DefaultText: TLandrixXmlUtf8; Line, Column: Integer);
 var
-  F: TLandrixXmlXsdFrame;
-  T: TLandrixXmlXsdSimpleType;
+  F: ^TLandrixXmlXsdFrame;
   Decl: TLandrixXmlXsdElementDecl;
   Value: TLandrixXmlXsdValue;
   Error: TLandrixXmlXsdError;
   S: TLandrixXmlUtf8;
+  Valid, HasValue: Boolean;
+begin
+  F := @FFrames[FDepth - 1];
+  Decl := F^.Decl;
+  if F^.HasChild then
+  begin
+    if IsSimpleType then
+      Report('cvc-type.3.1.2', 'Element ' + Q(F^.Name) + ' is a simple type, so it must have no element ' +
+        'information item [children].', Line, Column, F^.Decl)
+    else
+      Report('cvc-complex-type.2.2', 'Element ' + Q(F^.Name) + ' must have no element [children], and the ' +
+        'value must be valid.', Line, Column, F^.ComplexType);
+  end;
+  if UseDefault then
+    S := DefaultText
+  else
+    S := FBuffer;
+  Valid := T.Validate(S, FValueContext, Value, Error, HasValue);
+  if not Valid then
+  begin
+    Report(Error.Code, Error.Message, Line, Column, F^.Decl);
+    { as Xerces: the value computed before a facet failed is still the
+      value of identity constraints }
+    if HasValue then
+      KeepValue(Value);
+  end
+  else if not CheckIdValue(T, Value, Line, Column) then
+  begin
+    { as Xerces: a value that fails the ID or ENTITY rules is still the
+      value of identity constraints }
+    Valid := False;
+    KeepValue(Value);
+  end;
+  if not Valid then
+  begin
+    if IsSimpleType then
+      Report('cvc-type.3.1.3', 'The value ' + Q(S) + ' of element ' + Q(F^.Name) + ' is not valid.', Line,
+        Column, F^.Decl)
+    else
+      Report('cvc-complex-type.2.2', 'Element ' + Q(F^.Name) + ' must have no element [children], and the ' +
+        'value must be valid.', Line, Column, F^.ComplexType);
+  end
+  else
+    KeepValue(Value);
+  { as Xerces: an applied default gives identity constraints the value
+    the schema loader validated (in the schema's namespace context),
+    whatever the check in the document's context found }
+  if UseDefault then
+    KeepValue(Decl.ConstraintActual);
+  if IsFixed then
+  begin
+    if F^.HasChild then
+      Report('cvc-elt.5.2.2.1', 'Element ' + Q(F^.Name) + ' must have no element information item [children].',
+        Line, Column, Decl);
+    if Valid and (LandrixXmlXsdCompareValues(Value, Decl.ConstraintActual) <> 0) then
+      Report('cvc-elt.5.2.2.2.2', 'The value ' + Q(S) + ' of element ' + Q(F^.Name) +
+        ' does not match the {value constraint} value ' + Q(LandrixXmlXsdValueText(Decl.ConstraintActual)) + '.',
+        Line, Column, Decl);
+  end;
+end;
+
+procedure TLandrixXmlXsdValidator.EndElement(Line, Column: Integer);
+var
+  F: ^TLandrixXmlXsdFrame;
+  T: TLandrixXmlXsdSimpleType;
+  Decl: TLandrixXmlXsdElementDecl;
   Issues: TLandrixXmlXsdContentIssues;
   I: Integer;
   Code, Message: string;
-  IsSimpleType, Valid, UseDefault, IsFixed, Nilled, HasValue: Boolean;
+  IsSimpleType, UseDefault, IsFixed, Nilled: Boolean;
   DefaultText: TLandrixXmlUtf8;
   TypeName: string;
 begin
   Issues := nil;
   if Stopped or (FDepth = 0) then
     Exit;
-  F := FFrames[FDepth - 1];
-  if F.Mode <> xfmSkip then
+  F := @FFrames[FDepth - 1];
+  if F^.Mode <> xfmSkip then
   begin
-    Decl := F.Decl;
-    Nilled := F.Nilled;
-    if Nilled and (F.HasChild or F.HasText) then
-      Report('cvc-elt.3.2.1', 'Element ' + Q(F.Name) + ' cannot have character or element information [children], ' +
+    Decl := F^.Decl;
+    Nilled := F^.Nilled;
+    if Nilled and (F^.HasChild or F^.HasText) then
+      Report('cvc-elt.3.2.1', 'Element ' + Q(F^.Name) + ' cannot have character or element information [children], ' +
         'because ''' + LandrixXmlXsiNamespace + ',nil'' is specified.', Line, Column, Decl);
     { the value constraint applies to an element without any content }
-    UseDefault := (Decl <> nil) and (Decl.ValueConstraint <> xvcNone) and not F.HasChild and not F.HasText and
+    UseDefault := (Decl <> nil) and (Decl.ValueConstraint <> xvcNone) and not F^.HasChild and not F^.HasText and
       not Nilled;
     IsFixed := (Decl <> nil) and (Decl.ValueConstraint = xvcFixed) and not UseDefault and not Nilled;
-    TValueContext(FValueContext).Node := F.Node;
+    TValueContext(FValueContext).Node := F^.Node;
     DefaultText := '';
     if UseDefault then
     begin
       { as Xerces: the canonical form of the value; with an xsi:type it
         must be a valid default for that type too }
       DefaultText := LandrixXmlXsdValueText(Decl.ConstraintActual);
-      if ((F.SimpleType <> Decl.SimpleType) or (F.ComplexType <> Decl.ComplexType)) and
-        not DefaultValidFor(F.ComplexType, F.SimpleType, DefaultText) then
+      if ((F^.SimpleType <> Decl.SimpleType) or (F^.ComplexType <> Decl.ComplexType)) and
+        not DefaultValidFor(F^.ComplexType, F^.SimpleType, DefaultText) then
       begin
-        if F.SimpleType <> nil then
-          TypeName := F.SimpleType.DisplayName
+        if F^.SimpleType <> nil then
+          TypeName := F^.SimpleType.DisplayName
         else
-          TypeName := LandrixXmlEscapeForMessage(F.ComplexType.DisplayName, MaxInt);
-        Report('cvc-elt.5.1.1', '{value constraint} ' + Q(DefaultText) + ' of element ' + Q(F.Name) +
+          TypeName := LandrixXmlEscapeForMessage(F^.ComplexType.DisplayName, MaxInt);
+        Report('cvc-elt.5.1.1', '{value constraint} ' + Q(DefaultText) + ' of element ' + Q(F^.Name) +
           ' is not a valid default value for type ''' + TypeName + '''.', Line, Column, Decl);
       end;
     end;
-    T := F.SimpleType;
+    T := F^.SimpleType;
     IsSimpleType := T <> nil;
-    if (T = nil) and (F.ComplexType.ContentType = xctSimple) then
-      T := F.ComplexType.SimpleType;
+    if (T = nil) and (F^.ComplexType.ContentType = xctSimple) then
+      T := F^.ComplexType.SimpleType;
     if (T <> nil) and Nilled then
     begin
-      if F.HasChild and IsSimpleType then
-        Report('cvc-type.3.1.2', 'Element ' + Q(F.Name) + ' is a simple type, so it must have no element ' +
-          'information item [children].', Line, Column, F.Decl);
+      if F^.HasChild and IsSimpleType then
+        Report('cvc-type.3.1.2', 'Element ' + Q(F^.Name) + ' is a simple type, so it must have no element ' +
+          'information item [children].', Line, Column, F^.Decl);
     end
     else if T <> nil then
-    begin
-      if F.HasChild then
-      begin
-        if IsSimpleType then
-          Report('cvc-type.3.1.2', 'Element ' + Q(F.Name) + ' is a simple type, so it must have no element ' +
-            'information item [children].', Line, Column, F.Decl)
-        else
-          Report('cvc-complex-type.2.2', 'Element ' + Q(F.Name) + ' must have no element [children], and the ' +
-            'value must be valid.', Line, Column, F.ComplexType);
-      end;
-      if UseDefault then
-        S := DefaultText
-      else
-        S := FBuffer;
-      Valid := T.Validate(S, FValueContext, Value, Error, HasValue);
-      if not Valid then
-      begin
-        Report(Error.Code, Error.Message, Line, Column, F.Decl);
-        { as Xerces: the value computed before a facet failed is still the
-          value of identity constraints }
-        if HasValue then
-        begin
-          FFrames[FDepth - 1].ValueKnown := True;
-          FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Value);
-          FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Value);
-        end;
-      end
-      else if not CheckIdValue(T, Value, Line, Column) then
-      begin
-        { as Xerces: a value that fails the ID or ENTITY rules is still the
-          value of identity constraints }
-        Valid := False;
-        FFrames[FDepth - 1].ValueKnown := True;
-        FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Value);
-        FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Value);
-      end;
-      if not Valid then
-      begin
-        if IsSimpleType then
-          Report('cvc-type.3.1.3', 'The value ' + Q(S) + ' of element ' + Q(F.Name) + ' is not valid.', Line,
-            Column, F.Decl)
-        else
-          Report('cvc-complex-type.2.2', 'Element ' + Q(F.Name) + ' must have no element [children], and the ' +
-            'value must be valid.', Line, Column, F.ComplexType);
-      end
-      else
-      begin
-        FFrames[FDepth - 1].ValueKnown := True;
-        FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Value);
-        FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Value);
-      end;
-      { as Xerces: an applied default gives identity constraints the value
-        the schema loader validated (in the schema's namespace context),
-        whatever the check in the document's context found }
-      if UseDefault then
-      begin
-        FFrames[FDepth - 1].ValueKnown := True;
-        FFrames[FDepth - 1].ValueKey := LandrixXmlXsdValueKey(Decl.ConstraintActual);
-        FFrames[FDepth - 1].ValueText := LandrixXmlXsdValueText(Decl.ConstraintActual);
-      end;
-      if IsFixed then
-      begin
-        if F.HasChild then
-          Report('cvc-elt.5.2.2.1', 'Element ' + Q(F.Name) + ' must have no element information item [children].',
-            Line, Column, Decl);
-        if Valid and (LandrixXmlXsdCompareValues(Value, Decl.ConstraintActual) <> 0) then
-          Report('cvc-elt.5.2.2.2.2', 'The value ' + Q(S) + ' of element ' + Q(F.Name) +
-            ' does not match the {value constraint} value ' + Q(LandrixXmlXsdValueText(Decl.ConstraintActual)) + '.',
-            Line, Column, Decl);
-      end;
-    end
+      CheckSimpleContent(T, IsSimpleType, UseDefault, IsFixed, DefaultText, Line, Column)
     else if not Nilled then
     begin
-      case F.ComplexType.ContentType of
+      case F^.ComplexType.ContentType of
         xctEmpty:
-          if F.HasChild or F.HasText then
-            Report('cvc-complex-type.2.1', 'Element ' + Q(F.Name) + ' must have no character or element ' +
-              'information item [children], because the type''s content type is empty.', Line, Column, F.ComplexType);
+          if F^.HasChild or F^.HasText then
+            Report('cvc-complex-type.2.1', 'Element ' + Q(F^.Name) + ' must have no character or element ' +
+              'information item [children], because the type''s content type is empty.', Line, Column, F^.ComplexType);
         xctElementOnly:
-          if F.HasNonSpaceText then
-            Report('cvc-complex-type.2.3', 'Element ' + Q(F.Name) + ' cannot have character [children], because ' +
-              'the type''s content type is element-only.', Line, Column, F.ComplexType);
+          if F^.HasNonSpaceText then
+            Report('cvc-complex-type.2.3', 'Element ' + Q(F^.Name) + ' cannot have character [children], because ' +
+              'the type''s content type is element-only.', Line, Column, F^.ComplexType);
       else
         { mixed: any text }
       end;
-      if F.State <> nil then
+      if F^.State <> nil then
       begin
-        Issues := F.State.Finish;
+        Issues := F^.State.Finish;
         for I := 0 to Integer(Length(Issues)) - 1 do
         begin
-          F.State.Expected(FExpected);
-          LandrixXmlXsdContentIssueText(Issues[I], '', '', '', F.Name, FExpected, True, Code, Message);
-          Report(Code, Message, Line, Column, F.ComplexType);
+          F^.State.Expected(FExpected);
+          LandrixXmlXsdContentIssueText(Issues[I], '', '', '', F^.Name, FExpected, True, Code, Message);
+          Report(Code, Message, Line, Column, F^.ComplexType);
         end;
       end;
       if IsFixed then
       begin
-        if F.HasChild then
-          Report('cvc-elt.5.2.2.1', 'Element ' + Q(F.Name) + ' must have no element information item [children].',
+        if F^.HasChild then
+          Report('cvc-elt.5.2.2.1', 'Element ' + Q(F^.Name) + ' must have no element information item [children].',
             Line, Column, Decl);
         { mixed content: the text as it is must equal the fixed value }
-        if (F.ComplexType.ContentType = xctMixed) and (FBuffer <> Decl.ConstraintValue) then
-          Report('cvc-elt.5.2.2.2.1', 'The value ' + Q(FBuffer) + ' of element ' + Q(F.Name) +
+        if (F^.ComplexType.ContentType = xctMixed) and (FBuffer <> Decl.ConstraintValue) then
+          Report('cvc-elt.5.2.2.2.1', 'The value ' + Q(FBuffer) + ' of element ' + Q(F^.Name) +
             ' does not match the fixed {value constraint} value ' + Q(Decl.ConstraintValue) + '.', Line, Column,
             Decl);
       end;
@@ -2412,26 +2464,51 @@ begin
   end;
 end;
 
+{ The text of Span; Last if it has the same bytes (namespace names repeat,
+  so they are not copied for every element), which then becomes Last. }
+function SameOrNew(const Span: TLandrixXmlSpan; var Last: TLandrixXmlUtf8): TLandrixXmlUtf8;
+begin
+  if (Span.Len <> Length(Last)) or ((Span.Len > 0) and not CompareMem(Span.P, Pointer(Last), Span.Len)) then
+    Last := LandrixXmlSpanToUtf8(Span);
+  Result := Last;
+end;
+
 function TLandrixXmlXsdValidator.ValidateReader(Reader: TLandrixXmlReader): Boolean;
 var
   I, EndLine, EndColumn: Integer;
+  LastUri, LastAttrUri, LocalName, AttrLocalName: TLandrixXmlUtf8;
 begin
   Reset;
   EndLine := 0;
   EndColumn := 0;
+  LastUri := '';
+  LastAttrUri := '';
   TValueContext(FValueContext).Reader := Reader;
   while Reader.Read do
   begin
     case Reader.TokenType of
       xttStartElement:
         begin
+          { a name without prefix is its local name: one string for both }
           ClearAttributes;
           for I := 0 to Reader.AttributeCount - 1 do
             if not Reader.IsNamespaceDeclaration(I) then
-              AddAttribute(Reader.AttributeNamespaceUriUtf8(I), Reader.AttributeLocalNameUtf8(I),
-                Reader.AttributeNameUtf8(I), Reader.AttributeValueUtf8(I));
-          StartElement(Reader.NamespaceUriUtf8, Reader.LocalNameUtf8, Reader.NameUtf8, Reader.TokenEndLine,
-            Reader.TokenEndColumn, nil);
+            begin
+              AttrLocalName := Reader.AttributeLocalNameUtf8(I);
+              if Reader.AttributePrefixSpan(I).Len = 0 then
+                AddAttribute(SameOrNew(Reader.AttributeNamespaceUriSpan(I), LastAttrUri), AttrLocalName, AttrLocalName,
+                  Reader.AttributeValueUtf8(I))
+              else
+                AddAttribute(SameOrNew(Reader.AttributeNamespaceUriSpan(I), LastAttrUri), AttrLocalName,
+                  Reader.AttributeNameUtf8(I), Reader.AttributeValueUtf8(I));
+            end;
+          LocalName := Reader.LocalNameUtf8;
+          if Reader.PrefixSpan.Len = 0 then
+            StartElement(SameOrNew(Reader.NamespaceUriSpan, LastUri), LocalName, LocalName, Reader.TokenEndLine,
+              Reader.TokenEndColumn, nil)
+          else
+            StartElement(SameOrNew(Reader.NamespaceUriSpan, LastUri), LocalName, Reader.NameUtf8,
+              Reader.TokenEndLine, Reader.TokenEndColumn, nil);
         end;
       xttEndElement:
         begin
@@ -2440,7 +2517,9 @@ begin
           EndElement(EndLine, EndColumn);
         end;
       xttText:
-        Text(Reader.ValueUtf8, Reader.IsWhitespace);
+        { the text as a string only where it is buffered }
+        if (Reader.ValueSpan.Len > 0) and TextSeen(Reader.IsWhitespace) then
+          FBuffer := FBuffer + Reader.ValueUtf8;
       xttCData:
         Text(Reader.ValueUtf8, IsSpaceText(Reader.ValueUtf8));
       xttDocumentType:

@@ -242,11 +242,13 @@ type
     function ValidatorName: string;
     function HasPatterns: Boolean;
     function IsTrimmedType: Boolean;
-    function CheckPatterns(const Value: TLandrixXmlXsdValue; const TypeName: string;
+    function CheckPatterns(const Value: TLandrixXmlXsdValue; Owner: TLandrixXmlXsdSimpleType;
       out Error: TLandrixXmlXsdError): Boolean;
     function ParseFacetValue(const Text: TLandrixXmlUtf8; const Code: string;
       Context: TLandrixXmlXsdNamespaceContext): TLandrixXmlXsdValue;
     function ParseBound(Facet: TLandrixXmlXsdFacet; const Text: TLandrixXmlUtf8): TLandrixXmlXsdValue;
+    function ValidateUnion(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+      out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError; out HasValue: Boolean): Boolean;
     function ValidateList(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
       out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError; out HasValue: Boolean): Boolean;
     function GetMemberCount: Integer;
@@ -395,10 +397,30 @@ end;
 function LandrixXmlXsdNormalizeWhiteSpace(const S: TLandrixXmlUtf8;
   Mode: TLandrixXmlXsdWhiteSpace): TLandrixXmlUtf8;
 var
-  I, N: Integer;
-  PendingSpace: Boolean;
+  I, N, Len: Integer;
+  P: PAnsiChar;
+  PendingSpace, Changes: Boolean;
 begin
   if Mode = xwsPreserve then
+  begin
+    Result := S;
+    Exit;
+  end;
+  { most values need no change: then S itself, without a copy }
+  Changes := False;
+  Len := Length(S);
+  P := PAnsiChar(S);
+  for I := 0 to Len - 1 do
+    if P[I] <= ' ' then
+    begin
+      if (P[I] = #9) or (P[I] = #10) or (P[I] = #13) or ((P[I] = ' ') and (Mode = xwsCollapse) and
+        ((I = 0) or (I = Len - 1) or (P[I + 1] = ' '))) then
+      begin
+        Changes := True;
+        Break;
+      end;
+    end;
+  if not Changes then
   begin
     Result := S;
     Exit;
@@ -2660,7 +2682,7 @@ begin
   CheckFacetConsistency;
 end;
 
-function TLandrixXmlXsdSimpleType.CheckPatterns(const Value: TLandrixXmlXsdValue; const TypeName: string;
+function TLandrixXmlXsdSimpleType.CheckPatterns(const Value: TLandrixXmlXsdValue; Owner: TLandrixXmlXsdSimpleType;
   out Error: TLandrixXmlXsdError): Boolean;
 var
   I: Integer;
@@ -2674,7 +2696,7 @@ begin
   Result := False;
   SetError(Error, 'cvc-pattern-valid', 'Value ' + Quote(Value.Text) +
     ' is not facet-valid with respect to pattern ' +
-    Quote(TLandrixXmlRegex(FPatterns[0]).Source) + ' for type ''' + TypeName + '''.');
+    Quote(TLandrixXmlRegex(FPatterns[0]).Source) + ' for type ''' + Owner.DisplayName + '''.');
 end;
 
 { --- canonical forms and keys as Xerces has them ---------------------- }
@@ -3173,10 +3195,8 @@ var
   T, Start: TLandrixXmlXsdSimpleType;
   I, C, Digits: Integer;
   Found: Boolean;
-  TypeName: string;
 begin
   Result := False;
-  TypeName := DisplayName;
   { Xerces checks no length facets for QName and NOTATION values }
   if (Value.Variety <> xsvList) and (Value.Primitive in [xspQName, xspNotation]) then
     T := nil
@@ -3188,7 +3208,7 @@ begin
     T := T.FBase;
   if (T <> nil) and (Value.Length > T.FMaxLength) then
   begin
-    SetError(Error, 'cvc-maxLength-valid', LengthMessage(Value, 'maxLength', T.FMaxLength, TypeName));
+    SetError(Error, 'cvc-maxLength-valid', LengthMessage(Value, 'maxLength', T.FMaxLength, DisplayName));
     Exit;
   end;
   { minLength }
@@ -3197,7 +3217,7 @@ begin
     T := T.FBase;
   if (T <> nil) and (Value.Length < T.FMinLength) then
   begin
-    SetError(Error, 'cvc-minLength-valid', LengthMessage(Value, 'minLength', T.FMinLength, TypeName));
+    SetError(Error, 'cvc-minLength-valid', LengthMessage(Value, 'minLength', T.FMinLength, DisplayName));
     Exit;
   end;
   { length }
@@ -3206,7 +3226,7 @@ begin
     T := T.FBase;
   if (T <> nil) and (Value.Length <> T.FLength) then
   begin
-    SetError(Error, 'cvc-length-valid', LengthMessage(Value, 'length', T.FLength, TypeName));
+    SetError(Error, 'cvc-length-valid', LengthMessage(Value, 'length', T.FLength, DisplayName));
     Exit;
   end;
   { enumeration }
@@ -3269,7 +3289,7 @@ begin
     C := LandrixXmlXsdCompareValues(Value, T.FMaxInclusive.Value);
     if (C = 1) or (C = LandrixXmlXsdIncomparable) then
     begin
-      SetError(Error, 'cvc-maxInclusive-valid', BoundMessage(Value, 'maxInclusive', T.FMaxInclusive, T, TypeName));
+      SetError(Error, 'cvc-maxInclusive-valid', BoundMessage(Value, 'maxInclusive', T.FMaxInclusive, T, DisplayName));
       Exit;
     end;
   end;
@@ -3279,7 +3299,7 @@ begin
     T := T.FBase;
   if (T <> nil) and T.FMaxExclusive.Present and (LandrixXmlXsdCompareValues(Value, T.FMaxExclusive.Value) <> -1) then
   begin
-    SetError(Error, 'cvc-maxExclusive-valid', BoundMessage(Value, 'maxExclusive', T.FMaxExclusive, T, TypeName));
+    SetError(Error, 'cvc-maxExclusive-valid', BoundMessage(Value, 'maxExclusive', T.FMaxExclusive, T, DisplayName));
     Exit;
   end;
   { minInclusive }
@@ -3291,7 +3311,7 @@ begin
     C := LandrixXmlXsdCompareValues(Value, T.FMinInclusive.Value);
     if (C = -1) or (C = LandrixXmlXsdIncomparable) then
     begin
-      SetError(Error, 'cvc-minInclusive-valid', BoundMessage(Value, 'minInclusive', T.FMinInclusive, T, TypeName));
+      SetError(Error, 'cvc-minInclusive-valid', BoundMessage(Value, 'minInclusive', T.FMinInclusive, T, DisplayName));
       Exit;
     end;
   end;
@@ -3301,7 +3321,7 @@ begin
     T := T.FBase;
   if (T <> nil) and T.FMinExclusive.Present and (LandrixXmlXsdCompareValues(Value, T.FMinExclusive.Value) <> 1) then
   begin
-    SetError(Error, 'cvc-minExclusive-valid', BoundMessage(Value, 'minExclusive', T.FMinExclusive, T, TypeName));
+    SetError(Error, 'cvc-minExclusive-valid', BoundMessage(Value, 'minExclusive', T.FMinExclusive, T, DisplayName));
     Exit;
   end;
   Result := True;
@@ -3342,7 +3362,10 @@ begin
     Inc(First);
   while (Last >= First) and IsXmlSpace(AnsiChar(S[Last])) do
     Dec(Last);
-  Result := Copy(S, First, Last - First + 1);
+  if (First = 1) and (Last = Length(S)) then
+    Result := S
+  else
+    Result := Copy(S, First, Last - First + 1);
 end;
 
 { The type name Xerces prints in cvc-datatype-valid.1.2.1: the built-in
@@ -3377,13 +3400,11 @@ var
   T: TLandrixXmlXsdSimpleType;
   Items: array[0..1] of TLandrixXmlXsdValue;
   I, Start, Count, K: Integer;
-  TypeName: string;
   ItemHasValue: Boolean;
 begin
   Result := False;
   HasValue := False;
   Normalized := LandrixXmlXsdNormalizeWhiteSpace(Text, xwsCollapse);
-  TypeName := DisplayName;
   Value.Primitive := xspAnySimpleType;
   Value.Text := Normalized;
   Value.RawText := Text;
@@ -3396,7 +3417,7 @@ begin
   T := Self;
   while T <> nil do
   begin
-    if not T.CheckPatterns(Value, TypeName, Error) then
+    if not T.CheckPatterns(Value, Self, Error) then
       Exit;
     T := T.FBase;
   end;
@@ -3456,7 +3477,9 @@ end;
   leaves the last one set.
   Xerces deviation, not in the test suite: XML Schema gives an invalid
   value no actual value, so identity constraints would not see it. }
-function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+{ A union value (Validate): as Xerces, the patterns of a restriction on
+  the collapsed value, then the member types, then the enumeration. }
+function TLandrixXmlXsdSimpleType.ValidateUnion(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
   out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError; out HasValue: Boolean): Boolean;
 var
   I: Integer;
@@ -3466,6 +3489,54 @@ var
   MemberHasValue: Boolean;
 begin
   Result := False;
+  HasValue := False;
+  { as Xerces: the patterns of a restriction on the collapsed value,
+    then the member types, then the enumeration }
+  if HasPatterns then
+  begin
+    Value.Primitive := xspAnySimpleType;
+    Value.Text := LandrixXmlXsdNormalizeWhiteSpace(Text, xwsCollapse);
+    Value.RawText := Text;
+    Value.MemberType := nil;
+    Value.Length := 0;
+    Value.NamespaceUri := '';
+    Value.LocalName := '';
+    T := Self;
+    while T <> nil do
+    begin
+      if not T.CheckPatterns(Value, Self, Error) then
+        Exit;
+      T := T.FBase;
+    end;
+  end;
+  for I := 0 to Integer(Length(FMembers)) - 1 do
+  begin
+    if FMembers[I].Validate(Text, Context, Value, MemberError, MemberHasValue) then
+    begin
+      HasValue := True;
+      Result := CheckFacets(Value, Error);
+      Exit;
+    end;
+    if MemberHasValue then
+    begin
+      Last := Value;
+      HasValue := True;
+    end;
+  end;
+  if HasValue then
+    Value := Last
+  else
+  begin
+    Value.RawText := Text;
+    Value.MemberType := nil;
+  end;
+  SetError(Error, 'cvc-datatype-valid.1.2.3', Quote(Text) + ' is not a valid value of union type ''' +
+    DisplayName + '''.');
+end;
+
+function TLandrixXmlXsdSimpleType.Validate(const Text: TLandrixXmlUtf8; Context: TLandrixXmlXsdNamespaceContext;
+  out Value: TLandrixXmlXsdValue; out Error: TLandrixXmlXsdError; out HasValue: Boolean): Boolean;
+begin
   HasValue := False;
   Error.Code := '';
   Error.Message := '';
@@ -3478,48 +3549,7 @@ begin
   end;
   if FVariety = xsvUnion then
   begin
-    { as Xerces: the patterns of a restriction on the collapsed value,
-      then the member types, then the enumeration }
-    if HasPatterns then
-    begin
-      Value.Primitive := xspAnySimpleType;
-      Value.Text := LandrixXmlXsdNormalizeWhiteSpace(Text, xwsCollapse);
-      Value.RawText := Text;
-      Value.MemberType := nil;
-      Value.Length := 0;
-      Value.NamespaceUri := '';
-      Value.LocalName := '';
-      T := Self;
-      while T <> nil do
-      begin
-        if not T.CheckPatterns(Value, DisplayName, Error) then
-          Exit;
-        T := T.FBase;
-      end;
-    end;
-    for I := 0 to Integer(Length(FMembers)) - 1 do
-    begin
-      if FMembers[I].Validate(Text, Context, Value, MemberError, MemberHasValue) then
-      begin
-        HasValue := True;
-        Result := CheckFacets(Value, Error);
-        Exit;
-      end;
-      if MemberHasValue then
-      begin
-        Last := Value;
-        HasValue := True;
-      end;
-    end;
-    if HasValue then
-      Value := Last
-    else
-    begin
-      Value.RawText := Text;
-      Value.MemberType := nil;
-    end;
-    SetError(Error, 'cvc-datatype-valid.1.2.3', Quote(Text) + ' is not a valid value of union type ''' +
-      DisplayName + '''.');
+    Result := ValidateUnion(Text, Context, Value, Error, HasValue);
     Exit;
   end;
   HasValue := ValidateLexical(Text, Context, Value, Error);
@@ -3534,7 +3564,6 @@ var
   Normalized, Prefix, Uri: TLandrixXmlUtf8;
   Colon: Integer;
   T: TLandrixXmlXsdSimpleType;
-  TypeName: string;
   Found: Boolean;
 begin
   Result := False;
@@ -3550,7 +3579,6 @@ begin
     Normalized := Trimmed(Text)
   else
     Normalized := LandrixXmlXsdNormalizeWhiteSpace(Text, FWhiteSpace);
-  TypeName := DisplayName;
   { as Xerces: the patterns of all types first, on the lexical form }
   Value.Text := Normalized;
   Value.RawText := Text;
@@ -3560,7 +3588,7 @@ begin
   T := Self;
   while T <> nil do
   begin
-    if not T.CheckPatterns(Value, TypeName, Error) then
+    if not T.CheckPatterns(Value, Self, Error) then
       Exit;
     T := T.FBase;
   end;
@@ -3573,7 +3601,7 @@ begin
     if FLexicalRule = xslLanguage then
       SetError(Error, 'cvc-pattern-valid', 'Value ' + Quote(Normalized) +
         ' is not facet-valid with respect to pattern ''([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*'' for type ''' +
-        TypeName + '''.')
+        DisplayName + '''.')
     else
       SetError(Error, 'cvc-datatype-valid.1.2.1', Quote(Normalized) + ' is not a valid value for ''' +
         ValidatorName + '''.');

@@ -623,6 +623,50 @@ begin
   end;
 end;
 
+{ A model with more leaves than one word of the leaf bit sets holds:
+  children from different words, a substitute added after the model was
+  built, a step back, and names the model does not have. }
+procedure TestManyLeaves;
+var
+  Model: TLandrixXmlXsdContentModel;
+  Root: TLandrixXmlXsdParticle;
+  State: TLandrixXmlXsdContentState;
+  Issue: TLandrixXmlXsdContentIssue;
+  List: TList;
+  I: Integer;
+begin
+  Root := TLandrixXmlXsdParticle.CreateGroup(xpkSequence, 1, 1);
+  for I := 0 to 69 do
+    Root.Add(TLandrixXmlXsdParticle.CreateElement('', U('e' + IntToStr(I)), nil, 0, 1));
+  Model := TLandrixXmlXsdContentModel.Create(Root);
+  State := TLandrixXmlXsdContentState.Create;
+  List := TList.Create;
+  try
+    Model.Leaves[40].AddSubstitute(U('urn:s'), U('z'), nil);
+    State.Start(Model);
+    Check(State.Step('', U('e3'), Issue) = Model.Leaves[3], 'e3 (first word)');
+    Check(State.Step('', U('e33'), Issue) = Model.Leaves[33], 'e33 (second word)');
+    Check(State.Step(U('urn:s'), U('z'), Issue) = Model.Leaves[40], 'z, the substitute of e40');
+    Check(State.Step('', U('e64'), Issue) = Model.Leaves[64], 'e64 (third word)');
+    CheckEquals(Ord(xciNone), Ord(Issue.Kind), 'no issue up to e64');
+    State.Step('', U('e10'), Issue);
+    CheckEquals(Ord(xciUnexpected), Ord(Issue.Kind), 'e10 after e64');
+    State.Expected(List);
+    CheckEqualsUtf8(U('{e65, e66, e67, e68, e69}'), LandrixXmlXsdExpectedText(List), 'expected after e64');
+    State.Start(Model);
+    Check(State.Step('', U('e69'), Issue) = Model.Leaves[69], 'the last leaf first');
+    State.Step('', U('e70'), Issue);
+    CheckEquals(Ord(xciUnexpected), Ord(Issue.Kind), 'a name the model does not have');
+    State.Start(Model);
+    State.Step('', U('z'), Issue);
+    CheckEquals(Ord(xciUnexpected), Ord(Issue.Kind), 'z without the namespace of the substitute');
+  finally
+    List.Free;
+    State.Free;
+    Model.Free;
+  end;
+end;
+
 { tests/data/xsdcontent/upa.txt: random models and the verdict of Xerces'
   Unique Particle Attribution check (tools/gen-xsdcontent-testdata.py
   --upa) }
@@ -787,6 +831,7 @@ begin
   RegisterTest('XsdContent.SameDeclarationTwice', TestSameDeclarationTwice);
   RegisterTest('XsdContent.FailureRecovery', TestFailureRecovery);
   RegisterTest('XsdContent.Wildcards', TestWildcards);
+  RegisterTest('XsdContent.ManyLeaves', TestManyLeaves);
   RegisterTest('XsdContent.UniqueParticleAttribution', TestUniqueParticleAttribution);
   RegisterTest('XsdContent.WildcardOverlap', TestWildcardOverlap);
   RegisterTest('XsdContent.UpaLimit', TestUpaLimit);

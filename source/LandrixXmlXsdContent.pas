@@ -81,6 +81,8 @@ type
     xbcRepeating  { checked at each child with the occurrence codes }
   );
 
+  TLandrixXmlXsdContentModel = class;
+
   TLandrixXmlXsdParticle = class
   private
     FKind: TLandrixXmlXsdParticleKind;
@@ -105,6 +107,10 @@ type
     FNullable: Boolean;
     FBodyNullable: Boolean;
     FFirst: TList;
+    { the model the particle belongs to, and the leaf indices of FFirst as
+      a bit set (both set when the model is compiled) }
+    FModel: TLandrixXmlXsdContentModel;
+    FFirstBits: array of Cardinal;
     function GetChildCount: Integer;
     function GetChild(Index: Integer): TLandrixXmlXsdParticle;
     function GetIsLeaf: Boolean;
@@ -164,7 +170,19 @@ type
     FLeaves: TList;
     FTerms: TList;
     FRepeatingMode: Boolean;
+    { the names of the element leaves (with their substitutes), each with
+      the indices of the leaves that match it, in a hash table; the
+      wildcard leaves; the length of a leaf bit set in words }
+    FNameNs: TLandrixXmlUtf8Array;
+    FNameLocal: TLandrixXmlUtf8Array;
+    FNameLeaves: array of array of Integer;
+    FNameCount: Integer;
+    FNameSlots: array of Integer;
+    FWildLeaves: array of Integer;
+    FWords: Integer;
     procedure Compile;
+    function FindName(const NamespaceUri, LocalName: TLandrixXmlUtf8): Integer;
+    procedure AddLeafName(const NamespaceUri, LocalName: TLandrixXmlUtf8; Leaf: Integer);
     function GetLeafCount: Integer;
     function GetLeaf(Index: Integer): TLandrixXmlXsdParticle;
     function GetTermCount: Integer;
@@ -246,6 +264,11 @@ type
     FWorkLens: TLandrixXmlXsdContentCounts;
     FWorkCount: Integer;
     FCur: TLandrixXmlXsdContentFrames;
+    { the leaves that match the child being taken (bit set), and the
+      words of it that are not zero }
+    FMatch: array of Cardinal;
+    FMatchLow: Integer;
+    FMatchHigh: Integer;
     FFailed: Boolean;
     FCounts: TLandrixXmlXsdContentCounts;
     { an all group: which of its elements are present, and whether any
@@ -254,6 +277,7 @@ type
     FAllSeen: TLandrixXmlXsdContentCounts;
     FAllStarted: Boolean;
     function TryStep(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlXsdParticle;
+    function CanStart(P: TLandrixXmlXsdParticle): Boolean;
     function ConfigCanEnd(const Frames: TLandrixXmlXsdContentFrames; Len: Integer): Boolean;
     procedure OccurrenceOf(out Issue: TLandrixXmlXsdContentIssue; out Present: Boolean);
   public
@@ -400,6 +424,8 @@ begin
   FSubNames[FSubCount] := LocalName;
   FSubDecls[FSubCount] := Decl;
   Inc(FSubCount);
+  if FModel <> nil then
+    FModel.AddLeafName(NamespaceUri, LocalName, FLeafIndex);
 end;
 
 function TLandrixXmlXsdParticle.MatchingDecl(const NamespaceUri, LocalName: TLandrixXmlUtf8): TObject;
@@ -809,9 +835,28 @@ begin
     CollectLeaves(P.Children[I], Leaves);
 end;
 
+{ The leaf bit sets of FFirst, for P and the particles below it. }
+procedure ComputeFirstBits(P: TLandrixXmlXsdParticle; Model: TLandrixXmlXsdContentModel);
+var
+  I, Leaf: Integer;
+begin
+  P.FModel := Model;
+  P.FFirstBits := nil;
+  SetLength(P.FFirstBits, Model.FWords);
+  for I := 0 to Model.FWords - 1 do
+    P.FFirstBits[I] := 0;
+  for I := 0 to Integer(P.FFirst.Count) - 1 do
+  begin
+    Leaf := TLandrixXmlXsdParticle(P.FFirst[I]).FLeafIndex;
+    P.FFirstBits[Leaf shr 5] := P.FFirstBits[Leaf shr 5] or (Cardinal(1) shl (Leaf and 31));
+  end;
+  for I := 0 to P.ChildCount - 1 do
+    ComputeFirstBits(P.Children[I], Model);
+end;
+
 procedure TLandrixXmlXsdContentModel.Compile;
 var
-  I: Integer;
+  I, J, WildCount: Integer;
   Leaf: TLandrixXmlXsdParticle;
 begin
   FRepeatingMode := UsesRepeatingLeaves(FRoot);
@@ -825,6 +870,110 @@ begin
     Leaf.FTermIndex := I;
     FTerms.Add(Leaf);
   end;
+  { the leaves by name (substitutes added later register themselves) }
+  FWords := (Integer(FLeaves.Count) + 31) div 32;
+  WildCount := 0;
+  for I := 0 to Integer(FLeaves.Count) - 1 do
+  begin
+    Leaf := TLandrixXmlXsdParticle(FLeaves[I]);
+    if Leaf.FKind = xpkWildcard then
+    begin
+      SetLength(FWildLeaves, WildCount + 1);
+      FWildLeaves[WildCount] := I;
+      Inc(WildCount);
+    end
+    else
+    begin
+      AddLeafName(Leaf.FNamespaceUri, Leaf.FLocalName, I);
+      for J := 0 to Leaf.FSubCount - 1 do
+        AddLeafName(Leaf.FSubNamespaces[J], Leaf.FSubNames[J], I);
+    end;
+  end;
+  ComputeFirstBits(FRoot, Self);
+end;
+
+function NameHash(const NamespaceUri, LocalName: TLandrixXmlUtf8): Cardinal;
+begin
+  Result := LandrixXmlHashBytes(PAnsiChar(LocalName), Length(LocalName),
+    LandrixXmlHashBytes(PAnsiChar(NamespaceUri), Length(NamespaceUri), LandrixXmlHashSeed));
+end;
+
+{ The entry of a name in the table of leaf names, -1 if there is none. }
+function TLandrixXmlXsdContentModel.FindName(const NamespaceUri, LocalName: TLandrixXmlUtf8): Integer;
+var
+  Mask, Slot: Integer;
+begin
+  Result := -1;
+  if FNameSlots = nil then
+    Exit;
+  Mask := Integer(Length(FNameSlots)) - 1;
+  Slot := Integer(NameHash(NamespaceUri, LocalName) and Cardinal(Mask));
+  while FNameSlots[Slot] >= 0 do
+  begin
+    if (FNameLocal[FNameSlots[Slot]] = LocalName) and (FNameNs[FNameSlots[Slot]] = NamespaceUri) then
+    begin
+      Result := FNameSlots[Slot];
+      Exit;
+    end;
+    Slot := (Slot + 1) and Mask;
+  end;
+end;
+
+{ Records that leaf Leaf matches the name; the leaves of a name stay in
+  ascending order. }
+procedure TLandrixXmlXsdContentModel.AddLeafName(const NamespaceUri, LocalName: TLandrixXmlUtf8; Leaf: Integer);
+var
+  E, I, N, Mask, Slot, Size: Integer;
+begin
+  E := FindName(NamespaceUri, LocalName);
+  if E < 0 then
+  begin
+    if 2 * (FNameCount + 1) > Length(FNameSlots) then
+    begin
+      Size := 16;
+      while Size < 4 * (FNameCount + 1) do
+        Size := Size * 2;
+      FNameSlots := nil;
+      SetLength(FNameSlots, Size);
+      for I := 0 to Size - 1 do
+        FNameSlots[I] := -1;
+      for I := 0 to FNameCount - 1 do
+      begin
+        Slot := Integer(NameHash(FNameNs[I], FNameLocal[I]) and Cardinal(Size - 1));
+        while FNameSlots[Slot] >= 0 do
+          Slot := (Slot + 1) and (Size - 1);
+        FNameSlots[Slot] := I;
+      end;
+    end;
+    if FNameCount = Length(FNameNs) then
+    begin
+      SetLength(FNameNs, 2 * FNameCount + 8);
+      SetLength(FNameLocal, 2 * FNameCount + 8);
+      SetLength(FNameLeaves, 2 * FNameCount + 8);
+    end;
+    E := FNameCount;
+    FNameNs[E] := NamespaceUri;
+    FNameLocal[E] := LocalName;
+    FNameLeaves[E] := nil;
+    Inc(FNameCount);
+    Mask := Integer(Length(FNameSlots)) - 1;
+    Slot := Integer(NameHash(NamespaceUri, LocalName) and Cardinal(Mask));
+    while FNameSlots[Slot] >= 0 do
+      Slot := (Slot + 1) and Mask;
+    FNameSlots[Slot] := E;
+  end;
+  N := Length(FNameLeaves[E]);
+  for I := 0 to N - 1 do
+    if FNameLeaves[E][I] = Leaf then
+      Exit;
+  SetLength(FNameLeaves[E], N + 1);
+  I := N;
+  while (I > 0) and (FNameLeaves[E][I - 1] > Leaf) do
+  begin
+    FNameLeaves[E][I] := FNameLeaves[E][I - 1];
+    Dec(I);
+  end;
+  FNameLeaves[E][I] := Leaf;
 end;
 
 function TLandrixXmlXsdContentModel.FindTerm(const NamespaceUri,
@@ -1625,12 +1774,13 @@ end;
 { TLandrixXmlXsdContentState                                             }
 { ---------------------------------------------------------------------- }
 
-function CanStart(P: TLandrixXmlXsdParticle; const NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
+{ True if a leaf that can start P matches the child (FMatch). }
+function TLandrixXmlXsdContentState.CanStart(P: TLandrixXmlXsdParticle): Boolean;
 var
   I: Integer;
 begin
-  for I := 0 to Integer(P.FFirst.Count) - 1 do
-    if TLandrixXmlXsdParticle(P.FFirst[I]).Matches(NamespaceUri, LocalName) then
+  for I := FMatchLow to FMatchHigh do
+    if (P.FFirstBits[I] and FMatch[I]) <> 0 then
     begin
       Result := True;
       Exit;
@@ -1748,6 +1898,31 @@ begin
   Swap := nil;
   FNextCount := 0;
   FWorkCount := 0;
+  { the leaves that match the child: by name from the table, the
+    wildcards one by one }
+  if Length(FMatch) < FModel.FWords then
+    SetLength(FMatch, FModel.FWords);
+  for I := 0 to FModel.FWords - 1 do
+    FMatch[I] := 0;
+  K := FModel.FindName(NamespaceUri, LocalName);
+  if K >= 0 then
+    for I := 0 to Integer(Length(FModel.FNameLeaves[K])) - 1 do
+    begin
+      J := FModel.FNameLeaves[K][I];
+      FMatch[J shr 5] := FMatch[J shr 5] or (Cardinal(1) shl (J and 31));
+    end;
+  for I := 0 to Integer(Length(FModel.FWildLeaves)) - 1 do
+  begin
+    J := FModel.FWildLeaves[I];
+    if FModel.Leaves[J].Matches(NamespaceUri, LocalName) then
+      FMatch[J shr 5] := FMatch[J shr 5] or (Cardinal(1) shl (J and 31));
+  end;
+  FMatchLow := 0;
+  while (FMatchLow < FModel.FWords) and (FMatch[FMatchLow] = 0) do
+    Inc(FMatchLow);
+  FMatchHigh := FModel.FWords - 1;
+  while (FMatchHigh >= FMatchLow) and (FMatch[FMatchHigh] = 0) do
+    Dec(FMatchHigh);
   for I := FConfigCount - 1 downto 0 do
     AppendConfig(FWork, FWorkLens, FWorkCount, FConfigs[I], FConfigLens[I], 0);
   Explored := 0;
@@ -1769,7 +1944,7 @@ begin
     if P.IsLeaf then
     begin
       if ((P.FEffectiveMax = LandrixXmlXsdUnbounded) or (FCur[Top].Count < P.FEffectiveMax)) and
-        P.Matches(NamespaceUri, LocalName) then
+        ((FMatch[P.FLeafIndex shr 5] and (Cardinal(1) shl (P.FLeafIndex and 31))) <> 0) then
       begin
         K := AppendConfig(FNext, FNextLens, FNextCount, FCur, Len, 0);
         FNext[K][Top].Count := Clamped(P, FCur[Top].Count + 1);
@@ -1805,7 +1980,7 @@ begin
       while J < P.ChildCount do
       begin
         Child := P.Children[J];
-        if CanStart(Child, NamespaceUri, LocalName) then
+        if CanStart(Child) then
         begin
           K := AppendConfig(FWork, FWorkLens, FWorkCount, FCur, Len, 1);
           FWork[K][Top].Index := J;
@@ -1827,11 +2002,11 @@ begin
       Continue;
     { the iteration is complete (or none has started): another one }
     if ((P.FEffectiveMax = LandrixXmlXsdUnbounded) or (FCur[Top].Count < P.FEffectiveMax)) and
-      CanStart(P, NamespaceUri, LocalName) then
+      CanStart(P) then
       for J := 0 to P.ChildCount - 1 do
       begin
         Child := P.Children[J];
-        if CanStart(Child, NamespaceUri, LocalName) then
+        if CanStart(Child) then
         begin
           K := AppendConfig(FWork, FWorkLens, FWorkCount, FCur, Len, 1);
           FWork[K][Top].Count := Clamped(P, FCur[Top].Count + 1);
