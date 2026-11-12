@@ -5,6 +5,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-12
+
+Exact normalization check, faster XPath and XML Schema validation, a fix
+for nested repetitions in content models and two portability fixes. The
+documented API only gains additions.
+
+### Added
+
 - `LandrixXmlNormalize`: `LandrixXmlIsNormalizedUtf8` and
   `LandrixXmlIsNormalizedCodePoints` tell exactly whether a text is in a
   normalization form (the Unicode quick check, and a normalization only
@@ -14,12 +22,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   normalization data (15.0.0); characters assigned later pass through
   unchanged. Every line of the Unicode file NormalizationTest.txt also
   checks the new functions.
-- `LandrixXmlNormalize`: an input or a result of more than `MaxInt` code
-  points raises `xecLimit` instead of overflowing the Integer
-  arithmetic (64-bit only).
-- `LandrixXmlDom`: copies names without `Move`. FPC 3.2.4 on aarch64-darwin
-  reported note 6058 ("Move ... marked as inline is not inlined") there in
-  the builds of some consuming projects, despite `{$WARN 6058 OFF}`.
+
+### Changed
+
 - `LandrixXmlDouble`: integers below 10^15 (below 10^7 for xs:float) are
   converted to a double directly instead of through a big-integer
   division; the result is the same. An XPath comparison such as
@@ -41,6 +46,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   itself when nothing changes; text the validator does not look at is
   no longer copied. A 50 MB GAEB DA XML 3.3 file (X83) takes about two
   thirds of the time before.
+- `LandrixXmlXsdValidator`: the record `TLandrixXmlXsdFrame`, documented as
+  internal, has `PathIndex` instead of `PathStep`.
+
+### Fixed
+
 - XML Schema content models: of the configurations a child leaves, those
   another one covers (same position, counts no higher and already at
   their lower bounds) are dropped. Nested repetitions such as
@@ -48,6 +58,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   "Content model too ambiguous to check" after a minute; the three XSTS
   tests `particlesZ036_b1`, `_b2` and `_c` pass, and the whole XSTS run
   takes 45 seconds instead of 4.5 minutes.
+- `LandrixXmlNormalize`: an input or a result of more than `MaxInt` code
+  points raises `xecLimit` instead of overflowing the Integer
+  arithmetic (64-bit only).
+- `LandrixXmlDom`: copies names without `Move`. FPC 3.2.4 on aarch64-darwin
+  reported note 6058 ("Move ... marked as inline is not inlined") there in
+  the builds of some consuming projects, despite `{$WARN 6058 OFF}`.
 
 ## [0.3.0] - 2026-11-10
 
@@ -925,7 +941,8 @@ First release.
   copies must be rejected cleanly, and `tools/check-local.py` cross-checks
   the classification with expat.
 
-[Unreleased]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/landrix/LandrixXML-for-Pascal/releases/tag/v0.1.0

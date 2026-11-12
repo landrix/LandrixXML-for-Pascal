@@ -37,7 +37,7 @@ uses
   Classes;
 
 const
-  LandrixXmlVersion = '0.3.0';
+  LandrixXmlVersion = '0.4.0';
 
   { Highest Unicode code point. }
   LandrixXmlMaxCodePoint = $10FFFF;

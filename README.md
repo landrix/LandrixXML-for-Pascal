@@ -4,7 +4,7 @@ A small, fast and dependency-free XML library for **Delphi 6 through
 Delphi 13** and **Free Pascal 3.2+**: a pull reader, a streaming writer, a
 DOM and locale-independent conversion helpers for XML Schema values.
 
-> **Status:** version 0.3.0. The API may still change in details before
+> **Status:** version 0.4.0. The API may still change in details before
 > 1.0; see the [CHANGELOG](CHANGELOG.md).
 
 ## Features
