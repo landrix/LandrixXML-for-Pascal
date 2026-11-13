@@ -1706,6 +1706,85 @@ begin
   Run(xppXPath20, xppSaxon, 'string(f:uri())', 'error FORG0001');
 end;
 
+{ A tree without a document node (as XSLT builds a parentless element):
+  "/" raises XPDY0050, root() is the element, also in an added tree. }
+procedure TestTreeWithoutDocument;
+var
+  Tree, Other: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+
+  function Run(const S: string; Node: Integer): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), nil);
+    try
+      Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, Node));
+    except
+      on E: ELandrixXmlXPathError do
+        Result := 'error ' + E.XPathCode;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Other := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  Expr := nil;
+  try
+    Tree.BeginBuild(False);
+    Tree.BuildStartElement(U(''), U(''), U('e'));
+    Tree.BuildNamespace(U('p'), U('urn:p'));
+    Tree.BuildAttribute(U(''), U(''), U('a'), U('1'));
+    Tree.BuildAttribute(LandrixXmlNamespaceXml, U('xml'), U('base'), U('http://example.org/d/'));
+    Tree.BuildAttribute(LandrixXmlNamespaceXml, U('xml'), U('lang'), U('de'));
+    Tree.BuildStartElement(U(''), U(''), U('f'));
+    Tree.BuildText(U('x'));
+    Tree.BuildEndElement;
+    Tree.BuildEndElement;
+    Tree.EndBuild;
+    Tree.BaseUri := U('urn:test');
+    Other.BeginBuild(False);
+    Other.BuildStartElement(U(''), U(''), U('g'));
+    Other.BuildEndElement;
+    Other.EndBuild;
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    try
+      Evaluator.AddDocument(U('other'), Other);
+      FailNotRaised('a tree without document node added as a document');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'AddDocument: no document node');
+    end;
+    CheckEqualsStr('error XPDY0050', Run('/', 0), '"/" on the element');
+    CheckEqualsStr('error XPDY0050', Run('//f', 4), '"//" below the element');
+    CheckEqualsStr('e', Run('name(root())', 4), 'root() is the element');
+    CheckEqualsStr('e', Run('name(root(..))', 1), 'root() of the attribute''s element');
+    CheckEqualsStr('0', Run('count(ancestor::node())', 0), 'no ancestors');
+    CheckEqualsStr('1', Run('count(ancestor::node())', 4), 'one ancestor');
+    CheckEqualsStr('0', Run('count(following::node() | preceding::node())', 0), 'nothing before or after');
+    CheckEqualsStr('x', Run('string(.)', 0), 'string value');
+    CheckEqualsStr('false', Run('. instance of document-node()', 0), 'no document node');
+    CheckEqualsStr('', Run('string(document-uri(.))', 0), 'no document URI');
+    CheckEqualsStr('false', Run('doc-available(''urn:test'')', 0), 'not available as a document');
+    CheckEqualsStr('error FODC0002', Run('doc(''urn:test'')', 0), 'doc() needs a document node');
+    CheckEqualsStr('error FODC0001', Run('id(''x'')', 0), 'id() needs a document node');
+    CheckEqualsStr('urn:p', Run('string(namespace-uri-for-prefix(''p'', .))', 4),
+      'a namespace declared on the top');
+    CheckEqualsStr('2 true', Run('concat(count(in-scope-prefixes(.)), '' '', in-scope-prefixes(.) = ''p'')', 4),
+      'in-scope prefixes from the top');
+    CheckEqualsStr('http://example.org/d/', Run('string(base-uri(.))', 4), 'xml:base on the top');
+    CheckEqualsStr('true', Run('lang(''de'')', 4), 'xml:lang on the top');
+    CheckEqualsStr('error FODC0001', Run('idref(''x'')', 4), 'idref() needs a document node');
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    Other.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
@@ -1726,6 +1805,7 @@ begin
   RegisterTest('XPathEval.ResolveUri', TestResolveUri);
   RegisterTest('XPathEval.BaseUri', TestBaseUri);
   RegisterTest('XPathEval.LangAndDocuments', TestLangAndDocuments);
+  RegisterTest('XPathEval.TreeWithoutDocument', TestTreeWithoutDocument);
 end;
 
 end.

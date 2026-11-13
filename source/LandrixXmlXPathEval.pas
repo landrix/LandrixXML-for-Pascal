@@ -271,6 +271,8 @@ type
     function NodeMatches(Node: Integer; const T: TLandrixXmlXPathSequenceType): Boolean;
     function SequenceMatches(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType): Boolean;
     function RootOf(Node: Integer): Integer;
+    { RootOf for "/": XPDY0050 if the root is no document node }
+    function DocumentRootOf(Node: Integer): Integer;
     function SlotRef(Slot: Integer): Pointer;
     function ReadVariable(Slot: Integer): TLandrixXmlXPathSequence;
     procedure WriteLocal(Slot: Integer; const Value: TLandrixXmlXPathSequence);
@@ -371,8 +373,9 @@ type
     { forgets the kept values of context-free subexpressions (see the unit
       comment); needed when the tree changes while the evaluator lives }
     procedure ClearCache;
-    { the tree document(Uri) returns (the URI as written in the expression);
-      not owned, it must live as long as the evaluator and its results }
+    { the tree document(Uri) returns (the URI as written in the expression),
+      which has a document node; not owned, it must live as long as the
+      evaluator and its results }
     procedure AddDocument(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree);
     { user functions (TLandrixXmlXPathFunctionDef) by their index in the
       static context; not owned }
@@ -1410,6 +1413,8 @@ var
 begin
   if (Tree = nil) or (Tree = FTree) then
     raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'AddDocument: another tree is needed');
+  if Tree.Kind[0] <> xnkDocument then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'AddDocument: the tree has no document node');
   N := Integer(Length(FDocTrees));
   SetLength(FDocUris, N + 1);
   SetLength(FDocTrees, N + 1);
@@ -1581,10 +1586,17 @@ begin
   end;
 end;
 
-{ the document node of Node's tree }
+{ the root of Node's tree: its document node, or the node at the top of a
+  tree built without one }
 function TLandrixXmlXPathEvaluator.RootOf(Node: Integer): Integer;
 begin
   TreeOf(Node, Result);
+end;
+
+function TLandrixXmlXPathEvaluator.DocumentRootOf(Node: Integer): Integer;
+begin
+  if TreeOf(Node, Result).Kind[0] <> xnkDocument then
+    Fail('XPDY0050', 'the root of the context node is not a document node ("/")');
 end;
 
 function TLandrixXmlXPathEvaluator.CachedEval(Index: Integer; Context: Integer; Position, Size: Integer;
@@ -2836,7 +2848,7 @@ begin
   begin
     if Context < 0 then
       Fail('XPDY0002', 'the context item for "/" is absent or not a node');
-    Current := LandrixXmlXPathNodeItem(RootOf(Context));
+    Current := LandrixXmlXPathNodeItem(DocumentRootOf(Context));
     First := 0;
   end
   else
@@ -2995,7 +3007,7 @@ begin
       begin
         if Context < 0 then
           Fail('XPDY0002', 'the context item for "/" is absent or not a node');
-        NodeItemInto(RootOf(Context), Output);
+        NodeItemInto(DocumentRootOf(Context), Output);
       end;
     xakStep:
       begin

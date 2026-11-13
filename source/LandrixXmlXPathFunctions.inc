@@ -793,7 +793,7 @@ begin
   if Tree.Kind[N] in [xnkAttribute, xnkText, xnkComment, xnkProcessingInstruction] then
     N := Tree.Parent[N];
   { the xml:base values from the node outwards }
-  while N > 0 do
+  while N >= 0 do
   begin
     for I := N + 1 to N + Tree.AttributeCount[N] do
       if (Tree.LocalNameUtf8(I) = 'base') and (Tree.NamespaceUriUtf8(I) = LandrixXmlNamespaceXml) then
@@ -1079,7 +1079,7 @@ var
         Result := FDocBases[D];
         Exit;
       end;
-    if (FTree.Count > 0) and (FTree.BaseUri <> '') and (FTree.BaseUri = Uri) then
+    if (FTree.Kind[0] = xnkDocument) and (FTree.BaseUri <> '') and (FTree.BaseUri = Uri) then
       Result := 0
     else
       Result := -1;
@@ -1814,7 +1814,7 @@ begin
         if OwnTree.Kind[I] <> xnkElement then
           I := OwnTree.Parent[I];
         Found := False;
-        while (I > 0) and not Found do
+        while (I >= 0) and not Found do
         begin
           for J := I + 1 to I + OwnTree.AttributeCount[I] do
             if (OwnTree.LocalNameUtf8(J) = 'lang') and (OwnTree.NamespaceUriUtf8(J) = LandrixXmlNamespaceXml) then
@@ -1873,7 +1873,7 @@ begin
           for I := 0 to Integer(Length(FDocUris)) - 1 do
             if FDocBases[I] = A.Items[0].Node then
               Result := SingleSeq(StringItem(xikAnyUri, FDocUris[I]));
-          if (A.Items[0].Node = 0) and (FTree.Count > 0) and (FTree.BaseUri <> '') then
+          if (A.Items[0].Node = 0) and (FTree.Kind[0] = xnkDocument) and (FTree.BaseUri <> '') then
             Result := SingleSeq(StringItem(xikAnyUri, FTree.BaseUri));
         end;
       end;
@@ -1903,6 +1903,8 @@ begin
           A := ContextSeq;
         if (A.Count <> 1) or (A.Items[0].Kind <> xikNode) then
           Fail('XPTY0004', Name + ': a single node was expected');
+        if TreeOf(A.Items[0].Node, K).Kind[0] <> xnkDocument then
+          Fail('FODC0001', Name + ': the root of the node is not a document node');
         B := Atomize(Arg(0));
         for I := 0 to B.Count - 1 do
           if not IsStringLike(B.Items[I].Kind) then

@@ -11,7 +11,10 @@
   only reads, so threads may share a tree they do not ask for location
   paths (LocationPathUtf8 computes sibling positions when first needed).
 
-  Node 0 is the document node. An element is followed by its attributes,
+  Node 0 is the document node, except in a tree built with BeginBuild
+  without one: there node 0 is the only node without a parent (an
+  element, attribute, text, comment or processing instruction, as XSLT
+  constructs them in a variable). An element is followed by its attributes,
   then its children, as XPath orders them; SubtreeEnd is the last node
   below it, so every axis is a loop over index ranges. Namespace
   declarations are not attributes (the tree keeps them for
@@ -96,7 +99,12 @@ type
     FStack: TLandrixXmlXPathIntArray;
     FLastChild: TLandrixXmlXPathIntArray;
     FDepth: Integer;
+    { BeginBuild was called, EndBuild not yet; FBuildDocument: with a
+      document node }
+    FBuilding: Boolean;
+    FBuildDocument: Boolean;
     procedure Clear;
+    procedure CheckBuild(Top: Boolean);
     function NameId(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8): Integer;
     function LookupExpanded(const Key: TLandrixXmlUtf8; Add: Boolean): Integer;
     function NewNode(Kind: TLandrixXmlXPathNodeKind; Line, Column: Integer): Integer;
@@ -158,7 +166,8 @@ type
     property AttributeCount[Index: Integer]: Integer read GetAttributeCount;
     { the first child that is not an attribute; -1 if none }
     function FirstChild(Index: Integer): Integer;
-    { the root element; -1 for an empty tree }
+    { the root element; -1 for an empty tree and a tree without document
+      node }
     function DocumentElement: Integer;
     { an integer for namespace URI plus local name, -1 for unnamed nodes;
       the name of a processing instruction is its target }
@@ -204,6 +213,28 @@ type
       part of the contract. Empty for nodes that are no element or
       attribute. }
     function InScopePrefixesUtf8(Index: Integer): TLandrixXmlUtf8Array;
+    { Building a tree from constructed nodes (for the XSLT units; not part
+      of the documented API yet). BeginBuild empties the tree; with
+      DocumentNode node 0 is a document node and the nodes added at the
+      top are its children (text included), without it the first node
+      added is node 0 and no other node may be added at the top. The
+      calls follow document order: an element's namespaces and
+      attributes come before its children. Built nodes have line and
+      column 0. A call out of order raises ELandrixXmlError
+      (xecInvalidOperation) and leaves the tree unusable until the next
+      BeginBuild or load. }
+    procedure BeginBuild(DocumentNode: Boolean);
+    procedure BuildStartElement(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8);
+    { a namespace declaration of the element just started }
+    procedure BuildNamespace(const Prefix, NamespaceUri: TLandrixXmlUtf8);
+    { an attribute of the element just started, or the node at the top }
+    procedure BuildAttribute(const NamespaceUri, Prefix, LocalName, Value: TLandrixXmlUtf8);
+    { adjacent text is merged; empty text adds nothing }
+    procedure BuildText(const Value: TLandrixXmlUtf8);
+    procedure BuildComment(const Value: TLandrixXmlUtf8);
+    procedure BuildProcessingInstruction(const Target, Value: TLandrixXmlUtf8);
+    procedure BuildEndElement;
+    procedure EndBuild;
   end;
 
 implementation
@@ -293,6 +324,8 @@ begin
   FStack := nil;
   FLastChild := nil;
   FDepth := 0;
+  FBuilding := False;
+  FBuildDocument := False;
   FPositions := nil;
   NewNode(xnkDocument, 1, 1);
 end;
@@ -397,6 +430,9 @@ var
   P: Integer;
 begin
   Index := NewNode(Kind, Line, Column);
+  { the node at the top of a tree built without a document node }
+  if FDepth = 0 then
+    Exit;
   P := FStack[FDepth - 1];
   FParents[Index] := P;
   if FLastChild[FDepth - 1] >= 0 then
@@ -409,14 +445,17 @@ procedure TLandrixXmlXPathTree.AddText(const Value: TLandrixXmlUtf8; Line, Colum
 var
   I: Integer;
 begin
-  { no text nodes in the document node, none empty }
-  if (FDepth <= 1) or (Value = '') then
+  { no text nodes in a loaded document node, none empty }
+  if (Value = '') or (FDepth <= 1) and not FBuilding then
     Exit;
-  I := FLastChild[FDepth - 1];
-  if (I >= 0) and (FKinds[I] = xnkText) then
+  if FDepth > 0 then
   begin
-    FValues[I] := FValues[I] + Value;
-    Exit;
+    I := FLastChild[FDepth - 1];
+    if (I >= 0) and (FKinds[I] = xnkText) then
+    begin
+      FValues[I] := FValues[I] + Value;
+      Exit;
+    end;
   end;
   AddChild(xnkText, Line, Column, I);
   FValues[I] := Value;
@@ -492,6 +531,128 @@ begin
   FStack := nil;
   FLastChild := nil;
   FDepth := 0;
+end;
+
+{ --- building from constructed nodes ---------------------------------- }
+
+procedure TLandrixXmlXPathTree.BeginBuild(DocumentNode: Boolean);
+begin
+  Clear;
+  SetLength(FStack, 16);
+  SetLength(FLastChild, 16);
+  FBuilding := True;
+  FBuildDocument := DocumentNode;
+  if DocumentNode then
+  begin
+    FStack[0] := 0;
+    FLastChild[0] := -1;
+    FDepth := 1;
+  end
+  else
+  begin
+    { the first node added becomes node 0 }
+    FCount := 0;
+    FDepth := 0;
+  end;
+end;
+
+{ Top: the call adds a node at the current level (not an attribute or a
+  namespace of the element just started). }
+procedure TLandrixXmlXPathTree.CheckBuild(Top: Boolean);
+begin
+  if not FBuilding then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'XPath tree: BeginBuild was not called');
+  if Top and (FDepth = 0) and (FCount > 0) then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation,
+      'XPath tree: a tree without a document node has one node at the top');
+end;
+
+procedure TLandrixXmlXPathTree.BuildStartElement(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8);
+begin
+  CheckBuild(True);
+  StartElement(NamespaceUri, Prefix, LocalName, 0, 0, nil);
+end;
+
+{ The element just started, which has no children yet (its namespaces and
+  attributes come first); -1 at the top of a tree without document node. }
+function OpenElement(Depth: Integer; const Stack, LastChild: TLandrixXmlXPathIntArray;
+  const Kinds: TLandrixXmlXPathKindArray): Integer;
+begin
+  Result := -1;
+  if Depth = 0 then
+    Exit;
+  Result := Stack[Depth - 1];
+  if (Kinds[Result] <> xnkElement) or (LastChild[Depth - 1] >= 0) then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation,
+      'XPath tree: attributes and namespaces belong to an element before its children');
+end;
+
+procedure TLandrixXmlXPathTree.BuildNamespace(const Prefix, NamespaceUri: TLandrixXmlUtf8);
+begin
+  CheckBuild(False);
+  if OpenElement(FDepth, FStack, FLastChild, FKinds) < 0 then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'XPath tree: a namespace needs an element');
+  AddDeclaration(Prefix, NamespaceUri);
+end;
+
+procedure TLandrixXmlXPathTree.BuildAttribute(const NamespaceUri, Prefix, LocalName, Value: TLandrixXmlUtf8);
+var
+  I: Integer;
+begin
+  CheckBuild(False);
+  if OpenElement(FDepth, FStack, FLastChild, FKinds) >= 0 then
+  begin
+    AddAttribute(NamespaceUri, Prefix, LocalName, Value, nil, -1);
+    Exit;
+  end;
+  CheckBuild(True);
+  I := NewNode(xnkAttribute, 0, 0);
+  FNameIds[I] := NameId(NamespaceUri, Prefix, LocalName);
+  FValues[I] := Value;
+end;
+
+procedure TLandrixXmlXPathTree.BuildText(const Value: TLandrixXmlUtf8);
+begin
+  CheckBuild(Value <> '');
+  AddText(Value, 0, 0, nil);
+end;
+
+procedure TLandrixXmlXPathTree.BuildComment(const Value: TLandrixXmlUtf8);
+var
+  N: Integer;
+begin
+  CheckBuild(True);
+  AddChild(xnkComment, 0, 0, N);
+  FValues[N] := Value;
+end;
+
+procedure TLandrixXmlXPathTree.BuildProcessingInstruction(const Target, Value: TLandrixXmlUtf8);
+var
+  N: Integer;
+begin
+  CheckBuild(True);
+  AddChild(xnkProcessingInstruction, 0, 0, N);
+  FNameIds[N] := NameId('', '', Target);
+  FValues[N] := Value;
+end;
+
+procedure TLandrixXmlXPathTree.BuildEndElement;
+begin
+  CheckBuild(False);
+  if (FDepth = 0) or FBuildDocument and (FDepth = 1) then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'XPath tree: no element to end');
+  EndElement;
+end;
+
+procedure TLandrixXmlXPathTree.EndBuild;
+begin
+  CheckBuild(False);
+  if FDepth <> Ord(FBuildDocument) then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'XPath tree: an element is not ended');
+  if FCount = 0 then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'XPath tree: no node was added');
+  FBuilding := False;
+  Finish;
 end;
 
 procedure TLandrixXmlXPathTree.LoadFromReader(Reader: TLandrixXmlReader);
@@ -691,7 +852,7 @@ begin
   Result := Index;
   if FKinds[Result] = xnkAttribute then
     Result := FParents[Result];
-  if FKinds[Result] <> xnkElement then
+  if (Result >= 0) and (FKinds[Result] <> xnkElement) then
     Result := -1;
 end;
 
@@ -748,9 +909,10 @@ begin
     Result := True;
     Exit;
   end;
-  { the parent of the root element is the document node 0 }
+  { up to the document node (no declarations, no name) or the node at
+    the top of a tree without one }
   N := E;
-  while N > 0 do
+  while N >= 0 do
   begin
     D := DeclarationIndex(N, Prefix);
     if D >= 0 then
@@ -762,7 +924,7 @@ begin
     N := FParents[N];
   end;
   N := E;
-  while N > 0 do
+  while N >= 0 do
   begin
     if NamedPrefixUri(N, Prefix, NamespaceUri) then
     begin
@@ -807,7 +969,7 @@ begin
   SeenCount := 0;
   { the nearest declaration of a prefix counts, xmlns="" included }
   N := E;
-  while N > 0 do
+  while N >= 0 do
   begin
     D := FDeclFirsts[N];
     if D >= 0 then
@@ -825,7 +987,7 @@ begin
   end;
   { then the prefixes of names without a declaration, as LookupNamespace }
   N := E;
-  while N > 0 do
+  while N >= 0 do
   begin
     for I := N to N + FAttrCounts[N] do
     begin
@@ -878,6 +1040,9 @@ end;
 
 function TLandrixXmlXPathTree.DocumentElement: Integer;
 begin
+  Result := -1;
+  if FKinds[0] <> xnkDocument then
+    Exit;
   Result := FirstChild(0);
   while (Result >= 0) and (FKinds[Result] <> xnkElement) do
     Result := FNexts[Result];
@@ -1040,8 +1205,14 @@ var
 begin
   Result := '';
   I := Index;
-  while (I > 0) and (FKinds[I] <> xnkDocument) do
+  while FKinds[I] <> xnkDocument do
   begin
+    { the top of a tree without document node, as fn:path writes it }
+    if FParents[I] < 0 then
+    begin
+      Result := 'Q{http://www.w3.org/2005/xpath-functions}root()' + Result;
+      Exit;
+    end;
     Segment := '';
     if FKinds[I] = xnkAttribute then
       Segment := '@Q{' + NamespaceUriUtf8(I) + '}' + LocalNameUtf8(I)

@@ -429,6 +429,174 @@ begin
   end;
 end;
 
+{ Copies the children of Node of Source into Target with the Build calls. }
+procedure CopyChildren(Source, Target: TLandrixXmlXPathTree; Node: Integer);
+var
+  I, J: Integer;
+  Prefixes: TLandrixXmlUtf8Array;
+  Uri: TLandrixXmlUtf8;
+begin
+  Prefixes := nil;
+  I := Source.FirstChild(Node);
+  while I >= 0 do
+  begin
+    case Source.Kind[I] of
+      xnkElement:
+        begin
+          Target.BuildStartElement(Source.NamespaceUriUtf8(I), Source.PrefixUtf8(I), Source.LocalNameUtf8(I));
+          Prefixes := Source.InScopePrefixesUtf8(I);
+          for J := 0 to Integer(Length(Prefixes)) - 1 do
+            if Source.LookupNamespace(I, Prefixes[J], Uri) then
+              Target.BuildNamespace(Prefixes[J], Uri);
+          for J := I + 1 to I + Source.AttributeCount[I] do
+            Target.BuildAttribute(Source.NamespaceUriUtf8(J), Source.PrefixUtf8(J), Source.LocalNameUtf8(J),
+              Source.ValueUtf8(J));
+          CopyChildren(Source, Target, I);
+          Target.BuildEndElement;
+        end;
+      xnkText:
+        Target.BuildText(Source.ValueUtf8(I));
+      xnkComment:
+        Target.BuildComment(Source.ValueUtf8(I));
+      xnkProcessingInstruction:
+        Target.BuildProcessingInstruction(Source.LocalNameUtf8(I), Source.ValueUtf8(I));
+    else
+      { attributes are not children }
+    end;
+    I := Source.NextSibling[I];
+  end;
+end;
+
+{ A tree built from constructed nodes equals the loaded one. }
+procedure TestBuildDocument;
+var
+  Loaded, T: TLandrixXmlXPathTree;
+  I: Integer;
+begin
+  Loaded := TLandrixXmlXPathTree.Create;
+  T := TLandrixXmlXPathTree.Create;
+  try
+    Loaded.LoadFromUtf8(U(Sample));
+    T.BeginBuild(True);
+    CopyChildren(Loaded, T, 0);
+    T.EndBuild;
+    CheckTree(T, 'built');
+    CheckEquals(0, T.Line[T.DocumentElement], 'built: no line');
+    Loaded.LoadFromUtf8(U(Tricky));
+    T.BeginBuild(True);
+    CopyChildren(Loaded, T, 0);
+    T.EndBuild;
+    CheckEquals(Loaded.Count, T.Count, 'tricky: node count');
+    for I := 1 to T.Count - 1 do
+      CheckEqualsUtf8(U(TrickyLocations[I - 1]), T.LocationPathUtf8(I), 'tricky: location of node ' + IntToStr(I));
+    { text split over several calls is one node; text and empty text at
+      the top of a document node }
+    T.BeginBuild(True);
+    T.BuildText(U('a'));
+    T.BuildText(U(''));
+    T.BuildText(U('b'));
+    T.BuildStartElement(U(''), U(''), U('e'));
+    T.BuildText(U('c'));
+    T.BuildEndElement;
+    T.BuildText(U('d'));
+    T.EndBuild;
+    CheckEquals(5, T.Count, 'document with text: node count');
+    CheckEquals(Ord(xnkText), Ord(T.Kind[1]), 'text at the top');
+    CheckEqualsUtf8(U('ab'), T.ValueUtf8(1), 'text merged');
+    CheckEqualsUtf8(U('abcd'), T.StringValueUtf8(0), 'string value of the document');
+    CheckEquals(2, T.DocumentElement, 'the element after the text');
+    CheckEqualsUtf8(U('/text()[2]'), T.LocationPathUtf8(4), 'second text at the top');
+  finally
+    T.Free;
+    Loaded.Free;
+  end;
+end;
+
+procedure CheckBuildError(T: TLandrixXmlXPathTree; Step: Integer; const Msg: string);
+begin
+  try
+    case Step of
+      0: T.BuildStartElement(U(''), U(''), U('x'));
+      1: T.BuildAttribute(U(''), U(''), U('a'), U('1'));
+      2: T.BuildNamespace(U('p'), U('urn:p'));
+      3: T.BuildEndElement;
+      4: T.EndBuild;
+      5: T.BuildText(U('t'));
+    end;
+    FailNotRaised(Msg);
+  except
+    on E: ELandrixXmlError do
+      CheckEquals(Ord(xecInvalidOperation), Ord(E.Code), Msg);
+  end;
+end;
+
+{ Trees without a document node: one node at the top, which has no
+  parent; calls out of order raise xecInvalidOperation. }
+procedure TestBuildWithoutDocument;
+var
+  T: TLandrixXmlXPathTree;
+  Uri: TLandrixXmlUtf8;
+begin
+  T := TLandrixXmlXPathTree.Create;
+  try
+    T.BeginBuild(False);
+    T.BuildStartElement(U('urn:e'), U('p'), U('e'));
+    T.BuildNamespace(U('p'), U('urn:e'));
+    T.BuildAttribute(U(''), U(''), U('a'), U('1'));
+    T.BuildStartElement(U(''), U(''), U('f'));
+    T.BuildText(U('x'));
+    T.BuildEndElement;
+    T.BuildText(U('y'));
+    T.BuildEndElement;
+    CheckBuildError(T, 0, 'a second node at the top');
+    CheckBuildError(T, 5, 'text after the node at the top');
+    T.EndBuild;
+    CheckEquals(5, T.Count, 'element tree: node count');
+    CheckEquals(Ord(xnkElement), Ord(T.Kind[0]), 'node 0 is the element');
+    CheckEquals(-1, T.Parent[0], 'no parent');
+    CheckEquals(4, T.SubtreeEnd[0], 'subtree of node 0');
+    CheckEquals(-1, T.DocumentElement, 'no document element');
+    CheckEqualsUtf8(U('xy'), T.StringValueUtf8(0), 'string value');
+    Check(T.LookupNamespace(2, U('p'), Uri), 'a namespace declared on the top');
+    CheckEqualsUtf8(U('urn:e'), Uri, 'its URI');
+    CheckEquals(0, T.Parent[1], 'attribute parent');
+    CheckEqualsUtf8(U('Q{http://www.w3.org/2005/xpath-functions}root()'), T.LocationPathUtf8(0),
+      'location of the top');
+    CheckEqualsUtf8(U('Q{http://www.w3.org/2005/xpath-functions}root()/Q{}f[1]/text()[1]'),
+      T.LocationPathUtf8(3), 'location below the top');
+    T.BeginBuild(False);
+    T.BuildAttribute(U('urn:a'), U('q'), U('b'), U('2'));
+    CheckBuildError(T, 1, 'a second attribute at the top');
+    T.EndBuild;
+    CheckEquals(1, T.Count, 'attribute tree');
+    CheckEquals(Ord(xnkAttribute), Ord(T.Kind[0]), 'node 0 is the attribute');
+    CheckEqualsUtf8(U('2'), T.StringValueUtf8(0), 'attribute value');
+    Check(not T.LookupNamespace(0, U('q'), Uri), 'no namespace lookup on an attribute at the top');
+    CheckEquals(0, Integer(Length(T.InScopePrefixesUtf8(0))), 'no prefixes of an attribute at the top');
+    T.BeginBuild(False);
+    T.BuildText(U('t'));
+    T.EndBuild;
+    CheckEquals(Ord(xnkText), Ord(T.Kind[0]), 'node 0 is the text');
+    { errors }
+    T.BeginBuild(False);
+    CheckBuildError(T, 4, 'nothing built');
+    CheckBuildError(T, 2, 'a namespace without element');
+    CheckBuildError(T, 3, 'no element to end');
+    T.BeginBuild(True);
+    CheckBuildError(T, 1, 'an attribute of the document node');
+    CheckBuildError(T, 3, 'the document node is not ended');
+    T.BuildStartElement(U(''), U(''), U('e'));
+    T.BuildComment(U('c'));
+    CheckBuildError(T, 1, 'an attribute after a child');
+    CheckBuildError(T, 2, 'a namespace after a child');
+    CheckBuildError(T, 4, 'an element not ended');
+    T.LoadFromUtf8(U('<x/>'));
+    CheckBuildError(T, 0, 'no BeginBuild after a load');
+  finally
+    T.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathTree.FromReader', TestFromReader);
@@ -438,6 +606,8 @@ begin
   RegisterTest('XPathTree.ManyNames', TestManyNames);
   RegisterTest('XPathTree.Namespaces', TestNamespaces);
   RegisterTest('XPathTree.FailedLoad', TestFailedLoad);
+  RegisterTest('XPathTree.BuildDocument', TestBuildDocument);
+  RegisterTest('XPathTree.BuildWithoutDocument', TestBuildWithoutDocument);
 end;
 
 end.

@@ -1196,6 +1196,8 @@ var
   end;
 
 begin
+  if Tree.Kind[0] <> xnkDocument then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Schematron: the tree has no document node');
   ClearResults;
   FCurrentPattern := -1;
   FCurrentEvent := -1;

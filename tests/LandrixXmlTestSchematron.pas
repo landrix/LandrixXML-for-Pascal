@@ -335,6 +335,18 @@ begin
     V.AbortOnDynamicError := False;
     Check(V.ValidateTree(Tree), 'only a warning and a report: valid');
     CheckEquals(2, V.ResultCount, 'warning and report');
+    { a tree without document node is no document to validate }
+    Tree.BeginBuild(False);
+    Tree.BuildStartElement(U('urn:p'), U('p'), U('a'));
+    Tree.BuildEndElement;
+    Tree.EndBuild;
+    try
+      V.ValidateTree(Tree);
+      FailNotRaised('a tree without document node');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'no document node');
+    end;
   finally
     Tree.Free;
     V.Free;
