@@ -1785,6 +1785,100 @@ begin
   end;
 end;
 
+{ AddTree: trees without URI get the next node numbers; the numbers given
+  before stay, document() and doc() do not find them, a result keeps the
+  trees it was computed with; many trees (the lookup of a node's tree). }
+procedure TestTemporaryTrees;
+const
+  Many = 1000;
+var
+  Tree, Codes: TLandrixXmlXPathTree;
+  Temps: array of TLandrixXmlXPathTree;
+  Bases: array of Integer;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  R: TLandrixXmlXPathResult;
+  I, CodeNode, Base: Integer;
+
+  function Run(const S: string; Node: Integer): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), nil);
+    try
+      Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, Node));
+    except
+      on E: ELandrixXmlXPathError do
+        Result := 'error ' + E.XPathCode;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Codes := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  Expr := nil;
+  R := nil;
+  Temps := nil;
+  Bases := nil;
+  SetLength(Temps, Many);
+  for I := 0 to Many - 1 do
+    Temps[I] := nil;
+  SetLength(Bases, Many);
+  try
+    Tree.LoadFromUtf8(U('<r><a/></r>'));
+    Codes.LoadFromUtf8(U('<codes><c v="1"/></codes>'));
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    Evaluator.AddDocument(U('codes.xml'), Codes);
+    Expr := TLandrixXmlXPathExpression.Create(U('document(''codes.xml'')/codes/c/@v'), nil);
+    R := Evaluator.Evaluate(Expr, 0);
+    CodeNode := R.Node[0] - 1;
+    CheckEquals(Tree.Count + 2, CodeNode, 'the code after the document''s nodes');
+    for I := 0 to Many - 1 do
+    begin
+      Temps[I] := TLandrixXmlXPathTree.Create;
+      Temps[I].BeginBuild(I mod 2 = 0);
+      Temps[I].BuildStartElement(U(''), U(''), U('t' + IntToStr(I)));
+      Temps[I].BuildText(U(IntToStr(I)));
+      Temps[I].BuildEndElement;
+      Temps[I].EndBuild;
+      Bases[I] := Evaluator.AddTree(Temps[I]);
+      if I = 0 then
+        CheckEquals(Tree.Count + Codes.Count, Bases[0], 'the first temporary tree after the document')
+      else
+        CheckEquals(Bases[I - 1] + Temps[I - 1].Count, Bases[I], 'the next free numbers ' + IntToStr(I));
+    end;
+    { the result computed before still finds its tree }
+    CheckEqualsStr('1', LandrixXmlUtf8ToString(R.StringValueUtf8(0)), 'the result after AddTree');
+    CheckEqualsStr('1', Run('string(document(''codes.xml'')/codes/c/@v)', 0), 'the document still found');
+    CheckEqualsStr('c', Run('name(.)', CodeNode), 'the number of the code is the same');
+    for I := 0 to Many - 1 do
+    begin
+      if I mod 2 = 0 then
+        Base := Bases[I] + 1
+      else
+        Base := Bases[I];
+      CheckEqualsStr('t' + IntToStr(I) + ' ' + IntToStr(I), Run('concat(name(.), '' '', .)', Base),
+        'a node of temporary tree ' + IntToStr(I));
+    end;
+    CheckEqualsStr('t7', Run('name(root(.))', Bases[7] + 1), 'root() in a tree without document node');
+    CheckEqualsStr('t6', Run('name(/*)', Bases[6] + 2), '"/" in a tree with document node');
+    CheckEqualsStr('error XPDY0050', Run('/', Bases[7]), '"/" in a tree without document node');
+    CheckEqualsStr('', Run('string(document-uri(/))', Bases[6]), 'no document URI');
+    CheckEqualsStr('false', Run('doc-available('''')', 0), 'not found by an empty URI');
+    CheckEqualsStr('true', Run('document(''codes.xml'')/codes << root(.)', Bases[Many - 1]),
+      'document order: an added document before a later temporary tree');
+  finally
+    R.Free;
+    Expr.Free;
+    Evaluator.Free;
+    for I := 0 to Many - 1 do
+      Temps[I].Free;
+    Codes.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
@@ -1806,6 +1900,7 @@ begin
   RegisterTest('XPathEval.BaseUri', TestBaseUri);
   RegisterTest('XPathEval.LangAndDocuments', TestLangAndDocuments);
   RegisterTest('XPathEval.TreeWithoutDocument', TestTreeWithoutDocument);
+  RegisterTest('XPathEval.TemporaryTrees', TestTemporaryTrees);
 end;
 
 end.

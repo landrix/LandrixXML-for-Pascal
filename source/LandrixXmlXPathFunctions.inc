@@ -1073,8 +1073,8 @@ var
   var
     D: Integer;
   begin
-    for D := 0 to Integer(Length(FDocUris)) - 1 do
-      if FDocUris[D] = Uri then
+    for D := 0 to FDocCount - 1 do
+      if FDocNamed[D] and (FDocUris[D] = Uri) then
       begin
         Result := FDocBases[D];
         Exit;
@@ -1870,8 +1870,8 @@ begin
           Fail('XPTY0004', Name + ': a single node was expected');
         if A.Count = 1 then
         begin
-          for I := 0 to Integer(Length(FDocUris)) - 1 do
-            if FDocBases[I] = A.Items[0].Node then
+          for I := 0 to FDocCount - 1 do
+            if FDocNamed[I] and (FDocBases[I] = A.Items[0].Node) then
               Result := SingleSeq(StringItem(xikAnyUri, FDocUris[I]));
           if (A.Items[0].Node = 0) and (FTree.Kind[0] = xnkDocument) and (FTree.BaseUri <> '') then
             Result := SingleSeq(StringItem(xikAnyUri, FTree.BaseUri));

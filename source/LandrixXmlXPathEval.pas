@@ -65,7 +65,10 @@
   evaluator's tree first, then each added tree from its base on; "/" and
   root() give the root of the node's own tree. Kept values of rooted
   paths hold for the evaluator's tree; from a node of an added tree they
-  are computed again.
+  are computed again. AddTree adds a tree without a URI (the temporary
+  trees of XSLT): it only gets node numbers after those already given,
+  nothing kept is forgotten, so it is cheap enough for every constructed
+  value.
 
   EvaluatePattern evaluates a path as the nodes an XSLT match pattern
   matches: a dynamic error in a predicate of one of its steps means that
@@ -173,9 +176,11 @@ type
   private
     FItems: TLandrixXmlXPathSequence;
     FTree: TLandrixXmlXPathTree;
-    { the trees AddDocument gave the evaluator and their bases }
+    { the trees AddDocument and AddTree gave the evaluator and their bases
+      (the first FDocCount entries) }
     FDocTrees: TLandrixXmlXPathTreeArray;
     FDocBases: TLandrixXmlXPathIntArray;
+    FDocCount: Integer;
     function GetCount: Integer;
     function GetKind(Index: Integer): TLandrixXmlXPathItemKind;
     function GetNode(Index: Integer): Integer;
@@ -196,10 +201,14 @@ type
   TLandrixXmlXPathEvaluator = class
   private
     FTree: TLandrixXmlXPathTree;
-    { AddDocument: the URIs, trees and the first node number of each }
+    { AddDocument and AddTree: the URIs, trees and the first node number
+      of each (the first FDocCount entries; the arrays grow by doubling);
+      FDocNamed: added with AddDocument (AddTree's have no URI) }
     FDocUris: TLandrixXmlUtf8Array;
     FDocTrees: TLandrixXmlXPathTreeArray;
     FDocBases: TLandrixXmlXPathIntArray;
+    FDocNamed: array of Boolean;
+    FDocCount: Integer;
     FGlobalCount: Integer;
     FGlobals: TLandrixXmlXPathSlots;
     FFrame: TLandrixXmlXPathSlots;
@@ -267,6 +276,7 @@ type
       out SavedBase: Integer);
     procedure LeaveExpression(SavedExpr: TLandrixXmlXPathExpression; SavedBase: Integer);
     procedure ComputeBases;
+    procedure AppendTree(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree; Named: Boolean);
     function TreeOf(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
     function NodeMatches(Node: Integer; const T: TLandrixXmlXPathSequenceType): Boolean;
     function SequenceMatches(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType): Boolean;
@@ -377,6 +387,13 @@ type
       which has a document node; not owned, it must live as long as the
       evaluator and its results }
     procedure AddDocument(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree);
+    { A tree without URI (a temporary tree of XSLT, with or without a
+      document node; for the XSLT units, not part of the documented API
+      yet); returns the number of its node 0. The node numbers given so
+      far and the kept values stay (until ClearCache, which numbers all
+      trees again). Not owned: it must live as long as
+      the evaluator and the values that hold its nodes. }
+    function AddTree(Tree: TLandrixXmlXPathTree): Integer;
     { user functions (TLandrixXmlXPathFunctionDef) by their index in the
       static context; not owned }
     property Functions: TList read FFunctions write FFunctions;
@@ -966,23 +983,30 @@ end;
 {$I LandrixXmlXPathCast.inc}
 
 { The tree of Node in the numbering of TLandrixXmlXPathEvaluator.AddDocument
-  and the number its nodes start from. }
+  and the number its nodes start from (the bases of the first Count trees
+  ascend). }
 function NodeTree(Main: TLandrixXmlXPathTree; const Trees: TLandrixXmlXPathTreeArray;
-  const Bases: TLandrixXmlXPathIntArray; Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
+  const Bases: TLandrixXmlXPathIntArray; Count, Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
 var
-  K: Integer;
+  Lo, Hi, M: Integer;
 begin
   Base := 0;
   Result := Main;
-  if Node < Main.Count then
+  if (Node < Main.Count) or (Count = 0) then
     Exit;
-  for K := Integer(High(Trees)) downto 0 do
-    if Node >= Bases[K] then
-    begin
-      Base := Bases[K];
-      Result := Trees[K];
-      Exit;
-    end;
+  { the last tree whose base is at most Node }
+  Lo := 0;
+  Hi := Count - 1;
+  while Lo < Hi do
+  begin
+    M := Lo + (Hi - Lo + 1) div 2;
+    if Bases[M] <= Node then
+      Lo := M
+    else
+      Hi := M - 1;
+  end;
+  Base := Bases[Lo];
+  Result := Trees[Lo];
 end;
 
 function TLandrixXmlXPathResult.StringValueUtf8(Index: Integer): TLandrixXmlUtf8;
@@ -992,7 +1016,7 @@ var
 begin
   if FItems.Items[Index].Kind = xikNode then
   begin
-    T := NodeTree(FTree, FDocTrees, FDocBases, FItems.Items[Index].Node, Base);
+    T := NodeTree(FTree, FDocTrees, FDocBases, FDocCount, FItems.Items[Index].Node, Base);
     Result := T.StringValueUtf8(FItems.Items[Index].Node - Base);
   end
   else
@@ -1407,26 +1431,59 @@ begin
     Result := CastDateKind(Result, Kind);
 end;
 
-procedure TLandrixXmlXPathEvaluator.AddDocument(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree);
+{ Appends Tree after the trees added so far, with the next free node
+  numbers. }
+procedure TLandrixXmlXPathEvaluator.AppendTree(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree;
+  Named: Boolean);
 var
+  Next: Int64;
   N: Integer;
 begin
   if (Tree = nil) or (Tree = FTree) then
-    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'AddDocument: another tree is needed');
-  if Tree.Kind[0] <> xnkDocument then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'XPath evaluator: another tree is needed');
+  if FDocCount = 0 then
+    Next := FTree.Count
+  else
+    Next := Int64(FDocBases[FDocCount - 1]) + FDocTrees[FDocCount - 1].Count;
+  if Next + Tree.Count > MaxInt then
+    raise ELandrixXmlError.CreateCode(xecLimit, 'XPath evaluator: too many nodes');
+  if FDocCount = Length(FDocTrees) then
+  begin
+    { every tree has a node: at most MaxInt trees }
+    if FDocCount > (MaxInt - 4) div 2 then
+      N := MaxInt
+    else
+      N := 2 * FDocCount + 4;
+    SetLength(FDocUris, N);
+    SetLength(FDocTrees, N);
+    SetLength(FDocBases, N);
+    SetLength(FDocNamed, N);
+  end;
+  FDocUris[FDocCount] := Uri;
+  FDocTrees[FDocCount] := Tree;
+  FDocBases[FDocCount] := Integer(Next);
+  FDocNamed[FDocCount] := Named;
+  Inc(FDocCount);
+end;
+
+procedure TLandrixXmlXPathEvaluator.AddDocument(const Uri: TLandrixXmlUtf8; Tree: TLandrixXmlXPathTree);
+begin
+  if (Tree <> nil) and (Tree.Kind[0] <> xnkDocument) then
     raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'AddDocument: the tree has no document node');
-  N := Integer(Length(FDocTrees));
-  SetLength(FDocUris, N + 1);
-  SetLength(FDocTrees, N + 1);
-  FDocUris[N] := Uri;
-  FDocTrees[N] := Tree;
+  AppendTree(Uri, Tree, True);
   { kept values and evaluated lazy variables may have read the documents
     (doc-available, doc) }
   ResetDynamicContext;
-  ComputeBases;
 end;
 
-{ The node numbers: the evaluator's tree, then the added trees in turn. }
+function TLandrixXmlXPathEvaluator.AddTree(Tree: TLandrixXmlXPathTree): Integer;
+begin
+  AppendTree('', Tree, False);
+  Result := FDocBases[FDocCount - 1];
+end;
+
+{ The node numbers: the evaluator's tree, then the added trees in turn
+  (again after ClearCache: the evaluator's tree may have another size). }
 procedure TLandrixXmlXPathEvaluator.ComputeBases;
 var
   K: Integer;
@@ -1434,9 +1491,8 @@ var
 begin
   { the node numbers change: the indexes hold them }
   DropKeyIndexes;
-  SetLength(FDocBases, Length(FDocTrees));
   Next := FTree.Count;
-  for K := 0 to Integer(High(FDocTrees)) do
+  for K := 0 to FDocCount - 1 do
   begin
     if Next + FDocTrees[K].Count > MaxInt then
       raise ELandrixXmlError.CreateCode(xecLimit, 'AddDocument: too many nodes');
@@ -1447,7 +1503,7 @@ end;
 
 function TLandrixXmlXPathEvaluator.TreeOf(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
 begin
-  Result := NodeTree(FTree, FDocTrees, FDocBases, Node, Base);
+  Result := NodeTree(FTree, FDocTrees, FDocBases, FDocCount, Node, Base);
 end;
 
 { The name and type annotation of element(N, T) or attribute(N, T) on an
@@ -2050,8 +2106,11 @@ begin
   Result := TLandrixXmlXPathResult.Create;
   try
     Result.FTree := FTree;
+    { shared, not copied: trees added later only fill entries after
+      FDocCount (or go into new arrays when the evaluator's grow) }
     Result.FDocTrees := FDocTrees;
     Result.FDocBases := FDocBases;
+    Result.FDocCount := FDocCount;
     Result.FItems := EvaluateSequence(Expr, ContextNode);
   except
     Result.Free;
