@@ -735,6 +735,7 @@ type
     function ParseOr: Integer;
     function ParseAnd: Integer;
     function ParseComparison: Integer;
+    function ParseStringConcat: Integer;
     function ParseRange: Integer;
     function ParseAdditive: Integer;
     function ParseMultiplicative: Integer;
@@ -1052,7 +1053,12 @@ begin
         Symbol(2)
       else
         Error('unexpected character ":"', Start);
-    '(', ')', '[', ']', ',', '@', '=', '+', '-', '|', '?':
+    '|':
+      if PeekChar(1) = '|' then
+        Symbol(2)
+      else
+        Symbol(1);
+    '(', ')', '[', ']', ',', '@', '=', '+', '-', '?':
       Symbol(1);
   else
     if IsNameStart(AnsiChar(FSource[FPos])) then
@@ -1352,7 +1358,7 @@ var
   Kind: TLandrixXmlXPathAstKind;
   Op: TLandrixXmlXPathCompare;
 begin
-  Result := ParseRange;
+  Result := ParseStringConcat;
   Kind := xakGeneralCompare;
   if FToken.Kind = tkSymbol then
   begin
@@ -1410,7 +1416,28 @@ begin
   FNodes[N].Op := Ord(Op);
   Next;
   AddChild(N, Result);
-  AddChild(N, ParseRange);
+  AddChild(N, ParseStringConcat);
+  Result := N;
+end;
+
+{ a || b || c (XPath 3.0, only in the Saxon profile) is concat(a, b, c) }
+function TParser.ParseStringConcat: Integer;
+var
+  N: Integer;
+begin
+  Result := ParseRange;
+  if not IsSymbol('||') then
+    Exit;
+  if FContext.Profile = xppXPath20 then
+    Error('"||" is XPath 3.0', FToken.Position);
+  N := NewNode(xakFunction, FToken.Position);
+  FNodes[N].Op := Ord(xfnConcat);
+  AddChild(N, Result);
+  while IsSymbol('||') do
+  begin
+    Next;
+    AddChild(N, ParseRange);
+  end;
   Result := N;
 end;
 

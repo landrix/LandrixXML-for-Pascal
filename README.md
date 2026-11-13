@@ -575,8 +575,10 @@ Differences from Xerces, also on purpose:
   follows XPath 2.0 where Saxon, which runs XPath 2.0 rule sets as XPath
   3.1, differs, e.g. `round` with two arguments is an error;
   `xppSaxon` behaves as Saxon in the KoSIT validator and is what the
-  Schematron validator uses. Both profiles have a QT3 baseline; the
-  differences are tested in `tests/data/xpath/profiles.txt`.
+  Schematron validator uses; it also accepts the XPath 3.0 string
+  concatenation operator `||`, which XSLT 2.0 stylesheets run by Saxon
+  use. Both profiles have a QT3 baseline; the differences are tested in
+  `tests/data/xpath/profiles.txt`.
 - The [KoSIT XRechnung test suite](https://github.com/itplr-kosit/xrechnung-testsuite)
   (`tools/run-kosit-suite.py`, pinned release 2026-08-31 with the
   matching KoSIT validator configuration): all 86 invoices are validated

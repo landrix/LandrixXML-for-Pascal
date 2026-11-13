@@ -5,6 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- XPath: the string concatenation operator `||` (XPath 3.0) in the
+  `xppSaxon` profile, as Saxon accepts it in stylesheets that declare
+  XSLT 2.0; `a || b || c` is `concat(a, b, c)`. The `xppXPath20` profile
+  rejects it with XPST0003.
+
 ## [0.4.0] - 2026-11-12
 
 Exact normalization check, faster XPath and XML Schema validation, a fix

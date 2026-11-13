@@ -49,3 +49,8 @@ doc-available('%gg')	error FODC0005	xs:boolean false	F&O 2.0: doc-available rais
 matches('a.b', 'a.b', 'q')	error FORX0001	xs:boolean true	the flag q (literal pattern) is XPath 3.0
 matches('A', '^[a-]$', 'i')	xs:boolean true	xs:boolean false	F&O 2.0: every character of a class gets its case variants; Saxon not a character before -] or -[
 matches('A', '^[a-[x]]$', 'i')	xs:boolean true	xs:boolean false	the same before a subtraction
+'a' || 'b'	error XPST0003	xs:string ab	the string concatenation operator is XPath 3.0 (functions.xsl of the KoSIT visualization uses it)
+1 || () || 2.5	error XPST0003	xs:string 12.5	the same; an empty operand is the empty string
+('a', 'b') || 'c'	error XPST0003	error XPTY0004	the same; every operand is at most one item, as in concat
+1 || 2 = '12'	error XPST0003	xs:boolean true	the same; || binds more tightly than a comparison
+'x' || 1 to 2	error XPST0003	error XPTY0004	the same; a range binds more tightly than ||
