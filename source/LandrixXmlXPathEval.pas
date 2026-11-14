@@ -135,6 +135,29 @@ type
     Count: Integer;
   end;
 
+  { The focus of an evaluation: a context node (Node, Item empty), an
+    atomic context item (Node -1, Item one item) or none (Node -1, Item
+    empty, Position and Size 0); Position from 1 to Size otherwise. }
+  TLandrixXmlXPathFocus = record
+    Node: Integer;
+    Item: TLandrixXmlXPathSequence;
+    Position: Integer;
+    Size: Integer;
+  end;
+
+  TLandrixXmlXPathEvaluator = class;
+  TLandrixXmlXPathFunctionDef = class;
+
+  { A user function implemented by the caller (for the XSLT units, not
+    part of the documented API yet): the arguments are evaluated (not
+    converted to the parameter types), Focus is the caller's, and
+    current() keeps the caller's node (unlike in a user function with a
+    body). It may evaluate other expressions with the evaluator (they
+    share the current frame of variables); it raises
+    ELandrixXmlXPathError for a dynamic error. }
+  TLandrixXmlXPathHostFunction = function(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+    const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence of object;
+
   TLandrixXmlXPathSlotState = (xssUnbound, xssValue, xssLazy, xssEvaluating, xssError);
 
   TLandrixXmlXPathSlot = record
@@ -167,6 +190,10 @@ type
     { the number of variables of the function's static context }
     FrameSize: Integer;
     Name: string;
+    { set: the function is the caller's, Body and the slots are not used
+      (see TLandrixXmlXPathHostFunction); Tag is the caller's }
+    Host: TLandrixXmlXPathHostFunction;
+    Tag: Integer;
   end;
 
   TLandrixXmlXPathTreeArray = array of TLandrixXmlXPathTree;
@@ -346,6 +373,10 @@ type
     function CallFunction(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function CallUser(Def: TLandrixXmlXPathFunctionDef; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function CallHost(Def: TLandrixXmlXPathFunctionDef; const Args: array of TLandrixXmlXPathSequence;
+      Context, Position, Size: Integer; const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function EvaluateFocusShared(Expr: TLandrixXmlXPathExpression; Context, Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function Regex(const Pattern, Flags: TLandrixXmlUtf8): TLandrixXmlRegex;
     function StringOf(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
     { the expression being evaluated was compiled for XPath 2.0 (not the
@@ -367,6 +398,11 @@ type
     { the string values of the items joined with spaces (xsl:value-of) }
     function EvaluateString(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlUtf8;
     function EvaluateSequence(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlXPathSequence;
+    { EvaluateSequence with any focus (see TLandrixXmlXPathFocus; for the
+      XSLT units, not part of the documented API yet); an invalid focus
+      raises ELandrixXmlError (xecInvalidArgument) }
+    function EvaluateInFocus(Expr: TLandrixXmlXPathExpression;
+      const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
     { EvaluateSequence as an XSLT match pattern (see the unit comment); Expr
       is the path of the matched nodes (//a for the pattern a) }
     function EvaluatePattern(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlXPathSequence;
@@ -1119,6 +1155,14 @@ begin
       Deps := Deps + Dependencies(Nodes, Nodes[Index].Children[I], GlobalCount, FirstLocalSlot, Free, Rooted);
     for I := 0 to Integer(High(Nodes[Index].Predicates)) do
       Inner(Nodes[Index].Predicates[I]);
+    { a user function the caller implements may read more }
+    if (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op < 0) then
+    begin
+      if xffFocus in Nodes[Index].FunctionFlags then
+        Include(Deps, xdFocus);
+      if xffVolatile in Nodes[Index].FunctionFlags then
+        Include(Deps, xdOther);
+    end;
     if (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) then
     begin
       Id := TLandrixXmlXPathFunctionId(Nodes[Index].Op);
@@ -1147,8 +1191,9 @@ const
   var
     J: Integer;
   begin
-    Result := (Nodes[I].Kind = xakFunction) and (Nodes[I].Op >= 0) and
-      (TLandrixXmlXPathFunctionId(Nodes[I].Op) in [xfnPosition, xfnLast]);
+    Result := (Nodes[I].Kind = xakFunction) and ((Nodes[I].Op >= 0) and
+      (TLandrixXmlXPathFunctionId(Nodes[I].Op) in [xfnPosition, xfnLast]) or
+      (Nodes[I].Op < 0) and (xffFocus in Nodes[I].FunctionFlags));
     J := 0;
     while not Result and (J < Length(Nodes[I].Children)) do
     begin
@@ -1195,6 +1240,28 @@ begin
     MarkOutermost(Nodes, Nodes[Index].Predicates[I], Free[Index], Free, Flags);
 end;
 
+{ True if Index calls a user function flagged xffVolatile (anywhere below
+  it). }
+function CallsVolatile(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Boolean;
+var
+  J: Integer;
+begin
+  Result := (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op < 0) and
+    (xffVolatile in Nodes[Index].FunctionFlags);
+  J := 0;
+  while not Result and (J < Length(Nodes[Index].Children)) do
+  begin
+    Result := CallsVolatile(Nodes, Nodes[Index].Children[J]);
+    Inc(J);
+  end;
+  J := 0;
+  while not Result and (J < Length(Nodes[Index].Predicates)) do
+  begin
+    Result := CallsVolatile(Nodes, Nodes[Index].Predicates[J]);
+    Inc(J);
+  end;
+end;
+
 { A step "name[@attribute = value][...]" on the child axis whose value
   depends neither on the focus nor on the root of its tree (a string
   literal, a variable, a path from document()): Attribute and Value
@@ -1220,7 +1287,8 @@ begin
     B := Nodes[P].Children[1 - Side];
     if (Nodes[A].Kind = xakStep) and (Nodes[A].Axis = xaxAttribute) and (Nodes[A].NodeTest = xntName) and
       (Length(Nodes[A].Predicates) = 0) and not (Nodes[B].Kind in [xakInteger, xakDecimal, xakDouble]) and
-      (Dependencies(Nodes, B, GlobalCount, FirstLocalSlot, Free, Rooted) * [xdFocus, xdRoot] = []) then
+      (Dependencies(Nodes, B, GlobalCount, FirstLocalSlot, Free, Rooted) * [xdFocus, xdRoot] = []) and
+      not CallsVolatile(Nodes, B) then
     begin
       Attribute := A;
       Value := B;
@@ -2070,18 +2138,49 @@ end;
 function TLandrixXmlXPathEvaluator.EvaluateShared(Expr: TLandrixXmlXPathExpression;
   ContextNode: Integer): TLandrixXmlXPathSequence;
 var
-  SavedExpr: TLandrixXmlXPathExpression;
-  SavedBase: Integer;
   Empty: TLandrixXmlXPathSequence;
 begin
   Empty := LandrixXmlXPathEmpty;
+  if ContextNode >= 0 then
+    Result := EvaluateFocusShared(Expr, ContextNode, 1, 1, Empty)
+  else
+    Result := EvaluateFocusShared(Expr, -1, 0, 0, Empty);
+end;
+
+function TLandrixXmlXPathEvaluator.EvaluateInFocus(Expr: TLandrixXmlXPathExpression;
+  const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+var
+  Has: Boolean;
+  NodeLimit: Int64;
+begin
+  { the first number after all trees' nodes }
+  if FDocCount = 0 then
+    NodeLimit := FTree.Count
+  else
+    NodeLimit := Int64(FDocBases[FDocCount - 1]) + FDocTrees[FDocCount - 1].Count;
+  Has := (Focus.Node >= 0) or (Focus.Item.Count > 0);
+  if (Focus.Node < -1) or (Focus.Item.Count < 0) or (Focus.Item.Count > Length(Focus.Item.Items)) or
+    (Focus.Item.Count = 1) and (Focus.Item.Items[0].Kind in [xikNone, xikAnyAtomic]) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'EvaluateInFocus: not a valid focus');
+  if (Focus.Item.Count > 1) or (Focus.Node >= 0) and (Focus.Item.Count > 0) or
+    (Focus.Item.Count = 1) and (Focus.Item.Items[0].Kind = xikNode) or
+    Has and ((Focus.Position < 1) or (Focus.Position > Focus.Size)) or
+    not Has and ((Focus.Position <> 0) or (Focus.Size <> 0)) or (Focus.Node >= NodeLimit) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'EvaluateInFocus: not a valid focus');
+  Result := EvaluateFocusShared(Expr, Focus.Node, Focus.Position, Focus.Size, Focus.Item);
+  Result.Items := Copy(Result.Items, 0, Result.Count);
+end;
+
+function TLandrixXmlXPathEvaluator.EvaluateFocusShared(Expr: TLandrixXmlXPathExpression;
+  Context, Position, Size: Integer; const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  SavedExpr: TLandrixXmlXPathExpression;
+  SavedBase: Integer;
+begin
   EnterExpression(Expr, SavedExpr, SavedBase);
   try
     try
-      if ContextNode >= 0 then
-        Result := Eval(Expr.Root, ContextNode, 1, 1, Empty)
-      else
-        Result := Eval(Expr.Root, -1, 0, 0, Empty);
+      Result := Eval(Expr.Root, Context, Position, Size, ContextItem);
     except
       { errors of the number and string units become XPath errors }
       on E: ELandrixXmlXPathError do
@@ -2266,8 +2365,9 @@ function UsesOwnPosition(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer):
 var
   J: Integer;
 begin
-  Result := (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op >= 0) and
-    (TLandrixXmlXPathFunctionId(Nodes[Index].Op) in [xfnPosition, xfnLast]);
+  Result := (Nodes[Index].Kind = xakFunction) and ((Nodes[Index].Op >= 0) and
+    (TLandrixXmlXPathFunctionId(Nodes[Index].Op) in [xfnPosition, xfnLast]) or
+    (Nodes[Index].Op < 0) and (xffFocus in Nodes[Index].FunctionFlags));
   if Result then
     Exit;
   if Nodes[Index].Kind = xakPath then
@@ -3638,6 +3738,42 @@ begin
     FCurrentNode := SavedCurrent;
     FPattern := SavedPattern;
     Dec(FDepth);
+  end;
+end;
+
+{ A user function the caller implements; nested calls count towards
+  MaxDepth as those of other user functions. }
+function TLandrixXmlXPathEvaluator.CallHost(Def: TLandrixXmlXPathFunctionDef;
+  const Args: array of TLandrixXmlXPathSequence; Context, Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  Focus: TLandrixXmlXPathFocus;
+  SavedPattern, SavedFinal: Boolean;
+begin
+  if FDepth >= FMaxDepth then
+    Fail('FOER0000', 'user functions nested deeper than ' + IntToStr(FMaxDepth));
+  { the focus as EvaluateInFocus takes it: a context node is never also
+    the item (predicates and steps pass both) }
+  Focus.Node := Context;
+  Focus.Item := ContextItem;
+  if (ContextItem.Count = 1) and (ContextItem.Items[0].Kind = xikNode) then
+    Focus.Node := ContextItem.Items[0].Node;
+  if Focus.Node >= 0 then
+    Focus.Item := LandrixXmlXPathEmpty;
+  Focus.Position := Position;
+  Focus.Size := Size;
+  { what the function evaluates is no pattern (as in CallUser) }
+  SavedPattern := FPattern;
+  SavedFinal := FFinal;
+  FPattern := False;
+  FFinal := False;
+  Inc(FDepth);
+  try
+    Result := Def.Host(Self, Def, Args, Focus);
+  finally
+    Dec(FDepth);
+    FPattern := SavedPattern;
+    FFinal := SavedFinal;
   end;
 end;
 

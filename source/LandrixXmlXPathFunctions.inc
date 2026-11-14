@@ -1271,7 +1271,10 @@ begin
     SetLength(Args, ArgCount);
     for I := 0 to ArgCount - 1 do
       Args[I] := Arg(I);
-    Result := CallUser(Def, Args);
+    if Assigned(Def.Host) then
+      Result := CallHost(Def, Args, Context, Position, Size, ContextItem)
+    else
+      Result := CallUser(Def, Args);
     Exit;
   end;
   Id := TLandrixXmlXPathFunctionId(N^.Op);

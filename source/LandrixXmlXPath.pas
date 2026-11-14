@@ -158,6 +158,14 @@ type
     Declared: Boolean;
   end;
 
+  { How the value of a user function depends on the dynamic context
+    beyond its arguments (for the XSLT units, not part of the documented
+    API yet): xffFocus on the context item, position or size, xffVolatile
+    on anything else (current-group(), a counter). The evaluator keeps no
+    value of a call that depends on them. }
+  TLandrixXmlXPathFunctionFlag = (xffFocus, xffVolatile);
+  TLandrixXmlXPathFunctionFlags = set of TLandrixXmlXPathFunctionFlag;
+
   TLandrixXmlXPathAstNode = record
     Kind: TLandrixXmlXPathAstKind;
     Op: Integer;
@@ -179,6 +187,8 @@ type
     AllowEmpty: Boolean;
     { instance of, treat as; a step with the node test xntKindTest }
     SequenceType: TLandrixXmlXPathSequenceType;
+    { the call of a user function: its flags in the static context }
+    FunctionFlags: TLandrixXmlXPathFunctionFlags;
     { 1-based byte index into the expression text (messages print it
       0-based as "offset") }
     Position: Integer;
@@ -228,6 +238,7 @@ type
     NamespaceUri: TLandrixXmlUtf8;
     LocalName: TLandrixXmlUtf8;
     Arity: Integer;
+    Flags: TLandrixXmlXPathFunctionFlags;
   end;
 
   { The language an expression is compiled and evaluated for.
@@ -263,6 +274,10 @@ type
     { returns the function's index }
     function DeclareFunction(const NamespaceUri, LocalName: TLandrixXmlUtf8; Arity: Integer): Integer;
     function FindFunction(const NamespaceUri, LocalName: TLandrixXmlUtf8; Arity: Integer): Integer;
+    { the flags of the declared function Index (see
+      TLandrixXmlXPathFunctionFlag); expressions compiled before keep the
+      flags they were compiled with }
+    procedure SetFunctionFlags(Index: Integer; Flags: TLandrixXmlXPathFunctionFlags);
     property VariableCount: Integer read GetVariableCount;
     property FunctionCount: Integer read GetFunctionCount;
     { xppXPath20 unless set; every expression keeps the profile it was
@@ -659,6 +674,14 @@ begin
   FFunctions[Result].NamespaceUri := NamespaceUri;
   FFunctions[Result].LocalName := LocalName;
   FFunctions[Result].Arity := Arity;
+  FFunctions[Result].Flags := [];
+end;
+
+procedure TLandrixXmlXPathStaticContext.SetFunctionFlags(Index: Integer; Flags: TLandrixXmlXPathFunctionFlags);
+begin
+  if (Index < 0) or (Index >= Length(FFunctions)) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'SetFunctionFlags: no function ' + IntToStr(Index));
+  FFunctions[Index].Flags := Flags;
 end;
 
 function TLandrixXmlXPathStaticContext.FindFunction(const NamespaceUri, LocalName: TLandrixXmlUtf8;
@@ -2278,6 +2301,7 @@ begin
   if User >= 0 then
   begin
     FNodes[Result].Op := -1 - User;
+    FNodes[Result].FunctionFlags := FContext.FFunctions[User].Flags;
     Exit;
   end;
   Found := False;

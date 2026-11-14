@@ -1879,6 +1879,259 @@ begin
   end;
 end;
 
+type
+  { functions the test implements (TLandrixXmlXPathHostFunction) }
+  THostFunctions = class
+  public
+    Calls: Integer;
+    DoubleExpr: TLandrixXmlXPathExpression;
+    NestedExpr: TLandrixXmlXPathExpression;
+    NameExpr: TLandrixXmlXPathExpression;
+    InterExpr: TLandrixXmlXPathExpression;
+    function Call(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+      const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+  end;
+
+{ Tag 0: the position of the focus; 1: a counter; 2: twice the argument,
+  evaluated as ". * 2" with the argument as atomic context item; 3: the
+  name of the context node (from the focus); 4: h:double(1); 5: the
+  local name of the focus, evaluated in the focus passed on; 6: an
+  intersection (not allowed in a pattern) }
+function THostFunctions.Call(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+  const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+var
+  F: TLandrixXmlXPathFocus;
+begin
+  Inc(Calls);
+  case Def.Tag of
+    0: Result := LandrixXmlXPathStringItem(U(IntToStr(Focus.Position)));
+    1: Result := LandrixXmlXPathStringItem(U(IntToStr(Calls)));
+    2:
+      begin
+        F.Node := -1;
+        F.Item := LandrixXmlXPathEmpty;
+        if High(Args) >= 0 then
+          F.Item := Args[0];
+        F.Position := 1;
+        F.Size := 1;
+        Result := Evaluator.EvaluateInFocus(DoubleExpr, F);
+      end;
+    4: Result := Evaluator.EvaluateSequence(NestedExpr, -1);
+    5: Result := Evaluator.EvaluateInFocus(NameExpr, Focus);
+    6: Result := Evaluator.EvaluateSequence(InterExpr, 0);
+  else
+    Result := LandrixXmlXPathStringItem(Evaluator.Tree.LocalNameUtf8(Focus.Node));
+  end;
+end;
+
+{ User functions the caller implements: arguments, the caller's focus, the
+  flags that keep the evaluator from keeping their values, nested
+  evaluation; EvaluateInFocus. }
+procedure TestHostFunctions;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Host: THostFunctions;
+  Functions: TList;
+  Expr: TLandrixXmlXPathExpression;
+  F: TLandrixXmlXPathFocus;
+  I, K: Integer;
+  Raised: Boolean;
+  S: string;
+
+  function Run(const S: string; Node: Integer): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), Context);
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, Node));
+  end;
+
+  function Again(Node: Integer): string;
+  begin
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, Node));
+  end;
+
+  function InFocus(const S: string): string;
+  var
+    R: TLandrixXmlXPathSequence;
+    J: Integer;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), Context);
+    R := Evaluator.EvaluateInFocus(Expr, F);
+    Result := '';
+    for J := 0 to R.Count - 1 do
+    begin
+      if J > 0 then
+        Result := Result + ' ';
+      if R.Items[J].Kind = xikNode then
+        Result := Result + 'node ' + IntToStr(R.Items[J].Node)
+      else
+        Result := Result + LandrixXmlUtf8ToString(R.Items[J].Text);
+    end;
+  end;
+
+  procedure Declare(const Name: string; Arity, Tag: Integer; Flags: TLandrixXmlXPathFunctionFlags);
+  var
+    Def: TLandrixXmlXPathFunctionDef;
+  begin
+    K := Context.DeclareFunction(U('urn:h'), U(Name), Arity);
+    Context.SetFunctionFlags(K, Flags);
+    Def := TLandrixXmlXPathFunctionDef.Create;
+    Def.Name := 'h:' + Name;
+    Def.Host := Host.Call;
+    Def.Tag := Tag;
+    Functions.Add(Def);
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Host := THostFunctions.Create;
+  Functions := TList.Create;
+  Evaluator := nil;
+  Expr := nil;
+  try
+    S := '<r><a/><b/><c>';
+    for I := 1 to 20 do
+      S := S + '<d k="' + IntToStr(I) + '"/>';
+    Tree.LoadFromUtf8(U(S + '</c></r>'));
+    Context.AddNamespace(U('h'), U('urn:h'));
+    Context.Profile := xppSaxon;
+    Host.DoubleExpr := TLandrixXmlXPathExpression.Create(U('. * 2'), nil);
+    Declare('position', 0, 0, [xffFocus]);
+    Declare('counter', 0, 1, [xffVolatile]);
+    Declare('double', 1, 2, []);
+    Declare('name', 0, 3, [xffFocus]);
+    Declare('stale-counter', 0, 1, []);
+    Declare('nested', 0, 4, [xffVolatile]);
+    Declare('refocus', 0, 5, [xffFocus]);
+    Host.NameExpr := TLandrixXmlXPathExpression.Create(U('local-name()'), nil);
+    Declare('inter', 0, 6, []);
+    Host.InterExpr := TLandrixXmlXPathExpression.Create(U('/r/a intersect /r/*'), nil);
+    Host.NestedExpr := TLandrixXmlXPathExpression.Create(U('h:double(1)'), Context);
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    Evaluator.Functions := Functions;
+    CheckEqualsStr('20', Run('string((10, 20, 30)[h:position() = ''2''])', 0), 'the position of the caller');
+    CheckEqualsStr('a b c', Run('string-join(for $e in /r/* return $e/h:name(), '' '')', 0), 'the context node');
+    CheckEqualsStr('a', Run('h:name()', 2), 'focus on a node');
+    CheckEqualsStr('b', Again(3), 'not kept: depends on the focus');
+    { the position among the children of each parent, not among all
+      descendants }
+    CheckEqualsStr('b d', Run('string-join(for $e in /r//*[h:position() = ''2''] return name($e), '' '')', 0),
+      'a descendant step with a call that reads the position');
+    { a key value that calls a volatile function is not indexed: it is
+      evaluated per child }
+    Host.Calls := 0;
+    CheckEqualsStr('20', Run('count(/r/c/d[@k = h:counter()])', 0), 'a key value calling a volatile function');
+    CheckEquals(20, Host.Calls, 'called once per child');
+    { what a function evaluates inside a pattern is no pattern }
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('h:inter()'), Context);
+    CheckEquals(1, Evaluator.EvaluatePattern(Expr, 0).Count, 'intersect inside a function of a pattern');
+    { a pattern step whose later predicate reads the position: after the
+      failure on b the positions are unknown, nothing matches (as with
+      position()) }
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(
+      U('/r/*[if (self::b) then error() else true()][h:position() = ''1'']'), Context);
+    CheckEquals(0, Evaluator.EvaluatePattern(Expr, 0).Count, 'a position read by a function in a pattern');
+    { the focus a predicate passes is valid for EvaluateInFocus }
+    CheckEqualsStr('d', Run('string(/r/c/d[h:refocus() = ''d''][1]/h:refocus())', 0), 'the focus passed on');
+    Host.Calls := 0;
+    CheckEqualsStr('1', Run('h:counter()', 0), 'volatile: first call');
+    CheckEqualsStr('2', Again(0), 'volatile: not kept');
+    { without a flag a call with constant arguments is context-free }
+    Host.Calls := 0;
+    CheckEqualsStr('1', Run('h:stale-counter()', 0), 'kept: first call');
+    CheckEqualsStr('1', Again(0), 'kept: the value of the first call');
+    CheckEqualsStr('84', Run('string(h:double(42))', 0), 'nested evaluation with an atomic focus');
+    CheckEqualsStr('12', Run('string(h:double(h:double(3)))', 0), 'nested calls');
+    { MaxDepth counts the caller's functions }
+    CheckEqualsStr('2', Run('string(h:nested())', 0), 'a call inside a call');
+    Evaluator.MaxDepth := 1;
+    Raised := False;
+    try
+      Run('h:nested()', 0);
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode = 'FOER0000';
+    end;
+    Check(Raised, 'MaxDepth counts the nested call');
+    Evaluator.MaxDepth := 500;
+    { EvaluateInFocus }
+    F.Node := -1;
+    F.Item := LandrixXmlXPathStringItem(U('x'));
+    F.Position := 2;
+    F.Size := 3;
+    CheckEqualsStr('2/3:x', InFocus('concat(position(), ''/'', last(), '':'', .)'), 'atomic focus');
+    F.Item := LandrixXmlXPathEmpty;
+    F.Node := 3;
+    CheckEqualsStr('b 2', InFocus('name(), string(h:position())'), 'node focus');
+    CheckEqualsStr('node 1', InFocus('..'), 'the parent of the focus node');
+    F.Node := -1;
+    F.Position := 0;
+    F.Size := 0;
+    Raised := False;
+    try
+      InFocus('.');
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode = 'XPDY0002';
+    end;
+    Check(Raised, 'no focus');
+    for I := 0 to 7 do
+    begin
+      F.Node := -1;
+      F.Item := LandrixXmlXPathEmpty;
+      F.Position := 1;
+      F.Size := 1;
+      case I of
+        0: F.Position := 0;
+        1: begin F.Node := 1; F.Position := 2; end;
+        2: begin F.Item := LandrixXmlXPathStringItem(U('x')); F.Node := 1; end;
+        3: F.Item := LandrixXmlXPathNodeItem(1);
+        4: F.Node := Tree.Count;
+        5: begin F.Node := -2; F.Position := 0; F.Size := 0; end;
+        6: begin F.Item := LandrixXmlXPathStringItem(U('x')); F.Item.Count := 2; end;
+      else
+        begin
+          F.Item := LandrixXmlXPathStringItem(U('x'));
+          F.Item.Items[0].Kind := xikNone;
+        end;
+      end;
+      if I = 0 then
+        F.Node := 1;
+      Raised := False;
+      try
+        InFocus('.');
+      except
+        on E: ELandrixXmlError do
+          Raised := E.Code = xecInvalidArgument;
+      end;
+      Check(Raised, 'invalid focus ' + IntToStr(I));
+    end;
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    for I := 0 to Integer(Functions.Count) - 1 do
+      TObject(Functions[I]).Free;
+    Functions.Free;
+    Host.DoubleExpr.Free;
+    Host.NestedExpr.Free;
+    Host.NameExpr.Free;
+    Host.InterExpr.Free;
+    Host.Free;
+    Context.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
@@ -1901,6 +2154,7 @@ begin
   RegisterTest('XPathEval.LangAndDocuments', TestLangAndDocuments);
   RegisterTest('XPathEval.TreeWithoutDocument', TestTreeWithoutDocument);
   RegisterTest('XPathEval.TemporaryTrees', TestTemporaryTrees);
+  RegisterTest('XPathEval.HostFunctions', TestHostFunctions);
 end;
 
 end.
