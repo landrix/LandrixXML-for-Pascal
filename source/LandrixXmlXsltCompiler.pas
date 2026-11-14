@@ -369,6 +369,27 @@ type
   one; none: preserved). }
 function XsltStripsSpace(C: TXsltCompiled; const NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
 
+{ The functions system-property(), function-available() and
+  element-available() share (at run time and in use-when): the lexical
+  QName in Arg (one string, white space around it allowed) as a URI and a
+  local name, the prefix by the stylesheet's namespaces at the calling
+  expression ('#ns:' keys of the static context), no prefix: DefaultUri,
+  or the default namespace if DefaultUri is '#'; Code for a name that is
+  none or has an unbound prefix. }
+procedure XsltNameArgument(Evaluator: TLandrixXmlXPathEvaluator; const Arg: TLandrixXmlXPathSequence;
+  const Code, FunctionName: string; const DefaultUri: TLandrixXmlUtf8; out Uri, Local: TLandrixXmlUtf8);
+{ the value of system-property() for a name }
+function XsltSystemProperty(const Uri, Local: TLandrixXmlUtf8): TLandrixXmlUtf8;
+{ the second argument of function-available(): the arity, -1 for a
+  negative one (any, as Saxon), MaxInt for one beyond Integer }
+function XsltArityArgument(Evaluator: TLandrixXmlXPathEvaluator; const Arg: TLandrixXmlXPathSequence): Integer;
+{ function-available(): an XPath function of the calling expression's
+  profile or a function of the stylesheet's table (not the internal
+  global(), not document() with two arguments); while the table is still
+  empty (use-when) the XSLT functions of this processor; Arity -1: any }
+function XsltFunctionAvailable(Evaluator: TLandrixXmlXPathEvaluator; FC: TXsltCompiled;
+  const Uri, Local: TLandrixXmlUtf8; Arity: Integer): Boolean;
+
 { Compiles the stylesheet whose principal module is Tree (BaseUri its
   URI). Raises ELandrixXmlXsltError. }
 function XsltCompile(Tree: TLandrixXmlXPathTree; const BaseUri: TLandrixXmlUtf8;
@@ -723,8 +744,14 @@ type
     { the modules its xsl:include elements read, by element }
     IncludeElements: array of Integer;
     IncludeModules: array of TModule;
+    { the positions of the nodes in the module's text when Tree is the copy
+      use-when made (empty otherwise) }
+    Lines: array of Integer;
+    Columns: array of Integer;
     destructor Destroy; override;
     function IncludedAt(E: Integer): TModule;
+    function LineOf(E: Integer): Integer;
+    function ColumnOf(E: Integer): Integer;
   end;
 
   { a top-level declaration found in pass 1 }
@@ -761,6 +788,15 @@ type
     FNextOrder: Integer;
     FC: TXsltCompiled;
     FAllModeTemplates: TList;
+    { the evaluation of use-when: an empty tree, the definitions of the
+      functions it answers, true() and false() (made on first use) }
+    FUseWhenTree: TLandrixXmlXPathTree;
+    FUseWhenEvaluator: TLandrixXmlXPathEvaluator;
+    FUseWhenDefs: TObjectList;
+    FUseWhenFunctions: TList;
+    FUseWhenTrue, FUseWhenFalse: TLandrixXmlXPathExpression;
+    { the module whose use-when is evaluated (static-base-uri()) }
+    FUseWhenModule: TModule;
     { the URIs of the modules being included or imported (a cycle) }
     FChain: TStringList;
     { the namespace URIs of variable names, with the prefix the static
@@ -770,6 +806,12 @@ type
     function VarName(const Clark: TLandrixXmlUtf8): TLandrixXmlUtf8;
     procedure CheckStandard(M: TModule; E: Integer);
     procedure CheckModule(M: TModule);
+    procedure PruneUseWhen(M: TModule);
+    function HasXsltAttribute(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
+    function HasXmlBase(M: TModule; E: Integer): Boolean;
+    function UseWhen(M: TModule; E: Integer; const Text: TLandrixXmlUtf8): Boolean;
+    function UseWhenHost(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+      const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
     procedure LoadIncludes(M: TModule);
     procedure ProcessImports(M: TModule);
     procedure CollectDecls(M: TModule; Precedence: Integer);
@@ -826,6 +868,22 @@ begin
   inherited Destroy;
 end;
 
+function TModule.LineOf(E: Integer): Integer;
+begin
+  if (E >= 0) and (E < Length(Lines)) then
+    Result := Lines[E]
+  else
+    Result := Tree.Line[E];
+end;
+
+function TModule.ColumnOf(E: Integer): Integer;
+begin
+  if (E >= 0) and (E < Length(Columns)) then
+    Result := Columns[E]
+  else
+    Result := Tree.Column[E];
+end;
+
 function TModule.IncludedAt(E: Integer): TModule;
 var
   I: Integer;
@@ -874,6 +932,12 @@ end;
 
 destructor TCompiler.Destroy;
 begin
+  FUseWhenTrue.Free;
+  FUseWhenFalse.Free;
+  FUseWhenEvaluator.Free;
+  FUseWhenFunctions.Free;
+  FUseWhenDefs.Free;
+  FUseWhenTree.Free;
   FVarUris.Free;
   FChain.Free;
   FAllModeTemplates.Free;
@@ -893,8 +957,8 @@ begin
   Column := 0;
   if (M <> nil) and (E >= 0) then
   begin
-    Line := M.Tree.Line[E];
-    Column := M.Tree.Column[E];
+    Line := M.LineOf(E);
+    Column := M.ColumnOf(E);
   end;
   if M <> nil then
     raise ELandrixXmlXsltError.CreateXslt(xecXslt, Code, Msg, M.Uri, Line, Column)
@@ -905,14 +969,14 @@ end;
 procedure TCompiler.Unsupported(M: TModule; E: Integer; const Msg: string);
 begin
   raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000', Msg + ' is not supported', M.Uri,
-    M.Tree.Line[E], M.Tree.Column[E]);
+    M.LineOf(E), M.ColumnOf(E));
 end;
 
 { an XPath error of an expression at E, as an XSLT error with E's position }
 procedure TCompiler.XPathFailed(M: TModule; E: Integer; X: ELandrixXmlXPathError);
 begin
   raise ELandrixXmlXsltError.CreateXslt(xecXPath, X.XPathCode, Copy(X.Message, Length(X.XPathCode) + 3, MaxInt),
-    M.Uri, M.Tree.Line[E], M.Tree.Column[E]);
+    M.Uri, M.LineOf(E), M.ColumnOf(E));
 end;
 
 function TCompiler.IsXsl(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
@@ -1158,7 +1222,7 @@ begin
       Continue;
     L := M.Tree.LocalNameUtf8(I);
     V := Trim8(M.Tree.ValueUtf8(I));
-    if (L = 'use-when') or (L = 'xpath-default-namespace') or (L = 'default-collation') or
+    if (L = 'xpath-default-namespace') or (L = 'default-collation') or
       (L = 'default-mode') or (L = 'default-validation') or (L = 'input-type-annotations') or
       ((L = 'expand-text') and (V = 'yes')) or ((L = 'inherit-namespaces') and (V = 'no')) or
       ((L = 'extension-element-prefixes') and (V <> '')) or
@@ -1169,12 +1233,389 @@ begin
   end;
 end;
 
+function PreservesSpace(T: TLandrixXmlXPathTree; N: Integer): Boolean; forward;
+
+{ whether element E has the standard attribute Local (no namespace on an
+  XSLT element, the XSLT namespace on another) }
+function TCompiler.HasXsltAttribute(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
+var
+  A: Integer;
+  Xsl: Boolean;
+begin
+  Result := True;
+  Xsl := M.Tree.NamespaceUriUtf8(E) = XsltNamespace;
+  for A := E + 1 to E + M.Tree.AttributeCount[E] do
+    if (M.Tree.LocalNameUtf8(A) = Local) and ((Xsl and (M.Tree.NamespaceUriUtf8(A) = '')) or
+      (not Xsl and (M.Tree.NamespaceUriUtf8(A) = XsltNamespace))) then
+      Exit;
+  Result := False;
+end;
+
+function TCompiler.HasXmlBase(M: TModule; E: Integer): Boolean;
+var
+  A: Integer;
+begin
+  Result := True;
+  for A := E + 1 to E + M.Tree.AttributeCount[E] do
+    if (M.Tree.NamespaceUriUtf8(A) = LandrixXmlNamespaceXml) and (M.Tree.LocalNameUtf8(A) = 'base') then
+      Exit;
+  Result := False;
+end;
+
+{ S as an XPath string literal }
+function XPathLiteral(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I: Integer;
+begin
+  Result := '"';
+  for I := 1 to Length(S) do
+    if S[I] = '"' then
+      Result := Result + '""'
+    else
+      Result := Result + Copy(S, I, 1);
+  Result := Result + '"';
+end;
+
+{ The value of use-when="Text" on element E (XSLT 2.0 3.12): evaluated
+  with the namespaces of E, no context item, no variables and the
+  functions of XPath and XSLT (system-property(), function-available(),
+  element-available() answer here; the others raise an error when
+  called); an error in it is a static error. }
+function TCompiler.UseWhen(M: TModule; E: Integer; const Text: TLandrixXmlUtf8): Boolean;
+var
+  Ctx: TLandrixXmlXPathStaticContext;
+  Prefixes: TLandrixXmlUtf8Array;
+  Uri: TLandrixXmlUtf8;
+  I: Integer;
+  Expr: TLandrixXmlXPathExpression;
+  Def: TLandrixXmlXPathFunctionDef;
+  Focus: TLandrixXmlXPathFocus;
+  A: Integer;
+begin
+  Result := True;
+  if FUseWhenEvaluator = nil then
+  begin
+    FUseWhenTree := TLandrixXmlXPathTree.Create;
+    FUseWhenEvaluator := TLandrixXmlXPathEvaluator.Create(FUseWhenTree);
+    FUseWhenDefs := TObjectList.Create;
+    FUseWhenFunctions := TList.Create;
+    for I := 0 to 5 do
+    begin
+      Def := TLandrixXmlXPathFunctionDef.Create;
+      Def.Host := UseWhenHost;
+      Def.Tag := I;
+      FUseWhenDefs.Add(Def);
+      FUseWhenFunctions.Add(Def);
+    end;
+    FUseWhenEvaluator.Functions := FUseWhenFunctions;
+    FUseWhenTrue := TLandrixXmlXPathExpression.Create('true()', nil);
+    FUseWhenFalse := TLandrixXmlXPathExpression.Create('false()', nil);
+  end;
+  Expr := nil;
+  Ctx := TLandrixXmlXPathStaticContext.Create;
+  try
+    Ctx.Profile := xppSaxon;
+    Prefixes := M.Tree.InScopePrefixesUtf8(E);
+    for I := 0 to Integer(Length(Prefixes)) - 1 do
+      if (Prefixes[I] <> 'xml') and M.Tree.LookupNamespace(E, Prefixes[I], Uri) and (Uri <> '') then
+      begin
+        if Prefixes[I] <> '' then
+          Ctx.AddNamespace(Prefixes[I], Uri);
+        Ctx.AddNamespace('#ns:' + Prefixes[I], Uri);
+      end;
+    { in the order of the definitions (their tags) }
+    Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'system-property', 1);
+    Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'function-available', 1);
+    Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'function-available', 2);
+    Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'element-available', 1);
+    Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'static-base-uri', 0);
+    Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'resolve-uri', 1);
+    { the default namespace of XPath is not supported (see CheckStandard) }
+    A := E;
+    while A >= 0 do
+    begin
+      if (M.Tree.Kind[A] = xnkElement) and HasXsltAttribute(M, A, 'xpath-default-namespace') then
+        Unsupported(M, E, 'xpath-default-namespace');
+      { the static base URI is the module's (see CheckStandard) }
+      if (M.Tree.Kind[A] = xnkElement) and HasXmlBase(M, A) then
+        Unsupported(M, E, 'xml:base in a stylesheet');
+      A := M.Tree.Parent[A];
+    end;
+    FUseWhenModule := M;
+    try
+      Expr := TLandrixXmlXPathExpression.Create(Text, Ctx);
+      Focus.Node := -1;
+      Focus.Item := LandrixXmlXPathEmpty;
+      Focus.Position := 0;
+      Focus.Size := 0;
+      Result := FUseWhenEvaluator.EffectiveBoolean(FUseWhenEvaluator.EvaluateInFocus(Expr, Focus));
+    except
+      on X: ELandrixXmlXPathError do
+        XPathFailed(M, E, X);
+    end;
+  finally
+    Expr.Free;
+    Ctx.Free;
+  end;
+end;
+
+function TCompiler.UseWhenHost(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+  const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+var
+  Uri, Local, Text: TLandrixXmlUtf8;
+  Found: Boolean;
+  Expr: TLandrixXmlXPathExpression;
+  V, Arg0, Arg1: TLandrixXmlXPathSequence;
+begin
+  { the arguments one by one (FPC 3.2.2 hints at an open array otherwise) }
+  Arg0 := LandrixXmlXPathEmpty;
+  Arg1 := LandrixXmlXPathEmpty;
+  if High(Args) >= 0 then
+    Arg0 := Args[0];
+  if High(Args) >= 1 then
+    Arg1 := Args[1];
+  case Def.Tag of
+    4, 5:
+      begin
+        { static-base-uri(): the module's URI as xs:anyURI; resolve-uri()
+          with one argument against it; a module without URI has no
+          static base URI (as at run time) }
+        if (Def.Tag = 4) and (FUseWhenModule.Uri = '') then
+          Text := '()'
+        else if Def.Tag = 4 then
+          Text := 'xs:anyURI(' + XPathLiteral(FUseWhenModule.Uri) + ')'
+        else
+        begin
+          V := Evaluator.ConvertSequence(Arg0, LandrixXmlXPathParseSequenceType('xs:string?', nil),
+            'resolve-uri()');
+          if V.Count = 0 then
+          begin
+            Result := LandrixXmlXPathEmpty;
+            Exit;
+          end;
+          if FUseWhenModule.Uri = '' then
+            Text := 'resolve-uri(' + XPathLiteral(Evaluator.ItemString(V.Items[0])) + ')'
+          else
+            Text := 'resolve-uri(' + XPathLiteral(Evaluator.ItemString(V.Items[0])) + ', ' +
+              XPathLiteral(FUseWhenModule.Uri) + ')';
+        end;
+        Expr := TLandrixXmlXPathExpression.Create(Text, nil);
+        try
+          Result := Evaluator.EvaluateInFocus(Expr, Focus);
+        finally
+          Expr.Free;
+        end;
+        Exit;
+      end;
+    0:
+      begin
+        XsltNameArgument(Evaluator, Arg0, 'XTDE1390', 'system-property()', '', Uri, Local);
+        Result := LandrixXmlXPathStringItem(XsltSystemProperty(Uri, Local));
+        Exit;
+      end;
+    3:
+      begin
+        XsltNameArgument(Evaluator, Arg0, 'XTDE1440', 'element-available()', '#', Uri, Local);
+        Found := (Uri = XsltNamespace) and XsltElementAvailable(Local);
+      end;
+  else
+    XsltNameArgument(Evaluator, Arg0, 'XTDE1400', 'function-available()', LandrixXmlXPathFunctionNamespace,
+      Uri, Local);
+    if Def.Tag = 2 then
+      Found := XsltFunctionAvailable(Evaluator, FC, Uri, Local, XsltArityArgument(Evaluator, Arg1))
+    else
+      Found := XsltFunctionAvailable(Evaluator, FC, Uri, Local, -1);
+  end;
+  if Found then
+    Result := Evaluator.EvaluateInFocus(FUseWhenTrue, Focus)
+  else
+    Result := Evaluator.EvaluateInFocus(FUseWhenFalse, Focus);
+end;
+
+{ The module without the elements whose use-when is false (and their
+  content; for the xsl:stylesheet element its content): a copy of the
+  tree with the positions of the original nodes in Lines and Columns. }
+procedure TCompiler.PruneUseWhen(M: TModule);
+var
+  Excluded: array of Boolean;
+  Any: Boolean;
+  T: TLandrixXmlXPathTree;
+  Root: Integer;
+
+  procedure Mark(I: Integer);
+  var
+    C, A: Integer;
+    Xsl: Boolean;
+  begin
+    Xsl := M.Tree.NamespaceUriUtf8(I) = XsltNamespace;
+    for A := I + 1 to I + M.Tree.AttributeCount[I] do
+      if (M.Tree.LocalNameUtf8(A) = 'use-when') and ((Xsl and (M.Tree.NamespaceUriUtf8(A) = '')) or
+        (not Xsl and (M.Tree.NamespaceUriUtf8(A) = XsltNamespace))) then
+        if not UseWhen(M, I, M.Tree.ValueUtf8(A)) then
+        begin
+          Excluded[I] := True;
+          Any := True;
+          if I <> Root then
+            Exit;
+        end;
+    if Excluded[I] then
+      Exit;
+    C := M.Tree.FirstChild(I);
+    while C >= 0 do
+    begin
+      if M.Tree.Kind[C] = xnkElement then
+        Mark(C);
+      C := M.Tree.NextSibling[C];
+    end;
+  end;
+
+  procedure Note(I: Integer);
+  var
+    N: Integer;
+  begin
+    N := T.Count - 1;
+    if N >= Length(M.Lines) then
+    begin
+      SetLength(M.Lines, 2 * N + 64);
+      SetLength(M.Columns, 2 * N + 64);
+    end;
+    M.Lines[N] := M.Tree.Line[I];
+    M.Columns[N] := M.Tree.Column[I];
+  end;
+
+  procedure Copy1(I: Integer);
+  var
+    C, A, K, Before, D, Last: Integer;
+    Prefixes, Uris: TLandrixXmlUtf8Array;
+    S: TLandrixXmlUtf8;
+    Drop: Boolean;
+  begin
+    Prefixes := nil;
+    Uris := nil;
+    case M.Tree.Kind[I] of
+      xnkElement:
+        begin
+          T.BuildStartElement(M.Tree.NamespaceUriUtf8(I), M.Tree.PrefixUtf8(I), M.Tree.LocalNameUtf8(I));
+          Note(I);
+          M.Tree.GetDeclarations(I, Prefixes, Uris);
+          for K := 0 to Integer(Length(Prefixes)) - 1 do
+            T.BuildNamespace(Prefixes[K], Uris[K]);
+          for A := I + 1 to I + M.Tree.AttributeCount[I] do
+          begin
+            T.BuildAttribute(M.Tree.NamespaceUriUtf8(A), M.Tree.PrefixUtf8(A), M.Tree.LocalNameUtf8(A),
+              M.Tree.ValueUtf8(A));
+            Note(A);
+          end;
+          if not Excluded[I] then
+          begin
+            C := M.Tree.FirstChild(I);
+            while C >= 0 do
+            begin
+              if M.Tree.Kind[C] = xnkElement then
+              begin
+                if not Excluded[C] then
+                  Copy1(C);
+                C := M.Tree.NextSibling[C];
+                Continue;
+              end;
+              { a run of text, comments and processing instructions up to
+                the next element: white space is stripped before elements
+                are left out (as Saxon does), so a run of white space goes
+                here, not after its neighbours are merged }
+              S := '';
+              Last := C;
+              D := C;
+              while (D >= 0) and (M.Tree.Kind[D] <> xnkElement) do
+              begin
+                if M.Tree.Kind[D] = xnkText then
+                  S := S + M.Tree.ValueUtf8(D);
+                Last := D;
+                D := M.Tree.NextSibling[D];
+              end;
+              Drop := (Trim8(S) = '') and not IsXsl(M, I, 'text') and not PreservesSpace(M.Tree, Last);
+              while C >= 0 do
+              begin
+                if not (Drop and (M.Tree.Kind[C] = xnkText)) then
+                  Copy1(C);
+                if C = Last then
+                  Break;
+                C := M.Tree.NextSibling[C];
+              end;
+              C := D;
+            end;
+          end;
+          T.BuildEndElement;
+        end;
+      xnkText:
+        begin
+          Before := T.Count;
+          T.BuildText(M.Tree.ValueUtf8(I));
+          if T.Count > Before then
+            Note(I);
+        end;
+      xnkComment:
+        begin
+          T.BuildComment(M.Tree.ValueUtf8(I));
+          Note(I);
+        end;
+      xnkProcessingInstruction:
+        begin
+          T.BuildProcessingInstruction(M.Tree.LocalNameUtf8(I), M.Tree.ValueUtf8(I));
+          Note(I);
+        end;
+    end;
+  end;
+
+var
+  C: Integer;
+begin
+  Excluded := nil;
+  Root := M.Tree.DocumentElement;
+  if Root < 0 then
+    Exit;
+  SetLength(Excluded, M.Tree.Count);
+  Any := False;
+  Mark(Root);
+  if not Any then
+    Exit;
+  T := TLandrixXmlXPathTree.Create;
+  try
+    M.Lines := nil;
+    M.Columns := nil;
+    T.BeginBuild(True);
+    SetLength(M.Lines, 64);
+    SetLength(M.Columns, 64);
+    M.Lines[0] := 0;
+    M.Columns[0] := 0;
+    C := M.Tree.FirstChild(0);
+    while C >= 0 do
+    begin
+      Copy1(C);
+      C := M.Tree.NextSibling[C];
+    end;
+    T.EndBuild;
+    T.BaseUri := M.Tree.BaseUri;
+  except
+    T.Free;
+    M.Lines := nil;
+    M.Columns := nil;
+    raise;
+  end;
+  SetLength(M.Lines, T.Count);
+  SetLength(M.Columns, T.Count);
+  if M.Owned then
+    M.Tree.Free;
+  M.Tree := T;
+  M.Owned := True;
+end;
+
 { CheckStandard for every element of a module (also those the compiler
   never looks at as instructions, such as xsl:when or xsl:param) }
 procedure TCompiler.CheckModule(M: TModule);
 var
   I: Integer;
 begin
+  PruneUseWhen(M);
   for I := 0 to M.Tree.Count - 1 do
     if M.Tree.Kind[I] = xnkElement then
       CheckStandard(M, I);
@@ -1420,7 +1861,7 @@ begin
     except
       on X: ELandrixXmlXPathError do
         raise ELandrixXmlXsltError.CreateXslt(xecXPath, X.XPathCode,
-          Copy(X.Message, Length(X.XPathCode) + 3, MaxInt), M.Uri, M.Tree.Line[E], M.Tree.Column[E]);
+          Copy(X.Message, Length(X.XPathCode) + 3, MaxInt), M.Uri, M.LineOf(E), M.ColumnOf(E));
     end;
   finally
     Ctx.Free;
@@ -1433,8 +1874,8 @@ function TCompiler.NewInstr(Kind: TXsltInstrKind; M: TModule; E: Integer): TXslt
 begin
   Result := TXsltInstr.Create(Kind);
   Result.Module := M.Uri;
-  Result.Line := M.Tree.Line[E];
-  Result.Column := M.Tree.Column[E];
+  Result.Line := M.LineOf(E);
+  Result.Column := M.ColumnOf(E);
 end;
 
 { xml:space="preserve" on the node or an ancestor (nearest wins) }
@@ -2239,8 +2680,8 @@ begin
       Lexical := Trim8(ReqAttr(D.Module, D.Element, 'name'));
       G.Lexical := Lexical;
       G.Module := D.Module.Uri;
-      G.Line := D.Module.Tree.Line[D.Element];
-      G.Column := D.Module.Tree.Column[D.Element];
+      G.Line := D.Module.LineOf(D.Element);
+      G.Column := D.Module.ColumnOf(D.Element);
       G.Slot := I;
       G.Precedence := D.Precedence;
       G.IsParam := IsXsl(D.Module, D.Element, 'param');
@@ -2694,6 +3135,123 @@ begin
       Result := False;
 end;
 
+procedure XsltNameArgument(Evaluator: TLandrixXmlXPathEvaluator; const Arg: TLandrixXmlXPathSequence;
+  const Code, FunctionName: string; const DefaultUri: TLandrixXmlUtf8; out Uri, Local: TLandrixXmlUtf8);
+var
+  S, Prefix: TLandrixXmlUtf8;
+  A, B, I: Integer;
+begin
+  S := Evaluator.ItemString(Evaluator.ConvertSequence(Arg, LandrixXmlXPathParseSequenceType('xs:string', nil),
+    FunctionName).Items[0]);
+  A := 1;
+  B := Length(S);
+  while (A <= B) and (S[A] in [#9, #10, #13, ' ']) do
+    Inc(A);
+  while (B >= A) and (S[B] in [#9, #10, #13, ' ']) do
+    Dec(B);
+  S := Copy(S, A, B - A + 1);
+  I := Pos8(':', S);
+  Uri := DefaultUri;
+  Local := S;
+  Prefix := '';
+  if I > 0 then
+  begin
+    Prefix := Copy(S, 1, I - 1);
+    Local := Copy(S, I + 1, Length(S) - I);
+  end;
+  if (I = 0) and (DefaultUri = '#') and ((Evaluator.CallerExpression = nil) or
+    not Evaluator.CallerExpression.LookupNamespace('#ns:', Uri)) then
+    Uri := '';
+  if (I > 0) and (Prefix = 'xml') then
+    Uri := LandrixXmlNamespaceXml;
+  if not IsNCName8(Local) or (I > 0) and (Prefix <> 'xml') and (not IsNCName8(Prefix) or
+    (Evaluator.CallerExpression = nil) or not Evaluator.CallerExpression.LookupNamespace('#ns:' + Prefix, Uri) or
+    (Uri = '')) then
+    raise ELandrixXmlXPathError.CreateXPath(Code, FunctionName + ': ' + LandrixXmlUtf8ToString(S) +
+      ' is no QName with a bound prefix');
+end;
+
+function XsltSystemProperty(const Uri, Local: TLandrixXmlUtf8): TLandrixXmlUtf8;
+begin
+  Result := '';
+  if Uri <> XsltNamespace then
+    Exit;
+  if Local = 'version' then
+    Result := '2.0'
+  else if Local = 'vendor' then
+    Result := 'Landrix Software'
+  else if Local = 'vendor-url' then
+    Result := 'https://github.com/landrix/LandrixXML-for-Pascal'
+  else if Local = 'product-name' then
+    Result := 'LandrixXML'
+  else if Local = 'product-version' then
+    Result := LandrixXmlVersion
+  else if (Local = 'is-schema-aware') or (Local = 'supports-backwards-compatibility') then
+    Result := 'no'
+  else if Local = 'supports-serialization' then
+    Result := 'yes';
+end;
+
+function XsltArityArgument(Evaluator: TLandrixXmlXPathEvaluator; const Arg: TLandrixXmlXPathSequence): Integer;
+var
+  Count: TLandrixXmlUtf8;
+begin
+  Result := -1;
+  Count := Evaluator.ItemString(Evaluator.ConvertSequence(Arg, LandrixXmlXPathParseSequenceType('xs:integer', nil),
+    'function-available()').Items[0]);
+  if (Count = '') or (Count[1] <> '-') then
+    if Length(Count) > 9 then
+      Result := MaxInt
+    else
+      Result := StrToInt(LandrixXmlUtf8ToString(Count));
+end;
+
+function XsltFunctionAvailable(Evaluator: TLandrixXmlXPathEvaluator; FC: TXsltCompiled;
+  const Uri, Local: TLandrixXmlUtf8; Arity: Integer): Boolean;
+const
+  { the XSLT functions of the fixed and per-module part of the table, for
+    use-when (name and arity) }
+  Fixed: array[0..28] of string = ('current/0', 'format-dateTime/2', 'format-dateTime/5', 'format-date/2',
+    'format-date/5', 'format-time/2', 'format-time/5', 'current-group/0', 'current-grouping-key/0',
+    'generate-id/0', 'generate-id/1', 'key/2', 'key/3', 'format-number/2', 'format-number/3',
+    'system-property/1', 'function-available/1', 'function-available/2', 'element-available/1',
+    'regex-group/1', 'doc/1', 'doc-available/1', 'document/1', 'static-base-uri/0', 'resolve-uri/1',
+    'unparsed-text/1', 'unparsed-text/2', 'unparsed-text-available/1', 'unparsed-text-available/2');
+var
+  I, P: Integer;
+  Name: string;
+begin
+  Result := (Evaluator.CallerExpression <> nil) and
+    LandrixXmlXPathBuiltinExists(Uri, Local, Arity, Evaluator.CallerExpression.Profile);
+  if Result then
+    Exit;
+  if Length(FC.FunctionNames) = 0 then
+  begin
+    if Uri <> LandrixXmlXPathFunctionNamespace then
+      Exit;
+    for I := Low(Fixed) to High(Fixed) do
+    begin
+      P := Pos('/', Fixed[I]);
+      Name := Copy(Fixed[I], 1, P - 1);
+      if (LandrixXmlStringToUtf8(Name) = Local) and
+        ((Arity < 0) or (StrToInt(Copy(Fixed[I], P + 1, MaxInt)) = Arity)) then
+      begin
+        Result := True;
+        Exit;
+      end;
+    end;
+    Exit;
+  end;
+  for I := 0 to Integer(Length(FC.FunctionNames)) - 1 do
+    if (FC.FunctionNames[I] = Local) and (FC.FunctionUris[I] = Uri) and
+      ((Arity < 0) or (FC.FunctionArities[I] = Arity)) and (I <> XfnGlobal) and
+      not ((Local = 'document') and (FC.FunctionArities[I] = 2) and (Uri = LandrixXmlXPathFunctionNamespace)) then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
 { xsl:strip-space or xsl:preserve-space: its elements attribute, a list
   of name tests ("*", "prefix:*", "*:name" or a QName; the EQName of
   XSLT 3.0 is not supported) }
@@ -3097,16 +3655,16 @@ begin
         FFunctionDecls[K] := D;
         T.Precedence := D.Precedence;
         T.Module := M.Uri;
-        T.Line := M.Tree.Line[D.Element];
-        T.Column := M.Tree.Column[D.Element];
+        T.Line := M.LineOf(D.Element);
+        T.Column := M.ColumnOf(D.Element);
         Continue;
       end;
       T := TXsltTemplate.Create;
       FC.Templates.Add(T);
       T.Name := Name;
       T.Module := M.Uri;
-      T.Line := M.Tree.Line[D.Element];
-      T.Column := M.Tree.Column[D.Element];
+      T.Line := M.LineOf(D.Element);
+      T.Column := M.ColumnOf(D.Element);
       T.Precedence := D.Precedence;
       { the parameters, to count them (CompileFunction compiles them) }
       for C := 1 to Arity do
@@ -3194,8 +3752,8 @@ begin
   T := TXsltTemplate.Create;
   FC.Templates.Add(T);
   T.Module := M.Uri;
-  T.Line := M.Tree.Line[E];
-  T.Column := M.Tree.Column[E];
+  T.Line := M.LineOf(E);
+  T.Column := M.ColumnOf(E);
   T.Precedence := D.Precedence;
   if Attr(M, E, 'name', V) then
     T.Name := QNameToClark(M, E, V, False);

@@ -234,8 +234,6 @@ type
       const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
     function KeyIndex(K: TXsltKey; Root: Integer): TObject;
     function GenerateId(Node: Integer): TLandrixXmlUtf8;
-    procedure NameArgument(Evaluator: TLandrixXmlXPathEvaluator; const Arg: TLandrixXmlXPathSequence;
-      const Code, FunctionName: string; const DefaultUri: TLandrixXmlUtf8; out Uri, Local: TLandrixXmlUtf8);
     function Availability(Evaluator: TLandrixXmlXPathEvaluator; Kind: Integer;
       const NameArg, ArityArg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function FormatNumber(const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
@@ -1695,106 +1693,33 @@ begin
       Result := False;
 end;
 
-{ the lexical QName in Arg (white space around it allowed) as a URI and
-  a local name: the prefix by the stylesheet's namespaces at the calling
-  expression (the '#ns:' keys of NewContext), no prefix: DefaultUri, or the
-  default namespace if DefaultUri is '#'; Code for a name that is none or
-  an unbound prefix }
-procedure TRun.NameArgument(Evaluator: TLandrixXmlXPathEvaluator; const Arg: TLandrixXmlXPathSequence;
-  const Code, FunctionName: string; const DefaultUri: TLandrixXmlUtf8; out Uri, Local: TLandrixXmlUtf8);
-var
-  S, Prefix: TLandrixXmlUtf8;
-  A, B, I: Integer;
-begin
-  S := Evaluator.ItemString(Evaluator.ConvertSequence(Arg, FStringType, FunctionName).Items[0]);
-  A := 1;
-  B := Length(S);
-  while (A <= B) and (S[A] in [#9, #10, #13, ' ']) do
-    Inc(A);
-  while (B >= A) and (S[B] in [#9, #10, #13, ' ']) do
-    Dec(B);
-  S := System.Copy(S, A, B - A + 1);
-  I := Pos8(':', S);
-  Uri := DefaultUri;
-  Local := S;
-  Prefix := '';
-  if I > 0 then
-  begin
-    Prefix := System.Copy(S, 1, I - 1);
-    Local := System.Copy(S, I + 1, Length(S) - I);
-  end;
-  if (I = 0) and (DefaultUri = '#') and ((Evaluator.CallerExpression = nil) or
-    not Evaluator.CallerExpression.LookupNamespace('#ns:', Uri)) then
-    Uri := '';
-  if (I > 0) and (Prefix = 'xml') then
-    Uri := 'http://www.w3.org/XML/1998/namespace';
-  if not IsNCName8(Local) or (I > 0) and (Prefix <> 'xml') and (not IsNCName8(Prefix) or
-    (Evaluator.CallerExpression = nil) or not Evaluator.CallerExpression.LookupNamespace('#ns:' + Prefix, Uri) or
-    (Uri = '')) then
-    raise ELandrixXmlXPathError.CreateXPath(Code, FunctionName + ': ' + LandrixXmlUtf8ToString(S) +
-      ' is no QName with a bound prefix');
-end;
-
-{ system-property(), function-available() and element-available() }
+{ system-property(), function-available() and element-available() (see
+  XsltSystemProperty and the functions beside it) }
 function TRun.Availability(Evaluator: TLandrixXmlXPathEvaluator; Kind: Integer;
   const NameArg, ArityArg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
 var
-  Uri, Local, Value, Count: TLandrixXmlUtf8;
-  Arity, I: Integer;
+  Uri, Local: TLandrixXmlUtf8;
   Found: Boolean;
 begin
   if Kind = XfnSystemProperty then
   begin
-    NameArgument(Evaluator, NameArg, 'XTDE1390', 'system-property()', '', Uri, Local);
-    Value := '';
-    if Uri = XsltNamespace then
-      if Local = 'version' then
-        Value := '2.0'
-      else if Local = 'vendor' then
-        Value := 'Landrix Software'
-      else if Local = 'vendor-url' then
-        Value := 'https://github.com/landrix/LandrixXML-for-Pascal'
-      else if Local = 'product-name' then
-        Value := 'LandrixXML'
-      else if Local = 'product-version' then
-        Value := LandrixXmlVersion
-      else if (Local = 'is-schema-aware') or (Local = 'supports-backwards-compatibility') then
-        Value := 'no'
-      else if Local = 'supports-serialization' then
-        Value := 'yes';
-    Result := LandrixXmlXPathStringItem(Value);
+    XsltNameArgument(Evaluator, NameArg, 'XTDE1390', 'system-property()', '', Uri, Local);
+    Result := LandrixXmlXPathStringItem(XsltSystemProperty(Uri, Local));
     Exit;
   end;
   if Kind = XfnElementAvailable then
   begin
-    NameArgument(Evaluator, NameArg, 'XTDE1440', 'element-available()', '#', Uri, Local);
+    XsltNameArgument(Evaluator, NameArg, 'XTDE1440', 'element-available()', '#', Uri, Local);
     Found := (Uri = XsltNamespace) and XsltElementAvailable(Local);
   end
   else
   begin
-    NameArgument(Evaluator, NameArg, 'XTDE1400', 'function-available()', LandrixXmlXPathFunctionNamespace,
+    XsltNameArgument(Evaluator, NameArg, 'XTDE1400', 'function-available()', LandrixXmlXPathFunctionNamespace,
       Uri, Local);
-    { a negative number of arguments: any (as Saxon) }
-    Arity := -1;
     if Kind = XfnFunctionAvailable2 then
-    begin
-      Count := Evaluator.ItemString(Evaluator.ConvertSequence(ArityArg, FIntegerType,
-        'function-available()').Items[0]);
-      if (Count = '') or (Count[1] <> '-') then
-        if Length(Count) > 9 then
-          Arity := MaxInt
-        else
-          Arity := StrToInt(LandrixXmlUtf8ToString(Count));
-    end;
-    Found := (Evaluator.CallerExpression <> nil) and
-      LandrixXmlXPathBuiltinExists(Uri, Local, Arity, Evaluator.CallerExpression.Profile);
-    { the functions of the stylesheet and the runtime (not the internal
-      global(), document() with two arguments is unsupported) }
-    for I := 0 to Integer(Length(FC.FunctionNames)) - 1 do
-      if (FC.FunctionNames[I] = Local) and (FC.FunctionUris[I] = Uri) and
-        ((Arity < 0) or (FC.FunctionArities[I] = Arity)) and (I <> XfnGlobal) and
-        not ((Local = 'document') and (FC.FunctionArities[I] = 2) and (Uri = LandrixXmlXPathFunctionNamespace)) then
-        Found := True;
+      Found := XsltFunctionAvailable(Evaluator, FC, Uri, Local, XsltArityArgument(Evaluator, ArityArg))
+    else
+      Found := XsltFunctionAvailable(Evaluator, FC, Uri, Local, -1);
   end;
   if Found then
     Result := Evaluator.EvaluateInFocus(FTrue, NoFocus)

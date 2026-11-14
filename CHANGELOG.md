@@ -26,6 +26,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   values and `SERE0008` elsewhere (comments, names, method text), as in
   Saxon.
 - XSLT: `xsl:strip-space` and `xsl:preserve-space`.
+- XSLT: `use-when` and `xsl:use-when` (conditional inclusion).
 - XSLT: `xsl:sort` (in `xsl:for-each`, `xsl:apply-templates` and
   `xsl:for-each-group`), `xsl:perform-sort`, `xsl:analyze-string` and
   `regex-group()`.
