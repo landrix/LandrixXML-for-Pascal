@@ -2289,6 +2289,87 @@ begin
   end;
 end;
 
+{ PushFrame and PopFrame: each call has its own slots; lazy variables are
+  evaluated in their frame; popping without a push raises. }
+procedure TestFrames;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr, Lazy: TLandrixXmlXPathExpression;
+  G, X, Y: Integer;
+  Raised: Boolean;
+
+  function Run(const S: string): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), Context);
+    try
+      Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0));
+    except
+      on E: ELandrixXmlXPathError do
+        Result := 'error ' + E.XPathCode;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := nil;
+  Expr := nil;
+  Lazy := nil;
+  try
+    Tree.LoadFromUtf8(U('<r/>'));
+    G := Context.DeclareVariable(U('g'));
+    X := Context.DeclareVariable(U('x'));
+    Y := Context.DeclareVariable(U('y'));
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    Evaluator.SetGlobalCount(1);
+    Evaluator.BindString(G, U('global'));
+    Evaluator.SetFrameSize(3);
+    Evaluator.BindString(X, U('outer'));
+    Evaluator.PushFrame(3);
+    CheckEqualsStr('error XPDY0002', Run('$x'), 'a new frame: unbound');
+    CheckEqualsStr('global', Run('$g'), 'globals stay');
+    Evaluator.BindString(X, U('inner'));
+    Lazy := TLandrixXmlXPathExpression.Create(U('concat($x, ''!'')'), Context);
+    Evaluator.BindLazy(Y, Lazy, -1);
+    Evaluator.PushFrame(3);
+    Evaluator.BindString(X, U('third'));
+    CheckEqualsStr('third', Run('$x'), 'the third frame');
+    Evaluator.PopFrame;
+    CheckEqualsStr('inner! inner', Run('concat($y, '' '', $x)'), 'a lazy variable in its frame');
+    Evaluator.PopFrame;
+    CheckEqualsStr('outer', Run('$x'), 'back to the first frame');
+    Raised := False;
+    try
+      Evaluator.PopFrame;
+    except
+      on E: ELandrixXmlError do
+        Raised := E.Code = xecInvalidOperation;
+    end;
+    Check(Raised, 'PopFrame without PushFrame');
+    { a lazy variable of a frame below the current one is evaluated again
+      after the dynamic context changed }
+    Lazy.Free;
+    Lazy := nil;
+    Lazy := TLandrixXmlXPathExpression.Create(U('string(implicit-timezone())'), Context);
+    Evaluator.BindLazy(Y, Lazy, -1);
+    CheckEqualsStr('PT0S', Run('$y'), 'the implicit time zone');
+    Evaluator.PushFrame(3);
+    Evaluator.ImplicitTimeZone := 60;
+    Evaluator.PopFrame;
+    CheckEqualsStr('PT1H', Run('$y'), 'evaluated again after the change');
+  finally
+    Expr.Free;
+    Lazy.Free;
+    Evaluator.Free;
+    Context.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
@@ -2313,6 +2394,7 @@ begin
   RegisterTest('XPathEval.TemporaryTrees', TestTemporaryTrees);
   RegisterTest('XPathEval.HostFunctions', TestHostFunctions);
   RegisterTest('XPathEval.MatchesPattern', TestMatchesPattern);
+  RegisterTest('XPathEval.Frames', TestFrames);
 end;
 
 end.

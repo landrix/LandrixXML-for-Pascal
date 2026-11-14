@@ -239,6 +239,9 @@ type
     FGlobalCount: Integer;
     FGlobals: TLandrixXmlXPathSlots;
     FFrame: TLandrixXmlXPathSlots;
+    { PushFrame: the frames below the current one }
+    FFrameStack: array of TLandrixXmlXPathSlots;
+    FFrameTop: Integer;
     { slots of for, some and every: a stack, one block per expression being evaluated }
     FLocals: array of TLandrixXmlXPathSequence;
     FLocalTop: Integer;
@@ -431,6 +434,12 @@ type
     { evaluated on first use with ContextNode as context item }
     procedure BindLazy(Slot: Integer; Expr: TLandrixXmlXPathExpression; ContextNode: Integer);
     procedure UnbindFrame;
+    { A new frame of Size unbound slots for a call (an XSLT template or
+      stylesheet function; for the XSLT units, not part of the documented
+      API yet); PopFrame returns to the frame before it. Globals and kept
+      values are not touched. The caller pops in a finally block. }
+    procedure PushFrame(Size: Integer);
+    procedure PopFrame;
     { forgets the kept values of context-free subexpressions (see the unit
       comment); needed when the tree changes while the evaluator lives }
     procedure ClearCache;
@@ -1435,7 +1444,7 @@ end;
   context: forget them (variables bound lazily are evaluated again). }
 procedure TLandrixXmlXPathEvaluator.ResetDynamicContext;
 var
-  I: Integer;
+  I, J: Integer;
 begin
   DropCachedValues;
   for I := 0 to Integer(Length(FGlobals)) - 1 do
@@ -1450,6 +1459,14 @@ begin
       FFrame[I].State := xssLazy;
       FFrame[I].Value := LandrixXmlXPathEmpty;
     end;
+  { and those of the frames below it (PushFrame) }
+  for J := 0 to FFrameTop - 1 do
+    for I := 0 to Integer(Length(FFrameStack[J])) - 1 do
+      if (FFrameStack[J][I].Expression <> nil) and (FFrameStack[J][I].State in [xssValue, xssError]) then
+      begin
+        FFrameStack[J][I].State := xssLazy;
+        FFrameStack[J][I].Value := LandrixXmlXPathEmpty;
+      end;
 end;
 
 procedure TLandrixXmlXPathEvaluator.SetImplicitTimeZone(Value: Integer);
@@ -1798,6 +1815,36 @@ begin
   SetLength(FFrame, Size);
   for I := 0 to Size - 1 do
     ClearSlot(FFrame[I]);
+end;
+
+procedure TLandrixXmlXPathEvaluator.PushFrame(Size: Integer);
+var
+  I: Integer;
+  Frame: TLandrixXmlXPathSlots;
+begin
+  if Size < 0 then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'PushFrame: negative size');
+  { everything that may fail first: the current frame stays if it does }
+  if FFrameTop = Length(FFrameStack) then
+    SetLength(FFrameStack, 2 * FFrameTop + 8);
+  Frame := nil;
+  SetLength(Frame, Size);
+  for I := 0 to Size - 1 do
+    ClearSlot(Frame[I]);
+  { the old frame stays alive on the stack (a slot being read keeps a
+    pointer into it) }
+  FFrameStack[FFrameTop] := FFrame;
+  Inc(FFrameTop);
+  FFrame := Frame;
+end;
+
+procedure TLandrixXmlXPathEvaluator.PopFrame;
+begin
+  if FFrameTop = 0 then
+    raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'PopFrame: no frame was pushed');
+  Dec(FFrameTop);
+  FFrame := FFrameStack[FFrameTop];
+  FFrameStack[FFrameTop] := nil;
 end;
 
 procedure TLandrixXmlXPathEvaluator.UnbindFrame;
