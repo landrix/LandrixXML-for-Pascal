@@ -14,8 +14,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   messages), `TLandrixXmlXsltResolver` (imports and documents from files
   or a catalog, no network) and `ELandrixXmlXsltError` (an
   `ELandrixXmlXPathError` with the W3C code, the module and the line).
-  See the README for the supported instructions. `TLandrixXmlErrorCode`
-  gains `xecXslt`.
+  See the README for the supported instructions; the KoSIT report
+  stylesheets give the report Saxon gives, byte for byte.
+  `TLandrixXmlErrorCode` gains `xecXslt`.
 - XPath: the string concatenation operator `||` (XPath 3.0) in the
   `xppSaxon` profile, as Saxon accepts it in stylesheets that declare
   XSLT 2.0; `a || b || c` is `concat(a, b, c)`. The `xppXPath20` profile

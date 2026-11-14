@@ -38,7 +38,8 @@ uses
   LandrixXmlXPath,
   LandrixXmlXPathEval,
   LandrixXmlXslt,
-  LandrixXmlXsltCompiler;
+  LandrixXmlXsltCompiler,
+  LandrixXmlXsltFormat;
 
 type
   TXsltRunSettings = class
@@ -180,8 +181,15 @@ type
     FDocUris: TStringList;
     FDocNodes: array of Integer;
     FTrue, FFalse: TLandrixXmlXPathExpression;
+    { xsl:number value: round(number(.)) as an integer, -1 for NaN }
+    FRoundExpr: TLandrixXmlXPathExpression;
     { per module: static-base-uri() and resolve-uri(.) with its URI }
     FBaseExprs: TObjectList;
+    { xs:dateTime?, xs:date?, xs:time? (the first argument of the format
+      functions) }
+    FDateTypes: array[TXsltDateKind] of TLandrixXmlXPathSequenceType;
+    FStringType, FOptionalStringType: TLandrixXmlXPathSequenceType;
+    function FormatDate(Kind: TXsltDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function LoadDocument(const Href, Base: TLandrixXmlUtf8; Available: Boolean): Integer;
     function DocFunction(Kind, Module: Integer; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
@@ -229,6 +237,8 @@ type
       R: TReceiver);
     procedure DoCallTemplate(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
+    function NumberMatches(Instr: TXsltInstr; Count: Boolean; Node, Model: Integer): Boolean;
+    procedure DoNumber(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; R: TReceiver);
     procedure Located(Instr: TXsltInstr; E: ELandrixXmlXPathError);
     function Supplied(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode): TSuppliedArray;
     procedure ApplyTemplates(Instr: TXsltInstr; const Nodes: TLandrixXmlXPathSequence; Mode: TXsltMode;
@@ -239,6 +249,7 @@ type
       const Params: TSuppliedArray);
     procedure TypedBody(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
     function FindRule(Mode: TXsltMode; Node: Integer): TXsltRule;
+    function CallFunction(T: TXsltTemplate; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure BuiltIn(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
     procedure BindGlobals;
@@ -939,6 +950,14 @@ begin
   end;
   FEvaluator := TLandrixXmlXPathEvaluator.Create(FSource);
   FTrue := TLandrixXmlXPathExpression.Create('true()', nil);
+  FRoundExpr := TLandrixXmlXPathExpression.Create(
+    'if (number(.) != number(.) or round(number(.)) lt 0) then -1 ' +
+    'else if (round(number(.)) gt 2147483647) then -2 else xs:integer(round(number(.)))', nil);
+  FDateTypes[xdkDateTime] := LandrixXmlXPathParseSequenceType('xs:dateTime?', nil);
+  FDateTypes[xdkDate] := LandrixXmlXPathParseSequenceType('xs:date?', nil);
+  FDateTypes[xdkTime] := LandrixXmlXPathParseSequenceType('xs:time?', nil);
+  FStringType := LandrixXmlXPathParseSequenceType('xs:string', nil);
+  FOptionalStringType := LandrixXmlXPathParseSequenceType('xs:string?', nil);
   FBaseExprs := TObjectList.Create;
   for I := 0 to Integer(Length(FC.ModuleUris)) - 1 do
   begin
@@ -979,6 +998,7 @@ begin
   FDocUris.Free;
   FEvaluator.Free;
   FTrue.Free;
+  FRoundExpr.Free;
   FBaseExprs.Free;
   FFalse.Free;
   FParamExprs.Free;
@@ -1142,10 +1162,15 @@ function TRun.Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFu
   const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
 var
   G: TXsltGlobal;
-  Slot: Integer;
-  Arg: TLandrixXmlXPathSequence;
+  Slot, SavedNode: Integer;
+  Arg, SavedCurrent: TLandrixXmlXPathSequence;
 begin
   Result := LandrixXmlXPathEmpty;
+  if Def.Tag >= FC.UserFunctionBase then
+  begin
+    Result := CallFunction(TXsltTemplate(FC.UserFunctions[Def.Tag - FC.UserFunctionBase]), Args);
+    Exit;
+  end;
   if Def.Tag >= XfnFixedCount then
   begin
     Result := DocFunction((Def.Tag - XfnFixedCount) mod XfnPerModule, (Def.Tag - XfnFixedCount) div XfnPerModule,
@@ -1153,6 +1178,12 @@ begin
     Exit;
   end;
   case Def.Tag of
+    XfnFormatDateTime2, XfnFormatDateTime5:
+      Result := FormatDate(xdkDateTime, Args);
+    XfnFormatDate2, XfnFormatDate5:
+      Result := FormatDate(xdkDate, Args);
+    XfnFormatTime2, XfnFormatTime5:
+      Result := FormatDate(xdkTime, Args);
     XfnCurrent:
       begin
         { the node the evaluator has (also that of a global variable
@@ -1177,14 +1208,58 @@ begin
           Arg := Args[0];
         Slot := StrToInt(LandrixXmlUtf8ToString(Evaluator.ItemString(Arg.Items[0])));
         G := TXsltGlobal(FC.Globals[Slot]);
+        SavedNode := FEvaluator.CurrentNode;
+        SavedCurrent := FCurrent;
         FEvaluator.PushFrame(G.FrameSize);
         try
           Result := VariableValue(nil, nil, G.Body, G.HasAs, G.AsType, G.Name, Focus, FC.FindMode(''));
         finally
           FEvaluator.PopFrame;
+          FEvaluator.CurrentNode := SavedNode;
+          FCurrent := SavedCurrent;
         end;
       end;
   end;
+end;
+
+{ format-dateTime(), format-date(), format-time(): the value converted as
+  a function argument, the picture, language and calendar as strings }
+function TRun.FormatDate(Kind: TXsltDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+const
+  Names: array[TXsltDateKind] of string = ('format-date', 'format-time', 'format-dateTime');
+var
+  V: TLandrixXmlXPathSequence;
+  Picture, Language, Calendar: TLandrixXmlUtf8;
+
+  { argument I as xs:string (One) or xs:string? }
+  function Str(I: Integer; One: Boolean): TLandrixXmlUtf8;
+  var
+    S: TLandrixXmlXPathSequence;
+  begin
+    Result := '';
+    if I > High(Args) then
+      Exit;
+    if One then
+      S := FEvaluator.ConvertSequence(Args[I], FStringType, Names[Kind] + '()')
+    else
+      S := FEvaluator.ConvertSequence(Args[I], FOptionalStringType, Names[Kind] + '()');
+    if S.Count > 0 then
+      Result := FEvaluator.ItemString(S.Items[0]);
+  end;
+
+begin
+  Result := LandrixXmlXPathEmpty;
+  if High(Args) < 1 then
+    Exit;
+  V := FEvaluator.ConvertSequence(Args[0], FDateTypes[Kind], Names[Kind] + '()');
+  Picture := Str(1, True);
+  Language := Str(2, False);
+  Calendar := Str(3, False);
+  Str(4, False);
+  if V.Count = 0 then
+    Exit;
+  Result := LandrixXmlXPathStringItem(XsltFormatDateTime(FEvaluator.ItemString(V.Items[0]), Kind, Picture,
+    Language, Calendar, (High(Args) >= 2) and (Args[2].Count > 0), (High(Args) >= 3) and (Args[3].Count > 0)));
 end;
 
 { XPath errors get the instruction's position }
@@ -1698,6 +1773,64 @@ begin
     R.Item(V.Items[I], False);
 end;
 
+{ A stylesheet function: its arguments converted to the parameter types
+  (XPTY0004, as Saxon reports it), its body run without focus in a frame of its own, the
+  result converted to its type (XTTE0780). }
+function TRun.CallFunction(T: TXsltTemplate; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  I, SavedNode: Integer;
+  P: TXsltInstr;
+  V, SavedCurrent: TLandrixXmlXPathSequence;
+  S: TSequenceReceiver;
+begin
+  if FTemplateDepth >= FSettings.MaxTemplateDepth then
+    raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested deeper than ' +
+      IntToStr(FSettings.MaxTemplateDepth), T.Module, T.Line, T.Column);
+  Inc(FTemplateDepth);
+  { the caller's current() is still needed after the call }
+  SavedNode := FEvaluator.CurrentNode;
+  SavedCurrent := FCurrent;
+  FEvaluator.PushFrame(T.FrameSize);
+  try
+    for I := 0 to Integer(T.Params.Count) - 1 do
+    begin
+      P := TXsltInstr(T.Params[I]);
+      V := LandrixXmlXPathEmpty;
+      if I <= High(Args) then
+        V := Args[I];
+      if P.HasAs then
+        try
+          V := FEvaluator.ConvertSequence(V, P.AsType, '$' + LandrixXmlUtf8ToString(P.VarName));
+        except
+          on E: ELandrixXmlXPathError do
+            raise ELandrixXmlXsltError.CreateXslt(xecXslt, E.XPathCode,
+              System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), P.Module, P.Line, P.Column);
+        end;
+      FEvaluator.BindValue(P.Slot, V);
+    end;
+    S := TSequenceReceiver.Create(Self);
+    try
+      Exec(T.Body, NoFocus, FC.FindMode(''), S);
+      Result := S.Items;
+    finally
+      S.Free;
+    end;
+    if T.HasAs then
+      try
+        Result := FEvaluator.ConvertSequence(Result, T.AsType, 'function ' + LandrixXmlUtf8ToString(T.Name));
+      except
+        on E: ELandrixXmlXPathError do
+          raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTTE0780',
+            System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), T.Module, T.Line, T.Column);
+      end;
+  finally
+    FEvaluator.PopFrame;
+    FEvaluator.CurrentNode := SavedNode;
+    FCurrent := SavedCurrent;
+    Dec(FTemplateDepth);
+  end;
+end;
+
 procedure TRun.Invoke(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
   const Params: TSuppliedArray; R: TReceiver);
 begin
@@ -1981,6 +2114,327 @@ begin
   Invoke(TXsltTemplate(Instr.Template), Focus, Mode, Params, R);
 end;
 
+{ Whether Node matches the count pattern (Count) or the from pattern of
+  xsl:number; without a count pattern: a node of the kind and name of
+  Model. }
+function TRun.NumberMatches(Instr: TXsltInstr; Count: Boolean; Node, Model: Integer): Boolean;
+var
+  I, B, BM: Integer;
+  T, TM: TLandrixXmlXPathTree;
+begin
+  Result := False;
+  if Count and (Length(Instr.CountPatterns) = 0) then
+  begin
+    T := FEvaluator.TreeOfNode(Node, B);
+    TM := FEvaluator.TreeOfNode(Model, BM);
+    Result := (T.Kind[Node - B] = TM.Kind[Model - BM]) and
+      (T.LocalNameUtf8(Node - B) = TM.LocalNameUtf8(Model - BM)) and
+      (T.NamespaceUriUtf8(Node - B) = TM.NamespaceUriUtf8(Model - BM));
+    Exit;
+  end;
+  FEvaluator.CurrentNode := Node;
+  FCurrent := LandrixXmlXPathEmpty;
+  if Count then
+  begin
+    for I := 0 to Integer(Length(Instr.CountPatterns)) - 1 do
+      if FEvaluator.MatchesPattern(Instr.CountPatterns[I], Node, Instr.CountRelative[I]) then
+      begin
+        Result := True;
+        Exit;
+      end;
+  end
+  else
+    for I := 0 to Integer(Length(Instr.FromPatterns)) - 1 do
+      if FEvaluator.MatchesPattern(Instr.FromPatterns[I], Node, Instr.FromRelative[I]) then
+      begin
+        Result := True;
+        Exit;
+      end;
+end;
+
+{ The text of one number in a format token: decimal digits (their number
+  the minimum width), a, A, i, I. }
+function NumberToken(N: Integer; const Token: TLandrixXmlUtf8; const GroupSep: TLandrixXmlUtf8;
+  GroupSize: Integer): TLandrixXmlUtf8;
+const
+  Values: array[0..12] of Integer = (1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1);
+  Symbols: array[0..12] of string = ('M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I');
+var
+  I, K, Width: Integer;
+  Digits: Boolean;
+  S, Letters: TLandrixXmlUtf8;
+begin
+  Result := '';
+  Letters := 'abcdefghijklmnopqrstuvwxyz';
+  if Token = 'A' then
+    Letters := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if (Token = 'a') or (Token = 'A') then
+  begin
+    K := N;
+    while K > 0 do
+    begin
+      Dec(K);
+      Result := Copy(Letters, K mod 26 + 1, 1) + Result;
+      K := K div 26;
+    end;
+    if Result = '' then
+      Result := '0';
+    Exit;
+  end;
+  if (Token = 'i') or (Token = 'I') then
+  begin
+    K := N;
+    if (K <= 0) or (K > 9999) then
+      Result := LandrixXmlStringToUtf8(IntToStr(K))
+    else
+      for I := 0 to 12 do
+        while K >= Values[I] do
+        begin
+          Result := Result + LandrixXmlStringToUtf8(Symbols[I]);
+          Dec(K, Values[I]);
+        end;
+    if Token = 'i' then
+      Result := LandrixXmlStringToUtf8(LowerCase(LandrixXmlUtf8ToString(Result)));
+    Exit;
+  end;
+  Digits := Token <> '';
+  for I := 1 to Length(Token) do
+    if not (Token[I] in ['0'..'9']) then
+      Digits := False;
+  if not Digits then
+    raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT: the xsl:number format token "' +
+      LandrixXmlUtf8ToString(Token) + '" is not supported');
+  Width := Length(Token);
+  Result := LandrixXmlStringToUtf8(IntToStr(N));
+  while Length(Result) < Width do
+    Result := '0' + Result;
+  if (GroupSep <> '') and (GroupSize > 0) then
+  begin
+    S := '';
+    K := 0;
+    for I := Length(Result) downto 1 do
+    begin
+      if (K > 0) and (K mod GroupSize = 0) then
+        S := GroupSep + S;
+      S := Copy(Result, I, 1) + S;
+      Inc(K);
+    end;
+    Result := S;
+  end;
+end;
+
+{ Numbers formatted as XSLT 2.0 12.3 says: the alphanumeric tokens of the
+  format and the separators between them (prefix and suffix kept; the
+  last token and separator for further numbers). }
+function FormatNumbers(const Numbers: array of Integer; const Format, GroupSep: TLandrixXmlUtf8;
+  GroupSize: Integer): TLandrixXmlUtf8;
+var
+  Tokens, Seps: TLandrixXmlUtf8Array;
+  Prefix, Suffix, Sep, Token: TLandrixXmlUtf8;
+  I, Start, K: Integer;
+
+  function Alnum(C: AnsiChar): Boolean;
+  begin
+    Result := C in ['0'..'9', 'A'..'Z', 'a'..'z'];
+  end;
+
+begin
+  Tokens := nil;
+  Seps := nil;
+  Prefix := '';
+  Suffix := '';
+  for I := 1 to Length(Format) do
+    if Ord(Format[I]) >= $80 then
+      raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT: an xsl:number format with characters ' +
+        'other than ASCII is not supported');
+  I := 1;
+  while (I <= Length(Format)) and not Alnum(Format[I]) do
+    Inc(I);
+  Prefix := Copy(Format, 1, I - 1);
+  while I <= Length(Format) do
+  begin
+    Start := I;
+    while (I <= Length(Format)) and Alnum(Format[I]) do
+      Inc(I);
+    K := Integer(Length(Tokens));
+    SetLength(Tokens, K + 1);
+    Tokens[K] := Copy(Format, Start, I - Start);
+    Start := I;
+    while (I <= Length(Format)) and not Alnum(Format[I]) do
+      Inc(I);
+    if I > Length(Format) then
+      Suffix := Copy(Format, Start, I - Start)
+    else
+    begin
+      SetLength(Seps, K + 1);
+      Seps[K] := Copy(Format, Start, I - Start);
+    end;
+  end;
+  if Length(Tokens) = 0 then
+  begin
+    { no token: "1", the format before and after it }
+    SetLength(Tokens, 1);
+    Tokens[0] := '1';
+    Suffix := Prefix;
+  end;
+  Result := Prefix;
+  for I := 0 to Integer(High(Numbers)) do
+  begin
+    if I > 0 then
+    begin
+      if I - 1 < Length(Seps) then
+        Sep := Seps[I - 1]
+      else if Length(Seps) > 0 then
+        Sep := Seps[High(Seps)]
+      else
+        Sep := '.';
+      Result := Result + Sep;
+    end;
+    if I < Length(Tokens) then
+      Token := Tokens[I]
+    else
+      Token := Tokens[High(Tokens)];
+    Result := Result + NumberToken(Numbers[I], Token, GroupSep, GroupSize);
+  end;
+  Result := Result + Suffix;
+end;
+
+procedure TRun.DoNumber(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; R: TReceiver);
+var
+  Numbers: array of Integer;
+  S: TLandrixXmlXPathSequence;
+  T: TLandrixXmlXPathTree;
+  Node, B, I, A, C, K: Integer;
+  GroupSep, V: TLandrixXmlUtf8;
+  GroupSize: Integer;
+  Chain: array of Integer;
+
+  procedure Add(N: Integer);
+  begin
+    SetLength(Numbers, Length(Numbers) + 1);
+    Numbers[High(Numbers)] := N;
+  end;
+
+  { 1 + the preceding siblings of Node that match the count pattern }
+  function SiblingNumber(N: Integer): Integer;
+  var
+    P, X: Integer;
+  begin
+    Result := 1;
+    if T.Kind[N - B] = xnkAttribute then
+      Exit;
+    P := T.Parent[N - B];
+    if P < 0 then
+      Exit;
+    X := T.FirstChild(P);
+    while (X >= 0) and (X <> N - B) do
+    begin
+      if NumberMatches(Instr, True, X + B, Node) then
+        Inc(Result);
+      X := T.NextSibling[X];
+    end;
+  end;
+
+begin
+  Numbers := nil;
+  Chain := nil;
+  if Instr.NumberValue <> nil then
+  begin
+    S := Eval(Instr, Instr.NumberValue, Focus);
+    for I := 0 to Integer(S.Count) - 1 do
+    begin
+      { round(number(.)), -1 for NaN }
+      K := StrToIntDef(LandrixXmlUtf8ToString(FEvaluator.ItemString(FEvaluator.EvaluateInFocus(FRoundExpr,
+        ItemFocus(S.Items[I], 1, 1)).Items[0])), -1);
+      if K = -2 then
+        raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000', 'xsl:number: a value above ' +
+          IntToStr(MaxInt) + ' is not supported', Instr.Module, Instr.Line, Instr.Column);
+      if K < 0 then
+        Fail(Instr, 'XTDE0980', 'xsl:number: ' + LandrixXmlUtf8ToString(FEvaluator.ItemString(S.Items[I])) +
+          ' is no number from 0 on');
+      Add(K);
+    end;
+  end
+  else
+  begin
+    if Instr.Select <> nil then
+    begin
+      S := Eval(Instr, Instr.Select, Focus);
+      if (S.Count <> 1) or (S.Items[0].Kind <> xikNode) then
+        Fail(Instr, 'XTTE1000', 'xsl:number: select must give one node');
+      Node := S.Items[0].Node;
+    end
+    else
+    begin
+      if Focus.Node < 0 then
+        Fail(Instr, 'XTTE0990', 'xsl:number: the context item is no node');
+      Node := Focus.Node;
+    end;
+    T := FEvaluator.TreeOfNode(Node, B);
+    case Instr.NumberLevel of
+      0, 1:
+        begin
+          { the ancestors-or-self that match count, up to one that matches from }
+          A := Node - B;
+          while A >= 0 do
+          begin
+            if NumberMatches(Instr, True, A + B, Node) then
+            begin
+              SetLength(Chain, Length(Chain) + 1);
+              Chain[High(Chain)] := A + B;
+              if Instr.NumberLevel = 0 then
+                Break;
+            end;
+            if (Length(Instr.FromPatterns) > 0) and NumberMatches(Instr, False, A + B, Node) then
+              Break;
+            A := T.Parent[A];
+          end;
+          for I := Integer(High(Chain)) downto 0 do
+            Add(SiblingNumber(Chain[I]));
+        end;
+    else
+      begin
+        { the nodes before Node (not attributes) and its ancestors-or-self
+          that match count, after the last one that matches from }
+        C := 0;
+        for K := 0 to Node - B do
+        begin
+          if (T.Kind[K] = xnkAttribute) and (K <> Node - B) then
+            Continue;
+          if (Length(Instr.FromPatterns) > 0) and NumberMatches(Instr, False, K + B, Node) then
+            C := 0;
+          if NumberMatches(Instr, True, K + B, Node) then
+            Inc(C);
+        end;
+        if C > 0 then
+          Add(C);
+      end;
+    end;
+  end;
+  GroupSep := '';
+  GroupSize := 0;
+  if (Instr.GroupingSeparator <> nil) and (Instr.GroupingSize <> nil) then
+  begin
+    GroupSep := EvalAvt(Instr, Instr.GroupingSeparator, Focus);
+    { an integer; 0 or less: no grouping (as Saxon) }
+    V := EvalAvt(Instr, Instr.GroupingSize, Focus);
+    A := 1;
+    if (V <> '') and (V[1] = '-') then
+      A := 2;
+    if A > Length(V) then
+      Fail(Instr, 'XTDE0030', 'xsl:number: grouping-size must be an integer');
+    GroupSize := 0;
+    for I := A to Length(V) do
+      if not (V[I] in ['0'..'9']) then
+        Fail(Instr, 'XTDE0030', 'xsl:number: grouping-size must be an integer')
+      else if GroupSize < 100000 then
+        GroupSize := GroupSize * 10 + Ord(V[I]) - Ord('0');
+    if A = 2 then
+      GroupSize := 0;
+  end;
+  R.Characters(FormatNumbers(Numbers, EvalAvt(Instr, Instr.FormatAvt, Focus), GroupSep, GroupSize));
+end;
+
 procedure TRun.ExecCore(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
 begin
   case Instr.Kind of
@@ -2019,9 +2473,11 @@ begin
       DoApplyTemplates(Instr, Focus, Mode, R);
     xskCallTemplate:
       DoCallTemplate(Instr, Focus, Mode, R);
+    xskNumber:
+      DoNumber(Instr, Focus, R);
   else
-    { xsl:when, xsl:number and xsl:namespace are not compiled as
-      instructions of their own }
+    { xsl:when and xsl:namespace are not compiled as instructions of
+      their own }
   end;
 end;
 

@@ -11,10 +11,10 @@
   Methods xml and text. xml escapes as Saxon does (& < > in text, also "
   and white space other than the space in attributes, carriage returns
   everywhere as character references) and writes the namespace
-  declarations each element holds; indent="yes" puts every element of
-  element-only content on a new line, three spaces per level, and drops
-  white space text there (equal to Saxon's after parsing, not byte by
-  byte). The encoding is UTF-8; another raises xecUnsupported. }
+  declarations each element holds, ordered by prefix; indent="yes"
+  indents as Saxon's indenter does, byte for byte (see
+  TSerializer.Element). The encoding is UTF-8; another raises
+  xecUnsupported. }
 
 unit LandrixXmlXsltOutput;
 

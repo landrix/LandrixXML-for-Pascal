@@ -315,7 +315,7 @@ const
     '<xsl:output doctype-system="x.dtd"/><xsl:template match="/"/>',
     '<xsl:output encoding="ISO-8859-1"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort/></xsl:for-each></xsl:template>',
-    '<xsl:template match="/"><xsl:number/></xsl:template>',
+    '<xsl:template match="/"><xsl:number lang="de"/></xsl:template>',
     '<xsl:key name="k" match="a" use="."/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:apply-templates><xsl:with-param name="p" tunnel="yes"/></xsl:apply-templates></xsl:template>',
     '<xsl:template match="/"><xsl:choose><xsl:when use-when="false()" test="1">a</xsl:when></xsl:choose></xsl:template>',

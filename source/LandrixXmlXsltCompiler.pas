@@ -52,7 +52,14 @@ const
   { the fixed functions, in this order in every static context }
   XfnGlobal = 0;
   XfnCurrent = 1;
-  XfnFixedCount = 2;
+  { format-dateTime, format-date, format-time with 2 and 5 arguments }
+  XfnFormatDateTime2 = 2;
+  XfnFormatDateTime5 = 3;
+  XfnFormatDate2 = 4;
+  XfnFormatDate5 = 5;
+  XfnFormatTime2 = 6;
+  XfnFormatTime5 = 7;
+  XfnFixedCount = 8;
   { then per module: doc#1, doc-available#1, document#1, document#2,
     static-base-uri#0, resolve-uri#1 (the module's URI is the static base
     URI) }
@@ -154,6 +161,18 @@ type
     AsType: TLandrixXmlXPathSequenceType;
     { xsl:choose: the xsl:when branches (owned); Body is xsl:otherwise }
     Branches: TObjectList;
+    { xsl:number: the level (0 single, 1 multiple, 2 any), the branches of
+      the count and from patterns (none: the default count pattern), the
+      value, the format and the grouping (nil if not given) }
+    NumberLevel: Integer;
+    CountPatterns: array of TLandrixXmlXPathExpression;
+    CountRelative: array of Boolean;
+    FromPatterns: array of TLandrixXmlXPathExpression;
+    FromRelative: array of Boolean;
+    NumberValue: TLandrixXmlXPathExpression;
+    FormatAvt: TXsltAvt;
+    GroupingSeparator: TXsltAvt;
+    GroupingSize: TXsltAvt;
     constructor Create(AKind: TXsltInstrKind);
     destructor Destroy; override;
   end;
@@ -239,6 +258,10 @@ type
     { the module a function belongs to (-1: all), and the modules' URIs }
     FunctionModules: array of Integer;
     ModuleUris: TLandrixXmlUtf8Array;
+    { the stylesheet functions (xsl:function, a TXsltTemplate each, owned
+      by Templates): function UserFunctionBase + I is UserFunctions[I] }
+    UserFunctions: TList;
+    UserFunctionBase: Integer;
     constructor Create;
     destructor Destroy; override;
     function FindMode(const Name: TLandrixXmlUtf8): TXsltMode;
@@ -404,6 +427,7 @@ begin
   NamedTemplates.Sorted := True;
   Expressions := TObjectList.Create;
   Output := TXsltOutputProperties.Create;
+  UserFunctions := TList.Create;
 end;
 
 destructor TXsltCompiled.Destroy;
@@ -419,6 +443,7 @@ begin
   Globals.Free;
   Output.Free;
   Expressions.Free;
+  UserFunctions.Free;
   inherited Destroy;
 end;
 
@@ -534,6 +559,9 @@ type
     FOwnResolver: Boolean;
     FModules: TObjectList;
     FDecls: TObjectList;
+    { the xsl:function declarations in force, in the order of
+      FC.UserFunctions }
+    FFunctionDecls: TList;
     FNextPrecedence: Integer;
     FNextOrder: Integer;
     FC: TXsltCompiled;
@@ -573,6 +601,11 @@ type
     function CompileVariable(M: TModule; E: Integer; Scope: TScope; Param: Boolean): TXsltInstr;
     procedure CompileGlobals;
     procedure CompileTemplate(D: TDecl);
+    function PatternBranch(M: TModule; E: Integer; const Branch: TLandrixXmlUtf8; Scope: TScope;
+      out Relative: Boolean): TLandrixXmlXPathExpression;
+    procedure CompileNumber(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    procedure CollectFunctions;
+    procedure CompileFunction(T: TXsltTemplate; D: TDecl);
     procedure AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8);
     function ModeOf(const Name: TLandrixXmlUtf8): TXsltMode;
     procedure CompileOutput(D: TDecl);
@@ -628,6 +661,7 @@ begin
   end;
   FModules := TObjectList.Create;
   FDecls := TObjectList.Create;
+  FFunctionDecls := TList.Create;
   FAllModeTemplates := TList.Create;
   FChain := TXsltStringList.Create;
   FChain.CaseSensitive := True;
@@ -640,6 +674,7 @@ begin
   FVarUris.Free;
   FChain.Free;
   FAllModeTemplates.Free;
+  FFunctionDecls.Free;
   FDecls.Free;
   FModules.Free;
   if FOwnResolver then
@@ -1469,7 +1504,7 @@ begin
     (L = 'iterate') or (L = 'evaluate') or (L = 'where-populated') or (L = 'on-empty') or
     (L = 'on-non-empty') or (L = 'map') or (L = 'array') or (L = 'merge') or (L = 'fork') or
     (L = 'assert') or (L = 'break') or (L = 'next-iteration') or (L = 'source-document') or
-    (L = 'number') or (L = 'call-function') or (L = 'context-item') then
+    (L = 'call-function') or (L = 'context-item') then
     Unsupported(M, E, 'xsl:' + LandrixXmlUtf8ToString(L));
   try
     if L = 'text' then
@@ -1565,6 +1600,11 @@ begin
       Result := NewInstr(xskForEach, M, E);
       Result.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
       CompileBody(M, E, Scope, Result.Body, -1);
+    end
+    else if L = 'number' then
+    begin
+      Result := NewInstr(xskNumber, M, E);
+      CompileNumber(M, E, Scope, Result);
     end
     else if L = 'sequence' then
     begin
@@ -1977,13 +2017,127 @@ begin
   L.Add(R);
 end;
 
+{ A branch of a pattern as the expression MatchesPattern takes: "//"
+  before a relative path (Relative), rooted ones as they are,
+  document-node(...) as the root tested. }
+function TCompiler.PatternBranch(M: TModule; E: Integer; const Branch: TLandrixXmlUtf8; Scope: TScope;
+  out Relative: Boolean): TLandrixXmlXPathExpression;
+var
+  B, Text: TLandrixXmlUtf8;
+begin
+  B := Branch;
+  if StripSpace(B) = 'document-node()' then
+    B := '/'
+  else if Copy(StripSpace(B), 1, 14) = 'document-node(' then
+    B := '/self::' + B;
+  if (B[1] = '/') or (Copy(B, 1, 3) = 'id(') or (Copy(B, 1, 4) = 'key(') or (Copy(B, 1, 4) = 'doc(') then
+  begin
+    Text := B;
+    Relative := False;
+  end
+  else
+  begin
+    Text := '//' + B;
+    Relative := True;
+  end;
+  Result := nil;
+  try
+    Result := Compile(M, E, Text, Scope);
+  except
+    on X: ELandrixXmlXsltError do
+      if X.XPathCode = 'XPST0003' then
+        Fail(M, E, 'XTSE0340', 'not a pattern: "' + LandrixXmlUtf8ToString(Branch) + '"')
+      else
+        raise;
+  end;
+end;
+
+{ xsl:number (XSLT 2.0 12): value or the place of the selected node
+  (level, count, from), the format and the grouping as templates; lang,
+  letter-value and ordinal are not supported. }
+procedure TCompiler.CompileNumber(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+var
+  V: TLandrixXmlUtf8;
+  Branches: TLandrixXmlUtf8Array;
+  I: Integer;
+begin
+  Branches := nil;
+  for I := E + 1 to E + M.Tree.AttributeCount[E] do
+    if M.Tree.NamespaceUriUtf8(I) = '' then
+    begin
+      V := M.Tree.LocalNameUtf8(I);
+      if (V <> 'value') and (V <> 'select') and (V <> 'level') and (V <> 'count') and (V <> 'from') and
+        (V <> 'format') and (V <> 'lang') and (V <> 'letter-value') and (V <> 'ordinal') and
+        (V <> 'grouping-separator') and (V <> 'grouping-size') and (V <> 'start-at') and (V <> 'version') then
+        Fail(M, E, 'XTSE0090', 'xsl:number has no attribute ' + LandrixXmlUtf8ToString(V));
+      if V = 'start-at' then
+        Unsupported(M, E, 'xsl:number start-at (XSLT 3.0)');
+    end;
+  I := M.Tree.FirstChild(E);
+  while I >= 0 do
+  begin
+    if (M.Tree.Kind[I] = xnkElement) or (M.Tree.Kind[I] = xnkText) and (Trim8(M.Tree.ValueUtf8(I)) <> '') then
+      Fail(M, E, 'XTSE0260', 'xsl:number must be empty');
+    I := M.Tree.NextSibling[I];
+  end;
+  if Attr(M, E, 'lang', V) or Attr(M, E, 'letter-value', V) or Attr(M, E, 'ordinal', V) then
+    Unsupported(M, E, 'xsl:number with lang, letter-value or ordinal');
+  Instr.NumberValue := CompileAttr(M, E, 'value', Scope);
+  Instr.Select := CompileAttr(M, E, 'select', Scope);
+  if (Instr.NumberValue <> nil) and ((Instr.Select <> nil) or Attr(M, E, 'level', V) or Attr(M, E, 'count', V) or
+    Attr(M, E, 'from', V)) then
+    Fail(M, E, 'XTSE0975', 'xsl:number has value and select, level, count or from');
+  Instr.NumberLevel := 0;
+  if Attr(M, E, 'level', V) then
+  begin
+    V := Trim8(V);
+    if V = 'multiple' then
+      Instr.NumberLevel := 1
+    else if V = 'any' then
+      Instr.NumberLevel := 2
+    else if V <> 'single' then
+      Fail(M, E, 'XTSE0020', 'level must be single, multiple or any');
+  end;
+  if Attr(M, E, 'count', V) then
+  begin
+    Branches := SplitPattern(V);
+    SetLength(Instr.CountPatterns, Length(Branches));
+    SetLength(Instr.CountRelative, Length(Branches));
+    for I := 0 to Integer(Length(Branches)) - 1 do
+    begin
+      if Branches[I] = '' then
+        Fail(M, E, 'XTSE0340', 'an empty pattern');
+      Instr.CountPatterns[I] := PatternBranch(M, E, Branches[I], Scope, Instr.CountRelative[I]);
+    end;
+  end;
+  if Attr(M, E, 'from', V) then
+  begin
+    Branches := SplitPattern(V);
+    SetLength(Instr.FromPatterns, Length(Branches));
+    SetLength(Instr.FromRelative, Length(Branches));
+    for I := 0 to Integer(Length(Branches)) - 1 do
+    begin
+      if Branches[I] = '' then
+        Fail(M, E, 'XTSE0340', 'an empty pattern');
+      Instr.FromPatterns[I] := PatternBranch(M, E, Branches[I], Scope, Instr.FromRelative[I]);
+    end;
+  end;
+  if not Attr(M, E, 'format', V) then
+    V := '1';
+  Instr.FormatAvt := CompileAvt(M, E, V, Scope);
+  if Attr(M, E, 'grouping-separator', V) then
+    Instr.GroupingSeparator := CompileAvt(M, E, V, Scope);
+  if Attr(M, E, 'grouping-size', V) then
+    Instr.GroupingSize := CompileAvt(M, E, V, Scope);
+end;
+
 procedure TCompiler.AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8);
 var
   Branches: TLandrixXmlUtf8Array;
   ModeNames: TList;
   I, J, Start: Integer;
   R: TXsltRule;
-  Text, B, V, W: TLandrixXmlUtf8;
+  B, V, W: TLandrixXmlUtf8;
   Prio: Double;
   HasPrio, All: Boolean;
   Code: Integer;
@@ -2034,23 +2188,7 @@ begin
         R.Priority := Prio
       else
         R.Priority := DefaultPriority(B);
-      if StripSpace(B) = 'document-node()' then
-        B := '/'
-      else if Copy(StripSpace(B), 1, 14) = 'document-node(' then
-        { a document node test with an argument: the root, tested }
-        B := '/self::' + B;
-      if (B[1] = '/') or (Copy(B, 1, 3) = 'id(') or (Copy(B, 1, 4) = 'key(') or
-        (Copy(B, 1, 4) = 'doc(') then
-      begin
-        Text := B;
-        R.Relative := False;
-      end
-      else
-      begin
-        Text := '//' + B;
-        R.Relative := True;
-      end;
-      R.Pattern := Compile(D.Module, D.Element, Text, nil);
+      R.Pattern := PatternBranch(D.Module, D.Element, B, nil, R.Relative);
       if All then
         FAllModeTemplates.Add(R)
       else
@@ -2059,6 +2197,152 @@ begin
     end;
   finally
     ModeNames.Free;
+  end;
+end;
+
+{ The xsl:function declarations: for each name and arity the one with the
+  highest import precedence (XTSE0770 for two with the same). Their
+  bodies are compiled after the globals and templates (CompileFunction),
+  their names are known to every expression before. }
+procedure TCompiler.CollectFunctions;
+var
+  I, K, C, Arity: Integer;
+  D: TDecl;
+  M: TModule;
+  T: TXsltTemplate;
+  Name, Uri, Key: TLandrixXmlUtf8;
+  Keys: TXsltStringList;
+  DupTemplates, DupDecls: TList;
+begin
+  Keys := TXsltStringList.Create;
+  DupTemplates := TList.Create;
+  DupDecls := TList.Create;
+  try
+    Keys.CaseSensitive := True;
+    for I := 0 to Integer(FDecls.Count) - 1 do
+    begin
+      D := TDecl(FDecls[I]);
+      M := D.Module;
+      if not IsXsl(M, D.Element, 'function') then
+        Continue;
+      Name := QNameToClark(M, D.Element, Trim8(ReqAttr(M, D.Element, 'name')), False);
+      Uri := '';
+      if Copy(Name, 1, 1) = '{' then
+        Uri := Copy(Name, 2, Pos8('}', Name) - 2);
+      if Uri = '' then
+        Fail(M, D.Element, 'XTSE0740', 'a stylesheet function needs a name in a namespace');
+      if (Uri = XsltNamespace) or (Uri = LandrixXmlXPathFunctionNamespace) or
+        (Uri = 'http://www.w3.org/2001/XMLSchema') or (Uri = 'http://www.w3.org/2001/XMLSchema-instance') or
+        (Uri = LandrixXmlNamespaceXml) then
+        Fail(M, D.Element, 'XTSE0080', 'a stylesheet function in a reserved namespace');
+      Arity := 0;
+      C := M.Tree.FirstChild(D.Element);
+      while C >= 0 do
+      begin
+        if IsXsl(M, C, 'param') then
+          Inc(Arity);
+        C := M.Tree.NextSibling[C];
+      end;
+      Key := Name + '#' + LandrixXmlStringToUtf8(IntToStr(Arity));
+      K := Keys.IndexOf(LandrixXmlUtf8ToString(Key));
+      if K >= 0 then
+      begin
+        T := TXsltTemplate(Keys.Objects[K]);
+        { two with the same precedence: an error unless a higher one
+          replaces both (checked at the end) }
+        if T.Precedence = D.Precedence then
+        begin
+          DupTemplates.Add(T);
+          DupDecls.Add(D);
+          Continue;
+        end;
+        if T.Precedence > D.Precedence then
+          Continue;
+        { a higher precedence: this declaration instead }
+        K := Integer(FC.UserFunctions.IndexOf(T));
+        FFunctionDecls[K] := D;
+        T.Precedence := D.Precedence;
+        T.Module := M.Uri;
+        T.Line := M.Tree.Line[D.Element];
+        T.Column := M.Tree.Column[D.Element];
+        Continue;
+      end;
+      T := TXsltTemplate.Create;
+      FC.Templates.Add(T);
+      T.Name := Name;
+      T.Module := M.Uri;
+      T.Line := M.Tree.Line[D.Element];
+      T.Column := M.Tree.Column[D.Element];
+      T.Precedence := D.Precedence;
+      { the parameters, to count them (CompileFunction compiles them) }
+      for C := 1 to Arity do
+        T.Params.Add(nil);
+      FC.UserFunctions.Add(T);
+      FFunctionDecls.Add(D);
+      Keys.AddObject(LandrixXmlUtf8ToString(Key), T);
+    end;
+    for I := 0 to Integer(DupTemplates.Count) - 1 do
+      if TXsltTemplate(DupTemplates[I]).Precedence = TDecl(DupDecls[I]).Precedence then
+        Fail(TDecl(DupDecls[I]).Module, TDecl(DupDecls[I]).Element, 'XTSE0770', 'two functions ' +
+          LandrixXmlUtf8ToString(TXsltTemplate(DupTemplates[I]).Name) + ' with the same arity and precedence');
+  finally
+    DupDecls.Free;
+    DupTemplates.Free;
+    Keys.Free;
+  end;
+end;
+
+{ The parameters and body of a stylesheet function (no focus inside; a
+  parameter has neither select nor content: XTSE0760). }
+procedure TCompiler.CompileFunction(T: TXsltTemplate; D: TDecl);
+var
+  M: TModule;
+  E, C, I: Integer;
+  V: TLandrixXmlUtf8;
+  Scope: TScope;
+  P: TXsltInstr;
+begin
+  M := D.Module;
+  E := D.Element;
+  T.Params.Clear;
+  if Attr(M, E, 'override', V) and (Trim8(V) <> 'yes') and (Trim8(V) <> 'no') then
+    Fail(M, E, 'XTSE0020', 'override must be yes or no');
+  Scope := TScope.Create;
+  try
+    Scope.NextSlot := FC.GlobalCount;
+    Scope.MaxSlot := FC.GlobalCount;
+    T.HasAs := ParseType(M, E, Scope, T.AsType);
+    C := M.Tree.FirstChild(E);
+    while C >= 0 do
+    begin
+      if IsXsl(M, C, 'param') then
+      begin
+        if Attr(M, C, 'required', V) then
+          Fail(M, C, 'XTSE0020', 'a parameter of a function has no required attribute');
+        P := CompileVariable(M, C, Scope, True);
+        if (P.Select <> nil) or (P.Body.Count > 0) then
+        begin
+          P.Free;
+          Fail(M, C, 'XTSE0760', 'a parameter of a function has no default value');
+        end;
+        for I := 0 to Integer(T.Params.Count) - 1 do
+          if TXsltInstr(T.Params[I]).VarName = P.VarName then
+          begin
+            P.Free;
+            Fail(M, C, 'XTSE0580', 'two parameters of a function have the same name');
+          end;
+        T.Params.Add(P);
+      end
+      else if (M.Tree.Kind[C] = xnkElement) or
+        ((M.Tree.Kind[C] = xnkText) and ((Trim8(M.Tree.ValueUtf8(C)) <> '') or PreservesSpace(M.Tree, C))) then
+        Break;
+      C := M.Tree.NextSibling[C];
+    end;
+    if C >= 0 then
+      CompileBody(M, E, Scope, T.Body, C);
+    T.FrameSize := Scope.MaxSlot;
+  finally
+    Scope.Free;
   end;
 end;
 
@@ -2253,6 +2537,7 @@ end;
 procedure TCompiler.AddModuleFunctions;
 var
   N, I, K, F: Integer;
+  T: TXsltTemplate;
 
   procedure Add(const Uri, Name: TLandrixXmlUtf8; Arity: Integer; Flags: TLandrixXmlXPathFunctionFlags;
     Module: Integer);
@@ -2266,7 +2551,7 @@ var
   end;
 
 begin
-  N := XfnFixedCount + XfnPerModule * Integer(FModules.Count);
+  N := XfnFixedCount + XfnPerModule * Integer(FModules.Count) + Integer(FC.UserFunctions.Count);
   SetLength(FC.FunctionUris, N);
   SetLength(FC.FunctionNames, N);
   SetLength(FC.FunctionArities, N);
@@ -2275,6 +2560,12 @@ begin
   F := 0;
   Add(XsltInternalNamespace, 'global', 1, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'current', 0, [xffVolatile], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'format-dateTime', 2, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'format-dateTime', 5, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'format-date', 2, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'format-date', 5, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'format-time', 2, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'format-time', 5, [], -1);
   SetLength(FC.ModuleUris, FModules.Count);
   for I := 0 to Integer(FModules.Count) - 1 do
   begin
@@ -2289,6 +2580,14 @@ begin
     Add(LandrixXmlXPathFunctionNamespace, 'document', 2, [], K);
     Add(LandrixXmlXPathFunctionNamespace, 'static-base-uri', 0, [], K);
     Add(LandrixXmlXPathFunctionNamespace, 'resolve-uri', 1, [], K);
+  end;
+  { the stylesheet functions, in every module }
+  FC.UserFunctionBase := F;
+  for K := 0 to Integer(FC.UserFunctions.Count) - 1 do
+  begin
+    T := TXsltTemplate(FC.UserFunctions[K]);
+    I := Pos8('}', T.Name);
+    Add(Copy(T.Name, 2, I - 2), Copy(T.Name, I + 1, Length(T.Name) - I), Integer(T.Params.Count), [], -1);
   end;
 end;
 
@@ -2320,6 +2619,7 @@ begin
       Unsupported(Main, E, 'an XSLT 1.0 stylesheet (backwards compatible processing)');
     CheckModule(Main);
     Collect(Main);
+    CollectFunctions;
     AddModuleFunctions;
     CompileGlobals;
     for I := 0 to Integer(FDecls.Count) - 1 do
@@ -2332,9 +2632,10 @@ begin
         CompileTemplate(D)
       else if L = 'output' then
         CompileOutput(D)
-      else if (L = 'variable') or (L = 'param') or (L = 'import') or (L = 'include') then
+      else if (L = 'variable') or (L = 'param') or (L = 'import') or (L = 'include') or
+        (L = 'function') then
         { done }
-      else if (L = 'function') or (L = 'key') or (L = 'decimal-format') or (L = 'strip-space') or
+      else if (L = 'key') or (L = 'decimal-format') or (L = 'strip-space') or
         (L = 'preserve-space') or (L = 'attribute-set') or (L = 'namespace-alias') or
         (L = 'character-map') or (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
         (L = 'use-package') or (L = 'global-context-item') then
@@ -2342,6 +2643,8 @@ begin
       else
         Fail(D.Module, D.Element, 'XTSE0010', 'unknown declaration xsl:' + LandrixXmlUtf8ToString(L));
     end;
+    for I := 0 to Integer(FC.UserFunctions.Count) - 1 do
+      CompileFunction(TXsltTemplate(FC.UserFunctions[I]), TDecl(FFunctionDecls[I]));
     Finish;
     Result := FC;
     FC := nil;

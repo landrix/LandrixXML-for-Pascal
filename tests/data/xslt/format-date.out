@@ -1,0 +1,47 @@
+[D].[M].[Y] [H]:[m]:[s] = 4.1.2026 7:05:03 | 14.11.2026 23:59:09 | 2.3.2026 0:00:00
+[D01].[M01].[Y0001] = 04.01.2026 | 14.11.2026 | 02.03.2026
+[f] = 27 | 0 | 0
+[f001] = 270 | 000 | 000
+[f1] = 27 | 0 | 0
+[Z] = +01:00 | +00:00 | 
+[z] = GMT+01:00 | GMT+00:00 | 
+[F] = Sunday | Saturday | Monday
+[FNn] = Sunday | Saturday | Monday
+[FN,3-3] = SUN | SAT | MON
+[F1] = 7 | 6 | 1
+[P] = a.m. | p.m. | a.m.
+[h] = 7 | 11 | 12
+[MNn] = January | November | March
+[Mn,3-3] = jan | nov | mar
+[MN,*-3] = JAN | NOV | MAR
+[Y,2] = 2026 | 2026 | 2026
+[Y,2-2] = 26 | 26 | 26
+[YI] = MMXXVI | MMXXVI | MMXXVI
+[Di] = iv | xiv | ii
+[d] = 4 | 318 | 61
+[W] = 1 | 46 | 10
+[C] = Gregorian | Gregorian | Gregorian
+[E] = AD | AD | AD
+[[x]] [Y] = [x] 2026 | [x] 2026 | [x] 2026
+[ D ] = 4 | 14 | 2
+[Y01] = 26 | 26 | 26
+[Y001] = 026 | 026 | 026
+[M,2] = 01 | 11 | 03
+[H01] = 07 | 23 | 00
+[m1] = 5 | 59 | 0
+[s1] = 3 | 9 | 0
+[Z0] = +1 | +0 | 
+[Z00:00] = +01:00 | +00:00 | 
+[Z0000] = +0100 | +0000 | 
+[Z01] = +01 | +00 | 
+[MNn,6-6] = Januar | Novemb | March 
+[FNn,2-3] = Sun | Sat | Mon
+14.11.2026
+53 1
+53 5
+1:04 p.m.
+[Language: en]4 January 2026
+4. January 2026
+|
+44 BC
+2026-08

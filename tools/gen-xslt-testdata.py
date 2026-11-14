@@ -55,7 +55,8 @@ def main():
             print("%s: %d bytes" % (case, len(data)))
             continue
         text = run.stderr.decode("utf-8", "replace")
-        codes = re.findall(r"\b([A-Z]{4}[0-9]{4})\b", text)
+        # the first error code (not a warning such as SXWN9027)
+        codes = [c for c in re.findall(r"\b([A-Z]{4}[0-9]{4})\b", text) if not c.startswith("SXWN")]
         if not codes:
             sys.exit("%s failed without an error code:\n%s" % (case, text[-2000:]))
         with open(err_file, "w", encoding="utf-8", newline="\n") as f:

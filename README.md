@@ -59,7 +59,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlSchematronCompiler` | compiles ISO Schematron (`.sch`) into rule files, optional validation unit |
 | `LandrixXmlSha256` | SHA-256, used for the source fingerprint of compiled rules |
 | `LandrixXmlXslt` | XSLT 2.0 transformations (a subset, see below): `TLandrixXmlXsltStylesheet`, `TLandrixXmlXsltTransformer`, optional unit |
-| `LandrixXmlXsltCompiler`, `LandrixXmlXsltRuntime`, `LandrixXmlXsltOutput` | internals of `LandrixXmlXslt` |
+| `LandrixXmlXsltCompiler`, `LandrixXmlXsltRuntime`, `LandrixXmlXsltOutput`, `LandrixXmlXsltFormat` | internals of `LandrixXmlXslt` |
 
 Add the `source` folder to the search path (Delphi: unit and include path;
 Free Pascal: `-Fusource -Fisource`).
@@ -378,12 +378,17 @@ sequence constructor and `as`), `xsl:import` and `xsl:include` with
 import precedence, literal result elements, `xsl:element`,
 `xsl:attribute`, `xsl:value-of`, `xsl:text`, `xsl:if`, `xsl:choose`,
 `xsl:for-each`, `xsl:sequence`, `xsl:copy`, `xsl:copy-of`,
-`xsl:document`, `xsl:comment`, `xsl:processing-instruction` and
-`xsl:message`; output methods xml and text in UTF-8, with Saxon's
-indentation. Anything else is rejected when the stylesheet is loaded
-(`xecUnsupported`), never run differently. The XSLT functions not done
-yet (`key()`, `generate-id()`, `format-number()`, `system-property()`
-and the others) are unknown functions (`XPST0017`), and a result whose
+`xsl:document`, `xsl:comment`, `xsl:processing-instruction`,
+`xsl:message`, `xsl:number` and `xsl:function`; `format-date()`,
+`format-time()` and `format-dateTime()` in English (numbers, roman
+numerals, names, widths); output methods xml and text in UTF-8, with
+Saxon's indentation. The report stylesheets of the KoSIT validator run
+with it: for the 86 invoices of the KoSIT test suite the report is the
+one Saxon writes, byte for byte. Anything else is rejected when the
+stylesheet is loaded (`xecUnsupported`), never run differently. The XSLT
+functions not done yet (`key()`, `generate-id()`, `format-number()`,
+`system-property()` and the others) are unknown functions (`XPST0017`),
+and a result whose
 root element is `html` without an `xsl:output` method is rejected when it
 is serialized. Work in progress (more instructions, functions and the
 html method follow): the cases in `tests/data/xslt` give the output
