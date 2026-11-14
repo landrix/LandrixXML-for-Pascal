@@ -76,7 +76,9 @@ const
   XfnFunctionAvailable1 = 17;
   XfnFunctionAvailable2 = 18;
   XfnElementAvailable = 19;
-  XfnFixedCount = 20;
+  { regex-group#1 }
+  XfnRegexGroup = 20;
+  XfnFixedCount = 21;
   { then per module: doc#1, doc-available#1, document#1, document#2,
     static-base-uri#0, resolve-uri#1 (the module's URI is the static base
     URI), unparsed-text#1/#2, unparsed-text-available#1/#2 }
@@ -112,7 +114,7 @@ type
   TXsltInstrKind = (xskLiteralElement, xskText, xskValueOf, xskApplyTemplates, xskCallTemplate,
     xskVariable, xskIf, xskChoose, xskWhen, xskForEach, xskSequence, xskCopyOf, xskCopy,
     xskElement, xskAttribute, xskComment, xskProcessingInstruction, xskMessage, xskDocument,
-    xskNumber, xskNamespace, xskForEachGroup);
+    xskNumber, xskNamespace, xskForEachGroup, xskPerformSort, xskAnalyzeString);
 
   { a value with literal parts and expressions in curly brackets: Exprs[I] nil for a
     literal part }
@@ -121,6 +123,25 @@ type
     Parts: TLandrixXmlUtf8Array;
     Exprs: array of TLandrixXmlXPathExpression;
     function IsLiteral: Boolean;
+  end;
+
+  TXsltInstr = class;
+
+  { one xsl:sort: the key (Select, or the sequence constructor in Body)
+    and its attribute value templates (nil where the attribute is absent) }
+  TXsltSortKey = class
+  public
+    Select: TLandrixXmlXPathExpression;
+    Body: TObjectList;
+    Order: TXsltAvt;
+    DataType: TXsltAvt;
+    CaseOrder: TXsltAvt;
+    Collation: TXsltAvt;
+    Stable: TXsltAvt;
+    { the xsl:sort element, for the position of its errors (owned) }
+    Where: TXsltInstr;
+    constructor Create;
+    destructor Destroy; override;
   end;
 
   TXsltAttributeTemplate = class
@@ -203,6 +224,15 @@ type
     FormatAvt: TXsltAvt;
     GroupingSeparator: TXsltAvt;
     GroupingSize: TXsltAvt;
+    { xsl:for-each, xsl:apply-templates, xsl:for-each-group,
+      xsl:perform-sort: the sort keys (TXsltSortKey, owned; nil if none) }
+    SortKeys: TObjectList;
+    { xsl:analyze-string: regex and flags (nil if absent); Body is
+      xsl:matching-substring, NonMatching xsl:non-matching-substring
+      (owned) }
+    RegexAvt: TXsltAvt;
+    FlagsAvt: TXsltAvt;
+    NonMatching: TObjectList;
     constructor Create(AKind: TXsltInstrKind);
     destructor Destroy; override;
   end;
@@ -335,7 +365,8 @@ function XsltClarkOf(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXm
 implementation
 
 uses
-  LandrixXmlReader;
+  LandrixXmlReader,
+  LandrixXmlRegex;
 
 {$IFDEF FPC}
 function TXsltStringList.DoCompareText(const S1, S2: string): PtrInt;
@@ -369,13 +400,13 @@ end;
 function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 const
   { the XSLT elements CompileInstruction and the declaration loop
-    translate (xsl:sort, xsl:strip-space, xsl:namespace-alias and others are
+    translate (xsl:strip-space, xsl:namespace-alias and others are
     rejected) }
-  Names: array[0..32] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+  Names: array[0..35] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
-    'message', 'document', 'text', 'value-of', 'fallback');
+    'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string');
 var
   I: Integer;
 begin
@@ -443,9 +474,24 @@ end;
 
 destructor TXsltInstr.Destroy;
 begin
+  NonMatching.Free;
+  SortKeys.Free;
   Branches.Free;
   Params.Free;
   Attributes.Free;
+  Body.Free;
+  inherited Destroy;
+end;
+
+constructor TXsltSortKey.Create;
+begin
+  inherited Create;
+  Body := TObjectList.Create;
+end;
+
+destructor TXsltSortKey.Destroy;
+begin
+  Where.Free;
   Body.Free;
   inherited Destroy;
 end;
@@ -693,6 +739,10 @@ type
     function CompileInstr(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     function CompileLiteral(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     procedure CompileWithParams(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    procedure CompileSortKey(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    procedure CompileAnalyzeString(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    function CompileSorts(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr): Integer;
+    function SortFollows(M: TModule; C: Integer): Boolean;
     function CompileVariable(M: TModule; E: Integer; Scope: TScope; Param: Boolean): TXsltInstr;
     procedure CompileGlobals;
     procedure CompileTemplate(D: TDecl);
@@ -1549,13 +1599,212 @@ begin
       if P.Select = nil then
         CompileBody(M, C, Scope, P.Body, -1);
     end
-    else if IsXsl(M, C, 'sort') then
-      Unsupported(M, C, 'xsl:sort')
+    else if IsXsl(M, C, 'sort') and (Instr.Kind = xskApplyTemplates) then
+      CompileSortKey(M, C, Scope, Instr)
     else if (M.Tree.Kind[C] = xnkElement) or
       ((M.Tree.Kind[C] = xnkText) and (Trim8(M.Tree.ValueUtf8(C)) <> '')) then
       Fail(M, C, 'XTSE0010', 'only xsl:with-param is allowed here');
     C := M.Tree.NextSibling[C];
   end;
+end;
+
+const
+  CodepointCollation = 'http://www.w3.org/2005/xpath-functions/collation/codepoint';
+
+{ the value of an attribute value template without expressions }
+function AvtLiteral(A: TXsltAvt; out Value: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Value := '';
+  Result := (A <> nil) and A.IsLiteral;
+  if Result then
+    for I := 0 to Integer(Length(A.Parts)) - 1 do
+      Value := Value + A.Parts[I];
+end;
+
+{ xsl:sort E, a sort key of Instr: select or a sequence constructor (the
+  context item by default); order, data-type, case-order and collation
+  as attribute value templates, checked here where they are literal;
+  lang is not supported (it needs a collation of the language), stable
+  only on the first key, and the sort is always stable }
+procedure TCompiler.CompileSortKey(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+var
+  K: TXsltSortKey;
+  V, Literal: TLandrixXmlUtf8;
+  C: Integer;
+  HasContent: Boolean;
+begin
+  if Instr.SortKeys = nil then
+    Instr.SortKeys := TObjectList.Create;
+  K := TXsltSortKey.Create;
+  Instr.SortKeys.Add(K);
+  K.Where := NewInstr(xskText, M, E);
+  HasContent := False;
+  C := M.Tree.FirstChild(E);
+  while C >= 0 do
+  begin
+    { white space text kept by xml:space is content as well }
+    if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and
+      ((Trim8(M.Tree.ValueUtf8(C)) <> '') or PreservesSpace(M.Tree, C)) then
+      HasContent := True;
+    C := M.Tree.NextSibling[C];
+  end;
+  K.Select := CompileAttr(M, E, 'select', Scope);
+  if (K.Select <> nil) and HasContent then
+    Fail(M, E, 'XTSE1015', 'xsl:sort has a select attribute and content');
+  if HasContent then
+    CompileBody(M, E, Scope, K.Body, -1)
+  else if K.Select = nil then
+    K.Select := Compile(M, E, '.', Scope);
+  if Attr(M, E, 'order', V) then
+  begin
+    K.Order := CompileAvt(M, E, V, Scope);
+    if AvtLiteral(K.Order, V) and (Trim8(V) <> 'ascending') and (Trim8(V) <> 'descending') then
+      Fail(M, E, 'XTSE0020', 'xsl:sort order is ascending or descending');
+  end;
+  if Attr(M, E, 'case-order', V) then
+  begin
+    K.CaseOrder := CompileAvt(M, E, V, Scope);
+    if AvtLiteral(K.CaseOrder, V) and (Trim8(V) <> 'upper-first') and (Trim8(V) <> 'lower-first') then
+      Fail(M, E, 'XTSE0020', 'xsl:sort case-order is upper-first or lower-first');
+  end;
+  if Attr(M, E, 'data-type', V) then
+  begin
+    K.DataType := CompileAvt(M, E, V, Scope);
+    if AvtLiteral(K.DataType, V) and (Trim8(V) <> 'text') and (Trim8(V) <> 'number') then
+    begin
+      if Pos8(':', V) > 0 then
+        Unsupported(M, E, 'a data-type of xsl:sort with a prefix')
+      else
+        Fail(M, E, 'XTSE0020', 'xsl:sort data-type is text, number or a prefixed name');
+    end;
+  end;
+  if Attr(M, E, 'lang', V) then
+    Unsupported(M, E, 'xsl:sort with lang');
+  if Attr(M, E, 'collation', V) then
+  begin
+    K.Collation := CompileAvt(M, E, V, Scope);
+    if AvtLiteral(K.Collation, V) and (Trim8(V) <> CodepointCollation) then
+      Unsupported(M, E, 'a collation other than the codepoint collation');
+  end;
+  if Attr(M, E, 'stable', V) then
+  begin
+    if Instr.SortKeys.Count > 1 then
+      Fail(M, E, 'XTSE1017', 'stable is allowed on the first xsl:sort only');
+    K.Stable := CompileAvt(M, E, V, Scope);
+    if AvtLiteral(K.Stable, Literal) and (Trim8(Literal) <> 'yes') and (Trim8(Literal) <> 'no') then
+      Fail(M, E, 'XTSE0020', 'xsl:sort stable is yes or no');
+  end;
+end;
+
+{ xsl:analyze-string: select, regex and flags (a literal regex and flags
+  are checked here: XTDE1140, XTDE1145, XTDE1150 for one that matches the
+  empty string), then xsl:matching-substring and xsl:non-matching-substring
+  in this order, at least one of them (XTSE1130), and xsl:fallback }
+procedure TCompiler.CompileAnalyzeString(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+var
+  V, Pattern, Flags: TLandrixXmlUtf8;
+  C: Integer;
+  HasMatching, HasNonMatching: Boolean;
+  R: TLandrixXmlRegex;
+begin
+  Instr.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
+  Instr.RegexAvt := CompileAvt(M, E, ReqAttr(M, E, 'regex'), Scope);
+  if Attr(M, E, 'flags', V) then
+    Instr.FlagsAvt := CompileAvt(M, E, V, Scope);
+  Flags := '';
+  if AvtLiteral(Instr.RegexAvt, Pattern) and ((Instr.FlagsAvt = nil) or AvtLiteral(Instr.FlagsAvt, Flags)) then
+  begin
+    if not LandrixXmlRegexFlagsValid(Flags, xrmXPath) then
+      Fail(M, E, 'XTDE1145', 'invalid regular expression flags "' + LandrixXmlUtf8ToString(Flags) + '"');
+    R := nil;
+    try
+      try
+        R := TLandrixXmlRegex.Create(Pattern, xrmXPath, Flags);
+      except
+        on X: ELandrixXmlError do
+          if X.Code = xecRegex then
+            Fail(M, E, 'XTDE1140', 'invalid regular expression: ' + X.Message)
+          else
+            raise;
+      end;
+      if R.MatchesEmptyString then
+        Fail(M, E, 'XTDE1150', 'the regular expression matches a zero-length string');
+    finally
+      R.Free;
+    end;
+  end;
+  HasMatching := False;
+  HasNonMatching := False;
+  C := M.Tree.FirstChild(E);
+  while C >= 0 do
+  begin
+    if IsXsl(M, C, 'matching-substring') and not HasMatching and not HasNonMatching then
+    begin
+      HasMatching := True;
+      CompileBody(M, C, Scope, Instr.Body, -1);
+    end
+    else if IsXsl(M, C, 'non-matching-substring') and not HasNonMatching then
+    begin
+      HasNonMatching := True;
+      Instr.NonMatching := TObjectList.Create;
+      CompileBody(M, C, Scope, Instr.NonMatching, -1);
+    end
+    else if IsXsl(M, C, 'fallback') then
+      { for an XSLT 1.0 processor only }
+    else if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and
+      (Trim8(M.Tree.ValueUtf8(C)) <> '') then
+      Fail(M, C, 'XTSE0010', 'xsl:analyze-string contains xsl:matching-substring, ' +
+        'xsl:non-matching-substring and xsl:fallback, in this order');
+    C := M.Tree.NextSibling[C];
+  end;
+  if not HasMatching and not HasNonMatching then
+    Fail(M, E, 'XTSE1130', 'xsl:analyze-string needs xsl:matching-substring or xsl:non-matching-substring');
+end;
+
+{ whether an xsl:sort comes after C among its siblings before any other
+  element or text that is not white space }
+function TCompiler.SortFollows(M: TModule; C: Integer): Boolean;
+begin
+  Result := False;
+  C := M.Tree.NextSibling[C];
+  while C >= 0 do
+  begin
+    if IsXsl(M, C, 'sort') then
+    begin
+      Result := True;
+      Exit;
+    end;
+    if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and (Trim8(M.Tree.ValueUtf8(C)) <> '') then
+      Exit;
+    C := M.Tree.NextSibling[C];
+  end;
+end;
+
+{ the xsl:sort children at the start of E as sort keys of Instr; the
+  first child after them (-2 if there is none) }
+function TCompiler.CompileSorts(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr): Integer;
+var
+  C: Integer;
+begin
+  C := M.Tree.FirstChild(E);
+  while C >= 0 do
+  begin
+    if IsXsl(M, C, 'sort') then
+      CompileSortKey(M, C, Scope, Instr)
+    else if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and
+      (Trim8(M.Tree.ValueUtf8(C)) <> '') then
+      Break
+    else if (M.Tree.Kind[C] = xnkText) and PreservesSpace(M.Tree, C) and not SortFollows(M, C) then
+      { white space kept by xml:space after the last xsl:sort: content
+        (before an xsl:sort it is dropped, as Saxon does) }
+      Break;
+    C := M.Tree.NextSibling[C];
+  end;
+  Result := C;
+  if Result < 0 then
+    Result := -2;
 end;
 
 function TCompiler.CompileVariable(M: TModule; E: Integer; Scope: TScope; Param: Boolean): TXsltInstr;
@@ -1622,13 +1871,15 @@ begin
   end;
   if (L = 'param') or (L = 'with-param') or (L = 'when') or (L = 'otherwise') then
     Fail(M, E, 'XTSE0010', 'xsl:' + LandrixXmlUtf8ToString(L) + ' is not allowed here');
-  { wherever it is (for-each, apply-templates or a wrong place) }
+  { the places xsl:sort may have are compiled by CompileSorts }
   if L = 'sort' then
-    Unsupported(M, E, 'xsl:sort');
+    Fail(M, E, 'XTSE0010', 'xsl:sort is not allowed here');
   if L = 'fallback' then
     Exit;
-  if (L = 'apply-imports') or (L = 'next-match') or (L = 'analyze-string') or
-    (L = 'result-document') or (L = 'perform-sort') or (L = 'namespace') or (L = 'try') or
+  if (L = 'matching-substring') or (L = 'non-matching-substring') then
+    Fail(M, E, 'XTSE0010', 'xsl:' + LandrixXmlUtf8ToString(L) + ' is allowed in xsl:analyze-string only');
+  if (L = 'apply-imports') or (L = 'next-match') or
+    (L = 'result-document') or (L = 'namespace') or (L = 'try') or
     (L = 'iterate') or (L = 'evaluate') or (L = 'where-populated') or (L = 'on-empty') or
     (L = 'on-non-empty') or (L = 'map') or (L = 'array') or (L = 'merge') or (L = 'fork') or
     (L = 'assert') or (L = 'break') or (L = 'next-iteration') or (L = 'source-document') or
@@ -1727,7 +1978,39 @@ begin
     begin
       Result := NewInstr(xskForEach, M, E);
       Result.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
-      CompileBody(M, E, Scope, Result.Body, -1);
+      C := CompileSorts(M, E, Scope, Result);
+      if C >= 0 then
+        CompileBody(M, E, Scope, Result.Body, C);
+    end
+    else if L = 'analyze-string' then
+    begin
+      Result := NewInstr(xskAnalyzeString, M, E);
+      CompileAnalyzeString(M, E, Scope, Result);
+    end
+    else if L = 'perform-sort' then
+    begin
+      { the sorted sequence: select, or the sequence constructor after the
+        sort keys }
+      Result := NewInstr(xskPerformSort, M, E);
+      Result.Select := CompileAttr(M, E, 'select', Scope);
+      C := CompileSorts(M, E, Scope, Result);
+      if Result.SortKeys = nil then
+        Fail(M, E, 'XTSE0010', 'xsl:perform-sort needs an xsl:sort');
+      if C >= 0 then
+      begin
+        if Result.Select <> nil then
+        begin
+          while C >= 0 do
+          begin
+            if not IsXsl(M, C, 'fallback') and ((M.Tree.Kind[C] = xnkElement) or
+              (M.Tree.Kind[C] = xnkText) and (Trim8(M.Tree.ValueUtf8(C)) <> '')) then
+              Fail(M, C, 'XTSE1040', 'xsl:perform-sort with select has xsl:sort and xsl:fallback only');
+            C := M.Tree.NextSibling[C];
+          end;
+        end
+        else
+          CompileBody(M, E, Scope, Result.Body, C);
+      end;
     end
     else if L = 'number' then
     begin
@@ -2271,7 +2554,7 @@ procedure TCompiler.CompileGroup(M: TModule; E: Integer; Scope: TScope; Instr: T
 var
   V, Pattern: TLandrixXmlUtf8;
   Branches: TLandrixXmlUtf8Array;
-  I, Count: Integer;
+  I, Count, C: Integer;
 begin
   Branches := nil;
   if Attr(M, E, 'collation', V) and (Trim8(V) <> 'http://www.w3.org/2005/xpath-functions/collation/codepoint') then
@@ -2319,7 +2602,9 @@ begin
       Instr.CountPatterns[I] := PatternBranch(M, E, Branches[I], Scope, Instr.CountRelative[I]);
     end;
   end;
-  CompileBody(M, E, Scope, Instr.Body, -1);
+  C := CompileSorts(M, E, Scope, Instr);
+  if C >= 0 then
+    CompileBody(M, E, Scope, Instr.Body, C);
 end;
 
 { xsl:key: the declarations of one name are combined (all precedences);
@@ -2880,6 +3165,11 @@ var
         Resolve(TXsltInstr(Instr.Branches[P]).Body);
       for P := 0 to Integer(Instr.Params.Count) - 1 do
         Resolve(TXsltWithParam(Instr.Params[P]).Body);
+      if Instr.SortKeys <> nil then
+        for P := 0 to Integer(Instr.SortKeys.Count) - 1 do
+          Resolve(TXsltSortKey(Instr.SortKeys[P]).Body);
+      if Instr.NonMatching <> nil then
+        Resolve(Instr.NonMatching);
     end;
   end;
 
@@ -2950,6 +3240,7 @@ begin
   Add(LandrixXmlXPathFunctionNamespace, 'function-available', 1, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'function-available', 2, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'element-available', 1, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'regex-group', 1, [xffVolatile], -1);
   SetLength(FC.ModuleUris, FModules.Count);
   for I := 0 to Integer(FModules.Count) - 1 do
   begin

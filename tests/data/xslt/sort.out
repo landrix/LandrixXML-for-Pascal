@@ -1,0 +1,27 @@
+
+plain: A,Ab,B,a,aB,ab,b,c,
+upper: A,a,Ab,aB,ab,B,b,c,
+late: xAB,xAb,xaB,xab,
+latelow: xab,xaB,xAb,xAB,
+lower: a,A,ab,aB,Ab,b,B,c,
+num: x,,-1,9,10,
+numdesc: 10,9,-1,x,,
+text: 10,100,9,
+typed: 9,10,100,
+dates: 2000-12-31,2001-01-02,
+empty: 2,1,3,
+nanempty: 2,NaN,1,3,
+nandesc: 3,1,NaN,2,
+stable: b1,b2,a1,a2,
+two: a2,a1,b2,b1,
+pos: z13,y23,x33,
+body: a,b,
+called: b,c,a,
+textempty: 1,2,
+coll: B,a,
+kelvin: k,K,K,
+pres:  1|
+pres2:  1 2|
+wsbody: 21|
+stableavt: 12|
+avt: c,b,a,

@@ -380,7 +380,10 @@ import precedence, literal result elements, `xsl:element`,
 `xsl:for-each`, `xsl:sequence`, `xsl:copy`, `xsl:copy-of`,
 `xsl:document`, `xsl:comment`, `xsl:processing-instruction`,
 `xsl:message`, `xsl:number`, `xsl:function`, `xsl:for-each-group`,
-`xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`,
+`xsl:sort` (in `xsl:for-each`, `xsl:apply-templates`,
+`xsl:for-each-group` and `xsl:perform-sort`; the codepoint collation,
+`case-order`, no `lang`), `xsl:analyze-string`, `xsl:key` and
+`xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
 `element-available()` (true for what this subset translates),
@@ -389,7 +392,12 @@ this library's) and `format-date()`, `format-time()` and
 `format-dateTime()` in English (numbers, roman numerals, names, widths);
 output methods xml, html (HTML5) and text in UTF-8, US-ASCII or
 ISO-8859-1 (a character the encoding does not have is a character
-reference, as in Saxon), indented as Saxon indents. The report stylesheet of the KoSIT validator and the XRechnung
+reference, as in Saxon), indented as Saxon indents. Where XSLT 2.0 and
+Saxon (which runs XSLT 2.0 stylesheets as XSLT 3.0) differ, Saxon is
+followed (`xsl:analyze-string` of an empty sequence, regular expressions
+with `(?:...)` and the flag `q`), except that a regular expression
+matching the empty string in `xsl:analyze-string` is an error
+(`XTDE1150`) as in XSLT 2.0, where Saxon runs it. The report stylesheet of the KoSIT validator and the XRechnung
 visualization (invoice to XR XML to HTML) run with it: for the 86
 invoices of the KoSIT test suite the report, the XR XML and the HTML
 are the ones Saxon writes, byte for byte (`tools/xslt-crosscheck.py`).
@@ -664,8 +672,8 @@ Differences from Xerces, also on purpose:
   XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,389 are XSLT 1.0
   or 2.0 cases without features this library leaves out (schema
   awareness, backwards compatibility, the namespace axis, DTDs and the
-  like); 3,889 of them pass and 59 more raise an error where one is
-  expected, but with another code. 1,208 use an instruction or option
+  like); 4,062 of them pass and 65 more raise an error where one is
+  expected, but with another code. 1,026 use an instruction or option
   that is not supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.

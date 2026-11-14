@@ -345,13 +345,13 @@ const
     '<xsl:output method="xhtml"/><xsl:template match="/"/>',
     '<xsl:output doctype-system="x.dtd"/><xsl:template match="/"/>',
     '<xsl:output encoding="UTF-16"/><xsl:template match="/"/>',
-    '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort/></xsl:for-each></xsl:template>',
+    '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
     '<xsl:template match="/"><xsl:number lang="de"/></xsl:template>',
     '<xsl:key name="p:k" xmlns:p="urn:p" match="a" use="."/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:apply-templates><xsl:with-param name="p" tunnel="yes"/></xsl:apply-templates></xsl:template>',
     '<xsl:template match="/"><xsl:choose><xsl:when use-when="false()" test="1">a</xsl:when></xsl:choose></xsl:template>',
     '<xsl:param name="p" use-when="false()"/><xsl:template match="/"/>',
-    '<xsl:template match="/"><xsl:for-each select="1"><!--c--><xsl:sort/></xsl:for-each></xsl:template>',
+    '<xsl:template match="/"><xsl:for-each select="1"><!--c--><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
     '<xsl:output suppress-indentation="a"/><xsl:template match="/"/>',
     '<xsl:template match="/" xml:base="http://example.org/"><r/></xsl:template>');
 var

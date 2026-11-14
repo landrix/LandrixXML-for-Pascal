@@ -68,7 +68,9 @@ procedure XsltRun(Compiled: TObject; Settings: TXsltRunSettings; Source, Target:
 implementation
 
 uses
-  LandrixXmlReader;
+  LandrixXmlReader,
+  LandrixXmlUnicode,
+  LandrixXmlRegex;
 
 type
   TRun = class;
@@ -160,6 +162,9 @@ type
     Value: TLandrixXmlXPathSequence;
   end;
   TSuppliedArray = array of TSupplied;
+  TSequenceArray = array of TLandrixXmlXPathSequence;
+  { the order of sorted items: their indexes }
+  TSortOrder = array of Integer;
 
   TRun = class
   private
@@ -197,6 +202,15 @@ type
     FGroupLazyDepth: Integer;
     { group-by or group-adjacent: there is a grouping key }
     FGroupHasKey: Boolean;
+    { regex-group(): the string being analyzed and the positions of the
+      current match and its groups (code points; see
+      TLandrixXmlRegex.Analyze), FRegexActive False where there is none }
+    FRegexText: TLandrixXmlCodePoints;
+    FRegexGroups: TLandrixXmlCodePoints;
+    FRegexActive: Boolean;
+    { the lazy depth of the evaluator in the match: a global variable
+      evaluated lazily inside it sees no captured substrings }
+    FRegexLazyDepth: Integer;
     { generate-id(): the tree last asked and the numbers of its nodes }
     FIdTree: TLandrixXmlXPathTree;
     FIdNumbers: array of Integer;
@@ -225,6 +239,17 @@ type
       const HrefArg, EncodingArg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure DoForEachGroup(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
+    function SortOrder(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+      const Items: TLandrixXmlXPathSequence; const Groups, GroupKeys: TSequenceArray;
+      HasKey: Boolean): TSortOrder;
+    function Sorted(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+      const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    procedure DoPerformSort(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+      R: TReceiver);
+    procedure DoAnalyzeString(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+      R: TReceiver);
+    function RegexGroup(const Arg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function PatternMatches(Expr: TLandrixXmlXPathExpression; Node: Integer; Relative: Boolean): Boolean;
     function LoadDocument(const Href, Base: TLandrixXmlUtf8; Available: Boolean): Integer;
     function DocFunction(Kind, Module: Integer; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
@@ -326,6 +351,20 @@ begin
     Result.Position := Position;
     Result.Size := Size;
   end;
+end;
+
+{ S without white space around it }
+function Trim8(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  A, B: Integer;
+begin
+  A := 1;
+  B := Length(S);
+  while (A <= B) and (S[A] in [#9, #10, #13, ' ']) do
+    Inc(A);
+  while (B >= A) and (S[B] in [#9, #10, #13, ' ']) do
+    Dec(B);
+  Result := Copy(S, A, B - A + 1);
 end;
 
 { the byte index of Sub in S (0 if none), without a conversion to string }
@@ -1276,6 +1315,7 @@ var
   G: TXsltGlobal;
   Slot, SavedNode: Integer;
   Arg, SavedCurrent: TLandrixXmlXPathSequence;
+  SavedRegex: Boolean;
 begin
   Result := LandrixXmlXPathEmpty;
   if Def.Tag >= FC.UserFunctionBase then
@@ -1330,6 +1370,8 @@ begin
       Result := Availability(Evaluator, Def.Tag, Args[0], Args[0]);
     XfnFormatNumber2, XfnFormatNumber3:
       Result := FormatNumber(Args);
+    XfnRegexGroup:
+      Result := RegexGroup(Args[0]);
     XfnFormatDateTime2, XfnFormatDateTime5:
       Result := FormatDate(xdkDateTime, Args);
     XfnFormatDate2, XfnFormatDate5:
@@ -1362,6 +1404,9 @@ begin
         G := TXsltGlobal(FC.Globals[Slot]);
         SavedNode := FEvaluator.CurrentNode;
         SavedCurrent := FCurrent;
+        { nor the captured substrings of the instruction that needs it }
+        SavedRegex := FRegexActive;
+        FRegexActive := False;
         FEvaluator.PushFrame(G.FrameSize);
         try
           Result := VariableValue(nil, nil, G.Body, G.HasAs, G.AsType, G.Name, Focus, FC.FindMode(''));
@@ -1369,6 +1414,7 @@ begin
           FEvaluator.PopFrame;
           FEvaluator.CurrentNode := SavedNode;
           FCurrent := SavedCurrent;
+          FRegexActive := SavedRegex;
         end;
       end;
   end;
@@ -1962,7 +2008,7 @@ begin
       Cand := TXsltRule(Mode.Others[B]);
       Inc(B);
     end;
-    if FEvaluator.MatchesPattern(Cand.Pattern, Node, Cand.Relative) then
+    if PatternMatches(Cand.Pattern, Node, Cand.Relative) then
     begin
       Result := Cand;
       Exit;
@@ -2041,7 +2087,7 @@ var
   P: TXsltInstr;
   V, SavedCurrent: TLandrixXmlXPathSequence;
   S: TSequenceReceiver;
-  SavedGroupActive: Boolean;
+  SavedGroupActive, SavedRegexActive: Boolean;
 begin
   if FTemplateDepth >= FSettings.MaxTemplateDepth then
     raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested deeper than ' +
@@ -2053,6 +2099,9 @@ begin
   SavedCurrent := FCurrent;
   SavedGroupActive := FGroupActive;
   FGroupActive := False;
+  { nor captured substrings of xsl:analyze-string }
+  SavedRegexActive := FRegexActive;
+  FRegexActive := False;
   FEvaluator.PushFrame(T.FrameSize);
   try
     for I := 0 to Integer(T.Params.Count) - 1 do
@@ -2091,6 +2140,7 @@ begin
     FEvaluator.CurrentNode := SavedNode;
     FCurrent := SavedCurrent;
     FGroupActive := SavedGroupActive;
+    FRegexActive := SavedRegexActive;
     Dec(FTemplateDepth);
   end;
 end;
@@ -2263,12 +2313,429 @@ begin
   Result := Instr.Body;
 end;
 
+{ The order of Items by the sort keys of Instr (XSLT 2.0 13.1): the keys
+  are evaluated per item with the item, its position and the size as the
+  focus (and with Groups the current group and key of the item, as
+  xsl:for-each-group sorts its groups), the attributes once with Focus.
+  An empty key comes first, then NaN; equal keys keep the order of Items
+  (the sort is stable). }
+function TRun.SortOrder(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+  const Items: TLandrixXmlXPathSequence; const Groups, GroupKeys: TSequenceArray;
+  HasKey: Boolean): TSortOrder;
+var
+  N, NK, I, K: Integer;
+  Keys: array of TLandrixXmlXPathItems;
+  Empty: array of array of Boolean;
+  Descending: array of Boolean;
+  CaseOrder, DataType: array of Integer;
+  Key: TXsltSortKey;
+  Where: TXsltInstr;
+  V: TLandrixXmlXPathSequence;
+  S: TLandrixXmlUtf8;
+  Temp, Idx: TSortOrder;
+  F: TLandrixXmlXPathFocus;
+  SavedGroup, SavedKey: TLandrixXmlXPathSequence;
+  SavedActive, SavedHasKey: Boolean;
+  SavedLazy: Integer;
+
+  function Compare(A, B: Integer): Integer;
+  var
+    J: Integer;
+  begin
+    Result := 0;
+    for J := 0 to NK - 1 do
+    begin
+      if Empty[J][A] and Empty[J][B] then
+        Result := 0
+      else if Empty[J][A] then
+        Result := -1
+      else if Empty[J][B] then
+        Result := 1
+      else
+        try
+          Result := FEvaluator.SortCompare(Keys[J][A], Keys[J][B], CaseOrder[J]);
+        except
+          on E: ELandrixXmlXPathError do
+            if E.XPathCode = 'XPTY0004' then
+              Fail(TXsltSortKey(Instr.SortKeys[J]).Where, 'XTDE1030', 'sort keys that cannot be compared: ' +
+                System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt))
+            else
+              Located(TXsltSortKey(Instr.SortKeys[J]).Where, E);
+        end;
+      if Descending[J] then
+        Result := -Result;
+      if Result <> 0 then
+        Exit;
+    end;
+    Result := A - B;
+  end;
+
+  procedure MergeSort(Lo, Hi: Integer);
+  var
+    Mid, L, R2, T: Integer;
+  begin
+    if Hi - Lo < 1 then
+      Exit;
+    Mid := (Lo + Hi) div 2;
+    MergeSort(Lo, Mid);
+    MergeSort(Mid + 1, Hi);
+    L := Lo;
+    R2 := Mid + 1;
+    T := Lo;
+    while (L <= Mid) and (R2 <= Hi) do
+    begin
+      if Compare(Idx[L], Idx[R2]) <= 0 then
+      begin
+        Temp[T] := Idx[L];
+        Inc(L);
+      end
+      else
+      begin
+        Temp[T] := Idx[R2];
+        Inc(R2);
+      end;
+      Inc(T);
+    end;
+    while L <= Mid do
+    begin
+      Temp[T] := Idx[L];
+      Inc(L);
+      Inc(T);
+    end;
+    while R2 <= Hi do
+    begin
+      Temp[T] := Idx[R2];
+      Inc(R2);
+      Inc(T);
+    end;
+    for T := Lo to Hi do
+      Idx[T] := Temp[T];
+  end;
+
+begin
+  Idx := nil;
+  Keys := nil;
+  Empty := nil;
+  Descending := nil;
+  CaseOrder := nil;
+  DataType := nil;
+  Temp := nil;
+  N := Items.Count;
+  NK := Integer(Instr.SortKeys.Count);
+  SetLength(Idx, N);
+  for I := 0 to N - 1 do
+    Idx[I] := I;
+  SetLength(Keys, NK);
+  SetLength(Empty, NK);
+  SetLength(Descending, NK);
+  SetLength(CaseOrder, NK);
+  SetLength(DataType, NK);
+  for K := 0 to NK - 1 do
+  begin
+    Key := TXsltSortKey(Instr.SortKeys[K]);
+    Where := Key.Where;
+    Descending[K] := False;
+    if Key.Order <> nil then
+    begin
+      S := Trim8(EvalAvt(Where, Key.Order, Focus));
+      if S = 'descending' then
+        Descending[K] := True
+      else if S <> 'ascending' then
+        Fail(Where, 'XTDE0030', 'xsl:sort order is ascending or descending');
+    end;
+    CaseOrder[K] := 0;
+    if Key.CaseOrder <> nil then
+    begin
+      S := Trim8(EvalAvt(Where, Key.CaseOrder, Focus));
+      if S = 'upper-first' then
+        CaseOrder[K] := 1
+      else if S = 'lower-first' then
+        CaseOrder[K] := -1
+      else
+        Fail(Where, 'XTDE0030', 'xsl:sort case-order is upper-first or lower-first');
+    end;
+    DataType[K] := 0;
+    if Key.DataType <> nil then
+    begin
+      S := Trim8(EvalAvt(Where, Key.DataType, Focus));
+      if S = 'text' then
+        DataType[K] := 1
+      else if S = 'number' then
+        DataType[K] := 2
+      else if Pos8(':', S) > 0 then
+        raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000',
+          'a data-type of xsl:sort with a prefix is not supported', Where.Module, Where.Line, Where.Column)
+      else
+        Fail(Where, 'XTDE0030', 'xsl:sort data-type is text, number or a prefixed name');
+    end;
+    if Key.Stable <> nil then
+    begin
+      { the sort is stable either way }
+      S := Trim8(EvalAvt(Where, Key.Stable, Focus));
+      if (S <> 'yes') and (S <> 'no') then
+        Fail(Where, 'XTDE0030', 'xsl:sort stable is yes or no');
+    end;
+    if Key.Collation <> nil then
+    begin
+      if Trim8(EvalAvt(Where, Key.Collation, Focus)) <> 'http://www.w3.org/2005/xpath-functions/collation/codepoint' then
+        raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000',
+          'a collation other than the codepoint collation is not supported', Where.Module, Where.Line, Where.Column);
+      { a collation given: case-order does not apply }
+      CaseOrder[K] := 0;
+    end;
+    SetLength(Keys[K], N);
+    SetLength(Empty[K], N);
+  end;
+  SavedGroup := FGroup;
+  SavedKey := FGroupKey;
+  SavedActive := FGroupActive;
+  SavedLazy := FGroupLazyDepth;
+  SavedHasKey := FGroupHasKey;
+  try
+    for I := 0 to N - 1 do
+    begin
+      F := ItemFocus(Items.Items[I], I + 1, N);
+      if Groups <> nil then
+      begin
+        FGroup := Groups[I];
+        FGroupKey := GroupKeys[I];
+        FGroupActive := True;
+        FGroupHasKey := HasKey;
+        FGroupLazyDepth := FEvaluator.LazyDepth;
+      end;
+      for K := 0 to NK - 1 do
+      begin
+        Key := TXsltSortKey(Instr.SortKeys[K]);
+        if Key.Select <> nil then
+          V := Eval(Key.Where, Key.Select, F)
+        else
+          V := BodySequence(Key.Body, F, Mode);
+        V := FEvaluator.DataOf(V);
+        if V.Count > 1 then
+          Fail(Key.Where, 'XTTE1020', 'a sort key is more than one value');
+        if DataType[K] = 2 then
+        begin
+          { number(): NaN for none }
+          if V.Count = 0 then
+            V := LandrixXmlXPathStringItem('');
+          Keys[K][I] := FEvaluator.NumberOf(V.Items[0]);
+          Empty[K][I] := False;
+        end
+        else if (V.Count = 0) and (DataType[K] = 1) then
+        begin
+          { string(): the empty string for none }
+          Keys[K][I] := LandrixXmlXPathStringItem('').Items[0];
+          Empty[K][I] := False;
+        end
+        else if V.Count = 0 then
+          Empty[K][I] := True
+        else
+        begin
+          Empty[K][I] := False;
+          if (DataType[K] = 1) or (V.Items[0].Kind = xikUntypedAtomic) then
+            Keys[K][I] := LandrixXmlXPathStringItem(FEvaluator.ItemString(V.Items[0])).Items[0]
+          else
+            Keys[K][I] := V.Items[0];
+        end;
+      end;
+    end;
+  finally
+    FGroup := SavedGroup;
+    FGroupKey := SavedKey;
+    FGroupActive := SavedActive;
+    FGroupLazyDepth := SavedLazy;
+    FGroupHasKey := SavedHasKey;
+  end;
+  SetLength(Temp, N);
+  MergeSort(0, N - 1);
+  Result := Idx;
+end;
+
+{ S in the order of the sort keys of Instr (S itself without keys) }
+function TRun.Sorted(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+  const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  Order: TSortOrder;
+  I: Integer;
+begin
+  Order := nil;
+  if Instr.SortKeys = nil then
+  begin
+    Result := S;
+    Exit;
+  end;
+  Order := SortOrder(Instr, Focus, Mode, S, nil, nil, False);
+  Result := LandrixXmlXPathEmpty;
+  for I := 0 to Integer(Length(Order)) - 1 do
+    LandrixXmlXPathAppend(Result, S.Items[Order[I]]);
+end;
+
+procedure TRun.DoPerformSort(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+  R: TReceiver);
+var
+  S: TLandrixXmlXPathSequence;
+  I: Integer;
+begin
+  if Instr.Select <> nil then
+    S := Eval(Instr, Instr.Select, Focus)
+  else
+    S := BodySequence(Instr.Body, Focus, Mode);
+  S := Sorted(Instr, Focus, Mode, S);
+  for I := 0 to Integer(S.Count) - 1 do
+    R.Item(S.Items[I], False);
+end;
+
+{ xsl:analyze-string (XSLT 2.0 15.1): the string split into the matches
+  and the substrings between them (empty ones dropped); each runs its
+  body with the substring as the context item, its position among all of
+  them and their number, and for a match the groups regex-group() gives }
+procedure TRun.DoAnalyzeString(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+  R: TReceiver);
+var
+  S, Pattern, Flags: TLandrixXmlUtf8;
+  V: TLandrixXmlXPathSequence;
+  Regex: TLandrixXmlRegex;
+  Text, Found, Groups: TLandrixXmlCodePoints;
+  Slots, Count, Position, I, J, Last, SavedLazy: Integer;
+  SavedText, SavedGroups: TLandrixXmlCodePoints;
+  SavedActive: Boolean;
+
+  procedure Piece(Lo, Hi: Integer; Match: Boolean);
+  var
+    Body: TObjectList;
+  begin
+    Inc(Position);
+    if Match then
+      Body := Instr.Body
+    else
+      Body := Instr.NonMatching;
+    FRegexActive := Match;
+    FRegexLazyDepth := FEvaluator.LazyDepth;
+    if Body <> nil then
+      Exec(Body, ItemFocus(LandrixXmlXPathStringItem(LandrixXmlCodePointsToUtf8(Text, Lo, Hi)).Items[0],
+        Position, Count), Mode, R);
+  end;
+
+begin
+  Text := nil;
+  Found := nil;
+  Groups := nil;
+  { xs:string? by the function conversion rules (an empty sequence as the
+    empty string, as in Saxon; XSLT 2.0 makes it XPTY0004) }
+  V := FEvaluator.ConvertSequence(Eval(Instr, Instr.Select, Focus), FOptionalStringType,
+    'xsl:analyze-string select');
+  S := '';
+  if V.Count = 1 then
+    S := FEvaluator.ItemString(V.Items[0]);
+  Pattern := EvalAvt(Instr, Instr.RegexAvt, Focus);
+  Flags := '';
+  if Instr.FlagsAvt <> nil then
+    Flags := EvalAvt(Instr, Instr.FlagsAvt, Focus);
+  { a computed regex or flags that are invalid: FORX0002 and FORX0001 as
+    in Saxon (XSLT 2.0 says XTDE1140 and XTDE1145, as for literal ones) }
+  Regex := nil;
+  try
+    Regex := FEvaluator.CompiledRegex(Pattern, Flags, False);
+  except
+    on E: ELandrixXmlXPathError do
+      Located(Instr, E);
+  end;
+  { XSLT 2.0: an error (Saxon accepts it with the rules of XSLT 3.0) }
+  if Regex.MatchesEmptyString then
+    Fail(Instr, 'XTDE1150', 'the regular expression matches a zero-length string');
+  Found := Regex.Analyze(S, Text);
+  Slots := 2 * (Regex.GroupCount + 1);
+  { the number of pieces: the matches and the substrings before, between
+    and after them that are not empty }
+  Count := 0;
+  Last := 0;
+  I := 0;
+  while I < Length(Found) do
+  begin
+    if Found[I] > Last then
+      Inc(Count);
+    Inc(Count);
+    Last := Found[I + 1];
+    Inc(I, Slots);
+  end;
+  if Length(Text) > Last then
+    Inc(Count);
+  SavedText := FRegexText;
+  SavedGroups := FRegexGroups;
+  SavedActive := FRegexActive;
+  SavedLazy := FRegexLazyDepth;
+  try
+    FRegexText := Text;
+    SetLength(Groups, Slots);
+    Position := 0;
+    Last := 0;
+    I := 0;
+    while I < Length(Found) do
+    begin
+      if Found[I] > Last then
+        Piece(Last, Found[I], False);
+      for J := 0 to Slots - 1 do
+        Groups[J] := Found[I + J];
+      FRegexGroups := Groups;
+      Piece(Found[I], Found[I + 1], True);
+      { a copy per match: a body may have kept nothing of it, but
+        nested instructions replace the fields }
+      Groups := nil;
+      SetLength(Groups, Slots);
+      Last := Found[I + 1];
+      Inc(I, Slots);
+    end;
+    if Length(Text) > Last then
+      Piece(Last, Integer(Length(Text)), False);
+  finally
+    FRegexText := SavedText;
+    FRegexGroups := SavedGroups;
+    FRegexActive := SavedActive;
+    FRegexLazyDepth := SavedLazy;
+  end;
+end;
+
+{ MatchesPattern without the captured substrings of xsl:analyze-string:
+  regex-group() is empty in a pattern }
+function TRun.PatternMatches(Expr: TLandrixXmlXPathExpression; Node: Integer; Relative: Boolean): Boolean;
+var
+  Saved: Boolean;
+begin
+  Saved := FRegexActive;
+  FRegexActive := False;
+  try
+    Result := FEvaluator.MatchesPattern(Expr, Node, Relative);
+  finally
+    FRegexActive := Saved;
+  end;
+end;
+
+{ regex-group(N): group N of the current match ('' if there is none, N
+  is out of range or the group did not take part) }
+function TRun.RegexGroup(const Arg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  V: TLandrixXmlXPathSequence;
+  N: Int64;
+begin
+  Result := LandrixXmlXPathStringItem('');
+  V := FEvaluator.ConvertSequence(Arg, FIntegerType, 'regex-group()');
+  if not FRegexActive or (FEvaluator.LazyDepth <> FRegexLazyDepth) or (V.Count = 0) then
+    Exit;
+  N := V.Items[0].Bits;
+  { N checked before it is doubled (no overflow) }
+  if (V.Items[0].Payload <> nil) or (N < 0) or (N >= Length(FRegexGroups) div 2) or
+    (FRegexGroups[2 * N] < 0) or (FRegexGroups[2 * N + 1] < 0) then
+    Exit;
+  Result := LandrixXmlXPathStringItem(LandrixXmlCodePointsToUtf8(FRegexText, FRegexGroups[2 * N],
+    FRegexGroups[2 * N + 1]));
+end;
+
 procedure TRun.DoForEach(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
 var
   S: TLandrixXmlXPathSequence;
   I: Integer;
 begin
-  S := Eval(Instr, Instr.Select, Focus);
+  S := Sorted(Instr, Focus, Mode, Eval(Instr, Instr.Select, Focus));
   for I := 0 to Integer(S.Count) - 1 do
     Exec(Instr.Body, ItemFocus(S.Items[I], I + 1, S.Count), Mode, R);
 end;
@@ -2364,7 +2831,7 @@ begin
   M := TXsltMode(Instr.Mode);
   if Instr.CurrentMode then
     M := Mode;
-  S := Eval(Instr, Instr.Select, Focus);
+  S := Sorted(Instr, Focus, Mode, Eval(Instr, Instr.Select, Focus));
   Params := Supplied(Instr, Focus, Mode);
   ApplyTemplates(Instr, S, M, Params, R);
 end;
@@ -2401,7 +2868,7 @@ begin
   if Count then
   begin
     for I := 0 to Integer(Length(Instr.CountPatterns)) - 1 do
-      if FEvaluator.MatchesPattern(Instr.CountPatterns[I], Node, Instr.CountRelative[I]) then
+      if PatternMatches(Instr.CountPatterns[I], Node, Instr.CountRelative[I]) then
       begin
         Result := True;
         Exit;
@@ -2409,7 +2876,7 @@ begin
   end
   else
     for I := 0 to Integer(Length(Instr.FromPatterns)) - 1 do
-      if FEvaluator.MatchesPattern(Instr.FromPatterns[I], Node, Instr.FromRelative[I]) then
+      if PatternMatches(Instr.FromPatterns[I], Node, Instr.FromRelative[I]) then
       begin
         Result := True;
         Exit;
@@ -3072,7 +3539,7 @@ var
   Nodes: TKeyNodes;
   SavedNode: Integer;
   SavedCurrent: TLandrixXmlXPathSequence;
-  Matched: Boolean;
+  Matched, SavedRegex: Boolean;
 begin
   for I := 0 to Integer(FKeyIndexes.Count) - 1 do
   begin
@@ -3095,6 +3562,9 @@ begin
   T := FEvaluator.TreeOfNode(Root, B);
   SavedNode := FEvaluator.CurrentNode;
   SavedCurrent := FCurrent;
+  { the use expressions see no captured substrings of xsl:analyze-string }
+  SavedRegex := FRegexActive;
+  FRegexActive := False;
   try
     for I := 0 to T.Count - 1 do
       for D := 0 to Integer(K.Decls.Count) - 1 do
@@ -3105,7 +3575,7 @@ begin
         FCurrent := LandrixXmlXPathEmpty;
         Matched := False;
         for P := 0 to Integer(Length(Decl.Patterns)) - 1 do
-          if FEvaluator.MatchesPattern(Decl.Patterns[P], I + B, Decl.Relative[P]) then
+          if PatternMatches(Decl.Patterns[P], I + B, Decl.Relative[P]) then
           begin
             Matched := True;
             Break;
@@ -3136,10 +3606,12 @@ begin
     FKeyIndexes.Delete(Integer(FKeyIndexes.IndexOf(Index)));
     FEvaluator.CurrentNode := SavedNode;
     FCurrent := SavedCurrent;
+    FRegexActive := SavedRegex;
     raise;
   end;
   FEvaluator.CurrentNode := SavedNode;
   FCurrent := SavedCurrent;
+  FRegexActive := SavedRegex;
 end;
 
 { key(name, values[, top]): the nodes of the tree of top (the context
@@ -3236,8 +3708,9 @@ end;
 procedure TRun.DoForEachGroup(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
   R: TReceiver);
 var
-  Population, Keys: TLandrixXmlXPathSequence;
-  Groups, GroupKeys: array of TLandrixXmlXPathSequence;
+  Population, Keys, Firsts: TLandrixXmlXPathSequence;
+  Groups, GroupKeys: TSequenceArray;
+  Order: TSortOrder;
   Map: TXsltStringList;
   I, J, G, P, Count: Integer;
   Key, Previous: TLandrixXmlUtf8;
@@ -3331,7 +3804,7 @@ begin
           FCurrent := LandrixXmlXPathEmpty;
           Matched := False;
           for P := 0 to Integer(Length(Instr.CountPatterns)) - 1 do
-            if FEvaluator.MatchesPattern(Instr.CountPatterns[P], Population.Items[I].Node, Instr.CountRelative[P]) then
+            if PatternMatches(Instr.CountPatterns[P], Population.Items[I].Node, Instr.CountRelative[P]) then
             begin
               Matched := True;
               Break;
@@ -3360,15 +3833,28 @@ begin
   SavedActive := FGroupActive;
   SavedLazy := FGroupLazyDepth;
   SavedHasKey := FGroupHasKey;
-  try
+  Order := nil;
+  SetLength(Order, Count);
+  for G := 0 to Count - 1 do
+    Order[G] := G;
+  if Instr.SortKeys <> nil then
+  begin
+    { the groups in the order of their sort keys }
+    Firsts := LandrixXmlXPathEmpty;
     for G := 0 to Count - 1 do
+      LandrixXmlXPathAppend(Firsts, Groups[G].Items[0]);
+    Order := SortOrder(Instr, Focus, Mode, Firsts, Groups, GroupKeys, Instr.GroupKind <= 1);
+  end;
+  try
+    for J := 0 to Count - 1 do
     begin
+      G := Order[J];
       FGroup := Groups[G];
       FGroupKey := GroupKeys[G];
       FGroupActive := True;
       FGroupHasKey := Instr.GroupKind <= 1;
       FGroupLazyDepth := FEvaluator.LazyDepth;
-      Exec(Instr.Body, ItemFocus(Groups[G].Items[0], G + 1, Count), Mode, R);
+      Exec(Instr.Body, ItemFocus(Groups[G].Items[0], J + 1, Count), Mode, R);
     end;
   finally
     FGroup := SavedGroup;
@@ -3421,6 +3907,10 @@ begin
       DoNumber(Instr, Focus, R);
     xskForEachGroup:
       DoForEachGroup(Instr, Focus, Mode, R);
+    xskPerformSort:
+      DoPerformSort(Instr, Focus, Mode, R);
+    xskAnalyzeString:
+      DoAnalyzeString(Instr, Focus, Mode, R);
   else
     { xsl:when and xsl:namespace are not compiled as instructions of
       their own }

@@ -168,6 +168,12 @@ type
       part). Raises xecRegex if S is not empty and the pattern matches the
       empty string. }
     function Tokenize(const S: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
+    { xsl:analyze-string: S as code points (Text) and its matches as
+      fn:replace finds them, per match 2 * (GroupCount + 1) code point
+      positions (start and end of the match, then of each group, -1 for a
+      group that did not take part). Raises xecRegex if the pattern
+      matches the empty string. }
+    function Analyze(const S: TLandrixXmlUtf8; out Text: TLandrixXmlCodePoints): TLandrixXmlCodePoints;
     property GroupCount: Integer read FGroupCount;
     { True if the pattern matches the empty string (fn:replace and
       fn:tokenize then raise FORX0003). }
@@ -1859,6 +1865,38 @@ begin
   finally
     Buffer.Free;
   end;
+end;
+
+function TLandrixXmlRegex.Analyze(const S: TLandrixXmlUtf8; out Text: TLandrixXmlCodePoints): TLandrixXmlCodePoints;
+var
+  Captures: TLandrixXmlCodePoints;
+  Position, N, I, Slots: Integer;
+  State: TVmState;
+begin
+  Result := nil;
+  if FMatchesEmpty then
+    raise ELandrixXmlError.CreateCode(xecRegex, 'Regular expression "' +
+      LandrixXmlEscapeForMessage(FSource, 60) + '" matches a zero-length string');
+  Text := LandrixXmlUtf8ToCodePoints(S);
+  Slots := 2 * (FGroupCount + 1);
+  InitVm(Self, State, True);
+  N := 0;
+  Position := 0;
+  while (Position <= Length(Text)) and RunMatch(Self, State, Text, Position, True, Captures) do
+  begin
+    if N + Slots > Length(Result) then
+      SetLength(Result, 2 * N + 4 * Slots);
+    for I := 0 to Slots - 1 do
+      if I < Length(Captures) then
+        Result[N + I] := Captures[I]
+      else
+        Result[N + I] := -1;
+    Inc(N, Slots);
+    if Captures[1] <= Captures[0] then
+      raise ELandrixXmlError.CreateCode(xecRegex, 'Zero-length match in xsl:analyze-string');
+    Position := Captures[1];
+  end;
+  SetLength(Result, N);
 end;
 
 function TLandrixXmlRegex.Tokenize(const S: TLandrixXmlUtf8): TLandrixXmlUtf8Array;

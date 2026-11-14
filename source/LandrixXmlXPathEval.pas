@@ -432,6 +432,23 @@ type
       node and the number its nodes start from. }
     function ItemString(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
     function EffectiveBoolean(const S: TLandrixXmlXPathSequence): Boolean;
+    { Helpers of xsl:sort (for the XSLT units, not part of the documented
+      API yet): the atomized sequence (fn:data); fn:number of an item;
+      the order of two sort key values (negative, 0, positive): NaN before
+      the other numbers and equal to NaN, the rest as by "lt" (XPTY0004
+      for values without an order between them); CaseOrder 1 upper-first,
+      -1 lower-first for two strings: compared without case first, then
+      at the first character that differs in case the upper (lower) case
+      one first, equal if there is none, as Saxon does; 0 the codepoint
+      order. }
+    function DataOf(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function NumberOf(const Item: TLandrixXmlXPathItem): TLandrixXmlXPathItem;
+    function SortCompare(const A, B: TLandrixXmlXPathItem; CaseOrder: Integer): Integer;
+    { the compiled regular expression of fn:matches (owned by the
+      evaluator; FORX0001, FORX0002 and FOER0000 as there), in the dialect
+      of XPath 2.0 (AsXPath20) or of the Saxon profile; for the XSLT
+      units, not part of the documented API yet }
+    function CompiledRegex(const Pattern, Flags: TLandrixXmlUtf8; AsXPath20: Boolean): TLandrixXmlRegex;
     function ConvertSequence(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType;
       const Name: string): TLandrixXmlXPathSequence;
     function TreeOfNode(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
@@ -2140,13 +2157,19 @@ begin
 end;
 
 function TLandrixXmlXPathEvaluator.Regex(const Pattern, Flags: TLandrixXmlUtf8): TLandrixXmlRegex;
+begin
+  Result := CompiledRegex(Pattern, Flags, Xp20);
+end;
+
+function TLandrixXmlXPathEvaluator.CompiledRegex(const Pattern, Flags: TLandrixXmlUtf8;
+  AsXPath20: Boolean): TLandrixXmlRegex;
 var
   Key: TLandrixXmlUtf8;
   I: Integer;
   Mode: TLandrixXmlRegexMode;
 begin
   { the dialect of the profile: XML Schema 1.0 character classes in XPath 2.0 }
-  if Xp20 then
+  if AsXPath20 then
   begin
     Mode := xrmXPath20;
     Key := '2' + Flags + #0 + Pattern;
@@ -2220,6 +2243,84 @@ end;
 function TLandrixXmlXPathEvaluator.EffectiveBoolean(const S: TLandrixXmlXPathSequence): Boolean;
 begin
   Result := SequenceBoolean(S);
+end;
+
+function TLandrixXmlXPathEvaluator.DataOf(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+begin
+  Result := Atomize(S);
+end;
+
+function TLandrixXmlXPathEvaluator.NumberOf(const Item: TLandrixXmlXPathItem): TLandrixXmlXPathItem;
+begin
+  try
+    Result := CastTo(Item, xikDouble, False);
+  except
+    on E: ELandrixXmlXPathError do
+    begin
+      if (E.XPathCode <> 'FORG0001') and (E.XPathCode <> 'XPTY0004') then
+        raise;
+      Result := DoubleItem(LandrixXmlDoubleNaN);
+    end;
+  end;
+end;
+
+function TLandrixXmlXPathEvaluator.SortCompare(const A, B: TLandrixXmlXPathItem; CaseOrder: Integer): Integer;
+var
+  NanA, NanB: Boolean;
+  X, Y: TLandrixXmlCodePoints;
+  LX, LY: TLandrixXmlUtf8;
+  I: Integer;
+  UpperX, UpperY: Boolean;
+begin
+  X := nil;
+  Y := nil;
+  NanA := (A.Kind in [xikDouble, xikFloat]) and LandrixXmlDoubleIsNaN(ItemDouble(A));
+  NanB := (B.Kind in [xikDouble, xikFloat]) and LandrixXmlDoubleIsNaN(ItemDouble(B));
+  if NanA or NanB then
+  begin
+    if not IsNumeric(A.Kind) or not IsNumeric(B.Kind) then
+      FailCompare(A.Kind, B.Kind);
+    Result := Ord(NanB) - Ord(NanA);
+    Exit;
+  end;
+  if (CaseOrder <> 0) and IsStringLike(A.Kind) and IsStringLike(B.Kind) and (A.Text <> B.Text) then
+  begin
+    LX := MapCase(A.Text, False);
+    LY := MapCase(B.Text, False);
+    if LX <> LY then
+    begin
+      Result := CompareStrings(LX, LY);
+      Exit;
+    end;
+    X := LandrixXmlUtf8ToCodePoints(A.Text);
+    Y := LandrixXmlUtf8ToCodePoints(B.Text);
+    for I := 0 to Integer(Length(X)) - 1 do
+      if (I < Integer(Length(Y))) and (X[I] <> Y[I]) then
+      begin
+        { the same character in another case: X's is upper case if
+          lowering changes it }
+        UpperX := MapCase(LandrixXmlCodePointsToUtf8(X, I, I + 1), False) <> LandrixXmlCodePointsToUtf8(X, I, I + 1);
+        UpperY := MapCase(LandrixXmlCodePointsToUtf8(Y, I, I + 1), False) <> LandrixXmlCodePointsToUtf8(Y, I, I + 1);
+        { two upper (or two lower) case forms of a letter, such as K and
+          the Kelvin sign, do not decide (Saxon keeps them in order) }
+        if UpperX <> UpperY then
+        begin
+          if UpperX = (CaseOrder > 0) then
+            Result := -1
+          else
+            Result := 1;
+          Exit;
+        end;
+      end;
+    Result := 0;
+    Exit;
+  end;
+  if CompareAtomic(A, B, xpcLt, False, FImplicitTimeZone) then
+    Result := -1
+  else if CompareAtomic(B, A, xpcLt, False, FImplicitTimeZone) then
+    Result := 1
+  else
+    Result := 0;
 end;
 
 function TLandrixXmlXPathEvaluator.ConvertSequence(const S: TLandrixXmlXPathSequence;

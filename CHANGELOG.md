@@ -25,6 +25,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   not have is a hexadecimal character reference in text and attribute
   values and `SERE0008` elsewhere (comments, names, method text), as in
   Saxon.
+- XSLT: `xsl:sort` (in `xsl:for-each`, `xsl:apply-templates` and
+  `xsl:for-each-group`), `xsl:perform-sort`, `xsl:analyze-string` and
+  `regex-group()`.
 - `tools/run-xslt-tests.py` runs the XSLT 1.0 and 2.0 cases of the W3C
   XSLT test suite against a baseline (`tests/data/xslt-baseline.txt`).
 - XPath: the string concatenation operator `||` (XPath 3.0) in the
