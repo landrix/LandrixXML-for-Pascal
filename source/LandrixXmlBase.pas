@@ -81,7 +81,8 @@ type
     xecRegex,            { invalid regular expression or replacement string }
     xecUnsupported,      { valid input using a construct this library does not support }
     xecSchema,           { an XML Schema that is invalid or cannot be resolved }
-    xecXPath             { an XPath expression with a static or dynamic error }
+    xecXPath,            { an XPath expression with a static or dynamic error }
+    xecXslt              { an XSLT stylesheet with a static or dynamic error }
   );
 
   { All errors raised by LandrixXml. Line and Column are 1-based (Column in

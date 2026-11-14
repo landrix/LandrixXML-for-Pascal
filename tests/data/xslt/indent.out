@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<out>
+   <a>
+      <b>x</b>
+      <c/>
+   </a>
+   <m>text <i>it</i> more</m>
+   <p xml:space="preserve"> <q/> </p>
+</out>

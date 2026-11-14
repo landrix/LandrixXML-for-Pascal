@@ -497,6 +497,7 @@ begin
   CheckEquals(15, Ord(xecUnsupported), 'xecUnsupported');
   CheckEquals(16, Ord(xecSchema), 'xecSchema');
   CheckEquals(17, Ord(xecXPath), 'xecXPath');
+  CheckEquals(18, Ord(xecXslt), 'xecXslt');
 end;
 
 procedure TestEscapeForMessage;

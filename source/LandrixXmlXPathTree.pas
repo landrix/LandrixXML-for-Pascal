@@ -224,18 +224,26 @@ type
       (xecInvalidOperation) and leaves the tree unusable until the next
       BeginBuild or load. }
     procedure BeginBuild(DocumentNode: Boolean);
+    { the namespace declarations of an element itself, in the order they
+      were added ('' = default namespace, an empty URI undeclares it) }
+    procedure GetDeclarations(Index: Integer; out Prefixes, Uris: TLandrixXmlUtf8Array);
     procedure BuildStartElement(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8);
     { a namespace declaration of the element just started }
     procedure BuildNamespace(const Prefix, NamespaceUri: TLandrixXmlUtf8);
     { an attribute of the element just started, or the node at the top }
     procedure BuildAttribute(const NamespaceUri, Prefix, LocalName, Value: TLandrixXmlUtf8);
-    { adjacent text is merged; empty text adds nothing }
+    { adjacent text is merged; empty text adds nothing, except as the node
+      at the top of a tree without document node }
     procedure BuildText(const Value: TLandrixXmlUtf8);
     procedure BuildComment(const Value: TLandrixXmlUtf8);
     procedure BuildProcessingInstruction(const Target, Value: TLandrixXmlUtf8);
     procedure BuildEndElement;
     procedure EndBuild;
   end;
+
+{ A file name as LoadFromFile sets BaseUri (file:/D:/x/y.xml); for the
+  XSLT units, not part of the documented API yet. }
+function LandrixXmlFileUri(const FileName: string): TLandrixXmlUtf8;
 
 implementation
 
@@ -445,8 +453,10 @@ procedure TLandrixXmlXPathTree.AddText(const Value: TLandrixXmlUtf8; Line, Colum
 var
   I: Integer;
 begin
-  { no text nodes in a loaded document node, none empty }
-  if (Value = '') or (FDepth <= 1) and not FBuilding then
+  { no text nodes in a loaded document node, none empty (except a built
+  one at the top of a tree without document node: XSLT keeps such a text
+  node of a sequence) }
+  if (Value = '') and ((FDepth > 0) or not FBuilding) or (FDepth <= 1) and not FBuilding then
     Exit;
   if FDepth > 0 then
   begin
@@ -535,6 +545,29 @@ end;
 
 { --- building from constructed nodes ---------------------------------- }
 
+procedure TLandrixXmlXPathTree.GetDeclarations(Index: Integer; out Prefixes, Uris: TLandrixXmlUtf8Array);
+var
+  D, N, K: Integer;
+begin
+  Prefixes := nil;
+  Uris := nil;
+  if FKinds[Index] <> xnkElement then
+    Exit;
+  D := FDeclFirsts[Index];
+  if D < 0 then
+    Exit;
+  N := 0;
+  while (D + N < FDeclCount) and (FDeclOwners[D + N] = Index) do
+    Inc(N);
+  SetLength(Prefixes, N);
+  SetLength(Uris, N);
+  for K := 0 to N - 1 do
+  begin
+    Prefixes[K] := FDeclPrefixes[D + K];
+    Uris[K] := FDeclUris[D + K];
+  end;
+end;
+
 procedure TLandrixXmlXPathTree.BeginBuild(DocumentNode: Boolean);
 begin
   Clear;
@@ -613,7 +646,7 @@ end;
 
 procedure TLandrixXmlXPathTree.BuildText(const Value: TLandrixXmlUtf8);
 begin
-  CheckBuild(Value <> '');
+  CheckBuild((Value <> '') or (FDepth = 0));
   AddText(Value, 0, 0, nil);
 end;
 
@@ -741,6 +774,11 @@ begin
     Result := 'file:' + Path
   else
     Result := 'file:/' + Path;
+end;
+
+function LandrixXmlFileUri(const FileName: string): TLandrixXmlUtf8;
+begin
+  Result := FileUri(FileName);
 end;
 
 procedure TLandrixXmlXPathTree.LoadFromFile(const FileName: string);

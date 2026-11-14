@@ -424,6 +424,16 @@ type
       function at the start) does not match. current() is CurrentNode,
       as the caller sets it. }
     function MatchesPattern(Expr: TLandrixXmlXPathExpression; Node: Integer; Relative: Boolean): Boolean;
+    { Helpers for the XSLT units (not part of the documented API yet): the
+      string value of an item (fn:string), the effective boolean value of
+      a sequence (FORG0006), the function conversion rules to a declared
+      type (as in the Saxon profile; Name for messages), the tree of a
+      node and the number its nodes start from. }
+    function ItemString(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+    function EffectiveBoolean(const S: TLandrixXmlXPathSequence): Boolean;
+    function ConvertSequence(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType;
+      const Name: string): TLandrixXmlXPathSequence;
+    function TreeOfNode(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
     { Variables: slots below GlobalCount are global; the others belong to
       the current frame. Setting GlobalCount or FrameSize unbinds the slots
       concerned. }
@@ -433,6 +443,11 @@ type
     procedure BindString(Slot: Integer; const Value: TLandrixXmlUtf8);
     { evaluated on first use with ContextNode as context item }
     procedure BindLazy(Slot: Integer; Expr: TLandrixXmlXPathExpression; ContextNode: Integer);
+    { BindLazy, the value converted to T when it is evaluated (an XSLT
+      variable with "as"; for the XSLT units, not part of the documented
+      API yet) }
+    procedure BindLazyAs(Slot: Integer; Expr: TLandrixXmlXPathExpression; ContextNode: Integer;
+      const T: TLandrixXmlXPathSequenceType);
     procedure UnbindFrame;
     { A new frame of Size unbound slots for a call (an XSLT template or
       stylesheet function; for the XSLT units, not part of the documented
@@ -484,6 +499,13 @@ function LandrixXmlXPathEmpty: TLandrixXmlXPathSequence;
 function LandrixXmlXPathStringItem(const S: TLandrixXmlUtf8): TLandrixXmlXPathSequence;
 function LandrixXmlXPathNodeItem(Node: Integer): TLandrixXmlXPathSequence;
 procedure LandrixXmlXPathAppend(var S: TLandrixXmlXPathSequence; const Item: TLandrixXmlXPathItem);
+{ Relative resolved against Base (RFC 3986, as fn:resolve-uri; an
+  absolute Relative stays as it is); for the XSLT units, not part of the
+  documented API yet. }
+function LandrixXmlXPathResolveUri(const Relative, Base: TLandrixXmlUtf8): TLandrixXmlUtf8;
+{ The base URI of node Node of Tree (as fn:base-uri: xml:base included),
+  False for none; for the XSLT units, not part of the documented API yet. }
+function LandrixXmlXPathNodeBaseUri(Tree: TLandrixXmlXPathTree; Node: Integer; out Uri: TLandrixXmlUtf8): Boolean;
 
 implementation
 
@@ -1897,6 +1919,13 @@ begin
     DropCachedValues;
 end;
 
+procedure TLandrixXmlXPathEvaluator.BindLazyAs(Slot: Integer; Expr: TLandrixXmlXPathExpression;
+  ContextNode: Integer; const T: TLandrixXmlXPathSequenceType);
+begin
+  BindLazy(Slot, Expr, ContextNode);
+  PSlot(SlotRef(Slot))^.DeclaredType := T;
+end;
+
 procedure TLandrixXmlXPathEvaluator.EnterExpression(Expr: TLandrixXmlXPathExpression;
   out SavedExpr: TLandrixXmlXPathExpression; out SavedBase: Integer);
 var
@@ -2169,6 +2198,27 @@ begin
     FFinal := False;
     FFailedCount := 0;
   end;
+end;
+
+function TLandrixXmlXPathEvaluator.ItemString(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+begin
+  Result := StringOf(Item);
+end;
+
+function TLandrixXmlXPathEvaluator.EffectiveBoolean(const S: TLandrixXmlXPathSequence): Boolean;
+begin
+  Result := SequenceBoolean(S);
+end;
+
+function TLandrixXmlXPathEvaluator.ConvertSequence(const S: TLandrixXmlXPathSequence;
+  const T: TLandrixXmlXPathSequenceType; const Name: string): TLandrixXmlXPathSequence;
+begin
+  Result := ConvertTo(S, T, Name, False);
+end;
+
+function TLandrixXmlXPathEvaluator.TreeOfNode(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
+begin
+  Result := TreeOf(Node, Base);
 end;
 
 function PatternMismatch(E: ELandrixXmlError): Boolean; forward;
@@ -4083,5 +4133,15 @@ begin
 end;
 
 {$I LandrixXmlXPathFunctions.inc}
+
+function LandrixXmlXPathResolveUri(const Relative, Base: TLandrixXmlUtf8): TLandrixXmlUtf8;
+begin
+  Result := ResolveUriReference(Relative, Base);
+end;
+
+function LandrixXmlXPathNodeBaseUri(Tree: TLandrixXmlXPathTree; Node: Integer; out Uri: TLandrixXmlUtf8): Boolean;
+begin
+  Result := NodeBaseUri(Tree, Node, Uri);
+end;
 
 end.

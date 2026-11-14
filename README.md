@@ -58,6 +58,8 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlSchematron` | Schematron validation (EN16931, XRechnung, Peppol BIS, Factur-X), SVRL output, optional validation unit |
 | `LandrixXmlSchematronCompiler` | compiles ISO Schematron (`.sch`) into rule files, optional validation unit |
 | `LandrixXmlSha256` | SHA-256, used for the source fingerprint of compiled rules |
+| `LandrixXmlXslt` | XSLT 2.0 transformations (a subset, see below): `TLandrixXmlXsltStylesheet`, `TLandrixXmlXsltTransformer`, optional unit |
+| `LandrixXmlXsltCompiler`, `LandrixXmlXsltRuntime`, `LandrixXmlXsltOutput` | internals of `LandrixXmlXslt` |
 
 Add the `source` folder to the search path (Delphi: unit and include path;
 Free Pascal: `-Fusource -Fisource`).
@@ -347,6 +349,51 @@ and the parsers also take a pointer and a length (`...Buf`).
 - Dates and times keep their time zone in `TLandrixXmlDateTime`; the
   `TDateTime` variants return the value as written, without converting to
   UTC.
+
+### Transforming with XSLT
+
+```pascal
+Sheet := TLandrixXmlXsltStylesheet.Create;   { compiled once, shareable }
+Source := TLandrixXmlXPathTree.Create;
+try
+  Sheet.LoadFromFile('report.xsl');
+  Source.LoadFromFile('input.xml');
+  T := TLandrixXmlXsltTransformer.Create(Sheet);   { one run at a time }
+  try
+    T.SetParameter('lang', 'de');                 { xs:untypedAtomic }
+    T.Transform(Source, OutputStream);            { as xsl:output says }
+  finally
+    T.Free;
+  end;
+finally
+  Source.Free;
+  Sheet.Free;
+end;
+```
+
+The XSLT units run a subset of XSLT 2.0 as Saxon HE does (XPath in the
+Saxon profile): templates with match patterns, modes and priorities,
+named templates, parameters, global and local variables (also with a
+sequence constructor and `as`), `xsl:import` and `xsl:include` with
+import precedence, literal result elements, `xsl:element`,
+`xsl:attribute`, `xsl:value-of`, `xsl:text`, `xsl:if`, `xsl:choose`,
+`xsl:for-each`, `xsl:sequence`, `xsl:copy`, `xsl:copy-of`,
+`xsl:document`, `xsl:comment`, `xsl:processing-instruction` and
+`xsl:message`; output methods xml and text in UTF-8, with Saxon's
+indentation. Anything else is rejected when the stylesheet is loaded
+(`xecUnsupported`), never run differently. The XSLT functions not done
+yet (`key()`, `generate-id()`, `format-number()`, `system-property()`
+and the others) are unknown functions (`XPST0017`), and a result whose
+root element is `html` without an `xsl:output` method is rejected when it
+is serialized. Work in progress (more instructions, functions and the
+html method follow): the cases in `tests/data/xslt` give the output
+Saxon gives, byte for byte. Errors raise `ELandrixXmlXsltError` with the
+W3C code, the stylesheet module and the line of the instruction.
+
+Without a resolver of its own (`TLandrixXmlXsltResolver`), a stylesheet
+reads any `file:` URI it names, with `xsl:include`, `xsl:import`,
+`doc()` and `document()`, as XSLT processors do. For a stylesheet you do
+not trust, pass a resolver that only returns what it may read.
 
 ## Limitations
 

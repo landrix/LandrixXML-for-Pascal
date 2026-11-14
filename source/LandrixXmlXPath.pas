@@ -53,6 +53,11 @@ type
     FXPathCode: string;
   public
     constructor CreateXPath(const AXPathCode, Msg: string);
+    { with another error code (xecXslt) and a position (an instruction of
+      a stylesheet; for the XSLT units, not part of the documented API
+      yet) }
+    constructor CreateXPathAt(ACode: TLandrixXmlErrorCode; const AXPathCode, Msg: string;
+      ALine, AColumn: Integer);
     property XPathCode: string read FXPathCode;
   end;
 
@@ -567,6 +572,16 @@ end;
 constructor ELandrixXmlXPathError.CreateXPath(const AXPathCode, Msg: string);
 begin
   inherited CreateCode(xecXPath, AXPathCode + ': ' + Msg);
+  FXPathCode := AXPathCode;
+end;
+
+constructor ELandrixXmlXPathError.CreateXPathAt(ACode: TLandrixXmlErrorCode; const AXPathCode, Msg: string;
+  ALine, AColumn: Integer);
+begin
+  if ALine > 0 then
+    inherited CreateAt(ACode, AXPathCode + ': ' + Msg, ALine, AColumn, -1)
+  else
+    inherited CreateCode(ACode, AXPathCode + ': ' + Msg);
   FXPathCode := AXPathCode;
 end;
 

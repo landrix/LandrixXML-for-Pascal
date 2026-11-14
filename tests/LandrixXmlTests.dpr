@@ -45,6 +45,7 @@ uses
   LandrixXmlTestXPathEval,
   LandrixXmlTestSha256,
   LandrixXmlTestSchematron,
+  LandrixXmlTestXslt,
   LandrixXmlTestLocal;
 
 function FilterParam: string;
@@ -78,6 +79,7 @@ begin
   LandrixXmlTestXPathEval.Register;
   LandrixXmlTestSha256.Register;
   LandrixXmlTestSchematron.Register;
+  LandrixXmlTestXslt.Register;
   LandrixXmlTestLocal.Register;
   ExitCode := RunAllTests(FilterParam);
 end.
