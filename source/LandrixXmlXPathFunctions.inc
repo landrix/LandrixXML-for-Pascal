@@ -1253,6 +1253,71 @@ var
       Result := False;
   end;
 
+  { distinct-values(): a string-like value (equal only to one with the
+    same text) through a hash table of its text, every other value
+    compared with the other values kept }
+  function DistinctValues(const V: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+  var
+    Slots, Others: array of Integer;
+    Size, Mask, OtherCount, X, Y, Slot: Integer;
+    H: Cardinal;
+    Dup: Boolean;
+  begin
+    Result := LandrixXmlXPathEmpty;
+    Size := 16;
+    while Size < 2 * V.Count do
+      Size := Size * 2;
+    Mask := Size - 1;
+    Slots := nil;
+    Others := nil;
+    SetLength(Slots, Size);
+    for X := 0 to Size - 1 do
+      Slots[X] := -1;
+    OtherCount := 0;
+    for X := 0 to V.Count - 1 do
+    begin
+      Dup := False;
+      if IsStringLike(V.Items[X].Kind) then
+      begin
+        H := 0;
+        for Y := 1 to Length(V.Items[X].Text) do
+          H := ((H shl 5) or (H shr 27)) xor Cardinal(Ord(V.Items[X].Text[Y]));
+        Slot := Integer(H and Cardinal(Mask));
+        while Slots[Slot] >= 0 do
+        begin
+          if Result.Items[Slots[Slot]].Text = V.Items[X].Text then
+          begin
+            Dup := True;
+            Break;
+          end;
+          Slot := (Slot + 1) and Mask;
+        end;
+        if not Dup then
+        begin
+          Slots[Slot] := Result.Count;
+          LandrixXmlXPathAppend(Result, V.Items[X]);
+        end;
+      end
+      else
+      begin
+        for Y := 0 to OtherCount - 1 do
+          if SameValue(V.Items[X], Result.Items[Others[Y]], True) then
+          begin
+            Dup := True;
+            Break;
+          end;
+        if not Dup then
+        begin
+          if OtherCount >= Length(Others) then
+            SetLength(Others, 2 * OtherCount + 8);
+          Others[OtherCount] := Result.Count;
+          Inc(OtherCount);
+          LandrixXmlXPathAppend(Result, V.Items[X]);
+        end;
+      end;
+    end;
+  end;
+
 begin
   CPs := nil;
   Map := nil;
@@ -2203,21 +2268,7 @@ begin
           LandrixXmlXPathAppend(Result, A.Items[I]);
       end;
     xfnDistinctValues:
-      begin
-        A := Atomize(Arg(0));
-        for I := 0 to A.Count - 1 do
-        begin
-          Found := False;
-          for J := 0 to Result.Count - 1 do
-            if SameValue(A.Items[I], Result.Items[J], True) then
-            begin
-              Found := True;
-              Break;
-            end;
-          if not Found then
-            LandrixXmlXPathAppend(Result, A.Items[I]);
-        end;
-      end;
+      Result := DistinctValues(Atomize(Arg(0)));
     xfnSubsequence:
       begin
         A := Arg(0);

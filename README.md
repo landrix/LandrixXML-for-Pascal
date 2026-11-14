@@ -382,7 +382,10 @@ import precedence, literal result elements, `xsl:element`,
 `xsl:message`, `xsl:number`, `xsl:function`, `xsl:for-each-group`,
 `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
-`unparsed-text()` (UTF-8, UTF-16, ISO-8859-1) and `format-date()`, `format-time()` and
+`unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
+`element-available()` (true for what this subset translates),
+`system-property()` (`xsl:version` is `2.0`, vendor and product are
+this library's) and `format-date()`, `format-time()` and
 `format-dateTime()` in English (numbers, roman numerals, names, widths);
 output methods xml, html (HTML5) and text in UTF-8, indented as Saxon
 indents. The report stylesheet of the KoSIT validator and the XRechnung
@@ -390,9 +393,11 @@ visualization (invoice to XR XML to HTML) run with it: for the 86
 invoices of the KoSIT test suite the report, the XR XML and the HTML
 are the ones Saxon writes, byte for byte (`tools/xslt-crosscheck.py`).
 Anything else is rejected when the stylesheet is loaded
-(`xecUnsupported`), never run differently. The XSLT functions not done
-yet (`system-property()`, `function-available()` and the others) are
-unknown functions (`XPST0017`). Work in progress: the cases in
+(`xecUnsupported`), never run differently. A stylesheet with
+`version="3.0"` is run with these rules (Saxon runs it as XSLT 3.0; the
+XSLT 3.0 instructions are rejected); XSLT 3.0 is to follow step by step.
+`unparsed-entity-uri()` and `unparsed-entity-public-id()` are unknown
+functions (`XPST0017`). Work in progress: the cases in
 `tests/data/xslt` give the output Saxon gives, byte for byte. Errors
 raise `ELandrixXmlXsltError` with the W3C code, the stylesheet module and
 the line of the instruction.

@@ -18,10 +18,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   stylesheet and the XRechnung visualization (XR XML and HTML) give the
   output Saxon gives, byte for byte.
   `TLandrixXmlErrorCode` gains `xecXslt`.
+- XSLT: `system-property()`, `function-available()` and
+  `element-available()`; a name given with a prefix is resolved with the
+  namespaces of the calling expression.
 - XPath: the string concatenation operator `||` (XPath 3.0) in the
   `xppSaxon` profile, as Saxon accepts it in stylesheets that declare
   XSLT 2.0; `a || b || c` is `concat(a, b, c)`. The `xppXPath20` profile
   rejects it with XPST0003.
+
+### Changed
+
+- XPath: `distinct-values()` finds repeated strings through a hash table:
+  120,000 values with 60,000 distinct strings took more than ten
+  minutes, now about two seconds.
 
 ## [0.4.0] - 2026-11-12
 

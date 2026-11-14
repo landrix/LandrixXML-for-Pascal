@@ -274,6 +274,34 @@ begin
   end;
 end;
 
+{ system-property(): the values that are this processor's, not Saxon's }
+procedure TestSystemProperty;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U(
+      '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
+      ' xmlns:x="http://www.w3.org/1999/XSL/Transform">' +
+      '<xsl:output method="text"/>' +
+      '<xsl:template name="main"><xsl:value-of separator="|" select="system-property(''xsl:version''),' +
+      ' system-property(''x:vendor''), system-property(''xsl:vendor-url''),' +
+      ' system-property(''xsl:product-name''), system-property(''xsl:product-version''),' +
+      ' system-property(''xsl:supports-backwards-compatibility'')"/></xsl:template>' +
+      '</xsl:stylesheet>'), U('urn:test'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    T.InitialTemplate := U('main');
+    CheckEqualsUtf8(U('2.0|Landrix Software|https://github.com/landrix/LandrixXML-for-Pascal|LandrixXML|' +
+      LandrixXmlVersion + '|no'), T.TransformToUtf8(nil), 'system-property()');
+  finally
+    T.Free;
+    Sheet.Free;
+  end;
+end;
+
 { An attribute in a message is its value (as Saxon prints it). }
 procedure TestMessages;
 var
@@ -375,6 +403,7 @@ begin
   RegisterTest('Xslt.Api', TestApi);
   RegisterTest('Xslt.NoSource', TestNoSource);
   RegisterTest('Xslt.Messages', TestMessages);
+  RegisterTest('Xslt.SystemProperty', TestSystemProperty);
   RegisterTest('Xslt.Rejected', TestRejected);
 end;
 

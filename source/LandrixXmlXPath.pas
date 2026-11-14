@@ -342,6 +342,12 @@ function LandrixXmlXPathAtomicTypeName(T: TLandrixXmlXPathItemKind): string;
 { The atomic type with this local name in the xs namespace; xikNone if it
   is not supported. }
 function LandrixXmlXPathAtomicTypeByName(const LocalName: TLandrixXmlUtf8): TLandrixXmlXPathItemKind;
+{ Whether a built-in function (in the fn namespace, or a constructor in
+  the xs namespace) has this name and takes Arity arguments (a negative
+  Arity: any number) in Profile; for function-available() of the XSLT
+  units. }
+function LandrixXmlXPathBuiltinExists(const NamespaceUri, LocalName: TLandrixXmlUtf8; Arity: Integer;
+  Profile: TLandrixXmlXPathProfile): Boolean;
 
 { Parses an XPath 2.0 SequenceType ("xs:decimal?", "element(a)*",
   "document-node(element(*, xs:untyped))", "empty-sequence()"); the
@@ -552,6 +558,42 @@ begin
     Result := 'node()'
   else
     Result := 'xs:' + AtomicNames[T];
+end;
+
+{ XPath 2.0 knows fewer forms of some functions than XPath 3.0 }
+function ArityInProfile(F: TLandrixXmlXPathFunctionId; Count: Integer; Profile: TLandrixXmlXPathProfile): Boolean;
+begin
+  if Profile <> xppXPath20 then
+    Result := True
+  else
+    case F of
+      xfnRound: Result := Count = 1;
+      xfnStringJoin: Result := Count = 2;
+      xfnNodeName: Result := Count = 1;
+      xfnTrace: Result := Count = 2;
+    else
+      Result := True;
+    end;
+end;
+
+function LandrixXmlXPathBuiltinExists(const NamespaceUri, LocalName: TLandrixXmlUtf8; Arity: Integer;
+  Profile: TLandrixXmlXPathProfile): Boolean;
+var
+  Id: TLandrixXmlXPathFunctionId;
+begin
+  Result := True;
+  for Id := Low(TLandrixXmlXPathFunctionId) to High(TLandrixXmlXPathFunctionId) do
+    if (LandrixXmlStringToUtf8(Functions[Id].Name) = LocalName) and
+      ((Functions[Id].Xs and (NamespaceUri = LandrixXmlXPathSchemaNamespace)) or
+      (not Functions[Id].Xs and (NamespaceUri = LandrixXmlXPathFunctionNamespace))) then
+    begin
+      if Arity < 0 then
+        Exit;
+      if (Arity >= Functions[Id].MinArgs) and ((Functions[Id].MaxArgs < 0) or (Arity <= Functions[Id].MaxArgs)) and
+        ArityInProfile(Id, Arity, Profile) then
+        Exit;
+    end;
+  Result := False;
 end;
 
 function LandrixXmlXPathAtomicTypeByName(const LocalName: TLandrixXmlUtf8): TLandrixXmlXPathItemKind;
@@ -2277,17 +2319,7 @@ var
     XPath 3.0 on }
   function ArityIn20(F: TLandrixXmlXPathFunctionId; Count: Integer): Boolean;
   begin
-    if FContext.Profile <> xppXPath20 then
-      Result := True
-    else
-      case F of
-        xfnRound: Result := Count = 1;
-        xfnStringJoin: Result := Count = 2;
-        xfnNodeName: Result := Count = 1;
-        xfnTrace: Result := Count = 2;
-      else
-        Result := True;
-      end;
+    Result := ArityInProfile(F, Count, FContext.Profile);
   end;
 
 begin

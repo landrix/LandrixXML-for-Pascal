@@ -71,7 +71,12 @@ const
   { format-number() with 2 and 3 arguments }
   XfnFormatNumber2 = 14;
   XfnFormatNumber3 = 15;
-  XfnFixedCount = 16;
+  { system-property#1, function-available#1/#2, element-available#1 }
+  XfnSystemProperty = 16;
+  XfnFunctionAvailable1 = 17;
+  XfnFunctionAvailable2 = 18;
+  XfnElementAvailable = 19;
+  XfnFixedCount = 20;
   { then per module: doc#1, doc-available#1, document#1, document#2,
     static-base-uri#0, resolve-uri#1 (the module's URI is the static base
     URI), unparsed-text#1/#2, unparsed-text-available#1/#2 }
@@ -86,6 +91,11 @@ const
   XfnUnparsedText2 = 7;
   XfnUnparsedTextAvailable1 = 8;
   XfnUnparsedTextAvailable2 = 9;
+
+{ Whether the compiler translates the XSLT element with this local name
+  (element-available(): instructions and declarations; false for those
+  it rejects as unsupported). }
+function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 
 type
   { a string list that compares byte by byte (TStringList compares by the
@@ -354,6 +364,26 @@ begin
     Result := LocalName
   else
     Result := '{' + NamespaceUri + '}' + LocalName;
+end;
+
+function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
+const
+  { the XSLT elements CompileInstruction and the declaration loop
+    translate (xsl:sort, xsl:strip-space, xsl:namespace-alias and others are
+    rejected) }
+  Names: array[0..32] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+    'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
+    'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
+    'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
+    'message', 'document', 'text', 'value-of', 'fallback');
+var
+  I: Integer;
+begin
+  Result := True;
+  for I := Low(Names) to High(Names) do
+    if LandrixXmlStringToUtf8(Names[I]) = Local then
+      Exit;
+  Result := False;
 end;
 
 { the byte index of Sub in S (0 if none), without a conversion to string }
@@ -1080,8 +1110,18 @@ begin
     Result.Profile := xppSaxon;
     Prefixes := M.Tree.InScopePrefixesUtf8(E);
     for I := 0 to Integer(Length(Prefixes)) - 1 do
-      if (Prefixes[I] <> '') and (Prefixes[I] <> 'xml') and M.Tree.LookupNamespace(E, Prefixes[I], Uri) then
-        Result.AddNamespace(Prefixes[I], Uri);
+      if (Prefixes[I] <> 'xml') and M.Tree.LookupNamespace(E, Prefixes[I], Uri) and (Uri <> '') then
+      begin
+        if Prefixes[I] <> '' then
+          Result.AddNamespace(Prefixes[I], Uri);
+        { the stylesheet's own bindings once more, under a key no XPath
+          name has ('#ns:' and the prefix, '#ns:' the default namespace;
+          the variables' URIs use '#v' and a number): the
+          names function-available() and the others get as strings are
+          resolved with these alone (not with the xs and fn the XPath
+          context adds) }
+        Result.AddNamespace('#ns:' + Prefixes[I], Uri);
+      end;
     if FInternalCall then
       Result.AddNamespace('xsl-internal-f', XsltInternalNamespace);
     { the variables in slot order, named by their expanded names }
@@ -2886,6 +2926,10 @@ begin
   Add(LandrixXmlXPathFunctionNamespace, 'key', 3, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'format-number', 2, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'format-number', 3, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'system-property', 1, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'function-available', 1, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'function-available', 2, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'element-available', 1, [], -1);
   SetLength(FC.ModuleUris, FModules.Count);
   for I := 0 to Integer(FModules.Count) - 1 do
   begin

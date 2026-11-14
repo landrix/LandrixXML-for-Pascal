@@ -481,6 +481,9 @@ type
     { how many lazily bound variables are being evaluated (a caller tells
       a function call made for a global variable from one of its own) }
     property LazyDepth: Integer read FLazyDepth;
+    { the expression being evaluated; in a host function the caller's (its
+      LookupNamespace resolves a name given as a string) }
+    property CallerExpression: TLandrixXmlXPathExpression read FExpr;
     property Tree: TLandrixXmlXPathTree read FTree;
     { the maximum nesting of user function calls (default 500) }
     property MaxDepth: Integer read FMaxDepth write FMaxDepth;
