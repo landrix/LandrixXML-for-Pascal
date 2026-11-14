@@ -641,7 +641,15 @@ Differences from Xerces, also on purpose:
   validator's XSLT line by line, for all 86 invoices. All of them are
   schema-valid, so schema errors are not exercised here; the W3C XML
   Schema Test Suite below covers them. The full KoSIT
-  report (assessment, custom levels) is not part of this library.
+  report (assessment, custom levels) is not part of this library, but
+  its report stylesheet runs with the XSLT units:
+  `tools/xslt-crosscheck.py` lets the KoSIT validator write the report
+  input of each of the 86 invoices and compares the report the XSLT
+  units write with Saxon's, byte for byte; all 86 are equal (FPC,
+  Delphi 6 and 13). It needs Java and the validator jar.
+- The XSLT cases in `tests/data/xslt` hold the output (or the error
+  code) of Saxon HE for each stylesheet, generated with
+  `tools/gen-xslt-testdata.py`, and are compared byte for byte.
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
