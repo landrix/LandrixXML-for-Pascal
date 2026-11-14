@@ -406,6 +406,21 @@ type
     { EvaluateSequence as an XSLT match pattern (see the unit comment); Expr
       is the path of the matched nodes (//a for the pattern a) }
     function EvaluatePattern(Expr: TLandrixXmlXPathExpression; ContextNode: Integer): TLandrixXmlXPathSequence;
+    { True if Node is one of the nodes EvaluatePattern(Expr, root of Node)
+      returns (for the XSLT units, not part of the documented API yet):
+      decided from the node upwards when Expr is a path of child and
+      attribute steps and "//" (the predicates of a step are evaluated on
+      the node's siblings), otherwise and after a dynamic error through
+      EvaluatePattern. A predicate that cannot read the position is
+      evaluated for the node alone: a dynamic error in it means no match.
+      Relative: Expr is "//" followed by a relative pattern (the caller
+      gives patterns starting with "/" or document-node() as rooted
+      paths); then a node without parent matches the first step, as in
+      XSLT 3.0. In a tree without document node a pattern that needs
+      EvaluatePattern (a positional predicate with a dynamic error, a
+      function at the start) does not match. current() is CurrentNode,
+      as the caller sets it. }
+    function MatchesPattern(Expr: TLandrixXmlXPathExpression; Node: Integer; Relative: Boolean): Boolean;
     { Variables: slots below GlobalCount are global; the others belong to
       the current frame. Setting GlobalCount or FrameSize unbinds the slots
       concerned. }
@@ -2107,6 +2122,249 @@ begin
     FFinal := False;
     FFailedCount := 0;
   end;
+end;
+
+function PatternMismatch(E: ELandrixXmlError): Boolean; forward;
+
+function TLandrixXmlXPathEvaluator.MatchesPattern(Expr: TLandrixXmlXPathExpression; Node: Integer;
+  Relative: Boolean): Boolean;
+var
+  SavedExpr: TLandrixXmlXPathExpression;
+  SavedBase, PathIndex, I: Integer;
+  Slow: Boolean;
+  S: TLandrixXmlXPathSequence;
+
+  function ParentOf(X: Integer): Integer;
+  var
+    T: TLandrixXmlXPathTree;
+    B: Integer;
+  begin
+    T := TreeOf(X, B);
+    Result := T.Parent[X - B];
+    if Result >= 0 then
+      Inc(Result, B);
+  end;
+
+  function KindOf(X: Integer): TLandrixXmlXPathNodeKind;
+  var
+    B: Integer;
+  begin
+    Result := TreeOf(X, B).Kind[X - B];
+  end;
+
+  function Contains(const Seq: TLandrixXmlXPathSequence; X: Integer): Boolean;
+  var
+    I: Integer;
+  begin
+    Result := True;
+    for I := 0 to Seq.Count - 1 do
+      if Seq.Items[I].Node = X then
+        Exit;
+    Result := False;
+  end;
+
+  function Positional(Step: Integer): Boolean;
+  var
+    I: Integer;
+  begin
+    Result := False;
+    for I := 0 to Integer(High(FNodes[Step].Predicates)) do
+      if MayBePositional(FNodes, FNodes[Step].Predicates[I]) then
+        Result := True;
+  end;
+
+  { The node test of Step (child or attribute axis) on X, then its
+    predicates on X alone (position 1 of 1); a dynamic error in them: no
+    match (XSLT 3.0, 5.5.4, as EvaluatePattern keeps the other nodes). }
+  function Alone(Step, X: Integer): Boolean;
+  var
+    T: TLandrixXmlXPathTree;
+    B, I, Expanded: Integer;
+    K: TLandrixXmlXPathNodeKind;
+    N: ^TLandrixXmlXPathAstNode;
+    One: TLandrixXmlXPathSequence;
+  begin
+    N := @FNodes[Step];
+    T := TreeOf(X, B);
+    I := X - B;
+    K := T.Kind[I];
+    case N^.NodeTest of
+      xntAnyNode: Result := True;
+      xntText: Result := K = xnkText;
+      xntComment: Result := K = xnkComment;
+      xntProcessingInstruction:
+        Result := (K = xnkProcessingInstruction) and ((N^.LocalName = '') or (T.LocalNameUtf8(I) = N^.LocalName));
+      xntDocumentNode: Result := K = xnkDocument;
+      xntAnyElement: Result := K = xnkElement;
+      xntAnyAttribute: Result := K = xnkAttribute;
+      xntKindTest: Result := NodeMatches(X, N^.SequenceType);
+    else
+      { name tests: the principal node kind of the axis }
+      if N^.Axis = xaxAttribute then
+        Result := K = xnkAttribute
+      else
+        Result := K = xnkElement;
+      if Result then
+        case N^.NodeTest of
+          xntName:
+            begin
+              Expanded := T.FindExpandedName(N^.NamespaceUri, N^.LocalName);
+              Result := (Expanded >= 0) and (T.ExpandedName[I] = Expanded);
+            end;
+          xntNamespaceWildcard: Result := T.NamespaceUriUtf8(I) = N^.NamespaceUri;
+          xntLocalWildcard: Result := T.LocalNameUtf8(I) = N^.LocalName;
+        else
+          { * }
+        end;
+    end;
+    if not Result or (Length(N^.Predicates) = 0) then
+      Exit;
+    One := LandrixXmlXPathNodeItem(X);
+    try
+      Result := ApplyPredicates(N^.Predicates, One, MaxInt).Count = 1;
+    except
+      { limits and circular variables stay errors, as in EvaluatePattern }
+      on E: ELandrixXmlError do
+        if PatternMismatch(E) then
+          Result := False
+        else
+          raise;
+    end;
+  end;
+
+  { Does X belong to the nodes of the steps 0 to K (X = -1: no node, the
+    context of a top node's step)? }
+  function Match(K, X: Integer): Boolean;
+  var
+    Step, P, A: Integer;
+    Ok: Boolean;
+  begin
+    Result := False;
+    if K < 0 then
+    begin
+      { before the first step: "/" }
+      Result := (X >= 0) and (RootOf(X) = X) and (KindOf(X) = xnkDocument);
+      Exit;
+    end;
+    Step := FNodes[PathIndex].Children[K];
+    if (FNodes[Step].Axis = xaxDescendantOrSelf) and (FNodes[Step].NodeTest = xntAnyNode) and
+      (Length(FNodes[Step].Predicates) = 0) then
+    begin
+      { never an attribute (the context of a later step is a parent) }
+      if (X >= 0) and (KindOf(X) = xnkAttribute) then
+        Exit;
+      { "//": the leading one of a relative pattern takes any context }
+      if Relative and (K = 0) then
+      begin
+        Result := True;
+        Exit;
+      end;
+      A := X;
+      while A >= 0 do
+      begin
+        if Match(K - 1, A) then
+        begin
+          Result := True;
+          Exit;
+        end;
+        A := ParentOf(A);
+      end;
+      Exit;
+    end;
+    if X < 0 then
+      Exit;
+    P := ParentOf(X);
+    case FNodes[Step].Axis of
+      xaxChild:
+        if KindOf(X) in [xnkAttribute, xnkDocument] then
+          Exit;
+      xaxAttribute:
+        if KindOf(X) <> xnkAttribute then
+          Exit;
+    else
+      Slow := True;
+      Exit;
+    end;
+    if P < 0 then
+    begin
+      { a node without parent: the first step of a relative pattern
+        (XSLT 3.0: child-or-top, attribute-or-top), the node alone as the
+        step's sequence }
+      if Relative and (K = 1) then
+        Result := Alone(Step, X);
+      Exit;
+    end;
+    { a predicate that may read the position needs the siblings (an error
+      there: EvaluatePattern decides) }
+    if Positional(Step) then
+      Ok := Contains(EvalStep(Step, P, FNodes[Step].Axis), X)
+    else
+      Ok := Alone(Step, X);
+    Result := Ok and Match(K - 1, P);
+  end;
+
+  { the steps Match understands }
+  function Simple(Path: Integer): Boolean;
+  var
+    I, Step: Integer;
+  begin
+    Result := (FNodes[Path].Kind = xakPath) and FNodes[Path].RootStart and (Length(FNodes[Path].Children) > 0);
+    I := 0;
+    while Result and (I < Length(FNodes[Path].Children)) do
+    begin
+      Step := FNodes[Path].Children[I];
+      Result := (FNodes[Step].Kind = xakStep) and ((FNodes[Step].Axis in [xaxChild, xaxAttribute]) or
+        (FNodes[Step].Axis = xaxDescendantOrSelf) and (FNodes[Step].NodeTest = xntAnyNode) and
+        (Length(FNodes[Step].Predicates) = 0));
+      Inc(I);
+    end;
+  end;
+
+begin
+  Result := False;
+  if Node < 0 then
+    Exit;
+  Slow := False;
+  EnterExpression(Expr, SavedExpr, SavedBase);
+  try
+    PathIndex := Expr.Root;
+    if not Simple(PathIndex) then
+      Slow := True
+    else
+      try
+        Result := Match(Integer(High(FNodes[PathIndex].Children)), Node);
+      except
+        { a dynamic error: EvaluatePattern knows which nodes still match
+          (limits and circular variables stay errors) }
+        on E: ELandrixXmlError do
+          if PatternMismatch(E) then
+            Slow := True
+          else
+            raise;
+      end;
+  finally
+    LeaveExpression(SavedExpr, SavedBase);
+  end;
+  if not Slow then
+    Exit;
+  Result := False;
+  try
+    S := EvaluatePattern(Expr, RootOf(Node));
+  except
+    { a tree without document node: "/" has no root to start from }
+    on E: ELandrixXmlXPathError do
+      if E.XPathCode = 'XPDY0050' then
+        Exit
+      else
+        raise;
+  end;
+  { not always in document order (a variable's nodes) }
+  for I := 0 to S.Count - 1 do
+    if (S.Items[I].Kind = xikNode) and (S.Items[I].Node = Node) then
+    begin
+      Result := True;
+      Exit;
+    end;
 end;
 
 procedure TLandrixXmlXPathEvaluator.AddFailed(Node: Integer);

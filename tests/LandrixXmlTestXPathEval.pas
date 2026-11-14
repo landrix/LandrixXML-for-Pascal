@@ -2132,6 +2132,163 @@ begin
   end;
 end;
 
+{ MatchesPattern decides for every node what EvaluatePattern returns,
+  for paths it walks from the node upwards and for those it hands to
+  EvaluatePattern (a function at the start, a dynamic error in a
+  predicate); a node without parent matches the first step of a relative
+  pattern only. }
+procedure TestMatchesPattern;
+const
+  Patterns: array[0..25] of string = (
+    '//a', '//a/b', '//b[1]', '//b[@k]', '//b[last()]', '/r', '/r/a', '//a//b', '//text()', '//@k',
+    '//b[@k = ''2'']', '//*[2]', '//node()', '//a[b]/b[2]', '//comment()', '//c/@k',
+    '//b[position() mod 2 = 0]', '//b[xs:integer(@k) = 2]', '//b[xs:integer(@k) = 2][1]',
+    '//*[@k][1]', '/', '//processing-instruction()', '//a[1]//b[2]', '/r/a[2]/b',
+    '/r/descendant-or-self::node()', '//b[@k][xs:integer(@k) > 0]');
+var
+  Tree, Top, Second, Attr: TLandrixXmlXPathTree;
+  Context: TLandrixXmlXPathStaticContext;
+  V: TLandrixXmlXPathSequence;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  S: TLandrixXmlXPathSequence;
+  I, J, N, Base: Integer;
+  Expected, Rel: Boolean;
+  Raised: string;
+
+  function Compile(const Text: string): TLandrixXmlXPathExpression;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(Text), nil);
+    Result := Expr;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Top := TLandrixXmlXPathTree.Create;
+  Second := TLandrixXmlXPathTree.Create;
+  Attr := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := nil;
+  Expr := nil;
+  try
+    Tree.LoadFromUtf8(U('<r><!--c--><a><b k="1"/><b/><b k="x">t</b><b k="2"/></a><a><b k="2"/><c k="3"><b/></c></a>' +
+      '<?p d?>u</r>'));
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    for I := 0 to High(Patterns) do
+    begin
+      Compile(Patterns[I]);
+      S := Evaluator.EvaluatePattern(Expr, 0);
+      for N := 0 to Tree.Count - 1 do
+      begin
+        Expected := False;
+        for J := 0 to S.Count - 1 do
+          if S.Items[J].Node = N then
+            Expected := True;
+        for J := 0 to 1 do
+        begin
+          Rel := J = 1;
+          if Rel and ((Patterns[I] = '/') or (Copy(Patterns[I], 1, 2) <> '//')) then
+            Continue;
+          Check(Evaluator.MatchesPattern(Expr, N, Rel) = Expected, Patterns[I] + ' on node ' + IntToStr(N) +
+            ' relative ' + IntToStr(J));
+        end;
+      end;
+    end;
+    { a pattern starting with a function goes through EvaluatePattern }
+    Compile('id(''none'')/b');
+    Check(not Evaluator.MatchesPattern(Expr, 3, False), 'a function at the start');
+    { trees without document node }
+    Top.BeginBuild(False);
+    Top.BuildStartElement(U(''), U(''), U('a'));
+    Top.BuildStartElement(U(''), U(''), U('b'));
+    Top.BuildEndElement;
+    Top.BuildEndElement;
+    Top.EndBuild;
+    Base := Evaluator.AddTree(Top);
+    Check(Evaluator.MatchesPattern(Compile('//a'), Base, True), 'a top element: relative pattern');
+    Check(not Evaluator.MatchesPattern(Expr, Base, False), 'a top element: "//a" needs a document node');
+    Check(Evaluator.MatchesPattern(Compile('//a[1]'), Base, True), 'a top element: its own position');
+    Check(not Evaluator.MatchesPattern(Compile('//a[2]'), Base, True), 'a top element: no second');
+    Check(Evaluator.MatchesPattern(Compile('//a/b'), Base + 1, True), 'below a top element');
+    Check(not Evaluator.MatchesPattern(Expr, Base + 1, False), 'below a top element: "//a/b" absolute');
+    Check(not Evaluator.MatchesPattern(Compile('//x/a'), Base, True), 'a top element has no parent x');
+    { a dynamic error on a sibling does not matter (the predicate cannot
+      read the position) }
+    Second.BeginBuild(False);
+    Second.BuildStartElement(U(''), U(''), U('a'));
+    Second.BuildStartElement(U(''), U(''), U('b'));
+    Second.BuildAttribute(U(''), U(''), U('k'), U('1'));
+    Second.BuildEndElement;
+    Second.BuildStartElement(U(''), U(''), U('b'));
+    Second.BuildAttribute(U(''), U(''), U('k'), U('x'));
+    Second.BuildEndElement;
+    Second.BuildEndElement;
+    Second.EndBuild;
+    Base := Evaluator.AddTree(Second);
+    Compile('//b[xs:integer(@k) = 1]');
+    Check(Evaluator.MatchesPattern(Expr, Base + 1, True), 'the b before the failing one');
+    Check(not Evaluator.MatchesPattern(Expr, Base + 3, True), 'the failing b');
+    { with a positional predicate the siblings count: the error on one goes
+      to EvaluatePattern, which needs a document node (documented: no
+      match) }
+    Check(not Evaluator.MatchesPattern(Compile('//b[xs:integer(@k) = 1][1]'), Base + 1, True),
+      'a positional predicate and an error without document node');
+    { an implementation limit stays an error, as in EvaluatePattern }
+    for J := 0 to 1 do
+    begin
+      if J = 0 then
+        Compile('//b[matches(@k, ''(ab){100000}'')]')
+      else
+        Compile('//b[matches(@k, ''(ab){100000}'')][1]');
+      Raised := '';
+      try
+        Evaluator.MatchesPattern(Expr, 4, False);
+      except
+        on E: ELandrixXmlXPathError do
+          Raised := E.XPathCode;
+      end;
+      Expected := False;
+      try
+        Evaluator.EvaluatePattern(Expr, 0);
+      except
+        on E: ELandrixXmlXPathError do
+          Expected := E.XPathCode = Raised;
+      end;
+      Check((Raised <> '') and Expected, 'the same error as EvaluatePattern ' + IntToStr(J) + ': ' + Raised);
+    end;
+    { an attribute without parent }
+    Attr.BeginBuild(False);
+    Attr.BuildAttribute(U(''), U(''), U('k'), U('1'));
+    Attr.EndBuild;
+    Base := Evaluator.AddTree(Attr);
+    Check(Evaluator.MatchesPattern(Compile('//@k'), Base, True), 'an attribute at the top: relative pattern');
+    Check(not Evaluator.MatchesPattern(Expr, Base, False), 'an attribute at the top: absolute pattern');
+    Check(not Evaluator.MatchesPattern(Compile('//@j'), Base, True), 'an attribute at the top: another name');
+    { the fallback does not assume document order: a variable's nodes }
+    Context.DeclareVariable(U('v'));
+    Evaluator.SetGlobalCount(1);
+    V := LandrixXmlXPathNodeItem(4);
+    LandrixXmlXPathAppend(V, LandrixXmlXPathNodeItem(3).Items[0]);
+    Evaluator.BindValue(0, V);
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('$v'), Context);
+    Check(Evaluator.MatchesPattern(Expr, 3, False), 'a variable: the second node');
+    Check(Evaluator.MatchesPattern(Expr, 4, False), 'a variable: the first node');
+    Check(not Evaluator.MatchesPattern(Expr, 5, False), 'a variable: another node');
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    Top.Free;
+    Second.Free;
+    Attr.Free;
+    Context.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XPathEval.SaxonCases', TestSaxonCases);
@@ -2155,6 +2312,7 @@ begin
   RegisterTest('XPathEval.TreeWithoutDocument', TestTreeWithoutDocument);
   RegisterTest('XPathEval.TemporaryTrees', TestTemporaryTrees);
   RegisterTest('XPathEval.HostFunctions', TestHostFunctions);
+  RegisterTest('XPathEval.MatchesPattern', TestMatchesPattern);
 end;
 
 end.
