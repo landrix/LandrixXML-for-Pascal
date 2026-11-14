@@ -173,6 +173,10 @@ type
     FEvaluator: TLandrixXmlXPathEvaluator;
     FSource: TLandrixXmlXPathTree;
     FEmpty: TLandrixXmlXPathTree;
+    { the source without the white space xsl:strip-space removes (owned),
+      and the source as given (a parameter may be that tree) }
+    FStripped: TLandrixXmlXPathTree;
+    FGivenSource: TLandrixXmlXPathTree;
     FTrees: TObjectList;
     FFunctions: TList;
     FDefs: TObjectList;
@@ -237,6 +241,7 @@ type
     function FormatNumber(const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function UnparsedText(Kind: Integer; const Base: TLandrixXmlUtf8;
       const HrefArg, EncodingArg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function StrippedCopy(Tree: TLandrixXmlXPathTree): TLandrixXmlXPathTree;
     procedure DoForEachGroup(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
     function SortOrder(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
@@ -1066,10 +1071,16 @@ begin
     FOwnResolver := True;
   end;
   FSource := Source;
+  FGivenSource := Source;
   if FSource = nil then
   begin
     FEmpty := TLandrixXmlXPathTree.Create;
     FSource := FEmpty;
+  end
+  else if FC.HasStrip then
+  begin
+    FStripped := StrippedCopy(Source);
+    FSource := FStripped;
   end;
   FEvaluator := TLandrixXmlXPathEvaluator.Create(FSource);
   FTrue := TLandrixXmlXPathExpression.Create('true()', nil);
@@ -1147,6 +1158,7 @@ begin
   FDefs.Free;
   FTrees.Free;
   FEmpty.Free;
+  FStripped.Free;
   inherited Destroy;
 end;
 
@@ -1156,7 +1168,7 @@ function TRun.LoadDocument(const Href, Base: TLandrixXmlUtf8; Available: Boolean
 var
   Uri, Key: TLandrixXmlUtf8;
   Content: TStream;
-  Tree: TLandrixXmlXPathTree;
+  Tree, Stripped: TLandrixXmlXPathTree;
   Reader: TLandrixXmlReader;
   I: Integer;
 begin
@@ -1184,6 +1196,12 @@ begin
           Reader.LoadFromStream(Content);
           Tree.LoadFromReader(Reader);
           Tree.BaseUri := Uri;
+          if FC.HasStrip then
+          begin
+            Stripped := StrippedCopy(Tree);
+            Tree.Free;
+            Tree := Stripped;
+          end;
           Result := AddTree(Tree);
           Tree := nil;
         except
@@ -1845,6 +1863,109 @@ begin
     else
       Fail(Instr, 'XTDE0860', 'the prefix "' + LandrixXmlUtf8ToString(Prefix) + '" is not declared');
   end;
+end;
+
+{ A copy of Tree (a document or a tree without document node) without
+  the white space text nodes xsl:strip-space removes: those whose parent
+  element XsltStripsSpace names, unless the nearest xml:space attribute
+  of the parent or an ancestor is "preserve". Positions in the source
+  are not kept. }
+function TRun.StrippedCopy(Tree: TLandrixXmlXPathTree): TLandrixXmlXPathTree;
+var
+  T: TLandrixXmlXPathTree;
+
+  function IsWhite(const S: TLandrixXmlUtf8): Boolean;
+  var
+    I: Integer;
+  begin
+    Result := False;
+    for I := 1 to Length(S) do
+      if not (S[I] in [#9, #10, #13, ' ']) then
+        Exit;
+    Result := True;
+  end;
+
+  { Preserve: an xml:space="preserve" is in force at the parent }
+  procedure Walk(I: Integer; Preserve: Boolean);
+  var
+    C, A, K: Integer;
+    Prefixes, Uris: TLandrixXmlUtf8Array;
+    Strip: Boolean;
+  begin
+    Prefixes := nil;
+    Uris := nil;
+    case Tree.Kind[I] of
+      xnkDocument:
+        begin
+          C := Tree.FirstChild(I);
+          while C >= 0 do
+          begin
+            Walk(C, False);
+            C := Tree.NextSibling[C];
+          end;
+        end;
+      xnkElement:
+        begin
+          T.BuildStartElement(Tree.NamespaceUriUtf8(I), Tree.PrefixUtf8(I), Tree.LocalNameUtf8(I));
+          Tree.GetDeclarations(I, Prefixes, Uris);
+          for K := 0 to Integer(Length(Prefixes)) - 1 do
+            T.BuildNamespace(Prefixes[K], Uris[K]);
+          for A := I + 1 to I + Tree.AttributeCount[I] do
+          begin
+            T.BuildAttribute(Tree.NamespaceUriUtf8(A), Tree.PrefixUtf8(A), Tree.LocalNameUtf8(A), Tree.ValueUtf8(A));
+            { a value other than "preserve" counts as "default", as in
+              Saxon }
+            if (Tree.LocalNameUtf8(A) = 'space') and
+              (Tree.NamespaceUriUtf8(A) = 'http://www.w3.org/XML/1998/namespace') then
+              Preserve := Tree.ValueUtf8(A) = 'preserve';
+          end;
+          Strip := not Preserve and XsltStripsSpace(FC, Tree.NamespaceUriUtf8(I), Tree.LocalNameUtf8(I));
+          C := Tree.FirstChild(I);
+          while C >= 0 do
+          begin
+            if not (Strip and (Tree.Kind[C] = xnkText) and IsWhite(Tree.ValueUtf8(C))) then
+              Walk(C, Preserve);
+            C := Tree.NextSibling[C];
+          end;
+          T.BuildEndElement;
+        end;
+      xnkText:
+        T.BuildText(Tree.ValueUtf8(I));
+      xnkComment:
+        T.BuildComment(Tree.ValueUtf8(I));
+      xnkProcessingInstruction:
+        T.BuildProcessingInstruction(Tree.LocalNameUtf8(I), Tree.ValueUtf8(I));
+      xnkAttribute:
+        { only an attribute at the top (those of an element are copied with
+          it) }
+        T.BuildAttribute(Tree.NamespaceUriUtf8(I), Tree.PrefixUtf8(I), Tree.LocalNameUtf8(I), Tree.ValueUtf8(I));
+    end;
+  end;
+
+var
+  I: Integer;
+begin
+  T := TLandrixXmlXPathTree.Create;
+  try
+    T.BeginBuild((Tree.Count > 0) and (Tree.Kind[0] = xnkDocument));
+    if (Tree.Count > 0) and (Tree.Kind[0] = xnkDocument) then
+      Walk(0, False)
+    else
+    begin
+      I := 0;
+      while (I >= 0) and (I < Tree.Count) do
+      begin
+        Walk(I, False);
+        I := Tree.NextSibling[I];
+      end;
+    end;
+    T.EndBuild;
+    T.BaseUri := Tree.BaseUri;
+  except
+    T.Free;
+    raise;
+  end;
+  Result := T;
 end;
 
 procedure TRun.CopyNode(Node: Integer; R: TReceiver);
@@ -3955,7 +4076,7 @@ begin
                 LandrixXmlXPathAppend(V, It);
               end;
             1:
-              if FSettings.ParamTrees[J] = FSource then
+              if (FSettings.ParamTrees[J] = FSource) or (FSettings.ParamTrees[J] = FGivenSource) then
                 V := LandrixXmlXPathNodeItem(0)
               else
                 V := LandrixXmlXPathNodeItem(FEvaluator.AddTree(FSettings.ParamTrees[J]));

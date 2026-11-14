@@ -1,0 +1,10 @@
+<doc xmlns:p="urn:p">
+  <a> <b> </b> text <c/> </a>
+  <keep> <b/> </keep>
+  <p:x> <b/> </p:x>
+  <p:gone> <b/> </p:gone>
+  <sp xml:space="preserve"> <b> </b> <in xml:space="default"> <b/> </in> </sp>
+  <star> <b/> </star>
+  <p:star> <b/> </p:star>
+  <sp2 xml:space="preserve"><o xml:space="other"> <b/> </o></sp2>
+</doc>

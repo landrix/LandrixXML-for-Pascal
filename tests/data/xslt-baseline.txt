@@ -240,8 +240,10 @@ axes/axes-083 pass
 axes/axes-084 pass
 axes/axes-085 pass
 axes/axes-086 pass
+axes/axes-087 pass
 axes/axes-088 pass
 axes/axes-089 pass
+axes/axes-090 pass
 axes/axes-091 pass
 axes/axes-092 pass
 axes/axes-093 pass
@@ -454,6 +456,9 @@ boolean/boolean-111 pass
 boolean/boolean-112 pass
 bug/bug-0101 pass
 bug/bug-0201 pass
+bug/bug-0301 pass
+bug/bug-0302 pass
+bug/bug-0304 pass
 bug/bug-0305 pass
 bug/bug-0401 pass
 bug/bug-0701 pass
@@ -483,6 +488,7 @@ bug/bug-2801 pass
 bug/bug-2901 pass
 bug/bug-3301 pass
 bug/bug-3401 pass
+bug/bug-3701 pass
 bug/bug-3901 pass
 bug/bug-4001 pass
 bug/bug-4101 pass
@@ -494,6 +500,7 @@ bug/bug-4601 pass
 bug/bug-4801 pass
 bug/bug-4901 pass
 bug/bug-5001 pass
+bug/bug-5101 pass
 bug/bug-5201 pass
 bug/bug-5301 pass
 bug/bug-5401 pass
@@ -502,9 +509,11 @@ bug/bug-5601 pass
 bug/bug-5701 pass
 bug/bug-5801 pass
 bug/bug-5802 pass
+bug/bug-5901 pass
 bug/bug-6001 pass
 bug/bug-6101 pass
 bug/bug-6301 pass
+bug/bug-6401 pass
 built-in-templates/built-in-templates-0101 pass
 built-in-templates/built-in-templates-0102 pass
 built-in-templates/built-in-templates-0201 pass
@@ -549,6 +558,9 @@ catalog/catalog-002 pass
 catalog/catalog-003 pass
 character-map/character-map-027 pass
 choose/choose-0101 pass
+choose/choose-0102 pass
+choose/choose-0103 pass
+choose/choose-0104 wrong-code
 choose/choose-0105 pass
 choose/choose-0106 pass
 choose/choose-0201 pass
@@ -904,6 +916,18 @@ date/date-092 pass
 date/date-093 pass
 deep-equal/deep-equal-001 pass
 deep-equal/deep-equal-002 pass
+document/document-0105 pass
+document/document-0106 pass
+document/document-0107 pass
+document/document-0108 pass
+document/document-0109 pass
+document/document-0110 pass
+document/document-0111 pass
+document/document-0112 pass
+document/document-0201 pass
+document/document-0202 pass
+document/document-0203 pass
+document/document-0204 pass
 document/document-0301 pass
 document/document-0302 pass
 document/document-0303 pass
@@ -911,8 +935,12 @@ document/document-0304 pass
 document/document-0305 pass
 document/document-0306 pass
 document/document-0307 pass
+document/document-0308 pass
 document/document-0601 pass
 document/document-0701 pass
+document/document-0801 pass
+document/document-0802 pass
+document/document-0803 pass
 document/document-0901 pass
 document/document-1001 pass
 document/document-1002 pass
@@ -925,6 +953,7 @@ document/document-1202 pass
 document/document-1301 pass
 document/document-1401 pass
 document/document-1501 pass
+document/document-1502 pass
 document/document-1601 pass
 document/document-1901 pass
 document/document-2009 pass
@@ -960,6 +989,7 @@ error/error-0010am pass
 error/error-0010an pass
 error/error-0010ao pass
 error/error-0010ap pass
+error/error-0010aq pass
 error/error-0010ar pass
 error/error-0010as pass
 error/error-0010au pass
@@ -994,6 +1024,7 @@ error/error-0040a pass
 error/error-0050a pass
 error/error-0090e pass
 error/error-0090k pass
+error/error-0090m pass
 error/error-0090n pass
 error/error-0120a pass
 error/error-0120b pass
@@ -1309,6 +1340,7 @@ expression/expression-4402 pass
 for-each-group/for-each-group-012 pass
 for-each-group/for-each-group-013 pass
 for-each-group/for-each-group-016 pass
+for-each-group/for-each-group-018 pass
 for-each-group/for-each-group-020 pass
 for-each-group/for-each-group-022 pass
 for-each-group/for-each-group-024 pass
@@ -1449,6 +1481,7 @@ function/function-0202 pass
 function/function-0203 pass
 function/function-0205 pass
 function/function-0301 pass
+function/function-0501 pass
 function/function-0601 pass
 function/function-0602 pass
 function/function-0901 pass
@@ -1479,6 +1512,8 @@ function/function-2105 pass
 function/function-2106 wrong-code
 function/function-2107 pass
 function/function-2108 pass
+id/id-014 pass
+import/import-0101 pass
 import/import-0201 pass
 import/import-0202 pass
 import/import-0203 pass
@@ -1535,6 +1570,7 @@ key/key-041 pass
 key/key-043 pass
 key/key-045 pass
 key/key-046 pass
+key/key-047 pass
 key/key-048 pass
 key/key-049 pass
 key/key-050 pass
@@ -1542,6 +1578,7 @@ key/key-051 pass
 key/key-052 pass
 key/key-053 pass
 key/key-054 pass
+key/key-055 pass
 key/key-056 pass
 key/key-059 pass
 key/key-060 pass
@@ -1562,6 +1599,7 @@ key/key-077 pass
 key/key-080 pass
 key/key-081 pass
 key/key-083 pass
+key/key-084 pass
 key/key-085a pass
 key/key-085b pass
 key/key-088 pass
@@ -1584,6 +1622,8 @@ lre/lre-022 pass
 lre/lre-023 pass
 lre/lre-024 pass
 lre/lre-110 pass
+match/match-001 pass
+match/match-002 pass
 match/match-003 pass
 match/match-004 pass
 match/match-005 pass
@@ -1614,6 +1654,7 @@ match/match-031 pass
 match/match-032 pass
 match/match-033 pass
 match/match-034 pass
+match/match-036 pass
 match/match-037 pass
 match/match-038 pass
 match/match-040 pass
@@ -1628,6 +1669,7 @@ match/match-048 pass
 match/match-049 pass
 match/match-058 pass
 match/match-077 pass
+match/match-078 pass
 match/match-087 pass
 match/match-088 pass
 match/match-089 pass
@@ -1668,6 +1710,7 @@ match/match-124 pass
 match/match-125 pass
 match/match-126 pass
 match/match-242 pass
+match/match-245 pass
 match/match-247 pass
 match/match-249 pass
 match/match-250 pass
@@ -1846,6 +1889,7 @@ mode/mode-1104 pass
 mode/mode-1201 pass
 mode/mode-1202 pass
 mode/mode-1203 pass
+mode/mode-1301 pass
 mode/mode-1401 pass
 mode/mode-1403 pass
 mode/mode-1404 pass
@@ -1871,6 +1915,8 @@ namespace/namespace-1403 pass
 namespace/namespace-1404 pass
 namespace/namespace-1501 pass
 namespace/namespace-1502 pass
+namespace/namespace-1601 pass
+namespace/namespace-1602 pass
 namespace/namespace-1701 pass
 namespace/namespace-2201 pass
 namespace/namespace-2301 pass
@@ -2046,9 +2092,15 @@ nodetest/nodetest-002 pass
 nodetest/nodetest-003 pass
 normalize-unicode/normalize-unicode-001 pass
 normalize-unicode/normalize-unicode-002 pass
+normalize-unicode/normalize-unicode-018 pass
+number/number-0101 pass
 number/number-0201 pass
 number/number-0202 pass
 number/number-0301 pass
+number/number-0401 pass
+number/number-0402 pass
+number/number-0403 pass
+number/number-0404 pass
 number/number-0405 pass
 number/number-0406 pass
 number/number-0407 pass
@@ -2175,6 +2227,7 @@ number/number-4301 pass
 number/number-4401 pass
 number/number-4402 pass
 number/number-4601 pass
+number/number-4701 pass
 output/output-0101 pass
 output/output-0123 pass
 output/output-0124 pass
@@ -2323,6 +2376,11 @@ position/position-1507 pass
 position/position-1508 pass
 position/position-1509 pass
 position/position-1510 pass
+position/position-1602 pass
+position/position-1701 pass
+position/position-1702 pass
+position/position-1703 pass
+position/position-1801 pass
 position/position-1901 pass
 position/position-2001 pass
 position/position-2101 pass
@@ -2395,6 +2453,7 @@ position/position-5902 pass
 position/position-5903 pass
 position/position-6001 pass
 position/position-6002 pass
+position/position-6101 pass
 position/position-6201 pass
 position/position-6301 pass
 position/position-6302 pass
@@ -2470,6 +2529,7 @@ predicate/predicate-051 pass
 predicate/predicate-052 pass
 predicate/predicate-053 pass
 predicate/predicate-054 pass
+predicate/predicate-055 pass
 regex-syntax-xslt20/regex-syntax-xslt20-0001 pass
 regex-syntax-xslt20/regex-syntax-xslt20-0002 pass
 regex-syntax-xslt20/regex-syntax-xslt20-0003 pass
@@ -3763,6 +3823,7 @@ sort/sort-048 pass
 sort/sort-050 pass
 sort/sort-051 pass
 sort/sort-052 pass
+sort/sort-053 pass
 sort/sort-054 pass
 sort/sort-056 pass
 sort/sort-057 pass
@@ -3913,6 +3974,24 @@ string/string-130 pass
 string/string-131 pass
 string/string-132 pass
 string/string-133 pass
+strip-space/strip-space-001 pass
+strip-space/strip-space-002 pass
+strip-space/strip-space-004 pass
+strip-space/strip-space-006 pass
+strip-space/strip-space-010 pass
+strip-space/strip-space-011 pass
+strip-space/strip-space-012 pass
+strip-space/strip-space-013 pass
+strip-space/strip-space-014 pass
+strip-space/strip-space-015 pass
+strip-space/strip-space-016 pass
+strip-space/strip-space-017 pass
+strip-space/strip-space-018 pass
+strip-space/strip-space-019 pass
+strip-space/strip-space-020 pass
+strip-space/strip-space-021 pass
+strip-space/strip-space-022 pass
+strip-space/strip-space-024 pass
 system-property/system-property-001 pass
 system-property/system-property-002 pass
 system-property/system-property-003 pass
@@ -3941,6 +4020,7 @@ type/type-0121 pass
 type/type-0122 pass
 type/type-0123 pass
 type/type-0124 pass
+type/type-0125 pass
 type/type-0126 pass
 type/type-0127 pass
 type/type-0128 pass
@@ -4008,6 +4088,7 @@ variable/variable-0116 wrong-code
 variable/variable-0117 wrong-code
 variable/variable-0122 pass
 variable/variable-0123 pass
+variable/variable-0501 pass
 variable/variable-0601 pass
 variable/variable-0701 pass
 variable/variable-0801 pass
@@ -4090,6 +4171,9 @@ whitespace/whitespace-007 pass
 whitespace/whitespace-008 pass
 whitespace/whitespace-009 pass
 whitespace/whitespace-010 pass
+whitespace/whitespace-012 pass
+whitespace/whitespace-013 pass
+whitespace/whitespace-014 pass
 whitespace/whitespace-015 pass
 whitespace/whitespace-016 pass
 whitespace/whitespace-017 pass

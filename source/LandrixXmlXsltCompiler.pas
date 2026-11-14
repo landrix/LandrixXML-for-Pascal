@@ -344,11 +344,30 @@ type
     Keys: TStringList;
     { decimal format name ('' the default) -> TXsltDecimalFormat, owned }
     DecimalFormats: TStringList;
+    { the name tests of xsl:strip-space and xsl:preserve-space: kind 0 a
+      name (URI and local name), 1 "prefix:*" (URI), 2 "*", 3 "*:name"
+      (local name); strip or
+      preserve; import precedence and declaration order. HasStrip: there
+      is an xsl:strip-space (else no source is changed). }
+    SpaceKinds: array of Integer;
+    SpaceUris: TLandrixXmlUtf8Array;
+    SpaceLocals: TLandrixXmlUtf8Array;
+    SpaceStrip: array of Boolean;
+    SpacePrecedences: array of Integer;
+    SpaceOrders: array of Integer;
+    HasStrip: Boolean;
     constructor Create;
     destructor Destroy; override;
     function FindMode(const Name: TLandrixXmlUtf8): TXsltMode;
     function FindGlobal(const Name: TLandrixXmlUtf8): TXsltGlobal;
   end;
+
+{ Whether white space text children of an element with this name are
+  stripped from a source document (xsl:strip-space and
+  xsl:preserve-space: the test of the highest import precedence, then of
+  the highest priority, a name before "prefix:*" before "*", then the last
+  one; none: preserved). }
+function XsltStripsSpace(C: TXsltCompiled; const NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
 
 { Compiles the stylesheet whose principal module is Tree (BaseUri its
   URI). Raises ELandrixXmlXsltError. }
@@ -389,6 +408,40 @@ begin
   inherited Destroy;
 end;
 
+{ the priority of a name test kind as a rank: a name 0, "prefix:*" and
+  "*:name" 1, "*" 2 }
+function SpaceRank(Kind: Integer): Integer;
+begin
+  if Kind = 3 then
+    Result := 1
+  else
+    Result := Kind;
+end;
+
+function XsltStripsSpace(C: TXsltCompiled; const NamespaceUri, LocalName: TLandrixXmlUtf8): Boolean;
+var
+  I, Best: Integer;
+  Matches: Boolean;
+begin
+  Best := -1;
+  for I := 0 to Integer(Length(C.SpaceKinds)) - 1 do
+  begin
+    case C.SpaceKinds[I] of
+      0: Matches := (C.SpaceUris[I] = NamespaceUri) and (C.SpaceLocals[I] = LocalName);
+      1: Matches := C.SpaceUris[I] = NamespaceUri;
+      3: Matches := C.SpaceLocals[I] = LocalName;
+    else
+      Matches := True;
+    end;
+    if Matches and ((Best < 0) or (C.SpacePrecedences[I] > C.SpacePrecedences[Best]) or
+      (C.SpacePrecedences[I] = C.SpacePrecedences[Best]) and
+      ((SpaceRank(C.SpaceKinds[I]) < SpaceRank(C.SpaceKinds[Best])) or
+      (SpaceRank(C.SpaceKinds[I]) = SpaceRank(C.SpaceKinds[Best])) and (C.SpaceOrders[I] > C.SpaceOrders[Best]))) then
+      Best := I;
+  end;
+  Result := (Best >= 0) and C.SpaceStrip[Best];
+end;
+
 function XsltClarkOf(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlUtf8;
 begin
   if NamespaceUri = '' then
@@ -400,13 +453,14 @@ end;
 function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 const
   { the XSLT elements CompileInstruction and the declaration loop
-    translate (xsl:strip-space, xsl:namespace-alias and others are
+    translate (xsl:namespace-alias, xsl:attribute-set and others are
     rejected) }
-  Names: array[0..35] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+  Names: array[0..37] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
-    'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string');
+    'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
+    'strip-space', 'preserve-space');
 var
   I: Integer;
 begin
@@ -740,6 +794,7 @@ type
     function CompileLiteral(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     procedure CompileWithParams(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
     procedure CompileSortKey(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    procedure CompileSpace(D: TDecl; Strip: Boolean);
     procedure CompileAnalyzeString(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
     function CompileSorts(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr): Integer;
     function SortFollows(M: TModule; C: Integer): Boolean;
@@ -1385,9 +1440,17 @@ end;
 { xml:space="preserve" on the node or an ancestor (nearest wins) }
 function PreservesSpace(T: TLandrixXmlXPathTree; N: Integer): Boolean;
 var
-  I: Integer;
+  I, D: Integer;
 begin
   Result := False;
+  { white space before xsl:param or xsl:sort goes whatever xml:space says
+    (comments and processing instructions are removed first) }
+  D := T.NextSibling[N];
+  while (D >= 0) and (T.Kind[D] in [xnkComment, xnkProcessingInstruction]) do
+    D := T.NextSibling[D];
+  if (D >= 0) and (T.Kind[D] = xnkElement) and (T.NamespaceUriUtf8(D) = XsltNamespace) and
+    ((T.LocalNameUtf8(D) = 'param') or (T.LocalNameUtf8(D) = 'sort')) then
+    Exit;
   while N >= 0 do
   begin
     if T.Kind[N] = xnkElement then
@@ -1406,7 +1469,7 @@ end;
   them and leave the scope at its end. }
 procedure TCompiler.CompileBody(M: TModule; Parent: Integer; Scope: TScope; Body: TObjectList; First: Integer);
 var
-  C, SavedCount: Integer;
+  C, SavedCount, D, Last: Integer;
   I: TXsltInstr;
   S: TLandrixXmlUtf8;
 begin
@@ -1420,13 +1483,26 @@ begin
     case M.Tree.Kind[C] of
       xnkText:
         begin
+          { the text up to the next element: comments and processing
+            instructions of the stylesheet are removed before white space
+            is stripped, so the text around them is one text node }
           S := M.Tree.ValueUtf8(C);
-          if (Trim8(S) <> '') or PreservesSpace(M.Tree, C) then
+          Last := C;
+          D := M.Tree.NextSibling[C];
+          while (D >= 0) and (M.Tree.Kind[D] in [xnkText, xnkComment, xnkProcessingInstruction]) do
+          begin
+            if M.Tree.Kind[D] = xnkText then
+              S := S + M.Tree.ValueUtf8(D);
+            Last := D;
+            D := M.Tree.NextSibling[D];
+          end;
+          if (Trim8(S) <> '') or PreservesSpace(M.Tree, Last) then
           begin
             I := NewInstr(xskText, M, C);
             I.Text := S;
             Body.Add(I);
           end;
+          C := Last;
         end;
       xnkElement:
         begin
@@ -2607,6 +2683,110 @@ begin
     CompileBody(M, E, Scope, Instr.Body, C);
 end;
 
+{ an NCName (by the ASCII rules, any non-ASCII character allowed) }
+function IsNCName8(const S: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := (S <> '') and not (S[1] in ['0'..'9', '-', '.']);
+  for I := 1 to Length(S) do
+    if not ((S[I] in ['A'..'Z', 'a'..'z', '0'..'9', '_', '-', '.']) or (Ord(S[I]) >= 128)) then
+      Result := False;
+end;
+
+{ xsl:strip-space or xsl:preserve-space: its elements attribute, a list
+  of name tests ("*", "prefix:*", "*:name" or a QName; the EQName of
+  XSLT 3.0 is not supported) }
+procedure TCompiler.CompileSpace(D: TDecl; Strip: Boolean);
+var
+  M: TModule;
+  E, I, Start, N, P: Integer;
+  List, Token, Prefix, Uri, Local: TLandrixXmlUtf8;
+  Kind: Integer;
+begin
+  M := D.Module;
+  E := D.Element;
+  List := ReqAttr(M, E, 'elements');
+  I := 1;
+  while I <= Length(List) do
+  begin
+    while (I <= Length(List)) and (List[I] in [#9, #10, #13, ' ']) do
+      Inc(I);
+    Start := I;
+    while (I <= Length(List)) and not (List[I] in [#9, #10, #13, ' ']) do
+      Inc(I);
+    if I = Start then
+      Break;
+    Token := Copy(List, Start, I - Start);
+    Uri := '';
+    Local := '';
+    if (Length(Token) >= 2) and (Token[1] = 'Q') and (Token[2] = '{') then
+      Unsupported(M, E, 'a name test Q{uri}name (XSLT 3.0)');
+    if Token = '*' then
+      Kind := 2
+    else if (Length(Token) > 2) and (Token[1] = '*') and (Token[2] = ':') then
+    begin
+      Kind := 3;
+      Local := Copy(Token, 3, MaxInt);
+      Prefix := '';
+      if not IsNCName8(Local) then
+        Fail(M, E, 'XTSE0020', 'not a name test: "' + LandrixXmlUtf8ToString(Token) + '"');
+    end
+    else
+    begin
+      P := Pos8(':', Token);
+      { an empty prefix is one that is not declared (as in Saxon) }
+      if P = 1 then
+        Fail(M, E, 'XTSE0280', 'the empty prefix in "' + LandrixXmlUtf8ToString(Token) + '" is not declared');
+      if (P > 1) and (Copy(Token, P + 1, MaxInt) = '*') then
+      begin
+        Kind := 1;
+        Prefix := Copy(Token, 1, P - 1);
+      end
+      else
+      begin
+        Kind := 0;
+        if P > 0 then
+        begin
+          Prefix := Copy(Token, 1, P - 1);
+          Local := Copy(Token, P + 1, MaxInt);
+        end
+        else
+        begin
+          Prefix := '';
+          Local := Token;
+        end;
+        if not IsNCName8(Local) then
+          Fail(M, E, 'XTSE0020', 'not a name test: "' + LandrixXmlUtf8ToString(Token) + '"');
+      end;
+      if Prefix <> '' then
+      begin
+        if not IsNCName8(Prefix) then
+          Fail(M, E, 'XTSE0020', 'not a name test: "' + LandrixXmlUtf8ToString(Token) + '"');
+        if Prefix = 'xml' then
+          Uri := 'http://www.w3.org/XML/1998/namespace'
+        else if not M.Tree.LookupNamespace(E, Prefix, Uri) or (Uri = '') then
+          Fail(M, E, 'XTSE0280', 'the prefix ' + LandrixXmlUtf8ToString(Prefix) + ' is not declared');
+      end;
+    end;
+    N := Integer(Length(FC.SpaceKinds));
+    SetLength(FC.SpaceKinds, N + 1);
+    SetLength(FC.SpaceUris, N + 1);
+    SetLength(FC.SpaceLocals, N + 1);
+    SetLength(FC.SpaceStrip, N + 1);
+    SetLength(FC.SpacePrecedences, N + 1);
+    SetLength(FC.SpaceOrders, N + 1);
+    FC.SpaceKinds[N] := Kind;
+    FC.SpaceUris[N] := Uri;
+    FC.SpaceLocals[N] := Local;
+    FC.SpaceStrip[N] := Strip;
+    FC.SpacePrecedences[N] := D.Precedence;
+    FC.SpaceOrders[N] := D.Order;
+    if Strip then
+      FC.HasStrip := True;
+  end;
+end;
+
 { xsl:key: the declarations of one name are combined (all precedences);
   a name with a prefix is not supported (key() gets the name as a string
   and resolves no prefixes). }
@@ -3315,11 +3495,12 @@ begin
         CompileKey(D)
       else if L = 'decimal-format' then
         CompileDecimalFormat(D)
+      else if (L = 'strip-space') or (L = 'preserve-space') then
+        CompileSpace(D, L = 'strip-space')
       else if (L = 'variable') or (L = 'param') or (L = 'import') or (L = 'include') or
         (L = 'function') then
         { done }
-      else if (L = 'strip-space') or
-        (L = 'preserve-space') or (L = 'attribute-set') or (L = 'namespace-alias') or
+      else if (L = 'attribute-set') or (L = 'namespace-alias') or
         (L = 'character-map') or (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
         (L = 'use-package') or (L = 'global-context-item') then
         Unsupported(D.Module, D.Element, 'xsl:' + LandrixXmlUtf8ToString(L))

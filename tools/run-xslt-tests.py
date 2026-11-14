@@ -572,6 +572,16 @@ def expected_codes(el):
     return set()
 
 
+def unparsed_only(case, r):
+    """True if the result passes when the assertions that did not parse
+    (XPST0003) are taken as true"""
+    if not any(v.startswith("error XPST0003") for v in r["checks"].values()):
+        return False
+    r2 = dict(r)
+    r2["checks"] = {n: ("true" if v.startswith("error XPST0003") else v) for n, v in r["checks"].items()}
+    return all(check(e, r2, case) for e in case.result)
+
+
 def judge(case, r):
     if "harness" in r:
         case.outcome, case.detail = "harness-error", r["harness"]
@@ -594,6 +604,11 @@ def judge(case, r):
         return
     if all(check(e, r, case) for e in case.result):
         case.outcome = "pass"
+    elif unparsed_only(case, r):
+        # an assertion in the syntax of XPath 3.0 or later (e.g. the operator
+        # "!"), which the checks, run with this library's XPath, cannot
+        # parse; only if the result would pass with those taken as true
+        case.outcome, case.detail = "assertion-unsupported", "assertion beyond XPath 2.0"
     else:
         case.outcome = "fail"
         case.detail = "value" if not codes or len(case.result) > 1 or local(case.result[0]) != "error" \

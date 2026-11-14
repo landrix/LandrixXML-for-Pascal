@@ -25,6 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   not have is a hexadecimal character reference in text and attribute
   values and `SERE0008` elsewhere (comments, names, method text), as in
   Saxon.
+- XSLT: `xsl:strip-space` and `xsl:preserve-space`.
 - XSLT: `xsl:sort` (in `xsl:for-each`, `xsl:apply-templates` and
   `xsl:for-each-group`), `xsl:perform-sort`, `xsl:analyze-string` and
   `regex-group()`.
@@ -41,6 +42,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   references, as Saxon does.
 - XSLT: an XPath comment inside the braces of an attribute value
   template may contain braces.
+- XSLT: white space in the stylesheet is stripped after comments and
+  processing instructions are removed (text around a comment is one text
+  node), and white space before `xsl:param` and `xsl:sort` is stripped
+  even under `xml:space="preserve"`.
 - XPath: `distinct-values()` finds repeated strings through a hash table:
   120,000 values with 60,000 distinct strings took more than ten
   minutes, now about two seconds.

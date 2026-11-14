@@ -380,7 +380,8 @@ import precedence, literal result elements, `xsl:element`,
 `xsl:for-each`, `xsl:sequence`, `xsl:copy`, `xsl:copy-of`,
 `xsl:document`, `xsl:comment`, `xsl:processing-instruction`,
 `xsl:message`, `xsl:number`, `xsl:function`, `xsl:for-each-group`,
-`xsl:sort` (in `xsl:for-each`, `xsl:apply-templates`,
+`xsl:strip-space` and `xsl:preserve-space` (for the source and the
+documents `doc()` and `document()` read), `xsl:sort` (in `xsl:for-each`, `xsl:apply-templates`,
 `xsl:for-each-group` and `xsl:perform-sort`; the codepoint collation,
 `case-order`, no `lang`), `xsl:analyze-string`, `xsl:key` and
 `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
@@ -672,8 +673,8 @@ Differences from Xerces, also on purpose:
   XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,389 are XSLT 1.0
   or 2.0 cases without features this library leaves out (schema
   awareness, backwards compatibility, the namespace axis, DTDs and the
-  like); 4,062 of them pass and 65 more raise an error where one is
-  expected, but with another code. 1,026 use an instruction or option
+  like); 4,145 of them pass and 66 more raise an error where one is
+  expected, but with another code. 941 use an instruction or option
   that is not supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.
