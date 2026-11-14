@@ -587,6 +587,9 @@ begin
     xosUnknown:
       raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'SetOutputProperty: no output property ' +
         LandrixXmlUtf8ToString(Name));
+    xosInvalid:
+      raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'SetOutputProperty: ' + LandrixXmlUtf8ToString(Name) +
+        '="' + LandrixXmlUtf8ToString(Value) + '" is not a valid value');
   else
     { supported }
   end;

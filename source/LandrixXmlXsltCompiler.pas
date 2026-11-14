@@ -74,14 +74,18 @@ const
   XfnFixedCount = 16;
   { then per module: doc#1, doc-available#1, document#1, document#2,
     static-base-uri#0, resolve-uri#1 (the module's URI is the static base
-    URI) }
-  XfnPerModule = 6;
+    URI), unparsed-text#1/#2, unparsed-text-available#1/#2 }
+  XfnPerModule = 10;
   XfnDoc = 0;
   XfnDocAvailable = 1;
   XfnDocument = 2;
   XfnDocument2 = 3;
   XfnStaticBaseUri = 4;
   XfnResolveUri = 5;
+  XfnUnparsedText1 = 6;
+  XfnUnparsedText2 = 7;
+  XfnUnparsedTextAvailable1 = 8;
+  XfnUnparsedTextAvailable2 = 9;
 
 type
   { a string list that compares byte by byte (TStringList compares by the
@@ -2746,6 +2750,9 @@ begin
         Unsupported(M, D.Element, 'xsl:output ' + LandrixXmlUtf8ToString(L) + '="' + LandrixXmlUtf8ToString(V) + '"');
       xosUnknown:
         Fail(M, D.Element, 'XTSE0090', 'xsl:output has no attribute ' + LandrixXmlUtf8ToString(L));
+      xosInvalid:
+        Fail(M, D.Element, 'XTSE0020', 'xsl:output ' + LandrixXmlUtf8ToString(L) + '="' +
+          LandrixXmlUtf8ToString(V) + '" is not a valid value');
     else
       { supported }
     end;
@@ -2893,6 +2900,10 @@ begin
     Add(LandrixXmlXPathFunctionNamespace, 'document', 2, [], K);
     Add(LandrixXmlXPathFunctionNamespace, 'static-base-uri', 0, [], K);
     Add(LandrixXmlXPathFunctionNamespace, 'resolve-uri', 1, [], K);
+    Add(LandrixXmlXPathFunctionNamespace, 'unparsed-text', 1, [], K);
+    Add(LandrixXmlXPathFunctionNamespace, 'unparsed-text', 2, [], K);
+    Add(LandrixXmlXPathFunctionNamespace, 'unparsed-text-available', 1, [], K);
+    Add(LandrixXmlXPathFunctionNamespace, 'unparsed-text-available', 2, [], K);
   end;
   { the stylesheet functions, in every module }
   FC.UserFunctionBase := F;

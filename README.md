@@ -381,21 +381,21 @@ import precedence, literal result elements, `xsl:element`,
 `xsl:document`, `xsl:comment`, `xsl:processing-instruction`,
 `xsl:message`, `xsl:number`, `xsl:function`, `xsl:for-each-group`,
 `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`,
-`current-group()`, `current-grouping-key()`, `format-number()` and
-`format-date()`, `format-time()` and `format-dateTime()` in English
-(numbers, roman numerals, names, widths); output methods xml and text in
-UTF-8, with Saxon's indentation. The report stylesheets of the KoSIT validator run
-with it: for the 86 invoices of the KoSIT test suite the report is the
-one Saxon writes, byte for byte. Anything else is rejected when the
-stylesheet is loaded (`xecUnsupported`), never run differently. The XSLT
-functions not done yet (`unparsed-text()`, `system-property()` and the
-others) are unknown functions (`XPST0017`),
-and a result whose
-root element is `html` without an `xsl:output` method is rejected when it
-is serialized. Work in progress (more instructions, functions and the
-html method follow): the cases in `tests/data/xslt` give the output
-Saxon gives, byte for byte. Errors raise `ELandrixXmlXsltError` with the
-W3C code, the stylesheet module and the line of the instruction.
+`current-group()`, `current-grouping-key()`, `format-number()`,
+`unparsed-text()` (UTF-8, UTF-16, ISO-8859-1) and `format-date()`, `format-time()` and
+`format-dateTime()` in English (numbers, roman numerals, names, widths);
+output methods xml, html (HTML5) and text in UTF-8, indented as Saxon
+indents. The report stylesheet of the KoSIT validator and the XRechnung
+visualization (invoice to XR XML to HTML) run with it: for the 86
+invoices of the KoSIT test suite the report, the XR XML and the HTML
+are the ones Saxon writes, byte for byte (`tools/xslt-crosscheck.py`).
+Anything else is rejected when the stylesheet is loaded
+(`xecUnsupported`), never run differently. The XSLT functions not done
+yet (`system-property()`, `function-available()` and the others) are
+unknown functions (`XPST0017`). Work in progress: the cases in
+`tests/data/xslt` give the output Saxon gives, byte for byte. Errors
+raise `ELandrixXmlXsltError` with the W3C code, the stylesheet module and
+the line of the instruction.
 
 Without a resolver of its own (`TLandrixXmlXsltResolver`), a stylesheet
 reads any `file:` URI it names, with `xsl:include`, `xsl:import`,
@@ -647,8 +647,9 @@ Differences from Xerces, also on purpose:
   its report stylesheet runs with the XSLT units:
   `tools/xslt-crosscheck.py` lets the KoSIT validator write the report
   input of each of the 86 invoices and compares the report the XSLT
-  units write with Saxon's, byte for byte; all 86 are equal (FPC,
-  Delphi 6 and 13). It needs Java and the validator jar.
+  units write with Saxon's, byte for byte, and does the same for both
+  stages of the XRechnung visualization (pinned release 2026-01-31):
+  all 3 x 86 outputs are equal. It needs Java and the validator jar.
 - The XSLT cases in `tests/data/xslt` hold the output (or the error
   code) of Saxon HE for each stylesheet, generated with
   `tools/gen-xslt-testdata.py`, and are compared byte for byte.

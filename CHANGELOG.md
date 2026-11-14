@@ -15,7 +15,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   or a catalog, no network) and `ELandrixXmlXsltError` (an
   `ELandrixXmlXPathError` with the W3C code, the module and the line).
   See the README for the supported instructions; the KoSIT report
-  stylesheets give the report Saxon gives, byte for byte.
+  stylesheet and the XRechnung visualization (XR XML and HTML) give the
+  output Saxon gives, byte for byte.
   `TLandrixXmlErrorCode` gains `xecXslt`.
 - XPath: the string concatenation operator `||` (XPath 3.0) in the
   `xppSaxon` profile, as Saxon accepts it in stylesheets that declare

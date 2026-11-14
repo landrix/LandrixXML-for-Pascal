@@ -314,7 +314,7 @@ const
     '<xsl:template match="/"><x xsl:use-when="true()" use-when="literal"/></xsl:template>',
     '<xsl:template match="/"><xsl:if test="1" use-when="false()">a</xsl:if></xsl:template>',
     '<xsl:template match="/"><x xsl:expand-text="yes">{1}</x></xsl:template>',
-    '<xsl:output method="html"/><xsl:template match="/"/>',
+    '<xsl:output method="xhtml"/><xsl:template match="/"/>',
     '<xsl:output doctype-system="x.dtd"/><xsl:template match="/"/>',
     '<xsl:output encoding="ISO-8859-1"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort/></xsl:for-each></xsl:template>',

@@ -217,6 +217,8 @@ type
     function KeyIndex(K: TXsltKey; Root: Integer): TObject;
     function GenerateId(Node: Integer): TLandrixXmlUtf8;
     function FormatNumber(const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function UnparsedText(Kind: Integer; const Base: TLandrixXmlUtf8;
+      const HrefArg, EncodingArg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure DoForEachGroup(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
     function LoadDocument(const Href, Base: TLandrixXmlUtf8; Available: Boolean): Integer;
@@ -1194,6 +1196,16 @@ begin
     Exit;
   end;
   Base := FC.ModuleUris[Module];
+  if Kind >= XfnUnparsedText1 then
+  begin
+    { the arguments one by one: with an open array FPC 3.2.2 -Cr hints
+      that it is assigned but never used }
+    if (Kind = XfnUnparsedText2) or (Kind = XfnUnparsedTextAvailable2) then
+      Result := UnparsedText(Kind, Base, Args[0], Args[1])
+    else
+      Result := UnparsedText(Kind, Base, Args[0], Args[0]);
+    Exit;
+  end;
   if Kind = XfnDocument2 then
     raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000',
       'document() with a base node is not supported', Base, 0, 0);
@@ -2568,6 +2580,232 @@ begin
       GroupSize := 0;
   end;
   R.Characters(FormatNumbers(Numbers, EvalAvt(Instr, Instr.FormatAvt, Focus), GroupSep, GroupSize));
+end;
+
+{ whether Href can name a text resource: no fragment, no query, none of
+  the ASCII characters a URI may not hold, a backslash included (Saxon:
+  FOUT1170) }
+function UriTextOk(const Href: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to Length(Href) do
+    if (Href[I] < '!') or (Href[I] in ['#', '?', '"', '<', '>', '|', '{', '}', '^', '`', '\']) then
+      Exit;
+  Result := True;
+end;
+
+{ the rest of Content as bytes; frees Content }
+function ReadAndFree(Content: TStream): TLandrixXmlUtf8;
+var
+  Len: Integer;
+begin
+  Result := '';
+  try
+    Len := Integer(Content.Size - Content.Position);
+    SetLength(Result, Len);
+    if Len > 0 then
+      Content.ReadBuffer(PAnsiChar(Result)^, Len);
+  finally
+    Content.Free;
+  end;
+end;
+
+{ appends the code point C to Text in UTF-8; False if it is none }
+function AddCodePoint(var Text: TLandrixXmlUtf8; C: Cardinal): Boolean;
+var
+  Buf: array[0..3] of AnsiChar;
+  K: Integer;
+begin
+  K := LandrixXmlEncodeUtf8(C, @Buf[0]);
+  Result := K > 0;
+  if Result then
+    Text := Text + LandrixXmlBufToUtf8(@Buf[0], K);
+end;
+
+{ appends the UTF-16 of Raw from byte I on (little or big endian) to Text;
+  False for a byte sequence that is no UTF-16 }
+function DecodeUtf16(const Raw: TLandrixXmlUtf8; I: Integer; Little: Boolean;
+  var Text: TLandrixXmlUtf8): Boolean;
+var
+  W, W2: Cardinal;
+begin
+  Result := False;
+  while I + 1 <= Length(Raw) do
+  begin
+    if Little then
+      W := Ord(Raw[I]) or (Ord(Raw[I + 1]) shl 8)
+    else
+      W := (Ord(Raw[I]) shl 8) or Ord(Raw[I + 1]);
+    Inc(I, 2);
+    if (W >= $D800) and (W < $DC00) then
+    begin
+      if I + 1 > Length(Raw) then
+        Exit;
+      if Little then
+        W2 := Ord(Raw[I]) or (Ord(Raw[I + 1]) shl 8)
+      else
+        W2 := (Ord(Raw[I]) shl 8) or Ord(Raw[I + 1]);
+      Inc(I, 2);
+      if (W2 < $DC00) or (W2 > $DFFF) then
+        Exit;
+      W := $10000 + ((W - $D800) shl 10) + (W2 - $DC00);
+    end
+    else if (W >= $DC00) and (W <= $DFFF) then
+      Exit;
+    if not AddCodePoint(Text, W) then
+      Exit;
+  end;
+  Result := I > Length(Raw);
+end;
+
+{ unparsed-text() and unparsed-text-available(): a text resource through
+  the resolver (xrkText), relative to the module; UTF-8, UTF-16 and
+  ISO-8859-1. Without an encoding a byte order mark decides (else UTF-8)
+  and bytes not in it are FOUT1200; with one given (as Saxon) they are
+  FOUT1190. FOUT1190 for characters that are no XML characters }
+function TRun.UnparsedText(Kind: Integer; const Base: TLandrixXmlUtf8;
+  const HrefArg, EncodingArg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  Href, Encoding, Uri, Raw, Text: TLandrixXmlUtf8;
+  Available, Given: Boolean;
+  Content: TStream;
+  N, I: Integer;
+  Code: Cardinal;
+  Error: string;
+  Enc: string;
+begin
+  Result := LandrixXmlXPathEmpty;
+  Available := Kind >= XfnUnparsedTextAvailable1;
+  { the encoding is one string (also when the URI is empty) }
+  Given := (Kind = XfnUnparsedText2) or (Kind = XfnUnparsedTextAvailable2);
+  Encoding := '';
+  if Given then
+    Encoding := FEvaluator.ItemString(FEvaluator.ConvertSequence(EncodingArg, FStringType, 'unparsed-text()').Items[0]);
+  if HrefArg.Count = 0 then
+  begin
+    if Available then
+      Result := FEvaluator.EvaluateInFocus(FFalse, NoFocus);
+    Exit;
+  end;
+  Href := FEvaluator.ItemString(FEvaluator.ConvertSequence(HrefArg, FStringType, 'unparsed-text()').Items[0]);
+  { the names Saxon (Java) takes, not trimmed }
+  Enc := LowerCase(LandrixXmlUtf8ToString(Encoding));
+  if Given and (Enc <> 'utf-8') and (Enc <> 'utf8') and (Enc <> 'utf-16') and (Enc <> 'utf16') and
+    (Enc <> 'utf-16le') and (Enc <> 'utf-16be') and (Enc <> 'iso-8859-1') and (Enc <> 'latin1') and
+    (Enc <> 'iso8859-1') then
+  begin
+    { not available in another encoding (it is not supported) }
+    if Available then
+    begin
+      Result := FEvaluator.EvaluateInFocus(FFalse, NoFocus);
+      Exit;
+    end;
+    raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT: unparsed-text() in the encoding ' +
+      LandrixXmlUtf8ToString(Encoding) + ' is not supported');
+  end;
+  Error := '';
+  Raw := '';
+  Content := nil;
+  { a fragment, a query or a character not allowed in a URI: no resource
+    (Saxon) }
+  if not UriTextOk(Href) or not FResolver.Resolve(xrkText, Base, Href, Uri, Content) then
+    Error := 'FOUT1170'
+  else
+    Raw := ReadAndFree(Content);
+  Text := '';
+  if Error = '' then
+  begin
+    { without an encoding: a byte order mark, else UTF-8; an encoding
+      given is used as it is (a byte order mark only for UTF-16 without
+      an order), a leading U+FEFF is dropped afterwards (Saxon) }
+    I := 1;
+    if not Given and (Length(Raw) >= 3) and (Raw[1] = #$EF) and (Raw[2] = #$BB) and (Raw[3] = #$BF) then
+    begin
+      Enc := 'utf-8';
+      I := 4;
+    end
+    else if (not Given or (Enc = 'utf-16') or (Enc = 'utf16')) and (Length(Raw) >= 2) and
+      (Raw[1] = #$FF) and (Raw[2] = #$FE) then
+    begin
+      Enc := 'utf-16le';
+      I := 3;
+    end
+    else if (not Given or (Enc = 'utf-16') or (Enc = 'utf16')) and (Length(Raw) >= 2) and
+      (Raw[1] = #$FE) and (Raw[2] = #$FF) then
+    begin
+      Enc := 'utf-16be';
+      I := 3;
+    end
+    else if not Given then
+      Enc := 'utf-8';
+    if Enc = 'utf-16le' then
+    begin
+      if not DecodeUtf16(Raw, I, True, Text) then
+        Error := 'FOUT1200';
+    end
+    else if (Enc = 'utf-16') or (Enc = 'utf16') or (Enc = 'utf-16be') then
+    begin
+      if not DecodeUtf16(Raw, I, False, Text) then
+        Error := 'FOUT1200';
+    end
+    else if (Enc = 'utf-8') or (Enc = 'utf8') then
+    begin
+      Text := Copy(Raw, I, MaxInt);
+      I := 1;
+      while (Error = '') and (I <= Length(Text)) do
+      begin
+        N := LandrixXmlDecodeUtf8(PAnsiChar(Text) + I - 1, Length(Text) - I + 1, Code);
+        if N = 0 then
+          Error := 'FOUT1200'
+        else
+          Inc(I, N);
+      end;
+    end
+    else
+      { ISO-8859-1: each byte is its code point }
+      while I <= Length(Raw) do
+      begin
+        AddCodePoint(Text, Ord(Raw[I]));
+        Inc(I);
+      end;
+    if Given and (Error = '') and (Length(Text) >= 3) and (Text[1] = #$EF) and (Text[2] = #$BB) and
+      (Text[3] = #$BF) then
+      Delete(Text, 1, 3);
+    { bytes not in an encoding given: FOUT1190 (Saxon) }
+    if Given and (Error = 'FOUT1200') then
+      Error := 'FOUT1190';
+    { XML characters only }
+    I := 1;
+    while (Error = '') and (I <= Length(Text)) do
+    begin
+      N := LandrixXmlDecodeUtf8(PAnsiChar(Text) + I - 1, Length(Text) - I + 1, Code);
+      if N = 0 then
+      begin
+        Error := 'FOUT1200';
+        Break;
+      end;
+      if (Code < 32) and (Code <> 9) and (Code <> 10) and (Code <> 13) or (Code = $FFFE) or (Code = $FFFF) then
+        Error := 'FOUT1190';
+      Inc(I, N);
+    end;
+  end;
+  if Available then
+  begin
+    if Error <> '' then
+      Result := FEvaluator.EvaluateInFocus(FFalse, NoFocus)
+    else
+      Result := FEvaluator.EvaluateInFocus(FTrue, NoFocus);
+  end
+  else if Error = 'FOUT1170' then
+    raise ELandrixXmlXPathError.CreateXPath('FOUT1170', 'unparsed-text(): ' + LandrixXmlUtf8ToString(Href) +
+      ' is not available')
+  else if Error <> '' then
+    raise ELandrixXmlXPathError.CreateXPath(Error, 'unparsed-text(): ' + LandrixXmlUtf8ToString(Href) +
+      ' is not text of XML characters in its encoding')
+  else
+    Result := LandrixXmlXPathStringItem(Text);
 end;
 
 { format-number(value, picture[, name]): the value as a function argument

@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<html>
+   <head>
+      <title>T &amp; t</title>
+      <style>a > b { x: "&" }</style><script>if (a < b && c) {}</script><meta charset="UTF-8">
+   </head>
+   <body>
+      <p>Text with <b>bold</b> and <i>italic</i> and a long line of text that goes on and on and on beyond the eighty character limit
+         of the indenter so it may wrap</p>
+      <div><span>x</span><span>y</span></div>
+      <div>a&nbsp;b&#x80;c ä &lt; &gt; "q"</div><input type="checkbox" checked disabled hidden value="v"><option selected>o</option><br><img src="a b/%C3%A4.png" alt="<&amp;&#34;'&#xA;"><a href="#x?a=%C3%A4&amp;b=1 2">l</a><p></p>
+      <td></td>
+      <pre>  pre
+  text</pre><textarea>t
+x</textarea><p>multi
+         line
+         text</p>
+      <ul>
+         <li>one</li>
+         <li>two <em>em</em></li>
+      </ul>
+      <!--c--><?pi data></body>
+</html>
