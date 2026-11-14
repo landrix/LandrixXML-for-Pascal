@@ -105,6 +105,9 @@ tests/data/qt3-suite/
 # KoSIT XRechnung test suite and validator configuration (downloaded by tools/run-kosit-suite.py)
 tests/data/kosit-suite/
 
+# W3C XSLT test suite (downloaded by tools/run-xslt-tests.py)
+tests/data/xslt30-suite/
+
 # W3C XML Schema Test Suite (downloaded by tools/run-xsts.py)
 tests/data/xsts-suite/
 

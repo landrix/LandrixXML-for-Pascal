@@ -387,8 +387,9 @@ import precedence, literal result elements, `xsl:element`,
 `system-property()` (`xsl:version` is `2.0`, vendor and product are
 this library's) and `format-date()`, `format-time()` and
 `format-dateTime()` in English (numbers, roman numerals, names, widths);
-output methods xml, html (HTML5) and text in UTF-8, indented as Saxon
-indents. The report stylesheet of the KoSIT validator and the XRechnung
+output methods xml, html (HTML5) and text in UTF-8, US-ASCII or
+ISO-8859-1 (a character the encoding does not have is a character
+reference, as in Saxon), indented as Saxon indents. The report stylesheet of the KoSIT validator and the XRechnung
 visualization (invoice to XR XML to HTML) run with it: for the 86
 invoices of the KoSIT test suite the report, the XR XML and the HTML
 are the ones Saxon writes, byte for byte (`tools/xslt-crosscheck.py`).
@@ -658,6 +659,16 @@ Differences from Xerces, also on purpose:
 - The XSLT cases in `tests/data/xslt` hold the output (or the error
   code) of Saxon HE for each stylesheet, generated with
   `tools/gen-xslt-testdata.py`, and are compared byte for byte.
+- The [W3C XSLT test suite](https://github.com/w3c/xslt30-test)
+  (`tools/run-xslt-tests.py`, pinned revision) measures how much of
+  XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,389 are XSLT 1.0
+  or 2.0 cases without features this library leaves out (schema
+  awareness, backwards compatibility, the namespace axis, DTDs and the
+  like); 3,889 of them pass and 59 more raise an error where one is
+  expected, but with another code. 1,208 use an instruction or option
+  that is not supported yet and are rejected as such. The test set
+  `unicode-90` is left out: its cases never pass the parameter the
+  stylesheet needs. The passing cases are a baseline for the CI.
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must

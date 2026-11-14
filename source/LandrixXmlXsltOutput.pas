@@ -14,8 +14,10 @@
   declarations each element holds, ordered by prefix; indent="yes"
   indents as Saxon's indenter does, byte for byte (see
   TSerializer.Element). html writes HTML5 as Saxon's HTML emitter and
-  HTML indenter do (see THtmlSerializer). The encoding is UTF-8; another
-  raises xecUnsupported. }
+  HTML indenter do (see THtmlSerializer). Encodings UTF-8, US-ASCII and
+  ISO-8859-1: a character the encoding does not have is a hexadecimal
+  character reference in text and attribute values and SERE0008 elsewhere,
+  as in Saxon; another encoding raises xecUnsupported. }
 
 unit LandrixXmlXsltOutput;
 
@@ -64,6 +66,24 @@ uses
 
 { the value of a yes/no output property (and standalone) as Saxon reads
   it: white space trimmed, true and 1 for yes, false and 0 for no }
+{ the highest code point the output encoding Name has (case ignored):
+  UTF-8, US-ASCII (ASCII) and ISO-8859-1 (latin1), white space around it
+  allowed; 0 for another }
+function EncodingMaxChar(const Name: TLandrixXmlUtf8): Cardinal;
+var
+  S: string;
+begin
+  S := LowerCase(Trim(LandrixXmlUtf8ToString(Name)));
+  if (S = 'utf-8') or (S = 'utf8') then
+    Result := $10FFFF
+  else if (S = 'us-ascii') or (S = 'ascii') then
+    Result := $7F
+  else if (S = 'iso-8859-1') or (S = 'latin1') then
+    Result := $FF
+  else
+    Result := 0;
+end;
+
 function YesNoValue(const Name, Value: TLandrixXmlUtf8): TLandrixXmlUtf8;
 var
   A, B: Integer;
@@ -107,7 +127,7 @@ begin
     else if (Name = 'name') or (Name = 'use-character-maps') or (Name = 'cdata-section-elements') or
       (Name = 'doctype-public') or (Name = 'doctype-system') or (Name = 'method') and (Value <> 'xml') and
       (Value <> 'text') and (Value <> 'html') or (Name = 'encoding') and
-      (LowerCase(LandrixXmlUtf8ToString(Value)) <> 'utf-8') or
+      (EncodingMaxChar(Value) = 0) or
       (Name = 'byte-order-mark') and (Value = 'yes') or (Name = 'normalization-form') and (Value <> 'none') then
       Result := xosUnsupported;
   end
@@ -220,11 +240,19 @@ type
     { white space text held back: dropped where a line break is written }
     FPending: TLandrixXmlUtf8;
     FHasPending: Boolean;
+    { the highest code point of the encoding, and whether a character above
+      it is written as a character reference (text and attribute values)
+      or an error }
+    FMaxChar: Cardinal;
+    FEscape: Boolean;
+    procedure PutBytes(const S: TLandrixXmlUtf8);
+    procedure PutEncoded(const S: TLandrixXmlUtf8);
     procedure Put(const S: TLandrixXmlUtf8);
     procedure Flush;
     procedure Spaces(N: Integer);
     procedure Indent;
     procedure FlushPending;
+    procedure PutEscaped(const S: TLandrixXmlUtf8; Attribute: Boolean);
     procedure PutText(const S: TLandrixXmlUtf8);
     procedure PutAttributeValue(const S: TLandrixXmlUtf8);
     procedure Node(I: Integer);
@@ -240,6 +268,7 @@ begin
   FStream := Stream;
   FIndent := Indent;
   FSuppressedAt := -1;
+  FMaxChar := $10FFFF;
   SetLength(FBuffer, 65536);
 end;
 
@@ -251,6 +280,67 @@ begin
 end;
 
 procedure TSerializer.Put(const S: TLandrixXmlUtf8);
+var
+  I: Integer;
+begin
+  if FMaxChar < $10FFFF then
+    for I := 1 to Length(S) do
+      if Ord(S[I]) >= $80 then
+      begin
+        PutEncoded(S);
+        Exit;
+      end;
+  PutBytes(S);
+end;
+
+{ S (UTF-8, with a byte above 7F) in an encoding other than UTF-8 }
+procedure TSerializer.PutEncoded(const S: TLandrixXmlUtf8);
+var
+  I, N, Count: Integer;
+  Code: Cardinal;
+  R: TLandrixXmlUtf8;
+begin
+  R := '';
+  SetLength(R, Length(S));
+  Count := 0;
+  I := 1;
+  while I <= Length(S) do
+  begin
+    if Ord(S[I]) < $80 then
+    begin
+      Inc(Count);
+      R[Count] := S[I];
+      Inc(I);
+      Continue;
+    end;
+    N := LandrixXmlDecodeUtf8(PAnsiChar(S) + I - 1, Length(S) - I + 1, Code);
+    if N = 0 then
+    begin
+      N := 1;
+      Code := $FFFD;
+    end;
+    if Code <= FMaxChar then
+    begin
+      Inc(Count);
+      R[Count] := AnsiChar(Code);
+    end
+    else if FEscape then
+    begin
+      SetLength(R, Count);
+      R := R + '&#x' + LandrixXmlStringToUtf8(LowerCase(IntToHex(Code, 1))) + ';';
+      Count := Length(R);
+      SetLength(R, Count + Length(S) - I + 1);
+    end
+    else
+      raise ELandrixXmlXPathError.CreateXPath('SERE0008', 'output character not available in this encoding (x' +
+        LowerCase(IntToHex(Code, 1)) + ')');
+    Inc(I, N);
+  end;
+  SetLength(R, Count);
+  PutBytes(R);
+end;
+
+procedure TSerializer.PutBytes(const S: TLandrixXmlUtf8);
 var
   N: Integer;
 begin
@@ -308,53 +398,72 @@ begin
   FPending := '';
 end;
 
-procedure TSerializer.PutText(const S: TLandrixXmlUtf8);
+{ text (Attribute False) or an attribute value escaped as Saxon's XML
+  emitter does: < > & and carriage returns (in attributes also " and the
+  other white space), U+007F to U+009F and U+2028 as character references
+  in every encoding }
+procedure TSerializer.PutEscaped(const S: TLandrixXmlUtf8; Attribute: Boolean);
 var
-  I, Start: Integer;
+  I, Start, N: Integer;
   R: TLandrixXmlUtf8;
+  Saved: Boolean;
 begin
+  Saved := FEscape;
+  FEscape := True;
   Start := 1;
-  for I := 1 to Length(S) do
+  I := 1;
+  while I <= Length(S) do
   begin
+    R := '';
+    N := 1;
     case S[I] of
       '<': R := '&lt;';
       '>': R := '&gt;';
       '&': R := '&amp;';
       #13: R := '&#xD;';
-    else
-      Continue;
+      #127: R := '&#x7f;';
+      '"':
+        if Attribute then
+          R := '&#34;';
+      #9:
+        if Attribute then
+          R := '&#x9;';
+      #10:
+        if Attribute then
+          R := '&#xA;';
+      #$C2:
+        if (I < Length(S)) and (Ord(S[I + 1]) >= $80) and (Ord(S[I + 1]) <= $9F) then
+        begin
+          R := '&#x' + LandrixXmlStringToUtf8(LowerCase(IntToHex(Ord(S[I + 1]), 2))) + ';';
+          N := 2;
+        end;
+      #$E2:
+        if (I + 2 <= Length(S)) and (S[I + 1] = #$80) and (S[I + 2] = #$A8) then
+        begin
+          R := '&#x2028;';
+          N := 3;
+        end;
     end;
-    Put(Copy(S, Start, I - Start));
-    Put(R);
-    Start := I + 1;
+    if R <> '' then
+    begin
+      Put(Copy(S, Start, I - Start));
+      Put(R);
+      Start := I + N;
+    end;
+    Inc(I, N);
   end;
   Put(Copy(S, Start, Length(S) - Start + 1));
+  FEscape := Saved;
+end;
+
+procedure TSerializer.PutText(const S: TLandrixXmlUtf8);
+begin
+  PutEscaped(S, False);
 end;
 
 procedure TSerializer.PutAttributeValue(const S: TLandrixXmlUtf8);
-var
-  I, Start: Integer;
-  R: TLandrixXmlUtf8;
 begin
-  Start := 1;
-  for I := 1 to Length(S) do
-  begin
-    case S[I] of
-      '<': R := '&lt;';
-      '>': R := '&gt;';
-      '&': R := '&amp;';
-      '"': R := '&#34;';
-      #9: R := '&#x9;';
-      #10: R := '&#xA;';
-      #13: R := '&#xD;';
-    else
-      Continue;
-    end;
-    Put(Copy(S, Start, I - Start));
-    Put(R);
-    Start := I + 1;
-  end;
-  Put(Copy(S, Start, Length(S) - Start + 1));
+  PutEscaped(S, True);
 end;
 
 function IsWhiteSpace(const S: TLandrixXmlUtf8): Boolean;
@@ -633,6 +742,7 @@ type
     FEscapeUris: Boolean;
     FContentType: Boolean;
     FMediaType: TLandrixXmlUtf8;
+    FEncoding: TLandrixXmlUtf8;
     { the default namespace of the output per open element }
     FDefaults: TLandrixXmlUtf8Array;
     { per output element: the prefixes of its XHTML attributes }
@@ -706,13 +816,15 @@ var
   I, Start, N: Integer;
   Code: Cardinal;
   R: TLandrixXmlUtf8;
-  Drop: Boolean;
+  Drop, Saved: Boolean;
 begin
   if FInScript > 0 then
   begin
     Put(S);
     Exit;
   end;
+  Saved := FEscape;
+  FEscape := True;
   Start := 1;
   I := 1;
   while I <= Length(S) do
@@ -763,6 +875,7 @@ begin
     Inc(I, N);
   end;
   Put(Copy(S, Start, Length(S) - Start + 1));
+  FEscape := Saved;
 end;
 
 { text outside formatted elements: a line break, or a space after more than
@@ -986,7 +1099,7 @@ begin
     HtmlIndent;
   StartTag(Name, 'meta', IsHtml, -1);
   Put(' http-equiv="Content-Type" content="');
-  HtmlText(FMediaType + '; charset=UTF-8', True);
+  HtmlText(FMediaType + '; charset=' + FEncoding, True);
   Put('"');
   EndTag(Name, 'meta', IsHtml);
   FSameLine := False;
@@ -1144,19 +1257,23 @@ begin
   Result := LowerCase(LandrixXmlUtf8ToString(A)) = LowerCase(LandrixXmlUtf8ToString(B));
 end;
 
-{ The text of all text nodes (method text). }
-procedure WriteText(Tree: TLandrixXmlXPathTree; Stream: TStream);
+{ The text of all text nodes (method text), a character the encoding does
+  not have SERE0008. }
+procedure WriteText(Tree: TLandrixXmlXPathTree; Stream: TStream; MaxChar: Cardinal);
 var
   I: Integer;
-  S: TLandrixXmlUtf8;
+  S: TSerializer;
 begin
-  for I := 0 to Tree.Count - 1 do
-    if Tree.Kind[I] = xnkText then
-    begin
-      S := Tree.ValueUtf8(I);
-      if S <> '' then
-        Stream.WriteBuffer(PAnsiChar(S)^, Length(S));
-    end;
+  S := TSerializer.Create(Tree, Stream, False);
+  try
+    S.FMaxChar := MaxChar;
+    for I := 0 to Tree.Count - 1 do
+      if Tree.Kind[I] = xnkText then
+        S.Put(Tree.ValueUtf8(I));
+    S.Flush;
+  finally
+    S.Free;
+  end;
 end;
 
 procedure XsltSerialize(Tree: TLandrixXmlXPathTree; Props: TXsltOutputProperties; Stream: TStream;
@@ -1166,6 +1283,7 @@ var
   S: TSerializer;
   H: THtmlSerializer;
   E, C: Integer;
+  MaxChar: Cardinal;
 begin
   Method := Props.Value('method', '');
   if Method = '' then
@@ -1186,15 +1304,16 @@ begin
       end;
     end;
   end;
-  Encoding := Props.Value('encoding', 'UTF-8');
+  Encoding := Trim8Ws(Props.Value('encoding', 'UTF-8'));
   if ForceUtf8 then
     Encoding := 'UTF-8';
-  if not SameText8(Encoding, 'UTF-8') then
+  MaxChar := EncodingMaxChar(Encoding);
+  if MaxChar = 0 then
     raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT output: the encoding ' +
-      LandrixXmlUtf8ToString(Encoding) + ' is not supported (UTF-8 only)');
+      LandrixXmlUtf8ToString(Encoding) + ' is not supported (UTF-8, US-ASCII and ISO-8859-1 only)');
   if Method = 'text' then
   begin
-    WriteText(Tree, Stream);
+    WriteText(Tree, Stream, MaxChar);
     Exit;
   end;
   if Method = 'html' then
@@ -1208,6 +1327,8 @@ begin
       H.FEscapeUris := Props.Value('escape-uri-attributes', 'yes') = 'yes';
       H.FContentType := Props.Value('include-content-type', 'yes') = 'yes';
       H.FMediaType := Props.Value('media-type', 'text/html');
+      H.FEncoding := Encoding;
+      H.FMaxChar := MaxChar;
       H.HtmlNode(0);
       H.Flush;
     finally
@@ -1224,6 +1345,7 @@ begin
       'is not supported');
   S := TSerializer.Create(Tree, Stream, Props.Value('indent', 'no') = 'yes');
   try
+    S.FMaxChar := MaxChar;
     if Props.Value('omit-xml-declaration', 'no') <> 'yes' then
     begin
       S.Put('<?xml version="1.0" encoding="' + Encoding + '"');

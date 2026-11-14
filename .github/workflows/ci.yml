@@ -20,12 +20,13 @@ jobs:
             tests/data/kosit-suite
             tests/data/unicode-suite
             tests/data/xsts-suite
-          key: suites-${{ hashFiles('tools/run-xmlconf.py', 'tools/run-qt3.py', 'tools/run-kosit-suite.py', 'tools/fetch-unicode-tests.py', 'tools/run-xsts.py') }}
+            tests/data/xslt30-suite
+          key: suites-${{ hashFiles('tools/run-xmlconf.py', 'tools/run-qt3.py', 'tools/run-kosit-suite.py', 'tools/fetch-unicode-tests.py', 'tools/run-xsts.py', 'tools/run-xslt-tests.py') }}
 
       # a failed restore may leave a partial suite that the scripts would reuse
       - name: Remove a partially restored cache
         if: steps.suites.outputs.cache-hit != 'true'
-        run: rm -rf tests/data/xmlconf-suite tests/data/qt3-suite tests/data/kosit-suite tests/data/unicode-suite tests/data/xsts-suite
+        run: rm -rf tests/data/xmlconf-suite tests/data/qt3-suite tests/data/kosit-suite tests/data/unicode-suite tests/data/xsts-suite tests/data/xslt30-suite
 
       - name: Install Free Pascal
         run: |
@@ -98,3 +99,9 @@ jobs:
           mkdir -p build/fpc322-linux
           fpc -B -Fusource -Fisource -FUbuild/fpc322-linux -FEbuild/fpc322-linux tests/LandrixXmlXsts.dpr
           python3 tools/run-xsts.py --exe build/fpc322-linux/LandrixXmlXsts
+
+      - name: W3C XSLT test suite (XSLT 1.0 and 2.0 cases, against the baseline)
+        run: |
+          mkdir -p build/fpc322-linux
+          fpc -B -Fusource -Fisource -FUbuild/fpc322-linux -FEbuild/fpc322-linux tests/LandrixXmlXsltSuite.dpr
+          python3 tools/run-xslt-tests.py --exe build/fpc322-linux/LandrixXmlXsltSuite

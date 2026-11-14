@@ -21,6 +21,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `system-property()`, `function-available()` and
   `element-available()`; a name given with a prefix is resolved with the
   namespaces of the calling expression.
+- XSLT: output in US-ASCII and ISO-8859-1. A character the encoding does
+  not have is a hexadecimal character reference in text and attribute
+  values and `SERE0008` elsewhere (comments, names, method text), as in
+  Saxon.
+- `tools/run-xslt-tests.py` runs the XSLT 1.0 and 2.0 cases of the W3C
+  XSLT test suite against a baseline (`tests/data/xslt-baseline.txt`).
 - XPath: the string concatenation operator `||` (XPath 3.0) in the
   `xppSaxon` profile, as Saxon accepts it in stylesheets that declare
   XSLT 2.0; `a || b || c` is `concat(a, b, c)`. The `xppXPath20` profile
@@ -28,6 +34,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- XSLT: the XML output writes U+007F to U+009F and U+2028 as character
+  references, as Saxon does.
+- XSLT: an XPath comment inside the braces of an attribute value
+  template may contain braces.
 - XPath: `distinct-values()` finds repeated strings through a hash table:
   120,000 values with 60,000 distinct strings took more than ten
   minutes, now about two seconds.

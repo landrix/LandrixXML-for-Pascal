@@ -1205,7 +1205,7 @@ end;
 
 function TCompiler.CompileAvt(M: TModule; E: Integer; const Text: TLandrixXmlUtf8; Scope: TScope): TXsltAvt;
 var
-  I, Start, Depth, N: Integer;
+  I, Start, Depth, N, Comment: Integer;
   Lit: TLandrixXmlUtf8;
   Quote: AnsiChar;
 
@@ -1249,6 +1249,26 @@ begin
         end
         else if Text[I] in ['''', '"'] then
           Quote := Text[I]
+        else if (Text[I] = '(') and (I < Length(Text)) and (Text[I + 1] = ':') then
+        begin
+          { an XPath comment (nested ones too): its braces do not count }
+          Comment := 1;
+          Inc(I, 2);
+          while (I <= Length(Text)) and (Comment > 0) do
+            if (Text[I] = '(') and (I < Length(Text)) and (Text[I + 1] = ':') then
+            begin
+              Inc(Comment);
+              Inc(I, 2);
+            end
+            else if (Text[I] = ':') and (I < Length(Text)) and (Text[I + 1] = ')') then
+            begin
+              Dec(Comment);
+              Inc(I, 2);
+            end
+            else
+              Inc(I);
+          Continue;
+        end
         else if Text[I] = '{' then
           Inc(Depth)
         else if Text[I] = '}' then

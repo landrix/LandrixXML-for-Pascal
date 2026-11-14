@@ -344,7 +344,7 @@ const
     '<xsl:template match="/"><x xsl:expand-text="yes">{1}</x></xsl:template>',
     '<xsl:output method="xhtml"/><xsl:template match="/"/>',
     '<xsl:output doctype-system="x.dtd"/><xsl:template match="/"/>',
-    '<xsl:output encoding="ISO-8859-1"/><xsl:template match="/"/>',
+    '<xsl:output encoding="UTF-16"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort/></xsl:for-each></xsl:template>',
     '<xsl:template match="/"><xsl:number lang="de"/></xsl:template>',
     '<xsl:key name="p:k" xmlns:p="urn:p" match="a" use="."/><xsl:template match="/"/>',
