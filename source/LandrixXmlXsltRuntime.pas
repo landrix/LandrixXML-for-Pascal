@@ -183,6 +183,27 @@ type
     FTrue, FFalse: TLandrixXmlXPathExpression;
     { xsl:number value: round(number(.)) as an integer, -1 for NaN }
     FRoundExpr: TLandrixXmlXPathExpression;
+    { number(.), to compare numeric keys }
+    FNumberExpr: TLandrixXmlXPathExpression;
+    { xs:double(.): a function argument of type xs:double }
+    FDoubleExpr: TLandrixXmlXPathExpression;
+    { . * 100 and . * 1000 for a double in a percent or per-mille picture }
+    FTimes100Expr, FTimes1000Expr: TLandrixXmlXPathExpression;
+    { the current group and its key (xsl:for-each-group); FGroupActive
+      False where there is none (XTDE1061) }
+    FGroup: TLandrixXmlXPathSequence;
+    FGroupKey: TLandrixXmlXPathSequence;
+    FGroupActive: Boolean;
+    FGroupLazyDepth: Integer;
+    { group-by or group-adjacent: there is a grouping key }
+    FGroupHasKey: Boolean;
+    { generate-id(): the tree last asked and the numbers of its nodes }
+    FIdTree: TLandrixXmlXPathTree;
+    FIdNumbers: array of Integer;
+    { the canonical form of a QName, xs:dateTime or xs:time key }
+    FKeyNormExpr: TLandrixXmlXPathExpression;
+    { the indexes of xsl:key built so far (TKeyIndex) }
+    FKeyIndexes: TObjectList;
     { per module: static-base-uri() and resolve-uri(.) with its URI }
     FBaseExprs: TObjectList;
     { xs:dateTime?, xs:date?, xs:time? (the first argument of the format
@@ -190,6 +211,14 @@ type
     FDateTypes: array[TXsltDateKind] of TLandrixXmlXPathSequenceType;
     FStringType, FOptionalStringType: TLandrixXmlXPathSequenceType;
     function FormatDate(Kind: TXsltDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function AtomKey(const It: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+    function KeyFunction(const Args: array of TLandrixXmlXPathSequence;
+      const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+    function KeyIndex(K: TXsltKey; Root: Integer): TObject;
+    function GenerateId(Node: Integer): TLandrixXmlUtf8;
+    function FormatNumber(const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    procedure DoForEachGroup(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+      R: TReceiver);
     function LoadDocument(const Href, Base: TLandrixXmlUtf8; Available: Boolean): Integer;
     function DocFunction(Kind, Module: Integer; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
@@ -907,6 +936,55 @@ end;
 
 { --- the run ------------------------------------------------------------------------ }
 
+type
+  { the node numbers of one key value }
+  TKeyNodes = class
+  public
+    Nodes: array of Integer;
+    Count: Integer;
+    procedure Add(Node: Integer);
+  end;
+
+  { the index of a key in one tree: key value (AtomKey) -> TKeyNodes }
+  TKeyIndex = class
+  public
+    Key: TXsltKey;
+    Root: Integer;
+    { being built (a use expression that needs the same key: XTDE0640) }
+    Building: Boolean;
+    Map: TXsltStringList;
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
+procedure TKeyNodes.Add(Node: Integer);
+begin
+  if (Count > 0) and (Nodes[Count - 1] = Node) then
+    Exit;
+  if Count = Length(Nodes) then
+    SetLength(Nodes, 2 * Count + 4);
+  Nodes[Count] := Node;
+  Inc(Count);
+end;
+
+constructor TKeyIndex.Create;
+begin
+  inherited Create;
+  Map := TXsltStringList.Create;
+  Map.CaseSensitive := True;
+  Map.Sorted := True;
+end;
+
+destructor TKeyIndex.Destroy;
+var
+  I: Integer;
+begin
+  for I := 0 to Integer(Map.Count) - 1 do
+    Map.Objects[I].Free;
+  Map.Free;
+  inherited Destroy;
+end;
+
 { S with each ' doubled (in an XPath string literal) }
 function ReplaceQuotes(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
 var
@@ -950,6 +1028,17 @@ begin
   end;
   FEvaluator := TLandrixXmlXPathEvaluator.Create(FSource);
   FTrue := TLandrixXmlXPathExpression.Create('true()', nil);
+  FNumberExpr := TLandrixXmlXPathExpression.Create('number(.)', nil);
+  FDoubleExpr := TLandrixXmlXPathExpression.Create('xs:double(.)', nil);
+  FTimes100Expr := TLandrixXmlXPathExpression.Create('. * 100', nil);
+  FTimes1000Expr := TLandrixXmlXPathExpression.Create('. * 1000', nil);
+  FKeyNormExpr := TLandrixXmlXPathExpression.Create(
+    'if (. instance of xs:QName) then concat(''{'', namespace-uri-from-QName(.), ''}'', local-name-from-QName(.)) ' +
+    'else if (. instance of xs:dateTime and exists(timezone-from-dateTime(.))) ' +
+    'then string(adjust-dateTime-to-timezone(., xs:dayTimeDuration(''PT0S''))) ' +
+    'else if (. instance of xs:time and exists(timezone-from-time(.))) ' +
+    'then string(adjust-time-to-timezone(., xs:dayTimeDuration(''PT0S''))) else string(.)', nil);
+  FKeyIndexes := TObjectList.Create;
   FRoundExpr := TLandrixXmlXPathExpression.Create(
     'if (number(.) != number(.) or round(number(.)) lt 0) then -1 ' +
     'else if (round(number(.)) gt 2147483647) then -2 else xs:integer(round(number(.)))', nil);
@@ -999,6 +1088,12 @@ begin
   FEvaluator.Free;
   FTrue.Free;
   FRoundExpr.Free;
+  FNumberExpr.Free;
+  FDoubleExpr.Free;
+  FKeyNormExpr.Free;
+  FTimes100Expr.Free;
+  FTimes1000Expr.Free;
+  FKeyIndexes.Free;
   FBaseExprs.Free;
   FFalse.Free;
   FParamExprs.Free;
@@ -1178,6 +1273,41 @@ begin
     Exit;
   end;
   case Def.Tag of
+    XfnCurrentGroup:
+      begin
+        if not FGroupActive or (Evaluator.LazyDepth <> FGroupLazyDepth) then
+          raise ELandrixXmlXPathError.CreateXPath('XTDE1061', 'there is no current group');
+        Result := FGroup;
+      end;
+    XfnCurrentGroupingKey:
+      begin
+        if not FGroupActive or not FGroupHasKey or (Evaluator.LazyDepth <> FGroupLazyDepth) then
+          raise ELandrixXmlXPathError.CreateXPath('XTDE1071', 'there is no current grouping key');
+        Result := FGroupKey;
+      end;
+    XfnGenerateId0:
+      begin
+        if Focus.Node < 0 then
+        begin
+          if Focus.Item.Count = 0 then
+            raise ELandrixXmlXPathError.CreateXPath('XPDY0002', 'generate-id(): there is no context item');
+          raise ELandrixXmlXPathError.CreateXPath('XPTY0004', 'generate-id(): the context item is no node');
+        end;
+        Result := LandrixXmlXPathStringItem(GenerateId(Focus.Node));
+      end;
+    XfnGenerateId1:
+      begin
+        if (High(Args) < 0) or (Args[0].Count = 0) then
+          Result := LandrixXmlXPathStringItem('')
+        else if (Args[0].Count > 1) or (Args[0].Items[0].Kind <> xikNode) then
+          raise ELandrixXmlXPathError.CreateXPath('XPTY0004', 'generate-id(): the argument must be one node')
+        else
+          Result := LandrixXmlXPathStringItem(GenerateId(Args[0].Items[0].Node));
+      end;
+    XfnKey2, XfnKey3:
+      Result := KeyFunction(Args, Focus);
+    XfnFormatNumber2, XfnFormatNumber3:
+      Result := FormatNumber(Args);
     XfnFormatDateTime2, XfnFormatDateTime5:
       Result := FormatDate(xdkDateTime, Args);
     XfnFormatDate2, XfnFormatDate5:
@@ -1782,14 +1912,18 @@ var
   P: TXsltInstr;
   V, SavedCurrent: TLandrixXmlXPathSequence;
   S: TSequenceReceiver;
+  SavedGroupActive: Boolean;
 begin
   if FTemplateDepth >= FSettings.MaxTemplateDepth then
     raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested deeper than ' +
       IntToStr(FSettings.MaxTemplateDepth), T.Module, T.Line, T.Column);
   Inc(FTemplateDepth);
-  { the caller's current() is still needed after the call }
+  { the caller's current() is still needed after the call; there is no
+    current group inside a function }
   SavedNode := FEvaluator.CurrentNode;
   SavedCurrent := FCurrent;
+  SavedGroupActive := FGroupActive;
+  FGroupActive := False;
   FEvaluator.PushFrame(T.FrameSize);
   try
     for I := 0 to Integer(T.Params.Count) - 1 do
@@ -1827,6 +1961,7 @@ begin
     FEvaluator.PopFrame;
     FEvaluator.CurrentNode := SavedNode;
     FCurrent := SavedCurrent;
+    FGroupActive := SavedGroupActive;
     Dec(FTemplateDepth);
   end;
 end;
@@ -2435,6 +2570,460 @@ begin
   R.Characters(FormatNumbers(Numbers, EvalAvt(Instr, Instr.FormatAvt, Focus), GroupSep, GroupSize));
 end;
 
+{ format-number(value, picture[, name]): the value as a function argument
+  of type xs:numeric? (an untyped value or node as xs:double, the empty
+  sequence as NaN), the decimal format by name (XTDE1280) }
+function TRun.FormatNumber(const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  Value, Picture, Name: TLandrixXmlUtf8;
+  It: TLandrixXmlXPathItem;
+  K, Scale: Integer;
+  Scaled: Boolean;
+begin
+  Picture := FEvaluator.ItemString(FEvaluator.ConvertSequence(Args[1], FStringType, 'format-number()').Items[0]);
+  Name := '';
+  if High(Args) >= 2 then
+    Name := LandrixXmlStringToUtf8(Trim(LandrixXmlUtf8ToString(FEvaluator.ItemString(
+      FEvaluator.ConvertSequence(Args[2], FStringType, 'format-number()').Items[0]))));
+  K := FC.DecimalFormats.IndexOf(LandrixXmlUtf8ToString(Name));
+  if K < 0 then
+    raise ELandrixXmlXPathError.CreateXPath('FODF1280', 'format-number(): there is no decimal format ' +
+      LandrixXmlUtf8ToString(Name));
+  if Args[0].Count = 0 then
+    Value := 'NaN'
+  else
+  begin
+    if Args[0].Count > 1 then
+      raise ELandrixXmlXPathError.CreateXPath('XPTY0004', 'format-number(): the value must be one number');
+    It := Args[0].Items[0];
+    case It.Kind of
+      xikInteger, xikDecimal, xikDouble, xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt,
+      xikShort, xikByte, xikNonNegativeInteger, xikUnsignedLong, xikUnsignedInt, xikUnsignedShort,
+      xikUnsignedByte, xikPositiveInteger:
+        Value := FEvaluator.ItemString(It);
+      xikFloat, xikUntypedAtomic, xikNode:
+        { a float widened to xs:double, an untyped value cast }
+        begin
+          It := FEvaluator.EvaluateInFocus(FDoubleExpr, ItemFocus(It, 1, 1)).Items[0];
+          Value := FEvaluator.ItemString(It);
+        end;
+    else
+      raise ELandrixXmlXPathError.CreateXPath('XPTY0004', 'format-number(): the value must be a number');
+    end;
+  end;
+  { a double in a picture with percent or per mille: multiplied as a double
+    (Saxon: 0.545 is 55%) }
+  Scaled := False;
+  if (Args[0].Count > 0) and (It.Kind = xikDouble) then
+  begin
+    Scale := XsltPictureScale(Picture, TXsltDecimalFormat(FC.DecimalFormats.Objects[K]),
+      (Value <> '') and (Value[1] = '-'));
+    if Scale > 1 then
+    begin
+      if Scale = 100 then
+        Value := FEvaluator.ItemString(FEvaluator.EvaluateInFocus(FTimes100Expr, ItemFocus(It, 1, 1)).Items[0])
+      else
+        Value := FEvaluator.ItemString(FEvaluator.EvaluateInFocus(FTimes1000Expr, ItemFocus(It, 1, 1)).Items[0]);
+      Scaled := True;
+    end;
+  end;
+  Result := LandrixXmlXPathStringItem(XsltFormatNumber(Value, Picture,
+    TXsltDecimalFormat(FC.DecimalFormats.Objects[K]), Scaled));
+end;
+
+{ The value an atomic item (or a node: its string value) is compared by
+  in grouping and key(): strings and untyped values as strings, numbers
+  as xs:double (NaN equal to NaN), other types by their type and value. }
+function TRun.AtomKey(const It: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+begin
+  case It.Kind of
+    xikNode, xikUntypedAtomic, xikString, xikAnyUri, xikNormalizedString, xikToken, xikLanguage, xikNMTOKEN,
+    xikName, xikNCName, xikID, xikIDREF, xikENTITY:
+      Result := 's' + FEvaluator.ItemString(It);
+    xikInteger, xikDecimal, xikDouble, xikFloat, xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt,
+    xikShort, xikByte, xikNonNegativeInteger, xikUnsignedLong, xikUnsignedInt, xikUnsignedShort,
+    xikUnsignedByte, xikPositiveInteger:
+      begin
+        Result := 'n' + FEvaluator.ItemString(FEvaluator.EvaluateInFocus(FNumberExpr, ItemFocus(It, 1, 1)).Items[0]);
+        if Result = 'n-0' then
+          Result := 'n0';
+      end;
+    xikBoolean:
+      Result := 'b' + FEvaluator.ItemString(It);
+    xikQName, xikDateTime, xikTime:
+      Result := 'o' + LandrixXmlStringToUtf8(IntToStr(Ord(It.Kind))) + ':' +
+        FEvaluator.ItemString(FEvaluator.EvaluateInFocus(FKeyNormExpr, ItemFocus(It, 1, 1)).Items[0]);
+  else
+    Result := 'o' + LandrixXmlStringToUtf8(IntToStr(Ord(It.Kind))) + ':' + FEvaluator.ItemString(It);
+  end;
+end;
+
+{ An id as Saxon makes them: "d", the number of the tree, then a letter
+  for the kind (e element, t text, c comment, p processing instruction)
+  and the number of the node among the nodes that are no attributes; an
+  attribute: its element's id, "a" and its position. }
+function TRun.GenerateId(Node: Integer): TLandrixXmlUtf8;
+var
+  T: TLandrixXmlXPathTree;
+  B, I, J, K, Owner: Integer;
+begin
+  T := FEvaluator.TreeOfNode(Node, B);
+  Result := 'd' + LandrixXmlStringToUtf8(IntToStr(FEvaluator.TreeNumber(Node) + 1));
+  I := Node - B;
+  Owner := I;
+  if T.Kind[I] = xnkAttribute then
+    Owner := T.Parent[I];
+  if T.Kind[Owner] = xnkDocument then
+    Exit;
+  { the numbers of the nodes that are no attributes, counted once per tree }
+  if (FIdTree <> T) or (Length(FIdNumbers) <> T.Count) then
+  begin
+    FIdTree := T;
+    SetLength(FIdNumbers, T.Count);
+    K := 0;
+    if T.Kind[0] <> xnkDocument then
+      K := 1;
+    for J := 0 to T.Count - 1 do
+    begin
+      FIdNumbers[J] := K;
+      if T.Kind[J] <> xnkAttribute then
+        Inc(K);
+    end;
+  end;
+  K := FIdNumbers[Owner];
+  case T.Kind[Owner] of
+    xnkElement: Result := Result + 'e';
+    xnkText: Result := Result + 't';
+    xnkComment: Result := Result + 'c';
+  else
+    Result := Result + 'p';
+  end;
+  Result := Result + LandrixXmlStringToUtf8(IntToStr(K));
+  if Owner <> I then
+    Result := Result + 'a' + LandrixXmlStringToUtf8(IntToStr(I - Owner));
+end;
+
+{ The index of key K in the tree whose root is Root, built on first use:
+  every node that matches a declaration's pattern under each value of its
+  use expression. }
+function TRun.KeyIndex(K: TXsltKey; Root: Integer): TObject;
+var
+  Index: TKeyIndex;
+  T: TLandrixXmlXPathTree;
+  B, I, J, D, P: Integer;
+  Decl: TXsltKeyDecl;
+  V: TLandrixXmlXPathSequence;
+  Value: string;
+  Nodes: TKeyNodes;
+  SavedNode: Integer;
+  SavedCurrent: TLandrixXmlXPathSequence;
+  Matched: Boolean;
+begin
+  for I := 0 to Integer(FKeyIndexes.Count) - 1 do
+  begin
+    Index := TKeyIndex(FKeyIndexes[I]);
+    if (Index.Key = K) and (Index.Root = Root) then
+    begin
+      if Index.Building then
+        raise ELandrixXmlXPathError.CreateXPath('XTDE0640', 'the key ' + LandrixXmlUtf8ToString(K.Name) +
+          ' is used to build itself');
+      Result := Index;
+      Exit;
+    end;
+  end;
+  Index := TKeyIndex.Create;
+  FKeyIndexes.Add(Index);
+  Index.Key := K;
+  Index.Root := Root;
+  Index.Building := True;
+  Result := Index;
+  T := FEvaluator.TreeOfNode(Root, B);
+  SavedNode := FEvaluator.CurrentNode;
+  SavedCurrent := FCurrent;
+  try
+    for I := 0 to T.Count - 1 do
+      for D := 0 to Integer(K.Decls.Count) - 1 do
+      begin
+        Decl := TXsltKeyDecl(K.Decls[D]);
+        { current() in the pattern and the use expression is the node }
+        FEvaluator.CurrentNode := I + B;
+        FCurrent := LandrixXmlXPathEmpty;
+        Matched := False;
+        for P := 0 to Integer(Length(Decl.Patterns)) - 1 do
+          if FEvaluator.MatchesPattern(Decl.Patterns[P], I + B, Decl.Relative[P]) then
+          begin
+            Matched := True;
+            Break;
+          end;
+        if not Matched then
+          Continue;
+        V := FEvaluator.EvaluateInFocus(Decl.Use, NodeFocus(I + B, 1, 1));
+        for J := 0 to Integer(V.Count) - 1 do
+        begin
+          Value := LandrixXmlUtf8ToString(AtomKey(V.Items[J]));
+          { NaN is equal to no value }
+          if Value = 'nNaN' then
+            Continue;
+          P := Index.Map.IndexOf(Value);
+          if P >= 0 then
+            Nodes := TKeyNodes(Index.Map.Objects[P])
+          else
+          begin
+            Nodes := TKeyNodes.Create;
+            Index.Map.AddObject(Value, Nodes);
+          end;
+          Nodes.Add(I + B);
+        end;
+      end;
+    Index.Building := False;
+  except
+    { not kept half built }
+    FKeyIndexes.Delete(Integer(FKeyIndexes.IndexOf(Index)));
+    FEvaluator.CurrentNode := SavedNode;
+    FCurrent := SavedCurrent;
+    raise;
+  end;
+  FEvaluator.CurrentNode := SavedNode;
+  FCurrent := SavedCurrent;
+end;
+
+{ key(name, values[, top]): the nodes of the tree of top (the context
+  node) that have one of the values under the key, inside top, in
+  document order }
+function TRun.KeyFunction(const Args: array of TLandrixXmlXPathSequence;
+  const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+var
+  Name: TLandrixXmlUtf8;
+  I, J, Top, Root, B, N, X: Integer;
+  K: TXsltKey;
+  Index: TKeyIndex;
+  T: TLandrixXmlXPathTree;
+  Found: array of Integer;
+  Count: Integer;
+  Nodes: TKeyNodes;
+  Inside: Boolean;
+begin
+  Result := LandrixXmlXPathEmpty;
+  Found := nil;
+  if (Args[0].Count <> 1) then
+    raise ELandrixXmlXPathError.CreateXPath('XPTY0004', 'key(): the name must be one string');
+  Name := LandrixXmlStringToUtf8(Trim(LandrixXmlUtf8ToString(FEvaluator.ItemString(Args[0].Items[0]))));
+  I := FC.Keys.IndexOf(LandrixXmlUtf8ToString(Name));
+  if I < 0 then
+    raise ELandrixXmlXPathError.CreateXPath('XTDE1260', 'key(): there is no key ' + LandrixXmlUtf8ToString(Name));
+  K := TXsltKey(FC.Keys.Objects[I]);
+  if High(Args) >= 2 then
+  begin
+    if (Args[2].Count <> 1) or (Args[2].Items[0].Kind <> xikNode) then
+      raise ELandrixXmlXPathError.CreateXPath('XPTY0004', 'key(): the third argument must be one node');
+    Top := Args[2].Items[0].Node;
+  end
+  else
+  begin
+    if Focus.Node < 0 then
+      raise ELandrixXmlXPathError.CreateXPath('XTDE1270', 'key(): the context item is no node');
+    Top := Focus.Node;
+  end;
+  T := FEvaluator.TreeOfNode(Top, B);
+  Root := Top - B;
+  while T.Parent[Root] >= 0 do
+    Root := T.Parent[Root];
+  { two arguments: the whole document of the context node }
+  if High(Args) < 2 then
+    Top := Root + B;
+  if T.Kind[Root] <> xnkDocument then
+    raise ELandrixXmlXPathError.CreateXPath('XTDE1270', 'key(): the node is not in a document');
+  Index := TKeyIndex(KeyIndex(K, Root + B));
+  Count := 0;
+  for I := 0 to Integer(Args[1].Count) - 1 do
+  begin
+    J := Index.Map.IndexOf(LandrixXmlUtf8ToString(AtomKey(Args[1].Items[I])));
+    if J < 0 then
+      Continue;
+    Nodes := TKeyNodes(Index.Map.Objects[J]);
+    for N := 0 to Nodes.Count - 1 do
+    begin
+      { inside Top (its descendants or itself) }
+      X := Nodes.Nodes[N] - B;
+      Inside := Top = Root + B;
+      while not Inside and (X >= 0) do
+      begin
+        Inside := X + B = Top;
+        X := T.Parent[X];
+      end;
+      if not Inside then
+        Continue;
+      if Count = Length(Found) then
+        SetLength(Found, 2 * Count + 8);
+      Found[Count] := Nodes.Nodes[N];
+      Inc(Count);
+    end;
+  end;
+  { document order, each node once }
+  for I := 1 to Count - 1 do
+  begin
+    N := Found[I];
+    J := I - 1;
+    while (J >= 0) and (Found[J] > N) do
+    begin
+      Found[J + 1] := Found[J];
+      Dec(J);
+    end;
+    Found[J + 1] := N;
+  end;
+  for I := 0 to Count - 1 do
+    if (I = 0) or (Found[I] <> Found[I - 1]) then
+      LandrixXmlXPathAppend(Result, LandrixXmlXPathNodeItem(Found[I]).Items[0]);
+end;
+
+{ xsl:for-each-group: the groups in the order of their first item, the
+  body once per group with its first item as context item }
+procedure TRun.DoForEachGroup(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+  R: TReceiver);
+var
+  Population, Keys: TLandrixXmlXPathSequence;
+  Groups, GroupKeys: array of TLandrixXmlXPathSequence;
+  Map: TXsltStringList;
+  I, J, G, P, Count: Integer;
+  Key, Previous: TLandrixXmlUtf8;
+  Seen: string;
+  Starts, Matched: Boolean;
+  SavedGroup, SavedKey: TLandrixXmlXPathSequence;
+  SavedActive, SavedHasKey: Boolean;
+  SavedLazy: Integer;
+  Box: TKeyNodes;
+
+  { an atomic key: a node as its string value }
+  function Atomic(const It: TLandrixXmlXPathItem): TLandrixXmlXPathItem;
+  begin
+    Result := It;
+    if It.Kind = xikNode then
+    begin
+      Result.Kind := xikUntypedAtomic;
+      Result.Text := FEvaluator.ItemString(It);
+      Result.Node := -1;
+      Result.Bits := 0;
+      Result.Payload := nil;
+    end;
+  end;
+
+  procedure NewGroup(const It: TLandrixXmlXPathItem; const K: TLandrixXmlXPathSequence);
+  begin
+    SetLength(Groups, Count + 1);
+    SetLength(GroupKeys, Count + 1);
+    Groups[Count] := LandrixXmlXPathEmpty;
+    LandrixXmlXPathAppend(Groups[Count], It);
+    GroupKeys[Count] := K;
+    Inc(Count);
+  end;
+
+begin
+  Groups := nil;
+  GroupKeys := nil;
+  Count := 0;
+  Population := Eval(Instr, Instr.Select, Focus);
+  Map := TXsltStringList.Create;
+  try
+    Map.CaseSensitive := True;
+    Map.Sorted := True;
+    Previous := '';
+    for I := 0 to Integer(Population.Count) - 1 do
+      case Instr.GroupKind of
+        0:
+          begin
+            Keys := Eval(Instr, Instr.Test, ItemFocus(Population.Items[I], I + 1, Population.Count));
+            Seen := #1;
+            for J := 0 to Integer(Keys.Count) - 1 do
+            begin
+              Key := AtomKey(Keys.Items[J]);
+              { an item in a group once, even with two equal keys }
+              if Pos(#1 + LandrixXmlUtf8ToString(Key) + #1, Seen) > 0 then
+                Continue;
+              Seen := Seen + LandrixXmlUtf8ToString(Key) + #1;
+              if Map.Find(LandrixXmlUtf8ToString(Key), G) then
+                LandrixXmlXPathAppend(Groups[TKeyNodes(Map.Objects[G]).Nodes[0]], Population.Items[I])
+              else
+              begin
+                { the group's number (in a TKeyNodes, freed with the map) }
+                Box := TKeyNodes.Create;
+                Box.Add(Count);
+                Map.AddObject(LandrixXmlUtf8ToString(Key), Box);
+                NewGroup(Population.Items[I], LandrixXmlXPathEmpty);
+                LandrixXmlXPathAppend(GroupKeys[Count - 1], Atomic(Keys.Items[J]));
+              end;
+            end;
+          end;
+        1:
+          begin
+            Keys := Eval(Instr, Instr.Test, ItemFocus(Population.Items[I], I + 1, Population.Count));
+            if Keys.Count <> 1 then
+              Fail(Instr, 'XTTE1100', 'xsl:for-each-group: group-adjacent must give one value');
+            Key := AtomKey(Keys.Items[0]);
+            if (Count > 0) and (Key = Previous) then
+              LandrixXmlXPathAppend(Groups[Count - 1], Population.Items[I])
+            else
+            begin
+              NewGroup(Population.Items[I], LandrixXmlXPathEmpty);
+              LandrixXmlXPathAppend(GroupKeys[Count - 1], Atomic(Keys.Items[0]));
+            end;
+            Previous := Key;
+          end;
+      else
+        begin
+          if Population.Items[I].Kind <> xikNode then
+            Fail(Instr, 'XTTE1120', 'xsl:for-each-group: a pattern needs nodes to group');
+          FEvaluator.CurrentNode := Population.Items[I].Node;
+          FCurrent := LandrixXmlXPathEmpty;
+          Matched := False;
+          for P := 0 to Integer(Length(Instr.CountPatterns)) - 1 do
+            if FEvaluator.MatchesPattern(Instr.CountPatterns[P], Population.Items[I].Node, Instr.CountRelative[P]) then
+            begin
+              Matched := True;
+              Break;
+            end;
+          if Instr.GroupKind = 2 then
+            Starts := (Count = 0) or Matched
+          else
+            Starts := (Count = 0) or (Previous = 'end');
+          if Starts then
+            NewGroup(Population.Items[I], LandrixXmlXPathEmpty)
+          else
+            LandrixXmlXPathAppend(Groups[Count - 1], Population.Items[I]);
+          if Matched then
+            Previous := 'end'
+          else
+            Previous := '';
+        end;
+      end;
+  finally
+    for G := 0 to Integer(Map.Count) - 1 do
+      Map.Objects[G].Free;
+    Map.Free;
+  end;
+  SavedGroup := FGroup;
+  SavedKey := FGroupKey;
+  SavedActive := FGroupActive;
+  SavedLazy := FGroupLazyDepth;
+  SavedHasKey := FGroupHasKey;
+  try
+    for G := 0 to Count - 1 do
+    begin
+      FGroup := Groups[G];
+      FGroupKey := GroupKeys[G];
+      FGroupActive := True;
+      FGroupHasKey := Instr.GroupKind <= 1;
+      FGroupLazyDepth := FEvaluator.LazyDepth;
+      Exec(Instr.Body, ItemFocus(Groups[G].Items[0], G + 1, Count), Mode, R);
+    end;
+  finally
+    FGroup := SavedGroup;
+    FGroupKey := SavedKey;
+    FGroupActive := SavedActive;
+    FGroupLazyDepth := SavedLazy;
+    FGroupHasKey := SavedHasKey;
+  end;
+end;
+
 procedure TRun.ExecCore(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
 begin
   case Instr.Kind of
@@ -2475,6 +3064,8 @@ begin
       DoCallTemplate(Instr, Focus, Mode, R);
     xskNumber:
       DoNumber(Instr, Focus, R);
+    xskForEachGroup:
+      DoForEachGroup(Instr, Focus, Mode, R);
   else
     { xsl:when and xsl:namespace are not compiled as instructions of
       their own }

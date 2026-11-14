@@ -5,9 +5,10 @@
   or https://opensource.org/licenses/MIT for the full license text.
 
   Internal unit of the XSLT processor (LandrixXmlXslt), not part of the
-  documented API: format-date(), format-time() and format-dateTime()
-  (XSLT 2.0 16.5) as Saxon HE formats them, in English (another language
-  is named as Saxon names it: "[Language: en]" before the result).
+  documented API: format-number() (XSLT 2.0 16.4) and format-date(),
+  format-time() and format-dateTime() (XSLT 2.0 16.5) as Saxon HE formats
+  them, in English (another language is named as Saxon names it:
+  "[Language: en]" before the result).
 
   Components Y M D d F W H h P m s f Z z C E with decimal presentations
   (a format token of ASCII digits, its digits the minimum width; a year
@@ -30,12 +31,38 @@ uses
 type
   TXsltDateKind = (xdkDate, xdkTime, xdkDateTime);
 
+  { an xsl:decimal-format: its characters and strings (UTF-8) }
+  TXsltDecimalFormat = class
+  public
+    DecimalSeparator, GroupingSeparator, Infinity, MinusSign, NaN, Percent, PerMille, ZeroDigit, Digit,
+      PatternSeparator: TLandrixXmlUtf8;
+    { per property (PropertyIndex) the value and the import precedence of
+      the declaration that set it (-1: the default), for XTSE1290 }
+    Values: array[0..9] of TLandrixXmlUtf8;
+    Precedences: array[0..9] of Integer;
+    { the defaults of XSLT 2.0 }
+    constructor Create;
+    function PropertyIndex(const Name: TLandrixXmlUtf8): Integer;
+  end;
+
 { Value: the canonical lexical form of an xs:date, xs:time or
   xs:dateTime (Kind); HasLanguage, HasCalendar: a language or calendar
   was given (an empty language Saxon names too, an empty calendar is
   FOFD1340). }
 function XsltFormatDateTime(const Value: TLandrixXmlUtf8; Kind: TXsltDateKind;
   const Picture, Language, Calendar: TLandrixXmlUtf8; HasLanguage, HasCalendar: Boolean): TLandrixXmlUtf8;
+
+{ format-number() (XSLT 2.0 16.4) as Saxon HE formats: Value is 'NaN',
+  'INF', '-INF' or the lexical form of an xs:decimal, xs:integer or
+  xs:double (its shortest decimal form, so a double is rounded as Saxon
+  rounds it: half to even on those digits). Picture errors are FODF1310 (as Saxon);
+  a zero digit other than 0 is not supported. }
+function XsltFormatNumber(const Value: TLandrixXmlUtf8; const Picture: TLandrixXmlUtf8;
+  DF: TXsltDecimalFormat; Scaled: Boolean): TLandrixXmlUtf8;
+{ 100 or 1000 if the sub-picture for the sign (Negative) has a percent or
+  per-mille sign, else 1: a double is multiplied as a double before it is
+  formatted (Scaled), as Saxon does. Checks the picture (FODF1310). }
+function XsltPictureScale(const Picture: TLandrixXmlUtf8; DF: TXsltDecimalFormat; Negative: Boolean): Integer;
 
 implementation
 
@@ -641,6 +668,488 @@ begin
       Inc(I);
     end;
   end;
+end;
+
+{ --- format-number --------------------------------------------------------- }
+
+constructor TXsltDecimalFormat.Create;
+var
+  I: Integer;
+begin
+  inherited Create;
+  DecimalSeparator := '.';
+  GroupingSeparator := ',';
+  Infinity := 'Infinity';
+  MinusSign := '-';
+  NaN := 'NaN';
+  Percent := '%';
+  { U+2030 in UTF-8 }
+  PerMille := '';
+  SetLength(PerMille, 3);
+  PerMille[1] := AnsiChar($E2);
+  PerMille[2] := AnsiChar($80);
+  PerMille[3] := AnsiChar($B0);
+  ZeroDigit := '0';
+  Digit := '#';
+  PatternSeparator := ';';
+  for I := 0 to 9 do
+    Precedences[I] := -1;
+end;
+
+function TXsltDecimalFormat.PropertyIndex(const Name: TLandrixXmlUtf8): Integer;
+begin
+  if Name = 'decimal-separator' then
+    Result := 0
+  else if Name = 'grouping-separator' then
+    Result := 1
+  else if Name = 'infinity' then
+    Result := 2
+  else if Name = 'minus-sign' then
+    Result := 3
+  else if Name = 'NaN' then
+    Result := 4
+  else if Name = 'percent' then
+    Result := 5
+  else if Name = 'per-mille' then
+    Result := 6
+  else if Name = 'zero-digit' then
+    Result := 7
+  else if Name = 'digit' then
+    Result := 8
+  else
+    Result := 9;
+end;
+
+{ the characters of S (UTF-8 sequences) }
+function Chars(const S: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
+var
+  I, N, K: Integer;
+begin
+  Result := nil;
+  I := 1;
+  while I <= Length(S) do
+  begin
+    N := 1;
+    if Ord(S[I]) >= $F0 then
+      N := 4
+    else if Ord(S[I]) >= $E0 then
+      N := 3
+    else if Ord(S[I]) >= $C0 then
+      N := 2;
+    K := Integer(Length(Result));
+    SetLength(Result, K + 1);
+    Result[K] := Copy(S, I, N);
+    Inc(I, N);
+  end;
+end;
+
+{ Value as a sign and decimal digits: Value is the lexical form of an
+  xs:decimal, an xs:integer or an xs:double (also with an exponent, as
+  XPath writes doubles). }
+procedure SplitNumber(const Value: TLandrixXmlUtf8; out Negative: Boolean; out IntPart, FracPart: TLandrixXmlUtf8);
+var
+  I, E, Exp: Integer;
+  Mantissa, Digits: TLandrixXmlUtf8;
+  Point: Integer;
+begin
+  Negative := (Value <> '') and (Value[1] = '-');
+  I := 1;
+  if Negative or (Value <> '') and (Value[1] = '+') then
+    I := 2;
+  E := Pos('E', LandrixXmlUtf8ToString(Value));
+  if E = 0 then
+    E := Pos('e', LandrixXmlUtf8ToString(Value));
+  Exp := 0;
+  if E > 0 then
+  begin
+    Mantissa := Copy(Value, I, E - I);
+    Exp := StrToInt(LandrixXmlUtf8ToString(Copy(Value, E + 1, MaxInt)));
+  end
+  else
+    Mantissa := Copy(Value, I, MaxInt);
+  Point := Pos('.', LandrixXmlUtf8ToString(Mantissa));
+  if Point = 0 then
+  begin
+    Digits := Mantissa;
+    Point := Length(Mantissa) + 1;
+  end
+  else
+    Digits := Copy(Mantissa, 1, Point - 1) + Copy(Mantissa, Point + 1, MaxInt);
+  { the decimal point after Point - 1 + Exp digits }
+  Point := Point - 1 + Exp;
+  while Point < 0 do
+  begin
+    Digits := '0' + Digits;
+    Inc(Point);
+  end;
+  while Point > Length(Digits) do
+    Digits := Digits + '0';
+  IntPart := Copy(Digits, 1, Point);
+  FracPart := Copy(Digits, Point + 1, MaxInt);
+  while (Length(IntPart) > 0) and (IntPart[1] = '0') do
+    Delete(IntPart, 1, 1);
+  while (Length(FracPart) > 0) and (FracPart[Length(FracPart)] = '0') do
+    Delete(FracPart, Length(FracPart), 1);
+end;
+
+{ Rounds IntPart.FracPart to Places fraction digits, half to even }
+procedure RoundHalfEven(var IntPart, FracPart: TLandrixXmlUtf8; Places: Integer);
+var
+  Digits: TLandrixXmlUtf8;
+  N, I: Integer;
+  Up: Boolean;
+  Rest: TLandrixXmlUtf8;
+begin
+  if Length(FracPart) <= Places then
+    Exit;
+  Rest := Copy(FracPart, Places + 1, MaxInt);
+  Digits := IntPart + Copy(FracPart, 1, Places);
+  if Rest[1] > '5' then
+    Up := True
+  else if Rest[1] < '5' then
+    Up := False
+  else
+  begin
+    Up := False;
+    for I := 2 to Length(Rest) do
+      if Rest[I] <> '0' then
+        Up := True;
+    if not Up then
+      Up := (Digits <> '') and (Odd(Ord(Digits[Length(Digits)]) - Ord('0')));
+  end;
+  if Up then
+  begin
+    I := Length(Digits);
+    while (I >= 1) and (Digits[I] = '9') do
+    begin
+      Digits[I] := '0';
+      Dec(I);
+    end;
+    if I >= 1 then
+      Digits[I] := AnsiChar(Ord(Digits[I]) + 1)
+    else
+      Digits := '1' + Digits;
+  end;
+  N := Length(Digits) - Places;
+  IntPart := Copy(Digits, 1, N);
+  FracPart := Copy(Digits, N + 1, MaxInt);
+  while (Length(IntPart) > 0) and (IntPart[1] = '0') do
+    Delete(IntPart, 1, 1);
+  while (Length(FracPart) > 0) and (FracPart[Length(FracPart)] = '0') do
+    Delete(FracPart, Length(FracPart), 1);
+end;
+
+type
+  TSubPicture = record
+    Prefix, Suffix: TLandrixXmlUtf8;
+    MinInt, MinFrac, MaxFrac: Integer;
+    { grouping positions of the integer part (digits to their right) and
+      of the fraction part (digits to their left) }
+    IntGroups, FracGroups: array of Integer;
+    Percent, PerMille: Boolean;
+  end;
+
+procedure PictureError(const Picture: TLandrixXmlUtf8; const Why: string);
+begin
+  raise ELandrixXmlXPathError.CreateXPath('FODF1310', 'format-number(): the picture "' +
+    LandrixXmlUtf8ToString(Picture) + '" ' + Why);
+end;
+
+function ParseSubPicture(const P: TLandrixXmlUtf8Array; First, Last: Integer; DF: TXsltDecimalFormat;
+  const Picture: TLandrixXmlUtf8): TSubPicture;
+var
+  I, A, Z, Point, Digits: Integer;
+  C: TLandrixXmlUtf8;
+  AfterZero: Boolean;
+
+  function Active(const X: TLandrixXmlUtf8): Boolean;
+  begin
+    Result := (X = DF.DecimalSeparator) or (X = DF.GroupingSeparator) or (X = DF.Digit) or
+      ((Length(X) = 1) and (X[1] in ['0'..'9']));
+  end;
+
+begin
+  Result.Prefix := '';
+  Result.Suffix := '';
+  Result.MinInt := 0;
+  Result.MinFrac := 0;
+  Result.MaxFrac := 0;
+  Result.IntGroups := nil;
+  Result.FracGroups := nil;
+  Result.Percent := False;
+  Result.PerMille := False;
+  A := First;
+  while (A <= Last) and not Active(P[A]) do
+    Inc(A);
+  Z := Last;
+  while (Z >= A) and not Active(P[Z]) do
+    Dec(Z);
+  if A > Z then
+    PictureError(Picture, 'has no digit');
+  for I := First to A - 1 do
+    Result.Prefix := Result.Prefix + P[I];
+  for I := Z + 1 to Last do
+    Result.Suffix := Result.Suffix + P[I];
+  for I := First to Last do
+  begin
+    if (P[I] = DF.Percent) or (P[I] = DF.PerMille) then
+    begin
+      if Result.Percent or Result.PerMille then
+        PictureError(Picture, 'has more than one percent or per-mille sign');
+      if (I >= A) and (I <= Z) then
+        PictureError(Picture, 'has a percent or per-mille sign among the digits');
+      Result.Percent := P[I] = DF.Percent;
+      Result.PerMille := P[I] = DF.PerMille;
+    end;
+  end;
+  Point := -1;
+  for I := A to Z do
+  begin
+    if not Active(P[I]) then
+      PictureError(Picture, 'has a passive character among the digits');
+    if P[I] = DF.DecimalSeparator then
+    begin
+      if Point >= 0 then
+        PictureError(Picture, 'has two decimal separators');
+      Point := I;
+    end;
+  end;
+  if Point < 0 then
+    Point := Z + 1;
+  Digits := 0;
+  for I := A to Z do
+    if (P[I] = DF.Digit) or (Length(P[I]) = 1) and (P[I][1] in ['0'..'9']) then
+      Inc(Digits);
+  if Digits = 0 then
+    PictureError(Picture, 'has no digit');
+  if (Point + 1 <= Z) and (P[Point + 1] = DF.GroupingSeparator) then
+    PictureError(Picture, 'has a grouping separator next to the decimal separator');
+  if (Point - 1 >= A) and (P[Point - 1] = DF.GroupingSeparator) then
+    PictureError(Picture, 'has a grouping separator at the end of the integer part');
+  for I := A to Z - 1 do
+    if (P[I] = DF.GroupingSeparator) and (P[I + 1] = DF.GroupingSeparator) then
+      PictureError(Picture, 'has two grouping separators in a row');
+  { the integer part }
+  AfterZero := False;
+  Digits := 0;
+  for I := Point - 1 downto A do
+  begin
+    C := P[I];
+    if C = DF.GroupingSeparator then
+    begin
+      if (I = Point - 1) and (Point <= Z) then
+        PictureError(Picture, 'has a grouping separator next to the decimal separator');
+      SetLength(Result.IntGroups, Length(Result.IntGroups) + 1);
+      Result.IntGroups[High(Result.IntGroups)] := Digits;
+    end
+    else
+    begin
+      Inc(Digits);
+      if C = DF.Digit then
+      begin
+        AfterZero := True;
+        Continue;
+      end;
+      if AfterZero then
+        PictureError(Picture, 'has a "0" before a "#" in the integer part');
+      Inc(Result.MinInt);
+    end;
+  end;
+  { the fraction part }
+  Digits := 0;
+  AfterZero := False;
+  for I := Point + 1 to Z do
+  begin
+    C := P[I];
+    if C = DF.GroupingSeparator then
+    begin
+      SetLength(Result.FracGroups, Length(Result.FracGroups) + 1);
+      Result.FracGroups[High(Result.FracGroups)] := Digits;
+    end
+    else
+    begin
+      Inc(Digits);
+      Inc(Result.MaxFrac);
+      if C = DF.Digit then
+        AfterZero := True
+      else
+      begin
+        if AfterZero then
+          PictureError(Picture, 'has a "0" after a "#" in the fraction part');
+        Inc(Result.MinFrac);
+      end;
+    end;
+  end;
+  if (Result.MinInt = 0) and (Result.MaxFrac = 0) then
+    Result.MinInt := 1
+  else if (Result.MinInt = 0) and (Result.MinFrac = 0) then
+    Result.MinFrac := 1;
+end;
+
+{ the integer digits with grouping separators }
+function Group(const Digits: TLandrixXmlUtf8; const Positions: array of Integer; const Sep: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I, K, N, Every: Integer;
+  Regular, Insert: Boolean;
+begin
+  Result := Digits;
+  N := Integer(Length(Positions));
+  if N = 0 then
+    Exit;
+  { regular: the positions are n, 2n, 3n, ... (then repeated) }
+  Every := Positions[0];
+  for I := 1 to N - 1 do
+    if Positions[I] < Every then
+      Every := Positions[I];
+  Regular := Every > 0;
+  if Regular then
+    for I := 0 to N - 1 do
+      if Positions[I] mod Every <> 0 then
+        Regular := False;
+  if Regular then
+    for K := 1 to N do
+    begin
+      Insert := False;
+      for I := 0 to N - 1 do
+        if Positions[I] = K * Every then
+          Insert := True;
+      if not Insert then
+        Regular := False;
+    end;
+  Result := '';
+  for I := Length(Digits) downto 1 do
+  begin
+    K := Length(Digits) - I;
+    Insert := False;
+    if K > 0 then
+    begin
+      if Regular then
+        Insert := K mod Every = 0
+      else
+        for N := 0 to Integer(High(Positions)) do
+          if Positions[N] = K then
+            Insert := True;
+    end;
+    if Insert then
+      Result := Sep + Result;
+    Result := Copy(Digits, I, 1) + Result;
+  end;
+end;
+
+{ the sub-picture for the sign: both are checked }
+function ChooseSubPicture(const Picture: TLandrixXmlUtf8; DF: TXsltDecimalFormat; Negative: Boolean;
+  out HasNegative: Boolean): TSubPicture;
+var
+  P: TLandrixXmlUtf8Array;
+  I, Sep: Integer;
+  Other: TSubPicture;
+begin
+  if DF.ZeroDigit <> '0' then
+    raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT: a zero digit other than 0 is not supported');
+  P := Chars(Picture);
+  Sep := -1;
+  for I := 0 to Integer(Length(P)) - 1 do
+    if P[I] = DF.PatternSeparator then
+    begin
+      if Sep >= 0 then
+        PictureError(Picture, 'has two pattern separators');
+      Sep := I;
+    end;
+  HasNegative := Sep >= 0;
+  if Sep < 0 then
+    Result := ParseSubPicture(P, 0, Integer(Length(P)) - 1, DF, Picture)
+  else
+  begin
+    Result := ParseSubPicture(P, 0, Sep - 1, DF, Picture);
+    Other := ParseSubPicture(P, Sep + 1, Integer(Length(P)) - 1, DF, Picture);
+    if Negative then
+      Result := Other;
+  end;
+end;
+
+function XsltPictureScale(const Picture: TLandrixXmlUtf8; DF: TXsltDecimalFormat; Negative: Boolean): Integer;
+var
+  Sub: TSubPicture;
+  HasNegative: Boolean;
+begin
+  Sub := ChooseSubPicture(Picture, DF, Negative, HasNegative);
+  Result := 1;
+  if Sub.Percent then
+    Result := 100
+  else if Sub.PerMille then
+    Result := 1000;
+end;
+
+function XsltFormatNumber(const Value: TLandrixXmlUtf8; const Picture: TLandrixXmlUtf8;
+  DF: TXsltDecimalFormat; Scaled: Boolean): TLandrixXmlUtf8;
+var
+  I, Sep: Integer;
+  Sub: TSubPicture;
+  Negative, HasNegative: Boolean;
+  IntPart, FracPart, Frac: TLandrixXmlUtf8;
+begin
+  Negative := (Value <> '') and (Value[1] = '-');
+  { the picture is checked also for NaN }
+  Sub := ChooseSubPicture(Picture, DF, Negative, HasNegative);
+  if Value = 'NaN' then
+  begin
+    Result := DF.NaN;
+    Exit;
+  end;
+  if (Value = 'INF') or (Value = '-INF') then
+  begin
+    Result := Sub.Prefix + DF.Infinity + Sub.Suffix;
+    if Negative and not HasNegative then
+      Result := DF.MinusSign + Result;
+    Exit;
+  end;
+  SplitNumber(Value, Negative, IntPart, FracPart);
+  { percent and per mille: the decimal point moved (a double the caller
+  multiplied already) }
+  if (Sub.Percent or Sub.PerMille) and not Scaled then
+  begin
+    if Sub.Percent then
+      I := 2
+    else
+      I := 3;
+    while I > 0 do
+    begin
+      if FracPart <> '' then
+      begin
+        IntPart := IntPart + Copy(FracPart, 1, 1);
+        Delete(FracPart, 1, 1);
+      end
+      else
+        IntPart := IntPart + '0';
+      Dec(I);
+    end;
+    while (Length(IntPart) > 0) and (IntPart[1] = '0') do
+      Delete(IntPart, 1, 1);
+  end;
+  RoundHalfEven(IntPart, FracPart, Sub.MaxFrac);
+  while Length(IntPart) < Sub.MinInt do
+    IntPart := '0' + IntPart;
+  while Length(FracPart) < Sub.MinFrac do
+    FracPart := FracPart + '0';
+  IntPart := Group(IntPart, Sub.IntGroups, DF.GroupingSeparator);
+  Frac := FracPart;
+  if Length(Sub.FracGroups) > 0 then
+  begin
+    Frac := '';
+    for I := 1 to Length(FracPart) do
+    begin
+      for Sep := 0 to Integer(High(Sub.FracGroups)) do
+        if (Sub.FracGroups[Sep] = I - 1) and (I > 1) then
+          Frac := Frac + DF.GroupingSeparator;
+      Frac := Frac + Copy(FracPart, I, 1);
+    end;
+  end;
+  Result := Sub.Prefix + IntPart;
+  if Frac <> '' then
+    Result := Result + DF.DecimalSeparator + Frac;
+  Result := Result + Sub.Suffix;
+  if Negative and not HasNegative then
+    Result := DF.MinusSign + Result;
 end;
 
 end.

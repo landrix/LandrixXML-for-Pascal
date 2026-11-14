@@ -42,7 +42,8 @@ uses
   LandrixXmlXPath,
   LandrixXmlXPathEval,
   LandrixXmlXslt,
-  LandrixXmlXsltOutput;
+  LandrixXmlXsltOutput,
+  LandrixXmlXsltFormat;
 
 const
   XsltNamespace = 'http://www.w3.org/1999/XSL/Transform';
@@ -59,7 +60,18 @@ const
   XfnFormatDate5 = 5;
   XfnFormatTime2 = 6;
   XfnFormatTime5 = 7;
-  XfnFixedCount = 8;
+  { current-group(), current-grouping-key(), generate-id() with 0 and 1,
+    key() with 2 and 3 arguments }
+  XfnCurrentGroup = 8;
+  XfnCurrentGroupingKey = 9;
+  XfnGenerateId0 = 10;
+  XfnGenerateId1 = 11;
+  XfnKey2 = 12;
+  XfnKey3 = 13;
+  { format-number() with 2 and 3 arguments }
+  XfnFormatNumber2 = 14;
+  XfnFormatNumber3 = 15;
+  XfnFixedCount = 16;
   { then per module: doc#1, doc-available#1, document#1, document#2,
     static-base-uri#0, resolve-uri#1 (the module's URI is the static base
     URI) }
@@ -86,7 +98,7 @@ type
   TXsltInstrKind = (xskLiteralElement, xskText, xskValueOf, xskApplyTemplates, xskCallTemplate,
     xskVariable, xskIf, xskChoose, xskWhen, xskForEach, xskSequence, xskCopyOf, xskCopy,
     xskElement, xskAttribute, xskComment, xskProcessingInstruction, xskMessage, xskDocument,
-    xskNumber, xskNamespace);
+    xskNumber, xskNamespace, xskForEachGroup);
 
   { a value with literal parts and expressions in curly brackets: Exprs[I] nil for a
     literal part }
@@ -165,6 +177,10 @@ type
       the count and from patterns (none: the default count pattern), the
       value, the format and the grouping (nil if not given) }
     NumberLevel: Integer;
+    { xsl:for-each-group: 0 group-by, 1 group-adjacent (the key in Test),
+      2 group-starting-with, 3 group-ending-with (the pattern in
+      CountPatterns) }
+    GroupKind: Integer;
     CountPatterns: array of TLandrixXmlXPathExpression;
     CountRelative: array of Boolean;
     FromPatterns: array of TLandrixXmlXPathExpression;
@@ -238,6 +254,24 @@ type
     destructor Destroy; override;
   end;
 
+  { one xsl:key declaration: its match pattern branches and use }
+  TXsltKeyDecl = class
+  public
+    Patterns: array of TLandrixXmlXPathExpression;
+    Relative: array of Boolean;
+    Use: TLandrixXmlXPathExpression;
+  end;
+
+  { the declarations of a key name (TXsltKeyDecl, owned) }
+  TXsltKey = class
+  public
+    Name: TLandrixXmlUtf8;
+    Index: Integer;
+    Decls: TObjectList;
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
   TXsltCompiled = class
   public
     Globals: TObjectList;
@@ -262,6 +296,10 @@ type
       by Templates): function UserFunctionBase + I is UserFunctions[I] }
     UserFunctions: TList;
     UserFunctionBase: Integer;
+    { key name (Clark) -> TXsltKey, owned }
+    Keys: TStringList;
+    { decimal format name ('' the default) -> TXsltDecimalFormat, owned }
+    DecimalFormats: TStringList;
     constructor Create;
     destructor Destroy; override;
     function FindMode(const Name: TLandrixXmlUtf8): TXsltMode;
@@ -292,6 +330,18 @@ function TXsltStringList.CompareStrings(const S1, S2: string): Integer;
 {$ENDIF}
 begin
   Result := CompareStr(S1, S2);
+end;
+
+constructor TXsltKey.Create;
+begin
+  inherited Create;
+  Decls := TObjectList.Create;
+end;
+
+destructor TXsltKey.Destroy;
+begin
+  Decls.Free;
+  inherited Destroy;
 end;
 
 function XsltClarkOf(const NamespaceUri, LocalName: TLandrixXmlUtf8): TLandrixXmlUtf8;
@@ -428,6 +478,11 @@ begin
   Expressions := TObjectList.Create;
   Output := TXsltOutputProperties.Create;
   UserFunctions := TList.Create;
+  Keys := TXsltStringList.Create;
+  Keys.CaseSensitive := True;
+  DecimalFormats := TXsltStringList.Create;
+  DecimalFormats.CaseSensitive := True;
+  DecimalFormats.AddObject('', TXsltDecimalFormat.Create);
 end;
 
 destructor TXsltCompiled.Destroy;
@@ -444,6 +499,12 @@ begin
   Output.Free;
   Expressions.Free;
   UserFunctions.Free;
+  for I := 0 to Integer(Keys.Count) - 1 do
+    Keys.Objects[I].Free;
+  Keys.Free;
+  for I := 0 to Integer(DecimalFormats.Count) - 1 do
+    DecimalFormats.Objects[I].Free;
+  DecimalFormats.Free;
   inherited Destroy;
 end;
 
@@ -604,6 +665,9 @@ type
     function PatternBranch(M: TModule; E: Integer; const Branch: TLandrixXmlUtf8; Scope: TScope;
       out Relative: Boolean): TLandrixXmlXPathExpression;
     procedure CompileNumber(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    procedure CompileGroup(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    procedure CompileKey(D: TDecl);
+    procedure CompileDecimalFormat(D: TDecl);
     procedure CollectFunctions;
     procedure CompileFunction(T: TXsltTemplate; D: TDecl);
     procedure AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8);
@@ -1499,7 +1563,7 @@ begin
     Unsupported(M, E, 'xsl:sort');
   if L = 'fallback' then
     Exit;
-  if (L = 'apply-imports') or (L = 'next-match') or (L = 'for-each-group') or (L = 'analyze-string') or
+  if (L = 'apply-imports') or (L = 'next-match') or (L = 'analyze-string') or
     (L = 'result-document') or (L = 'perform-sort') or (L = 'namespace') or (L = 'try') or
     (L = 'iterate') or (L = 'evaluate') or (L = 'where-populated') or (L = 'on-empty') or
     (L = 'on-non-empty') or (L = 'map') or (L = 'array') or (L = 'merge') or (L = 'fork') or
@@ -1605,6 +1669,11 @@ begin
     begin
       Result := NewInstr(xskNumber, M, E);
       CompileNumber(M, E, Scope, Result);
+    end
+    else if L = 'for-each-group' then
+    begin
+      Result := NewInstr(xskForEachGroup, M, E);
+      CompileGroup(M, E, Scope, Result);
     end
     else if L = 'sequence' then
     begin
@@ -2131,6 +2200,242 @@ begin
     Instr.GroupingSize := CompileAvt(M, E, V, Scope);
 end;
 
+{ xsl:for-each-group: the population, one of group-by, group-adjacent,
+  group-starting-with and group-ending-with (XTSE1080), the body. Only
+  the Unicode codepoint collation. }
+procedure TCompiler.CompileGroup(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+var
+  V, Pattern: TLandrixXmlUtf8;
+  Branches: TLandrixXmlUtf8Array;
+  I, Count: Integer;
+begin
+  Branches := nil;
+  if Attr(M, E, 'collation', V) and (Trim8(V) <> 'http://www.w3.org/2005/xpath-functions/collation/codepoint') then
+    Unsupported(M, E, 'a collation other than the codepoint collation');
+  Instr.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
+  Count := 0;
+  if Attr(M, E, 'group-by', V) then
+  begin
+    Instr.GroupKind := 0;
+    Instr.Test := Compile(M, E, V, Scope);
+    Inc(Count);
+  end;
+  if Attr(M, E, 'group-adjacent', V) then
+  begin
+    Instr.GroupKind := 1;
+    Instr.Test := Compile(M, E, V, Scope);
+    Inc(Count);
+  end;
+  if Attr(M, E, 'group-starting-with', V) then
+  begin
+    Instr.GroupKind := 2;
+    Pattern := V;
+    Inc(Count);
+  end;
+  if Attr(M, E, 'group-ending-with', V) then
+  begin
+    Instr.GroupKind := 3;
+    Pattern := V;
+    Inc(Count);
+  end;
+  if Count <> 1 then
+    Fail(M, E, 'XTSE1080', 'xsl:for-each-group needs exactly one of group-by, group-adjacent, ' +
+      'group-starting-with and group-ending-with');
+  if Instr.GroupKind >= 2 then
+  begin
+    if Attr(M, E, 'collation', V) then
+      Fail(M, E, 'XTSE1090', 'collation only with group-by or group-adjacent');
+    Branches := SplitPattern(Pattern);
+    SetLength(Instr.CountPatterns, Length(Branches));
+    SetLength(Instr.CountRelative, Length(Branches));
+    for I := 0 to Integer(Length(Branches)) - 1 do
+    begin
+      if Branches[I] = '' then
+        Fail(M, E, 'XTSE0340', 'an empty pattern');
+      Instr.CountPatterns[I] := PatternBranch(M, E, Branches[I], Scope, Instr.CountRelative[I]);
+    end;
+  end;
+  CompileBody(M, E, Scope, Instr.Body, -1);
+end;
+
+{ xsl:key: the declarations of one name are combined (all precedences);
+  a name with a prefix is not supported (key() gets the name as a string
+  and resolves no prefixes). }
+procedure TCompiler.CompileKey(D: TDecl);
+var
+  M: TModule;
+  E, I: Integer;
+  Name, V: TLandrixXmlUtf8;
+  Branches: TLandrixXmlUtf8Array;
+  K: TXsltKey;
+  Decl: TXsltKeyDecl;
+begin
+  M := D.Module;
+  E := D.Element;
+  Branches := nil;
+  V := Trim8(ReqAttr(M, E, 'name'));
+  if Pos8(':', V) > 0 then
+    Unsupported(M, E, 'a key name with a prefix');
+  Name := QNameToClark(M, E, V, False);
+  if Attr(M, E, 'collation', V) and (Trim8(V) <> 'http://www.w3.org/2005/xpath-functions/collation/codepoint') then
+    Unsupported(M, E, 'a collation other than the codepoint collation');
+  if not Attr(M, E, 'use', V) then
+    Unsupported(M, E, 'xsl:key without use (a sequence constructor)');
+  I := M.Tree.FirstChild(E);
+  while I >= 0 do
+  begin
+    if (M.Tree.Kind[I] = xnkElement) or (M.Tree.Kind[I] = xnkText) and (Trim8(M.Tree.ValueUtf8(I)) <> '') then
+      Fail(M, E, 'XTSE1205', 'xsl:key has use and content');
+    I := M.Tree.NextSibling[I];
+  end;
+  I := FC.Keys.IndexOf(LandrixXmlUtf8ToString(Name));
+  if I >= 0 then
+    K := TXsltKey(FC.Keys.Objects[I])
+  else
+  begin
+    K := TXsltKey.Create;
+    K.Name := Name;
+    K.Index := Integer(FC.Keys.Count);
+    FC.Keys.AddObject(LandrixXmlUtf8ToString(Name), K);
+  end;
+  Decl := TXsltKeyDecl.Create;
+  K.Decls.Add(Decl);
+  Decl.Use := Compile(M, E, V, nil);
+  Branches := SplitPattern(ReqAttr(M, E, 'match'));
+  SetLength(Decl.Patterns, Length(Branches));
+  SetLength(Decl.Relative, Length(Branches));
+  for I := 0 to Integer(Length(Branches)) - 1 do
+  begin
+    if Branches[I] = '' then
+      Fail(M, E, 'XTSE0340', 'an empty pattern');
+    Decl.Patterns[I] := PatternBranch(M, E, Branches[I], nil, Decl.Relative[I]);
+  end;
+end;
+
+{ xsl:decimal-format: a name without prefix (format-number() gets it as a
+  string and resolves no prefixes), the characters one each (XTSE0020) }
+{ an NCName (non-ASCII characters taken as name characters) }
+function NameOk(const N: TLandrixXmlUtf8): Boolean;
+var
+  K: Integer;
+begin
+  Result := (N <> '') and not (N[1] in ['0'..'9', '-', '.']);
+  for K := 1 to Length(N) do
+    if not ((N[K] in ['A'..'Z', 'a'..'z', '0'..'9', '_', '-', '.']) or (Ord(N[K]) >= 128)) then
+      Result := False;
+end;
+
+procedure TCompiler.CompileDecimalFormat(D: TDecl);
+var
+  M: TModule;
+  E, I, J, K: Integer;
+  Name, L, V: TLandrixXmlUtf8;
+  F: TXsltDecimalFormat;
+
+  function CharCount(const S: TLandrixXmlUtf8): Integer;
+  var
+    J: Integer;
+  begin
+    Result := 0;
+    for J := 1 to Length(S) do
+      if Ord(S[J]) and $C0 <> $80 then
+        Inc(Result);
+  end;
+
+begin
+  M := D.Module;
+  E := D.Element;
+  Name := '';
+  if Attr(M, E, 'name', V) then
+  begin
+    V := Trim8(V);
+    if Pos8(':', V) > 0 then
+      Unsupported(M, E, 'a decimal format name with a prefix');
+    if not NameOk(V) then
+      Fail(M, E, 'XTSE0020', 'not a decimal format name: "' + LandrixXmlUtf8ToString(V) + '"');
+    Name := V;
+  end;
+  K := FC.DecimalFormats.IndexOf(LandrixXmlUtf8ToString(Name));
+  if K >= 0 then
+    F := TXsltDecimalFormat(FC.DecimalFormats.Objects[K])
+  else
+  begin
+    F := TXsltDecimalFormat.Create;
+    FC.DecimalFormats.AddObject(LandrixXmlUtf8ToString(Name), F);
+  end;
+  for I := E + 1 to E + M.Tree.AttributeCount[E] do
+  begin
+    if M.Tree.NamespaceUriUtf8(I) <> '' then
+      Continue;
+    L := M.Tree.LocalNameUtf8(I);
+    V := M.Tree.ValueUtf8(I);
+    if (L = 'name') or (L = 'infinity') or (L = 'NaN') then
+      { strings }
+    else if (L = 'decimal-separator') or (L = 'grouping-separator') or (L = 'minus-sign') or (L = 'percent') or
+      (L = 'per-mille') or (L = 'zero-digit') or (L = 'digit') or (L = 'pattern-separator') then
+    begin
+      if CharCount(V) <> 1 then
+        Fail(M, E, 'XTSE0020', 'xsl:decimal-format ' + LandrixXmlUtf8ToString(L) + ' must be one character');
+    end
+    else
+      Fail(M, E, 'XTSE0090', 'xsl:decimal-format has no attribute ' + LandrixXmlUtf8ToString(L));
+    { a property given twice with the same precedence and different values
+      (XTSE1290); a higher precedence wins }
+    if L <> 'name' then
+    begin
+      J := F.PropertyIndex(L);
+      if F.Precedences[J] > D.Precedence then
+        Continue;
+      if (F.Precedences[J] = D.Precedence) and (F.Values[J] <> V) then
+        Fail(M, E, 'XTSE1290', 'two values of ' + LandrixXmlUtf8ToString(L) + ' for the decimal format "' +
+          LandrixXmlUtf8ToString(Name) + '"');
+      F.Precedences[J] := D.Precedence;
+      F.Values[J] := V;
+    end;
+    if L = 'decimal-separator' then
+      F.DecimalSeparator := V
+    else if L = 'grouping-separator' then
+      F.GroupingSeparator := V
+    else if L = 'infinity' then
+      F.Infinity := V
+    else if L = 'minus-sign' then
+      F.MinusSign := V
+    else if L = 'NaN' then
+      F.NaN := V
+    else if L = 'percent' then
+      F.Percent := V
+    else if L = 'per-mille' then
+      F.PerMille := V
+    else if L = 'zero-digit' then
+      F.ZeroDigit := V
+    else if L = 'digit' then
+      F.Digit := V
+    else if L = 'pattern-separator' then
+      F.PatternSeparator := V;
+  end;
+  if F.ZeroDigit <> '0' then
+  begin
+    if (Length(F.ZeroDigit) = 1) or not (F.ZeroDigit[1] in [#$C0..#$FF]) then
+      Fail(M, E, 'XTSE1295', 'the zero digit must be a digit of value zero');
+    Unsupported(M, E, 'a zero digit other than 0');
+  end;
+  { the characters that format a number are distinct }
+  if (F.DecimalSeparator = F.GroupingSeparator) or (F.DecimalSeparator = F.Percent) or
+    (F.DecimalSeparator = F.PerMille) or (F.DecimalSeparator = F.Digit) or
+    (F.DecimalSeparator = F.PatternSeparator) or (F.GroupingSeparator = F.Percent) or
+    (F.GroupingSeparator = F.PerMille) or (F.GroupingSeparator = F.Digit) or
+    (F.GroupingSeparator = F.PatternSeparator) or (F.Percent = F.PerMille) or (F.Percent = F.Digit) or
+    (F.Percent = F.PatternSeparator) or (F.PerMille = F.Digit) or (F.PerMille = F.PatternSeparator) or
+    (F.Digit = F.PatternSeparator) or
+    (Length(F.DecimalSeparator) = 1) and (F.DecimalSeparator[1] in ['0'..'9']) or
+    (Length(F.GroupingSeparator) = 1) and (F.GroupingSeparator[1] in ['0'..'9']) or
+    (Length(F.Digit) = 1) and (F.Digit[1] in ['0'..'9']) or
+    (Length(F.PatternSeparator) = 1) and (F.PatternSeparator[1] in ['0'..'9']) or
+    (Length(F.Percent) = 1) and (F.Percent[1] in ['0'..'9']) or
+    (Length(F.PerMille) = 1) and (F.PerMille[1] in ['0'..'9']) then
+    Fail(M, E, 'XTSE1300', 'the characters of a decimal format must be distinct');
+end;
+
 procedure TCompiler.AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8);
 var
   Branches: TLandrixXmlUtf8Array;
@@ -2566,6 +2871,14 @@ begin
   Add(LandrixXmlXPathFunctionNamespace, 'format-date', 5, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'format-time', 2, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'format-time', 5, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'current-group', 0, [xffVolatile], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'current-grouping-key', 0, [xffVolatile], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'generate-id', 0, [xffFocus], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'generate-id', 1, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'key', 2, [xffFocus], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'key', 3, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'format-number', 2, [], -1);
+  Add(LandrixXmlXPathFunctionNamespace, 'format-number', 3, [], -1);
   SetLength(FC.ModuleUris, FModules.Count);
   for I := 0 to Integer(FModules.Count) - 1 do
   begin
@@ -2632,10 +2945,14 @@ begin
         CompileTemplate(D)
       else if L = 'output' then
         CompileOutput(D)
+      else if L = 'key' then
+        CompileKey(D)
+      else if L = 'decimal-format' then
+        CompileDecimalFormat(D)
       else if (L = 'variable') or (L = 'param') or (L = 'import') or (L = 'include') or
         (L = 'function') then
         { done }
-      else if (L = 'key') or (L = 'decimal-format') or (L = 'strip-space') or
+      else if (L = 'strip-space') or
         (L = 'preserve-space') or (L = 'attribute-set') or (L = 'namespace-alias') or
         (L = 'character-map') or (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
         (L = 'use-package') or (L = 'global-context-item') then

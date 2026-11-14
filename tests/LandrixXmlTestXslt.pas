@@ -93,7 +93,8 @@ end;
 procedure TestCases;
 var
   SR: TSearchRec;
-  Name, Expected: string;
+  Name: string;
+  Expected: TLandrixXmlUtf8;
   Count: Integer;
 begin
   Count := 0;
@@ -103,11 +104,13 @@ begin
         if Copy(SR.Name, 1, 1) = '_' then
           Continue;
         Name := ChangeFileExt(SR.Name, '');
+        { the expected output as bytes (a string would lose what the
+          platform's code page has not) }
         if FileExists(DataFolder + Name + '.err') then
-          Expected := 'error ' + Trim(LandrixXmlUtf8ToString(FileBytes(DataFolder + Name + '.err')))
+          Expected := U('error ' + Trim(LandrixXmlUtf8ToString(FileBytes(DataFolder + Name + '.err'))))
         else
-          Expected := LandrixXmlUtf8ToString(FileBytes(DataFolder + Name + '.out'));
-        CheckEqualsUtf8(U(Expected), RunCase(Name), 'case ' + Name);
+          Expected := FileBytes(DataFolder + Name + '.out');
+        CheckEqualsUtf8(Expected, RunCase(Name), 'case ' + Name);
         Inc(Count);
       until FindNext(SR) <> 0;
     finally
@@ -316,7 +319,7 @@ const
     '<xsl:output encoding="ISO-8859-1"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort/></xsl:for-each></xsl:template>',
     '<xsl:template match="/"><xsl:number lang="de"/></xsl:template>',
-    '<xsl:key name="k" match="a" use="."/><xsl:template match="/"/>',
+    '<xsl:key name="p:k" xmlns:p="urn:p" match="a" use="."/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:apply-templates><xsl:with-param name="p" tunnel="yes"/></xsl:apply-templates></xsl:template>',
     '<xsl:template match="/"><xsl:choose><xsl:when use-when="false()" test="1">a</xsl:when></xsl:choose></xsl:template>',
     '<xsl:param name="p" use-when="false()"/><xsl:template match="/"/>',

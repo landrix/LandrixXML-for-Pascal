@@ -247,6 +247,7 @@ type
     FLocalTop: Integer;
     FFunctions: TList;
     FCurrentNode: Integer;
+    FLazyDepth: Integer;
     FDepth: Integer;
     FMaxDepth: Integer;
     { the implicit time zone and the current dateTime (FHasClock: read
@@ -434,6 +435,9 @@ type
     function ConvertSequence(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType;
       const Name: string): TLandrixXmlXPathSequence;
     function TreeOfNode(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
+    { the number of the tree of Node in the order the trees were added: 0
+      for the evaluator's own tree }
+    function TreeNumber(Node: Integer): Integer;
     { Variables: slots below GlobalCount are global; the others belong to
       the current frame. Setting GlobalCount or FrameSize unbinds the slots
       concerned. }
@@ -474,6 +478,9 @@ type
     property Functions: TList read FFunctions write FFunctions;
     { the node fn:current() returns (the context node of a Schematron rule) }
     property CurrentNode: Integer read FCurrentNode write FCurrentNode;
+    { how many lazily bound variables are being evaluated (a caller tells
+      a function call made for a global variable from one of its own) }
+    property LazyDepth: Integer read FLazyDepth;
     property Tree: TLandrixXmlXPathTree read FTree;
     { the maximum nesting of user function calls (default 500) }
     property MaxDepth: Integer read FMaxDepth write FMaxDepth;
@@ -1994,6 +2001,7 @@ begin
         SavedFinal := FFinal;
         FPattern := False;
         EnterExpression(P^.Expression, SavedExpr, SavedBase);
+        Inc(FLazyDepth);
         try
           try
             if Node >= 0 then
@@ -2001,6 +2009,7 @@ begin
             else
               Value := Eval(FExpr.Root, -1, 0, 0, Empty);
           finally
+            Dec(FLazyDepth);
             LeaveExpression(SavedExpr, SavedBase);
             FCurrentNode := SavedCurrent;
             FPattern := SavedPattern;
@@ -2219,6 +2228,26 @@ end;
 function TLandrixXmlXPathEvaluator.TreeOfNode(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
 begin
   Result := TreeOf(Node, Base);
+end;
+
+function TLandrixXmlXPathEvaluator.TreeNumber(Node: Integer): Integer;
+var
+  Lo, Hi, M: Integer;
+begin
+  Result := 0;
+  if (Node < FTree.Count) or (FDocCount = 0) then
+    Exit;
+  Lo := 0;
+  Hi := FDocCount - 1;
+  while Lo < Hi do
+  begin
+    M := Lo + (Hi - Lo + 1) div 2;
+    if FDocBases[M] <= Node then
+      Lo := M
+    else
+      Hi := M - 1;
+  end;
+  Result := Lo + 1;
 end;
 
 function PatternMismatch(E: ELandrixXmlError): Boolean; forward;
