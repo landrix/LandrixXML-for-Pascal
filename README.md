@@ -398,7 +398,9 @@ sequence of its own is rejected when it is built), `xsl:namespace-alias`
 Saxon applies it), simplified stylesheets (a literal result element
 with `xsl:version` as the stylesheet or as an included or imported
 module), `xpath-default-namespace` (expressions, patterns, sequence
-types and the names of `xsl:strip-space` and `xsl:preserve-space`),
+types and the names of `xsl:strip-space` and `xsl:preserve-space`), `xml:base` in a
+stylesheet (the static base URI of the instructions below it, of the
+`href` of `xsl:include` and `xsl:import`, and of temporary trees),
 `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,

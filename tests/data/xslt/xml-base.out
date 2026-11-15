@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><out><static>http://example.org/a/</static><resolved>http://example.org/a/x.xml</resolved><nested xml:base="b/">http://example.org/a/b/</nested><inner>http://example.org/c/ http://example.org/c/y</inner><tree>http://example.com/t/</tree><copied>http://example.com/t/</copied></out>

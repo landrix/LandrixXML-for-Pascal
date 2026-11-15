@@ -79,9 +79,10 @@ const
   { regex-group#1 }
   XfnRegexGroup = 20;
   XfnFixedCount = 21;
-  { then per module: doc#1, doc-available#1, document#1, document#2,
-    static-base-uri#0, resolve-uri#1 (the module's URI is the static base
-    URI), unparsed-text#1/#2, unparsed-text-available#1/#2 }
+  { then per static base URI (each module's URI, then those xml:base
+    gives elements of the modules): doc#1, doc-available#1, document#1,
+    document#2, static-base-uri#0, resolve-uri#1, unparsed-text#1/#2,
+    unparsed-text-available#1/#2 }
   XfnPerModule = 10;
   XfnDoc = 0;
   XfnDocAvailable = 1;
@@ -162,6 +163,8 @@ type
   TXsltWithParam = class
   public
     Name: TLandrixXmlUtf8;
+    { the static base URI (of a temporary tree its body makes) }
+    BaseUri: TLandrixXmlUtf8;
     { tunnel="yes": passed on to the templates the called one invokes }
     Tunnel: Boolean;
     Select: TLandrixXmlXPathExpression;
@@ -176,6 +179,9 @@ type
   public
     Kind: TXsltInstrKind;
     Module: TLandrixXmlUtf8;
+    { the static base URI (xml:base applied): the base URI of a temporary
+      tree it makes }
+    BaseUri: TLandrixXmlUtf8;
     Line: Integer;
     Column: Integer;
     { the sequence constructor (TXsltInstr, owned) }
@@ -318,6 +324,8 @@ type
     Name: TLandrixXmlUtf8;
     Lexical: TLandrixXmlUtf8;
     Module: TLandrixXmlUtf8;
+    { the static base URI (of a temporary tree its body makes) }
+    BaseUri: TLandrixXmlUtf8;
     Line: Integer;
     Column: Integer;
     Slot: Integer;
@@ -914,6 +922,11 @@ type
     { the xsl:result-document instructions with a literal format, checked
       when every xsl:output is known (Finish) }
     FFormatChecks: TList;
+    { the static base URIs xml:base gives (other than the modules' URIs):
+      base index FModules.Count + I is FBaseUris[I] }
+    FBaseUris: TStringList;
+    { the static base URI of the use-when being evaluated }
+    FUseWhenBase: TLandrixXmlUtf8;
     { the character maps (Clark name -> TCharMap, owned; the one of the
       highest import precedence) and the uses of them (TMapRef, owned) in
       declaration order }
@@ -927,6 +940,8 @@ type
     procedure CheckModule(M: TModule);
     procedure PruneUseWhen(M: TModule);
     function HasXmlBase(M: TModule; E: Integer): Boolean;
+    function StaticBase(M: TModule; E: Integer): TLandrixXmlUtf8;
+    function BaseIndex(M: TModule; E: Integer): Integer;
     function XPathDefaultNamespace(M: TModule; E: Integer): TLandrixXmlUtf8;
     function UseWhen(M: TModule; E: Integer; const Text: TLandrixXmlUtf8): Boolean;
     function UseWhenHost(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
@@ -1062,6 +1077,8 @@ begin
   FVarUris := TXsltStringList.Create;
   FVarUris.CaseSensitive := True;
   FFormatChecks := TList.Create;
+  FBaseUris := TXsltStringList.Create;
+  FBaseUris.CaseSensitive := True;
   FCharMaps := TXsltStringList.Create;
   FCharMaps.CaseSensitive := True;
   FCharMaps.Sorted := True;
@@ -1089,6 +1106,7 @@ begin
   FUseWhenDefs.Free;
   FUseWhenTree.Free;
   FFormatChecks.Free;
+  FBaseUris.Free;
   FVarUris.Free;
   FChain.Free;
   FAllModeTemplates.Free;
@@ -1208,7 +1226,7 @@ var
   I: Integer;
 begin
   Content := nil;
-  if not FResolver.Resolve(xrkStylesheet, M.Uri, Href, Uri, Content) then
+  if not FResolver.Resolve(xrkStylesheet, StaticBase(M, E), Href, Uri, Content) then
     Fail(M, E, 'XTSE0165', 'the stylesheet module ' + LandrixXmlUtf8ToString(Href) + ' cannot be read');
   try
     { a cycle: the module is being included or imported already (the same
@@ -1375,10 +1393,6 @@ begin
   Xsl := M.Tree.NamespaceUriUtf8(E) = XsltNamespace;
   for I := E + 1 to E + M.Tree.AttributeCount[E] do
   begin
-    { xml:base would change the static base URI of the instructions in
-      it (the module URI is taken for all of them) }
-    if (M.Tree.NamespaceUriUtf8(I) = LandrixXmlNamespaceXml) and (M.Tree.LocalNameUtf8(I) = 'base') then
-      Unsupported(M, E, 'xml:base in a stylesheet');
     if Xsl then
     begin
       if M.Tree.NamespaceUriUtf8(I) = XsltNamespace then
@@ -1433,6 +1447,53 @@ begin
   end;
 end;
 
+{ the static base URI of E: the module's URI with the xml:base
+  attributes of E and its ancestors applied, outermost first }
+function TCompiler.StaticBase(M: TModule; E: Integer): TLandrixXmlUtf8;
+var
+  Bases: TLandrixXmlUtf8Array;
+  A, I, N: Integer;
+begin
+  Bases := nil;
+  N := 0;
+  A := E;
+  while A >= 0 do
+  begin
+    if M.Tree.Kind[A] = xnkElement then
+      for I := A + 1 to A + M.Tree.AttributeCount[A] do
+        if (M.Tree.NamespaceUriUtf8(I) = LandrixXmlNamespaceXml) and (M.Tree.LocalNameUtf8(I) = 'base') then
+        begin
+          SetLength(Bases, N + 1);
+          Bases[N] := M.Tree.ValueUtf8(I);
+          Inc(N);
+        end;
+    A := M.Tree.Parent[A];
+  end;
+  Result := M.Uri;
+  for I := N - 1 downto 0 do
+    Result := LandrixXmlXPathResolveUri(Bases[I], Result);
+end;
+
+{ the index of the functions with E's static base URI (doc(),
+  static-base-uri() and the others): the module's, or one xml:base gives
+  (registered by AddModuleFunctions) }
+function TCompiler.BaseIndex(M: TModule; E: Integer): Integer;
+var
+  B: TLandrixXmlUtf8;
+begin
+  Result := M.Index;
+  if E < 0 then
+    Exit;
+  B := StaticBase(M, E);
+  if B = M.Uri then
+    Exit;
+  Result := FBaseUris.IndexOf(LandrixXmlUtf8ToString(B));
+  if Result < 0 then
+    Result := M.Index
+  else
+    Inc(Result, FModules.Count);
+end;
+
 function TCompiler.HasXmlBase(M: TModule; E: Integer): Boolean;
 var
   A: Integer;
@@ -1472,7 +1533,6 @@ var
   Expr: TLandrixXmlXPathExpression;
   Def: TLandrixXmlXPathFunctionDef;
   Focus: TLandrixXmlXPathFocus;
-  A: Integer;
 begin
   Result := True;
   if FUseWhenEvaluator = nil then
@@ -1513,15 +1573,8 @@ begin
     Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'static-base-uri', 0);
     Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'resolve-uri', 1);
     Ctx.DefaultElementNamespace := XPathDefaultNamespace(M, E);
-    A := E;
-    while A >= 0 do
-    begin
-      { the static base URI is the module's (see CheckStandard) }
-      if (M.Tree.Kind[A] = xnkElement) and HasXmlBase(M, A) then
-        Unsupported(M, E, 'xml:base in a stylesheet');
-      A := M.Tree.Parent[A];
-    end;
     FUseWhenModule := M;
+    FUseWhenBase := StaticBase(M, E);
     try
       Expr := TLandrixXmlXPathExpression.Create(Text, Ctx);
       Focus.Node := -1;
@@ -1560,10 +1613,10 @@ begin
         { static-base-uri(): the module's URI as xs:anyURI; resolve-uri()
           with one argument against it; a module without URI has no
           static base URI (as at run time) }
-        if (Def.Tag = 4) and (FUseWhenModule.Uri = '') then
+        if (Def.Tag = 4) and (FUseWhenBase = '') then
           Text := '()'
         else if Def.Tag = 4 then
-          Text := 'xs:anyURI(' + XPathLiteral(FUseWhenModule.Uri) + ')'
+          Text := 'xs:anyURI(' + XPathLiteral(FUseWhenBase) + ')'
         else
         begin
           V := Evaluator.ConvertSequence(Arg0, LandrixXmlXPathParseSequenceType('xs:string?', nil),
@@ -1573,11 +1626,11 @@ begin
             Result := LandrixXmlXPathEmpty;
             Exit;
           end;
-          if FUseWhenModule.Uri = '' then
+          if FUseWhenBase = '' then
             Text := 'resolve-uri(' + XPathLiteral(Evaluator.ItemString(V.Items[0])) + ')'
           else
             Text := 'resolve-uri(' + XPathLiteral(Evaluator.ItemString(V.Items[0])) + ', ' +
-              XPathLiteral(FUseWhenModule.Uri) + ')';
+              XPathLiteral(FUseWhenBase) + ')';
         end;
         Expr := TLandrixXmlXPathExpression.Create(Text, nil);
         try
@@ -1827,10 +1880,11 @@ function TCompiler.NewContext(M: TModule; E: Integer; Scope: TScope): TLandrixXm
 var
   Prefixes, Names: TLandrixXmlUtf8Array;
   Uri: TLandrixXmlUtf8;
-  I, J, N, K: Integer;
+  I, J, N, K, Base: Integer;
   G: TXsltGlobal;
 begin
   Names := nil;
+  Base := BaseIndex(M, E);
   Result := TLandrixXmlXPathStaticContext.Create;
   try
     Result.Profile := xppSaxon;
@@ -1887,7 +1941,7 @@ begin
       if (I = XfnGlobal) and not FInternalCall then
         { out of reach of the stylesheet's expressions }
         K := Result.DeclareFunction(XsltInternalNamespace, '#global', FC.FunctionArities[I])
-      else if (FC.FunctionModules[I] >= 0) and (FC.FunctionModules[I] <> M.Index) then
+      else if (FC.FunctionModules[I] >= 0) and (FC.FunctionModules[I] <> Base) then
         K := Result.DeclareFunction(XsltInternalNamespace, '#m' + LandrixXmlStringToUtf8(IntToStr(I)),
           FC.FunctionArities[I])
       else
@@ -2055,6 +2109,7 @@ function TCompiler.NewInstr(Kind: TXsltInstrKind; M: TModule; E: Integer): TXslt
 begin
   Result := TXsltInstr.Create(Kind);
   Result.Module := M.Uri;
+  Result.BaseUri := StaticBase(M, E);
   Result.Line := M.LineOf(E);
   Result.Column := M.ColumnOf(E);
 end;
@@ -2414,6 +2469,7 @@ begin
     begin
       P := TXsltWithParam.Create;
       Instr.Params.Add(P);
+      P.BaseUri := StaticBase(M, C);
       P.Name := QNameToClark(M, C, ReqAttr(M, C, 'name'), False);
       P.Tunnel := YesNoAttr(M, C, 'tunnel');
       for I := 0 to Integer(Instr.Params.Count) - 2 do
@@ -3022,6 +3078,7 @@ begin
       Lexical := Trim8(ReqAttr(D.Module, D.Element, 'name'));
       G.Lexical := Lexical;
       G.Module := D.Module.Uri;
+      G.BaseUri := StaticBase(D.Module, D.Element);
       G.Line := D.Module.LineOf(D.Element);
       G.Column := D.Module.ColumnOf(D.Element);
       G.Slot := I;
@@ -5059,8 +5116,10 @@ end;
   each module. }
 procedure TCompiler.AddModuleFunctions;
 var
-  N, I, K, F: Integer;
+  N, I, K, F, E: Integer;
   T: TXsltTemplate;
+  M: TModule;
+  B: TLandrixXmlUtf8;
 
   procedure Add(const Uri, Name: TLandrixXmlUtf8; Arity: Integer; Flags: TLandrixXmlXPathFunctionFlags;
     Module: Integer);
@@ -5074,7 +5133,20 @@ var
   end;
 
 begin
-  N := XfnFixedCount + XfnPerModule * Integer(FModules.Count) + Integer(FC.UserFunctions.Count);
+  { the static base URIs xml:base gives }
+  for I := 0 to Integer(FModules.Count) - 1 do
+  begin
+    M := TModule(FModules[I]);
+    for E := 0 to M.Tree.Count - 1 do
+      if (M.Tree.Kind[E] = xnkElement) and HasXmlBase(M, E) then
+      begin
+        B := StaticBase(M, E);
+        if (B <> M.Uri) and (FBaseUris.IndexOf(LandrixXmlUtf8ToString(B)) < 0) then
+          FBaseUris.Add(LandrixXmlUtf8ToString(B));
+      end;
+  end;
+  N := XfnFixedCount + XfnPerModule * (Integer(FModules.Count) + Integer(FBaseUris.Count)) +
+    Integer(FC.UserFunctions.Count);
   SetLength(FC.FunctionUris, N);
   SetLength(FC.FunctionNames, N);
   SetLength(FC.FunctionArities, N);
@@ -5102,13 +5174,15 @@ begin
   Add(LandrixXmlXPathFunctionNamespace, 'function-available', 2, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'element-available', 1, [], -1);
   Add(LandrixXmlXPathFunctionNamespace, 'regex-group', 1, [xffVolatile], -1);
-  SetLength(FC.ModuleUris, FModules.Count);
+  SetLength(FC.ModuleUris, Integer(FModules.Count) + Integer(FBaseUris.Count));
   for I := 0 to Integer(FModules.Count) - 1 do
   begin
     K := TModule(FModules[I]).Index;
     FC.ModuleUris[K] := TModule(FModules[I]).Uri;
   end;
-  for K := 0 to Integer(FModules.Count) - 1 do
+  for I := 0 to Integer(FBaseUris.Count) - 1 do
+    FC.ModuleUris[Integer(FModules.Count) + I] := LandrixXmlStringToUtf8(FBaseUris[I]);
+  for K := 0 to Integer(Length(FC.ModuleUris)) - 1 do
   begin
     Add(LandrixXmlXPathFunctionNamespace, 'doc', 1, [], K);
     Add(LandrixXmlXPathFunctionNamespace, 'doc-available', 1, [], K);

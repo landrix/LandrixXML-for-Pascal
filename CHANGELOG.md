@@ -49,6 +49,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: simplified stylesheets (a literal result element with
   `xsl:version` as a stylesheet module).
 - XSLT: `xpath-default-namespace` and `xsl:xpath-default-namespace`.
+- XSLT: `xml:base` in a stylesheet: the static base URI of the
+  instructions below it (`static-base-uri()`, `resolve-uri()`, `doc()`,
+  `document()`, `unparsed-text()`), the `href` of `xsl:include` and
+  `xsl:import`, and the base URI of the temporary trees an instruction
+  makes and of nodes made or copied at the top of a sequence, as Saxon
+  gives them.
 - XPath: `TLandrixXmlXPathStaticContext.DefaultElementNamespace` (the
   default element/type namespace, '' unless set), also readable on the
   compiled expression.

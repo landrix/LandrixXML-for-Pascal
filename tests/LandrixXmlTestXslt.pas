@@ -473,7 +473,7 @@ const
     '<xsl:template match="/"><xsl:result-document validation="strict"/></xsl:template>',
     '<xsl:template match="/"><xsl:for-each select="1"><!--c--><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
     '<xsl:output suppress-indentation="a"/><xsl:template match="/"/>',
-    '<xsl:template match="/" xml:base="http://example.org/"><r/></xsl:template>');
+    '<xsl:template match="/"><r xsl:type="x"/></xsl:template>');
 var
   Sheet: TLandrixXmlXsltStylesheet;
   I: Integer;

@@ -151,6 +151,16 @@ type
   TSequenceReceiver = class(TReceiver)
   private
     FItems: TLandrixXmlXPathSequence;
+    { the base URI of the next node of its own (xsl:copy: the original's;
+      FHasNextBase), else BaseUri }
+    FNextBase: TLandrixXmlUtf8;
+    FHasNextBase: Boolean;
+    FTreeBase: TLandrixXmlUtf8;
+    { the static base URI of the xsl:copy-of whose items are copied }
+    CopyBase: TLandrixXmlUtf8;
+    { the base URI of the trees of the nodes made at the top (the static
+      base URI of the instruction that makes the sequence; set by TRun) }
+    BaseUri: TLandrixXmlUtf8;
     FInner: TTreeReceiver;
     FInnerTree: TLandrixXmlXPathTree;
     procedure StartNode;
@@ -167,6 +177,7 @@ type
     procedure EndElement; override;
     procedure AddItem(const It: TLandrixXmlXPathItem); override;
     procedure CopyItem(const It: TLandrixXmlXPathItem); override;
+    procedure SetNextBase(const Uri: TLandrixXmlUtf8);
     property Items: TLandrixXmlXPathSequence read FItems;
   end;
 
@@ -306,13 +317,14 @@ type
       const Mode: TXsltMode; const Separator: TLandrixXmlUtf8): TLandrixXmlUtf8;
     function TemporarySequence(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
       const Mode: TXsltMode): TLandrixXmlXPathSequence;
-    function BodySequence(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
+    function BodySequence(Body: TObjectList; const BaseUri: TLandrixXmlUtf8; const Focus: TLandrixXmlXPathFocus;
       const Mode: TXsltMode): TLandrixXmlXPathSequence;
     function ContentDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus;
       const Mode: TXsltMode): TLandrixXmlXPathSequence;
-    function BodyDocument(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
+    function BodyDocument(Body: TObjectList; const BaseUri: TLandrixXmlUtf8; const Focus: TLandrixXmlXPathFocus;
       const Mode: TXsltMode): TLandrixXmlXPathSequence;
-    function VariableValue(Instr: TXsltInstr; Select: TLandrixXmlXPathExpression; Body: TObjectList;
+    function VariableValue(Instr: TXsltInstr; const BaseUri: TLandrixXmlUtf8; Select: TLandrixXmlXPathExpression;
+      Body: TObjectList;
       HasAs: Boolean; const AsType: TLandrixXmlXPathSequenceType; const Name: TLandrixXmlUtf8;
       const Focus: TLandrixXmlXPathFocus; const Mode: TXsltMode): TLandrixXmlXPathSequence;
     procedure Exec(Body: TObjectList; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
@@ -916,6 +928,22 @@ begin
   FTree.EndBuild;
 end;
 
+{ the xml:base attribute of element N of T (False if it has none) }
+function XmlBaseOf(T: TLandrixXmlXPathTree; N: Integer; out Value: TLandrixXmlUtf8): Boolean;
+var
+  A: Integer;
+begin
+  Result := True;
+  for A := N + 1 to N + T.AttributeCount[N] do
+    if (T.LocalNameUtf8(A) = 'base') and (T.NamespaceUriUtf8(A) = LandrixXmlNamespaceXml) then
+    begin
+      Value := T.ValueUtf8(A);
+      Exit;
+    end;
+  Value := '';
+  Result := False;
+end;
+
 constructor TSequenceReceiver.Create(ARun: TRun);
 begin
   inherited Create(ARun);
@@ -930,8 +958,20 @@ begin
 end;
 
 { a node at the top: a tree of its own }
+procedure TSequenceReceiver.SetNextBase(const Uri: TLandrixXmlUtf8);
+begin
+  if FInner <> nil then
+    Exit;
+  FNextBase := Uri;
+  FHasNextBase := True;
+end;
+
 procedure TSequenceReceiver.StartNode;
 begin
+  FTreeBase := BaseUri;
+  if FHasNextBase then
+    FTreeBase := FNextBase;
+  FHasNextBase := False;
   FInnerTree := TLandrixXmlXPathTree.Create;
   FInnerTree.BeginBuild(False);
   FInner := TTreeReceiver.Create(FRun, FInnerTree, False);
@@ -947,6 +987,10 @@ begin
   FInner := nil;
   T := FInnerTree;
   FInnerTree := nil;
+  { a parentless attribute, text, comment or processing instruction has
+    no base URI }
+  if (T.Count > 0) and (T.Kind[0] in [xnkElement, xnkDocument]) then
+    T.BaseUri := FTreeBase;
   Base := FRun.AddTree(T);
   LandrixXmlXPathAppend(FItems, LandrixXmlXPathNodeItem(Base).Items[0]);
 end;
@@ -1030,6 +1074,7 @@ end;
 
 procedure TSequenceReceiver.CopyItem(const It: TLandrixXmlXPathItem);
 var
+  U: TLandrixXmlUtf8;
   T: TLandrixXmlXPathTree;
   Builder: TTreeReceiver;
   B: Integer;
@@ -1059,6 +1104,13 @@ begin
     finally
       Builder.Free;
     end;
+    { the original's base URI; with a copied xml:base, that value resolved
+      against the static base of the xsl:copy-of (the copied attribute
+      applies once more, as in Saxon) }
+    if (Tree.Kind[It.Node - B] = xnkElement) and XmlBaseOf(Tree, It.Node - B, U) then
+      T.BaseUri := LandrixXmlXPathResolveUri(U, CopyBase)
+    else if LandrixXmlXPathNodeBaseUri(Tree, It.Node - B, U) then
+      T.BaseUri := U;
   except
     T.Free;
     raise;
@@ -1068,6 +1120,7 @@ begin
 end;
 
 { --- the run ------------------------------------------------------------------------ }
+
 
 type
   { the node numbers of one key value }
@@ -1525,7 +1578,7 @@ begin
         FTunnel := nil;
         FEvaluator.PushFrame(G.FrameSize);
         try
-          Result := VariableValue(nil, nil, G.Body, G.HasAs, G.AsType, G.Name, Focus, FC.FindMode(''));
+          Result := VariableValue(nil, G.BaseUri, nil, G.Body, G.HasAs, G.AsType, G.Name, Focus, FC.FindMode(''));
         finally
           FEvaluator.PopFrame;
           FEvaluator.CurrentNode := SavedNode;
@@ -1663,18 +1716,19 @@ begin
   Saved := FTemporary;
   FTemporary := True;
   try
-    Result := BodySequence(Body, Focus, Mode);
+    Result := BodySequence(Body, '', Focus, Mode);
   finally
     FTemporary := Saved;
   end;
 end;
 
-function TRun.BodySequence(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
+function TRun.BodySequence(Body: TObjectList; const BaseUri: TLandrixXmlUtf8; const Focus: TLandrixXmlXPathFocus;
   const Mode: TXsltMode): TLandrixXmlXPathSequence;
 var
   R: TSequenceReceiver;
 begin
   R := TSequenceReceiver.Create(Self);
+  R.BaseUri := BaseUri;
   try
     Exec(Body, Focus, Mode, R);
     Result := R.Items;
@@ -1724,8 +1778,9 @@ begin
   Result := LandrixXmlXPathNodeItem(AddTree(T));
 end;
 
-{ a temporary tree: the document node of the body's result }
-function TRun.BodyDocument(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
+{ a temporary tree: the document node of the body's result, with the
+  static base URI of the instruction that makes it }
+function TRun.BodyDocument(Body: TObjectList; const BaseUri: TLandrixXmlUtf8; const Focus: TLandrixXmlXPathFocus;
   const Mode: TXsltMode): TLandrixXmlXPathSequence;
 var
   T: TLandrixXmlXPathTree;
@@ -1741,6 +1796,8 @@ begin
     finally
       R.Free;
     end;
+    { after the build (BeginBuild clears it) }
+    T.BaseUri := BaseUri;
   except
     T.Free;
     raise;
@@ -1759,13 +1816,14 @@ begin
   Saved := FTemporary;
   FTemporary := True;
   try
-    Result := SimpleContent(BodySequence(Body, Focus, Mode), Separator);
+    Result := SimpleContent(BodySequence(Body, '', Focus, Mode), Separator);
   finally
     FTemporary := Saved;
   end;
 end;
 
-function TRun.VariableValue(Instr: TXsltInstr; Select: TLandrixXmlXPathExpression; Body: TObjectList;
+function TRun.VariableValue(Instr: TXsltInstr; const BaseUri: TLandrixXmlUtf8; Select: TLandrixXmlXPathExpression;
+  Body: TObjectList;
   HasAs: Boolean; const AsType: TLandrixXmlXPathSequenceType; const Name: TLandrixXmlUtf8;
   const Focus: TLandrixXmlXPathFocus; const Mode: TXsltMode): TLandrixXmlXPathSequence;
 var
@@ -1778,11 +1836,11 @@ begin
     if Select <> nil then
       Result := Eval(Instr, Select, Focus)
     else if HasAs then
-      Result := BodySequence(Body, Focus, Mode)
+      Result := BodySequence(Body, BaseUri, Focus, Mode)
     else if Body.Count = 0 then
       Result := LandrixXmlXPathStringItem('')
     else
-      Result := BodyDocument(Body, Focus, Mode);
+      Result := BodyDocument(Body, BaseUri, Focus, Mode);
   finally
     FTemporary := Saved;
   end;
@@ -1813,6 +1871,9 @@ var
   I: Integer;
   A: TXsltAttributeTemplate;
 begin
+  { an element at the top of a sequence: the instruction's static base }
+  if R is TSequenceReceiver then
+    TSequenceReceiver(R).SetNextBase(Instr.BaseUri);
   R.StartElement(Instr.NamespaceUri, Instr.Prefix, Instr.LocalName);
   for I := 0 to Integer(Length(Instr.NsPrefixes)) - 1 do
     R.NamespaceNode(Instr.NsPrefixes[I], Instr.NsUris[I]);
@@ -2116,9 +2177,17 @@ begin
     xnkDocument:
       { a document node of its own (an attribute in it is XTDE0420; in a
         tree, its content stays apart from adjacent atomic values) }
-      R.Item(BodyDocument(Instr.Body, Focus, Mode).Items[0], False);
+      R.Item(BodyDocument(Instr.Body, T.BaseUri, Focus, Mode).Items[0], False);
     xnkElement:
       begin
+        { a copy at the top of a sequence has the original's base URI (none
+          if it has none) }
+        if R is TSequenceReceiver then
+        begin
+          if not LandrixXmlXPathNodeBaseUri(T, I, Uri) then
+            Uri := '';
+          TSequenceReceiver(R).SetNextBase(Uri);
+        end;
         R.StartElement(T.NamespaceUriUtf8(I), T.PrefixUtf8(I), T.LocalNameUtf8(I));
         Prefixes := T.InScopePrefixesUtf8(I);
         for K := 0 to Integer(Length(Prefixes)) - 1 do
@@ -2149,7 +2218,7 @@ begin
       Continue;
     SetLength(Result, N + 1);
     Result[N].Name := P.Name;
-    Result[N].Value := VariableValue(Instr, P.Select, P.Body, P.HasAs, P.AsType, P.Name, Focus, Mode);
+    Result[N].Value := VariableValue(Instr, P.BaseUri, P.Select, P.Body, P.HasAs, P.AsType, P.Name, Focus, Mode);
     Inc(N);
   end;
 end;
@@ -2175,7 +2244,7 @@ begin
     if N = Length(Result) then
       SetLength(Result, N + 1);
     Result[N].Name := P.Name;
-    Result[N].Value := VariableValue(Instr, P.Select, P.Body, P.HasAs, P.AsType, P.Name, Focus, Mode);
+    Result[N].Value := VariableValue(Instr, P.BaseUri, P.Select, P.Body, P.HasAs, P.AsType, P.Name, Focus, Mode);
   end;
 end;
 
@@ -2295,7 +2364,7 @@ begin
     if P.Required then
       raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTDE0700', 'the required parameter ' +
         LandrixXmlUtf8ToString(P.VarName) + ' is not supplied', P.Module, P.Line, P.Column);
-    FEvaluator.BindValue(P.Slot, VariableValue(P, P.Select, P.Body, P.HasAs, P.AsType, P.VarName, Focus, Mode));
+    FEvaluator.BindValue(P.Slot, VariableValue(P, P.BaseUri, P.Select, P.Body, P.HasAs, P.AsType, P.VarName, Focus, Mode));
   end;
 end;
 
@@ -2704,7 +2773,7 @@ end;
 
 procedure TRun.DoVariable(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
 begin
-  FEvaluator.BindValue(Instr.Slot, VariableValue(Instr, Instr.Select, Instr.Body, Instr.HasAs, Instr.AsType,
+  FEvaluator.BindValue(Instr.Slot, VariableValue(Instr, Instr.BaseUri, Instr.Select, Instr.Body, Instr.HasAs, Instr.AsType,
     Instr.VarName, Focus, Mode));
 end;
 
@@ -3005,7 +3074,7 @@ begin
   if Instr.Select <> nil then
     S := Eval(Instr, Instr.Select, Focus)
   else
-    S := BodySequence(Instr.Body, Focus, Mode);
+    S := BodySequence(Instr.Body, Instr.BaseUri, Focus, Mode);
   S := Sorted(Instr, Focus, Mode, S);
   for I := 0 to Integer(S.Count) - 1 do
     R.Item(S.Items[I], False);
@@ -3172,6 +3241,8 @@ var
   I: Integer;
 begin
   S := Eval(Instr, Instr.Select, Focus);
+  if R is TSequenceReceiver then
+    TSequenceReceiver(R).CopyBase := Instr.BaseUri;
   for I := 0 to Integer(S.Count) - 1 do
     R.Item(S.Items[I], Instr.Kind = xskCopyOf);
 end;
@@ -3181,6 +3252,8 @@ var
   Uri, Prefix, Local: TLandrixXmlUtf8;
 begin
   ComputedName(Instr, Focus, True, Uri, Prefix, Local);
+  if R is TSequenceReceiver then
+    TSequenceReceiver(R).SetNextBase(Instr.BaseUri);
   R.StartElement(Uri, Prefix, Local);
   if Instr.UseSets <> nil then
     DoUseAttributeSets(Instr.UseSets, Focus, Mode, R);
@@ -3245,7 +3318,7 @@ procedure TRun.DoDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus;
 var
   Doc: TLandrixXmlXPathSequence;
 begin
-  Doc := BodyDocument(Instr.Body, Focus, Mode);
+  Doc := BodyDocument(Instr.Body, Instr.BaseUri, Focus, Mode);
   R.Item(Doc.Items[0], False);
 end;
 
