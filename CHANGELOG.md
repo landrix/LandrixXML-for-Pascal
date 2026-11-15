@@ -31,6 +31,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `xsl:for-each-group`), `xsl:perform-sort`, `xsl:analyze-string` and
   `regex-group()`.
 - XSLT: `xsl:next-match` and `xsl:apply-imports` (with `xsl:with-param`).
+- XSLT: `xsl:result-document` and named `xsl:output` definitions.
+  Secondary results are collected by the transformer
+  (`ResultDocumentCount`, `ResultDocuments`, `FindResultDocument`,
+  `TLandrixXmlXsltResultDocument`), `href` resolves against the new
+  `BaseOutputUri`; nothing is written to disk.
 - `tools/run-xslt-tests.py` runs the XSLT 1.0 and 2.0 cases of the W3C
   XSLT test suite against a baseline (`tests/data/xslt-baseline.txt`).
 - XPath: the string concatenation operator `||` (XPath 3.0) in the

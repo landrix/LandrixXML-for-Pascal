@@ -99,6 +99,11 @@ const
   it rejects as unsupported). }
 function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 
+{ The Clark name of the format of xsl:result-document: a QName with the
+  given namespaces (no default namespace) or an EQName (Q, the URI in braces, the local name; as
+  Saxon accepts it); '' if it is neither or the prefix is not declared. }
+function XsltFormatClark(const Name: TLandrixXmlUtf8; const Prefixes, Uris: TLandrixXmlUtf8Array): TLandrixXmlUtf8;
+
 type
   { a string list that compares byte by byte (TStringList compares by the
     locale: AnsiCompareStr) }
@@ -115,7 +120,7 @@ type
     xskVariable, xskIf, xskChoose, xskWhen, xskForEach, xskSequence, xskCopyOf, xskCopy,
     xskElement, xskAttribute, xskComment, xskProcessingInstruction, xskMessage, xskDocument,
     xskNumber, xskNamespace, xskForEachGroup, xskPerformSort, xskAnalyzeString, xskNextMatch,
-    xskApplyImports);
+    xskApplyImports, xskResultDocument);
 
   { a value with literal parts and expressions in curly brackets: Exprs[I] nil for a
     literal part }
@@ -234,6 +239,13 @@ type
     RegexAvt: TXsltAvt;
     FlagsAvt: TXsltAvt;
     NonMatching: TObjectList;
+    { xsl:result-document: href (nil if absent), the format in FormatAvt
+      (nil if absent; a literal one is checked when compiled) and the
+      serialization attributes: the output property names (output-version
+      as version) and their attribute value templates }
+    HrefAvt: TXsltAvt;
+    OutputNames: TLandrixXmlUtf8Array;
+    OutputAvts: array of TXsltAvt;
     constructor Create(AKind: TXsltInstrKind);
     destructor Destroy; override;
   end;
@@ -333,6 +345,9 @@ type
     NamedTemplates: TStringList;
     Expressions: TObjectList;
     Output: TXsltOutputProperties;
+    { the named output definitions (xsl:output with name): Clark name ->
+      TXsltOutputProperties, owned }
+    NamedOutputs: TStringList;
     { the functions of every static context (see the unit comment) }
     FunctionUris: TLandrixXmlUtf8Array;
     FunctionNames: TLandrixXmlUtf8Array;
@@ -485,12 +500,12 @@ const
   { the XSLT elements CompileInstruction and the declaration loop
     translate (xsl:namespace-alias, xsl:attribute-set and others are
     rejected) }
-  Names: array[0..39] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+  Names: array[0..40] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
     'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
-    'strip-space', 'preserve-space', 'next-match', 'apply-imports');
+    'strip-space', 'preserve-space', 'next-match', 'apply-imports', 'result-document');
 var
   I: Integer;
 begin
@@ -641,6 +656,9 @@ begin
   NamedTemplates.Sorted := True;
   Expressions := TObjectList.Create;
   Output := TXsltOutputProperties.Create;
+  NamedOutputs := TXsltStringList.Create;
+  NamedOutputs.CaseSensitive := True;
+  NamedOutputs.Sorted := True;
   UserFunctions := TList.Create;
   Keys := TXsltStringList.Create;
   Keys.CaseSensitive := True;
@@ -661,6 +679,9 @@ begin
   Templates.Free;
   Globals.Free;
   Output.Free;
+  for I := 0 to Integer(NamedOutputs.Count) - 1 do
+    NamedOutputs.Objects[I].Free;
+  NamedOutputs.Free;
   Expressions.Free;
   UserFunctions.Free;
   for I := 0 to Integer(Keys.Count) - 1 do
@@ -812,6 +833,9 @@ type
       contexts bind them to }
     FVarUris: TStringList;
     FInternalCall: Boolean;
+    { the xsl:result-document instructions with a literal format, checked
+      when every xsl:output is known (Finish) }
+    FFormatChecks: TList;
     function VarName(const Clark: TLandrixXmlUtf8): TLandrixXmlUtf8;
     procedure CheckStandard(M: TModule; E: Integer);
     procedure CheckModule(M: TModule);
@@ -844,6 +868,7 @@ type
     function CompileInstr(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     function CompileLiteral(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     procedure CompileWithParams(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    function CompileResultDocument(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     procedure CompileSortKey(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
     procedure CompileSpace(D: TDecl; Strip: Boolean);
     procedure CompileAnalyzeString(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
@@ -937,6 +962,7 @@ begin
   FChain.CaseSensitive := True;
   FVarUris := TXsltStringList.Create;
   FVarUris.CaseSensitive := True;
+  FFormatChecks := TList.Create;
 end;
 
 destructor TCompiler.Destroy;
@@ -947,6 +973,7 @@ begin
   FUseWhenFunctions.Free;
   FUseWhenDefs.Free;
   FUseWhenTree.Free;
+  FFormatChecks.Free;
   FVarUris.Free;
   FChain.Free;
   FAllModeTemplates.Free;
@@ -2108,6 +2135,94 @@ begin
   end;
 end;
 
+procedure ScopeNamespaces(M: TModule; E: Integer; Instr: TXsltInstr); forward;
+
+{ the text of an attribute value template without expressions (its
+  literal parts) }
+function LiteralOf(A: TXsltAvt): TLandrixXmlUtf8;
+var
+  I: Integer;
+begin
+  Result := '';
+  for I := 0 to Integer(Length(A.Parts)) - 1 do
+    Result := Result + A.Parts[I];
+end;
+
+{ xsl:result-document: the serialization attributes are attribute value
+  templates; literal values are checked here as on xsl:output }
+function TCompiler.CompileResultDocument(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
+var
+  I, N: Integer;
+  L, V, Name: TLandrixXmlUtf8;
+  A: TXsltAvt;
+begin
+  Result := NewInstr(xskResultDocument, M, E);
+  try
+    ScopeNamespaces(M, E, Result);
+    for I := E + 1 to E + M.Tree.AttributeCount[E] do
+    begin
+      if M.Tree.NamespaceUriUtf8(I) <> '' then
+        Continue;
+      L := M.Tree.LocalNameUtf8(I);
+      V := M.Tree.ValueUtf8(I);
+      { standard attributes (CheckStandard) }
+      if (L = 'version') or (L = 'exclude-result-prefixes') or (L = 'extension-element-prefixes') or
+        (L = 'xpath-default-namespace') or (L = 'default-collation') or (L = 'use-when') or
+        (L = 'expand-text') or (L = 'default-mode') or (L = 'default-validation') or
+        (L = 'input-type-annotations') then
+        Continue;
+      if L = 'href' then
+      begin
+        Result.HrefAvt := CompileAvt(M, E, V, Scope);
+        Continue;
+      end;
+      if L = 'format' then
+      begin
+        Result.FormatAvt := CompileAvt(M, E, V, Scope);
+        { a literal one is checked by Finish (an xsl:output may follow) }
+        if Result.FormatAvt.IsLiteral then
+          FFormatChecks.Add(Result);
+        Continue;
+      end;
+      if (L = 'validation') and (Trim8(V) <> 'strip') and (Trim8(V) <> 'preserve') or (L = 'type') then
+        Unsupported(M, E, 'a type or validation of xsl:result-document');
+      if L = 'validation' then
+        Continue;
+      if L = 'use-character-maps' then
+        Unsupported(M, E, 'xsl:result-document use-character-maps');
+      if L = 'output-version' then
+        Name := 'version'
+      else
+        Name := L;
+      if (L = 'name') or (L = 'version') or
+        (XsltOutputPropertyStatus(Name, 'yes') = xosUnknown) then
+        Fail(M, E, 'XTSE0090', 'xsl:result-document has no attribute ' + LandrixXmlUtf8ToString(L));
+      A := CompileAvt(M, E, V, Scope);
+      V := LiteralOf(A);
+      if A.IsLiteral then
+        case XsltOutputPropertyStatus(Name, Trim8(V)) of
+          xosUnsupported:
+            Unsupported(M, E, 'xsl:result-document ' + LandrixXmlUtf8ToString(L) + '="' +
+              LandrixXmlUtf8ToString(Trim8(V)) + '"');
+          xosInvalid:
+            Fail(M, E, 'XTSE0020', 'xsl:result-document ' + LandrixXmlUtf8ToString(L) + '="' +
+              LandrixXmlUtf8ToString(V) + '" is not a valid value');
+        else
+          { supported (the run checks it again) }
+        end;
+      N := Integer(Length(Result.OutputNames));
+      SetLength(Result.OutputNames, N + 1);
+      SetLength(Result.OutputAvts, N + 1);
+      Result.OutputNames[N] := Name;
+      Result.OutputAvts[N] := A;
+    end;
+    CompileBody(M, E, Scope, Result.Body, -1);
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
 procedure TCompiler.CompileWithParams(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
 var
   C: Integer;
@@ -2410,7 +2525,7 @@ begin
     Exit;
   if (L = 'matching-substring') or (L = 'non-matching-substring') then
     Fail(M, E, 'XTSE0010', 'xsl:' + LandrixXmlUtf8ToString(L) + ' is allowed in xsl:analyze-string only');
-  if (L = 'result-document') or (L = 'namespace') or (L = 'try') or
+  if (L = 'namespace') or (L = 'try') or
     (L = 'iterate') or (L = 'evaluate') or (L = 'where-populated') or (L = 'on-empty') or
     (L = 'on-non-empty') or (L = 'map') or (L = 'array') or (L = 'merge') or (L = 'fork') or
     (L = 'assert') or (L = 'break') or (L = 'next-iteration') or (L = 'source-document') or
@@ -2461,6 +2576,8 @@ begin
         Result.Mode := ModeOf(QNameToClark(M, E, V, False));
       CompileWithParams(M, E, Scope, Result);
     end
+    else if L = 'result-document' then
+      Result := CompileResultDocument(M, E, Scope)
     else if (L = 'next-match') or (L = 'apply-imports') then
     begin
       if L = 'next-match' then
@@ -3157,6 +3274,35 @@ begin
       Result := False;
 end;
 
+function XsltFormatClark(const Name: TLandrixXmlUtf8; const Prefixes, Uris: TLandrixXmlUtf8Array): TLandrixXmlUtf8;
+var
+  I, P: Integer;
+  Prefix, Local: TLandrixXmlUtf8;
+begin
+  Result := '';
+  if Copy(Name, 1, 2) = 'Q{' then
+  begin
+    P := Pos8('}', Name);
+    if (P > 0) and IsNCName8(Copy(Name, P + 1, MaxInt)) then
+      Result := XsltClarkOf(Copy(Name, 3, P - 3), Copy(Name, P + 1, MaxInt));
+    Exit;
+  end;
+  P := Pos8(':', Name);
+  if P = 0 then
+  begin
+    if IsNCName8(Name) then
+      Result := Name;
+    Exit;
+  end;
+  Prefix := Copy(Name, 1, P - 1);
+  Local := Copy(Name, P + 1, MaxInt);
+  if not IsNCName8(Prefix) or not IsNCName8(Local) then
+    Exit;
+  for I := 0 to Integer(Length(Prefixes)) - 1 do
+    if Prefixes[I] = Prefix then
+      Result := XsltClarkOf(Uris[I], Local);
+end;
+
 procedure XsltNameArgument(Evaluator: TLandrixXmlXPathEvaluator; const Arg: TLandrixXmlXPathSequence;
   const Code, FunctionName: string; const DefaultUri: TLandrixXmlUtf8; out Uri, Local: TLandrixXmlUtf8);
 var
@@ -3835,11 +3981,33 @@ end;
 
 procedure TCompiler.CompileOutput(D: TDecl);
 var
-  I: Integer;
+  I, P: Integer;
   M: TModule;
-  L, V: TLandrixXmlUtf8;
+  L, V, Name: TLandrixXmlUtf8;
+  Target: TXsltOutputProperties;
 begin
   M := D.Module;
+  { a named one: its own definition, the unnamed ones the default }
+  Target := FC.Output;
+  if Attr(M, D.Element, 'name', Name) then
+  begin
+    { a QName or an EQName (as Saxon accepts it) }
+    if Copy(Trim8(Name), 1, 2) = 'Q{' then
+    begin
+      Name := XsltFormatClark(Trim8(Name), nil, nil);
+      if Name = '' then
+        Fail(M, D.Element, 'XTSE0020', 'the name of xsl:output is not a valid EQName');
+    end
+    else
+      Name := QNameToClark(M, D.Element, Trim8(Name), False);
+    if FC.NamedOutputs.Find(LandrixXmlUtf8ToString(Name), P) then
+      Target := TXsltOutputProperties(FC.NamedOutputs.Objects[P])
+    else
+    begin
+      Target := TXsltOutputProperties.Create;
+      FC.NamedOutputs.AddObject(LandrixXmlUtf8ToString(Name), Target);
+    end;
+  end;
   for I := D.Element + 1 to D.Element + M.Tree.AttributeCount[D.Element] do
   begin
     if M.Tree.NamespaceUriUtf8(I) <> '' then
@@ -3849,7 +4017,7 @@ begin
     if (L = 'exclude-result-prefixes') or (L = 'extension-element-prefixes') or (L = 'expand-text') then
       Continue;
     if L = 'name' then
-      Unsupported(M, D.Element, 'a named xsl:output');
+      Continue;
     V := Trim8(M.Tree.ValueUtf8(I));
     case XsltOutputPropertyStatus(L, V) of
       xosUnsupported:
@@ -3862,7 +4030,7 @@ begin
     else
       { supported }
     end;
-    FC.Output.SetValue(L, V);
+    Target.SetValue(L, V);
   end;
 end;
 
@@ -3871,6 +4039,8 @@ procedure TCompiler.Finish;
 var
   I, J, K: Integer;
   Mode: TXsltMode;
+  Instr: TXsltInstr;
+  V: TLandrixXmlUtf8;
 
   { every required parameter of the called template is supplied }
   procedure CheckRequired(Instr: TXsltInstr);
@@ -3935,6 +4105,17 @@ var
   end;
 
 begin
+  { XTDE1460 for a literal format that is not defined (or has an
+    undeclared prefix), as in Saxon }
+  for I := 0 to Integer(FFormatChecks.Count) - 1 do
+  begin
+    Instr := TXsltInstr(FFormatChecks[I]);
+    V := Trim8(LiteralOf(Instr.FormatAvt));
+    if not FC.NamedOutputs.Find(LandrixXmlUtf8ToString(XsltFormatClark(V, Instr.ScopePrefixes,
+      Instr.ScopeUris)), J) then
+      raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTDE1460', 'no xsl:output named ' +
+        LandrixXmlUtf8ToString(V), Instr.Module, Instr.Line, Instr.Column);
+  end;
   for I := 0 to Integer(FC.Templates.Count) - 1 do
   begin
     Resolve(TXsltTemplate(FC.Templates[I]).Body);

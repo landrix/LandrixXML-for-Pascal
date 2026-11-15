@@ -387,8 +387,8 @@ when the stylesheet is loaded, with `system-property()`,
 documents `doc()` and `document()` read), `xsl:sort` (in `xsl:for-each`, `xsl:apply-templates`,
 `xsl:for-each-group` and `xsl:perform-sort`; the codepoint collation,
 `case-order`, no `lang`), `xsl:analyze-string`, `xsl:next-match`,
-`xsl:apply-imports`, `xsl:key` and
-`xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
+`xsl:apply-imports`, `xsl:result-document` (with named `xsl:output`
+formats), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
 `element-available()` (true for what this subset translates),
@@ -405,12 +405,16 @@ matching the empty string in `xsl:analyze-string` is an error
 (`XTDE1150`) as in XSLT 2.0, where Saxon runs it, and that
 `xsl:analyze-string` clears the current template rule as in XSLT 2.0
 (`xsl:next-match` in it is `XTDE0560`; Saxon applies the built-in rule
-to the string). The report stylesheet of the KoSIT validator and the XRechnung
+to the string), and that `xsl:result-document` in the content of
+`xsl:attribute` is `XTDE1480` as in XSLT 2.0 (Saxon reports `XTDE1490`). The report stylesheet of the KoSIT validator and the XRechnung
 visualization (invoice to XR XML to HTML) run with it: for the 86
 invoices of the KoSIT test suite the report, the XR XML and the HTML
 are the ones Saxon writes, byte for byte (`tools/xslt-crosscheck.py`).
 Anything else is rejected when the stylesheet is loaded
-(`xecUnsupported`), never run differently. A stylesheet with
+(`xecUnsupported`), never run differently; only a serialization
+attribute of `xsl:result-document` computed at run time can ask for an
+unsupported value, which raises `xecUnsupported` when the instruction is
+evaluated. A stylesheet with
 `version="3.0"` is run with these rules (Saxon runs it as XSLT 3.0; the
 XSLT 3.0 instructions are rejected); XSLT 3.0 is to follow step by step.
 `unparsed-entity-uri()` and `unparsed-entity-public-id()` are unknown
@@ -423,6 +427,21 @@ Without a resolver of its own (`TLandrixXmlXsltResolver`), a stylesheet
 reads any `file:` URI it names, with `xsl:include`, `xsl:import`,
 `doc()` and `document()`, as XSLT processors do. For a stylesheet you do
 not trust, pass a resolver that only returns what it may read.
+
+`xsl:result-document` never writes anything itself. With an `href`, its
+result is collected by the transformer: after a run without error,
+`ResultDocumentCount` and `ResultDocuments[I]`
+(`TLandrixXmlXsltResultDocument`: `Uri`, `Tree`, `Serialize`,
+`SerializeToUtf8`, `SaveToFile`, `OutputProperty`) or
+`FindResultDocument(Uri)` give the results; the caller decides where
+they go. `href` is resolved against `BaseOutputUri` (an absolute URI;
+with none, a relative `href` is `FOER0000`). Without `href`, or with one
+that resolves to `BaseOutputUri`, it makes the principal result, which
+`Transform`, `TransformToUtf8` and `TransformToTree` return with its own
+output properties (`SetOutputProperty` applies to the principal result
+only). As in XSLT 2.0, `xsl:result-document` inside variables,
+parameters, attributes, comments, processing instructions,
+`xsl:value-of`, messages, sort keys and functions is `XTDE1480`.
 
 ## Limitations
 
@@ -680,8 +699,8 @@ Differences from Xerces, also on purpose:
   XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,389 are XSLT 1.0
   or 2.0 cases without features this library leaves out (schema
   awareness, backwards compatibility, the namespace axis, DTDs and the
-  like); 4,295 of them pass and 66 more raise an error where one is
-  expected, but with another code. 789 use an instruction or option
+  like); 4,450 of them pass and 67 more raise an error where one is
+  expected, but with another code. 619 use an instruction or option
   that is not supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.

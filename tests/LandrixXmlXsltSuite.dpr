@@ -21,12 +21,22 @@
                        declaration, whatever the stylesheet says)
     check EXPR         evaluated on the principal result (a document node:
                        the context item and $result)
+    output URI         the base output URI
+    rdoc URI           a result document (xsl:result-document) by its
+                       absolute URI; then for it:
+    rserialize FILE    serialized as its output properties say
+    rxml FILE          as plain XML
+    rcheck EXPR        a check on it
   Result file: "serialized" (the file was written) or "error CODE
   MESSAGE" (an XPath or XSLT error), "unsupported MESSAGE" (xecUnsupported)
   or "exception CLASS MESSAGE"; with checks or xml, "tree" or the error of
   that run, with xml then "xml" (the file was written) or its error, with
   checks "string VALUE" (the string value of the result) and per check
-  "check N true", "check N false" or "check N error CODE MESSAGE". }
+  "check N true", "check N false" or "check N error CODE MESSAGE"; per
+  result document (after the last run, if it succeeded) "rdoc N found"
+  or "rdoc N missing", then "rserialized N", "rxml N", "rstring N VALUE"
+  and "rcheck N M VALUE"; "rerror N" and an error line if serializing
+  it failed. }
 
 program LandrixXmlXsltSuite;
 
@@ -178,21 +188,98 @@ begin
 end;
 
 var
-  Lines, NsPrefixes, NsUris, ParamNames, ParamExprs, Checks: TLandrixXmlUtf8Array;
-  StylesheetFile, SourceFile, SerializeFile, XmlFile: string;
-  Props: TXsltOutputProperties;
-  Template, Mode, Head, Rest, Name: TLandrixXmlUtf8;
-  Sheet: TLandrixXmlXsltStylesheet;
-  Transformer: TLandrixXmlXsltTransformer;
-  Source, Target: TLandrixXmlXPathTree;
+  NsPrefixes, NsUris: TLandrixXmlUtf8Array;
+
+{ the result as plain XML (no indentation, no XML declaration) }
+procedure WritePlainXml(Tree: TLandrixXmlXPathTree; const FileName: string; const Done, ErrorPrefix: TLandrixXmlUtf8);
+var
   Stream: TFileStream;
+  Props: TXsltOutputProperties;
+begin
+  Stream := nil;
+  Props := TXsltOutputProperties.Create;
+  try
+    try
+      Props.SetValue('method', 'xml');
+      Props.SetValue('indent', 'no');
+      Props.SetValue('omit-xml-declaration', 'yes');
+      Stream := TFileStream.Create(FileName, fmCreate);
+      XsltSerialize(Tree, Props, Stream, True);
+      Put(Done);
+    finally
+      Stream.Free;
+      Props.Free;
+    end;
+  except
+    on E: Exception do
+      Put(ErrorPrefix + ErrorLine(E));
+  end;
+end;
+
+{ the string value of Tree and the checks on it (Prefix: "" for the
+  principal result, "r" plus the number of a result document) }
+procedure RunChecks(Tree: TLandrixXmlXPathTree; const Checks: TLandrixXmlUtf8Array; const Prefix,
+  Number: TLandrixXmlUtf8);
+var
   Context: TLandrixXmlXPathStaticContext;
   Evaluator: TLandrixXmlXPathEvaluator;
   Expressions: TList;
   Expr: TLandrixXmlXPathExpression;
   Value: TLandrixXmlXPathSequence;
   I, Slot: Integer;
-  Ok: Boolean;
+begin
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := nil;
+  Expressions := TList.Create;
+  try
+    Context.Profile := xppSaxon;
+    for I := 0 to Integer(Length(NsPrefixes)) - 1 do
+      Context.AddNamespace(NsPrefixes[I], NsUris[I]);
+    Slot := Context.DeclareVariable(ResultName);
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    Evaluator.SetGlobalCount(Context.VariableCount);
+    Evaluator.BindValue(Slot, LandrixXmlXPathNodeItem(0));
+    try
+      Expr := TLandrixXmlXPathExpression.Create(U('string(/)'), Context);
+      Expressions.Add(Expr);
+      Value := Evaluator.EvaluateSequence(Expr, 0);
+      Put(Prefix + U('string ') + Number + Esc(Evaluator.ItemString(Value.Items[0])));
+    except
+      on E: Exception do
+        Put(Prefix + U('string-') + ErrorLine(E));
+    end;
+    for I := 0 to Integer(Length(Checks)) - 1 do
+      try
+        Expr := TLandrixXmlXPathExpression.Create(U('boolean((') + Checks[I] + U('))'), Context);
+        Expressions.Add(Expr);
+        Value := Evaluator.EvaluateSequence(Expr, 0);
+        Put(Prefix + U('check ') + Number + U(IntToStr(I + 1) + ' ') + Evaluator.ItemString(Value.Items[0]));
+      except
+        on E: Exception do
+          Put(Prefix + U('check ') + Number + U(IntToStr(I + 1) + ' ') + ErrorLine(E));
+      end;
+  finally
+    for I := 0 to Integer(Expressions.Count) - 1 do
+      TObject(Expressions[I]).Free;
+    Expressions.Free;
+    Evaluator.Free;
+    Context.Free;
+  end;
+end;
+
+var
+  Lines, ParamNames, ParamExprs, Checks, DocUris, DocSerialize, DocXml, DocChecks: TLandrixXmlUtf8Array;
+  DocCheckOwners: array of Integer;
+  StylesheetFile, SourceFile, SerializeFile, XmlFile: string;
+  Template, Mode, Head, Rest, Name, BaseOutput, Number: TLandrixXmlUtf8;
+  Sheet: TLandrixXmlXsltStylesheet;
+  Transformer: TLandrixXmlXsltTransformer;
+  Source, Target: TLandrixXmlXPathTree;
+  Stream: TFileStream;
+  Doc: TLandrixXmlXsltResultDocument;
+  OneChecks: TLandrixXmlUtf8Array;
+  I, J, N: Integer;
+  Ok, LastRunOk: Boolean;
 
 begin
   if ParamCount <> 2 then
@@ -206,12 +293,19 @@ begin
   ParamNames := nil;
   ParamExprs := nil;
   Checks := nil;
+  DocUris := nil;
+  DocSerialize := nil;
+  DocXml := nil;
+  DocChecks := nil;
+  DocCheckOwners := nil;
+  OneChecks := nil;
   StylesheetFile := '';
   SourceFile := '';
   SerializeFile := '';
   XmlFile := '';
   Template := '';
   Mode := '';
+  BaseOutput := '';
   for I := 0 to Integer(Length(Lines)) - 1 do
   begin
     Rest := Split(Lines[I], Head);
@@ -240,18 +334,34 @@ begin
     else if Head = 'xml' then
       XmlFile := LandrixXmlUtf8ToString(Unesc(Rest))
     else if Head = 'check' then
-      Add(Checks, Unesc(Rest));
+      Add(Checks, Unesc(Rest))
+    else if Head = 'output' then
+      BaseOutput := Unesc(Rest)
+    else if Head = 'rdoc' then
+    begin
+      Add(DocUris, Unesc(Rest));
+      Add(DocSerialize, '');
+      Add(DocXml, '');
+    end
+    else if (Head = 'rserialize') and (Length(DocUris) > 0) then
+      DocSerialize[High(DocSerialize)] := Unesc(Rest)
+    else if (Head = 'rxml') and (Length(DocUris) > 0) then
+      DocXml[High(DocXml)] := Unesc(Rest)
+    else if (Head = 'rcheck') and (Length(DocUris) > 0) then
+    begin
+      Add(DocChecks, Unesc(Rest));
+      SetLength(DocCheckOwners, Length(DocCheckOwners) + 1);
+      DocCheckOwners[High(DocCheckOwners)] := High(DocUris);
+    end;
   end;
   Output := TFileStream.Create(ParamStr(2), fmCreate);
   Sheet := TLandrixXmlXsltStylesheet.Create;
   Transformer := nil;
   Source := nil;
   Target := nil;
-  Context := nil;
-  Evaluator := nil;
-  Expressions := TList.Create;
   try
     Ok := False;
+    LastRunOk := False;
     try
       Sheet.LoadFromFile(StylesheetFile);
       if SourceFile <> '' then
@@ -262,6 +372,7 @@ begin
       Transformer := TLandrixXmlXsltTransformer.Create(Sheet);
       Transformer.InitialTemplate := Template;
       Transformer.InitialMode := Mode;
+      Transformer.BaseOutputUri := BaseOutput;
       for I := 0 to Integer(Length(ParamNames)) - 1 do
         Transformer.SetParameterXPath(ParamNames[I], ParamExprs[I]);
       Ok := True;
@@ -277,6 +388,7 @@ begin
           Stream := TFileStream.Create(SerializeFile, fmCreate);
           Transformer.Transform(Source, Stream);
           Put(U('serialized'));
+          LastRunOk := True;
         finally
           Stream.Free;
         end;
@@ -291,73 +403,61 @@ begin
     if Ok and ((Length(Checks) > 0) or (XmlFile <> '')) then
     begin
       Ok := False;
+      LastRunOk := False;
       try
         Target := TLandrixXmlXPathTree.Create;
         Transformer.TransformToTree(Source, Target);
         Put(U('tree'));
         Ok := True;
+        LastRunOk := True;
       except
         on E: Exception do
           Put(ErrorLine(E));
       end;
       if Ok and (XmlFile <> '') then
-      begin
-        Stream := nil;
-        Props := TXsltOutputProperties.Create;
-        try
-          try
-            Props.SetValue('method', 'xml');
-            Props.SetValue('indent', 'no');
-            Props.SetValue('omit-xml-declaration', 'yes');
-            Stream := TFileStream.Create(XmlFile, fmCreate);
-            XsltSerialize(Target, Props, Stream, True);
-            Put(U('xml'));
-          finally
-            Stream.Free;
-            Props.Free;
-          end;
-        except
-          on E: Exception do
-            Put(U('xml-') + ErrorLine(E));
-        end;
-      end;
+        WritePlainXml(Target, XmlFile, U('xml'), U('xml-'));
       if Ok and (Length(Checks) > 0) then
+        RunChecks(Target, Checks, '', '');
+    end;
+    { the result documents of the last run }
+    if LastRunOk then
+      for I := 0 to Integer(Length(DocUris)) - 1 do
       begin
-        Context := TLandrixXmlXPathStaticContext.Create;
-        Context.Profile := xppSaxon;
-        for I := 0 to Integer(Length(NsPrefixes)) - 1 do
-          Context.AddNamespace(NsPrefixes[I], NsUris[I]);
-        Slot := Context.DeclareVariable(ResultName);
-        Evaluator := TLandrixXmlXPathEvaluator.Create(Target);
-        Evaluator.SetGlobalCount(Context.VariableCount);
-        Evaluator.BindValue(Slot, LandrixXmlXPathNodeItem(0));
-        try
-          Expr := TLandrixXmlXPathExpression.Create(U('string(/)'), Context);
-          Expressions.Add(Expr);
-          Value := Evaluator.EvaluateSequence(Expr, 0);
-          Put(U('string ') + Esc(Evaluator.ItemString(Value.Items[0])));
-        except
-          on E: Exception do
-            Put(U('string-') + ErrorLine(E));
+        Number := U(IntToStr(I + 1) + ' ');
+        Doc := Transformer.FindResultDocument(DocUris[I]);
+        if Doc = nil then
+        begin
+          Put(U('rdoc ') + Number + U('missing'));
+          Continue;
         end;
-        for I := 0 to Integer(Length(Checks)) - 1 do
+        Put(U('rdoc ') + Number + U('found'));
+        if DocSerialize[I] <> '' then
+        begin
+          Stream := nil;
           try
-            Expr := TLandrixXmlXPathExpression.Create(U('boolean((') + Checks[I] + U('))'), Context);
-            Expressions.Add(Expr);
-            Value := Evaluator.EvaluateSequence(Expr, 0);
-            Put(U('check ' + IntToStr(I + 1) + ' ') + Evaluator.ItemString(Value.Items[0]));
+            try
+              Stream := TFileStream.Create(LandrixXmlUtf8ToString(DocSerialize[I]), fmCreate);
+              Doc.Serialize(Stream);
+              Put(U('rserialized ') + Number);
+            finally
+              Stream.Free;
+            end;
           except
             on E: Exception do
-              Put(U('check ' + IntToStr(I + 1) + ' ') + ErrorLine(E));
+              Put(U('rerror ') + Number + ErrorLine(E));
           end;
+        end;
+        if DocXml[I] <> '' then
+          WritePlainXml(Doc.Tree, LandrixXmlUtf8ToString(DocXml[I]), U('rxml ') + Number, U('rerror ') + Number);
+        OneChecks := nil;
+        for J := 0 to Integer(Length(DocChecks)) - 1 do
+          if DocCheckOwners[J] = I then
+            Add(OneChecks, DocChecks[J]);
+        N := Integer(Length(OneChecks));
+        if N > 0 then
+          RunChecks(Doc.Tree, OneChecks, U('r'), Number);
       end;
-    end;
   finally
-    for I := 0 to Integer(Expressions.Count) - 1 do
-      TObject(Expressions[I]).Free;
-    Expressions.Free;
-    Evaluator.Free;
-    Context.Free;
     Target.Free;
     Transformer.Free;
     Source.Free;

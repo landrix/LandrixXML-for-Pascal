@@ -58,9 +58,21 @@ type
     MaxTemplateDepth: Integer;
     { TLandrixXmlXsltMessage, owned by the transformer }
     Messages: TObjectList;
+    { xsl:result-document: the base output URI, the list the secondary
+      results (TLandrixXmlXsltResultDocument) go to after a successful
+      run (owned by the transformer), and the output properties of an
+      xsl:result-document that made the principal result
+      (TXsltOutputProperties for the caller to free; nil if none) }
+    BaseOutputUri: TLandrixXmlUtf8;
+    ResultDocuments: TObjectList;
+    PrincipalProperties: TObject;
     procedure AddParameter(const Name: TLandrixXmlUtf8; Kind: Integer; const Value: TLandrixXmlUtf8;
       Tree: TLandrixXmlXPathTree);
   end;
+
+{ Whether S has a URI scheme (RFC 3986: a letter, then letters, digits,
+  + - .; at least two characters, so that C:\x is no URI). }
+function XsltHasUriScheme(const S: TLandrixXmlUtf8): Boolean;
 
 { Runs Compiled on Source (nil: an empty document) into Target. }
 procedure XsltRun(Compiled: TObject; Settings: TXsltRunSettings; Source, Target: TLandrixXmlXPathTree);
@@ -70,7 +82,8 @@ implementation
 uses
   LandrixXmlReader,
   LandrixXmlUnicode,
-  LandrixXmlRegex;
+  LandrixXmlRegex,
+  LandrixXmlXsltOutput;
 
 type
   TRun = class;
@@ -227,6 +240,20 @@ type
     FKeyNormExpr: TLandrixXmlXPathExpression;
     { the indexes of xsl:key built so far (TKeyIndex) }
     FKeyIndexes: TObjectList;
+    { xsl:result-document: in a temporary output state (XTDE1480: inside
+      variables, parameters, attributes, comments, processing
+      instructions, value-of, messages, sort keys and functions); the
+      secondary results so far (owned until the run succeeds) and their
+      URIs; the principal result an xsl:result-document made (owned) and
+      its properties; the tree and receiver of the implicit principal
+      result }
+    FTemporary: Boolean;
+    FResults: TObjectList;
+    FResultUris: TStringList;
+    FPrincipal: TLandrixXmlXPathTree;
+    FPrincipalProps: TXsltOutputProperties;
+    FImplicit: TLandrixXmlXPathTree;
+    FImplicitReceiver: TTreeReceiver;
     { per module: static-base-uri() and resolve-uri(.) with its URI }
     FBaseExprs: TObjectList;
     { xs:dateTime?, xs:date?, xs:time? (the first argument of the format
@@ -271,6 +298,8 @@ type
     function EvalAvt(Instr: TXsltInstr; Avt: TXsltAvt; const Focus: TLandrixXmlXPathFocus): TLandrixXmlUtf8;
     function BodyString(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
       const Mode: TXsltMode; const Separator: TLandrixXmlUtf8): TLandrixXmlUtf8;
+    function TemporarySequence(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
+      const Mode: TXsltMode): TLandrixXmlXPathSequence;
     function BodySequence(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
       const Mode: TXsltMode): TLandrixXmlXPathSequence;
     function ContentDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus;
@@ -318,6 +347,7 @@ type
     procedure TypedBody(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
     function FindRule(Mode: TXsltMode; Node: Integer; After: TXsltRule; Lowest, Highest: Integer): TXsltRule;
     procedure DoNextMatch(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+    procedure DoResultDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
     function CallFunction(T: TXsltTemplate; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure BuiltIn(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
@@ -1063,6 +1093,10 @@ begin
   FC := Compiled;
   FSettings := Settings;
   FTrees := TObjectList.Create;
+  FResults := TObjectList.Create;
+  { URIs are compared as written (ordinal, case matters) }
+  FResultUris := TXsltStringList.Create;
+  FResultUris.CaseSensitive := True;
   FDefs := TObjectList.Create;
   FFunctions := TList.Create;
   FParamExprs := TObjectList.Create;
@@ -1161,6 +1195,10 @@ begin
   FFunctions.Free;
   FDefs.Free;
   FTrees.Free;
+  FPrincipal.Free;
+  FPrincipalProps.Free;
+  FResultUris.Free;
+  FResults.Free;
   FEmpty.Free;
   FStripped.Free;
   inherited Destroy;
@@ -1562,6 +1600,21 @@ begin
       Result := Result + EvalString(Instr, Avt.Exprs[I], Focus, ' ');
 end;
 
+{ BodySequence in a temporary output state (sort keys) }
+function TRun.TemporarySequence(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
+  const Mode: TXsltMode): TLandrixXmlXPathSequence;
+var
+  Saved: Boolean;
+begin
+  Saved := FTemporary;
+  FTemporary := True;
+  try
+    Result := BodySequence(Body, Focus, Mode);
+  finally
+    FTemporary := Saved;
+  end;
+end;
+
 function TRun.BodySequence(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
   const Mode: TXsltMode): TLandrixXmlXPathSequence;
 var
@@ -1585,7 +1638,11 @@ var
   R: TTreeReceiver;
   S: TLandrixXmlXPathSequence;
   I: Integer;
+  Saved: Boolean;
 begin
+  { a temporary output state }
+  Saved := FTemporary;
+  FTemporary := True;
   T := TLandrixXmlXPathTree.Create;
   try
     T.BeginBuild(True);
@@ -1605,9 +1662,11 @@ begin
       R.Free;
     end;
   except
+    FTemporary := Saved;
     T.Free;
     raise;
   end;
+  FTemporary := Saved;
   Result := LandrixXmlXPathNodeItem(AddTree(T));
 end;
 
@@ -1638,22 +1697,41 @@ end;
 { the simple content of the body's result }
 function TRun.BodyString(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
   const Mode: TXsltMode; const Separator: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  Saved: Boolean;
 begin
-  Result := SimpleContent(BodySequence(Body, Focus, Mode), Separator);
+  { attributes, comments, processing instructions, value-of: a
+    temporary output state }
+  Saved := FTemporary;
+  FTemporary := True;
+  try
+    Result := SimpleContent(BodySequence(Body, Focus, Mode), Separator);
+  finally
+    FTemporary := Saved;
+  end;
 end;
 
 function TRun.VariableValue(Instr: TXsltInstr; Select: TLandrixXmlXPathExpression; Body: TObjectList;
   HasAs: Boolean; const AsType: TLandrixXmlXPathSequenceType; const Name: TLandrixXmlUtf8;
   const Focus: TLandrixXmlXPathFocus; const Mode: TXsltMode): TLandrixXmlXPathSequence;
+var
+  Saved: Boolean;
 begin
-  if Select <> nil then
-    Result := Eval(Instr, Select, Focus)
-  else if HasAs then
-    Result := BodySequence(Body, Focus, Mode)
-  else if Body.Count = 0 then
-    Result := LandrixXmlXPathStringItem('')
-  else
-    Result := BodyDocument(Body, Focus, Mode);
+  { variables and parameters: a temporary output state }
+  Saved := FTemporary;
+  FTemporary := True;
+  try
+    if Select <> nil then
+      Result := Eval(Instr, Select, Focus)
+    else if HasAs then
+      Result := BodySequence(Body, Focus, Mode)
+    else if Body.Count = 0 then
+      Result := LandrixXmlXPathStringItem('')
+    else
+      Result := BodyDocument(Body, Focus, Mode);
+  finally
+    FTemporary := Saved;
+  end;
   if HasAs then
     try
       Result := FEvaluator.ConvertSequence(Result, AsType, '$' + LandrixXmlUtf8ToString(Name));
@@ -2158,7 +2236,7 @@ var
   P: TXsltInstr;
   V, SavedCurrent: TLandrixXmlXPathSequence;
   S: TSequenceReceiver;
-  SavedGroupActive, SavedRegexActive: Boolean;
+  SavedGroupActive, SavedRegexActive, SavedTemporary: Boolean;
   SavedRule: TXsltRule;
 begin
   if FTemplateDepth >= FSettings.MaxTemplateDepth then
@@ -2174,9 +2252,11 @@ begin
   { nor captured substrings of xsl:analyze-string }
   SavedRegexActive := FRegexActive;
   FRegexActive := False;
-  { nor a current template rule }
+  { nor a current template rule; a temporary output state }
   SavedRule := FRule;
   FRule := nil;
+  SavedTemporary := FTemporary;
+  FTemporary := True;
   FEvaluator.PushFrame(T.FrameSize);
   try
     for I := 0 to Integer(T.Params.Count) - 1 do
@@ -2217,6 +2297,7 @@ begin
     FGroupActive := SavedGroupActive;
     FRegexActive := SavedRegexActive;
     FRule := SavedRule;
+    FTemporary := SavedTemporary;
     Dec(FTemplateDepth);
   end;
 end;
@@ -2322,6 +2403,116 @@ begin
     end;
   finally
     FRule := SavedRule;
+  end;
+end;
+
+function XsltHasUriScheme(const S: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if (S = '') or not (S[1] in ['A'..'Z', 'a'..'z']) then
+    Exit;
+  { from 2: a single letter is a drive (C:\out), not a scheme }
+  for I := 2 to Length(S) do
+    if S[I] = ':' then
+    begin
+      Result := I > 2;
+      Exit;
+    end
+    else if not (S[I] in ['A'..'Z', 'a'..'z', '0'..'9', '+', '-', '.']) then
+      Exit;
+end;
+
+{ xsl:result-document: the body becomes a tree of its own, with the
+  output properties of the format (else xsl:output) and the attributes;
+  without href (or one that resolves to the base output URI) it is the
+  principal result }
+procedure TRun.DoResultDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
+var
+  Href, Uri, Name, V: TLandrixXmlUtf8;
+  Props: TXsltOutputProperties;
+  T: TLandrixXmlXPathTree;
+  R: TTreeReceiver;
+  I, P, Index: Integer;
+  Principal: Boolean;
+begin
+  if FTemporary then
+    Fail(Instr, 'XTDE1480', 'xsl:result-document in a temporary output state');
+  Href := '';
+  if Instr.HrefAvt <> nil then
+    Href := Trim8(EvalAvt(Instr, Instr.HrefAvt, Focus));
+  Props := nil;
+  T := nil;
+  try
+    if Instr.FormatAvt <> nil then
+    begin
+      { a QName with the namespaces of the instruction (no default) or an
+        EQName }
+      Name := Trim8(EvalAvt(Instr, Instr.FormatAvt, Focus));
+      if not FC.NamedOutputs.Find(LandrixXmlUtf8ToString(XsltFormatClark(Name, Instr.ScopePrefixes,
+        Instr.ScopeUris)), P) then
+        Fail(Instr, 'XTDE1460', 'no xsl:output named ' + LandrixXmlUtf8ToString(Name));
+      Props := TXsltOutputProperties(FC.NamedOutputs.Objects[P]).Clone;
+    end
+    else
+      Props := FC.Output.Clone;
+    for I := 0 to Integer(Length(Instr.OutputNames)) - 1 do
+    begin
+      V := Trim8(EvalAvt(Instr, Instr.OutputAvts[I], Focus));
+      case XsltOutputPropertyStatus(Instr.OutputNames[I], V) of
+        xosUnsupported:
+          raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000', 'xsl:result-document ' +
+            LandrixXmlUtf8ToString(Instr.OutputNames[I]) + '="' + LandrixXmlUtf8ToString(V) + '" is not supported',
+            Instr.Module, Instr.Line, Instr.Column);
+        xosInvalid, xosUnknown:
+          Fail(Instr, 'XTDE0030', 'xsl:result-document ' + LandrixXmlUtf8ToString(Instr.OutputNames[I]) + '="' +
+            LandrixXmlUtf8ToString(V) + '" is not a valid value');
+      else
+        { supported }
+      end;
+      Props.SetValue(Instr.OutputNames[I], V);
+    end;
+    { the URI: href resolved against the base output URI }
+    Principal := Href = '';
+    if Principal then
+      Uri := FSettings.BaseOutputUri
+    else
+    begin
+      if (FSettings.BaseOutputUri = '') and not XsltHasUriScheme(Href) then
+        Fail(Instr, 'FOER0000', 'the relative href "' + LandrixXmlUtf8ToString(Href) +
+          '" needs a base output URI');
+      Uri := LandrixXmlXPathResolveUri(Href, FSettings.BaseOutputUri);
+      Principal := Uri = FSettings.BaseOutputUri;
+    end;
+    if Principal and ((FImplicit.Count > 1) or FImplicitReceiver.FPending) then
+      Fail(Instr, 'XTDE1490', 'the principal result has been written already');
+    if FResultUris.IndexOf(LandrixXmlUtf8ToString(Uri)) >= 0 then
+      Fail(Instr, 'XTDE1490', 'a second result document with the URI ' + LandrixXmlUtf8ToString(Uri));
+    FResultUris.Add(LandrixXmlUtf8ToString(Uri));
+    { in the order the instructions start (a nested one comes after) }
+    Index := Integer(FResults.Count);
+    T := TLandrixXmlXPathTree.Create;
+    T.BeginBuild(True);
+    R := TTreeReceiver.Create(Self, T, True);
+    try
+      Exec(Instr.Body, Focus, Mode, R);
+      R.Finish;
+    finally
+      R.Free;
+    end;
+    T.BaseUri := Uri;
+    if Principal then
+    begin
+      FPrincipal := T;
+      FPrincipalProps := Props;
+    end
+    else
+      FResults.Insert(Index, TLandrixXmlXsltResultDocument.Create(Uri, T, Props));
+  except
+    T.Free;
+    Props.Free;
+    raise;
   end;
 end;
 
@@ -2629,7 +2820,7 @@ begin
         if Key.Select <> nil then
           V := Eval(Key.Where, Key.Select, F)
         else
-          V := BodySequence(Key.Body, F, Mode);
+          V := TemporarySequence(Key.Body, F, Mode);
         V := FEvaluator.DataOf(V);
         if V.Count > 1 then
           Fail(Key.Where, 'XTTE1020', 'a sort key is more than one value');
@@ -4065,6 +4256,8 @@ begin
       DoPerformSort(Instr, Focus, Mode, R);
     xskNextMatch, xskApplyImports:
       DoNextMatch(Instr, Focus, Mode, R);
+    xskResultDocument:
+      DoResultDocument(Instr, Focus, Mode);
   else
     { xsl:when and xsl:namespace are not compiled as instructions of
       their own }
@@ -4161,6 +4354,7 @@ end;
 procedure TRun.Start(Target: TLandrixXmlXPathTree);
 var
   R: TTreeReceiver;
+  T2: TLandrixXmlXPathTree;
   Mode: TXsltMode;
   T: TXsltTemplate;
   I: Integer;
@@ -4170,6 +4364,8 @@ begin
   Params := nil;
   Target.BeginBuild(True);
   R := TTreeReceiver.Create(Self, Target, True);
+  FImplicit := Target;
+  FImplicitReceiver := R;
   try
     if FSettings.InitialTemplate <> '' then
     begin
@@ -4195,8 +4391,36 @@ begin
     end;
     R.Finish;
   finally
+    FImplicitReceiver := nil;
     R.Free;
   end;
+  { an xsl:result-document made the principal result: it is the result
+    (an implicit one besides it is XTDE1490) }
+  if FPrincipal <> nil then
+  begin
+    if Target.Count > 1 then
+      Fail(nil, 'XTDE1490', 'the principal result is written by xsl:result-document and by the templates');
+    T2 := FPrincipal;
+    FPrincipal := nil;
+    I := AddTree(T2);
+    Target.BeginBuild(True);
+    R := TTreeReceiver.Create(Self, Target, True);
+    try
+      CopyNode(I, R);
+      R.Finish;
+    finally
+      R.Free;
+    end;
+    Target.BaseUri := T2.BaseUri;
+    FSettings.PrincipalProperties := FPrincipalProps;
+    FPrincipalProps := nil;
+  end;
+  { the run succeeded: the secondary results go to the transformer }
+  FResults.OwnsObjects := False;
+  for I := 0 to Integer(FResults.Count) - 1 do
+    FSettings.ResultDocuments.Add(FResults[I]);
+  FResults.Clear;
+  FResults.OwnsObjects := True;
 end;
 
 procedure XsltRun(Compiled: TObject; Settings: TXsltRunSettings; Source, Target: TLandrixXmlXPathTree);

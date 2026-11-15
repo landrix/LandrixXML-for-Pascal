@@ -50,11 +50,13 @@ import hashlib
 import importlib.util
 import io
 import os
+import pathlib
 import re
 import shutil
 import subprocess
 import sys
 import tarfile
+import urllib.parse
 import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -79,7 +81,8 @@ FEATURES = {"serialization": True, "HTML5": True}
 # it "very slow")
 EXCLUDED_SETS = {"unicode-90": "suite defect (charclass parameter not passed)"}
 SUPPORTED_ASSERTIONS = {"assert", "assert-xml", "assert-string-value", "serialization-matches",
-                        "assert-serialization", "error", "all-of", "any-of", "not"}
+                        "assert-serialization", "error", "all-of", "any-of", "not",
+                        "assert-result-document"}
 
 
 def qt3_module():
@@ -346,13 +349,30 @@ def plan(case, el, set_deps, envs):
 
 # --- running -----------------------------------------------------------------
 
-def needs(el):
+def walk(el, skip_result_documents=True):
+    """el and its descendants, without those of assert-result-document
+    (they are about a result document, not the principal result)"""
+    yield el
+    for e in el:
+        if skip_result_documents and local(e) == "assert-result-document":
+            continue
+        yield from walk(e, skip_result_documents)
+
+
+def result_documents(el):
+    """the assert-result-document elements under el"""
+    return [e for e in el.iter() if local(e) == "assert-result-document"]
+
+
+def needs(el, top=True):
     """(serialize, xml, checks): what the assertions under el need (xml: the
     result as plain XML, for assert-xml)."""
     serialize = False
     xml = False
     checks = []
-    for e in el.iter():
+    for e in walk(el):
+        if e is el and not top:
+            continue
         tag = local(e)
         if tag == "assert-xml":
             xml = True
@@ -362,7 +382,7 @@ def needs(el):
             checks.append(e)
         elif tag == "assert-string-value":
             checks.append(None)
-    if not checks and not xml:
+    if top and not checks and not xml:
         # an expected error (also one of serialization) needs a run as well
         serialize = True
     return serialize, xml, checks
@@ -388,10 +408,17 @@ def run_case(exe, case):
         lines.append("template " + esc(case.template))
     if case.mode:
         lines.append("mode " + esc(case.mode))
+    # the base output URI: the principal result's file; the result
+    # documents by their URIs resolved against it
+    base_output = pathlib.Path(os.path.abspath(stem + ".out")).as_uri()
+    docs = []
+    for d in result_documents(case.result):
+        d_serialize, d_xml, d_checks = needs(d, top=False)
+        docs.append((d, urllib.parse.urljoin(base_output, d.get("uri") or ""), d_serialize, d_xml, d_checks))
     namespaces = {}
     for _, _, ns in case.params:
         namespaces.update(ns)
-    for e in checks:
+    for e in checks + [c for doc in docs for c in doc[4]]:
         if e is not None:
             namespaces.update(e.ns)
     for prefix, uri in sorted(namespaces.items()):
@@ -410,9 +437,26 @@ def run_case(exe, case):
         expressions_text = [(e.text or "").strip() for e in expressions]
     for x in expressions_text:
         lines.append("check " + esc(x))
+    lines.append("output " + esc(base_output))
+    doc_info = []
+    for n, (d, uri, d_serialize, d_xml, d_checks) in enumerate(docs, 1):
+        lines.append("rdoc " + esc(uri))
+        d_stem = "%s.rd%d" % (stem, n)
+        if d_serialize:
+            lines.append("rserialize " + esc(d_stem + ".out"))
+        if d_xml:
+            lines.append("rxml " + esc(d_stem + ".xml"))
+        d_expressions = [e for e in d_checks if e is not None]
+        d_text = [(e.text or "").strip() for e in d_expressions]
+        if d_checks and not d_expressions:
+            d_text = ["true()"]
+        for x in d_text:
+            lines.append("rcheck " + esc(x))
+        doc_info.append((d, d_stem, d_expressions))
     with open(stem + ".job", "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
-    for path in (stem + ".res", stem + ".out", stem + ".xml"):
+    for path in [stem + ".res", stem + ".out", stem + ".xml"] + \
+            [d_stem + ext for _, d_stem, _ in doc_info for ext in (".out", ".xml")]:
         if os.path.exists(path):
             os.remove(path)
     try:
@@ -422,7 +466,11 @@ def run_case(exe, case):
         return {"harness": "timeout"}
     if not os.path.exists(stem + ".res"):
         return {"harness": "no result file (exit code %d)" % run.returncode}
-    r = {"checks": {}, "expressions": expressions}
+    r = {"checks": {}, "expressions": expressions, "docs": {}}
+    subs = {}
+    for n, (d, d_stem, d_expressions) in enumerate(doc_info, 1):
+        subs[n] = {"checks": {}, "expressions": d_expressions, "found": False, "stem": d_stem}
+        r["docs"][id(d)] = subs[n]
     with open(stem + ".res", encoding="utf-8", errors="replace") as f:
         for line in f:
             line = line.rstrip("\n")
@@ -447,6 +495,26 @@ def run_case(exe, case):
             elif head == "check":
                 n, _, value = rest.partition(" ")
                 r["checks"][int(n)] = value
+            elif head in ("rdoc", "rserialized", "rxml", "rstring", "rcheck", "rerror"):
+                n, _, value = rest.partition(" ")
+                sub = subs.get(int(n))
+                if sub is None:
+                    continue
+                if head == "rdoc":
+                    sub["found"] = value == "found"
+                elif head == "rerror":
+                    sub["error"] = value
+                elif head == "rserialized":
+                    with open(sub["stem"] + ".out", "rb") as g:
+                        sub["serialized"] = g.read()
+                elif head == "rxml":
+                    with open(sub["stem"] + ".xml", "rb") as g:
+                        sub["xml"] = g.read()
+                elif head == "rstring":
+                    sub["string"] = QT3.unesc(value)
+                else:
+                    m, _, v = value.partition(" ")
+                    sub["checks"][int(m)] = v
     if run.returncode != 0 and "error" not in r:
         r["harness"] = "exit code %d" % run.returncode
     return r
@@ -520,6 +588,11 @@ def check(el, r, case):
         return not all(check(e, r, case) for e in el)
     if tag == "error":
         return False
+    if tag == "assert-result-document":
+        sub = r.get("docs", {}).get(id(el))
+        if sub is None or not sub["found"] or "error" in sub:
+            return False
+        return all(check(e, sub, case) for e in el)
     if tag == "assert":
         i = r["expressions"].index(el) + 1
         return r["checks"].get(i) == "true"

@@ -101,6 +101,35 @@ type
     property Column: Integer read FColumn;
   end;
 
+  { A secondary result of xsl:result-document (one with an href other
+    than the base output URI). Owned by the transformer; valid until its
+    next run or its destruction. The library never writes it anywhere by
+    itself. }
+  TLandrixXmlXsltResultDocument = class
+  private
+    FUri: TLandrixXmlUtf8;
+    FTree: TLandrixXmlXPathTree;
+    FProperties: TObject;
+  public
+    { internal: made by the run, which hands over the tree and the
+      output properties }
+    constructor Create(const AUri: TLandrixXmlUtf8; ATree: TLandrixXmlXPathTree; AProperties: TObject);
+    destructor Destroy; override;
+    { the output property in effect (xsl:output, the format and the
+      attributes of the instruction); '' if not set }
+    function OutputProperty(const Name: TLandrixXmlUtf8): TLandrixXmlUtf8;
+    { serialized as its output properties say, at the stream's position }
+    procedure Serialize(Output: TStream);
+    { serialized as UTF-8, whatever the encoding property says }
+    function SerializeToUtf8: TLandrixXmlUtf8;
+    procedure SaveToFile(const FileName: string);
+    { the absolute URI: href resolved against the base output URI }
+    property Uri: TLandrixXmlUtf8 read FUri;
+    { the result as a tree with a document node (BaseUri is Uri); owned by
+      this object }
+    property Tree: TLandrixXmlXPathTree read FTree;
+  end;
+
   TLandrixXmlXsltStylesheet = class
   private
     FCompiled: TObject;
@@ -145,6 +174,11 @@ type
     FMaxDepth: Integer;
     FMaxTemplateDepth: Integer;
     FMessages: TObjectList;
+    FBaseOutputUri: TLandrixXmlUtf8;
+    FResultDocuments: TObjectList;
+    procedure SetBaseOutputUri(const Value: TLandrixXmlUtf8);
+    function GetResultDocumentCount: Integer;
+    function GetResultDocument(Index: Integer): TLandrixXmlXsltResultDocument;
     procedure SetParam(const Name: TLandrixXmlUtf8; Kind: Integer; const Value: TLandrixXmlUtf8;
       Tree: TLandrixXmlXPathTree);
     procedure SetImplicitTimeZone(Value: Integer);
@@ -171,8 +205,8 @@ type
     procedure ClearOutputProperties;
     { Runs the stylesheet on Source (its document node is the initial
       context; nil only with an InitialTemplate) and writes the principal
-      result to Output at its position (UTF-8; another encoding raises
-      xecUnsupported). }
+      result to Output at its position (UTF-8, US-ASCII or ISO-8859-1;
+      another encoding raises xecUnsupported). }
     procedure Transform(Source: TLandrixXmlXPathTree; Output: TStream);
     { the result serialized as UTF-8, whatever xsl:output says }
     function TransformToUtf8(Source: TLandrixXmlXPathTree): TLandrixXmlUtf8;
@@ -196,6 +230,17 @@ type
     { the messages of the last run (also after XTMM9000) }
     property MessageCount: Integer read GetMessageCount;
     property Messages[Index: Integer]: TLandrixXmlXsltMessage read GetMessage;
+    { what the href of xsl:result-document is resolved against: '' or an
+      absolute URI (else xecInvalidArgument). With '' a relative href is a
+      dynamic error (FOER0000). xsl:result-document without href, or with
+      one that resolves to this URI, makes the principal result. }
+    property BaseOutputUri: TLandrixXmlUtf8 read FBaseOutputUri write SetBaseOutputUri;
+    { the secondary results of the last run, in the order their
+      instructions were evaluated; empty after an error }
+    property ResultDocumentCount: Integer read GetResultDocumentCount;
+    property ResultDocuments[Index: Integer]: TLandrixXmlXsltResultDocument read GetResultDocument;
+    { the result with this absolute URI, nil if there is none }
+    function FindResultDocument(const Uri: TLandrixXmlUtf8): TLandrixXmlXsltResultDocument;
   end;
 
 { internal: a name as written (Clark notation, with an empty or no URI
@@ -501,6 +546,63 @@ begin
   Result := XsltParameterRequired(FCompiled, Index);
 end;
 
+{ --- TLandrixXmlXsltResultDocument ----------------------------------------- }
+
+constructor TLandrixXmlXsltResultDocument.Create(const AUri: TLandrixXmlUtf8; ATree: TLandrixXmlXPathTree;
+  AProperties: TObject);
+begin
+  inherited Create;
+  FUri := AUri;
+  FTree := ATree;
+  FProperties := AProperties;
+end;
+
+destructor TLandrixXmlXsltResultDocument.Destroy;
+begin
+  FProperties.Free;
+  FTree.Free;
+  inherited Destroy;
+end;
+
+function TLandrixXmlXsltResultDocument.OutputProperty(const Name: TLandrixXmlUtf8): TLandrixXmlUtf8;
+begin
+  Result := TXsltOutputProperties(FProperties).Value(Name, '');
+end;
+
+procedure TLandrixXmlXsltResultDocument.Serialize(Output: TStream);
+begin
+  XsltSerialize(FTree, TXsltOutputProperties(FProperties), Output, False);
+end;
+
+function TLandrixXmlXsltResultDocument.SerializeToUtf8: TLandrixXmlUtf8;
+var
+  M: TMemoryStream;
+begin
+  Result := '';
+  M := TMemoryStream.Create;
+  try
+    XsltSerialize(FTree, TXsltOutputProperties(FProperties), M, True);
+    SetLength(Result, Integer(M.Size));
+    M.Position := 0;
+    if M.Size > 0 then
+      M.ReadBuffer(PAnsiChar(Result)^, Integer(M.Size));
+  finally
+    M.Free;
+  end;
+end;
+
+procedure TLandrixXmlXsltResultDocument.SaveToFile(const FileName: string);
+var
+  F: TFileStream;
+begin
+  F := TFileStream.Create(FileName, fmCreate);
+  try
+    Serialize(F);
+  finally
+    F.Free;
+  end;
+end;
+
 { --- TLandrixXmlXsltTransformer -------------------------------------------- }
 
 constructor TLandrixXmlXsltTransformer.Create(Stylesheet: TLandrixXmlXsltStylesheet);
@@ -510,14 +612,46 @@ begin
     raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'XSLT: the transformer needs a loaded stylesheet');
   FStylesheet := Stylesheet;
   FMessages := TObjectList.Create;
+  FResultDocuments := TObjectList.Create;
   FMaxDepth := 500;
   FMaxTemplateDepth := 1000;
 end;
 
 destructor TLandrixXmlXsltTransformer.Destroy;
 begin
+  FResultDocuments.Free;
   FMessages.Free;
   inherited Destroy;
+end;
+
+procedure TLandrixXmlXsltTransformer.SetBaseOutputUri(const Value: TLandrixXmlUtf8);
+begin
+  if (Value <> '') and not XsltHasUriScheme(Value) then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'XSLT: the base output URI must be absolute');
+  FBaseOutputUri := Value;
+end;
+
+function TLandrixXmlXsltTransformer.GetResultDocumentCount: Integer;
+begin
+  Result := Integer(FResultDocuments.Count);
+end;
+
+function TLandrixXmlXsltTransformer.GetResultDocument(Index: Integer): TLandrixXmlXsltResultDocument;
+begin
+  Result := TLandrixXmlXsltResultDocument(FResultDocuments[Index]);
+end;
+
+function TLandrixXmlXsltTransformer.FindResultDocument(const Uri: TLandrixXmlUtf8): TLandrixXmlXsltResultDocument;
+var
+  I: Integer;
+begin
+  for I := 0 to Integer(FResultDocuments.Count) - 1 do
+  begin
+    Result := TLandrixXmlXsltResultDocument(FResultDocuments[I]);
+    if Result.Uri = Uri then
+      Exit;
+  end;
+  Result := nil;
 end;
 
 procedure TLandrixXmlXsltTransformer.SetParam(const Name: TLandrixXmlUtf8; Kind: Integer;
@@ -650,6 +784,7 @@ var
 begin
   Output := nil;
   FMessages.Clear;
+  FResultDocuments.Clear;
   Settings := TXsltRunSettings.Create;
   try
     for I := 0 to FParamCount - 1 do
@@ -663,11 +798,19 @@ begin
     Settings.MaxDepth := FMaxDepth;
     Settings.MaxTemplateDepth := FMaxTemplateDepth;
     Settings.Messages := FMessages;
+    Settings.BaseOutputUri := FBaseOutputUri;
+    Settings.ResultDocuments := FResultDocuments;
     XsltRun(FStylesheet.Compiled, Settings, Source, Target);
+    { the properties of an xsl:result-document that made the principal
+      result, else those of xsl:output }
+    Props := TXsltOutputProperties(Settings.PrincipalProperties);
+    Settings.PrincipalProperties := nil;
   finally
+    TXsltOutputProperties(Settings.PrincipalProperties).Free;
     Settings.Free;
   end;
-  Props := XsltOutputProperties(FStylesheet.Compiled);
+  if Props = nil then
+    Props := XsltOutputProperties(FStylesheet.Compiled);
   for I := 0 to Integer(Length(FOutputNames)) - 1 do
     Props.SetValue(FOutputNames[I], FOutputValues[I]);
   Output := Props;
@@ -692,7 +835,13 @@ begin
   Props := nil;
   try
     Run(Source, Target, Props);
-    XsltSerialize(Target, TXsltOutputProperties(Props), Output, False);
+    try
+      XsltSerialize(Target, TXsltOutputProperties(Props), Output, False);
+    except
+      { no results after an error }
+      FResultDocuments.Clear;
+      raise;
+    end;
   finally
     Props.Free;
     Target.Free;
@@ -711,7 +860,13 @@ begin
   M := TMemoryStream.Create;
   try
     Run(Source, Target, Props);
-    XsltSerialize(Target, TXsltOutputProperties(Props), M, True);
+    try
+      XsltSerialize(Target, TXsltOutputProperties(Props), M, True);
+    except
+      { no results after an error }
+      FResultDocuments.Clear;
+      raise;
+    end;
     SetLength(Result, Integer(M.Size));
     M.Position := 0;
     if M.Size > 0 then

@@ -333,6 +333,91 @@ begin
   end;
 end;
 
+{ xsl:result-document: secondary results collected by the transformer
+  (URIs resolved against BaseOutputUri), empty after an error; a relative
+  href needs a base output URI. }
+procedure TestResultDocuments;
+const
+  Sheet1 = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+    '<xsl:output omit-xml-declaration="yes"/><xsl:output name="t" method="text"/>' +
+    '<xsl:param name="twice" select="false()"/>' +
+    '<xsl:template match="/"><main/>' +
+    '<xsl:result-document href="a.txt" format="t"><a>text</a></xsl:result-document>' +
+    '<xsl:result-document href="sub/../b.xml" omit-xml-declaration="{''yes''}"><b/></xsl:result-document>' +
+    '<xsl:if test="$twice"><xsl:result-document href="b.xml"><c/></xsl:result-document></xsl:if>' +
+    '</xsl:template></xsl:stylesheet>';
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  Doc: TLandrixXmlXsltResultDocument;
+  Code: string;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U(Sheet1), U('urn:test'));
+    Source.LoadFromUtf8(U('<doc/>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    { no base output URI: a relative href is an error }
+    Code := 'none';
+    try
+      T.TransformToUtf8(Source);
+    except
+      on E: ELandrixXmlXsltError do
+        Code := E.XPathCode;
+    end;
+    CheckEqualsStr('FOER0000', Code, 'a relative href without a base output URI');
+    CheckEquals(0, T.ResultDocumentCount, 'no results after an error');
+    Code := 'none';
+    try
+      T.BaseOutputUri := U('out/main.xml');
+    except
+      on E: ELandrixXmlError do
+        Code := IntToStr(Ord(E.Code));
+    end;
+    CheckEqualsStr(IntToStr(Ord(xecInvalidArgument)), Code, 'a relative base output URI');
+    Code := 'none';
+    try
+      T.BaseOutputUri := U('C:\out\main.xml');
+    except
+      on E: ELandrixXmlError do
+        Code := IntToStr(Ord(E.Code));
+    end;
+    CheckEqualsStr(IntToStr(Ord(xecInvalidArgument)), Code, 'a file name as the base output URI');
+    T.BaseOutputUri := U('file:///out/main.xml');
+    CheckEqualsUtf8(U('<main/>'), T.TransformToUtf8(Source), 'the principal result');
+    CheckEquals(2, T.ResultDocumentCount, 'two result documents');
+    CheckEqualsUtf8(U('file:///out/a.txt'), T.ResultDocuments[0].Uri, 'the first URI');
+    CheckEqualsUtf8(U('text'), T.ResultDocuments[0].SerializeToUtf8, 'the named format');
+    CheckEqualsUtf8(U('text'), T.ResultDocuments[0].OutputProperty(U('method')), 'its method');
+    Doc := T.FindResultDocument(U('file:///out/b.xml'));
+    Check(Doc <> nil, 'found by its URI');
+    if Doc <> nil then
+    begin
+      CheckEqualsUtf8(U('<b/>'), Doc.SerializeToUtf8, 'a computed attribute');
+      CheckEqualsUtf8(U('file:///out/b.xml'), Doc.Tree.BaseUri, 'the base URI of the tree');
+    end;
+    Check(T.FindResultDocument(U('file:///out/c.xml')) = nil, 'no such result');
+    { two results with the same URI }
+    T.SetParameterXPath(U('twice'), U('true()'));
+    Code := 'none';
+    try
+      T.TransformToUtf8(Source);
+    except
+      on E: ELandrixXmlXsltError do
+        Code := E.XPathCode;
+    end;
+    CheckEqualsStr('XTDE1490', Code, 'the same URI twice');
+    CheckEquals(0, T.ResultDocumentCount, 'none kept after the error');
+  finally
+    T.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 { xsl:analyze-string clears the current template rule (XSLT 2.0, 5.4.4;
   Saxon keeps it and applies the built-in rule to the string). }
 procedure TestNextMatchInAnalyzeString;
@@ -385,7 +470,7 @@ const
     '<xsl:key name="p:k" xmlns:p="urn:p" match="a" use="."/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:apply-templates><xsl:with-param name="p" tunnel="yes"/></xsl:apply-templates></xsl:template>',
     '<xsl:attribute-set name="a"/><xsl:template match="/"/>',
-    '<xsl:template match="/"><xsl:result-document/></xsl:template>',
+    '<xsl:template match="/"><xsl:result-document validation="strict"/></xsl:template>',
     '<xsl:template match="/"><xsl:for-each select="1"><!--c--><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
     '<xsl:output suppress-indentation="a"/><xsl:template match="/"/>',
     '<xsl:template match="/" xml:base="http://example.org/"><r/></xsl:template>');
@@ -440,6 +525,7 @@ begin
   RegisterTest('Xslt.Messages', TestMessages);
   RegisterTest('Xslt.SystemProperty', TestSystemProperty);
   RegisterTest('Xslt.NextMatchInAnalyzeString', TestNextMatchInAnalyzeString);
+  RegisterTest('Xslt.ResultDocuments', TestResultDocuments);
   RegisterTest('Xslt.Rejected', TestRejected);
 end;
 
