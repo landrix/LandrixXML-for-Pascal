@@ -175,6 +175,9 @@ class Case:
         self.stylesheet = None
         self.source = None
         self.inline_source = None
+        # the directory of the file whose environment gives inline_source
+        # (its base URI, as the reference driver takes it)
+        self.inline_base = None
         self.template = ""
         self.mode = ""
         self.params = []
@@ -221,6 +224,7 @@ def environment_problem(env, case):
                     if content is None:
                         return "source without content"
                     case.inline_source = content.text or ""
+                    case.inline_base = base
             elif role is None:
                 # a document doc() reads by its own (relative) file name
                 if ch.get("uri") is None or os.path.normpath(os.path.join(base, ch.get("uri"))) != \
@@ -402,6 +406,7 @@ def run_case(exe, case):
         with open(stem + ".source.xml", "w", encoding="utf-8", newline="") as f:
             f.write(case.inline_source)
         lines.append("source " + esc(stem + ".source.xml"))
+        lines.append("sourcebase " + esc(pathlib.Path(case.inline_base).resolve().as_uri() + "/"))
     elif case.source:
         lines.append("source " + esc(case.source))
     if case.template:

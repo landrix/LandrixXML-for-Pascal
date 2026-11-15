@@ -595,7 +595,9 @@ bug/bug-2102 pass
 bug/bug-2301 pass
 bug/bug-2401 pass
 bug/bug-2501 pass
+bug/bug-2502 pass
 bug/bug-2601 pass
+bug/bug-2701 pass
 bug/bug-2703 pass
 bug/bug-2801 pass
 bug/bug-2901 pass
@@ -1067,6 +1069,14 @@ document/document-0109 pass
 document/document-0110 pass
 document/document-0111 pass
 document/document-0112 pass
+document/document-0113 pass
+document/document-0114 pass
+document/document-0115 pass
+document/document-0116 pass
+document/document-0117 pass
+document/document-0118 pass
+document/document-0119 pass
+document/document-0120 pass
 document/document-0201 pass
 document/document-0202 pass
 document/document-0203 pass
@@ -1080,6 +1090,11 @@ document/document-0306 pass
 document/document-0307 pass
 document/document-0308 pass
 document/document-0309 pass
+document/document-0401 pass
+document/document-0501 pass
+document/document-0502 pass
+document/document-0503 pass
+document/document-0504 pass
 document/document-0601 pass
 document/document-0701 pass
 document/document-0801 pass
@@ -1101,6 +1116,7 @@ document/document-1502 pass
 document/document-1601 pass
 document/document-1901 pass
 document/document-2009 pass
+document/document-2101 pass
 document/document-2201 pass
 document/document-2301 pass
 element/element-0001 pass
@@ -4034,6 +4050,8 @@ resolve-uri/resolve-uri-005 pass
 resolve-uri/resolve-uri-006 pass
 resolve-uri/resolve-uri-007 pass
 resolve-uri/resolve-uri-008 pass
+resolve-uri/resolve-uri-009 pass
+resolve-uri/resolve-uri-010 pass
 resolve-uri/resolve-uri-011 pass
 resolve-uri/resolve-uri-012 pass
 resolve-uri/resolve-uri-013 pass

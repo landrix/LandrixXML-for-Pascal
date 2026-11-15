@@ -271,7 +271,7 @@ var
   Lines, ParamNames, ParamExprs, Checks, DocUris, DocSerialize, DocXml, DocChecks: TLandrixXmlUtf8Array;
   DocCheckOwners: array of Integer;
   StylesheetFile, SourceFile, SerializeFile, XmlFile: string;
-  Template, Mode, Head, Rest, Name, BaseOutput, Number: TLandrixXmlUtf8;
+  Template, Mode, Head, Rest, Name, BaseOutput, Number, SourceBase: TLandrixXmlUtf8;
   Sheet: TLandrixXmlXsltStylesheet;
   Transformer: TLandrixXmlXsltTransformer;
   Source, Target: TLandrixXmlXPathTree;
@@ -301,6 +301,7 @@ begin
   OneChecks := nil;
   StylesheetFile := '';
   SourceFile := '';
+  SourceBase := '';
   SerializeFile := '';
   XmlFile := '';
   Template := '';
@@ -313,6 +314,8 @@ begin
       StylesheetFile := LandrixXmlUtf8ToString(Unesc(Rest))
     else if Head = 'source' then
       SourceFile := LandrixXmlUtf8ToString(Unesc(Rest))
+    else if Head = 'sourcebase' then
+      SourceBase := Unesc(Rest)
     else if Head = 'template' then
       Template := Unesc(Rest)
     else if Head = 'mode' then
@@ -368,6 +371,9 @@ begin
       begin
         Source := TLandrixXmlXPathTree.Create;
         Source.LoadFromFile(SourceFile);
+        { inline content: the base URI of the file that gives it }
+        if SourceBase <> '' then
+          Source.BaseUri := SourceBase;
       end;
       Transformer := TLandrixXmlXsltTransformer.Create(Sheet);
       Transformer.InitialTemplate := Template;

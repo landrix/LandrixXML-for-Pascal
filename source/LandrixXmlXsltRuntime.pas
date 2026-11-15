@@ -928,6 +928,21 @@ begin
   FTree.EndBuild;
 end;
 
+{ whether S starts with a URI scheme (RFC 3986: a letter, then letters,
+  digits, "+", "-" or ".", then ":") }
+function HasScheme(const S: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if (S = '') or not (S[1] in ['A'..'Z', 'a'..'z']) then
+    Exit;
+  I := 2;
+  while (I <= Length(S)) and (S[I] in ['A'..'Z', 'a'..'z', '0'..'9', '+', '-', '.']) do
+    Inc(I);
+  Result := (I <= Length(S)) and (S[I] = ':');
+end;
+
 { the xml:base attribute of element N of T (False if it has none) }
 function XmlBaseOf(T: TLandrixXmlXPathTree; N: Integer; out Value: TLandrixXmlUtf8): Boolean;
 var
@@ -1412,14 +1427,20 @@ begin
       Result := UnparsedText(Kind, Base, Args[0], Args[0]);
     Exit;
   end;
-  if Kind = XfnDocument2 then
-    raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000',
-      'document() with a base node is not supported', Base, 0, 0);
-  if Kind = XfnDocument then
+  if (Kind = XfnDocument) or (Kind = XfnDocument2) then
   begin
+    { document(uris, node): the base URI of node for every relative URI }
+    if Kind = XfnDocument2 then
+    begin
+      if (Args[1].Count <> 1) or (Args[1].Items[0].Kind <> xikNode) then
+        raise ELandrixXmlXPathError.CreateXPath('XPTY0004', 'document(): the second argument must be one node');
+      T := FEvaluator.TreeOfNode(Args[1].Items[0].Node, B);
+      if not LandrixXmlXPathNodeBaseUri(T, Args[1].Items[0].Node - B, Base) then
+        Base := '';
+    end;
     for I := 0 to Args[0].Count - 1 do
     begin
-      if Args[0].Items[I].Kind = xikNode then
+      if (Args[0].Items[I].Kind = xikNode) and (Kind = XfnDocument) then
       begin
         { relative to the base URI of the node (its xml:base included) }
         T := FEvaluator.TreeOfNode(Args[0].Items[I].Node, B);
@@ -1430,7 +1451,15 @@ begin
         N := LoadDocument(Href, NodeBase, False);
       end
       else
-        N := LoadDocument(FEvaluator.ItemString(Args[0].Items[I]), Base, False);
+      begin
+        Href := FEvaluator.ItemString(Args[0].Items[I]);
+        { document#2: a relative URI needs the base URI of the node
+          (XTDE1162); document#1 leaves an empty base to the resolver }
+        if (Kind = XfnDocument2) and (Base = '') and not HasScheme(Href) then
+          raise ELandrixXmlXPathError.CreateXPath('XTDE1162', 'document(): no base URI to resolve "' +
+            LandrixXmlUtf8ToString(Href) + '" against');
+        N := LoadDocument(Href, Base, False);
+      end;
       Found := False;
       for K := 0 to Result.Count - 1 do
         if Result.Items[K].Node = N then

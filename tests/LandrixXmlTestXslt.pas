@@ -453,6 +453,41 @@ begin
   end;
 end;
 
+{ A stylesheet without a base URI reads documents the resolver has under
+  a relative or a single-letter scheme name, with document#1 (the empty
+  base is left to the resolver) and doc(). }
+procedure TestDocumentWithoutBase;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  Resolver: TLandrixXmlXsltResolver;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  Resolver := TLandrixXmlXsltResolver.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U(
+      '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+      '<xsl:output omit-xml-declaration="yes"/>' +
+      '<xsl:template match="/"><r><xsl:value-of select="document(''codes.xml'')/c, document(''x:d'')/d, ' +
+      'doc(''codes.xml'')/c"/></r></xsl:template>' +
+      '</xsl:stylesheet>'), U(''));
+    Resolver.AddUtf8(U('codes.xml'), U('<c>1</c>'));
+    Resolver.AddUtf8(U('x:d'), U('<d>2</d>'));
+    Source.LoadFromUtf8(U('<s/>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    T.Resolver := Resolver;
+    CheckEqualsUtf8(U('<r>1 2 1</r>'), T.TransformToUtf8(Source), 'resolver documents without a base URI');
+  finally
+    T.Free;
+    Resolver.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 { What the subset does not support is rejected when the stylesheet is
   loaded (xecUnsupported); errors name module and line. }
 procedure TestRejected;
@@ -527,6 +562,7 @@ begin
   RegisterTest('Xslt.NextMatchInAnalyzeString', TestNextMatchInAnalyzeString);
   RegisterTest('Xslt.ResultDocuments', TestResultDocuments);
   RegisterTest('Xslt.Rejected', TestRejected);
+  RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
 end;
 
 end.
