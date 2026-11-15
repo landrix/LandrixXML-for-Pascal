@@ -811,6 +811,9 @@ type
       use-when made (empty otherwise) }
     Lines: array of Integer;
     Columns: array of Integer;
+    { a simplified stylesheet module: a literal result element with
+      xsl:version, a template rule for "/" }
+    Simplified: Boolean;
     destructor Destroy; override;
     function IncludedAt(E: Integer): TModule;
     function LineOf(E: Integer): Integer;
@@ -824,6 +827,8 @@ type
     Element: Integer;
     Precedence: Integer;
     Order: Integer;
+    { the literal result element of a simplified stylesheet module }
+    Simplified: Boolean;
   end;
 
   { an xsl:character-map: its maps (use-character-maps, Clark names) and
@@ -970,6 +975,8 @@ type
     procedure AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8);
     function ModeOf(const Name: TLandrixXmlUtf8): TXsltMode;
     procedure CompileOutput(D: TDecl);
+    procedure CheckRoot(M: TModule);
+    procedure CompileSimplified(D: TDecl);
     function UseAttributeSets(M: TModule; E: Integer; const Names: TLandrixXmlUtf8): TXsltInstr;
     procedure CompileAttributeSet(D: TDecl);
     function MapNames(M: TModule; E: Integer; const Names: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
@@ -1234,9 +1241,7 @@ begin
   finally
     Content.Free;
   end;
-  E := Result.Tree.DocumentElement;
-  if (E < 0) or not (IsXsl(Result, E, 'stylesheet') or IsXsl(Result, E, 'transform')) then
-    Unsupported(Result, Result.Tree.FirstChild(0), 'a module that is no xsl:stylesheet (a simplified stylesheet)');
+  CheckRoot(Result);
   CheckModule(Result);
 end;
 
@@ -1249,7 +1254,9 @@ begin
   FChain.Add(LandrixXmlUtf8ToString(M.Uri));
   try
     E := M.Tree.DocumentElement;
-    C := M.Tree.FirstChild(E);
+    C := -1;
+    if not M.Simplified then
+      C := M.Tree.FirstChild(E);
     while C >= 0 do
     begin
       if IsXsl(M, C, 'include') then
@@ -1279,7 +1286,9 @@ begin
   FChain.Add(LandrixXmlUtf8ToString(M.Uri));
   try
     E := M.Tree.DocumentElement;
-    C := M.Tree.FirstChild(E);
+    C := -1;
+    if not M.Simplified then
+      C := M.Tree.FirstChild(E);
     while C >= 0 do
     begin
       if IsXsl(M, C, 'import') then
@@ -1301,6 +1310,18 @@ var
   D: TDecl;
 begin
   E := M.Tree.DocumentElement;
+  if M.Simplified then
+  begin
+    D := TDecl.Create;
+    D.Module := M;
+    D.Element := E;
+    D.Precedence := Precedence;
+    D.Order := FNextOrder;
+    D.Simplified := True;
+    Inc(FNextOrder);
+    FDecls.Add(D);
+    Exit;
+  end;
   C := M.Tree.FirstChild(E);
   while C >= 0 do
   begin
@@ -3872,7 +3893,7 @@ var
   HasPrio, All: Boolean;
   Code: Integer;
 begin
-  HasPrio := Attr(D.Module, D.Element, 'priority', V);
+  HasPrio := not D.Simplified and Attr(D.Module, D.Element, 'priority', V);
   Prio := 0;
   if HasPrio then
   begin
@@ -4693,6 +4714,71 @@ begin
   SetLength(Instr.NsUris, Count);
 end;
 
+{ the document element of a module: xsl:stylesheet or xsl:transform, or
+  a literal result element with xsl:version (a simplified stylesheet
+  module; XTSE0150 without it, and for another XSLT element, where Saxon
+  reports XPST0010) }
+procedure TCompiler.CheckRoot(M: TModule);
+var
+  E, A: Integer;
+  Found: Boolean;
+  V: TLandrixXmlUtf8;
+begin
+  E := M.Tree.DocumentElement;
+  if E < 0 then
+    Fail(M, -1, 'XTSE0150', 'the stylesheet has no element');
+  if IsXsl(M, E, 'stylesheet') or IsXsl(M, E, 'transform') then
+    Exit;
+  Found := False;
+  V := '';
+  for A := E + 1 to E + M.Tree.AttributeCount[E] do
+    if (M.Tree.NamespaceUriUtf8(A) = XsltNamespace) and (M.Tree.LocalNameUtf8(A) = 'version') then
+    begin
+      Found := True;
+      V := M.Tree.ValueUtf8(A);
+    end;
+  if (M.Tree.NamespaceUriUtf8(E) = XsltNamespace) or not Found then
+    Fail(M, E, 'XTSE0150', 'the document element is neither xsl:stylesheet nor a literal result element ' +
+      'with xsl:version');
+  if Trim8(V) = '1.0' then
+    Unsupported(M, E, 'an XSLT 1.0 stylesheet (backwards compatible processing)');
+  { the document element is not subject to use-when (Saxon rejects it,
+    XPST0010) }
+  for A := E + 1 to E + M.Tree.AttributeCount[E] do
+    if (M.Tree.NamespaceUriUtf8(A) = XsltNamespace) and (M.Tree.LocalNameUtf8(A) = 'use-when') then
+      Fail(M, E, 'XTSE0150', 'xsl:use-when on the document element of a simplified stylesheet module');
+  M.Simplified := True;
+end;
+
+{ a simplified stylesheet module: a template rule for "/" whose body is
+  the literal result element }
+procedure TCompiler.CompileSimplified(D: TDecl);
+var
+  T: TXsltTemplate;
+  M: TModule;
+  Scope: TScope;
+  I: TXsltInstr;
+begin
+  M := D.Module;
+  T := TXsltTemplate.Create;
+  FC.Templates.Add(T);
+  T.Module := M.Uri;
+  T.Line := M.LineOf(D.Element);
+  T.Column := M.ColumnOf(D.Element);
+  T.Precedence := D.Precedence;
+  Scope := TScope.Create;
+  try
+    Scope.NextSlot := FC.GlobalCount;
+    Scope.MaxSlot := FC.GlobalCount;
+    I := CompileLiteral(M, D.Element, Scope);
+    T.Body.Add(I);
+    T.FrameSize := Scope.MaxSlot;
+  finally
+    Scope.Free;
+  end;
+  AddRules(D, T, '/', '');
+end;
+
 procedure TCompiler.CompileOutput(D: TDecl);
 var
   I, P: Integer;
@@ -5037,16 +5123,14 @@ begin
     Main.Index := 0;
     FModules.Add(Main);
     E := Tree.DocumentElement;
-    if (E < 0) or not (IsXsl(Main, E, 'stylesheet') or IsXsl(Main, E, 'transform')) then
+    CheckRoot(Main);
+    if not Main.Simplified then
     begin
-      if E >= 0 then
-        Unsupported(Main, E, 'a simplified stylesheet (literal result element as the stylesheet)');
-      Fail(Main, -1, 'XTSE0150', 'the stylesheet has no element');
+      if not Attr(Main, E, 'version', V) then
+        Fail(Main, E, 'XTSE0010', 'xsl:stylesheet needs a version attribute');
+      if Trim8(V) = '1.0' then
+        Unsupported(Main, E, 'an XSLT 1.0 stylesheet (backwards compatible processing)');
     end;
-    if not Attr(Main, E, 'version', V) then
-      Fail(Main, E, 'XTSE0010', 'xsl:stylesheet needs a version attribute');
-    if Trim8(V) = '1.0' then
-      Unsupported(Main, E, 'an XSLT 1.0 stylesheet (backwards compatible processing)');
     CheckModule(Main);
     Collect(Main);
     CollectFunctions;
@@ -5055,6 +5139,11 @@ begin
     for I := 0 to Integer(FDecls.Count) - 1 do
     begin
       D := TDecl(FDecls[I]);
+      if D.Simplified then
+      begin
+        CompileSimplified(D);
+        Continue;
+      end;
       if D.Module.Tree.NamespaceUriUtf8(D.Element) <> XsltNamespace then
         Continue;
       L := D.Module.Tree.LocalNameUtf8(D.Element);

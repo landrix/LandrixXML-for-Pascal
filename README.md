@@ -395,7 +395,9 @@ applied to text and attribute values as Saxon applies it),
 `xsl:namespace` (namespace nodes of elements; a namespace node in a
 sequence of its own is rejected when it is built), `xsl:namespace-alias`
 (literal result elements, their attributes and namespace nodes, as
-Saxon applies it), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
+Saxon applies it), simplified stylesheets (a literal result element
+with `xsl:version` as the stylesheet or as an included or imported
+module), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
 `element-available()` (true for what this subset translates),
