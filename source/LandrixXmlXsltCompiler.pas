@@ -255,6 +255,10 @@ type
       xskUseAttributeSets: the names (Clark) and, resolved, the
       xsl:attribute-set declarations they expand to in order (TXsltTemplate
       each, not owned) }
+    { a literal result element: the namespaces exclude-result-prefixes
+      left out (an aliased one is copied all the same) }
+    ExPrefixes: TLandrixXmlUtf8Array;
+    ExUris: TLandrixXmlUtf8Array;
     UseSets: TXsltInstr;
     SetNames: TLandrixXmlUtf8Array;
     Sets: TList;
@@ -518,14 +522,14 @@ end;
 function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 const
   { the XSLT elements CompileInstruction and the declaration loop
-    translate (xsl:namespace-alias and others are rejected) }
-  Names: array[0..44] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+    translate (the others are rejected) }
+  Names: array[0..45] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
     'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
     'strip-space', 'preserve-space', 'next-match', 'apply-imports', 'result-document',
-    'attribute-set', 'character-map', 'output-character', 'namespace');
+    'attribute-set', 'character-map', 'output-character', 'namespace', 'namespace-alias');
 var
   I: Integer;
 begin
@@ -837,6 +841,20 @@ type
     Strings: TLandrixXmlUtf8Array;
   end;
 
+  { an xsl:namespace-alias: the result namespace (prefix and URI) for
+    the namespace of the stylesheet that the key names }
+  TNamespaceAlias = class
+  public
+    Prefix: TLandrixXmlUtf8;
+    Uri: TLandrixXmlUtf8;
+    Precedence: Integer;
+    { another alias of the precedence with another result (XTSE0810 unless
+      one of a higher precedence replaces both) }
+    Conflict: Boolean;
+    Module: TModule;
+    Element: Integer;
+  end;
+
   { a use-character-maps (of xsl:output or xsl:result-document): the
     output properties that get the maps, composed by Finish (nil: the
     names of a replaced xsl:character-map, only checked) }
@@ -896,6 +914,9 @@ type
       declaration order }
     FCharMaps: TStringList;
     FMapRefs: TObjectList;
+    { xsl:namespace-alias: stylesheet namespace URI -> TNamespaceAlias
+      (owned; the one of the highest import precedence) }
+    FAliases: TStringList;
     function VarName(const Clark: TLandrixXmlUtf8): TLandrixXmlUtf8;
     procedure CheckStandard(M: TModule; E: Integer);
     procedure CheckModule(M: TModule);
@@ -957,6 +978,8 @@ type
     procedure KeepMapNames(Map: TCharMap);
     procedure ComposeMap(Map: TCharMap; Props: TXsltOutputProperties);
     procedure FinishCharacterMaps;
+    procedure CompileNamespaceAlias(D: TDecl);
+    procedure ApplyAlias(Instr: TXsltInstr);
     procedure Finish;
   public
     constructor Create(Resolver: TLandrixXmlXsltResolver);
@@ -1036,6 +1059,9 @@ begin
   FCharMaps.CaseSensitive := True;
   FCharMaps.Sorted := True;
   FMapRefs := TObjectList.Create;
+  FAliases := TXsltStringList.Create;
+  FAliases.CaseSensitive := True;
+  FAliases.Sorted := True;
 end;
 
 destructor TCompiler.Destroy;
@@ -1046,6 +1072,9 @@ begin
     FCharMaps.Objects[I].Free;
   FCharMaps.Free;
   FMapRefs.Free;
+  for I := 0 to Integer(FAliases.Count) - 1 do
+    FAliases.Objects[I].Free;
+  FAliases.Free;
   FUseWhenTrue.Free;
   FUseWhenFalse.Free;
   FUseWhenEvaluator.Free;
@@ -2166,9 +2195,11 @@ begin
   for I := 0 to Integer(Length(Prefixes)) - 1 do
   begin
     P := Prefixes[I];
-    if (P = 'xml') or not M.Tree.LookupNamespace(E, P, Uri) or (Uri = XsltNamespace) then
+    if (P = 'xml') or not M.Tree.LookupNamespace(E, P, Uri) then
       Continue;
-    Skip := False;
+    { the XSLT namespace is never copied (unless it is the result of an
+      alias: ApplyAlias) }
+    Skip := Uri = XsltNamespace;
     { an excluded namespace the element or an attribute uses is no
       namespace node: the namespace fixup declares it (and gives the
       element another prefix if xsl:namespace binds this one otherwise,
@@ -2177,7 +2208,14 @@ begin
       if Excluded[J] = Uri then
         Skip := True;
     if Skip then
+    begin
+      N := Integer(Length(Instr.ExPrefixes));
+      SetLength(Instr.ExPrefixes, N + 1);
+      SetLength(Instr.ExUris, N + 1);
+      Instr.ExPrefixes[N] := P;
+      Instr.ExUris[N] := Uri;
       Continue;
+    end;
     Instr.NsPrefixes[Count] := P;
     Instr.NsUris[Count] := Uri;
     Inc(Count);
@@ -4482,6 +4520,179 @@ begin
   end;
 end;
 
+{ xsl:namespace-alias: #default for the default namespace (none: no
+  namespace); of several for one stylesheet namespace the one of the
+  highest import precedence (two of the same with different result
+  namespaces are XTSE0810 when Finish finds no higher one) }
+procedure TCompiler.CompileNamespaceAlias(D: TDecl);
+var
+  M: TModule;
+  E, K, P: Integer;
+  A, V, SUri, RPrefix, RUri: TLandrixXmlUtf8;
+  Alias: TNamespaceAlias;
+begin
+  M := D.Module;
+  E := D.Element;
+  for K := E + 1 to E + M.Tree.AttributeCount[E] do
+  begin
+    if M.Tree.NamespaceUriUtf8(K) <> '' then
+      Continue;
+    A := M.Tree.LocalNameUtf8(K);
+    if not ((A = 'stylesheet-prefix') or (A = 'result-prefix') or (A = 'version') or
+      (A = 'exclude-result-prefixes') or (A = 'extension-element-prefixes') or
+      (A = 'xpath-default-namespace') or (A = 'default-collation') or (A = 'use-when') or
+      (A = 'expand-text') or (A = 'default-mode') or (A = 'default-validation') or
+      (A = 'input-type-annotations')) then
+      Fail(M, E, 'XTSE0090', 'xsl:namespace-alias has no attribute ' + LandrixXmlUtf8ToString(A));
+  end;
+  V := Trim8(ReqAttr(M, E, 'stylesheet-prefix'));
+  if V = '#default' then
+  begin
+    if not M.Tree.LookupNamespace(E, '', SUri) then
+      SUri := '';
+  end
+  else if not M.Tree.LookupNamespace(E, V, SUri) then
+    Fail(M, E, 'XTSE0812', 'the stylesheet-prefix ' + LandrixXmlUtf8ToString(V) + ' is not declared');
+  V := Trim8(ReqAttr(M, E, 'result-prefix'));
+  if V = '#default' then
+  begin
+    RPrefix := '';
+    if not M.Tree.LookupNamespace(E, '', RUri) then
+      RUri := '';
+  end
+  else
+  begin
+    RPrefix := V;
+    if not M.Tree.LookupNamespace(E, V, RUri) then
+      Fail(M, E, 'XTSE0812', 'the result-prefix ' + LandrixXmlUtf8ToString(V) + ' is not declared');
+  end;
+  if FAliases.Find(LandrixXmlUtf8ToString(SUri), P) then
+  begin
+    Alias := TNamespaceAlias(FAliases.Objects[P]);
+    if Alias.Precedence > D.Precedence then
+      Exit;
+    if Alias.Precedence = D.Precedence then
+    begin
+      if Alias.Uri <> RUri then
+        Alias.Conflict := True;
+      Exit;
+    end;
+    Alias.Conflict := False;
+  end
+  else
+  begin
+    Alias := TNamespaceAlias.Create;
+    FAliases.AddObject(LandrixXmlUtf8ToString(SUri), Alias);
+  end;
+  Alias.Prefix := RPrefix;
+  Alias.Uri := RUri;
+  Alias.Precedence := D.Precedence;
+  Alias.Module := M;
+  Alias.Element := E;
+end;
+
+{ the namespace aliases for a literal result element: the names of the
+  element and of its attributes in a stylesheet namespace get the result
+  namespace and prefix, its namespace nodes for it become the result
+  namespace (replacing another binding of the result prefix, as Saxon) }
+procedure TCompiler.ApplyAlias(Instr: TXsltInstr);
+
+  function IsAliasResult(const Uri: TLandrixXmlUtf8): Boolean;
+  var
+    K: Integer;
+  begin
+    Result := True;
+    for K := 0 to Integer(FAliases.Count) - 1 do
+      if (Uri <> '') and (TNamespaceAlias(FAliases.Objects[K]).Uri = Uri) then
+        Exit;
+    Result := False;
+  end;
+
+var
+  I, J, P, Count: Integer;
+  Alias: TNamespaceAlias;
+  T: TXsltAttributeTemplate;
+  Prefixes, Uris: TLandrixXmlUtf8Array;
+  Mapped: array of Boolean;
+begin
+  if FAliases.Find(LandrixXmlUtf8ToString(Instr.NamespaceUri), P) then
+  begin
+    Alias := TNamespaceAlias(FAliases.Objects[P]);
+    Instr.NamespaceUri := Alias.Uri;
+    Instr.Prefix := Alias.Prefix;
+  end;
+  for I := 0 to Integer(Instr.Attributes.Count) - 1 do
+  begin
+    T := TXsltAttributeTemplate(Instr.Attributes[I]);
+    if (T.NamespaceUri <> '') and FAliases.Find(LandrixXmlUtf8ToString(T.NamespaceUri), P) then
+    begin
+      Alias := TNamespaceAlias(FAliases.Objects[P]);
+      T.NamespaceUri := Alias.Uri;
+      T.Prefix := Alias.Prefix;
+      if Alias.Uri = '' then
+        T.Prefix := '';
+    end;
+  end;
+  { the namespace nodes: the aliased ones first decided, then the others
+    unless they bind a prefix an aliased one takes }
+  Mapped := nil;
+  Prefixes := Copy(Instr.NsPrefixes, 0, Length(Instr.NsPrefixes));
+  Uris := Copy(Instr.NsUris, 0, Length(Instr.NsUris));
+  { an excluded namespace that is aliased, or the result of an alias,
+    is copied all the same (XSLT 2.0 11.1.4, Saxon) }
+  for I := 0 to Integer(Length(Instr.ExPrefixes)) - 1 do
+    if FAliases.Find(LandrixXmlUtf8ToString(Instr.ExUris[I]), P) or IsAliasResult(Instr.ExUris[I]) then
+    begin
+      J := Integer(Length(Prefixes));
+      SetLength(Prefixes, J + 1);
+      SetLength(Uris, J + 1);
+      Prefixes[J] := Instr.ExPrefixes[I];
+      Uris[J] := Instr.ExUris[I];
+    end;
+  SetLength(Mapped, Length(Prefixes));
+  for I := 0 to Integer(Length(Prefixes)) - 1 do
+  begin
+    Mapped[I] := FAliases.Find(LandrixXmlUtf8ToString(Uris[I]), P);
+    if Mapped[I] then
+    begin
+      Alias := TNamespaceAlias(FAliases.Objects[P]);
+      Prefixes[I] := Alias.Prefix;
+      Uris[I] := Alias.Uri;
+      { an alias to no namespace declares nothing }
+      if Uris[I] = '' then
+      begin
+        Mapped[I] := False;
+        Prefixes[I] := #0;
+      end;
+    end;
+  end;
+  Count := 0;
+  SetLength(Instr.NsPrefixes, Length(Prefixes));
+  SetLength(Instr.NsUris, Length(Prefixes));
+  for I := 0 to Integer(Length(Prefixes)) - 1 do
+  begin
+    if Prefixes[I] = #0 then
+      Continue;
+    if not Mapped[I] then
+      for J := 0 to Integer(Length(Prefixes)) - 1 do
+        if Mapped[J] and (Prefixes[J] = Prefixes[I]) then
+          Prefixes[I] := #0;
+    if Prefixes[I] = #0 then
+      Continue;
+    { once per binding }
+    for J := 0 to Count - 1 do
+      if Instr.NsPrefixes[J] = Prefixes[I] then
+        Prefixes[I] := #0;
+    if Prefixes[I] = #0 then
+      Continue;
+    Instr.NsPrefixes[Count] := Prefixes[I];
+    Instr.NsUris[Count] := Uris[I];
+    Inc(Count);
+  end;
+  SetLength(Instr.NsPrefixes, Count);
+  SetLength(Instr.NsUris, Count);
+end;
+
 procedure TCompiler.CompileOutput(D: TDecl);
 var
   I, P: Integer;
@@ -4668,6 +4879,8 @@ var
     for N := 0 to Integer(Body.Count) - 1 do
     begin
       Instr := TXsltInstr(Body[N]);
+      if (Instr.Kind = xskLiteralElement) and (FAliases.Count > 0) then
+        ApplyAlias(Instr);
       if Instr.Kind = xskUseAttributeSets then
         ResolveSets(Instr);
       if Instr.UseSets <> nil then
@@ -4695,6 +4908,11 @@ var
 
 begin
   FinishCharacterMaps;
+  for I := 0 to Integer(FAliases.Count) - 1 do
+    if TNamespaceAlias(FAliases.Objects[I]).Conflict then
+      Fail(TNamespaceAlias(FAliases.Objects[I]).Module, TNamespaceAlias(FAliases.Objects[I]).Element,
+        'XTSE0810', 'two xsl:namespace-alias for the namespace ' + LandrixXmlUtf8ToString(
+        LandrixXmlStringToUtf8(FAliases[I])));
   { XTDE1460 for a literal format that is not defined (or has an
     undeclared prefix), as in Saxon }
   for I := 0 to Integer(FFormatChecks.Count) - 1 do
@@ -4848,6 +5066,8 @@ begin
         CompileAttributeSet(D)
       else if L = 'character-map' then
         CompileCharacterMap(D)
+      else if L = 'namespace-alias' then
+        CompileNamespaceAlias(D)
       else if L = 'key' then
         CompileKey(D)
       else if L = 'decimal-format' then
@@ -4857,8 +5077,7 @@ begin
       else if (L = 'variable') or (L = 'param') or (L = 'import') or (L = 'include') or
         (L = 'function') then
         { done }
-      else if (L = 'namespace-alias') or
-        (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
+      else if (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
         (L = 'use-package') or (L = 'global-context-item') then
         Unsupported(D.Module, D.Element, 'xsl:' + LandrixXmlUtf8ToString(L))
       else

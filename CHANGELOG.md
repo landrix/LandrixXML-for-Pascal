@@ -43,6 +43,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and names new prefixes as Saxon does. `exclude-result-prefixes` now
   excludes the namespace URIs bound where it is, not every later binding
   of the same prefix.
+- XSLT: `xsl:namespace-alias` (literal result elements, their attributes
+  and namespace nodes; an aliased or alias result namespace is copied
+  even when excluded).
 - XSLT: the output method xhtml, as Saxon writes it (also the default
   method for an `html` root element in the XHTML namespace).
 - XSLT: tunnel parameters (`tunnel="yes"` on `xsl:with-param` and
