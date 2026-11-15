@@ -386,7 +386,8 @@ when the stylesheet is loaded, with `system-property()`,
 `xsl:strip-space` and `xsl:preserve-space` (for the source and the
 documents `doc()` and `document()` read), `xsl:sort` (in `xsl:for-each`, `xsl:apply-templates`,
 `xsl:for-each-group` and `xsl:perform-sort`; the codepoint collation,
-`case-order`, no `lang`), `xsl:analyze-string`, `xsl:key` and
+`case-order`, no `lang`), `xsl:analyze-string`, `xsl:next-match`,
+`xsl:apply-imports`, `xsl:key` and
 `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
@@ -401,7 +402,10 @@ Saxon (which runs XSLT 2.0 stylesheets as XSLT 3.0) differ, Saxon is
 followed (`xsl:analyze-string` of an empty sequence, regular expressions
 with `(?:...)` and the flag `q`), except that a regular expression
 matching the empty string in `xsl:analyze-string` is an error
-(`XTDE1150`) as in XSLT 2.0, where Saxon runs it. The report stylesheet of the KoSIT validator and the XRechnung
+(`XTDE1150`) as in XSLT 2.0, where Saxon runs it, and that
+`xsl:analyze-string` clears the current template rule as in XSLT 2.0
+(`xsl:next-match` in it is `XTDE0560`; Saxon applies the built-in rule
+to the string). The report stylesheet of the KoSIT validator and the XRechnung
 visualization (invoice to XR XML to HTML) run with it: for the 86
 invoices of the KoSIT test suite the report, the XR XML and the HTML
 are the ones Saxon writes, byte for byte (`tools/xslt-crosscheck.py`).
@@ -676,8 +680,8 @@ Differences from Xerces, also on purpose:
   XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,389 are XSLT 1.0
   or 2.0 cases without features this library leaves out (schema
   awareness, backwards compatibility, the namespace axis, DTDs and the
-  like); 4,201 of them pass and 66 more raise an error where one is
-  expected, but with another code. 884 use an instruction or option
+  like); 4,295 of them pass and 66 more raise an error where one is
+  expected, but with another code. 789 use an instruction or option
   that is not supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.

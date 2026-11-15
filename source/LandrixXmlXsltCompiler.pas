@@ -114,7 +114,8 @@ type
   TXsltInstrKind = (xskLiteralElement, xskText, xskValueOf, xskApplyTemplates, xskCallTemplate,
     xskVariable, xskIf, xskChoose, xskWhen, xskForEach, xskSequence, xskCopyOf, xskCopy,
     xskElement, xskAttribute, xskComment, xskProcessingInstruction, xskMessage, xskDocument,
-    xskNumber, xskNamespace, xskForEachGroup, xskPerformSort, xskAnalyzeString);
+    xskNumber, xskNamespace, xskForEachGroup, xskPerformSort, xskAnalyzeString, xskNextMatch,
+    xskApplyImports);
 
   { a value with literal parts and expressions in curly brackets: Exprs[I] nil for a
     literal part }
@@ -262,6 +263,10 @@ type
     Priority: Double;
     Precedence: Integer;
     Order: Integer;
+    { the template has a priority attribute: the branches of a union
+      pattern are one rule (xsl:next-match does not choose the template
+      again, as in Saxon) }
+    Explicit: Boolean;
   end;
 
   TXsltMode = class
@@ -356,6 +361,10 @@ type
     SpacePrecedences: array of Integer;
     SpaceOrders: array of Integer;
     HasStrip: Boolean;
+    { for each import precedence (a stylesheet level): the lowest
+      precedence of the modules imported into it (xsl:apply-imports
+      considers the rules from there to the precedence below its own) }
+    ImportLow: array of Integer;
     constructor Create;
     destructor Destroy; override;
     function FindMode(const Name: TLandrixXmlUtf8): TXsltMode;
@@ -476,12 +485,12 @@ const
   { the XSLT elements CompileInstruction and the declaration loop
     translate (xsl:namespace-alias, xsl:attribute-set and others are
     rejected) }
-  Names: array[0..37] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+  Names: array[0..39] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
     'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
-    'strip-space', 'preserve-space');
+    'strip-space', 'preserve-space', 'next-match', 'apply-imports');
 var
   I: Integer;
 begin
@@ -1185,12 +1194,16 @@ end;
   includes with the next precedence. }
 procedure TCompiler.Collect(M: TModule);
 var
-  P: Integer;
+  P, Low: Integer;
 begin
   LoadIncludes(M);
+  Low := FNextPrecedence;
   ProcessImports(M);
   P := FNextPrecedence;
   Inc(FNextPrecedence);
+  if Length(FC.ImportLow) <= P then
+    SetLength(FC.ImportLow, P + 1);
+  FC.ImportLow[P] := Low;
   CollectDecls(M, P);
 end;
 
@@ -2118,6 +2131,8 @@ begin
     end
     else if IsXsl(M, C, 'sort') and (Instr.Kind = xskApplyTemplates) then
       CompileSortKey(M, C, Scope, Instr)
+    else if IsXsl(M, C, 'fallback') and (Instr.Kind = xskNextMatch) then
+      { only for an instruction that is not available }
     else if (M.Tree.Kind[C] = xnkElement) or
       ((M.Tree.Kind[C] = xnkText) and (Trim8(M.Tree.ValueUtf8(C)) <> '')) then
       Fail(M, C, 'XTSE0010', 'only xsl:with-param is allowed here');
@@ -2395,8 +2410,7 @@ begin
     Exit;
   if (L = 'matching-substring') or (L = 'non-matching-substring') then
     Fail(M, E, 'XTSE0010', 'xsl:' + LandrixXmlUtf8ToString(L) + ' is allowed in xsl:analyze-string only');
-  if (L = 'apply-imports') or (L = 'next-match') or
-    (L = 'result-document') or (L = 'namespace') or (L = 'try') or
+  if (L = 'result-document') or (L = 'namespace') or (L = 'try') or
     (L = 'iterate') or (L = 'evaluate') or (L = 'where-populated') or (L = 'on-empty') or
     (L = 'on-non-empty') or (L = 'map') or (L = 'array') or (L = 'merge') or (L = 'fork') or
     (L = 'assert') or (L = 'break') or (L = 'next-iteration') or (L = 'source-document') or
@@ -2445,6 +2459,14 @@ begin
         Result.Mode := ModeOf('')
       else
         Result.Mode := ModeOf(QNameToClark(M, E, V, False));
+      CompileWithParams(M, E, Scope, Result);
+    end
+    else if (L = 'next-match') or (L = 'apply-imports') then
+    begin
+      if L = 'next-match' then
+        Result := NewInstr(xskNextMatch, M, E)
+      else
+        Result := NewInstr(xskApplyImports, M, E);
       CompileWithParams(M, E, Scope, Result);
     end
     else if L = 'call-template' then
@@ -3576,6 +3598,7 @@ begin
       R.Template := T;
       R.Precedence := D.Precedence;
       R.Order := D.Order;
+      R.Explicit := HasPrio;
       if HasPrio then
         R.Priority := Prio
       else

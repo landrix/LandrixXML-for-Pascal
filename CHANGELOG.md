@@ -30,6 +30,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:sort` (in `xsl:for-each`, `xsl:apply-templates` and
   `xsl:for-each-group`), `xsl:perform-sort`, `xsl:analyze-string` and
   `regex-group()`.
+- XSLT: `xsl:next-match` and `xsl:apply-imports` (with `xsl:with-param`).
 - `tools/run-xslt-tests.py` runs the XSLT 1.0 and 2.0 cases of the W3C
   XSLT test suite against a baseline (`tests/data/xslt-baseline.txt`).
 - XPath: the string concatenation operator `||` (XPath 3.0) in the

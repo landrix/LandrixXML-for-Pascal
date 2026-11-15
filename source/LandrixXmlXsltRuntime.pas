@@ -212,6 +212,11 @@ type
     FRegexText: TLandrixXmlCodePoints;
     FRegexGroups: TLandrixXmlCodePoints;
     FRegexActive: Boolean;
+    { the current template rule (xsl:next-match, xsl:apply-imports); nil
+      where there is none (XTDE0560): in xsl:for-each,
+      xsl:for-each-group, xsl:analyze-string, sort keys, keys, functions
+      and global variables (XSLT 2.0, 5.4.4) }
+    FRule: TXsltRule;
     { the lazy depth of the evaluator in the match: a global variable
       evaluated lazily inside it sees no captured substrings }
     FRegexLazyDepth: Integer;
@@ -311,7 +316,8 @@ type
     procedure BindParams(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       const Params: TSuppliedArray);
     procedure TypedBody(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
-    function FindRule(Mode: TXsltMode; Node: Integer): TXsltRule;
+    function FindRule(Mode: TXsltMode; Node: Integer; After: TXsltRule; Lowest, Highest: Integer): TXsltRule;
+    procedure DoNextMatch(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
     function CallFunction(T: TXsltTemplate; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure BuiltIn(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
@@ -1332,6 +1338,7 @@ var
   Slot, SavedNode: Integer;
   Arg, SavedCurrent: TLandrixXmlXPathSequence;
   SavedRegex: Boolean;
+  SavedRule: TXsltRule;
 begin
   Result := LandrixXmlXPathEmpty;
   if Def.Tag >= FC.UserFunctionBase then
@@ -1423,6 +1430,8 @@ begin
         { nor the captured substrings of the instruction that needs it }
         SavedRegex := FRegexActive;
         FRegexActive := False;
+        SavedRule := FRule;
+        FRule := nil;
         FEvaluator.PushFrame(G.FrameSize);
         try
           Result := VariableValue(nil, nil, G.Body, G.HasAs, G.AsType, G.Name, Focus, FC.FindMode(''));
@@ -1431,6 +1440,7 @@ begin
           FEvaluator.CurrentNode := SavedNode;
           FCurrent := SavedCurrent;
           FRegexActive := SavedRegex;
+          FRule := SavedRule;
         end;
       end;
   end;
@@ -2001,14 +2011,17 @@ begin
   end;
 end;
 
-function TRun.FindRule(Mode: TXsltMode; Node: Integer): TXsltRule;
+{ The first rule of Mode that matches Node, in the order rules are
+  tried; only those after After (if not nil) and with a precedence from
+  Lowest to Highest. }
+function TRun.FindRule(Mode: TXsltMode; Node: Integer; After: TXsltRule; Lowest, Highest: Integer): TXsltRule;
 var
   T: TLandrixXmlXPathTree;
   Base, I, A, B: Integer;
   Key: string;
   Named: TList;
   Cand: TXsltRule;
-  UseNamed: Boolean;
+  UseNamed, Passed: Boolean;
 
   function Better(X, Y: TXsltRule): Boolean;
   begin
@@ -2036,6 +2049,7 @@ begin
   { both lists in the order they are tried: merged }
   A := 0;
   B := 0;
+  Passed := After = nil;
   FEvaluator.CurrentNode := Node;
   FCurrent := LandrixXmlXPathEmpty;
   while True do
@@ -2054,6 +2068,17 @@ begin
       Cand := TXsltRule(Mode.Others[B]);
       Inc(B);
     end;
+    { the merged order is the same on every call: the rules after After
+      are those that follow it here }
+    if not Passed then
+    begin
+      Passed := Cand = After;
+      Continue;
+    end;
+    if (Cand.Precedence < Lowest) or (Cand.Precedence > Highest) then
+      Continue;
+    if (After <> nil) and After.Explicit and (Cand.Template = After.Template) then
+      Continue;
     if PatternMatches(Cand.Pattern, Node, Cand.Relative) then
     begin
       Result := Cand;
@@ -2134,6 +2159,7 @@ var
   V, SavedCurrent: TLandrixXmlXPathSequence;
   S: TSequenceReceiver;
   SavedGroupActive, SavedRegexActive: Boolean;
+  SavedRule: TXsltRule;
 begin
   if FTemplateDepth >= FSettings.MaxTemplateDepth then
     raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested deeper than ' +
@@ -2148,6 +2174,9 @@ begin
   { nor captured substrings of xsl:analyze-string }
   SavedRegexActive := FRegexActive;
   FRegexActive := False;
+  { nor a current template rule }
+  SavedRule := FRule;
+  FRule := nil;
   FEvaluator.PushFrame(T.FrameSize);
   try
     for I := 0 to Integer(T.Params.Count) - 1 do
@@ -2187,6 +2216,7 @@ begin
     FCurrent := SavedCurrent;
     FGroupActive := SavedGroupActive;
     FRegexActive := SavedRegexActive;
+    FRule := SavedRule;
     Dec(FTemplateDepth);
   end;
 end;
@@ -2262,30 +2292,74 @@ procedure TRun.ApplyTemplates(Instr: TXsltInstr; const Nodes: TLandrixXmlXPathSe
   const Params: TSuppliedArray; R: TReceiver);
 var
   I: Integer;
-  Rule: TXsltRule;
+  Rule, SavedRule: TXsltRule;
   F: TLandrixXmlXPathFocus;
 begin
   Rule := nil;
-  for I := 0 to Integer(Nodes.Count) - 1 do
-  begin
-    F := ItemFocus(Nodes.Items[I], I + 1, Nodes.Count);
-    if Nodes.Items[I].Kind <> xikNode then
+  SavedRule := FRule;
+  try
+    for I := 0 to Integer(Nodes.Count) - 1 do
     begin
-      { XSLT 3.0 lets atomic values through the built-in rule; 2.0 errs }
-      Fail(Instr, 'XTTE0520', 'xsl:apply-templates selects an atomic value');
+      F := ItemFocus(Nodes.Items[I], I + 1, Nodes.Count);
+      if Nodes.Items[I].Kind <> xikNode then
+      begin
+        { XSLT 3.0 lets atomic values through the built-in rule; 2.0 errs }
+        Fail(Instr, 'XTTE0520', 'xsl:apply-templates selects an atomic value');
+      end;
+      try
+        Rule := FindRule(Mode, Nodes.Items[I].Node, nil, 0, MaxInt);
+      except
+        on E: ELandrixXmlXsltError do
+          raise;
+        on E: ELandrixXmlXPathError do
+          Located(Instr, E);
+      end;
+      FRule := Rule;
+      if Rule = nil then
+        BuiltIn(Instr, F, Mode, Params, R)
+      else
+        Invoke(Rule.Template, F, Mode, Params, R);
     end;
-    try
-      Rule := FindRule(Mode, Nodes.Items[I].Node);
-    except
-      on E: ELandrixXmlXsltError do
-        raise;
-      on E: ELandrixXmlXPathError do
-        Located(Instr, E);
-    end;
-    if Rule = nil then
-      BuiltIn(Instr, F, Mode, Params, R)
+  finally
+    FRule := SavedRule;
+  end;
+end;
+
+{ xsl:next-match: the next rule after the current one that matches the
+  context node; xsl:apply-imports: the first matching rule of the
+  modules imported into the stylesheet level of the current one; both
+  in the current mode, else the built-in rule }
+procedure TRun.DoNextMatch(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+var
+  Params: TSuppliedArray;
+  Rule, SavedRule: TXsltRule;
+begin
+  { the context item of a current template rule is the node it matched
+    (xsl:for-each and xsl:analyze-string clear the rule) }
+  if (FRule = nil) or (Focus.Node < 0) then
+    Fail(Instr, 'XTDE0560', 'there is no current template rule');
+  Params := Supplied(Instr, Focus, Mode);
+  Rule := nil;
+  try
+    if Instr.Kind = xskNextMatch then
+      Rule := FindRule(Mode, Focus.Node, FRule, 0, MaxInt)
     else
-      Invoke(Rule.Template, F, Mode, Params, R);
+      Rule := FindRule(Mode, Focus.Node, nil, FC.ImportLow[FRule.Precedence], FRule.Precedence - 1);
+  except
+    on E: ELandrixXmlXsltError do
+      raise;
+    on E: ELandrixXmlXPathError do
+      Located(Instr, E);
+  end;
+  SavedRule := FRule;
+  FRule := Rule;
+  try
+    if Rule = nil then
+      BuiltIn(Instr, Focus, Mode, Params, R)
+    else
+      Invoke(Rule.Template, Focus, Mode, Params, R);
+  finally
+    FRule := SavedRule;
   end;
 end;
 
@@ -2603,6 +2677,7 @@ function TRun.Sorted(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode
 var
   Order: TSortOrder;
   I: Integer;
+  SavedRule: TXsltRule;
 begin
   Order := nil;
   if Instr.SortKeys = nil then
@@ -2610,7 +2685,14 @@ begin
     Result := S;
     Exit;
   end;
-  Order := SortOrder(Instr, Focus, Mode, S, nil, nil, False);
+  { no current template rule in the sort keys }
+  SavedRule := FRule;
+  FRule := nil;
+  try
+    Order := SortOrder(Instr, Focus, Mode, S, nil, nil, False);
+  finally
+    FRule := SavedRule;
+  end;
   Result := LandrixXmlXPathEmpty;
   for I := 0 to Integer(Length(Order)) - 1 do
     LandrixXmlXPathAppend(Result, S.Items[Order[I]]);
@@ -3586,6 +3668,7 @@ var
   SavedNode: Integer;
   SavedCurrent: TLandrixXmlXPathSequence;
   Matched, SavedRegex: Boolean;
+  SavedRule: TXsltRule;
 begin
   for I := 0 to Integer(FKeyIndexes.Count) - 1 do
   begin
@@ -3611,6 +3694,8 @@ begin
   { the use expressions see no captured substrings of xsl:analyze-string }
   SavedRegex := FRegexActive;
   FRegexActive := False;
+  SavedRule := FRule;
+  FRule := nil;
   try
     for I := 0 to T.Count - 1 do
       for D := 0 to Integer(K.Decls.Count) - 1 do
@@ -3653,11 +3738,13 @@ begin
     FEvaluator.CurrentNode := SavedNode;
     FCurrent := SavedCurrent;
     FRegexActive := SavedRegex;
+    FRule := SavedRule;
     raise;
   end;
   FEvaluator.CurrentNode := SavedNode;
   FCurrent := SavedCurrent;
   FRegexActive := SavedRegex;
+  FRule := SavedRule;
 end;
 
 { key(name, values[, top]): the nodes of the tree of top (the context
@@ -3912,6 +3999,8 @@ begin
 end;
 
 procedure TRun.ExecCore(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+var
+  SavedRule: TXsltRule;
 begin
   case Instr.Kind of
     xskText:
@@ -3928,7 +4017,15 @@ begin
     xskChoose:
       Exec(ChosenBody(Instr, Focus), Focus, Mode, R);
     xskForEach:
-      DoForEach(Instr, Focus, Mode, R);
+      begin
+        SavedRule := FRule;
+        FRule := nil;
+        try
+          DoForEach(Instr, Focus, Mode, R);
+        finally
+          FRule := SavedRule;
+        end;
+      end;
     xskSequence, xskCopyOf:
       DoSequence(Instr, Focus, R);
     xskCopy:
@@ -3951,12 +4048,23 @@ begin
       DoCallTemplate(Instr, Focus, Mode, R);
     xskNumber:
       DoNumber(Instr, Focus, R);
-    xskForEachGroup:
-      DoForEachGroup(Instr, Focus, Mode, R);
+    xskForEachGroup, xskAnalyzeString:
+      begin
+        SavedRule := FRule;
+        FRule := nil;
+        try
+          if Instr.Kind = xskForEachGroup then
+            DoForEachGroup(Instr, Focus, Mode, R)
+          else
+            DoAnalyzeString(Instr, Focus, Mode, R);
+        finally
+          FRule := SavedRule;
+        end;
+      end;
     xskPerformSort:
       DoPerformSort(Instr, Focus, Mode, R);
-    xskAnalyzeString:
-      DoAnalyzeString(Instr, Focus, Mode, R);
+    xskNextMatch, xskApplyImports:
+      DoNextMatch(Instr, Focus, Mode, R);
   else
     { xsl:when and xsl:namespace are not compiled as instructions of
       their own }

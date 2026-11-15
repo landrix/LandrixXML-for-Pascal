@@ -333,14 +333,49 @@ begin
   end;
 end;
 
+{ xsl:analyze-string clears the current template rule (XSLT 2.0, 5.4.4;
+  Saxon keeps it and applies the built-in rule to the string). }
+procedure TestNextMatchInAnalyzeString;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  Code: string;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U(
+      '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+      '<xsl:template match="/"><xsl:analyze-string select="''q''" regex="q">' +
+      '<xsl:matching-substring><xsl:next-match/></xsl:matching-substring></xsl:analyze-string></xsl:template>' +
+      '</xsl:stylesheet>'), U('urn:test'));
+    Source.LoadFromUtf8(U('<r/>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    Code := 'none';
+    try
+      T.TransformToUtf8(Source);
+    except
+      on E: ELandrixXmlXsltError do
+        Code := E.XPathCode;
+    end;
+    CheckEqualsStr('XTDE0560', Code, 'xsl:next-match in xsl:analyze-string');
+  finally
+    T.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 { What the subset does not support is rejected when the stylesheet is
   loaded (xecUnsupported); errors name module and line. }
 procedure TestRejected;
 const
   Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">';
   Cases: array[0..14] of string = (
-    '<xsl:template match="/"><xsl:next-match/></xsl:template>',
-    '<xsl:template match="/"><xsl:apply-imports/></xsl:template>',
+    '<xsl:namespace-alias stylesheet-prefix="#default" result-prefix="#default"/><xsl:template match="/"/>',
+    '<xsl:character-map name="m"/><xsl:template match="/"/>',
     '<xsl:template match="/"><x xsl:expand-text="yes">{1}</x></xsl:template>',
     '<xsl:output method="xhtml"/><xsl:template match="/"/>',
     '<xsl:output doctype-system="x.dtd"/><xsl:template match="/"/>',
@@ -404,6 +439,7 @@ begin
   RegisterTest('Xslt.NoSource', TestNoSource);
   RegisterTest('Xslt.Messages', TestMessages);
   RegisterTest('Xslt.SystemProperty', TestSystemProperty);
+  RegisterTest('Xslt.NextMatchInAnalyzeString', TestNextMatchInAnalyzeString);
   RegisterTest('Xslt.Rejected', TestRejected);
 end;
 
