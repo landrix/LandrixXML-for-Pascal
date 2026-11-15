@@ -120,7 +120,7 @@ type
     xskVariable, xskIf, xskChoose, xskWhen, xskForEach, xskSequence, xskCopyOf, xskCopy,
     xskElement, xskAttribute, xskComment, xskProcessingInstruction, xskMessage, xskDocument,
     xskNumber, xskNamespace, xskForEachGroup, xskPerformSort, xskAnalyzeString, xskNextMatch,
-    xskApplyImports, xskResultDocument);
+    xskApplyImports, xskResultDocument, xskUseAttributeSets);
 
   { a value with literal parts and expressions in curly brackets: Exprs[I] nil for a
     literal part }
@@ -250,6 +250,14 @@ type
     HrefAvt: TXsltAvt;
     OutputNames: TLandrixXmlUtf8Array;
     OutputAvts: array of TXsltAvt;
+    { a literal result element, xsl:element, xsl:copy: the attribute sets
+      it uses (an xskUseAttributeSets, owned; nil if none);
+      xskUseAttributeSets: the names (Clark) and, resolved, the
+      xsl:attribute-set declarations they expand to in order (TXsltTemplate
+      each, not owned) }
+    UseSets: TXsltInstr;
+    SetNames: TLandrixXmlUtf8Array;
+    Sets: TList;
     constructor Create(AKind: TXsltInstrKind);
     destructor Destroy; override;
   end;
@@ -347,6 +355,10 @@ type
     Modes: TStringList;
     { template name -> TXsltTemplate }
     NamedTemplates: TStringList;
+    { attribute set name (Clark) -> TList of its xsl:attribute-set
+      declarations (TXsltTemplate each, owned by Templates) in order of
+      import precedence, then declaration order; the list is owned }
+    AttributeSets: TStringList;
     Expressions: TObjectList;
     Output: TXsltOutputProperties;
     { the named output definitions (xsl:output with name): Clark name ->
@@ -502,14 +514,15 @@ end;
 function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 const
   { the XSLT elements CompileInstruction and the declaration loop
-    translate (xsl:namespace-alias, xsl:attribute-set and others are
+    translate (xsl:namespace-alias, xsl:character-map and others are
     rejected) }
-  Names: array[0..40] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+  Names: array[0..41] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
     'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
-    'strip-space', 'preserve-space', 'next-match', 'apply-imports', 'result-document');
+    'strip-space', 'preserve-space', 'next-match', 'apply-imports', 'result-document',
+    'attribute-set');
 var
   I: Integer;
 begin
@@ -577,6 +590,8 @@ end;
 
 destructor TXsltInstr.Destroy;
 begin
+  Sets.Free;
+  UseSets.Free;
   NonMatching.Free;
   SortKeys.Free;
   Branches.Free;
@@ -658,6 +673,9 @@ begin
   NamedTemplates := TXsltStringList.Create;
   NamedTemplates.CaseSensitive := True;
   NamedTemplates.Sorted := True;
+  AttributeSets := TXsltStringList.Create;
+  AttributeSets.CaseSensitive := True;
+  AttributeSets.Sorted := True;
   Expressions := TObjectList.Create;
   Output := TXsltOutputProperties.Create;
   NamedOutputs := TXsltStringList.Create;
@@ -679,6 +697,9 @@ begin
     Modes.Objects[I].Free;
   Modes.Free;
   NamedTemplates.Free;
+  for I := 0 to Integer(AttributeSets.Count) - 1 do
+    AttributeSets.Objects[I].Free;
+  AttributeSets.Free;
   Rules.Free;
   Templates.Free;
   Globals.Free;
@@ -893,6 +914,8 @@ type
     procedure AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8);
     function ModeOf(const Name: TLandrixXmlUtf8): TXsltMode;
     procedure CompileOutput(D: TDecl);
+    function UseAttributeSets(M: TModule; E: Integer; const Names: TLandrixXmlUtf8): TXsltInstr;
+    procedure CompileAttributeSet(D: TDecl);
     procedure Finish;
   public
     constructor Create(Resolver: TLandrixXmlXsltResolver);
@@ -2123,7 +2146,7 @@ begin
       if Uri = XsltNamespace then
       begin
         if M.Tree.LocalNameUtf8(A) = 'use-attribute-sets' then
-          Unsupported(M, E, 'xsl:use-attribute-sets');
+          Result.UseSets := UseAttributeSets(M, E, M.Tree.ValueUtf8(A));
         Continue;
       end;
       T := TXsltAttributeTemplate.Create;
@@ -2718,7 +2741,7 @@ begin
       if Attr(M, E, 'copy-namespaces', V) and (V = 'no') then
         Unsupported(M, E, 'copy-namespaces="no"');
       if Attr(M, E, 'use-attribute-sets', V) then
-        Unsupported(M, E, 'use-attribute-sets');
+        Result.UseSets := UseAttributeSets(M, E, V);
       CompileBody(M, E, Scope, Result.Body, -1);
     end
     else if (L = 'element') or (L = 'attribute') then
@@ -2731,7 +2754,11 @@ begin
       if Attr(M, E, 'namespace', V) then
         Result.NamespaceAvt := CompileAvt(M, E, V, Scope);
       if Attr(M, E, 'use-attribute-sets', V) then
-        Unsupported(M, E, 'use-attribute-sets');
+      begin
+        if L = 'attribute' then
+          Fail(M, E, 'XTSE0090', 'xsl:attribute has no attribute use-attribute-sets');
+        Result.UseSets := UseAttributeSets(M, E, V);
+      end;
       ScopeNamespaces(M, E, Result);
       if L = 'attribute' then
       begin
@@ -4007,6 +4034,131 @@ begin
   end;
 end;
 
+{ whether S is a QName (prefix:local or local) }
+function IsQName8(const S: TLandrixXmlUtf8): Boolean;
+var
+  K: Integer;
+begin
+  K := Pos8(':', S);
+  if K = 0 then
+    Result := IsNCName8(S)
+  else
+    Result := IsNCName8(Copy(S, 1, K - 1)) and IsNCName8(Copy(S, K + 1, Length(S) - K));
+end;
+
+{ use-attribute-sets: the names (QNames separated by white space, no
+  default namespace) as an xskUseAttributeSets, resolved by Finish; nil
+  for an empty list (a name that is no QName: XTSE0710, as in Saxon) }
+function TCompiler.UseAttributeSets(M: TModule; E: Integer; const Names: TLandrixXmlUtf8): TXsltInstr;
+var
+  I, J, N: Integer;
+  S: TLandrixXmlUtf8;
+begin
+  Result := nil;
+  S := Names;
+  I := 1;
+  N := 0;
+  while I <= Length(S) do
+  begin
+    while (I <= Length(S)) and (S[I] in [' ', #9, #10, #13]) do
+      Inc(I);
+    if I > Length(S) then
+      Break;
+    J := I;
+    while (J <= Length(S)) and not (S[J] in [' ', #9, #10, #13]) do
+      Inc(J);
+    if Result = nil then
+      Result := NewInstr(xskUseAttributeSets, M, E);
+    SetLength(Result.SetNames, N + 1);
+    try
+      if not IsQName8(Copy(S, I, J - I)) then
+        Fail(M, E, 'XTSE0710', 'not a QName in use-attribute-sets: "' + LandrixXmlUtf8ToString(Copy(S, I, J - I)) + '"');
+      Result.SetNames[N] := QNameToClark(M, E, Copy(S, I, J - I), False);
+    except
+      Result.Free;
+      raise;
+    end;
+    Inc(N);
+    I := J;
+  end;
+end;
+
+{ xsl:attribute-set: a TXsltTemplate of its own (Body: the attribute sets
+  it uses, then its xsl:attribute instructions), added to the declarations
+  of its name in order of import precedence, then declaration order }
+procedure TCompiler.CompileAttributeSet(D: TDecl);
+var
+  T: TXsltTemplate;
+  M: TModule;
+  E, C, P, K: Integer;
+  V, A: TLandrixXmlUtf8;
+  Scope: TScope;
+  I: TXsltInstr;
+  L: TList;
+begin
+  M := D.Module;
+  E := D.Element;
+  for K := E + 1 to E + M.Tree.AttributeCount[E] do
+  begin
+    if M.Tree.NamespaceUriUtf8(K) <> '' then
+      Continue;
+    A := M.Tree.LocalNameUtf8(K);
+    { the standard attributes (CheckStandard) and those of XSLT 3.0 }
+    if not ((A = 'name') or (A = 'use-attribute-sets') or (A = 'visibility') or (A = 'streamable') or
+      (A = 'version') or (A = 'exclude-result-prefixes') or (A = 'extension-element-prefixes') or
+      (A = 'xpath-default-namespace') or (A = 'default-collation') or (A = 'use-when') or
+      (A = 'expand-text') or (A = 'default-mode') or (A = 'default-validation') or
+      (A = 'input-type-annotations')) then
+      Fail(M, E, 'XTSE0090', 'xsl:attribute-set has no attribute ' + LandrixXmlUtf8ToString(A));
+  end;
+  V := Trim8(ReqAttr(M, E, 'name'));
+  if not IsQName8(V) then
+    Fail(M, E, 'XTSE0020', 'the name of xsl:attribute-set is not a QName: "' + LandrixXmlUtf8ToString(V) + '"');
+  T := TXsltTemplate.Create;
+  FC.Templates.Add(T);
+  T.Name := QNameToClark(M, E, V, False);
+  T.Module := M.Uri;
+  T.Line := M.LineOf(E);
+  T.Column := M.ColumnOf(E);
+  T.Precedence := D.Precedence;
+  if Attr(M, E, 'use-attribute-sets', V) then
+  begin
+    I := UseAttributeSets(M, E, V);
+    if I <> nil then
+      T.Body.Add(I);
+  end;
+  Scope := TScope.Create;
+  try
+    Scope.NextSlot := FC.GlobalCount;
+    Scope.MaxSlot := FC.GlobalCount;
+    C := M.Tree.FirstChild(E);
+    while C >= 0 do
+    begin
+      if M.Tree.Kind[C] = xnkElement then
+      begin
+        if not IsXsl(M, C, 'attribute') then
+          Fail(M, C, 'XTSE0010', 'xsl:attribute-set contains xsl:attribute only');
+        I := CompileInstr(M, C, Scope);
+        if I <> nil then
+          T.Body.Add(I);
+      end
+      else if (M.Tree.Kind[C] = xnkText) and (Trim8(M.Tree.ValueUtf8(C)) <> '') then
+        Fail(M, E, 'XTSE0010', 'text in xsl:attribute-set');
+      C := M.Tree.NextSibling[C];
+    end;
+    T.FrameSize := Scope.MaxSlot;
+  finally
+    Scope.Free;
+  end;
+  if not FC.AttributeSets.Find(LandrixXmlUtf8ToString(T.Name), P) then
+    P := FC.AttributeSets.AddObject(LandrixXmlUtf8ToString(T.Name), TList.Create);
+  L := TList(FC.AttributeSets.Objects[P]);
+  K := Integer(L.Count);
+  while (K > 0) and (TXsltTemplate(L[K - 1]).Precedence > T.Precedence) do
+    Dec(K);
+  L.Insert(K, T);
+end;
+
 procedure TCompiler.CompileOutput(D: TDecl);
 var
   I, P: Integer;
@@ -4108,6 +4260,77 @@ var
     end;
   end;
 
+  { the declarations the names of an xskUseAttributeSets expand to }
+  procedure ResolveSets(Instr: TXsltInstr);
+  var
+    N, P, A: Integer;
+    L: TList;
+  begin
+    Instr.Sets := TList.Create;
+    for N := 0 to Integer(Length(Instr.SetNames)) - 1 do
+    begin
+      if not FC.AttributeSets.Find(LandrixXmlUtf8ToString(Instr.SetNames[N]), P) then
+        raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTSE0710', 'no attribute set named ' +
+          LandrixXmlUtf8ToString(Instr.SetNames[N]), Instr.Module, Instr.Line, Instr.Column);
+      L := TList(FC.AttributeSets.Objects[P]);
+      for A := 0 to Integer(L.Count) - 1 do
+        Instr.Sets.Add(L[A]);
+    end;
+  end;
+
+  { XTSE0720: an attribute set that uses itself (Path: the names being
+    expanded, Done: those without a cycle) }
+  procedure CheckCycle(const Name: TLandrixXmlUtf8; Path, Done: TStringList);
+  var
+    P, A, B: Integer;
+    L: TList;
+    T: TXsltTemplate;
+    U: TXsltInstr;
+  begin
+    if Done.IndexOf(LandrixXmlUtf8ToString(Name)) >= 0 then
+      Exit;
+    if not FC.AttributeSets.Find(LandrixXmlUtf8ToString(Name), P) then
+      Exit;
+    L := TList(FC.AttributeSets.Objects[P]);
+    if Path.IndexOf(LandrixXmlUtf8ToString(Name)) >= 0 then
+    begin
+      T := TXsltTemplate(L[0]);
+      raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTSE0720', 'the attribute set ' +
+        LandrixXmlUtf8ToString(Name) + ' uses itself', T.Module, T.Line, T.Column);
+    end;
+    Path.Add(LandrixXmlUtf8ToString(Name));
+    for A := 0 to Integer(L.Count) - 1 do
+    begin
+      T := TXsltTemplate(L[A]);
+      if (T.Body.Count = 0) or (TXsltInstr(T.Body[0]).Kind <> xskUseAttributeSets) then
+        Continue;
+      U := TXsltInstr(T.Body[0]);
+      for B := 0 to Integer(Length(U.SetNames)) - 1 do
+        CheckCycle(U.SetNames[B], Path, Done);
+    end;
+    Path.Delete(Path.Count - 1);
+    Done.Add(LandrixXmlUtf8ToString(Name));
+  end;
+
+  procedure CheckCycles;
+  var
+    N: Integer;
+    Path, Done: TStringList;
+  begin
+    Path := TXsltStringList.Create;
+    Done := TXsltStringList.Create;
+    try
+      Path.CaseSensitive := True;
+      Done.CaseSensitive := True;
+      Done.Sorted := True;
+      for N := 0 to Integer(FC.AttributeSets.Count) - 1 do
+        CheckCycle(LandrixXmlStringToUtf8(FC.AttributeSets[N]), Path, Done);
+    finally
+      Done.Free;
+      Path.Free;
+    end;
+  end;
+
   procedure Resolve(Body: TObjectList);
   var
     N, P: Integer;
@@ -4116,6 +4339,10 @@ var
     for N := 0 to Integer(Body.Count) - 1 do
     begin
       Instr := TXsltInstr(Body[N]);
+      if Instr.Kind = xskUseAttributeSets then
+        ResolveSets(Instr);
+      if Instr.UseSets <> nil then
+        ResolveSets(Instr.UseSets);
       if Instr.Kind = xskCallTemplate then
       begin
         if not FC.NamedTemplates.Find(LandrixXmlUtf8ToString(Instr.VarName), P) then
@@ -4149,6 +4376,7 @@ begin
       raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTDE1460', 'no xsl:output named ' +
         LandrixXmlUtf8ToString(V), Instr.Module, Instr.Line, Instr.Column);
   end;
+  CheckCycles;
   for I := 0 to Integer(FC.Templates.Count) - 1 do
   begin
     Resolve(TXsltTemplate(FC.Templates[I]).Body);
@@ -4286,6 +4514,8 @@ begin
         CompileTemplate(D)
       else if L = 'output' then
         CompileOutput(D)
+      else if L = 'attribute-set' then
+        CompileAttributeSet(D)
       else if L = 'key' then
         CompileKey(D)
       else if L = 'decimal-format' then
@@ -4295,7 +4525,7 @@ begin
       else if (L = 'variable') or (L = 'param') or (L = 'import') or (L = 'include') or
         (L = 'function') then
         { done }
-      else if (L = 'attribute-set') or (L = 'namespace-alias') or
+      else if (L = 'namespace-alias') or
         (L = 'character-map') or (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
         (L = 'use-package') or (L = 'global-context-item') then
         Unsupported(D.Module, D.Element, 'xsl:' + LandrixXmlUtf8ToString(L))

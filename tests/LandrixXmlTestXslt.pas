@@ -469,7 +469,7 @@ const
     '<xsl:template match="/"><xsl:number lang="de"/></xsl:template>',
     '<xsl:key name="p:k" xmlns:p="urn:p" match="a" use="."/><xsl:template match="/"/>',
     '<xsl:template match="/"><r><xsl:namespace name="p">urn:p</xsl:namespace></r></xsl:template>',
-    '<xsl:attribute-set name="a"/><xsl:template match="/"/>',
+    '<xsl:import-schema namespace="urn:x"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:result-document validation="strict"/></xsl:template>',
     '<xsl:template match="/"><xsl:for-each select="1"><!--c--><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
     '<xsl:output suppress-indentation="a"/><xsl:template match="/"/>',

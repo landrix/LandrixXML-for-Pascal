@@ -337,6 +337,8 @@ type
     procedure DoDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
     procedure DoApplyTemplates(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
+    procedure DoUseAttributeSets(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+      R: TReceiver);
     procedure DoCallTemplate(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
     function NumberMatches(Instr: TXsltInstr; Count: Boolean; Node, Model: Integer): Boolean;
@@ -1773,6 +1775,10 @@ begin
   R.StartElement(Instr.NamespaceUri, Instr.Prefix, Instr.LocalName);
   for I := 0 to Integer(Length(Instr.NsPrefixes)) - 1 do
     R.NamespaceNode(Instr.NsPrefixes[I], Instr.NsUris[I]);
+  { the attributes of the attribute sets first: the literal ones replace
+    them }
+  if Instr.UseSets <> nil then
+    DoUseAttributeSets(Instr.UseSets, Focus, Mode, R);
   for I := 0 to Integer(Instr.Attributes.Count) - 1 do
   begin
     A := TXsltAttributeTemplate(Instr.Attributes[I]);
@@ -2077,6 +2083,9 @@ begin
         for K := 0 to Integer(Length(Prefixes)) - 1 do
           if (Prefixes[K] <> 'xml') and T.LookupNamespace(I, Prefixes[K], Uri) then
             R.NamespaceNode(Prefixes[K], Uri);
+        { use-attribute-sets applies to an element only }
+        if Instr.UseSets <> nil then
+          DoUseAttributeSets(Instr.UseSets, Focus, Mode, R);
         Exec(Instr.Body, Focus, Mode, R);
         R.EndElement;
       end;
@@ -3129,6 +3138,8 @@ var
 begin
   ComputedName(Instr, Focus, True, Uri, Prefix, Local);
   R.StartElement(Uri, Prefix, Local);
+  if Instr.UseSets <> nil then
+    DoUseAttributeSets(Instr.UseSets, Focus, Mode, R);
   Exec(Instr.Body, Focus, Mode, R);
   R.EndElement;
 end;
@@ -3214,6 +3225,18 @@ begin
   finally
     FTunnel := Saved;
   end;
+end;
+
+{ the attributes of the attribute sets: each declaration with the focus,
+  the mode and the current template rule of the instruction that uses it
+  (its own attribute sets first, then its xsl:attribute instructions) }
+procedure TRun.DoUseAttributeSets(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+  R: TReceiver);
+var
+  I: Integer;
+begin
+  for I := 0 to Integer(Instr.Sets.Count) - 1 do
+    Invoke(TXsltTemplate(Instr.Sets[I]), Focus, Mode, nil, R);
 end;
 
 procedure TRun.DoCallTemplate(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
@@ -4326,6 +4349,8 @@ begin
       DoNextMatch(Instr, Focus, Mode, R);
     xskResultDocument:
       DoResultDocument(Instr, Focus, Mode);
+    xskUseAttributeSets:
+      DoUseAttributeSets(Instr, Focus, Mode, R);
   else
     { xsl:when and xsl:namespace are not compiled as instructions of
       their own }

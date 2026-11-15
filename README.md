@@ -388,7 +388,8 @@ documents `doc()` and `document()` read), `xsl:sort` (in `xsl:for-each`, `xsl:ap
 `xsl:for-each-group` and `xsl:perform-sort`; the codepoint collation,
 `case-order`, no `lang`), `xsl:analyze-string`, `xsl:next-match`,
 `xsl:apply-imports`, `xsl:result-document` (with named `xsl:output`
-formats), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
+formats), `xsl:attribute-set` (with `use-attribute-sets` on literal
+result elements, `xsl:element` and `xsl:copy`), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
 `element-available()` (true for what this subset translates),
