@@ -258,6 +258,10 @@ type
     UseSets: TXsltInstr;
     SetNames: TLandrixXmlUtf8Array;
     Sets: TList;
+    { xsl:result-document: the character map of its use-character-maps
+      (a TXsltOutputProperties with the mappings only, owned; nil if
+      none), added to that of the output definition }
+    MapProps: TObject;
     constructor Create(AKind: TXsltInstrKind);
     destructor Destroy; override;
   end;
@@ -514,15 +518,15 @@ end;
 function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 const
   { the XSLT elements CompileInstruction and the declaration loop
-    translate (xsl:namespace-alias, xsl:character-map and others are
+    translate (xsl:namespace-alias, xsl:namespace and others are
     rejected) }
-  Names: array[0..41] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+  Names: array[0..43] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
     'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
     'strip-space', 'preserve-space', 'next-match', 'apply-imports', 'result-document',
-    'attribute-set');
+    'attribute-set', 'character-map', 'output-character');
 var
   I: Integer;
 begin
@@ -590,6 +594,7 @@ end;
 
 destructor TXsltInstr.Destroy;
 begin
+  MapProps.Free;
   Sets.Free;
   UseSets.Free;
   NonMatching.Free;
@@ -818,6 +823,32 @@ type
     Order: Integer;
   end;
 
+  { an xsl:character-map: its maps (use-character-maps, Clark names) and
+    its characters with their strings }
+  TCharMap = class
+  public
+    Module: TModule;
+    Element: Integer;
+    Precedence: Integer;
+    { another map of the name and precedence (XTSE1580 unless one of a
+      higher precedence replaces both) }
+    Duplicate: Boolean;
+    UseNames: TLandrixXmlUtf8Array;
+    Chars: TXsltCardinalArray;
+    Strings: TLandrixXmlUtf8Array;
+  end;
+
+  { a use-character-maps (of xsl:output or xsl:result-document): the
+    output properties that get the maps, composed by Finish (nil: the
+    names of a replaced xsl:character-map, only checked) }
+  TMapRef = class
+  public
+    Props: TXsltOutputProperties;
+    Module: TModule;
+    Element: Integer;
+    Names: TLandrixXmlUtf8Array;
+  end;
+
   { the variables visible at a point of a template or function body }
   TScope = class
   public
@@ -861,6 +892,11 @@ type
     { the xsl:result-document instructions with a literal format, checked
       when every xsl:output is known (Finish) }
     FFormatChecks: TList;
+    { the character maps (Clark name -> TCharMap, owned; the one of the
+      highest import precedence) and the uses of them (TMapRef, owned) in
+      declaration order }
+    FCharMaps: TStringList;
+    FMapRefs: TObjectList;
     function VarName(const Clark: TLandrixXmlUtf8): TLandrixXmlUtf8;
     procedure CheckStandard(M: TModule; E: Integer);
     procedure CheckModule(M: TModule);
@@ -916,6 +952,12 @@ type
     procedure CompileOutput(D: TDecl);
     function UseAttributeSets(M: TModule; E: Integer; const Names: TLandrixXmlUtf8): TXsltInstr;
     procedure CompileAttributeSet(D: TDecl);
+    function MapNames(M: TModule; E: Integer; const Names: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
+    procedure AddMapRef(Props: TXsltOutputProperties; M: TModule; E: Integer; const Names: TLandrixXmlUtf8);
+    procedure CompileCharacterMap(D: TDecl);
+    procedure KeepMapNames(Map: TCharMap);
+    procedure ComposeMap(Map: TCharMap; Props: TXsltOutputProperties);
+    procedure FinishCharacterMaps;
     procedure Finish;
   public
     constructor Create(Resolver: TLandrixXmlXsltResolver);
@@ -991,10 +1033,20 @@ begin
   FVarUris := TXsltStringList.Create;
   FVarUris.CaseSensitive := True;
   FFormatChecks := TList.Create;
+  FCharMaps := TXsltStringList.Create;
+  FCharMaps.CaseSensitive := True;
+  FCharMaps.Sorted := True;
+  FMapRefs := TObjectList.Create;
 end;
 
 destructor TCompiler.Destroy;
+var
+  I: Integer;
 begin
+  for I := 0 to Integer(FCharMaps.Count) - 1 do
+    FCharMaps.Objects[I].Free;
+  FCharMaps.Free;
+  FMapRefs.Free;
   FUseWhenTrue.Free;
   FUseWhenFalse.Free;
   FUseWhenEvaluator.Free;
@@ -2217,7 +2269,12 @@ begin
       if L = 'validation' then
         Continue;
       if L = 'use-character-maps' then
-        Unsupported(M, E, 'xsl:result-document use-character-maps');
+      begin
+        if Result.MapProps = nil then
+          Result.MapProps := TXsltOutputProperties.Create;
+        AddMapRef(TXsltOutputProperties(Result.MapProps), M, E, V);
+        Continue;
+      end;
       if L = 'output-version' then
         Name := 'version'
       else
@@ -4159,6 +4216,246 @@ begin
   L.Insert(K, T);
 end;
 
+{ use-character-maps: the names (QNames separated by white space, no
+  default namespace) as Clark names; XTSE0020 for one that is no QName }
+function TCompiler.MapNames(M: TModule; E: Integer; const Names: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
+var
+  I, J, N: Integer;
+begin
+  Result := nil;
+  I := 1;
+  N := 0;
+  while I <= Length(Names) do
+  begin
+    while (I <= Length(Names)) and (Names[I] in [' ', #9, #10, #13]) do
+      Inc(I);
+    if I > Length(Names) then
+      Break;
+    J := I;
+    while (J <= Length(Names)) and not (Names[J] in [' ', #9, #10, #13]) do
+      Inc(J);
+    if not IsQName8(Copy(Names, I, J - I)) then
+      Fail(M, E, 'XTSE0020', 'not a QName in use-character-maps: "' +
+        LandrixXmlUtf8ToString(Copy(Names, I, J - I)) + '"');
+    SetLength(Result, N + 1);
+    Result[N] := QNameToClark(M, E, Copy(Names, I, J - I), False);
+    Inc(N);
+    I := J;
+  end;
+end;
+
+procedure TCompiler.AddMapRef(Props: TXsltOutputProperties; M: TModule; E: Integer; const Names: TLandrixXmlUtf8);
+var
+  R: TMapRef;
+  N: TLandrixXmlUtf8Array;
+begin
+  N := MapNames(M, E, Names);
+  R := TMapRef.Create;
+  FMapRefs.Add(R);
+  R.Props := Props;
+  R.Module := M;
+  R.Element := E;
+  R.Names := N;
+end;
+
+{ xsl:character-map with its xsl:output-character children; of several
+  of one name the one of the highest import precedence (two of the same
+  are XTSE1580 when FinishCharacterMaps finds no higher one) }
+procedure TCompiler.CompileCharacterMap(D: TDecl);
+var
+  M: TModule;
+  E, C, K, P, N, Len: Integer;
+  A, V, Name: TLandrixXmlUtf8;
+  Map: TCharMap;
+  Code: Cardinal;
+  Old: TCharMap;
+begin
+  M := D.Module;
+  E := D.Element;
+  for K := E + 1 to E + M.Tree.AttributeCount[E] do
+  begin
+    if M.Tree.NamespaceUriUtf8(K) <> '' then
+      Continue;
+    A := M.Tree.LocalNameUtf8(K);
+    if not ((A = 'name') or (A = 'use-character-maps') or (A = 'version') or
+      (A = 'exclude-result-prefixes') or (A = 'extension-element-prefixes') or
+      (A = 'xpath-default-namespace') or (A = 'default-collation') or (A = 'use-when') or
+      (A = 'expand-text') or (A = 'default-mode') or (A = 'default-validation') or
+      (A = 'input-type-annotations')) then
+      Fail(M, E, 'XTSE0090', 'xsl:character-map has no attribute ' + LandrixXmlUtf8ToString(A));
+  end;
+  V := Trim8(ReqAttr(M, E, 'name'));
+  if not IsQName8(V) then
+    Fail(M, E, 'XTSE0020', 'the name of xsl:character-map is not a QName: "' + LandrixXmlUtf8ToString(V) + '"');
+  Name := QNameToClark(M, E, V, False);
+  Map := TCharMap.Create;
+  try
+    Map.Module := M;
+    Map.Element := E;
+    Map.Precedence := D.Precedence;
+    if Attr(M, E, 'use-character-maps', V) then
+      Map.UseNames := MapNames(M, E, V);
+    N := 0;
+    C := M.Tree.FirstChild(E);
+    while C >= 0 do
+    begin
+      if M.Tree.Kind[C] = xnkElement then
+      begin
+        if not IsXsl(M, C, 'output-character') then
+          Fail(M, C, 'XTSE0010', 'xsl:character-map contains xsl:output-character only');
+        for K := C + 1 to C + M.Tree.AttributeCount[C] do
+        begin
+          if M.Tree.NamespaceUriUtf8(K) <> '' then
+            Continue;
+          A := M.Tree.LocalNameUtf8(K);
+          if not ((A = 'character') or (A = 'string') or (A = 'version') or
+            (A = 'exclude-result-prefixes') or (A = 'extension-element-prefixes') or
+            (A = 'xpath-default-namespace') or (A = 'default-collation') or (A = 'use-when') or
+            (A = 'expand-text') or (A = 'default-mode') or (A = 'default-validation') or
+            (A = 'input-type-annotations')) then
+            Fail(M, C, 'XTSE0090', 'xsl:output-character has no attribute ' + LandrixXmlUtf8ToString(A));
+        end;
+        { one character, as it is (no white space trimmed) }
+        V := ReqAttr(M, C, 'character');
+        Len := 0;
+        Code := 0;
+        if V <> '' then
+          Len := LandrixXmlDecodeUtf8(PAnsiChar(V), Length(V), Code);
+        if V = '' then
+          Fail(M, C, 'XTSE0020', 'the character of xsl:output-character is empty');
+        if (Len = 0) or (Len <> Length(V)) then
+          Fail(M, C, 'XTSE0020', 'the character of xsl:output-character must be a single character');
+        SetLength(Map.Chars, N + 1);
+        SetLength(Map.Strings, N + 1);
+        Map.Chars[N] := Code;
+        Map.Strings[N] := ReqAttr(M, C, 'string');
+        Inc(N);
+      end
+      else if (M.Tree.Kind[C] = xnkText) and (Trim8(M.Tree.ValueUtf8(C)) <> '') then
+        Fail(M, E, 'XTSE0010', 'xsl:character-map contains xsl:output-character only');
+      C := M.Tree.NextSibling[C];
+    end;
+  except
+    Map.Free;
+    raise;
+  end;
+  if FCharMaps.Find(LandrixXmlUtf8ToString(Name), P) then
+  begin
+    Old := TCharMap(FCharMaps.Objects[P]);
+    if Old.Precedence = Map.Precedence then
+    begin
+      KeepMapNames(Map);
+      Map.Free;
+      Old.Duplicate := True;
+    end
+    else if Old.Precedence > Map.Precedence then
+    begin
+      KeepMapNames(Map);
+      Map.Free;
+    end
+    else
+    begin
+      KeepMapNames(Old);
+      Old.Free;
+      FCharMaps.Objects[P] := Map;
+    end;
+  end
+  else
+    FCharMaps.AddObject(LandrixXmlUtf8ToString(Name), Map);
+end;
+
+{ the names a map that is not used (another one of its name replaces it)
+  refers to: still checked (XTSE1590), nothing composed }
+procedure TCompiler.KeepMapNames(Map: TCharMap);
+var
+  R: TMapRef;
+begin
+  if Length(Map.UseNames) = 0 then
+    Exit;
+  R := TMapRef.Create;
+  FMapRefs.Add(R);
+  R.Module := Map.Module;
+  R.Element := Map.Element;
+  R.Names := Map.UseNames;
+end;
+
+{ the mappings of Map into Props: those of its maps first, then its own }
+procedure TCompiler.ComposeMap(Map: TCharMap; Props: TXsltOutputProperties);
+var
+  I, P: Integer;
+begin
+  for I := 0 to Integer(Length(Map.UseNames)) - 1 do
+    if FCharMaps.Find(LandrixXmlUtf8ToString(Map.UseNames[I]), P) then
+      ComposeMap(TCharMap(FCharMaps.Objects[P]), Props);
+  for I := 0 to Integer(Length(Map.Chars)) - 1 do
+    Props.AddMapping(Map.Chars[I], Map.Strings[I]);
+end;
+
+{ XTSE1590 for a character map name that is not declared, XTSE1600 for a
+  map that uses itself; then the maps of each use-character-maps composed
+  into its output properties }
+procedure TCompiler.FinishCharacterMaps;
+var
+  I, J, P: Integer;
+  R: TMapRef;
+  Map: TCharMap;
+  Path, Done: TStringList;
+
+  procedure Check(Map: TCharMap; const Name: TLandrixXmlUtf8);
+  var
+    K, Q: Integer;
+  begin
+    if Done.IndexOf(LandrixXmlUtf8ToString(Name)) >= 0 then
+      Exit;
+    if Path.IndexOf(LandrixXmlUtf8ToString(Name)) >= 0 then
+      Fail(Map.Module, Map.Element, 'XTSE1600', 'the character map ' + LandrixXmlUtf8ToString(Name) +
+        ' uses itself');
+    Path.Add(LandrixXmlUtf8ToString(Name));
+    for K := 0 to Integer(Length(Map.UseNames)) - 1 do
+    begin
+      if not FCharMaps.Find(LandrixXmlUtf8ToString(Map.UseNames[K]), Q) then
+        Fail(Map.Module, Map.Element, 'XTSE1590', 'no character map named ' +
+          LandrixXmlUtf8ToString(Map.UseNames[K]));
+      Check(TCharMap(FCharMaps.Objects[Q]), Map.UseNames[K]);
+    end;
+    Path.Delete(Path.Count - 1);
+    Done.Add(LandrixXmlUtf8ToString(Name));
+  end;
+
+begin
+  for I := 0 to Integer(FCharMaps.Count) - 1 do
+  begin
+    Map := TCharMap(FCharMaps.Objects[I]);
+    if Map.Duplicate then
+      Fail(Map.Module, Map.Element, 'XTSE1580', 'two character maps named ' +
+        LandrixXmlUtf8ToString(LandrixXmlStringToUtf8(FCharMaps[I])) + ' with the same import precedence');
+  end;
+  Path := TXsltStringList.Create;
+  Done := TXsltStringList.Create;
+  try
+    Path.CaseSensitive := True;
+    Done.CaseSensitive := True;
+    Done.Sorted := True;
+    for I := 0 to Integer(FCharMaps.Count) - 1 do
+      Check(TCharMap(FCharMaps.Objects[I]), LandrixXmlStringToUtf8(FCharMaps[I]));
+  finally
+    Done.Free;
+    Path.Free;
+  end;
+  for I := 0 to Integer(FMapRefs.Count) - 1 do
+  begin
+    R := TMapRef(FMapRefs[I]);
+    for J := 0 to Integer(Length(R.Names)) - 1 do
+    begin
+      if not FCharMaps.Find(LandrixXmlUtf8ToString(R.Names[J]), P) then
+        Fail(R.Module, R.Element, 'XTSE1590', 'no character map named ' + LandrixXmlUtf8ToString(R.Names[J]));
+      Map := TCharMap(FCharMaps.Objects[P]);
+      if R.Props <> nil then
+        ComposeMap(Map, R.Props);
+    end;
+  end;
+end;
+
 procedure TCompiler.CompileOutput(D: TDecl);
 var
   I, P: Integer;
@@ -4198,6 +4495,12 @@ begin
       Continue;
     if L = 'name' then
       Continue;
+    if L = 'use-character-maps' then
+    begin
+      { the maps of every xsl:output are used, in declaration order }
+      AddMapRef(Target, M, D.Element, M.Tree.ValueUtf8(I));
+      Continue;
+    end;
     V := Trim8(M.Tree.ValueUtf8(I));
     case XsltOutputPropertyStatus(L, V) of
       xosUnsupported:
@@ -4365,6 +4668,7 @@ var
   end;
 
 begin
+  FinishCharacterMaps;
   { XTDE1460 for a literal format that is not defined (or has an
     undeclared prefix), as in Saxon }
   for I := 0 to Integer(FFormatChecks.Count) - 1 do
@@ -4516,6 +4820,8 @@ begin
         CompileOutput(D)
       else if L = 'attribute-set' then
         CompileAttributeSet(D)
+      else if L = 'character-map' then
+        CompileCharacterMap(D)
       else if L = 'key' then
         CompileKey(D)
       else if L = 'decimal-format' then
@@ -4526,7 +4832,7 @@ begin
         (L = 'function') then
         { done }
       else if (L = 'namespace-alias') or
-        (L = 'character-map') or (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
+        (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
         (L = 'use-package') or (L = 'global-context-item') then
         Unsupported(D.Module, D.Element, 'xsl:' + LandrixXmlUtf8ToString(L))
       else

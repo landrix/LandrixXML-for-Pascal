@@ -2516,6 +2516,9 @@ begin
     end
     else
       Props := FC.Output.Clone;
+    { use-character-maps: added to the maps of the output definition }
+    if Instr.MapProps <> nil then
+      Props.AddMappings(TXsltOutputProperties(Instr.MapProps));
     for I := 0 to Integer(Length(Instr.OutputNames)) - 1 do
     begin
       V := Trim8(EvalAvt(Instr, Instr.OutputAvts[I], Focus));

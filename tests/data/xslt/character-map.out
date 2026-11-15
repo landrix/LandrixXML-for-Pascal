@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<out xmlns:p="urn:p" xmlns:q="urn:abc">
+   <text>M1-A_M2-B_M2-C_&d;_LOW-X_MAIN-Y_z_<_€_&amp;</text>
+   <attr v='M1-A_M2-B<M2-C&#34;&d;'/>
+   <!--a b c d-->
+   <?pi a b c d?>
+   <bad/>
+   <space>_<e/>
+   </space>
+   <t>MAIN-T</t>
+   <wrap v="WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+         k="k"/>
+   <edge v="JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ"
+         k="k"/>
+</out>

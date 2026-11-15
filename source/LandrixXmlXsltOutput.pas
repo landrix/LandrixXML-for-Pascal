@@ -33,12 +33,22 @@ uses
   LandrixXmlXPathTree;
 
 type
+  TXsltCardinalArray = array of Cardinal;
+
   TXsltOutputProperties = class
   private
     FNames: TLandrixXmlUtf8Array;
     FValues: TLandrixXmlUtf8Array;
   public
+    { the character map (xsl:character-map, use-character-maps): the
+      characters and the strings written for them in text and attribute
+      values, in the order added }
+    MapChars: TXsltCardinalArray;
+    MapStrings: TLandrixXmlUtf8Array;
     procedure SetValue(const Name, AValue: TLandrixXmlUtf8);
+    { maps Code to S (replacing an earlier mapping of Code) }
+    procedure AddMapping(Code: Cardinal; const S: TLandrixXmlUtf8);
+    procedure AddMappings(Source: TXsltOutputProperties);
     function Value(const Name, Default: TLandrixXmlUtf8): TLandrixXmlUtf8;
     function Has(const Name: TLandrixXmlUtf8): Boolean;
     function Clone: TXsltOutputProperties;
@@ -50,8 +60,9 @@ type
   AValue; true, 1, false, 0 and surrounding white space allowed for yes
   and no as in Saxon) is one this serializer does:
   unknown for a name XSLT 2.0 does not define, unsupported for one it does
-  not do (other methods and encodings, doctype, character maps and so on,
-  the XSLT 3.0 properties). }
+  not do (other methods and encodings, doctype and so on, the XSLT 3.0
+  properties; use-character-maps as a value: the compiler composes the
+  maps into MapChars and MapStrings). }
 function XsltOutputPropertyStatus(const Name, AValue: TLandrixXmlUtf8): TXsltOutputStatus;
 
 { Writes Tree (a document) to Stream; ForceUtf8: UTF-8 whatever the
@@ -190,6 +201,33 @@ begin
   Result := TXsltOutputProperties.Create;
   Result.FNames := Copy(FNames, 0, Length(FNames));
   Result.FValues := Copy(FValues, 0, Length(FValues));
+  Result.MapChars := Copy(MapChars, 0, Length(MapChars));
+  Result.MapStrings := Copy(MapStrings, 0, Length(MapStrings));
+end;
+
+procedure TXsltOutputProperties.AddMapping(Code: Cardinal; const S: TLandrixXmlUtf8);
+var
+  I: Integer;
+begin
+  for I := 0 to Integer(Length(MapChars)) - 1 do
+    if MapChars[I] = Code then
+    begin
+      MapStrings[I] := S;
+      Exit;
+    end;
+  I := Integer(Length(MapChars));
+  SetLength(MapChars, I + 1);
+  SetLength(MapStrings, I + 1);
+  MapChars[I] := Code;
+  MapStrings[I] := S;
+end;
+
+procedure TXsltOutputProperties.AddMappings(Source: TXsltOutputProperties);
+var
+  I: Integer;
+begin
+  for I := 0 to Integer(Length(Source.MapChars)) - 1 do
+    AddMapping(Source.MapChars[I], Source.MapStrings[I]);
 end;
 
 { --- serializer ------------------------------------------------------------ }
@@ -246,6 +284,24 @@ type
       or an error }
     FMaxChar: Cardinal;
     FEscape: Boolean;
+    { the character map: the characters (those below 80 also in
+      FAsciiMap, -1 for none), their strings; FInMap while a text is
+      mapped; FPlain: the text method (nothing escaped) }
+    FMapChars: TXsltCardinalArray;
+    FMapStrings: TLandrixXmlUtf8Array;
+    FAsciiMap: array[0..127] of Integer;
+    FHasMap: Boolean;
+    FInMap: Boolean;
+    FPlain: Boolean;
+    procedure SetMap(Props: TXsltOutputProperties);
+    function MappedAt(const S: TLandrixXmlUtf8; I: Integer; out N: Integer): Integer;
+    procedure PutMapped(const S: TLandrixXmlUtf8; Attribute: Boolean);
+    procedure PutUnmapped(const S: TLandrixXmlUtf8);
+    procedure PutAttr(const Name, Value: TLandrixXmlUtf8);
+    function MappedValue(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+    function MappedCount(const S: TLandrixXmlUtf8): Integer;
+    function HasMapped(const S: TLandrixXmlUtf8): Boolean;
+    procedure Escape(const S: TLandrixXmlUtf8; Attribute: Boolean); virtual;
     procedure PutBytes(const S: TLandrixXmlUtf8);
     procedure PutEncoded(const S: TLandrixXmlUtf8);
     procedure Put(const S: TLandrixXmlUtf8);
@@ -255,7 +311,6 @@ type
     procedure FlushPending;
     procedure PutEscaped(const S: TLandrixXmlUtf8; Attribute: Boolean);
     procedure PutText(const S: TLandrixXmlUtf8);
-    procedure PutAttributeValue(const S: TLandrixXmlUtf8);
     procedure Node(I: Integer);
     procedure Element(I: Integer);
   public
@@ -271,6 +326,179 @@ begin
   FSuppressedAt := -1;
   FMaxChar := $10FFFF;
   SetLength(FBuffer, 65536);
+end;
+
+procedure TSerializer.SetMap(Props: TXsltOutputProperties);
+var
+  I: Integer;
+begin
+  for I := 0 to 127 do
+    FAsciiMap[I] := -1;
+  FMapChars := Copy(Props.MapChars, 0, Length(Props.MapChars));
+  FMapStrings := Copy(Props.MapStrings, 0, Length(Props.MapStrings));
+  for I := 0 to Integer(Length(FMapChars)) - 1 do
+    if FMapChars[I] < 128 then
+      FAsciiMap[FMapChars[I]] := I;
+  FHasMap := Length(FMapChars) > 0;
+end;
+
+{ the index of the mapped character at S[I] (-1: none); N its length in
+  bytes }
+function TSerializer.MappedAt(const S: TLandrixXmlUtf8; I: Integer; out N: Integer): Integer;
+var
+  Code: Cardinal;
+  K: Integer;
+begin
+  Result := -1;
+  N := 1;
+  if Ord(S[I]) < $80 then
+  begin
+    Result := FAsciiMap[Ord(S[I])];
+    Exit;
+  end;
+  N := LandrixXmlDecodeUtf8(PAnsiChar(S) + I - 1, Length(S) - I + 1, Code);
+  if N = 0 then
+  begin
+    N := 1;
+    Exit;
+  end;
+  for K := 0 to Integer(Length(FMapChars)) - 1 do
+    if FMapChars[K] = Code then
+    begin
+      Result := K;
+      Exit;
+    end;
+end;
+
+{ text or an attribute value with the character map: the parts between
+  mapped characters escaped, the strings of the mapped characters as they
+  are (SERE0008 for a character of them the encoding does not have) }
+procedure TSerializer.PutMapped(const S: TLandrixXmlUtf8; Attribute: Boolean);
+var
+  I, N, K, Start: Integer;
+  Saved: Boolean;
+begin
+  FInMap := True;
+  try
+    Start := 1;
+    I := 1;
+    while I <= Length(S) do
+    begin
+      K := MappedAt(S, I, N);
+      if K >= 0 then
+      begin
+        Escape(Copy(S, Start, I - Start), Attribute);
+        Saved := FEscape;
+        FEscape := False;
+        try
+          Put(FMapStrings[K]);
+        finally
+          FEscape := Saved;
+        end;
+        Start := I + N;
+      end;
+      Inc(I, N);
+    end;
+    Escape(Copy(S, Start, Length(S) - Start + 1), Attribute);
+  finally
+    FInMap := False;
+  end;
+end;
+
+{ whether S has a character of the character map }
+function TSerializer.HasMapped(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, N: Integer;
+begin
+  Result := True;
+  I := 1;
+  while I <= Length(S) do
+  begin
+    if MappedAt(S, I, N) >= 0 then
+      Exit;
+    Inc(I, N);
+  end;
+  Result := False;
+end;
+
+{ Name="Value", the value escaped and mapped; in apostrophes for a value
+  with a mapped character that has a quotation mark and no apostrophe once
+  mapped (Saxon) }
+procedure TSerializer.PutAttr(const Name, Value: TLandrixXmlUtf8);
+var
+  Mapped, Delimiter: TLandrixXmlUtf8;
+begin
+  Delimiter := '"';
+  if FHasMap and HasMapped(Value) then
+  begin
+    Mapped := MappedValue(Value);
+    if Pos8Byte('"', Mapped) and not Pos8Byte(#39, Mapped) then
+      Delimiter := #39;
+  end;
+  Put(Name + '=' + Delimiter);
+  Escape(Value, True);
+  Put(Delimiter);
+end;
+
+{ S with the strings of its mapped characters (S without a map) }
+function TSerializer.MappedValue(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I, N, K: Integer;
+begin
+  Result := S;
+  if not FHasMap or not HasMapped(S) then
+    Exit;
+  Result := '';
+  I := 1;
+  while I <= Length(S) do
+  begin
+    K := MappedAt(S, I, N);
+    if K >= 0 then
+      Result := Result + FMapStrings[K]
+    else
+      Result := Result + Copy(S, I, N);
+    Inc(I, N);
+  end;
+end;
+
+{ the number of mapped characters in S }
+function TSerializer.MappedCount(const S: TLandrixXmlUtf8): Integer;
+var
+  I, N: Integer;
+begin
+  Result := 0;
+  if not FHasMap then
+    Exit;
+  I := 1;
+  while I <= Length(S) do
+  begin
+    if MappedAt(S, I, N) >= 0 then
+      Inc(Result);
+    Inc(I, N);
+  end;
+end;
+
+{ an attribute value without the character map (a namespace URI, an
+  escaped URI) }
+procedure TSerializer.PutUnmapped(const S: TLandrixXmlUtf8);
+var
+  Saved: Boolean;
+begin
+  Saved := FInMap;
+  FInMap := True;
+  try
+    Escape(S, True);
+  finally
+    FInMap := Saved;
+  end;
+end;
+
+procedure TSerializer.Escape(const S: TLandrixXmlUtf8; Attribute: Boolean);
+begin
+  if FPlain then
+    Put(S)
+  else
+    PutEscaped(S, Attribute);
 end;
 
 procedure TSerializer.Flush;
@@ -409,6 +637,11 @@ var
   R: TLandrixXmlUtf8;
   Saved: Boolean;
 begin
+  if FHasMap and not FInMap then
+  begin
+    PutMapped(S, Attribute);
+    Exit;
+  end;
   Saved := FEscape;
   FEscape := True;
   Start := 1;
@@ -460,11 +693,6 @@ end;
 procedure TSerializer.PutText(const S: TLandrixXmlUtf8);
 begin
   PutEscaped(S, False);
-end;
-
-procedure TSerializer.PutAttributeValue(const S: TLandrixXmlUtf8);
-begin
-  PutEscaped(S, True);
 end;
 
 function IsWhiteSpace(const S: TLandrixXmlUtf8): Boolean;
@@ -572,7 +800,10 @@ begin
           Inc(Len, JavaLength(Prefixes[K]) + 10 + JavaLength(Uris[K]));
       for K := I + 1 to I + FTree.AttributeCount[I] do
       begin
-        Inc(Len, JavaLength(FTree.LocalNameUtf8(K)) + JavaLength(FTree.ValueUtf8(K)) + 4);
+        { the mapped value, and two for each mapped character (Saxon counts
+          the markers around its strings) }
+        Inc(Len, JavaLength(FTree.LocalNameUtf8(K)) + JavaLength(MappedValue(FTree.ValueUtf8(K))) +
+          2 * MappedCount(FTree.ValueUtf8(K)) + 4);
         if FTree.PrefixUtf8(K) = '' then
           Inc(Len, 4)
         else
@@ -592,15 +823,13 @@ begin
       Put('xmlns="')
     else
       Put('xmlns:' + Prefixes[K] + '="');
-    PutAttributeValue(Uris[K]);
+    PutUnmapped(Uris[K]);
     Put('"');
   end;
   for K := I + 1 to I + FTree.AttributeCount[I] do
   begin
     Separator;
-    Put(FTree.NameUtf8(K) + '="');
-    PutAttributeValue(FTree.ValueUtf8(K));
-    Put('"');
+    PutAttr(FTree.NameUtf8(K), FTree.ValueUtf8(K));
   end;
   C := FTree.FirstChild(I);
   if C >= 0 then
@@ -656,7 +885,8 @@ begin
         V := FTree.ValueUtf8(I);
         if FIndent then
         begin
-          if (FSuppressedAt < 0) and IsWhiteSpace(V) then
+          { white space with a mapped character is text (Saxon) }
+          if (FSuppressedAt < 0) and IsWhiteSpace(V) and not (FHasMap and HasMapped(V)) then
           begin
             FlushPending;
             FPending := V;
@@ -757,6 +987,7 @@ type
     procedure CloseTag;
     procedure HtmlIndent;
     procedure HtmlText(const S: TLandrixXmlUtf8; Attribute: Boolean);
+    procedure Escape(const S: TLandrixXmlUtf8; Attribute: Boolean); override;
     procedure IndentedText(const S: TLandrixXmlUtf8);
     procedure StartTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean; I: Integer);
     procedure EndTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean);
@@ -826,6 +1057,11 @@ var
   R: TLandrixXmlUtf8;
   Drop, Saved: Boolean;
 begin
+  if FHasMap and not FInMap then
+  begin
+    PutMapped(S, Attribute);
+    Exit;
+  end;
   if FXhtml then
   begin
     PutEscaped(S, Attribute);
@@ -889,6 +1125,11 @@ begin
   end;
   Put(Copy(S, Start, Length(S) - Start + 1));
   FEscape := Saved;
+end;
+
+procedure THtmlSerializer.Escape(const S: TLandrixXmlUtf8; Attribute: Boolean);
+begin
+  HtmlText(S, Attribute);
 end;
 
 { text outside formatted elements: a line break, or a space after more than
@@ -1038,7 +1279,7 @@ begin
       end
       else
         Put(' xmlns:' + Prefixes[K] + '="');
-      HtmlText(Uris[K], True);
+      PutUnmapped(Uris[K]);
       Put('"');
     end;
     for K := I + 1 to I + FTree.AttributeCount[I] do
@@ -1046,8 +1287,10 @@ begin
       AName := FTree.NameUtf8(K);
       ALocal := Lower8(FTree.LocalNameUtf8(K));
       V := FTree.ValueUtf8(K);
+      { minimized unless a character of it is mapped (Saxon) }
       if IsHtml and (FTree.NamespaceUriUtf8(K) = '') and (Lower8(V) = ALocal) and
-        (InList(HtmlBoolean, Local + '+' + ALocal) or InList(HtmlBoolean, '*+' + ALocal)) then
+        (InList(HtmlBoolean, Local + '+' + ALocal) or InList(HtmlBoolean, '*+' + ALocal)) and
+        not (FHasMap and HasMapped(V)) then
       begin
         Put(' ' + AName);
         Continue;
@@ -1056,10 +1299,16 @@ begin
         (Saxon) }
       if FEscapeUris and (FTree.NamespaceUriUtf8(K) = '') and InList(HtmlUri, Local + '+' + ALocal) and
         not Pos8Byte(':', FTree.NameUtf8(I)) then
+      begin
+        { an escaped URI gets no character map (Saxon) }
         V := EscapeHtmlUri(V);
-      Put(' ' + AName + '="');
-      HtmlText(V, True);
-      Put('"');
+        Put(' ' + AName + '="');
+        PutUnmapped(V);
+        Put('"');
+        Continue;
+      end;
+      Put(' ');
+      PutAttr(AName, V);
     end;
   end;
   if FNsDepth >= Length(FDefaults) then
@@ -1120,7 +1369,7 @@ begin
         Put(' xmlns="')
       else
         Put(' xmlns:' + Prefixes[K] + '="');
-      PutEscaped(Uris[K], True);
+      PutUnmapped(Uris[K]);
       Put('"');
     end;
     for K := I + 1 to I + FTree.AttributeCount[I] do
@@ -1130,10 +1379,16 @@ begin
         prefix is not escaped (Saxon) }
       if FEscapeUris and (FTree.NamespaceUriUtf8(K) = '') and
         InList(HtmlUri, Lower8(Local) + '+' + Lower8(FTree.LocalNameUtf8(K))) and not Pos8Byte(':', Name) then
+      begin
+        { an escaped URI gets no character map (Saxon) }
         V := EscapeHtmlUri(V);
-      Put(' ' + FTree.NameUtf8(K) + '="');
-      PutEscaped(V, True);
-      Put('"');
+        Put(' ' + FTree.NameUtf8(K) + '="');
+        PutUnmapped(V);
+        Put('"');
+        Continue;
+      end;
+      Put(' ');
+      PutAttr(FTree.NameUtf8(K), V);
     end;
   end;
   FOpenTag := True;
@@ -1170,9 +1425,10 @@ begin
     XhtmlStartTag(Name, 'meta', -1)
   else
     StartTag(Name, 'meta', IsHtml, -1);
-  Put(' http-equiv="Content-Type" content="');
-  HtmlText(FMediaType + '; charset=' + FEncoding, True);
-  Put('"');
+  Put(' ');
+  PutAttr('http-equiv', 'Content-Type');
+  Put(' ');
+  PutAttr('content', FMediaType + '; charset=' + FEncoding);
   if FXhtml then
     XhtmlEndTag(Name, 'meta', True)
   else
@@ -1315,7 +1571,8 @@ begin
     xnkText:
       begin
         V := FTree.ValueUtf8(I);
-        if not FIndent or FInFormatted then
+        { a text with a mapped character is not indented (Saxon) }
+        if not FIndent or FInFormatted or FHasMap and HasMapped(V) then
         begin
           CloseTag;
           HtmlText(V, False);
@@ -1368,7 +1625,8 @@ end;
 
 { The text of all text nodes (method text), a character the encoding does
   not have SERE0008. }
-procedure WriteText(Tree: TLandrixXmlXPathTree; Stream: TStream; MaxChar: Cardinal);
+procedure WriteText(Tree: TLandrixXmlXPathTree; Props: TXsltOutputProperties; Stream: TStream;
+  MaxChar: Cardinal);
 var
   I: Integer;
   S: TSerializer;
@@ -1376,9 +1634,16 @@ begin
   S := TSerializer.Create(Tree, Stream, False);
   try
     S.FMaxChar := MaxChar;
+    S.FPlain := True;
+    S.SetMap(Props);
     for I := 0 to Tree.Count - 1 do
       if Tree.Kind[I] = xnkText then
-        S.Put(Tree.ValueUtf8(I));
+      begin
+        if S.FHasMap then
+          S.PutMapped(Tree.ValueUtf8(I), False)
+        else
+          S.Put(Tree.ValueUtf8(I));
+      end;
     S.Flush;
   finally
     S.Free;
@@ -1427,7 +1692,7 @@ begin
       LandrixXmlUtf8ToString(Encoding) + ' is not supported (UTF-8, US-ASCII and ISO-8859-1 only)');
   if Method = 'text' then
   begin
-    WriteText(Tree, Stream, MaxChar);
+    WriteText(Tree, Props, Stream, MaxChar);
     Exit;
   end;
   if (Method = 'html') or (Method = 'xhtml') then
@@ -1449,6 +1714,7 @@ begin
       H.FMediaType := Props.Value('media-type', 'text/html');
       H.FEncoding := Encoding;
       H.FMaxChar := MaxChar;
+      H.SetMap(Props);
       if H.FXhtml and (Props.Value('omit-xml-declaration', 'no') <> 'yes') then
       begin
         H.Put('<?xml version="1.0" encoding="' + Encoding + '"');
@@ -1473,6 +1739,7 @@ begin
   S := TSerializer.Create(Tree, Stream, Props.Value('indent', 'no') = 'yes');
   try
     S.FMaxChar := MaxChar;
+    S.SetMap(Props);
     if Props.Value('omit-xml-declaration', 'no') <> 'yes' then
     begin
       S.Put('<?xml version="1.0" encoding="' + Encoding + '"');

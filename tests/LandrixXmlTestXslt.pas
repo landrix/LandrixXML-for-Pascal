@@ -460,7 +460,7 @@ const
   Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">';
   Cases: array[0..14] of string = (
     '<xsl:namespace-alias stylesheet-prefix="#default" result-prefix="#default"/><xsl:template match="/"/>',
-    '<xsl:character-map name="m"/><xsl:template match="/"/>',
+    '<xsl:mode name="m"/><xsl:template match="/"/>',
     '<xsl:template match="/"><x xsl:expand-text="yes">{1}</x></xsl:template>',
     '<xsl:output cdata-section-elements="a"/><xsl:template match="/"/>',
     '<xsl:output doctype-system="x.dtd"/><xsl:template match="/"/>',

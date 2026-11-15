@@ -33,6 +33,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:next-match` and `xsl:apply-imports` (with `xsl:with-param`).
 - XSLT: `xsl:attribute-set` and `use-attribute-sets` (on literal result
   elements, `xsl:element` and `xsl:copy`).
+- XSLT: `xsl:character-map` and `use-character-maps` (on `xsl:output`
+  and `xsl:result-document`), applied by the xml, html, xhtml and text
+  output methods as in Saxon.
 - XSLT: the output method xhtml, as Saxon writes it (also the default
   method for an `html` root element in the XHTML namespace).
 - XSLT: tunnel parameters (`tunnel="yes"` on `xsl:with-param` and
