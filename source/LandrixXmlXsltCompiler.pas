@@ -162,6 +162,8 @@ type
   TXsltWithParam = class
   public
     Name: TLandrixXmlUtf8;
+    { tunnel="yes": passed on to the templates the called one invokes }
+    Tunnel: Boolean;
     Select: TLandrixXmlXPathExpression;
     Body: TObjectList;
     HasAs: Boolean;
@@ -205,10 +207,12 @@ type
     Template: TObject;
     { with-param (TXsltWithParam, owned) }
     Params: TObjectList;
-    { xsl:variable, xsl:param of a template: the slot and name (Clark) }
+    { xsl:variable, xsl:param of a template: the slot and name (Clark);
+      Tunnel: a tunnel parameter }
     Slot: Integer;
     VarName: TLandrixXmlUtf8;
     IsParam: Boolean;
+    Tunnel: Boolean;
     Required: Boolean;
     HasAs: Boolean;
     AsType: TLandrixXmlXPathSequenceType;
@@ -867,6 +871,7 @@ type
     procedure CompileBody(M: TModule; Parent: Integer; Scope: TScope; Body: TObjectList; First: Integer);
     function CompileInstr(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     function CompileLiteral(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
+    function YesNoAttr(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
     procedure CompileWithParams(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
     function CompileResultDocument(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     procedure CompileSortKey(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
@@ -2223,11 +2228,27 @@ begin
   end;
 end;
 
+{ a yes/no attribute (also true/false and 1/0, as Saxon accepts them;
+  absent: no) }
+function TCompiler.YesNoAttr(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
+var
+  V: TLandrixXmlUtf8;
+begin
+  Result := False;
+  if not Attr(M, E, Local, V) then
+    Exit;
+  V := Trim8(V);
+  if (V = 'yes') or (V = 'true') or (V = '1') then
+    Result := True
+  else if (V <> 'no') and (V <> 'false') and (V <> '0') then
+    Fail(M, E, 'XTSE0020', LandrixXmlUtf8ToString(Local) + '="' + LandrixXmlUtf8ToString(V) +
+      '" is neither yes nor no');
+end;
+
 procedure TCompiler.CompileWithParams(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
 var
-  C: Integer;
+  C, I: Integer;
   P: TXsltWithParam;
-  V: TLandrixXmlUtf8;
 begin
   C := M.Tree.FirstChild(E);
   while C >= 0 do
@@ -2237,8 +2258,10 @@ begin
       P := TXsltWithParam.Create;
       Instr.Params.Add(P);
       P.Name := QNameToClark(M, C, ReqAttr(M, C, 'name'), False);
-      if Attr(M, C, 'tunnel', V) and (V = 'yes') then
-        Unsupported(M, C, 'a tunnel parameter');
+      P.Tunnel := YesNoAttr(M, C, 'tunnel');
+      for I := 0 to Integer(Instr.Params.Count) - 2 do
+        if TXsltWithParam(Instr.Params[I]).Name = P.Name then
+          Fail(M, C, 'XTSE0670', 'two xsl:with-param with the name ' + LandrixXmlUtf8ToString(P.Name));
       P.Select := CompileAttr(M, C, 'select', Scope);
       P.HasAs := ParseType(M, C, Scope, P.AsType);
       if P.Select = nil then
@@ -2466,8 +2489,7 @@ begin
     if Param then
     begin
       Result.Required := Attr(M, E, 'required', V) and (V = 'yes');
-      if Attr(M, E, 'tunnel', V) and (V = 'yes') then
-        Unsupported(M, E, 'a tunnel parameter');
+      Result.Tunnel := YesNoAttr(M, E, 'tunnel');
     end;
     Result.Select := CompileAttr(M, E, 'select', Scope);
     Result.HasAs := ParseType(M, E, Scope, Result.AsType);
@@ -2825,7 +2847,7 @@ begin
       G.Precedence := D.Precedence;
       G.IsParam := IsXsl(D.Module, D.Element, 'param');
       G.Required := G.IsParam and Attr(D.Module, D.Element, 'required', V) and (V = 'yes');
-      if Attr(D.Module, D.Element, 'tunnel', V) and (V = 'yes') then
+      if YesNoAttr(D.Module, D.Element, 'tunnel') then
         Fail(D.Module, D.Element, 'XTSE0020', 'a global parameter cannot be a tunnel parameter');
     end;
     FC.GlobalCount := Integer(FC.Globals.Count);
@@ -3881,6 +3903,12 @@ begin
         if Attr(M, C, 'required', V) then
           Fail(M, C, 'XTSE0020', 'a parameter of a function has no required attribute');
         P := CompileVariable(M, C, Scope, True);
+        { tunnel="no" is accepted, as Saxon does }
+        if P.Tunnel then
+        begin
+          P.Free;
+          Fail(M, C, 'XTSE0020', 'a parameter of a function cannot be a tunnel parameter');
+        end;
         if (P.Select <> nil) or (P.Body.Count > 0) then
         begin
           P.Free;
@@ -4052,11 +4080,12 @@ var
     for A := 0 to Integer(TXsltTemplate(Instr.Template).Params.Count) - 1 do
     begin
       P := TXsltInstr(TXsltTemplate(Instr.Template).Params[A]);
-      if not P.Required then
+      { a required tunnel parameter is checked when it is called (XTDE0700) }
+      if not P.Required or P.Tunnel then
         Continue;
       Found := False;
       for B := 0 to Integer(Instr.Params.Count) - 1 do
-        if TXsltWithParam(Instr.Params[B]).Name = P.VarName then
+        if (TXsltWithParam(Instr.Params[B]).Name = P.VarName) and not TXsltWithParam(Instr.Params[B]).Tunnel then
           Found := True;
       if not Found then
         raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTSE0690', 'the required parameter ' +
@@ -4064,9 +4093,13 @@ var
     end;
     for B := 0 to Integer(Instr.Params.Count) - 1 do
     begin
+      { a tunnel parameter may be meant for a template called further on }
+      if TXsltWithParam(Instr.Params[B]).Tunnel then
+        Continue;
       Found := False;
       for A := 0 to Integer(TXsltTemplate(Instr.Template).Params.Count) - 1 do
-        if TXsltInstr(TXsltTemplate(Instr.Template).Params[A]).VarName = TXsltWithParam(Instr.Params[B]).Name then
+        if (TXsltInstr(TXsltTemplate(Instr.Template).Params[A]).VarName = TXsltWithParam(Instr.Params[B]).Name) and
+          not TXsltInstr(TXsltTemplate(Instr.Template).Params[A]).Tunnel then
           Found := True;
       if not Found then
         raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTSE0680', 'the template ' +

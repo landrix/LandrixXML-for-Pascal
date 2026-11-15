@@ -31,6 +31,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `xsl:for-each-group`), `xsl:perform-sort`, `xsl:analyze-string` and
   `regex-group()`.
 - XSLT: `xsl:next-match` and `xsl:apply-imports` (with `xsl:with-param`).
+- XSLT: tunnel parameters (`tunnel="yes"` on `xsl:with-param` and
+  template parameters). An initial template with a required parameter is
+  `XTDE0060`, as in XSLT 2.0.
 - XSLT: `xsl:result-document` and named `xsl:output` definitions.
   Secondary results are collected by the transformer
   (`ResultDocumentCount`, `ResultDocuments`, `FindResultDocument`,

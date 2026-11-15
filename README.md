@@ -373,9 +373,9 @@ end;
 
 The XSLT units run a subset of XSLT 2.0 as Saxon HE does (XPath in the
 Saxon profile): templates with match patterns, modes and priorities,
-named templates, parameters, global and local variables (also with a
-sequence constructor and `as`), `xsl:import` and `xsl:include` with
-import precedence, literal result elements, `xsl:element`,
+named templates, parameters (also tunnel parameters), global and local
+variables (also with a sequence constructor and `as`), `xsl:import` and
+`xsl:include` with import precedence, literal result elements, `xsl:element`,
 `xsl:attribute`, `xsl:value-of`, `xsl:text`, `xsl:if`, `xsl:choose`,
 `xsl:for-each`, `xsl:sequence`, `xsl:copy`, `xsl:copy-of`,
 `xsl:document`, `xsl:comment`, `xsl:processing-instruction`,
@@ -699,8 +699,8 @@ Differences from Xerces, also on purpose:
   XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,389 are XSLT 1.0
   or 2.0 cases without features this library leaves out (schema
   awareness, backwards compatibility, the namespace axis, DTDs and the
-  like); 4,450 of them pass and 67 more raise an error where one is
-  expected, but with another code. 619 use an instruction or option
+  like); 4,532 of them pass and 66 more raise an error where one is
+  expected, but with another code. 541 use an instruction or option
   that is not supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.

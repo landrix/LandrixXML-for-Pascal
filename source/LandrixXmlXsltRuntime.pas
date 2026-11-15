@@ -248,6 +248,11 @@ type
       its properties; the tree and receiver of the implicit principal
       result }
     FTemporary: Boolean;
+    { the tunnel parameters the current template received (passed on by
+      xsl:apply-templates, xsl:call-template, xsl:next-match,
+      xsl:apply-imports and the built-in rules; none in functions and
+      global variables) }
+    FTunnel: TSuppliedArray;
     FResults: TObjectList;
     FResultUris: TStringList;
     FPrincipal: TLandrixXmlXPathTree;
@@ -338,6 +343,7 @@ type
     procedure DoNumber(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; R: TReceiver);
     procedure Located(Instr: TXsltInstr; E: ELandrixXmlXPathError);
     function Supplied(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode): TSuppliedArray;
+    function Tunnelled(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode): TSuppliedArray;
     procedure ApplyTemplates(Instr: TXsltInstr; const Nodes: TLandrixXmlXPathSequence; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
     procedure Invoke(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
@@ -1377,7 +1383,9 @@ var
   Arg, SavedCurrent: TLandrixXmlXPathSequence;
   SavedRegex: Boolean;
   SavedRule: TXsltRule;
+  SavedTunnel: TSuppliedArray;
 begin
+  SavedTunnel := nil;
   Result := LandrixXmlXPathEmpty;
   if Def.Tag >= FC.UserFunctionBase then
   begin
@@ -1470,6 +1478,8 @@ begin
         FRegexActive := False;
         SavedRule := FRule;
         FRule := nil;
+        SavedTunnel := FTunnel;
+        FTunnel := nil;
         FEvaluator.PushFrame(G.FrameSize);
         try
           Result := VariableValue(nil, nil, G.Body, G.HasAs, G.AsType, G.Name, Focus, FC.FindMode(''));
@@ -1479,6 +1489,7 @@ begin
           FCurrent := SavedCurrent;
           FRegexActive := SavedRegex;
           FRule := SavedRule;
+          FTunnel := SavedTunnel;
         end;
       end;
   end;
@@ -2076,16 +2087,45 @@ end;
 
 function TRun.Supplied(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode): TSuppliedArray;
 var
-  I: Integer;
+  I, N: Integer;
   P: TXsltWithParam;
 begin
   Result := nil;
-  SetLength(Result, Instr.Params.Count);
+  N := 0;
   for I := 0 to Integer(Instr.Params.Count) - 1 do
   begin
     P := TXsltWithParam(Instr.Params[I]);
-    Result[I].Name := P.Name;
-    Result[I].Value := VariableValue(Instr, P.Select, P.Body, P.HasAs, P.AsType, P.Name, Focus, Mode);
+    if P.Tunnel then
+      Continue;
+    SetLength(Result, N + 1);
+    Result[N].Name := P.Name;
+    Result[N].Value := VariableValue(Instr, P.Select, P.Body, P.HasAs, P.AsType, P.Name, Focus, Mode);
+    Inc(N);
+  end;
+end;
+
+{ the tunnel parameters for the templates Instr invokes: those received,
+  with the tunnel xsl:with-param of Instr added (replacing one of the
+  same name) }
+function TRun.Tunnelled(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode): TSuppliedArray;
+var
+  I, J, N: Integer;
+  P: TXsltWithParam;
+begin
+  Result := Copy(FTunnel, 0, Length(FTunnel));
+  for I := 0 to Integer(Instr.Params.Count) - 1 do
+  begin
+    P := TXsltWithParam(Instr.Params[I]);
+    if not P.Tunnel then
+      Continue;
+    N := Integer(Length(Result));
+    for J := 0 to Integer(Length(Result)) - 1 do
+      if Result[J].Name = P.Name then
+        N := J;
+    if N = Length(Result) then
+      SetLength(Result, N + 1);
+    Result[N].Name := P.Name;
+    Result[N].Value := VariableValue(Instr, P.Select, P.Body, P.HasAs, P.AsType, P.Name, Focus, Mode);
   end;
 end;
 
@@ -2174,15 +2214,21 @@ var
   P: TXsltInstr;
   Found: Boolean;
   V: TLandrixXmlXPathSequence;
+  Given: TSuppliedArray;
 begin
+  Given := nil;
   for I := 0 to Integer(T.Params.Count) - 1 do
   begin
     P := TXsltInstr(T.Params[I]);
     Found := False;
-    for J := 0 to Integer(Length(Params)) - 1 do
-      if Params[J].Name = P.VarName then
+    if P.Tunnel then
+      Given := FTunnel
+    else
+      Given := Params;
+    for J := 0 to Integer(Length(Given)) - 1 do
+      if Given[J].Name = P.VarName then
       begin
-        V := Params[J].Value;
+        V := Given[J].Value;
         if P.HasAs then
           try
             V := FEvaluator.ConvertSequence(V, P.AsType, '$' + LandrixXmlUtf8ToString(P.VarName));
@@ -2238,6 +2284,7 @@ var
   S: TSequenceReceiver;
   SavedGroupActive, SavedRegexActive, SavedTemporary: Boolean;
   SavedRule: TXsltRule;
+  SavedTunnel: TSuppliedArray;
 begin
   if FTemplateDepth >= FSettings.MaxTemplateDepth then
     raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested deeper than ' +
@@ -2257,6 +2304,8 @@ begin
   FRule := nil;
   SavedTemporary := FTemporary;
   FTemporary := True;
+  SavedTunnel := FTunnel;
+  FTunnel := nil;
   FEvaluator.PushFrame(T.FrameSize);
   try
     for I := 0 to Integer(T.Params.Count) - 1 do
@@ -2298,6 +2347,7 @@ begin
     FRegexActive := SavedRegexActive;
     FRule := SavedRule;
     FTemporary := SavedTemporary;
+    FTunnel := SavedTunnel;
     Dec(FTemplateDepth);
   end;
 end;
@@ -2522,7 +2572,7 @@ end;
   in the current mode, else the built-in rule }
 procedure TRun.DoNextMatch(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
 var
-  Params: TSuppliedArray;
+  Params, Tunnel, SavedTunnel: TSuppliedArray;
   Rule, SavedRule: TXsltRule;
 begin
   { the context item of a current template rule is the node it matched
@@ -2530,6 +2580,7 @@ begin
   if (FRule = nil) or (Focus.Node < 0) then
     Fail(Instr, 'XTDE0560', 'there is no current template rule');
   Params := Supplied(Instr, Focus, Mode);
+  Tunnel := Tunnelled(Instr, Focus, Mode);
   Rule := nil;
   try
     if Instr.Kind = xskNextMatch then
@@ -2544,6 +2595,8 @@ begin
   end;
   SavedRule := FRule;
   FRule := Rule;
+  SavedTunnel := FTunnel;
+  FTunnel := Tunnel;
   try
     if Rule = nil then
       BuiltIn(Instr, Focus, Mode, Params, R)
@@ -2551,6 +2604,7 @@ begin
       Invoke(Rule.Template, Focus, Mode, Params, R);
   finally
     FRule := SavedRule;
+    FTunnel := SavedTunnel;
   end;
 end;
 
@@ -3145,23 +3199,37 @@ procedure TRun.DoApplyTemplates(Instr: TXsltInstr; const Focus: TLandrixXmlXPath
 var
   M: TXsltMode;
   S: TLandrixXmlXPathSequence;
-  Params: TSuppliedArray;
+  Params, Tunnel, Saved: TSuppliedArray;
 begin
   M := TXsltMode(Instr.Mode);
   if Instr.CurrentMode then
     M := Mode;
   S := Sorted(Instr, Focus, Mode, Eval(Instr, Instr.Select, Focus));
   Params := Supplied(Instr, Focus, Mode);
-  ApplyTemplates(Instr, S, M, Params, R);
+  Tunnel := Tunnelled(Instr, Focus, Mode);
+  Saved := FTunnel;
+  FTunnel := Tunnel;
+  try
+    ApplyTemplates(Instr, S, M, Params, R);
+  finally
+    FTunnel := Saved;
+  end;
 end;
 
 procedure TRun.DoCallTemplate(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
   R: TReceiver);
 var
-  Params: TSuppliedArray;
+  Params, Tunnel, Saved: TSuppliedArray;
 begin
   Params := Supplied(Instr, Focus, Mode);
-  Invoke(TXsltTemplate(Instr.Template), Focus, Mode, Params, R);
+  Tunnel := Tunnelled(Instr, Focus, Mode);
+  Saved := FTunnel;
+  FTunnel := Tunnel;
+  try
+    Invoke(TXsltTemplate(Instr.Template), Focus, Mode, Params, R);
+  finally
+    FTunnel := Saved;
+  end;
 end;
 
 { Whether Node matches the count pattern (Count) or the from pattern of
@@ -4372,6 +4440,11 @@ begin
       if not FC.NamedTemplates.Find(LandrixXmlUtf8ToString(FSettings.InitialTemplate), I) then
         Fail(nil, 'XTDE0040', 'no template named ' + LandrixXmlUtf8ToString(FSettings.InitialTemplate));
       T := TXsltTemplate(FC.NamedTemplates.Objects[I]);
+      { XSLT 2.0: the initial template has no required parameter }
+      for I := 0 to Integer(T.Params.Count) - 1 do
+        if TXsltInstr(T.Params[I]).Required then
+          Fail(TXsltInstr(T.Params[I]), 'XTDE0060', 'the initial template has the required parameter ' +
+            LandrixXmlUtf8ToString(TXsltInstr(T.Params[I]).VarName));
       Mode := FC.FindMode(FSettings.InitialMode);
       if Mode = nil then
         Mode := FC.FindMode('');
