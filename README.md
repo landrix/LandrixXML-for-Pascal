@@ -397,7 +397,9 @@ sequence of its own is rejected when it is built), `xsl:namespace-alias`
 (literal result elements, their attributes and namespace nodes, as
 Saxon applies it), simplified stylesheets (a literal result element
 with `xsl:version` as the stylesheet or as an included or imported
-module), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
+module), `xpath-default-namespace` (expressions, patterns, sequence
+types and the names of `xsl:strip-space` and `xsl:preserve-space`),
+`xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
 `element-available()` (true for what this subset translates),
@@ -684,7 +686,11 @@ Differences from Xerces, also on purpose:
   Schematron validator uses; it also accepts the XPath 3.0 string
   concatenation operator `||`, which XSLT 2.0 stylesheets run by Saxon
   use. Both profiles have a QT3 baseline; the differences are tested in
-  `tests/data/xpath/profiles.txt`.
+  `tests/data/xpath/profiles.txt`. The static context's
+  `DefaultElementNamespace` (default '') is the default element/type
+  namespace of XPath 2.0: unprefixed element names in name tests (not on
+  the attribute axis), `element()` and atomic type names are in it (a
+  string cast to `xs:QName` is not, as in Saxon).
 - The [KoSIT XRechnung test suite](https://github.com/itplr-kosit/xrechnung-testsuite)
   (`tools/run-kosit-suite.py`, pinned release 2026-08-31 with the
   matching KoSIT validator configuration): all 86 invoices are validated

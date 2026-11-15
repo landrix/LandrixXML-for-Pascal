@@ -1607,6 +1607,73 @@ begin
   end;
 end;
 
+{ DefaultElementNamespace: unprefixed element names in name tests and
+  element() tests and atomic type names are in it; attribute names,
+  variables and a string cast to xs:QName are not; the expression keeps
+  it. }
+procedure TestDefaultElementNamespace;
+
+  function Run(const Text, Default: TLandrixXmlUtf8; Evaluator: TLandrixXmlXPathEvaluator): TLandrixXmlUtf8;
+  var
+    Context: TLandrixXmlXPathStaticContext;
+    Expr: TLandrixXmlXPathExpression;
+    R: TLandrixXmlXPathResult;
+  begin
+    Result := '';
+    Context := TLandrixXmlXPathStaticContext.Create;
+    Expr := nil;
+    try
+      Context.Profile := xppSaxon;
+      Context.DefaultElementNamespace := Default;
+      try
+        Expr := TLandrixXmlXPathExpression.Create(Text, Context);
+        Check(Expr.DefaultElementNamespace = Default, LandrixXmlUtf8ToString(Text) + ': kept by the expression');
+        R := Evaluator.Evaluate(Expr, 0);
+        try
+          if R.Count > 0 then
+            Result := R.StringValueUtf8(0);
+        finally
+          R.Free;
+        end;
+      except
+        on E: ELandrixXmlXPathError do
+          Result := LandrixXmlStringToUtf8(E.XPathCode);
+      end;
+    finally
+      Expr.Free;
+      Context.Free;
+    end;
+  end;
+
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  try
+    Tree.LoadFromUtf8('<r xmlns="urn:d" a="1"><e>x</e></r>');
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    CheckEqualsUtf8('0', Run('count(/r/e)', '', Evaluator), 'no default');
+    CheckEqualsUtf8('1', Run('count(/r/e)', 'urn:d', Evaluator), 'child axis');
+    CheckEqualsUtf8('1', Run('count(//e)', 'urn:d', Evaluator), 'descendants');
+    CheckEqualsUtf8('1', Run('count(/r/@a)', 'urn:d', Evaluator), 'attribute axis unaffected');
+    CheckEqualsUtf8('1', Run('count(/r/attribute::a)', 'urn:d', Evaluator), 'attribute:: unaffected');
+    CheckEqualsUtf8('1', Run('count(/r/element(e))', 'urn:d', Evaluator), 'element() test');
+    CheckEqualsUtf8('true', Run('/r instance of element(r)', 'urn:d', Evaluator), 'element() type');
+    CheckEqualsUtf8('', Run('namespace-uri-from-QName(xs:QName(''q''))', 'urn:d', Evaluator),
+      'QName cast unaffected (Saxon)');
+    CheckEqualsUtf8('2', Run('for $e in 1 return $e + 1', 'urn:d', Evaluator), 'variables unaffected');
+    CheckEqualsUtf8('5', Run('''5'' cast as integer', LandrixXmlXPathSchemaNamespace, Evaluator),
+      'type name in the default namespace');
+    CheckEqualsUtf8('XPST0051', Run('''5'' cast as integer', 'urn:d', Evaluator), 'unknown type');
+    CheckEqualsUtf8('x', Run('string(/r/e)', 'urn:d', Evaluator), 'string()');
+  finally
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 { The declared types of a user function convert in the function's
   profile, not in the caller's: f:inf() returns xs:untypedAtomic('+INF')
   as an xs:double, f:id($x as xs:double) returns $x; an xs:anyURI made in
@@ -2395,6 +2462,7 @@ begin
   RegisterTest('XPathEval.HostFunctions', TestHostFunctions);
   RegisterTest('XPathEval.MatchesPattern', TestMatchesPattern);
   RegisterTest('XPathEval.Frames', TestFrames);
+  RegisterTest('XPathEval.DefaultElementNamespace', TestDefaultElementNamespace);
 end;
 
 end.

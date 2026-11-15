@@ -926,8 +926,8 @@ type
     procedure CheckStandard(M: TModule; E: Integer);
     procedure CheckModule(M: TModule);
     procedure PruneUseWhen(M: TModule);
-    function HasXsltAttribute(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
     function HasXmlBase(M: TModule; E: Integer): Boolean;
+    function XPathDefaultNamespace(M: TModule; E: Integer): TLandrixXmlUtf8;
     function UseWhen(M: TModule; E: Integer; const Text: TLandrixXmlUtf8): Boolean;
     function UseWhenHost(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
       const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
@@ -1391,7 +1391,7 @@ begin
       Continue;
     L := M.Tree.LocalNameUtf8(I);
     V := Trim8(M.Tree.ValueUtf8(I));
-    if (L = 'xpath-default-namespace') or (L = 'default-collation') or
+    if (L = 'default-collation') or
       (L = 'default-mode') or (L = 'default-validation') or (L = 'input-type-annotations') or
       ((L = 'expand-text') and (V = 'yes')) or ((L = 'inherit-namespaces') and (V = 'no')) or
       ((L = 'extension-element-prefixes') and (V <> '')) or
@@ -1404,20 +1404,33 @@ end;
 
 function PreservesSpace(T: TLandrixXmlXPathTree; N: Integer): Boolean; forward;
 
-{ whether element E has the standard attribute Local (no namespace on an
-  XSLT element, the XSLT namespace on another) }
-function TCompiler.HasXsltAttribute(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
+{ the default element/type namespace of the XPath expressions of E: the
+  [xsl:]xpath-default-namespace of E or of the nearest ancestor that has
+  one ('' for none) }
+function TCompiler.XPathDefaultNamespace(M: TModule; E: Integer): TLandrixXmlUtf8;
 var
-  A: Integer;
+  A, I: Integer;
   Xsl: Boolean;
 begin
-  Result := True;
-  Xsl := M.Tree.NamespaceUriUtf8(E) = XsltNamespace;
-  for A := E + 1 to E + M.Tree.AttributeCount[E] do
-    if (M.Tree.LocalNameUtf8(A) = Local) and ((Xsl and (M.Tree.NamespaceUriUtf8(A) = '')) or
-      (not Xsl and (M.Tree.NamespaceUriUtf8(A) = XsltNamespace))) then
-      Exit;
-  Result := False;
+  Result := '';
+  A := E;
+  while A >= 0 do
+  begin
+    if M.Tree.Kind[A] = xnkElement then
+    begin
+      Xsl := M.Tree.NamespaceUriUtf8(A) = XsltNamespace;
+      for I := A + 1 to A + M.Tree.AttributeCount[A] do
+        if (M.Tree.LocalNameUtf8(I) = 'xpath-default-namespace') and
+          ((Xsl and (M.Tree.NamespaceUriUtf8(I) = '')) or
+          (not Xsl and (M.Tree.NamespaceUriUtf8(I) = XsltNamespace))) then
+        begin
+          { an xs:anyURI: white space collapsed (Saxon) }
+          Result := Trim8(M.Tree.ValueUtf8(I));
+          Exit;
+        end;
+    end;
+    A := M.Tree.Parent[A];
+  end;
 end;
 
 function TCompiler.HasXmlBase(M: TModule; E: Integer): Boolean;
@@ -1499,12 +1512,10 @@ begin
     Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'element-available', 1);
     Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'static-base-uri', 0);
     Ctx.DeclareFunction(LandrixXmlXPathFunctionNamespace, 'resolve-uri', 1);
-    { the default namespace of XPath is not supported (see CheckStandard) }
+    Ctx.DefaultElementNamespace := XPathDefaultNamespace(M, E);
     A := E;
     while A >= 0 do
     begin
-      if (M.Tree.Kind[A] = xnkElement) and HasXsltAttribute(M, A, 'xpath-default-namespace') then
-        Unsupported(M, E, 'xpath-default-namespace');
       { the static base URI is the module's (see CheckStandard) }
       if (M.Tree.Kind[A] = xnkElement) and HasXmlBase(M, A) then
         Unsupported(M, E, 'xml:base in a stylesheet');
@@ -1823,6 +1834,7 @@ begin
   Result := TLandrixXmlXPathStaticContext.Create;
   try
     Result.Profile := xppSaxon;
+    Result.DefaultElementNamespace := XPathDefaultNamespace(M, E);
     Prefixes := M.Tree.InScopePrefixesUtf8(E);
     for I := 0 to Integer(Length(Prefixes)) - 1 do
       if (Prefixes[I] <> 'xml') and M.Tree.LookupNamespace(E, Prefixes[I], Uri) and (Uri <> '') then
@@ -3331,7 +3343,11 @@ begin
       V := M.Tree.LocalNameUtf8(I);
       if (V <> 'value') and (V <> 'select') and (V <> 'level') and (V <> 'count') and (V <> 'from') and
         (V <> 'format') and (V <> 'lang') and (V <> 'letter-value') and (V <> 'ordinal') and
-        (V <> 'grouping-separator') and (V <> 'grouping-size') and (V <> 'start-at') and (V <> 'version') then
+        (V <> 'grouping-separator') and (V <> 'grouping-size') and (V <> 'start-at') and (V <> 'version') and
+        (V <> 'xpath-default-namespace') and (V <> 'exclude-result-prefixes') and
+        (V <> 'extension-element-prefixes') and (V <> 'use-when') and (V <> 'expand-text') and
+        (V <> 'default-collation') and (V <> 'default-validation') and (V <> 'default-mode') and
+        (V <> 'input-type-annotations') then
         Fail(M, E, 'XTSE0090', 'xsl:number has no attribute ' + LandrixXmlUtf8ToString(V));
       if V = 'start-at' then
         Unsupported(M, E, 'xsl:number start-at (XSLT 3.0)');
@@ -3684,7 +3700,10 @@ begin
           Uri := 'http://www.w3.org/XML/1998/namespace'
         else if not M.Tree.LookupNamespace(E, Prefix, Uri) or (Uri = '') then
           Fail(M, E, 'XTSE0280', 'the prefix ' + LandrixXmlUtf8ToString(Prefix) + ' is not declared');
-      end;
+      end
+      else if Kind = 0 then
+        { an unprefixed name: the default element namespace of XPath }
+        Uri := XPathDefaultNamespace(M, E);
     end;
     N := Integer(Length(FC.SpaceKinds));
     SetLength(FC.SpaceKinds, N + 1);
@@ -3817,6 +3836,10 @@ begin
     V := M.Tree.ValueUtf8(I);
     if (L = 'name') or (L = 'infinity') or (L = 'NaN') then
       { strings }
+    else if (L = 'xpath-default-namespace') or (L = 'exclude-result-prefixes') or
+      (L = 'extension-element-prefixes') or (L = 'use-when') or (L = 'expand-text') or (L = 'version') then
+      { standard attributes (CheckStandard): no property }
+      Continue
     else if (L = 'decimal-separator') or (L = 'grouping-separator') or (L = 'minus-sign') or (L = 'percent') or
       (L = 'per-mille') or (L = 'zero-digit') or (L = 'digit') or (L = 'pattern-separator') then
     begin
@@ -4814,7 +4837,8 @@ begin
       Continue;
     L := M.Tree.LocalNameUtf8(I);
     { standard attributes (CheckStandard) }
-    if (L = 'exclude-result-prefixes') or (L = 'extension-element-prefixes') or (L = 'expand-text') then
+    if (L = 'exclude-result-prefixes') or (L = 'extension-element-prefixes') or (L = 'expand-text') or
+      (L = 'xpath-default-namespace') or (L = 'use-when') then
       Continue;
     if L = 'name' then
       Continue;

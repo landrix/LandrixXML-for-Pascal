@@ -48,6 +48,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   even when excluded).
 - XSLT: simplified stylesheets (a literal result element with
   `xsl:version` as a stylesheet module).
+- XSLT: `xpath-default-namespace` and `xsl:xpath-default-namespace`.
+- XPath: `TLandrixXmlXPathStaticContext.DefaultElementNamespace` (the
+  default element/type namespace, '' unless set), also readable on the
+  compiled expression.
 - XSLT: the output method xhtml, as Saxon writes it (also the default
   method for an `html` root element in the XHTML namespace).
 - XSLT: tunnel parameters (`tunnel="yes"` on `xsl:with-param` and

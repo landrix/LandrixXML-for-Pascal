@@ -1561,7 +1561,8 @@ end;
 
 { A lexical QName (white space trimmed) with its prefix resolved by the
   static namespaces of Expr: FORG0001 for an invalid name, FONS0004 for
-  an unbound prefix; without a prefix the name is in no namespace. }
+  an unbound prefix; without a prefix the name is in no namespace (also
+  with a default element/type namespace, as in Saxon). }
 function StringToQName(const S: TLandrixXmlUtf8; Expr: TLandrixXmlXPathExpression): TLandrixXmlXPathItem;
 var
   T, Prefix, Local, Uri: TLandrixXmlUtf8;

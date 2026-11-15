@@ -260,6 +260,7 @@ type
   TLandrixXmlXPathStaticContext = class
   private
     FProfile: TLandrixXmlXPathProfile;
+    FDefaultElementNamespace: TLandrixXmlUtf8;
     FPrefixes: TLandrixXmlUtf8Array;
     FUris: TLandrixXmlUtf8Array;
     FVariables: TLandrixXmlUtf8Array;
@@ -288,6 +289,13 @@ type
     { xppXPath20 unless set; every expression keeps the profile it was
       compiled with }
     property Profile: TLandrixXmlXPathProfile read FProfile write FProfile;
+    { The default element/type namespace ('' unless set): the namespace
+      of an unprefixed name in an element name test (not on the attribute
+      axis), in element() and schema-element(), and of an unprefixed
+      atomic type name. Attribute, variable and function names are not
+      affected, nor is a string cast to xs:QName (as in Saxon). }
+    property DefaultElementNamespace: TLandrixXmlUtf8 read FDefaultElementNamespace
+      write FDefaultElementNamespace;
   end;
 
   { A compiled expression; immutable, usable from several threads. }
@@ -300,6 +308,7 @@ type
     FFirstLocalSlot: Integer;
     FSerial: Int64;
     FProfile: TLandrixXmlXPathProfile;
+    FDefaultElementNamespace: TLandrixXmlUtf8;
     FNsPrefixes: TLandrixXmlUtf8Array;
     FNsUris: TLandrixXmlUtf8Array;
     function GetNode(Index: Integer): TLandrixXmlXPathAstNode;
@@ -332,6 +341,8 @@ type
     property Serial: Int64 read FSerial;
     { the static context's profile when compiled }
     property Profile: TLandrixXmlXPathProfile read FProfile;
+    { the static context's default element/type namespace when compiled }
+    property DefaultElementNamespace: TLandrixXmlUtf8 read FDefaultElementNamespace;
   end;
 
   { The name and number of arguments of a built-in function, for messages
@@ -779,6 +790,9 @@ type
     Position: Integer;
   end;
 
+  { how ResolveName treats a name without a prefix }
+  TNameDefault = (ndNone, ndFunction, ndElement);
+
   TParser = class
   private
     FSource: TLandrixXmlUtf8;
@@ -806,7 +820,7 @@ type
     function NewNode(Kind: TLandrixXmlXPathAstKind; Position: Integer): Integer;
     procedure AddChild(Parent, Child: Integer);
     procedure AddPredicate(Parent, Child: Integer);
-    procedure ResolveName(const QName: TLandrixXmlUtf8; Position: Integer; DefaultFn: Boolean;
+    procedure ResolveName(const QName: TLandrixXmlUtf8; Position: Integer; Mode: TNameDefault;
       out NamespaceUri, LocalName: TLandrixXmlUtf8);
     function ParseExpr: Integer;
     function ParseExprSingle: Integer;
@@ -1269,7 +1283,10 @@ begin
   FNodes[Parent].Predicates[High(FNodes[Parent].Predicates)] := Child;
 end;
 
-procedure TParser.ResolveName(const QName: TLandrixXmlUtf8; Position: Integer; DefaultFn: Boolean;
+{ a QName resolved with the static context; without a prefix in no
+  namespace, the function namespace (ndFunction) or the default
+  element/type namespace (ndElement) }
+procedure TParser.ResolveName(const QName: TLandrixXmlUtf8; Position: Integer; Mode: TNameDefault;
   out NamespaceUri, LocalName: TLandrixXmlUtf8);
 var
   Prefix: TLandrixXmlUtf8;
@@ -1279,8 +1296,10 @@ begin
     if not FContext.LookupNamespace(Prefix, NamespaceUri) then
       ErrorCode('XPST0081', 'the prefix "' + LandrixXmlUtf8ToString(Prefix) + '" is not declared', Position);
   end
-  else if DefaultFn then
+  else if Mode = ndFunction then
     NamespaceUri := LandrixXmlXPathFunctionNamespace
+  else if Mode = ndElement then
+    NamespaceUri := FContext.DefaultElementNamespace
   else
     NamespaceUri := '';
 end;
@@ -1355,7 +1374,7 @@ begin
     if FToken.Kind <> tkVariable then
       Error('a variable was expected', FToken.Position);
     Name := FToken.Text;
-    ResolveName(Name, FToken.Position, False, Uri, Local);
+    ResolveName(Name, FToken.Position, ndNone, Uri, Local);
     Next;
     if not IsName('in') then
       Error('"in" was expected', FToken.Position);
@@ -1703,7 +1722,7 @@ var
 begin
   if FToken.Kind <> tkName then
     Error('a type name was expected', FToken.Position);
-  ResolveName(FToken.Text, FToken.Position, False, Uri, Local);
+  ResolveName(FToken.Text, FToken.Position, ndElement, Uri, Local);
   if Uri <> LandrixXmlXPathSchemaNamespace then
     ErrorCode('XPST0051', 'unknown atomic type "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
   FNodes[Node].AtomicType := LandrixXmlXPathAtomicTypeByName(Local);
@@ -1799,7 +1818,7 @@ begin
   begin
     if ContainsByte(Name, '*') then
       Error('an atomic type name was expected', Position);
-    ResolveName(Name, Position, False, Uri, Local);
+    ResolveName(Name, Position, ndElement, Uri, Local);
     if Uri <> LandrixXmlXPathSchemaNamespace then
       ErrorCode('XPST0051', 'unknown atomic type "' + LandrixXmlUtf8ToString(Name) + '"', Position);
     Result.Kind := xtkAtomic;
@@ -1893,7 +1912,10 @@ begin
   Expect('(');
   if (FToken.Kind <> tkName) or ContainsByte(FToken.Text, '*') then
     Error('a name was expected', FToken.Position);
-  ResolveName(FToken.Text, FToken.Position, False, Uri, Local);
+  if Name = 'schema-element' then
+    ResolveName(FToken.Text, FToken.Position, ndElement, Uri, Local)
+  else
+    ResolveName(FToken.Text, FToken.Position, ndNone, Uri, Local);
   Next;
   Expect(')');
   ErrorCode('XPST0008', '"' + LandrixXmlUtf8ToString(Name) + '()" needs a schema, none is in scope', Position);
@@ -1913,7 +1935,10 @@ begin
   begin
     if ContainsByte(FToken.Text, '*') then
       Error('a name or "*" was expected', FToken.Position);
-    ResolveName(FToken.Text, FToken.Position, False, T.NamespaceUri, T.LocalName);
+    if Element then
+      ResolveName(FToken.Text, FToken.Position, ndElement, T.NamespaceUri, T.LocalName)
+    else
+      ResolveName(FToken.Text, FToken.Position, ndNone, T.NamespaceUri, T.LocalName);
   end;
   Next;
   if not IsSymbol(',') then
@@ -1921,7 +1946,7 @@ begin
   Next;
   if (FToken.Kind <> tkName) or (ContainsByte(FToken.Text, '*')) then
     Error('a type name was expected', FToken.Position);
-  ResolveName(FToken.Text, FToken.Position, False, Uri, Local);
+  ResolveName(FToken.Text, FToken.Position, ndElement, Uri, Local);
   if (Uri <> LandrixXmlXPathSchemaNamespace) or not KnownTypeName(Local) then
     ErrorCode('XPST0008', 'unknown type "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
   T.ContentType := Local;
@@ -2202,7 +2227,11 @@ begin
   end
   else
   begin
-    ResolveName(Name, Position, False, Uri, Local);
+    { the default element namespace on the axes of elements }
+    if FNodes[Step].Axis = xaxAttribute then
+      ResolveName(Name, Position, ndNone, Uri, Local)
+    else
+      ResolveName(Name, Position, ndElement, Uri, Local);
     FNodes[Step].NodeTest := xntName;
     FNodes[Step].NamespaceUri := Uri;
     FNodes[Step].LocalName := Local;
@@ -2254,7 +2283,7 @@ begin
     tkVariable:
       begin
         Result := NewNode(xakVariable, FToken.Position);
-        ResolveName(FToken.Text, FToken.Position, False, Uri, Local);
+        ResolveName(FToken.Text, FToken.Position, ndNone, Uri, Local);
         Key := Uri + #0 + Local;
         Slot := -1;
         for I := FLocalCount - 1 downto 0 do
@@ -2328,7 +2357,7 @@ begin
   Name := AName;
   if (Name = 'if') or (Name = 'typeswitch') or (Name = 'item') or (Name = 'empty-sequence') then
     Error('unexpected "' + LandrixXmlUtf8ToString(Name) + '("', Position);
-  ResolveName(Name, Position, True, Uri, Local);
+  ResolveName(Name, Position, ndFunction, Uri, Local);
   Result := NewNode(xakFunction, Position);
   Next;
   Expect('(');
@@ -2475,6 +2504,7 @@ begin
     FSlotCount := P.FSlotCount;
     FFirstLocalSlot := P.FContext.VariableCount;
     FProfile := P.FContext.Profile;
+    FDefaultElementNamespace := P.FContext.DefaultElementNamespace;
     { a copy: the static context may change or go after compiling }
     FNsPrefixes := Copy(P.FContext.FPrefixes, 0, Length(P.FContext.FPrefixes));
     FNsUris := Copy(P.FContext.FUris, 0, Length(P.FContext.FUris));

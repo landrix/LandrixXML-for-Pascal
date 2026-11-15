@@ -64,6 +64,11 @@ apply-templates/conflict-resolution-0501 pass
 apply-templates/conflict-resolution-0502 pass
 apply-templates/conflict-resolution-0503 pass
 apply-templates/conflict-resolution-0601 pass
+apply-templates/conflict-resolution-0701 pass
+apply-templates/conflict-resolution-0702 pass
+apply-templates/conflict-resolution-0703 pass
+apply-templates/conflict-resolution-0801 pass
+apply-templates/conflict-resolution-0802 pass
 apply-templates/conflict-resolution-0901 pass
 apply-templates/conflict-resolution-1001 pass
 apply-templates/conflict-resolution-1101 pass
@@ -680,6 +685,8 @@ choose/choose-1202 pass
 choose/choose-1203 pass
 choose/choose-1301 pass
 choose/choose-1401 pass
+choose/choose-1501 pass
+choose/choose-1502 pass
 choose/choose-1601 pass
 choose/choose-1701 pass
 choose/choose-1702 pass
@@ -1862,6 +1869,7 @@ match/match-031 pass
 match/match-032 pass
 match/match-033 pass
 match/match-034 pass
+match/match-035 pass
 match/match-036 pass
 match/match-037 pass
 match/match-038 pass
@@ -4501,6 +4509,7 @@ system-property/system-property-006 pass
 system-property/system-property-007 pass
 system-property/system-property-008 pass
 system-property/system-property-009 pass
+system-property/system-property-010 pass
 system-property/system-property-011 pass
 system-property/system-property-019a pass
 system-property/system-property-020 pass
@@ -4638,7 +4647,10 @@ use-when/use-when-0114 pass
 use-when/use-when-0115 pass
 use-when/use-when-0116 pass
 use-when/use-when-0117 pass
+use-when/use-when-0118 pass
 use-when/use-when-0119 pass
+use-when/use-when-0120 pass
+use-when/use-when-0121 pass
 use-when/use-when-0122 pass
 use-when/use-when-0123 pass
 use-when/use-when-0124 pass
@@ -4825,6 +4837,18 @@ whitespace/whitespace-024 pass
 whitespace/whitespace-025 pass
 whitespace/whitespace-026 pass
 whitespace/whitespace-027 pass
+xpath-default-namespace/xpath-default-namespace-0101 pass
+xpath-default-namespace/xpath-default-namespace-0102 pass
+xpath-default-namespace/xpath-default-namespace-0103 pass
+xpath-default-namespace/xpath-default-namespace-0104 pass
+xpath-default-namespace/xpath-default-namespace-0105 pass
+xpath-default-namespace/xpath-default-namespace-0106 pass
+xpath-default-namespace/xpath-default-namespace-0108 pass
+xpath-default-namespace/xpath-default-namespace-0201 pass
+xpath-default-namespace/xpath-default-namespace-0202 pass
+xpath-default-namespace/xpath-default-namespace-0301 pass
+xpath-default-namespace/xpath-default-namespace-0401 pass
+xpath-default-namespace/xpath-default-namespace-0601 pass
 xpath-default-namespace/xpath-default-namespace-0801 pass
 xpath-default-namespace/xpath-default-namespace-0901 pass
 xpath-default-namespace/xpath-default-namespace-1001 pass
