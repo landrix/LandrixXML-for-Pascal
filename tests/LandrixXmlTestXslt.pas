@@ -462,7 +462,7 @@ const
     '<xsl:namespace-alias stylesheet-prefix="#default" result-prefix="#default"/><xsl:template match="/"/>',
     '<xsl:character-map name="m"/><xsl:template match="/"/>',
     '<xsl:template match="/"><x xsl:expand-text="yes">{1}</x></xsl:template>',
-    '<xsl:output method="xhtml"/><xsl:template match="/"/>',
+    '<xsl:output cdata-section-elements="a"/><xsl:template match="/"/>',
     '<xsl:output doctype-system="x.dtd"/><xsl:template match="/"/>',
     '<xsl:output encoding="UTF-16"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort lang="de"/></xsl:for-each></xsl:template>',

@@ -8,13 +8,14 @@
   documented API: the output properties of xsl:output and the
   serialization of a result tree as Saxon HE writes it.
 
-  Methods xml, html and text. xml escapes as Saxon does (& < > in text,
+  Methods xml, html, xhtml and text. xml escapes as Saxon does (& < > in text,
   also " and white space other than the space in attributes, carriage
   returns everywhere as character references) and writes the namespace
   declarations each element holds, ordered by prefix; indent="yes"
   indents as Saxon's indenter does, byte for byte (see
   TSerializer.Element). html writes HTML5 as Saxon's HTML emitter and
-  HTML indenter do (see THtmlSerializer). Encodings UTF-8, US-ASCII and
+  HTML indenter do (see THtmlSerializer); xhtml as its XHTML
+  serializer does (XML syntax, the HTML indentation). Encodings UTF-8, US-ASCII and
   ISO-8859-1: a character the encoding does not have is a hexadecimal
   character reference in text and attribute values and SERE0008 elsewhere,
   as in Saxon; another encoding raises xecUnsupported. }
@@ -126,7 +127,7 @@ begin
       Result := xosInvalid
     else if (Name = 'name') or (Name = 'use-character-maps') or (Name = 'cdata-section-elements') or
       (Name = 'doctype-public') or (Name = 'doctype-system') or (Name = 'method') and (Value <> 'xml') and
-      (Value <> 'text') and (Value <> 'html') or (Name = 'encoding') and
+      (Value <> 'text') and (Value <> 'html') and (Value <> 'xhtml') or (Name = 'encoding') and
       (EncodingMaxChar(Value) = 0) or
       (Name = 'byte-order-mark') and (Value = 'yes') or (Name = 'normalization-form') and (Value <> 'none') then
       Result := xosUnsupported;
@@ -722,11 +723,16 @@ const
     'area+href link+href base+href img+longdesc frame+longdesc iframe+longdesc head+profile script+src ' +
     'input+src frame+src iframe+src img+src img+usemap input+usemap object+usemap ';
   XhtmlNamespace = 'http://www.w3.org/1999/xhtml';
+  { the elements of XHTML 1.0 with empty content: <br /> (method xhtml) }
+  XhtmlEmpty = ' area base basefont br col frame hr img input isindex link meta param ';
 
 type
-  { Writes a tree as Saxon HE's HTML5 serializer and HTML indenter do. }
+  { Writes a tree as Saxon HE's HTML5 serializer and HTML indenter do;
+    with FXhtml as its XHTML serializer (XML names, namespaces and
+    escaping, <br /> for the empty XHTML elements, the HTML indentation) }
   THtmlSerializer = class(TSerializer)
   private
+    FXhtml: Boolean;
     FHtmlLevel: Integer;
     FSameLine: Boolean;
     FAfterInline: Boolean;
@@ -755,6 +761,8 @@ type
     procedure StartTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean; I: Integer);
     procedure EndTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean);
     procedure ContentTypeMeta(const Prefix: TLandrixXmlUtf8; IsHtml: Boolean);
+    procedure XhtmlStartTag(const Name, Local: TLandrixXmlUtf8; I: Integer);
+    procedure XhtmlEndTag(const Name, Local: TLandrixXmlUtf8; XhtmlElement: Boolean);
     procedure HtmlNode(I: Integer);
   end;
 
@@ -818,6 +826,11 @@ var
   R: TLandrixXmlUtf8;
   Drop, Saved: Boolean;
 begin
+  if FXhtml then
+  begin
+    PutEscaped(S, Attribute);
+    Exit;
+  end;
   if FInScript > 0 then
   begin
     Put(S);
@@ -1086,6 +1099,62 @@ begin
     Put('</' + Name + '>');
 end;
 
+{ method xhtml: the start tag as the XML serializer writes it (the
+  element's own namespace declarations, ordered by prefix); a URI
+  attribute escaped as in HTML }
+procedure THtmlSerializer.XhtmlStartTag(const Name, Local: TLandrixXmlUtf8; I: Integer);
+var
+  Prefixes, Uris: TLandrixXmlUtf8Array;
+  K: Integer;
+  V: TLandrixXmlUtf8;
+begin
+  CloseTag;
+  Put('<' + Name);
+  if I >= 0 then
+  begin
+    FTree.GetDeclarations(I, Prefixes, Uris);
+    SortDeclarations(Prefixes, Uris);
+    for K := 0 to Integer(Length(Prefixes)) - 1 do
+    begin
+      if Prefixes[K] = '' then
+        Put(' xmlns="')
+      else
+        Put(' xmlns:' + Prefixes[K] + '="');
+      PutEscaped(Uris[K], True);
+      Put('"');
+    end;
+    for K := I + 1 to I + FTree.AttributeCount[I] do
+    begin
+      V := FTree.ValueUtf8(K);
+      { by the names in lower case, in any namespace; an element with a
+        prefix is not escaped (Saxon) }
+      if FEscapeUris and (FTree.NamespaceUriUtf8(K) = '') and
+        InList(HtmlUri, Lower8(Local) + '+' + Lower8(FTree.LocalNameUtf8(K))) and not Pos8Byte(':', Name) then
+        V := EscapeHtmlUri(V);
+      Put(' ' + FTree.NameUtf8(K) + '="');
+      PutEscaped(V, True);
+      Put('"');
+    end;
+  end;
+  FOpenTag := True;
+end;
+
+{ method xhtml: an empty XHTML element of XHTML 1.0 as <br />, any other
+  empty element with an end tag }
+procedure THtmlSerializer.XhtmlEndTag(const Name, Local: TLandrixXmlUtf8; XhtmlElement: Boolean);
+begin
+  if FOpenTag then
+  begin
+    FOpenTag := False;
+    if XhtmlElement and InList(XhtmlEmpty, Local) then
+      Put(' />')
+    else
+      Put('></' + Name + '>');
+  end
+  else
+    Put('</' + Name + '>');
+end;
+
 { include-content-type: <meta http-equiv="Content-Type" ...> as the first
   child of head }
 procedure THtmlSerializer.ContentTypeMeta(const Prefix: TLandrixXmlUtf8; IsHtml: Boolean);
@@ -1097,11 +1166,17 @@ begin
     Name := Prefix + ':meta';
   if FIndent and not FInFormatted and not FAfterInline and (FHtmlLevel <> 0) then
     HtmlIndent;
-  StartTag(Name, 'meta', IsHtml, -1);
+  if FXhtml then
+    XhtmlStartTag(Name, 'meta', -1)
+  else
+    StartTag(Name, 'meta', IsHtml, -1);
   Put(' http-equiv="Content-Type" content="');
   HtmlText(FMediaType + '; charset=' + FEncoding, True);
   Put('"');
-  EndTag(Name, 'meta', IsHtml);
+  if FXhtml then
+    XhtmlEndTag(Name, 'meta', True)
+  else
+    EndTag(Name, 'meta', IsHtml);
   FSameLine := False;
   FAfterEndElement := True;
   FAfterInline := False;
@@ -1110,8 +1185,8 @@ end;
 procedure THtmlSerializer.HtmlNode(I: Integer);
 var
   C, K, Flags: Integer;
-  Name, Local, V: TLandrixXmlUtf8;
-  IsHtml, IsInline, Formatted, Skip: Boolean;
+  Name, Local, Exact, V: TLandrixXmlUtf8;
+  IsHtml, IsInline, Formatted, Skip, Meta: Boolean;
 begin
   case FTree.Kind[I] of
     xnkDocument:
@@ -1126,29 +1201,45 @@ begin
     xnkElement:
       begin
         Name := FTree.NameUtf8(I);
-        if FTree.NamespaceUriUtf8(I) = XhtmlNamespace then
+        if (FTree.NamespaceUriUtf8(I) = XhtmlNamespace) and not FXhtml then
           Name := FTree.LocalNameUtf8(I);
         Local := Lower8(FTree.LocalNameUtf8(I));
         IsHtml := (FTree.NamespaceUriUtf8(I) = '') or (FTree.NamespaceUriUtf8(I) = XhtmlNamespace);
-        { the meta elements of head the content type replaces }
-        if FContentType and (Local = 'meta') and (FTree.Parent[I] >= 0) and
-          (Lower8(FTree.LocalNameUtf8(FTree.Parent[I])) = 'head') and (FTree.Parent[FTree.Parent[I]] >= 0) and
+        { xhtml: the content type only in an XHTML head }
+        Meta := FContentType and (not FXhtml or (FTree.NamespaceUriUtf8(I) = XhtmlNamespace));
+        { xhtml: names as they are (Saxon: HEAD is no head, BR no br); the
+          indentation still by the lower case names }
+        Exact := Local;
+        if FXhtml then
+          Exact := FTree.LocalNameUtf8(I);
+        { the meta elements of head the content type replaces (xhtml: of a
+          head in the XHTML namespace) }
+        if Meta and (Exact = 'meta') and (FTree.Parent[I] >= 0) and
+          (not FXhtml and (Lower8(FTree.LocalNameUtf8(FTree.Parent[I])) = 'head') and
+          (FTree.Parent[FTree.Parent[I]] >= 0) and
           ((FTree.Parent[FTree.Parent[FTree.Parent[I]]] < 0) or
-          (FTree.Kind[FTree.Parent[FTree.Parent[FTree.Parent[I]]]] = xnkDocument)) then
+          (FTree.Kind[FTree.Parent[FTree.Parent[FTree.Parent[I]]]] = xnkDocument)) or
+          { xhtml: a head in the XHTML namespace at any depth (Saxon) }
+          FXhtml and (FTree.LocalNameUtf8(FTree.Parent[I]) = 'head') and
+          (FTree.NamespaceUriUtf8(FTree.Parent[I]) = XhtmlNamespace)) then
         begin
           Skip := False;
           for K := I + 1 to I + FTree.AttributeCount[I] do
-            if (FTree.NamespaceUriUtf8(K) = '') and ((Lower8(FTree.LocalNameUtf8(K)) = 'charset') or
-              (Lower8(FTree.LocalNameUtf8(K)) = 'http-equiv') and
+          begin
+            V := FTree.LocalNameUtf8(K);
+            if not FXhtml then
+              V := Lower8(V);
+            if (FTree.NamespaceUriUtf8(K) = '') and ((V = 'charset') or (V = 'http-equiv') and
               (Lower8(Trim8Ws(FTree.ValueUtf8(K))) = 'content-type')) then
               Skip := True;
+          end;
           if Skip then
             Exit;
         end;
         if not FStarted then
         begin
           FStarted := True;
-          if Local = 'html' then
+          if (Local = 'html') and not FXhtml then
           begin
             Put('<!DOCTYPE HTML>');
             if FIndent then
@@ -1163,7 +1254,10 @@ begin
         IsInline := Flags and 1 <> 0;
         if FIndent and not IsInline and not FInFormatted and not FAfterInline and (FHtmlLevel <> 0) then
           HtmlIndent;
-        StartTag(Name, Local, IsHtml, I);
+        if FXhtml then
+          XhtmlStartTag(Name, Exact, I)
+        else
+          StartTag(Name, Local, IsHtml, I);
         if FIndent then
         begin
           FInFormatted := FInFormatted or (Flags and 2 <> 0);
@@ -1175,10 +1269,12 @@ begin
           FAfterInline := False;
           FAfterEndElement := False;
         end;
-        if FContentType and (Local = 'head') and (FTree.Parent[I] >= 0) and
-          ((FTree.Parent[FTree.Parent[I]] < 0) or (FTree.Kind[FTree.Parent[FTree.Parent[I]]] = xnkDocument)) then
+        if Meta and (Exact = 'head') and (FTree.Parent[I] >= 0) and (FXhtml or
+          (FTree.Parent[FTree.Parent[I]] < 0) or (FTree.Kind[FTree.Parent[FTree.Parent[I]]] = xnkDocument)) then
         begin
-          if FTree.NamespaceUriUtf8(I) = XhtmlNamespace then
+          if FXhtml then
+            ContentTypeMeta(FTree.PrefixUtf8(I), True)
+          else if FTree.NamespaceUriUtf8(I) = XhtmlNamespace then
             ContentTypeMeta('', True)
           else
             ContentTypeMeta(FTree.PrefixUtf8(I), IsHtml);
@@ -1205,7 +1301,10 @@ begin
         end
         else
           Formatted := False;
-        EndTag(Name, Local, IsHtml);
+        if FXhtml then
+          XhtmlEndTag(Name, Exact, FTree.NamespaceUriUtf8(I) = XhtmlNamespace)
+        else
+          EndTag(Name, Local, IsHtml);
         if FIndent then
         begin
           FInFormatted := FInFormatted and not Formatted;
@@ -1239,10 +1338,20 @@ begin
         else
         begin
           V := FTree.ValueUtf8(I);
-          if Pos('>', LandrixXmlUtf8ToString(V)) > 0 then
-            raise ELandrixXmlXPathError.CreateXPath('SERE0015',
-              'a processing instruction in HTML must not contain ">"');
-          Put('<?' + FTree.LocalNameUtf8(I) + ' ' + V + '>');
+          if FXhtml then
+          begin
+            if V = '' then
+              Put('<?' + FTree.LocalNameUtf8(I) + '?>')
+            else
+              Put('<?' + FTree.LocalNameUtf8(I) + ' ' + V + '?>');
+          end
+          else
+          begin
+            if Pos('>', LandrixXmlUtf8ToString(V)) > 0 then
+              raise ELandrixXmlXPathError.CreateXPath('SERE0015',
+                'a processing instruction in HTML must not contain ">"');
+            Put('<?' + FTree.LocalNameUtf8(I) + ' ' + V + '>');
+          end;
         end;
         if FIndent then
           FAfterEndElement := False;
@@ -1288,13 +1397,18 @@ begin
   Method := Props.Value('method', '');
   if Method = '' then
   begin
-    { html for an html root element without namespace and only white space
-      text before it, else xml }
+    { html for an html root element without namespace (xhtml for one in
+      the XHTML namespace, as Saxon) and only white space text before it,
+      else xml }
     Method := 'xml';
     E := Tree.DocumentElement;
-    if (E >= 0) and (Tree.NamespaceUriUtf8(E) = '') and SameText8(Tree.LocalNameUtf8(E), 'html') then
+    if (E >= 0) and ((Tree.NamespaceUriUtf8(E) = '') and SameText8(Tree.LocalNameUtf8(E), 'html') or
+      (Tree.NamespaceUriUtf8(E) = XhtmlNamespace) and (Tree.LocalNameUtf8(E) = 'html')) then
     begin
-      Method := 'html';
+      if Tree.NamespaceUriUtf8(E) = '' then
+        Method := 'html'
+      else
+        Method := 'xhtml';
       C := Tree.FirstChild(0);
       while (C >= 0) and (C <> E) do
       begin
@@ -1316,19 +1430,32 @@ begin
     WriteText(Tree, Stream, MaxChar);
     Exit;
   end;
-  if Method = 'html' then
+  if (Method = 'html') or (Method = 'xhtml') then
   begin
-    if Props.Has('version') and (Props.Value('version', '') <> '5') and (Props.Value('version', '') <> '5.0') then
+    if (Method = 'html') and Props.Has('version') and (Props.Value('version', '') <> '5') and
+      (Props.Value('version', '') <> '5.0') then
       raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT output: HTML version ' +
         LandrixXmlUtf8ToString(Props.Value('version', '')) + ' is not supported (HTML5 only)');
+    if (Method = 'xhtml') and (Props.Has('version') and (Props.Value('version', '') <> '1.0') or
+      (Props.Value('undeclare-prefixes', 'no') = 'yes')) then
+      raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT output: xhtml with a version other than 1.0 or ' +
+        'undeclare-prefixes is not supported');
     H := THtmlSerializer.Create(Tree, Stream, Props.Value('indent', 'yes') = 'yes');
     try
+      H.FXhtml := Method = 'xhtml';
       H.FInScript := -1000000;
       H.FEscapeUris := Props.Value('escape-uri-attributes', 'yes') = 'yes';
       H.FContentType := Props.Value('include-content-type', 'yes') = 'yes';
       H.FMediaType := Props.Value('media-type', 'text/html');
       H.FEncoding := Encoding;
       H.FMaxChar := MaxChar;
+      if H.FXhtml and (Props.Value('omit-xml-declaration', 'no') <> 'yes') then
+      begin
+        H.Put('<?xml version="1.0" encoding="' + Encoding + '"');
+        if Props.Has('standalone') and (Props.Value('standalone', '') <> 'omit') then
+          H.Put(' standalone="' + Props.Value('standalone', '') + '"');
+        H.Put('?>');
+      end;
       H.HtmlNode(0);
       H.Flush;
     finally

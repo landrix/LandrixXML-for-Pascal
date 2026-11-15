@@ -395,7 +395,9 @@ formats), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-g
 `system-property()` (`xsl:version` is `2.0`, vendor and product are
 this library's) and `format-date()`, `format-time()` and
 `format-dateTime()` in English (numbers, roman numerals, names, widths);
-output methods xml, html (HTML5) and text in UTF-8, US-ASCII or
+output methods xml, html (HTML5), xhtml (XHTML 1.0 elements with the
+HTML indentation, as Saxon writes it; also the default for an `html`
+root element in the XHTML namespace, as in Saxon) and text in UTF-8, US-ASCII or
 ISO-8859-1 (a character the encoding does not have is a character
 reference, as in Saxon), indented as Saxon indents. Where XSLT 2.0 and
 Saxon (which runs XSLT 2.0 stylesheets as XSLT 3.0) differ, Saxon is
@@ -699,8 +701,8 @@ Differences from Xerces, also on purpose:
   XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,389 are XSLT 1.0
   or 2.0 cases without features this library leaves out (schema
   awareness, backwards compatibility, the namespace axis, DTDs and the
-  like); 4,532 of them pass and 66 more raise an error where one is
-  expected, but with another code. 541 use an instruction or option
+  like); 4,589 of them pass and 67 more raise an error where one is
+  expected, but with another code. 489 use an instruction or option
   that is not supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>T</title>
+   </head>
+   <body>
+      <p></p><br /><hr /><img src="a b%C3%A4.png" alt="ä" /><a href="x y%C3%A4?q=1&amp;r">l</a><span></span><div>
+         <p>t<b>b</b></p>
+      </div>
+      <x:y xmlns:x="urn:x"></x:y><script>if (a &lt; b) x();</script><input checked="checked" /></body>
+</html>

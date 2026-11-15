@@ -627,6 +627,12 @@ def check(el, r, case):
             return False
         if el.get("normalize-space") == "true":
             return normalize_space(text) == normalize_space(want)
+        if el.get("file"):
+            # the line ends of the expected file are those of its checkout
+            # (the stylesheet's text, parsed, has line feeds only); the
+            # output is compared as written, so a carriage return in it
+            # still fails
+            want = want.replace("\r\n", "\n")
         # only a final line break may differ
         return text.rstrip("\r\n") == want.rstrip("\r\n")
     return False
