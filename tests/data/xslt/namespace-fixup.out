@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><out><a xmlns:p="urn:u" xmlns:q="urn:u" p:a="1" q:b="2"/><b xmlns:p="urn:a" xmlns:q="urn:a" p:a=""/><c xmlns:p="urn:a" xmlns:q="urn:a" p:a="" q:b=""/><d><e xmlns:p="urn:a" xmlns:q="urn:a" q:z="1" p:a=""/></d><f xmlns:p="urn:a" xmlns:p_3="urn:b" p:a="" x="1" p_3:b=""/><_0:g xmlns="urn:other" xmlns:_0="urn:g"/></out>

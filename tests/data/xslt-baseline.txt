@@ -193,6 +193,7 @@ avt/avt-0201 pass
 avt/avt-0202 pass
 avt/avt-0301 pass
 avt/avt-0302 pass
+avt/avt-0303 pass
 avt/avt-0501 pass
 avt/avt-0601 pass
 avt/avt-1101 pass
@@ -1050,6 +1051,7 @@ element/element-0004 pass
 element/element-0005 pass
 element/element-0006 pass
 element/element-0101 pass
+element/element-0103 pass
 element/element-0201 pass
 element/element-0301 pass
 element/element-0303 pass
@@ -1164,6 +1166,9 @@ error/error-0350b pass
 error/error-0370a pass
 error/error-0410a pass
 error/error-0420b pass
+error/error-0430a pass
+error/error-0440a pass
+error/error-0440b pass
 error/error-0500a pass
 error/error-0500b pass
 error/error-0500d pass
@@ -1236,6 +1241,13 @@ error/error-0860a pass
 error/error-0865a pass
 error/error-0890a pass
 error/error-0890b pass
+error/error-0905c pass
+error/error-0910a pass
+error/error-0920a pass
+error/error-0920b pass
+error/error-0925a pass
+error/error-0925b pass
+error/error-0930a pass
 error/error-0975a pass
 error/error-0975b pass
 error/error-0975c pass
@@ -2060,6 +2072,7 @@ mode/mode-1402 pass
 mode/mode-1403 pass
 mode/mode-1404 pass
 mode/mode-1501 pass
+namespace-alias/namespace-alias-1903 pass
 namespace/namespace-0101 pass
 namespace/namespace-0202 pass
 namespace/namespace-0301 pass
@@ -2072,7 +2085,9 @@ namespace/namespace-0903 pass
 namespace/namespace-0904 pass
 namespace/namespace-0905 pass
 namespace/namespace-0906 pass
+namespace/namespace-1101 pass
 namespace/namespace-1102 pass
+namespace/namespace-1104 pass
 namespace/namespace-1201 pass
 namespace/namespace-1301 pass
 namespace/namespace-1401 pass
@@ -2095,7 +2110,13 @@ namespace/namespace-2503 pass
 namespace/namespace-2601 pass
 namespace/namespace-2611 pass
 namespace/namespace-2612 pass
+namespace/namespace-2614 pass
+namespace/namespace-2615 pass
 namespace/namespace-2616 pass
+namespace/namespace-2617 pass
+namespace/namespace-2618 pass
+namespace/namespace-2622 pass
+namespace/namespace-2624 pass
 namespace/namespace-2701 pass
 namespace/namespace-2801 pass
 namespace/namespace-3001 pass
@@ -2180,6 +2201,7 @@ namespace/namespace-3309 pass
 namespace/namespace-3310 pass
 namespace/namespace-3311 pass
 namespace/namespace-3312 pass
+namespace/namespace-3313 pass
 namespace/namespace-3314 pass
 namespace/namespace-3315 pass
 namespace/namespace-3401 pass
@@ -2274,6 +2296,7 @@ node/node-1802 pass
 node/node-1901 pass
 node/node-1902 pass
 node/node-1903 pass
+node/node-1904 pass
 node/node-1905 pass
 node/node-1906 pass
 node/node-2001 pass

@@ -126,8 +126,9 @@ type
     { an attribute at the top is its value as text (xsl:message) }
     FAttributesAsText: Boolean;
     procedure Flush;
-    function FreePrefix(const Prefix, Uri: TLandrixXmlUtf8): TLandrixXmlUtf8;
+    function FreePrefix(const Prefix, Uri: TLandrixXmlUtf8; First: Integer): TLandrixXmlUtf8;
     function Taken(const Prefix, Uri: TLandrixXmlUtf8): Boolean;
+    function AttrPrefixFree(const Prefix, Uri: TLandrixXmlUtf8; Index: Integer): Boolean;
     function Bound(const Prefix: TLandrixXmlUtf8; out Uri: TLandrixXmlUtf8): Boolean;
     function InScope(const Prefix: TLandrixXmlUtf8; out Uri: TLandrixXmlUtf8): Boolean;
     procedure Declare(const Prefix, Uri: TLandrixXmlUtf8);
@@ -338,6 +339,8 @@ type
     procedure DoApplyTemplates(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
     procedure DoUseAttributeSets(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+      R: TReceiver);
+    procedure DoNamespace(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
     procedure DoCallTemplate(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       R: TReceiver);
@@ -568,6 +571,27 @@ begin
   FNsUris[I] := Uri;
 end;
 
+{ whether attribute Index may keep Prefix for Uri: no declaration of the
+  element, the element's name or an attribute before it binds the prefix
+  to another URI }
+function TTreeReceiver.AttrPrefixFree(const Prefix, Uri: TLandrixXmlUtf8; Index: Integer): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if (Prefix = 'xml') or (Prefix = 'xmlns') then
+    Exit;
+  for I := 0 to Integer(Length(FNsPrefixes)) - 1 do
+    if (FNsPrefixes[I] = Prefix) and (FNsUris[I] <> Uri) then
+      Exit;
+  if (Prefix = FPrefix) and (FUri <> Uri) then
+    Exit;
+  for I := 0 to Index - 1 do
+    if (FAttrUris[I] <> '') and (FAttrPrefixes[I] = Prefix) and (FAttrUris[I] <> Uri) then
+      Exit;
+  Result := True;
+end;
+
 { Whether the pending element cannot bind Prefix to Uri: xml, its own
   declarations, the prefix of its name or of one of its attributes give
   the prefix another URI (an ancestor's binding can be redeclared, as
@@ -591,21 +615,23 @@ begin
 end;
 
 { a prefix for Uri the pending element can declare, as Saxon makes one:
-  the prefix, "_" and a number from 1 (for none "ns0" itself first) }
-function TTreeReceiver.FreePrefix(const Prefix, Uri: TLandrixXmlUtf8): TLandrixXmlUtf8;
+  the prefix, "_" and a number from First on (for an attribute without a
+  prefix "ns0" itself first) }
+function TTreeReceiver.FreePrefix(const Prefix, Uri: TLandrixXmlUtf8; First: Integer): TLandrixXmlUtf8;
 var
   N: Integer;
   Base: TLandrixXmlUtf8;
 begin
   Base := Prefix;
-  if Base = '' then
+  { an element without a prefix: _0 on (Saxon) }
+  if (Base = '') and (First > 0) then
   begin
     Base := 'ns0';
     Result := Base;
     if not Taken(Result, Uri) then
       Exit;
   end;
-  N := 1;
+  N := First;
   repeat
     Result := Base + '_' + LandrixXmlStringToUtf8(IntToStr(N));
     Inc(N);
@@ -656,13 +682,14 @@ begin
     begin
       FPrefix := 'xml_0';
       if Bound(FPrefix, Uri) and (Uri <> FUri) then
-        FPrefix := FreePrefix('xml', FUri);
+        FPrefix := FreePrefix('xml', FUri, 1);
     end
     else
       for I := 0 to Integer(Length(FNsPrefixes)) - 1 do
         if (FNsPrefixes[I] = FPrefix) and (FNsUris[I] <> FUri) then
         begin
-          FPrefix := FreePrefix(FPrefix, FUri);
+          { an element from _0 on, an attribute from _1 (Saxon) }
+          FPrefix := FreePrefix(FPrefix, FUri, 0);
           Break;
         end;
     Declare(FPrefix, FUri);
@@ -673,6 +700,13 @@ begin
     begin
       if (FAttrPrefixes[I] <> '') and Bound(FAttrPrefixes[I], Uri) and (Uri = FAttrUris[I]) then
         Continue;
+      { the attribute's own prefix where nothing binds it otherwise (Saxon),
+        else one bound to its URI, else a new one }
+      if (FAttrPrefixes[I] <> '') and AttrPrefixFree(FAttrPrefixes[I], FAttrUris[I], I) then
+      begin
+        Declare(FAttrPrefixes[I], FAttrUris[I]);
+        Continue;
+      end;
       P := '';
       for J := 0 to Integer(Length(FNsPrefixes)) - 1 do
         if (FNsPrefixes[J] <> '') and (FNsUris[J] = FAttrUris[I]) then
@@ -689,7 +723,8 @@ begin
       begin
         P := FAttrPrefixes[I];
         if (P = '') or Taken(P, FAttrUris[I]) then
-          P := FreePrefix(P, FAttrUris[I]);
+          { from the position of the attribute on (Saxon) }
+          P := FreePrefix(P, FAttrUris[I], I + 1);
         Declare(P, FAttrUris[I]);
       end;
       FAttrPrefixes[I] := P;
@@ -763,9 +798,15 @@ var
   I: Integer;
 begin
   if not FPending then
+  begin
+    if FDepth = 0 then
+      raise ELandrixXmlXPathError.CreateXPath('XTDE0420', 'a namespace node without an element');
     raise ELandrixXmlXPathError.CreateXPath('XTDE0410', 'a namespace node after the content of an element');
+  end;
   if Prefix = 'xml' then
     Exit;
+  if (Prefix = '') and (Uri <> '') and (FUri = '') then
+    raise ELandrixXmlXPathError.CreateXPath('XTDE0440', 'a default namespace for an element in no namespace');
   { the element's own declarations decide a clash (the element's name) }
   for I := 0 to Integer(Length(FNsPrefixes)) - 1 do
     if FNsPrefixes[I] = Prefix then
@@ -3242,6 +3283,38 @@ begin
     Invoke(TXsltTemplate(Instr.Sets[I]), Focus, Mode, nil, R);
 end;
 
+{ xsl:namespace: a namespace node of the element being built; the prefix
+  and the URI without surrounding white space (Saxon) }
+procedure TRun.DoNamespace(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+  R: TReceiver);
+var
+  Prefix, Uri: TLandrixXmlUtf8;
+begin
+  Prefix := Trim8(EvalAvt(Instr, Instr.NameAvt, Focus));
+  if (Prefix <> '') and (not IsNCName8(Prefix) or (Prefix = 'xmlns')) then
+    Fail(Instr, 'XTDE0920', 'not a valid namespace prefix: "' + LandrixXmlUtf8ToString(Prefix) + '"');
+  if Instr.Select <> nil then
+    Uri := EvalString(Instr, Instr.Select, Focus, ' ')
+  else
+    Uri := BodyString(Instr.Body, Focus, Mode, ' ');
+  Uri := Trim8(Uri);
+  if Uri = '' then
+    Fail(Instr, 'XTDE0930', 'the namespace URI of xsl:namespace is empty');
+  if (Prefix = 'xml') <> (Uri = LandrixXmlNamespaceXml) then
+    Fail(Instr, 'XTDE0925', 'the prefix xml and the namespace ' + LandrixXmlUtf8ToString(LandrixXmlNamespaceXml) +
+      ' belong together');
+  if Uri = 'http://www.w3.org/2000/xmlns/' then
+    Fail(Instr, 'XTDE0905', 'the namespace http://www.w3.org/2000/xmlns/ cannot be bound');
+  try
+    R.NamespaceNode(Prefix, Uri);
+  except
+    on E: ELandrixXmlXsltError do
+      raise;
+    on E: ELandrixXmlXPathError do
+      Fail(Instr, E.XPathCode, System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt));
+  end;
+end;
+
 procedure TRun.DoCallTemplate(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
   R: TReceiver);
 var
@@ -4354,9 +4427,10 @@ begin
       DoResultDocument(Instr, Focus, Mode);
     xskUseAttributeSets:
       DoUseAttributeSets(Instr, Focus, Mode, R);
+    xskNamespace:
+      DoNamespace(Instr, Focus, Mode, R);
   else
-    { xsl:when and xsl:namespace are not compiled as instructions of
-      their own }
+    { xsl:when is not compiled as an instruction of its own }
   end;
 end;
 

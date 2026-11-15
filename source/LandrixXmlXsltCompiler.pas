@@ -518,15 +518,14 @@ end;
 function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 const
   { the XSLT elements CompileInstruction and the declaration loop
-    translate (xsl:namespace-alias, xsl:namespace and others are
-    rejected) }
-  Names: array[0..43] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+    translate (xsl:namespace-alias and others are rejected) }
+  Names: array[0..44] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
     'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
     'strip-space', 'preserve-space', 'next-match', 'apply-imports', 'result-document',
-    'attribute-set', 'character-map', 'output-character');
+    'attribute-set', 'character-map', 'output-character', 'namespace');
 var
   I: Integer;
 begin
@@ -2090,14 +2089,29 @@ procedure LiteralNamespaces(M: TModule; E: Integer; Instr: TXsltInstr);
 var
   Prefixes, Excluded: TLandrixXmlUtf8Array;
   Uri, V, P: TLandrixXmlUtf8;
-  I, J, N, A, Count: Integer;
-  Skip, All: Boolean;
+  I, J, N, Count: Integer;
+  Skip: Boolean;
 
+  procedure AddUri(Element: Integer; const Prefix: TLandrixXmlUtf8);
+  var
+    U: TLandrixXmlUtf8;
+  begin
+    if M.Tree.LookupNamespace(Element, Prefix, U) then
+    begin
+      SetLength(Excluded, Length(Excluded) + 1);
+      Excluded[High(Excluded)] := U;
+    end;
+  end;
+
+  { the namespace URIs exclude-result-prefixes names, resolved where it
+    is (a prefix bound to another URI further in is not excluded) }
   procedure AddExcluded(Element: Integer; Stylesheet: Boolean);
   var
-    K, Start: Integer;
+    K, L, Start: Integer;
     W: TLandrixXmlUtf8;
+    InScope: TLandrixXmlUtf8Array;
   begin
+    InScope := nil;
     V := '';
     for K := Element + 1 to Element + M.Tree.AttributeCount[Element] do
       if (M.Tree.LocalNameUtf8(K) = 'exclude-result-prefixes') and
@@ -2114,20 +2128,22 @@ var
         if W = '' then
           Continue;
         if W = '#all' then
-          All := True
+        begin
+          InScope := M.Tree.InScopePrefixesUtf8(Element);
+          for L := 0 to Integer(Length(InScope)) - 1 do
+            AddUri(Element, InScope[L]);
+        end
         else
         begin
           if W = '#default' then
             W := '';
-          SetLength(Excluded, Length(Excluded) + 1);
-          Excluded[High(Excluded)] := W;
+          AddUri(Element, W);
         end;
       end;
   end;
 
 begin
   Excluded := nil;
-  All := False;
   N := E;
   while N >= 0 do
   begin
@@ -2153,23 +2169,13 @@ begin
     if (P = 'xml') or not M.Tree.LookupNamespace(E, P, Uri) or (Uri = XsltNamespace) then
       Continue;
     Skip := False;
-    { the element's own namespace and those of its attributes stay }
-    if All or (Length(Excluded) > 0) then
-    begin
-      for J := 0 to Integer(Length(Excluded)) - 1 do
-        if Excluded[J] = P then
-          Skip := True;
-      if All then
+    { an excluded namespace the element or an attribute uses is no
+      namespace node: the namespace fixup declares it (and gives the
+      element another prefix if xsl:namespace binds this one otherwise,
+      as Saxon does) }
+    for J := 0 to Integer(Length(Excluded)) - 1 do
+      if Excluded[J] = Uri then
         Skip := True;
-      if Skip then
-      begin
-        if (M.Tree.PrefixUtf8(E) = P) then
-          Skip := False;
-        for A := E + 1 to E + M.Tree.AttributeCount[E] do
-          if (P <> '') and (M.Tree.PrefixUtf8(A) = P) then
-            Skip := False;
-      end;
-    end;
     if Skip then
       Continue;
     Instr.NsPrefixes[Count] := P;
@@ -2627,7 +2633,7 @@ begin
     Exit;
   if (L = 'matching-substring') or (L = 'non-matching-substring') then
     Fail(M, E, 'XTSE0010', 'xsl:' + LandrixXmlUtf8ToString(L) + ' is allowed in xsl:analyze-string only');
-  if (L = 'namespace') or (L = 'try') or
+  if (L = 'try') or
     (L = 'iterate') or (L = 'evaluate') or (L = 'where-populated') or (L = 'on-empty') or
     (L = 'on-non-empty') or (L = 'map') or (L = 'array') or (L = 'merge') or (L = 'fork') or
     (L = 'assert') or (L = 'break') or (L = 'next-iteration') or (L = 'source-document') or
@@ -2827,6 +2833,26 @@ begin
       end;
       if Result.Select = nil then
         CompileBody(M, E, Scope, Result.Body, -1);
+    end
+    else if L = 'namespace' then
+    begin
+      Result := NewInstr(xskNamespace, M, E);
+      Result.NameAvt := CompileAvt(M, E, ReqAttr(M, E, 'name'), Scope);
+      Result.Select := CompileAttr(M, E, 'select', Scope);
+      if Result.Select = nil then
+        CompileBody(M, E, Scope, Result.Body, -1)
+      else
+      begin
+        { select and a sequence constructor: XTSE0910 }
+        C := M.Tree.FirstChild(E);
+        while C >= 0 do
+        begin
+          if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and
+            ((Trim8(M.Tree.ValueUtf8(C)) <> '') or PreservesSpace(M.Tree, C)) then
+            Fail(M, E, 'XTSE0910', 'xsl:namespace has a select attribute and content');
+          C := M.Tree.NextSibling[C];
+        end;
+      end;
     end
     else if L = 'comment' then
     begin

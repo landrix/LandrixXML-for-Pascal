@@ -391,7 +391,9 @@ documents `doc()` and `document()` read), `xsl:sort` (in `xsl:for-each`, `xsl:ap
 formats), `xsl:attribute-set` (with `use-attribute-sets` on literal
 result elements, `xsl:element` and `xsl:copy`), `xsl:character-map`
 (with `use-character-maps` on `xsl:output` and `xsl:result-document`;
-applied to text and attribute values as Saxon applies it), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
+applied to text and attribute values as Saxon applies it),
+`xsl:namespace` (namespace nodes of elements; a namespace node in a
+sequence of its own is rejected when it is built), `xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
 `element-available()` (true for what this subset translates),
