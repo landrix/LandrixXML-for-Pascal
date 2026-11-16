@@ -259,6 +259,8 @@ type
     GroupingSize: TXsltAvt;
     { xsl:for-each-group: the collation (nil if absent) }
     CollationAvt: TXsltAvt;
+    { xsl:text, xsl:value-of: disable-output-escaping="yes" }
+    NoEscape: Boolean;
     { xsl:for-each, xsl:apply-templates, xsl:for-each-group,
       xsl:perform-sort: the sort keys (TXsltSortKey, owned; nil if none) }
     SortKeys: TObjectList;
@@ -994,6 +996,7 @@ type
     procedure Fail(M: TModule; E: Integer; const Code, Msg: string);
     procedure Unsupported(M: TModule; E: Integer; const Msg: string);
     procedure CheckDefaultCollation(M: TModule; E: Integer; const V: TLandrixXmlUtf8);
+    function NoEscape(M: TModule; E: Integer): Boolean;
     procedure XPathFailed(M: TModule; E: Integer; X: ELandrixXmlXPathError);
     function IsXsl(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
     function Attr(M: TModule; E: Integer; const Local: TLandrixXmlUtf8; out Value: TLandrixXmlUtf8): Boolean;
@@ -1259,6 +1262,22 @@ begin
   while (B >= A) and (S[B] in [#9, #10, #13, ' ']) do
     Dec(B);
   Result := Copy(S, A, B - A + 1);
+end;
+
+{ disable-output-escaping of xsl:text and xsl:value-of: yes or no (as
+  Saxon also true, 1, false and 0; XTSE0020 otherwise) }
+function TCompiler.NoEscape(M: TModule; E: Integer): Boolean;
+var
+  V: TLandrixXmlUtf8;
+begin
+  Result := False;
+  if not Attr(M, E, 'disable-output-escaping', V) then
+    Exit;
+  V := Trim8(V);
+  if (V = 'yes') or (V = 'true') or (V = '1') then
+    Result := True
+  else if (V <> 'no') and (V <> 'false') and (V <> '0') then
+    Fail(M, E, 'XTSE0020', 'disable-output-escaping is yes or no');
 end;
 
 function TCompiler.QNameToClark(M: TModule; E: Integer; const QName: TLandrixXmlUtf8;
@@ -3155,8 +3174,7 @@ begin
           Fail(M, C, 'XTSE0010', 'xsl:text contains text only');
         C := M.Tree.NextSibling[C];
       end;
-      if Attr(M, E, 'disable-output-escaping', V) and (V = 'yes') then
-        Unsupported(M, E, 'disable-output-escaping');
+      Result.NoEscape := NoEscape(M, E);
     end
     else if L = 'value-of' then
     begin
@@ -3164,8 +3182,7 @@ begin
       Result.Select := CompileAttr(M, E, 'select', Scope);
       if Attr(M, E, 'separator', V) then
         Result.Separator := CompileAvt(M, E, V, Scope);
-      if Attr(M, E, 'disable-output-escaping', V) and (V = 'yes') then
-        Unsupported(M, E, 'disable-output-escaping');
+      Result.NoEscape := NoEscape(M, E);
       if Result.Select = nil then
         CompileBody(M, E, Scope, Result.Body, -1);
     end

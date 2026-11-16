@@ -488,6 +488,57 @@ begin
   end;
 end;
 
+{ disable-output-escaping where Saxon keeps it but this processor cannot
+  (raw text in a node built in a sequence, a raw text item put into a
+  temporary tree, in xsl:document or xsl:copy of a document node):
+  xecUnsupported at run time, with the line }
+procedure TestRawUnsupported;
+const
+  Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:f="urn:f">' +
+    '<xsl:function name="f:raw"><xsl:text disable-output-escaping="yes">&lt;c&gt;</xsl:text></xsl:function>' +
+    '<xsl:function name="f:e" as="element()"><e><xsl:text disable-output-escaping="yes">&lt;e&gt;</xsl:text>' +
+    '</e></xsl:function>'#10;
+  Cases: array[0..3] of string = (
+    '<xsl:template name="main"><out><xsl:sequence select="f:e()"/></out></xsl:template>',
+    '<xsl:template name="main"><out><xsl:document><xsl:text disable-output-escaping="yes">&lt;d&gt;</xsl:text>' +
+      '</xsl:document></out></xsl:template>',
+    '<xsl:template name="main"><xsl:for-each select="$d"><xsl:copy><xsl:text disable-output-escaping="yes">' +
+      '&lt;d&gt;</xsl:text></xsl:copy></xsl:for-each></xsl:template>' +
+      '<xsl:variable name="d"><r/></xsl:variable>',
+    '<xsl:template name="main"><xsl:variable name="w"><xsl:sequence select="f:raw()"/></xsl:variable>' +
+      '<out><xsl:sequence select="$w"/></out></xsl:template>');
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  I: Integer;
+  Code: string;
+begin
+  for I := 0 to High(Cases) do
+  begin
+    Sheet := TLandrixXmlXsltStylesheet.Create;
+    T := nil;
+    try
+      Sheet.LoadFromUtf8(U(Head + Cases[I] + '</xsl:stylesheet>'), U('urn:case'));
+      T := TLandrixXmlXsltTransformer.Create(Sheet);
+      T.InitialTemplate := U('main');
+      Code := 'none';
+      try
+        T.TransformToUtf8(nil);
+      except
+        on E: ELandrixXmlXsltError do
+        begin
+          Code := IntToStr(Ord(E.Code)) + ' ' + E.XPathCode;
+          Check(E.Line > 0, 'the line: ' + Cases[I]);
+        end;
+      end;
+      CheckEqualsStr(IntToStr(Ord(xecUnsupported)) + ' FOER0000', Code, 'unsupported: ' + Cases[I]);
+    finally
+      T.Free;
+      Sheet.Free;
+    end;
+  end;
+end;
+
 { What the subset does not support is rejected when the stylesheet is
   loaded (xecUnsupported); errors name module and line. }
 procedure TestRejected;
@@ -562,6 +613,7 @@ begin
   RegisterTest('Xslt.NextMatchInAnalyzeString', TestNextMatchInAnalyzeString);
   RegisterTest('Xslt.ResultDocuments', TestResultDocuments);
   RegisterTest('Xslt.Rejected', TestRejected);
+  RegisterTest('Xslt.RawUnsupported', TestRawUnsupported);
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
 end;
 

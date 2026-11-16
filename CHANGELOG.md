@@ -58,6 +58,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: `disable-output-escaping` on `xsl:text` and `xsl:value-of`, as
+  in Saxon: text written to the final result tree (also by
+  `xsl:result-document`) is serialized without escaping; the character
+  map, normalization and character references for characters the
+  encoding lacks still apply, and a CDATA section ends before it. A text
+  node a function or a template with `as` returns stays raw when it is
+  added to the result (not when it is copied with `xsl:copy-of`). It is
+  ignored in temporary trees, attributes and comments, and when the
+  result is returned as a tree; where Saxon keeps it in a node built in
+  a sequence or in a temporary tree it is `xecUnsupported` at run time.
+  Besides yes and no, `true`, `1`, `false` and `0` are accepted as in
+  Saxon; another value is `XTSE0020`.
 - XSLT: a collation URI that is not known as a collation is the error
   of the specification: `XTDE1035` (`xsl:sort`), `XTDE1110`
   (`xsl:for-each-group`; `FOCH0002` for a computed one, as in Saxon),

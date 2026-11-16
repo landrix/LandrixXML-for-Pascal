@@ -34,6 +34,7 @@ uses
 
 type
   TXsltCardinalArray = array of Cardinal;
+  TXsltIntegerArray = array of Integer;
 
   TXsltOutputProperties = class
   private
@@ -45,6 +46,15 @@ type
       values, in the order added }
     MapChars: TXsltCardinalArray;
     MapStrings: TLandrixXmlUtf8Array;
+    { disable-output-escaping: the parts of text nodes of the result tree
+      written without escaping (the node, the first byte and the length;
+      in the order of the nodes; not copied by Clone) }
+    RawNodes: TXsltIntegerArray;
+    RawStarts: TXsltIntegerArray;
+    RawLengths: TXsltIntegerArray;
+    procedure AddRaw(Node, Start, Count: Integer);
+    { the raw parts of Source (replacing these) }
+    procedure TakeRaw(Source: TXsltOutputProperties);
     procedure SetValue(const Name, AValue: TLandrixXmlUtf8);
     { maps Code to S (replacing an earlier mapping of Code) }
     procedure AddMapping(Code: Cardinal; const S: TLandrixXmlUtf8);
@@ -187,6 +197,26 @@ end;
 
 { --- TXsltOutputProperties ------------------------------------------------- }
 
+procedure TXsltOutputProperties.AddRaw(Node, Start, Count: Integer);
+var
+  N: Integer;
+begin
+  N := Integer(Length(RawNodes));
+  SetLength(RawNodes, N + 1);
+  SetLength(RawStarts, N + 1);
+  SetLength(RawLengths, N + 1);
+  RawNodes[N] := Node;
+  RawStarts[N] := Start;
+  RawLengths[N] := Count;
+end;
+
+procedure TXsltOutputProperties.TakeRaw(Source: TXsltOutputProperties);
+begin
+  RawNodes := Copy(Source.RawNodes, 0, Length(Source.RawNodes));
+  RawStarts := Copy(Source.RawStarts, 0, Length(Source.RawStarts));
+  RawLengths := Copy(Source.RawLengths, 0, Length(Source.RawLengths));
+end;
+
 procedure TXsltOutputProperties.SetValue(const Name, AValue: TLandrixXmlUtf8);
 var
   I: Integer;
@@ -326,6 +356,8 @@ type
     { white space text held back: dropped where a line break is written }
     FPending: TLandrixXmlUtf8;
     FHasPending: Boolean;
+    { the pending white space is a raw part (disable-output-escaping) }
+    FPendingRaw: Boolean;
     { the highest code point of the encoding, and whether a character above
       it is written as a character reference (text and attribute values)
       or an error }
@@ -347,6 +379,12 @@ type
       and attribute values, but not to what a character map writes }
     FNormalize: Boolean;
     FNormForm: TLandrixXmlNormalizationForm;
+    { disable-output-escaping: the raw parts (TXsltOutputProperties); FRaw
+      while one is written }
+    FRawNodes: TXsltIntegerArray;
+    FRawStarts: TXsltIntegerArray;
+    FRawLengths: TXsltIntegerArray;
+    FRaw: Boolean;
     { doctype-system and doctype-public ('' for none); FDocNewline: a line
       break before the declaration (indent not "yes"); FWellFormed: one
       element and no text but white space at the top (doctype-system or
@@ -382,6 +420,10 @@ type
     procedure FlushPending;
     procedure PutEscaped(const AText: TLandrixXmlUtf8; Attribute: Boolean);
     procedure PutText(const S: TLandrixXmlUtf8);
+    procedure SetRaw(Props: TXsltOutputProperties);
+    function RawIndex(I: Integer): Integer;
+    procedure WriteTextNode(I: Integer; const V: TLandrixXmlUtf8);
+    procedure TextNode(I: Integer; const V: TLandrixXmlUtf8); virtual;
     procedure Node(I: Integer);
     procedure Element(I: Integer);
   public
@@ -896,11 +938,19 @@ begin
 end;
 
 procedure TSerializer.FlushPending;
+var
+  Saved: Boolean;
 begin
   if not FHasPending then
     Exit;
   FHasPending := False;
-  PutText(FPending);
+  Saved := FRaw;
+  FRaw := FPendingRaw;
+  try
+    PutText(FPending);
+  finally
+    FRaw := Saved;
+  end;
   FPending := '';
 end;
 
@@ -926,6 +976,14 @@ begin
     S := Norm(AText);
   Saved := FEscape;
   FEscape := True;
+  { disable-output-escaping: nothing escaped but the characters the
+    encoding does not have }
+  if FRaw and not Attribute then
+  begin
+    Put(S);
+    FEscape := Saved;
+    Exit;
+  end;
   Start := 1;
   I := 1;
   while I <= Length(S) do
@@ -1152,11 +1210,100 @@ begin
   end;
 end;
 
+procedure TSerializer.SetRaw(Props: TXsltOutputProperties);
+begin
+  FRawNodes := Props.RawNodes;
+  FRawStarts := Props.RawStarts;
+  FRawLengths := Props.RawLengths;
+end;
+
+{ the first raw part of text node I, -1 if it has none }
+function TSerializer.RawIndex(I: Integer): Integer;
+var
+  Lo, Hi, Mid: Integer;
+begin
+  Result := -1;
+  Lo := 0;
+  Hi := Integer(Length(FRawNodes)) - 1;
+  while Lo <= Hi do
+  begin
+    Mid := (Lo + Hi) div 2;
+    if FRawNodes[Mid] < I then
+      Lo := Mid + 1
+    else
+    begin
+      if FRawNodes[Mid] = I then
+        Result := Mid;
+      Hi := Mid - 1;
+    end;
+  end;
+end;
+
+{ a text node; one with raw parts (disable-output-escaping) is written
+  part by part as Saxon receives them, the raw ones without escaping }
+procedure TSerializer.WriteTextNode(I: Integer; const V: TLandrixXmlUtf8);
+var
+  K, P: Integer;
+begin
+  K := RawIndex(I);
+  if K < 0 then
+  begin
+    TextNode(I, V);
+    Exit;
+  end;
+  P := 1;
+  while (K < Integer(Length(FRawNodes))) and (FRawNodes[K] = I) do
+  begin
+    if FRawStarts[K] > P then
+      TextNode(I, Copy(V, P, FRawStarts[K] - P));
+    FRaw := True;
+    try
+      TextNode(I, Copy(V, FRawStarts[K], FRawLengths[K]));
+    finally
+      FRaw := False;
+    end;
+    P := FRawStarts[K] + FRawLengths[K];
+    Inc(K);
+  end;
+  if P <= Length(V) then
+    TextNode(I, Copy(V, P, Length(V) - P + 1));
+end;
+
+{ text (of node I) in the XML output; a raw part is not put into a CDATA
+  section (Saxon) }
+procedure TSerializer.TextNode(I: Integer; const V: TLandrixXmlUtf8);
+var
+  Cdata: Boolean;
+begin
+  Cdata := InCData(I) and not FRaw;
+  if FIndent then
+  begin
+    { white space with a mapped character, or in a CDATA section, is
+      text (Saxon) }
+    if (FSuppressedAt < 0) and IsWhiteSpace(V) and not (FHasMap and HasMapped(V)) and not Cdata then
+    begin
+      FlushPending;
+      FPending := V;
+      FPendingRaw := FRaw;
+      FHasPending := True;
+      Exit;
+    end;
+    FlushPending;
+    if Pos8Byte(#10, V) then
+      FSameLine := False;
+    FAfterStart := False;
+    FAfterEnd := False;
+  end;
+  if Cdata then
+    PutCData(Norm(V))
+  else
+    PutText(V);
+end;
+
 procedure TSerializer.Node(I: Integer);
 var
   C: Integer;
   V: TLandrixXmlUtf8;
-  Cdata: Boolean;
 begin
   case FTree.Kind[I] of
     xnkDocument:
@@ -1174,28 +1321,7 @@ begin
       begin
         V := FTree.ValueUtf8(I);
         TopText(I, V);
-        Cdata := InCData(I);
-        if FIndent then
-        begin
-          { white space with a mapped character, or in a CDATA section, is
-            text (Saxon) }
-          if (FSuppressedAt < 0) and IsWhiteSpace(V) and not (FHasMap and HasMapped(V)) and not Cdata then
-          begin
-            FlushPending;
-            FPending := V;
-            FHasPending := True;
-            Exit;
-          end;
-          FlushPending;
-          if Pos8Byte(#10, V) then
-            FSameLine := False;
-          FAfterStart := False;
-          FAfterEnd := False;
-        end;
-        if Cdata then
-          PutCData(Norm(V))
-        else
-          PutText(V);
+        WriteTextNode(I, V);
       end;
     xnkComment, xnkProcessingInstruction:
       begin
@@ -1285,6 +1411,7 @@ type
     procedure HtmlText(const AText: TLandrixXmlUtf8; Attribute: Boolean);
     procedure Escape(const S: TLandrixXmlUtf8; Attribute: Boolean); override;
     procedure IndentedText(const S: TLandrixXmlUtf8);
+    procedure TextNode(I: Integer; const V: TLandrixXmlUtf8); override;
     procedure StartTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean; I: Integer);
     procedure EndTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean);
     procedure ContentTypeMeta(const Prefix: TLandrixXmlUtf8; IsHtml: Boolean);
@@ -1368,12 +1495,21 @@ begin
     S := AText
   else
     S := Norm(AText);
+  Saved := FEscape;
+  { disable-output-escaping (also in script and style): character
+    references for what the encoding lacks }
+  if FRaw and not Attribute then
+  begin
+    FEscape := True;
+    Put(S);
+    FEscape := Saved;
+    Exit;
+  end;
   if FInScript > 0 then
   begin
     Put(S);
     Exit;
   end;
-  Saved := FEscape;
   FEscape := True;
   Start := 1;
   I := 1;
@@ -1431,6 +1567,31 @@ end;
 procedure THtmlSerializer.Escape(const S: TLandrixXmlUtf8; Attribute: Boolean);
 begin
   HtmlText(S, Attribute);
+end;
+
+{ text of node I in the HTML and XHTML output }
+procedure THtmlSerializer.TextNode(I: Integer; const V: TLandrixXmlUtf8);
+begin
+  { xhtml: a CDATA section (not indented; not for a raw part) }
+  if InCData(I) and not FRaw then
+  begin
+    CloseTag;
+    PutCData(Norm(V));
+  end
+  { a text with a mapped character, or a raw part, is not indented
+    (Saxon) }
+  else if not FIndent or FInFormatted or FRaw or FHasMap and HasMapped(V) then
+  begin
+    CloseTag;
+    HtmlText(V, False);
+  end
+  else
+    IndentedText(V);
+  if FIndent then
+  begin
+    FAfterInline := False;
+    FAfterEndElement := False;
+  end;
 end;
 
 { text outside formatted elements: a line break, or a space after more than
@@ -1886,25 +2047,7 @@ begin
       begin
         V := FTree.ValueUtf8(I);
         TopText(I, V);
-        { xhtml: a CDATA section (not indented) }
-        if InCData(I) then
-        begin
-          CloseTag;
-          PutCData(Norm(V));
-        end
-        { a text with a mapped character is not indented (Saxon) }
-        else if not FIndent or FInFormatted or FHasMap and HasMapped(V) then
-        begin
-          CloseTag;
-          HtmlText(V, False);
-        end
-        else
-          IndentedText(V);
-        if FIndent then
-        begin
-          FAfterInline := False;
-          FAfterEndElement := False;
-        end;
+        WriteTextNode(I, V);
       end;
     xnkComment, xnkProcessingInstruction:
       begin
@@ -2059,6 +2202,7 @@ begin
       H.SetDocType(Props, H.FXhtml);
       H.FNormalize := Normalize;
       H.FNormForm := Form;
+      H.SetRaw(Props);
       if H.FXhtml and (Props.Value('omit-xml-declaration', 'no') <> 'yes') then
       begin
         H.Put('<?xml version="1.0" encoding="' + Encoding + '"');
@@ -2088,6 +2232,7 @@ begin
     S.SetDocType(Props, True);
     S.FNormalize := Normalize;
     S.FNormForm := Form;
+    S.SetRaw(Props);
     if Props.Value('omit-xml-declaration', 'no') <> 'yes' then
     begin
       S.Put('<?xml version="1.0" encoding="' + Encoding + '"');

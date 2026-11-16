@@ -802,17 +802,22 @@ begin
     Settings.Messages := FMessages;
     Settings.BaseOutputUri := FBaseOutputUri;
     Settings.ResultDocuments := FResultDocuments;
+    Settings.PrincipalRaw := TXsltOutputProperties.Create;
     XsltRun(FStylesheet.Compiled, Settings, Source, Target);
     { the properties of an xsl:result-document that made the principal
-      result, else those of xsl:output }
+      result (with its raw parts), else those of xsl:output }
     Props := TXsltOutputProperties(Settings.PrincipalProperties);
     Settings.PrincipalProperties := nil;
+    if Props = nil then
+    begin
+      Props := XsltOutputProperties(FStylesheet.Compiled);
+      Props.TakeRaw(TXsltOutputProperties(Settings.PrincipalRaw));
+    end;
   finally
     TXsltOutputProperties(Settings.PrincipalProperties).Free;
+    Settings.PrincipalRaw.Free;
     Settings.Free;
   end;
-  if Props = nil then
-    Props := XsltOutputProperties(FStylesheet.Compiled);
   for I := 0 to Integer(Length(FOutputNames)) - 1 do
     Props.SetValue(FOutputNames[I], FOutputValues[I]);
   Output := Props;

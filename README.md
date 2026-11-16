@@ -376,7 +376,14 @@ Saxon profile): templates with match patterns, modes and priorities,
 named templates, parameters (also tunnel parameters), global and local
 variables (also with a sequence constructor and `as`), `xsl:import` and
 `xsl:include` with import precedence, literal result elements, `xsl:element`,
-`xsl:attribute`, `xsl:value-of`, `xsl:text`, `xsl:if`, `xsl:choose`,
+`xsl:attribute`, `xsl:value-of` and `xsl:text` (with
+`disable-output-escaping` as Saxon does it: for text written to a
+serialized final result, also a text node a function or a template with
+`as` returns, unless it is copied with `xsl:copy-of`; ignored in
+temporary trees, attributes and comments, and in a result tree that is
+not serialized; where Saxon keeps it in a node built in a sequence or
+in a temporary tree it is rejected as unsupported when the instruction
+runs), `xsl:if`, `xsl:choose`,
 `xsl:for-each`, `xsl:sequence`, `xsl:copy`, `xsl:copy-of`,
 `xsl:document`, `xsl:comment`, `xsl:processing-instruction`,
 `xsl:message`, `xsl:number`, `xsl:function`, `xsl:for-each-group`,

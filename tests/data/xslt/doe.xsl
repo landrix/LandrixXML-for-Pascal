@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- disable-output-escaping: only text written to the final result tree (not in a temporary tree, an attribute or a comment); a character the encoding lacks is still a character reference -->
+<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:variable name="v"><t>x<xsl:text disable-output-escaping="yes">&lt;b/&gt;</xsl:text>y</t></xsl:variable>
+  <xsl:output encoding="US-ASCII"/>
+  <xsl:template match="/">
+    <out a="{'&lt;'}">
+      <xsl:attribute name="b"><xsl:value-of select="'&lt;'" disable-output-escaping="yes"/></xsl:attribute>
+      <one><xsl:copy-of select="$v"/></one>
+      <two><xsl:value-of select="$v"/></two>
+      <three>p<xsl:value-of select="'&lt;i&gt;&amp;'" disable-output-escaping="yes"/>q</three>
+      <four><xsl:comment><xsl:value-of select="'&lt;c&gt;'" disable-output-escaping="yes"/></xsl:comment></four>
+      <five><xsl:value-of select="'&#xE9;'" disable-output-escaping="yes"/></five>
+    </out>
+  </xsl:template>
+</xsl:stylesheet>

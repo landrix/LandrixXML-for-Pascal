@@ -66,6 +66,10 @@ type
     BaseOutputUri: TLandrixXmlUtf8;
     ResultDocuments: TObjectList;
     PrincipalProperties: TObject;
+    { disable-output-escaping: the raw parts of the principal result are
+      added to this TXsltOutputProperties (owned by the caller; nil: they
+      are ignored) }
+    PrincipalRaw: TObject;
     procedure AddParameter(const Name: TLandrixXmlUtf8; Kind: Integer; const Value: TLandrixXmlUtf8;
       Tree: TLandrixXmlXPathTree);
   end;
@@ -97,6 +101,9 @@ type
     procedure NamespaceNode(const Prefix, Uri: TLandrixXmlUtf8); virtual; abstract;
     procedure Attribute(const Uri, Prefix, Local, Value: TLandrixXmlUtf8); virtual; abstract;
     procedure Characters(const S: TLandrixXmlUtf8); virtual; abstract;
+    { text with disable-output-escaping: as Characters but in a final
+      result tree }
+    procedure RawCharacters(const S: TLandrixXmlUtf8); virtual;
     procedure Comment(const S: TLandrixXmlUtf8); virtual; abstract;
     procedure ProcessingInstruction(const Target, S: TLandrixXmlUtf8); virtual; abstract;
     procedure EndElement; virtual; abstract;
@@ -125,6 +132,13 @@ type
     FDocument: Boolean;
     { an attribute at the top is its value as text (xsl:message) }
     FAttributesAsText: Boolean;
+    { a final result tree: where its raw text parts go (nil for a
+      temporary tree: disable-output-escaping is ignored) }
+    FRawProps: TXsltOutputProperties;
+    { xsl:document: raw text is not supported (Saxon keeps it raw);
+      xsl:message: a raw text item is plain text (only the string counts) }
+    FRawFails: Boolean;
+    FRawIgnored: Boolean;
     procedure Flush;
     function FreePrefix(const Prefix, Uri: TLandrixXmlUtf8; First: Integer): TLandrixXmlUtf8;
     function Taken(const Prefix, Uri: TLandrixXmlUtf8): Boolean;
@@ -139,10 +153,12 @@ type
     procedure NamespaceNode(const Prefix, Uri: TLandrixXmlUtf8); override;
     procedure Attribute(const Uri, Prefix, Local, Value: TLandrixXmlUtf8); override;
     procedure Characters(const S: TLandrixXmlUtf8); override;
+    procedure RawCharacters(const S: TLandrixXmlUtf8); override;
     procedure Comment(const S: TLandrixXmlUtf8); override;
     procedure ProcessingInstruction(const Target, S: TLandrixXmlUtf8); override;
     procedure EndElement; override;
     procedure AddItem(const It: TLandrixXmlXPathItem); override;
+    procedure CopyItem(const It: TLandrixXmlXPathItem); override;
     { completes the tree (EndBuild) }
     procedure Finish;
     property Depth: Integer read FDepth;
@@ -172,6 +188,7 @@ type
     procedure NamespaceNode(const Prefix, Uri: TLandrixXmlUtf8); override;
     procedure Attribute(const Uri, Prefix, Local, Value: TLandrixXmlUtf8); override;
     procedure Characters(const S: TLandrixXmlUtf8); override;
+    procedure RawCharacters(const S: TLandrixXmlUtf8); override;
     procedure Comment(const S: TLandrixXmlUtf8); override;
     procedure ProcessingInstruction(const Target, S: TLandrixXmlUtf8); override;
     procedure EndElement; override;
@@ -260,6 +277,14 @@ type
       its properties; the tree and receiver of the implicit principal
       result }
     FTemporary: Boolean;
+    { disable-output-escaping: the text nodes made at the top of a sequence
+      (xsl:function, a template with as) from raw text, in the order made;
+      written raw when they are added to a final result tree (as Saxon;
+      not when copied with xsl:copy-of) }
+    FRawTexts: array of Integer;
+    FRawTextCount: Integer;
+    { xsl:document: the next BodyDocument rejects raw text }
+    FDocumentRaw: Boolean;
     { the tunnel parameters the current template received (passed on by
       xsl:apply-templates, xsl:call-template, xsl:next-match,
       xsl:apply-imports and the built-in rules; none in functions and
@@ -382,6 +407,8 @@ type
     { a finished tree: owned by the run, added to the evaluator }
     function AddTree(Tree: TLandrixXmlXPathTree): Integer;
     procedure CopyNode(Node: Integer; R: TReceiver);
+    procedure AddRawText(Node: Integer);
+    function IsRawText(Node: Integer): Boolean;
     procedure Start(Target: TLandrixXmlXPathTree);
     property Evaluator: TLandrixXmlXPathEvaluator read FEvaluator;
   end;
@@ -515,6 +542,19 @@ begin
     CopyItem(It)
   else
     AddItem(It);
+end;
+
+{ disable-output-escaping where Saxon keeps it and this processor cannot
+  (FOER0000, located by the instruction that runs) }
+procedure RawUnsupported;
+begin
+  raise ELandrixXmlXPathError.CreateXPathAt(xecUnsupported, 'FOER0000', 'disable-output-escaping for text that ' +
+    'is put into a temporary tree or a node built in a sequence is not supported', 0, 0);
+end;
+
+procedure TReceiver.RawCharacters(const S: TLandrixXmlUtf8);
+begin
+  Characters(S);
 end;
 
 procedure TReceiver.CopyItem(const It: TLandrixXmlXPathItem);
@@ -883,6 +923,28 @@ begin
   FTree.BuildText(S);
 end;
 
+{ the raw part is recorded with the text node it ends up in (adjacent
+  text is merged) }
+procedure TTreeReceiver.RawCharacters(const S: TLandrixXmlUtf8);
+var
+  N: Integer;
+begin
+  if FRawFails and (S <> '') then
+    RawUnsupported;
+  if (FRawProps = nil) or (S = '') then
+  begin
+    Characters(S);
+    Exit;
+  end;
+  Content;
+  N := FTree.Count;
+  FTree.BuildText(S);
+  if FTree.Count > N then
+    FRawProps.AddRaw(N, 1, Length(S))
+  else
+    FRawProps.AddRaw(N - 1, Length(FTree.ValueUtf8(N - 1)) - Length(S) + 1, Length(S));
+end;
+
 procedure TTreeReceiver.Comment(const S: TLandrixXmlUtf8);
 begin
   Content;
@@ -920,6 +982,20 @@ begin
     FLastAtomic := True;
     Exit;
   end;
+  if FRun.IsRawText(It.Node) and not FRawIgnored then
+  begin
+    { Saxon keeps it raw in a temporary tree too (implementation-defined) }
+    if FRawProps = nil then
+      RawUnsupported;
+    RawCharacters(FRun.Evaluator.ItemString(It));
+  end
+  else
+    FRun.CopyNode(It.Node, Self);
+end;
+
+{ xsl:copy-of: a copy is never raw (Saxon) }
+procedure TTreeReceiver.CopyItem(const It: TLandrixXmlXPathItem);
+begin
   FRun.CopyNode(It.Node, Self);
 end;
 
@@ -1049,6 +1125,18 @@ begin
   EndNode;
 end;
 
+{ a raw text node at the top of the sequence is remembered (inside a node
+  being built the text is not raw) }
+procedure TSequenceReceiver.RawCharacters(const S: TLandrixXmlUtf8);
+begin
+  { Saxon keeps it raw in a node built in a sequence (implementation-defined) }
+  if (FInner <> nil) and (S <> '') then
+    RawUnsupported;
+  Characters(S);
+  if (FInner = nil) and (S <> '') and (FItems.Count > 0) and (FItems.Items[FItems.Count - 1].Kind = xikNode) then
+    FRun.AddRawText(FItems.Items[FItems.Count - 1].Node);
+end;
+
 procedure TSequenceReceiver.Comment(const S: TLandrixXmlUtf8);
 begin
   if FInner <> nil then
@@ -1098,7 +1186,7 @@ var
 begin
   if FInner <> nil then
   begin
-    FInner.AddItem(It);
+    FInner.CopyItem(It);
     Exit;
   end;
   Tree := FRun.Evaluator.TreeOfNode(It.Node, B);
@@ -1801,6 +1889,7 @@ begin
     try
       { as Saxon: an attribute in a message is its value }
       R.FAttributesAsText := True;
+      R.FRawIgnored := True;
       if Instr.Select <> nil then
       begin
         S := Eval(Instr, Instr.Select, Focus);
@@ -1833,6 +1922,8 @@ begin
   try
     T.BeginBuild(True);
     R := TTreeReceiver.Create(Self, T, True);
+    R.FRawFails := FDocumentRaw;
+    FDocumentRaw := False;
     try
       Exec(Body, Focus, Mode, R);
       R.Finish;
@@ -2143,6 +2234,38 @@ begin
   Result := T;
 end;
 
+procedure TRun.AddRawText(Node: Integer);
+begin
+  if FRawTextCount = Length(FRawTexts) then
+    SetLength(FRawTexts, 2 * FRawTextCount + 16);
+  FRawTexts[FRawTextCount] := Node;
+  Inc(FRawTextCount);
+end;
+
+{ the nodes are numbered in the order their trees are added: the list is
+  sorted }
+function TRun.IsRawText(Node: Integer): Boolean;
+var
+  Lo, Hi, Mid: Integer;
+begin
+  Result := False;
+  Lo := 0;
+  Hi := FRawTextCount - 1;
+  while Lo <= Hi do
+  begin
+    Mid := (Lo + Hi) div 2;
+    if FRawTexts[Mid] = Node then
+    begin
+      Result := True;
+      Exit;
+    end;
+    if FRawTexts[Mid] < Node then
+      Lo := Mid + 1
+    else
+      Hi := Mid - 1;
+  end;
+end;
+
 procedure TRun.CopyNode(Node: Integer; R: TReceiver);
 var
   T: TLandrixXmlXPathTree;
@@ -2219,8 +2342,12 @@ begin
   case T.Kind[I] of
     xnkDocument:
       { a document node of its own (an attribute in it is XTDE0420; in a
-        tree, its content stays apart from adjacent atomic values) }
-      R.Item(BodyDocument(Instr.Body, T.BaseUri, Focus, Mode).Items[0], False);
+        tree, its content stays apart from adjacent atomic values; raw
+        text in it as in xsl:document) }
+      begin
+        FDocumentRaw := True;
+        R.Item(BodyDocument(Instr.Body, T.BaseUri, Focus, Mode).Items[0], False);
+      end;
     xnkElement:
       begin
         { a copy at the top of a sequence has the original's base URI (none
@@ -2720,6 +2847,7 @@ begin
     T.BeginBuild(True);
     R := TTreeReceiver.Create(Self, T, True);
     try
+      R.FRawProps := Props;
       Exec(Instr.Body, Focus, Mode, R);
       R.Finish;
     finally
@@ -2784,11 +2912,18 @@ end;
 
 { raises E again with the instruction's position (if any) }
 procedure TRun.Located(Instr: TXsltInstr; E: ELandrixXmlXPathError);
+var
+  Code: TLandrixXmlErrorCode;
 begin
+  { an unsupported feature met at run time stays unsupported }
+  if E.Code = xecUnsupported then
+    Code := xecUnsupported
+  else
+    Code := xecXslt;
   if Instr = nil then
-    raise ELandrixXmlXsltError.CreateXslt(xecXslt, E.XPathCode,
+    raise ELandrixXmlXsltError.CreateXslt(Code, E.XPathCode,
       System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), '', 0, 0);
-  raise ELandrixXmlXsltError.CreateXslt(xecXslt, E.XPathCode,
+  raise ELandrixXmlXsltError.CreateXslt(Code, E.XPathCode,
     System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), Instr.Module, Instr.Line, Instr.Column);
 end;
 
@@ -2820,7 +2955,10 @@ begin
     Text := EvalString(Instr, Instr.Select, Focus, Sep)
   else
     Text := BodyString(Instr.Body, Focus, Mode, Sep);
-  R.Characters(Text);
+  if Instr.NoEscape then
+    R.RawCharacters(Text)
+  else
+    R.Characters(Text);
 end;
 
 procedure TRun.DoVariable(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
@@ -3368,6 +3506,7 @@ procedure TRun.DoDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus;
 var
   Doc: TLandrixXmlXPathSequence;
 begin
+  FDocumentRaw := True;
   Doc := BodyDocument(Instr.Body, Instr.BaseUri, Focus, Mode);
   R.Item(Doc.Items[0], False);
 end;
@@ -4502,7 +4641,10 @@ var
 begin
   case Instr.Kind of
     xskText:
-      R.Characters(Instr.Text);
+      if Instr.NoEscape then
+        R.RawCharacters(Instr.Text)
+      else
+        R.Characters(Instr.Text);
     xskLiteralElement:
       LiteralElement(Instr, Focus, Mode, R);
     xskValueOf:
@@ -4679,6 +4821,7 @@ begin
   Params := nil;
   Target.BeginBuild(True);
   R := TTreeReceiver.Create(Self, Target, True);
+  R.FRawProps := TXsltOutputProperties(FSettings.PrincipalRaw);
   FImplicit := Target;
   FImplicitReceiver := R;
   try

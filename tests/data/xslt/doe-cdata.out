@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><out a="&lt;" b="&lt;"><one><t>x&lt;b/&gt;y</t></one><two>x&lt;b/&gt;y</two><three><![CDATA[p]]><i>&<![CDATA[q]]></three><four><!--<c>--></four><five>é</five></out>

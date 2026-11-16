@@ -74,7 +74,7 @@ TIMEOUT = 60
 SPECS = {"XSLT10+", "XSLT20+", "XSLT20"}
 # features: provided (True) or not (False); a feature not listed is not
 # provided
-FEATURES = {"serialization": True, "HTML5": True}
+FEATURES = {"serialization": True, "HTML5": True, "disabling_output_escaping": True}
 # test sets left out as a whole, with the reason: unicode-90 never passes
 # the charclass parameter its generated cases need (Saxon fails them too)
 # and runs every code point through regular expressions (the catalog marks

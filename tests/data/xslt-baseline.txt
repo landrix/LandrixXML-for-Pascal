@@ -578,6 +578,8 @@ bug/bug-0801 pass
 bug/bug-1001 pass
 bug/bug-1101 pass
 bug/bug-1201 pass
+bug/bug-1202 pass
+bug/bug-1203 pass
 bug/bug-1301 pass
 bug/bug-1401 pass
 bug/bug-1403 pass
@@ -604,11 +606,13 @@ bug/bug-2703 pass
 bug/bug-2801 pass
 bug/bug-2901 pass
 bug/bug-3001 pass
+bug/bug-3201 pass
 bug/bug-3301 pass
 bug/bug-3401 pass
 bug/bug-3501 pass
 bug/bug-3601 pass
 bug/bug-3701 pass
+bug/bug-3801 pass
 bug/bug-3901 pass
 bug/bug-4001 pass
 bug/bug-4101 pass
@@ -1067,6 +1071,10 @@ date/date-092 pass
 date/date-093 pass
 deep-equal/deep-equal-001 pass
 deep-equal/deep-equal-002 pass
+disable-output-escaping/doe-0176 pass
+disable-output-escaping/doe-0176c pass
+disable-output-escaping/doe-0401 pass
+disable-output-escaping/doe-0405 pass
 document/document-0105 pass
 document/document-0106 pass
 document/document-0107 pass
@@ -1161,6 +1169,7 @@ error/error-0010aq pass
 error/error-0010ar pass
 error/error-0010as pass
 error/error-0010au pass
+error/error-0010av pass
 error/error-0010aw pass
 error/error-0010ax pass
 error/error-0010ay pass

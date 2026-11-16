@@ -1,0 +1,9 @@
+<out a="<" b="<">
+   <one>
+      <t>x&lt;b/&gt;y</t>
+   </one>
+   <two>x&lt;b/&gt;y</two>
+   <three>p<i>&q</three>
+   <four><!--<c>--></four>
+   <five>é</five>
+</out>
