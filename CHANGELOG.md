@@ -58,6 +58,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: the output property `normalization-form` (NFC, NFD, NFKC, NFKD,
+  none) for every output method: text, attribute values and CDATA
+  sections are normalized, names and comments are not; as in Saxon the
+  character map comes first and its strings are not normalized. Another
+  value (also `fully-normalized`) is `SESU0011` when the result is
+  serialized.
 - XSLT: forwards compatible processing for a version above 3.0, as in
   Saxon: unknown declarations are ignored with their content, an unknown
   instruction runs its `xsl:fallback` (`XTSE0010` without one), unknown

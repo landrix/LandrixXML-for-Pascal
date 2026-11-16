@@ -416,7 +416,8 @@ root element in the XHTML namespace, as in Saxon) and text in UTF-8, US-ASCII or
 ISO-8859-1 (a character the encoding does not have is a character
 reference, as in Saxon), indented as Saxon indents, with
 `cdata-section-elements` (xml and xhtml; CDATA sections as Saxon writes
-them), `doctype-system` and `doctype-public`. Where XSLT 2.0 and
+them), `doctype-system`, `doctype-public` and `normalization-form` (NFC, NFD,
+NFKC, NFKD; applied after the character map, as in Saxon). Where XSLT 2.0 and
 Saxon (which runs XSLT 2.0 stylesheets as XSLT 3.0) differ, Saxon is
 followed (`xsl:analyze-string` of an empty sequence, regular expressions
 with `(?:...)` and the flag `q`), except that a regular expression

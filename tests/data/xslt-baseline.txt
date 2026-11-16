@@ -700,7 +700,9 @@ character-map/character-map-021 pass
 character-map/character-map-022 pass
 character-map/character-map-023 pass
 character-map/character-map-024 pass
+character-map/character-map-025 pass
 character-map/character-map-027 pass
+character-map/character-map-028 pass
 choose/choose-0101 pass
 choose/choose-0102 pass
 choose/choose-0103 pass
@@ -2461,6 +2463,8 @@ nodetest/nodetest-002 pass
 nodetest/nodetest-003 pass
 normalize-unicode/normalize-unicode-001 pass
 normalize-unicode/normalize-unicode-002 pass
+normalize-unicode/normalize-unicode-010 pass
+normalize-unicode/normalize-unicode-016 pass
 normalize-unicode/normalize-unicode-017 pass
 normalize-unicode/normalize-unicode-018 pass
 number/number-0101 pass
@@ -2627,6 +2631,8 @@ output/output-0114 pass
 output/output-0115 pass
 output/output-0115b pass
 output/output-0115c pass
+output/output-0115d pass
+output/output-0115e pass
 output/output-0116 pass
 output/output-0117 pass
 output/output-0118 pass
@@ -2655,6 +2661,7 @@ output/output-0142 pass
 output/output-0143 pass
 output/output-0144 pass
 output/output-0145 pass
+output/output-0146 pass
 output/output-0147 pass
 output/output-0148 pass
 output/output-0149 pass
@@ -2674,7 +2681,9 @@ output/output-0161 pass
 output/output-0163 pass
 output/output-0164 pass
 output/output-0166 pass
+output/output-0167 pass
 output/output-0168 pass
+output/output-0169 pass
 output/output-0170 pass
 output/output-0172 pass
 output/output-0173 pass

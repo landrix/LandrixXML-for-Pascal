@@ -201,7 +201,7 @@ begin
       T.TransformToUtf8(Source), 'an output property set by the caller');
     Raised := '';
     try
-      T.SetOutputProperty(U('normalization-form'), U('NFC'));
+      T.SetOutputProperty(U('html-version'), U('5'));
     except
       on E: ELandrixXmlError do
         Raised := IntToStr(Ord(E.Code));
@@ -497,7 +497,7 @@ const
     '<xsl:accumulator name="a" initial-value="0"/><xsl:template match="/"/>',
     '<xsl:mode name="m"/><xsl:template match="/"/>',
     '<xsl:template match="/"><x xsl:expand-text="yes">{1}</x></xsl:template>',
-    '<xsl:output normalization-form="NFC"/><xsl:template match="/"/>',
+    '<xsl:output html-version="5"/><xsl:template match="/"/>',
     '<xsl:output byte-order-mark="yes"/><xsl:template match="/"/>',
     '<xsl:output encoding="UTF-16"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort lang="de"/></xsl:for-each></xsl:template>',

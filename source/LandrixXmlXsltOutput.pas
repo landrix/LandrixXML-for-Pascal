@@ -174,7 +174,7 @@ begin
     else if (Name = 'name') or (Name = 'use-character-maps') or (Name = 'method') and (Value <> 'xml') and
       (Value <> 'text') and (Value <> 'html') and (Value <> 'xhtml') or (Name = 'encoding') and
       (EncodingMaxChar(Value) = 0) or
-      (Name = 'byte-order-mark') and (Value = 'yes') or (Name = 'normalization-form') and (Value <> 'none') then
+      (Name = 'byte-order-mark') and (Value = 'yes') then
       Result := xosUnsupported;
   end
   else if (Name = 'item-separator') or (Name = 'html-version') or (Name = 'suppress-indentation') or
@@ -343,6 +343,10 @@ type
     { cdata-section-elements: the Clark names of the elements whose text
       is written as CDATA sections }
     FCData: TLandrixXmlUtf8Array;
+    { normalization-form (FNormalize: not none): applied to text, CDATA
+      and attribute values, but not to what a character map writes }
+    FNormalize: Boolean;
+    FNormForm: TLandrixXmlNormalizationForm;
     { doctype-system and doctype-public ('' for none); FDocNewline: a line
       break before the declaration (indent not "yes"); FWellFormed: one
       element and no text but white space at the top (doctype-system or
@@ -352,6 +356,7 @@ type
     FDocNewline: Boolean;
     FWellFormed: Boolean;
     FTopCount: Integer;
+    function Norm(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
     procedure SetDocType(Props: TXsltOutputProperties; Xml: Boolean);
     procedure PutDocType(const Name: TLandrixXmlUtf8);
     procedure TopElement(I: Integer);
@@ -375,7 +380,7 @@ type
     procedure Spaces(N: Integer);
     procedure Indent;
     procedure FlushPending;
-    procedure PutEscaped(const S: TLandrixXmlUtf8; Attribute: Boolean);
+    procedure PutEscaped(const AText: TLandrixXmlUtf8; Attribute: Boolean);
     procedure PutText(const S: TLandrixXmlUtf8);
     procedure Node(I: Integer);
     procedure Element(I: Integer);
@@ -483,6 +488,21 @@ begin
     (not IsWhiteSpace(V) or FHasMap and not IsWhiteSpace(MappedValue(V))) then
     raise ELandrixXmlXPathError.CreateXPath('SEPM0004', 'with standalone or doctype-system the document ' +
       'must not have text at the top');
+end;
+
+function TSerializer.Norm(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I: Integer;
+begin
+  Result := S;
+  if not FNormalize then
+    Exit;
+  for I := 1 to Length(S) do
+    if Ord(S[I]) >= $80 then
+    begin
+      Result := LandrixXmlNormalizeUtf8(S, FNormForm);
+      Exit;
+    end;
 end;
 
 procedure TSerializer.SetCData(Props: TXsltOutputProperties);
@@ -638,7 +658,7 @@ begin
       K := MappedAt(S, I, N);
       if K >= 0 then
       begin
-        Escape(Copy(S, Start, I - Start), Attribute);
+        Escape(Norm(Copy(S, Start, I - Start)), Attribute);
         Saved := FEscape;
         FEscape := False;
         try
@@ -650,7 +670,7 @@ begin
       end;
       Inc(I, N);
     end;
-    Escape(Copy(S, Start, Length(S) - Start + 1), Attribute);
+    Escape(Norm(Copy(S, Start, Length(S) - Start + 1)), Attribute);
   finally
     FInMap := False;
   end;
@@ -694,22 +714,28 @@ end;
 { S with the strings of its mapped characters (S without a map) }
 function TSerializer.MappedValue(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
 var
-  I, N, K: Integer;
+  I, N, K, Start: Integer;
 begin
-  Result := S;
+  { the text between mapped characters normalized (normalization-form) }
   if not FHasMap or not HasMapped(S) then
+  begin
+    Result := Norm(S);
     Exit;
+  end;
   Result := '';
+  Start := 1;
   I := 1;
   while I <= Length(S) do
   begin
     K := MappedAt(S, I, N);
     if K >= 0 then
-      Result := Result + FMapStrings[K]
-    else
-      Result := Result + Copy(S, I, N);
+    begin
+      Result := Result + Norm(Copy(S, Start, I - Start)) + FMapStrings[K];
+      Start := I + N;
+    end;
     Inc(I, N);
   end;
+  Result := Result + Norm(Copy(S, Start, Length(S) - Start + 1));
 end;
 
 { the number of mapped characters in S }
@@ -882,17 +908,22 @@ end;
   emitter does: < > & and carriage returns (in attributes also " and the
   other white space), U+007F to U+009F and U+2028 as character references
   in every encoding }
-procedure TSerializer.PutEscaped(const S: TLandrixXmlUtf8; Attribute: Boolean);
+procedure TSerializer.PutEscaped(const AText: TLandrixXmlUtf8; Attribute: Boolean);
 var
   I, Start, N: Integer;
-  R: TLandrixXmlUtf8;
+  R, S: TLandrixXmlUtf8;
   Saved: Boolean;
 begin
   if FHasMap and not FInMap then
   begin
-    PutMapped(S, Attribute);
+    PutMapped(AText, Attribute);
     Exit;
   end;
+  { mapped text is normalized by PutMapped (and a namespace URI not) }
+  if FInMap then
+    S := AText
+  else
+    S := Norm(AText);
   Saved := FEscape;
   FEscape := True;
   Start := 1;
@@ -1043,7 +1074,7 @@ begin
     if FSuppressedAt < 0 then
       for K := I + 1 to I + FTree.AttributeCount[I] do
         if (FTree.NamespaceUriUtf8(K) = LandrixXmlNamespaceXml) and (FTree.LocalNameUtf8(K) = 'space') and
-          (Trim8Ws(FTree.ValueUtf8(K)) = 'preserve') then
+          (Trim8Ws(Norm(FTree.ValueUtf8(K))) = 'preserve') then
           FSuppressedAt := FLevel;
     FSameLine := True;
     FAfterStart := True;
@@ -1162,7 +1193,7 @@ begin
           FAfterEnd := False;
         end;
         if Cdata then
-          PutCData(V)
+          PutCData(Norm(V))
         else
           PutText(V);
       end;
@@ -1251,7 +1282,7 @@ type
     FNsDepth: Integer;
     procedure CloseTag;
     procedure HtmlIndent;
-    procedure HtmlText(const S: TLandrixXmlUtf8; Attribute: Boolean);
+    procedure HtmlText(const AText: TLandrixXmlUtf8; Attribute: Boolean);
     procedure Escape(const S: TLandrixXmlUtf8; Attribute: Boolean); override;
     procedure IndentedText(const S: TLandrixXmlUtf8);
     procedure StartTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean; I: Integer);
@@ -1315,23 +1346,28 @@ end;
 { Text as Saxon's HTML emitter escapes it: in text < > &, in attributes
   > & (not before "{") " and line breaks; U+00A0 as &nbsp;, the C1
   controls as character references; nothing inside script and style }
-procedure THtmlSerializer.HtmlText(const S: TLandrixXmlUtf8; Attribute: Boolean);
+procedure THtmlSerializer.HtmlText(const AText: TLandrixXmlUtf8; Attribute: Boolean);
 var
   I, Start, N: Integer;
   Code: Cardinal;
-  R: TLandrixXmlUtf8;
+  R, S: TLandrixXmlUtf8;
   Drop, Saved: Boolean;
 begin
   if FHasMap and not FInMap then
   begin
-    PutMapped(S, Attribute);
+    PutMapped(AText, Attribute);
     Exit;
   end;
   if FXhtml then
   begin
-    PutEscaped(S, Attribute);
+    PutEscaped(AText, Attribute);
     Exit;
   end;
+  { mapped text is normalized by PutMapped }
+  if FInMap then
+    S := AText
+  else
+    S := Norm(AText);
   if FInScript > 0 then
   begin
     Put(S);
@@ -1854,7 +1890,7 @@ begin
         if InCData(I) then
         begin
           CloseTag;
-          PutCData(V);
+          PutCData(Norm(V));
         end
         { a text with a mapped character is not indented (Saxon) }
         else if not FIndent or FInFormatted or FHasMap and HasMapped(V) then
@@ -1911,7 +1947,7 @@ end;
 { The text of all text nodes (method text), a character the encoding does
   not have SERE0008. }
 procedure WriteText(Tree: TLandrixXmlXPathTree; Props: TXsltOutputProperties; Stream: TStream;
-  MaxChar: Cardinal);
+  MaxChar: Cardinal; Normalize: Boolean; Form: TLandrixXmlNormalizationForm);
 var
   I: Integer;
   S: TSerializer;
@@ -1920,6 +1956,8 @@ begin
   try
     S.FMaxChar := MaxChar;
     S.FPlain := True;
+    S.FNormalize := Normalize;
+    S.FNormForm := Form;
     S.SetMap(Props);
     for I := 0 to Tree.Count - 1 do
       if Tree.Kind[I] = xnkText then
@@ -1927,7 +1965,7 @@ begin
         if S.FHasMap then
           S.PutMapped(Tree.ValueUtf8(I), False)
         else
-          S.Put(Tree.ValueUtf8(I));
+          S.Put(S.Norm(Tree.ValueUtf8(I)));
       end;
     S.Flush;
   finally
@@ -1938,12 +1976,27 @@ end;
 procedure XsltSerialize(Tree: TLandrixXmlXPathTree; Props: TXsltOutputProperties; Stream: TStream;
   ForceUtf8: Boolean);
 var
-  Method, Encoding: TLandrixXmlUtf8;
+  Method, Encoding, NF: TLandrixXmlUtf8;
   S: TSerializer;
   H: THtmlSerializer;
   E, C: Integer;
   MaxChar: Cardinal;
+  Normalize: Boolean;
+  Form: TLandrixXmlNormalizationForm;
 begin
+  { normalization-form: NFC, NFD, NFKC, NFKD or none (Saxon: SESU0011
+    for another one, fully-normalized too) }
+  NF := Trim8Ws(Props.Value('normalization-form', 'none'));
+  Normalize := NF <> 'none';
+  Form := xnfNfc;
+  if NF = 'NFD' then
+    Form := xnfNfd
+  else if NF = 'NFKC' then
+    Form := xnfNfkc
+  else if NF = 'NFKD' then
+    Form := xnfNfkd
+  else if Normalize and (NF <> 'NFC') then
+    raise ELandrixXmlXPathError.CreateXPath('SESU0011', 'unknown normalization form ' + LandrixXmlUtf8ToString(NF));
   Method := Props.Value('method', '');
   if Method = '' then
   begin
@@ -1977,7 +2030,7 @@ begin
       LandrixXmlUtf8ToString(Encoding) + ' is not supported (UTF-8, US-ASCII and ISO-8859-1 only)');
   if Method = 'text' then
   begin
-    WriteText(Tree, Props, Stream, MaxChar);
+    WriteText(Tree, Props, Stream, MaxChar, Normalize, Form);
     Exit;
   end;
   if (Method = 'html') or (Method = 'xhtml') then
@@ -2004,6 +2057,8 @@ begin
       if H.FXhtml then
         H.SetCData(Props);
       H.SetDocType(Props, H.FXhtml);
+      H.FNormalize := Normalize;
+      H.FNormForm := Form;
       if H.FXhtml and (Props.Value('omit-xml-declaration', 'no') <> 'yes') then
       begin
         H.Put('<?xml version="1.0" encoding="' + Encoding + '"');
@@ -2031,6 +2086,8 @@ begin
     S.SetMap(Props);
     S.SetCData(Props);
     S.SetDocType(Props, True);
+    S.FNormalize := Normalize;
+    S.FNormForm := Form;
     if Props.Value('omit-xml-declaration', 'no') <> 'yes' then
     begin
       S.Put('<?xml version="1.0" encoding="' + Encoding + '"');
