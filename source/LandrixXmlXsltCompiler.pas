@@ -261,6 +261,8 @@ type
     CollationAvt: TXsltAvt;
     { xsl:text, xsl:value-of: disable-output-escaping="yes" }
     NoEscape: Boolean;
+    { xsl:copy, xsl:copy-of: copy-namespaces="no" }
+    NoNamespaces: Boolean;
     { xsl:for-each, xsl:apply-templates, xsl:for-each-group,
       xsl:perform-sort: the sort keys (TXsltSortKey, owned; nil if none) }
     SortKeys: TObjectList;
@@ -3315,14 +3317,12 @@ begin
     begin
       Result := NewInstr(xskCopyOf, M, E);
       Result.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
-      if Attr(M, E, 'copy-namespaces', V) and (V = 'no') then
-        Unsupported(M, E, 'copy-namespaces="no"');
+      Result.NoNamespaces := Attr(M, E, 'copy-namespaces', V) and not YesNoAttr(M, E, 'copy-namespaces');
     end
     else if L = 'copy' then
     begin
       Result := NewInstr(xskCopy, M, E);
-      if Attr(M, E, 'copy-namespaces', V) and (V = 'no') then
-        Unsupported(M, E, 'copy-namespaces="no"');
+      Result.NoNamespaces := Attr(M, E, 'copy-namespaces', V) and not YesNoAttr(M, E, 'copy-namespaces');
       if Attr(M, E, 'use-attribute-sets', V) then
         Result.UseSets := UseAttributeSets(M, E, V);
       CompileBody(M, E, Scope, Result.Body, -1);

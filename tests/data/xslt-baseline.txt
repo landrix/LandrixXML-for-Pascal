@@ -806,6 +806,8 @@ copy/copy-0202 pass
 copy/copy-0203 pass
 copy/copy-0401 pass
 copy/copy-0501 pass
+copy/copy-0601 pass
+copy/copy-0602 pass
 copy/copy-0701 pass
 copy/copy-0801 pass
 copy/copy-1001 pass
@@ -862,6 +864,7 @@ copy/copy-4502 pass
 copy/copy-4601 pass
 copy/copy-4701 pass
 copy/copy-4702 pass
+copy/copy-4901 pass
 core-function/core-function-001 pass
 core-function/core-function-002 pass
 core-function/core-function-003 pass
@@ -1208,6 +1211,7 @@ error/error-0020d pass
 error/error-0020f wrong-code
 error/error-0020i pass
 error/error-0020j pass
+error/error-0020k pass
 error/error-0040a pass
 error/error-0050a pass
 error/error-0090e pass
@@ -1898,6 +1902,7 @@ key/key-062 pass
 key/key-063 pass
 key/key-064 pass
 key/key-065 pass
+key/key-066 pass
 key/key-067 pass
 key/key-068 pass
 key/key-069 pass

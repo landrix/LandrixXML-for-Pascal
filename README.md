@@ -384,7 +384,8 @@ temporary trees, attributes and comments, and in a result tree that is
 not serialized; where Saxon keeps it in a node built in a sequence or
 in a temporary tree it is rejected as unsupported when the instruction
 runs), `xsl:if`, `xsl:choose`,
-`xsl:for-each`, `xsl:sequence`, `xsl:copy`, `xsl:copy-of`,
+`xsl:for-each`, `xsl:sequence`, `xsl:copy` and `xsl:copy-of` (also with
+`copy-namespaces="no"`, the namespaces as Saxon writes them),
 `xsl:document`, `xsl:comment`, `xsl:processing-instruction`,
 `xsl:message`, `xsl:number`, `xsl:function`, `xsl:for-each-group`,
 `use-when` (and `xsl:use-when` on literal result elements; evaluated

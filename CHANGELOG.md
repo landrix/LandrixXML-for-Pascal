@@ -58,6 +58,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: `copy-namespaces="no"` on `xsl:copy` and `xsl:copy-of`: a copy
+  has the namespaces its names need; below the top of a deep copy an
+  element has those and the ones of the place the copy goes to, as
+  Saxon writes them (also `xmlns=""` or a declaration repeated).
+  `true`/`1`/`false`/`0` are accepted as in Saxon; another value is
+  `XTSE0020`.
 - XSLT: the output property `byte-order-mark` for every output method:
   as in Saxon the byte order mark is written for UTF-8 only (none for
   US-ASCII or ISO-8859-1); `TransformToUtf8` and `SerializeToUtf8` begin

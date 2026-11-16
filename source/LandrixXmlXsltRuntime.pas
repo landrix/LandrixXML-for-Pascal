@@ -112,6 +112,11 @@ type
     procedure AddItem(const It: TLandrixXmlXPathItem); virtual; abstract;
     { a copy of a node (in a tree any node is copied: AddItem) }
     procedure CopyItem(const It: TLandrixXmlXPathItem); virtual;
+    { the namespaces a node added now would inherit (the default one with
+      the prefix '', an empty URI for none) }
+    procedure InheritedNamespaces(var Prefixes, Uris: TLandrixXmlUtf8Array); virtual;
+    { a namespace node declared even where the scope has it already }
+    procedure ForceNamespace(const Prefix, Uri: TLandrixXmlUtf8); virtual;
   end;
 
   { builds Tree (BeginBuild called by the creator) }
@@ -139,6 +144,10 @@ type
       xsl:message: a raw text item is plain text (only the string counts) }
     FRawFails: Boolean;
     FRawIgnored: Boolean;
+    { the pending element's declarations kept although the scope has them
+      (ForceNamespace) }
+    FForced: TLandrixXmlUtf8Array;
+    function IsForced(const Prefix: TLandrixXmlUtf8): Boolean;
     procedure Flush;
     function FreePrefix(const Prefix, Uri: TLandrixXmlUtf8; First: Integer): TLandrixXmlUtf8;
     function Taken(const Prefix, Uri: TLandrixXmlUtf8): Boolean;
@@ -159,6 +168,8 @@ type
     procedure EndElement; override;
     procedure AddItem(const It: TLandrixXmlXPathItem); override;
     procedure CopyItem(const It: TLandrixXmlXPathItem); override;
+    procedure InheritedNamespaces(var Prefixes, Uris: TLandrixXmlUtf8Array); override;
+    procedure ForceNamespace(const Prefix, Uri: TLandrixXmlUtf8); override;
     { completes the tree (EndBuild) }
     procedure Finish;
     property Depth: Integer read FDepth;
@@ -194,6 +205,8 @@ type
     procedure EndElement; override;
     procedure AddItem(const It: TLandrixXmlXPathItem); override;
     procedure CopyItem(const It: TLandrixXmlXPathItem); override;
+    procedure InheritedNamespaces(var Prefixes, Uris: TLandrixXmlUtf8Array); override;
+    procedure ForceNamespace(const Prefix, Uri: TLandrixXmlUtf8); override;
     procedure SetNextBase(const Uri: TLandrixXmlUtf8);
     property Items: TLandrixXmlXPathSequence read FItems;
   end;
@@ -285,6 +298,9 @@ type
     FRawTextCount: Integer;
     { xsl:document: the next BodyDocument rejects raw text }
     FDocumentRaw: Boolean;
+    { xsl:copy-of copy-namespaces="no": CopyNode copies no namespace nodes
+      (the receiver declares those the names need) }
+    FNoNamespaces: Boolean;
     { the tunnel parameters the current template received (passed on by
       xsl:apply-templates, xsl:call-template, xsl:next-match,
       xsl:apply-imports and the built-in rules; none in functions and
@@ -557,6 +573,88 @@ begin
   Characters(S);
 end;
 
+procedure TReceiver.InheritedNamespaces(var Prefixes, Uris: TLandrixXmlUtf8Array);
+begin
+  Prefixes := nil;
+  Uris := nil;
+end;
+
+procedure TReceiver.ForceNamespace(const Prefix, Uri: TLandrixXmlUtf8);
+begin
+  NamespaceNode(Prefix, Uri);
+end;
+
+{ the scope; a pending element is completed first (its namespace fixup:
+  only called when content follows) }
+procedure TTreeReceiver.InheritedNamespaces(var Prefixes, Uris: TLandrixXmlUtf8Array);
+
+  procedure Add(const P, U: TLandrixXmlUtf8);
+  var
+    K, N: Integer;
+  begin
+    for K := 0 to Integer(Length(Prefixes)) - 1 do
+      if Prefixes[K] = P then
+      begin
+        Uris[K] := U;
+        Exit;
+      end;
+    N := Integer(Length(Prefixes));
+    SetLength(Prefixes, N + 1);
+    SetLength(Uris, N + 1);
+    Prefixes[N] := P;
+    Uris[N] := U;
+  end;
+
+var
+  I: Integer;
+begin
+  Prefixes := nil;
+  Uris := nil;
+  Flush;
+  for I := 0 to FScopeCount - 1 do
+    Add(FScopePrefixes[I], FScopeUris[I]);
+end;
+
+procedure TTreeReceiver.ForceNamespace(const Prefix, Uri: TLandrixXmlUtf8);
+var
+  N: Integer;
+begin
+  NamespaceNode(Prefix, Uri);
+  N := Integer(Length(FForced));
+  SetLength(FForced, N + 1);
+  FForced[N] := Prefix;
+end;
+
+function TTreeReceiver.IsForced(const Prefix: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  for I := 0 to Integer(Length(FForced)) - 1 do
+    if FForced[I] = Prefix then
+      Exit;
+  Result := False;
+end;
+
+procedure TSequenceReceiver.InheritedNamespaces(var Prefixes, Uris: TLandrixXmlUtf8Array);
+begin
+  if FInner <> nil then
+    FInner.InheritedNamespaces(Prefixes, Uris)
+  else
+  begin
+    Prefixes := nil;
+    Uris := nil;
+  end;
+end;
+
+procedure TSequenceReceiver.ForceNamespace(const Prefix, Uri: TLandrixXmlUtf8);
+begin
+  if FInner <> nil then
+    FInner.ForceNamespace(Prefix, Uri)
+  else
+    NamespaceNode(Prefix, Uri);
+end;
+
 procedure TReceiver.CopyItem(const It: TLandrixXmlXPathItem);
 begin
   AddItem(It);
@@ -789,7 +887,7 @@ begin
   Uris := nil;
   for I := 0 to Integer(Length(FNsPrefixes)) - 1 do
   begin
-    if InScope(FNsPrefixes[I], Uri) and (Uri = FNsUris[I]) then
+    if InScope(FNsPrefixes[I], Uri) and (Uri = FNsUris[I]) and not IsForced(FNsPrefixes[I]) then
       Continue;
     if (FNsPrefixes[I] = '') and (FNsUris[I] = '') and not InScope('', Uri) then
       Continue;
@@ -823,6 +921,7 @@ begin
   end;
   FNsPrefixes := nil;
   FNsUris := nil;
+  FForced := nil;
   FAttrCount := 0;
 end;
 
@@ -2266,10 +2365,110 @@ begin
   end;
 end;
 
+{ copy-namespaces="no" (FNoNamespaces) as Saxon does it: below the top of
+  the copy an element has the namespaces its names need and those of the
+  place the copy goes to (InsPrefixes, InsUris; its own names win), not
+  those of its copied parent; one its names need that the copied parent
+  does not have is declared again }
 procedure TRun.CopyNode(Node: Integer; R: TReceiver);
 var
   T: TLandrixXmlXPathTree;
-  Base: Integer;
+  Base, Root: Integer;
+  InsPrefixes, InsUris: TLandrixXmlUtf8Array;
+
+  { the binding of Prefix the place of the copy gives }
+  function Inserted(const Prefix: TLandrixXmlUtf8; out Uri: TLandrixXmlUtf8): Boolean;
+  var
+    K: Integer;
+  begin
+    for K := 0 to Integer(Length(InsPrefixes)) - 1 do
+      if InsPrefixes[K] = Prefix then
+      begin
+        Uri := InsUris[K];
+        Result := True;
+        Exit;
+      end;
+    Uri := '';
+    Result := False;
+  end;
+
+  { whether the names of element I (its own or an attribute's) use Prefix,
+    with the URI }
+  function NameUses(I: Integer; const Prefix: TLandrixXmlUtf8; out Uri: TLandrixXmlUtf8): Boolean;
+  var
+    A: Integer;
+  begin
+    Result := True;
+    if (T.PrefixUtf8(I) = Prefix) and ((Prefix <> '') or (T.NamespaceUriUtf8(I) <> '')) then
+    begin
+      Uri := T.NamespaceUriUtf8(I);
+      Exit;
+    end;
+    if Prefix <> '' then
+      for A := I + 1 to I + T.AttributeCount[I] do
+        if T.PrefixUtf8(A) = Prefix then
+        begin
+          Uri := T.NamespaceUriUtf8(A);
+          Exit;
+        end;
+    Uri := '';
+    Result := False;
+  end;
+
+  { whether the copy of the parent of I has the binding }
+  function ParentHas(I: Integer; const Prefix, Uri: TLandrixXmlUtf8): Boolean;
+  var
+    P: Integer;
+    U: TLandrixXmlUtf8;
+  begin
+    P := T.Parent[I];
+    if (P >= 0) and (T.Kind[P] = xnkElement) and NameUses(P, Prefix, U) then
+      Result := U = Uri
+    else
+      Result := Inserted(Prefix, U) and (U = Uri);
+  end;
+
+  { whether a copied ancestor of I has a name in no namespace (Saxon: its
+    xmlns="" holds for the elements below, not the place's default) }
+  function BelowNoNamespace(I: Integer): Boolean;
+  var
+    P: Integer;
+  begin
+    Result := True;
+    P := I;
+    while P <> Root do
+    begin
+      P := T.Parent[P];
+      if (T.Kind[P] = xnkElement) and (T.PrefixUtf8(P) = '') and (T.NamespaceUriUtf8(P) = '') then
+        Exit;
+    end;
+    Result := False;
+  end;
+
+  procedure NoNamespaces(I: Integer);
+  var
+    K, A: Integer;
+    U: TLandrixXmlUtf8;
+  begin
+    { the place's namespaces the names do not override; the default one
+      for a prefixed name only }
+    for K := 0 to Integer(Length(InsPrefixes)) - 1 do
+      if (InsPrefixes[K] <> '') and not NameUses(I, InsPrefixes[K], U) then
+        R.NamespaceNode(InsPrefixes[K], InsUris[K]);
+    if T.PrefixUtf8(I) <> '' then
+    begin
+      if BelowNoNamespace(I) or not Inserted('', U) then
+        U := '';
+      R.NamespaceNode('', U);
+    end;
+    { what the names need and the copied parent does not have }
+    if (T.PrefixUtf8(I) <> '') and not ParentHas(I, T.PrefixUtf8(I), T.NamespaceUriUtf8(I)) then
+      R.ForceNamespace(T.PrefixUtf8(I), T.NamespaceUriUtf8(I));
+    for A := I + 1 to I + T.AttributeCount[I] do
+      if (T.PrefixUtf8(A) <> '') and (T.PrefixUtf8(A) <> 'xml') and (T.PrefixUtf8(A) <> T.PrefixUtf8(I)) and
+        not ParentHas(I, T.PrefixUtf8(A), T.NamespaceUriUtf8(A)) then
+        R.ForceNamespace(T.PrefixUtf8(A), T.NamespaceUriUtf8(A));
+  end;
 
   procedure Walk(I: Integer);
   var
@@ -2291,10 +2490,15 @@ var
       xnkElement:
         begin
           R.StartElement(T.NamespaceUriUtf8(I), T.PrefixUtf8(I), T.LocalNameUtf8(I));
-          Prefixes := T.InScopePrefixesUtf8(I);
-          for K := 0 to Integer(Length(Prefixes)) - 1 do
-            if (Prefixes[K] <> 'xml') and T.LookupNamespace(I, Prefixes[K], Uri) then
-              R.NamespaceNode(Prefixes[K], Uri);
+          if not FNoNamespaces then
+          begin
+            Prefixes := T.InScopePrefixesUtf8(I);
+            for K := 0 to Integer(Length(Prefixes)) - 1 do
+              if (Prefixes[K] <> 'xml') and T.LookupNamespace(I, Prefixes[K], Uri) then
+                R.NamespaceNode(Prefixes[K], Uri);
+          end
+          else if I <> Root then
+            NoNamespaces(I);
           for A := I + 1 to I + T.AttributeCount[I] do
             R.Attribute(T.NamespaceUriUtf8(A), T.PrefixUtf8(A), T.LocalNameUtf8(A), T.ValueUtf8(A));
           C := T.FirstChild(I);
@@ -2318,7 +2522,14 @@ var
 
 begin
   T := FEvaluator.TreeOfNode(Node, Base);
-  Walk(Node - Base);
+  Root := Node - Base;
+  InsPrefixes := nil;
+  InsUris := nil;
+  { only where content follows: an element, a document with children }
+  if FNoNamespaces and ((T.Kind[Root] = xnkElement) or (T.Kind[Root] = xnkDocument) and
+    (T.FirstChild(Root) >= 0)) then
+    R.InheritedNamespaces(InsPrefixes, InsUris);
+  Walk(Root);
 end;
 
 { xsl:copy: a shallow copy of the context item }
@@ -2359,10 +2570,14 @@ begin
           TSequenceReceiver(R).SetNextBase(Uri);
         end;
         R.StartElement(T.NamespaceUriUtf8(I), T.PrefixUtf8(I), T.LocalNameUtf8(I));
-        Prefixes := T.InScopePrefixesUtf8(I);
-        for K := 0 to Integer(Length(Prefixes)) - 1 do
-          if (Prefixes[K] <> 'xml') and T.LookupNamespace(I, Prefixes[K], Uri) then
-            R.NamespaceNode(Prefixes[K], Uri);
+        { copy-namespaces="no": only the namespaces the names need }
+        if not Instr.NoNamespaces then
+        begin
+          Prefixes := T.InScopePrefixesUtf8(I);
+          for K := 0 to Integer(Length(Prefixes)) - 1 do
+            if (Prefixes[K] <> 'xml') and T.LookupNamespace(I, Prefixes[K], Uri) then
+              R.NamespaceNode(Prefixes[K], Uri);
+        end;
         { use-attribute-sets applies to an element only }
         if Instr.UseSets <> nil then
           DoUseAttributeSets(Instr.UseSets, Focus, Mode, R);
@@ -3427,12 +3642,19 @@ procedure TRun.DoSequence(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus;
 var
   S: TLandrixXmlXPathSequence;
   I: Integer;
+  Saved: Boolean;
 begin
   S := Eval(Instr, Instr.Select, Focus);
   if R is TSequenceReceiver then
     TSequenceReceiver(R).CopyBase := Instr.BaseUri;
-  for I := 0 to Integer(S.Count) - 1 do
-    R.Item(S.Items[I], Instr.Kind = xskCopyOf);
+  Saved := FNoNamespaces;
+  FNoNamespaces := Instr.NoNamespaces;
+  try
+    for I := 0 to Integer(S.Count) - 1 do
+      R.Item(S.Items[I], Instr.Kind = xskCopyOf);
+  finally
+    FNoNamespaces := Saved;
+  end;
 end;
 
 procedure TRun.DoElement(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);

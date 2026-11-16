@@ -1,0 +1,1 @@
+<doc xmlns:a="urn:a" xmlns:b="urn:b" xmlns="urn:d"><a:x b:att="1"><y xmlns:c="urn:c"><c:z/></y></a:x><plain xmlns=""><a:x><n/></a:x><u><a:y><a:z/></a:y></u></plain></doc>
