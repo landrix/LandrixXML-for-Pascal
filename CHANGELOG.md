@@ -58,6 +58,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: forwards compatible processing for a version above 3.0, as in
+  Saxon: unknown declarations are ignored with their content, an unknown
+  instruction runs its `xsl:fallback` (`XTSE0010` without one), unknown
+  attributes of XSLT elements are ignored. A version that is no decimal
+  is `XTSE0110`; one below 2.0 is still rejected.
 - XSLT: `extension-element-prefixes` (also on `xsl:template` and other
   XSLT elements, and as `xsl:extension-element-prefixes` on literal
   result elements). No extension instruction is known: an element in an

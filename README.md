@@ -436,6 +436,11 @@ unsupported value, which raises `xecUnsupported` when the instruction is
 evaluated. A stylesheet with
 `version="3.0"` is run with these rules (Saxon runs it as XSLT 3.0; the
 XSLT 3.0 instructions are rejected); XSLT 3.0 is to follow step by step.
+A version above 3.0 means forwards compatible processing as in Saxon (an
+unknown declaration is ignored, an unknown instruction runs its
+`xsl:fallback` and is `XTSE0010` without one, unknown attributes of XSLT
+elements are ignored); a version below 2.0 (backwards compatible
+processing) is rejected, one that is no decimal is `XTSE0110`.
 `unparsed-entity-uri()` and `unparsed-entity-public-id()` are unknown
 functions (`XPST0017`). Work in progress: the cases in
 `tests/data/xslt` give the output Saxon gives, byte for byte. Errors

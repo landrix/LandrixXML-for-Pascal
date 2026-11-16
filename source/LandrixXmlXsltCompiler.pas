@@ -1001,7 +1001,7 @@ type
     procedure CompileBody(M: TModule; Parent: Integer; Scope: TScope; Body: TObjectList; First: Integer);
     function CompileInstr(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     function CompileLiteral(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
-    function CompileExtension(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
+    function CompileExtension(M: TModule; E: Integer; Scope: TScope; CheckOthers: Boolean): TXsltInstr;
     function YesNoAttr(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
     procedure CompileWithParams(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
     function CompileResultDocument(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
@@ -1415,6 +1415,99 @@ begin
   CollectDecls(M, P);
 end;
 
+{ the class of a version attribute (an xs:decimal): -1 not a decimal,
+  0 below 2.0 (backwards compatible processing), 1 from 2.0 to 3.0, 2
+  above 3.0 (forwards compatible processing, as for Saxon, an XSLT 3.0
+  processor) }
+function VersionClass(const Value: TLandrixXmlUtf8): Integer;
+var
+  S, IntPart, Frac: TLandrixXmlUtf8;
+  I, Dot: Integer;
+  Negative: Boolean;
+begin
+  Result := -1;
+  S := Trim8(Value);
+  Negative := False;
+  if (S <> '') and ((S[1] = '+') or (S[1] = '-')) then
+  begin
+    Negative := S[1] = '-';
+    Delete(S, 1, 1);
+  end;
+  Dot := 0;
+  for I := 1 to Length(S) do
+    if S[I] = '.' then
+    begin
+      if Dot > 0 then
+        Exit;
+      Dot := I;
+    end
+    else if not (S[I] in ['0'..'9']) then
+      Exit;
+  if (S = '') or (S = '.') then
+    Exit;
+  if Dot > 0 then
+  begin
+    IntPart := Copy(S, 1, Dot - 1);
+    Frac := Copy(S, Dot + 1, MaxInt);
+  end
+  else
+  begin
+    IntPart := S;
+    Frac := '';
+  end;
+  while (IntPart <> '') and (IntPart[1] = '0') do
+    Delete(IntPart, 1, 1);
+  while (Frac <> '') and (Frac[Length(Frac)] = '0') do
+    Delete(Frac, Length(Frac), 1);
+  if Negative or (IntPart = '') or (Length(IntPart) = 1) and (IntPart[1] < '2') then
+    Result := 0
+  else if (IntPart = '2') or (IntPart = '3') and (Frac = '') then
+    Result := 1
+  else
+    Result := 2;
+end;
+
+{ whether E is processed in forwards compatible mode: the nearest version
+  (version on an XSLT element, but the output version of xsl:output;
+  xsl:version on another element) is above 3.0 }
+function Forwards(M: TModule; E: Integer): Boolean;
+var
+  N, K: Integer;
+  Xsl: Boolean;
+begin
+  Result := False;
+  N := E;
+  while N >= 0 do
+  begin
+    if M.Tree.Kind[N] = xnkElement then
+    begin
+      Xsl := M.Tree.NamespaceUriUtf8(N) = XsltNamespace;
+      if not (Xsl and (M.Tree.LocalNameUtf8(N) = 'output')) then
+        for K := N + 1 to N + M.Tree.AttributeCount[N] do
+          if (M.Tree.LocalNameUtf8(K) = 'version') and
+            (Xsl and (M.Tree.NamespaceUriUtf8(K) = '') or not Xsl and (M.Tree.NamespaceUriUtf8(K) = XsltNamespace)) then
+          begin
+            Result := VersionClass(M.Tree.ValueUtf8(K)) = 2;
+            Exit;
+          end;
+    end;
+    N := M.Tree.Parent[N];
+  end;
+end;
+
+{ a top-level element in the XSLT namespace that is no declaration XSLT
+  3.0 knows, in forwards compatible mode: ignored with its content }
+function IgnoredDeclaration(M: TModule; E: Integer): Boolean;
+const
+  Known = ' template output attribute-set character-map namespace-alias key decimal-format strip-space ' +
+    'preserve-space variable param import include function import-schema mode accumulator use-package ' +
+    'global-context-item stylesheet transform ';
+begin
+  Result := (M.Tree.NamespaceUriUtf8(E) = XsltNamespace) and (M.Tree.Parent[E] >= 0) and
+    (M.Tree.Parent[E] = M.Tree.DocumentElement) and
+    (Pos(' ' + LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(E)) + ' ', Known) = 0) and Forwards(M, E);
+end;
+
 { the first prefix of extension-element-prefixes that is not declared
   (#default always is: Saxon takes it for no namespace; #all is a prefix
   that is not declared, as in Saxon), or '#' and the first one bound to a
@@ -1514,7 +1607,7 @@ begin
   begin
     if Xsl then
     begin
-      if M.Tree.NamespaceUriUtf8(I) = XsltNamespace then
+      if (M.Tree.NamespaceUriUtf8(I) = XsltNamespace) and not Forwards(M, E) then
         Fail(M, E, 'XTSE0090', 'an XSLT element has no attribute in the XSLT namespace (' +
           LandrixXmlUtf8ToString(M.Tree.PrefixUtf8(I)) + ':' + LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(I)) + ')');
       if M.Tree.NamespaceUriUtf8(I) <> '' then
@@ -1539,8 +1632,15 @@ begin
         Fail(M, E, 'XTSE1430', 'the prefix ' + LandrixXmlUtf8ToString(Bad) + ' of extension-element-prefixes ' +
           'is not declared');
     end;
-    if (L = 'version') and (V <> '2.0') and (V <> '3.0') and not (Xsl and IsXsl(M, E, 'output')) then
-      Unsupported(M, E, 'version="' + LandrixXmlUtf8ToString(V) + '" (only 2.0 is processed as such)');
+    if (L = 'version') and not (Xsl and IsXsl(M, E, 'output')) then
+      case VersionClass(V) of
+        -1:
+          Fail(M, E, 'XTSE0110', 'the version "' + LandrixXmlUtf8ToString(V) + '" is not a number');
+        0:
+          Unsupported(M, E, 'version="' + LandrixXmlUtf8ToString(V) + '" (backwards compatible processing)');
+      else
+        { 2.0 and 3.0 by the rules of XSLT 2.0; above, forwards compatible }
+      end;
   end;
 end;
 
@@ -1977,9 +2077,23 @@ var
   I: Integer;
 begin
   PruneUseWhen(M);
-  for I := 0 to M.Tree.Count - 1 do
+  I := 0;
+  while I < M.Tree.Count do
+  begin
     if M.Tree.Kind[I] = xnkElement then
+    begin
+      if IgnoredDeclaration(M, I) then
+      begin
+        if M.Tree.NextSibling[I] >= 0 then
+          I := M.Tree.NextSibling[I]
+        else
+          I := M.Tree.Count;
+        Continue;
+      end;
       CheckStandard(M, I);
+    end;
+    Inc(I);
+  end;
 end;
 
 { --- expressions --------------------------------------------------------------- }
@@ -2314,7 +2428,7 @@ begin
           if IsXsl(M, C, '') then
             I := CompileInstr(M, C, Scope)
           else if IsExtension(M, C) then
-            I := CompileExtension(M, C, Scope)
+            I := CompileExtension(M, C, Scope, True)
           else
             I := CompileLiteral(M, C, Scope);
           if I <> nil then
@@ -2441,9 +2555,24 @@ begin
   SetLength(Instr.NsUris, Count);
 end;
 
+function HasFallback(M: TModule; E: Integer): Boolean;
+var
+  C: Integer;
+begin
+  Result := False;
+  C := M.Tree.FirstChild(E);
+  while C >= 0 do
+  begin
+    if (M.Tree.Kind[C] = xnkElement) and (M.Tree.NamespaceUriUtf8(C) = XsltNamespace) and
+      (M.Tree.LocalNameUtf8(C) = 'fallback') then
+      Result := True;
+    C := M.Tree.NextSibling[C];
+  end;
+end;
+
 { an extension instruction: no extension is known, so its xsl:fallback
   children are what it does (the other children are ignored) }
-function TCompiler.CompileExtension(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
+function TCompiler.CompileExtension(M: TModule; E: Integer; Scope: TScope; CheckOthers: Boolean): TXsltInstr;
 var
   C: Integer;
 begin
@@ -2453,8 +2582,11 @@ begin
     { the other children are compiled only for their static errors (as
       Saxon checks them); kept in NonMatching (never run), as compiled
       instructions may be registered for later checks }
-    Result.NonMatching := TObjectList.Create;
-    CompileBody(M, E, Scope, Result.NonMatching, -1);
+    if CheckOthers then
+    begin
+      Result.NonMatching := TObjectList.Create;
+      CompileBody(M, E, Scope, Result.NonMatching, -1);
+    end;
     C := M.Tree.FirstChild(E);
     while C >= 0 do
     begin
@@ -2581,7 +2713,12 @@ begin
         Name := L;
       if (L = 'name') or (L = 'version') or
         (XsltOutputPropertyStatus(Name, 'yes') = xosUnknown) then
-        Fail(M, E, 'XTSE0090', 'xsl:result-document has no attribute ' + LandrixXmlUtf8ToString(L));
+      begin
+        { forwards compatible: an unknown attribute is ignored }
+        if not Forwards(M, E) then
+          Fail(M, E, 'XTSE0090', 'xsl:result-document has no attribute ' + LandrixXmlUtf8ToString(L));
+        Continue;
+      end;
       A := CompileAvt(M, E, V, Scope);
       V := LiteralOf(A);
       if A.IsLiteral then
@@ -3113,9 +3250,10 @@ begin
         Result.NamespaceAvt := CompileAvt(M, E, V, Scope);
       if Attr(M, E, 'use-attribute-sets', V) then
       begin
-        if L = 'attribute' then
+        if L <> 'attribute' then
+          Result.UseSets := UseAttributeSets(M, E, V)
+        else if not Forwards(M, E) then
           Fail(M, E, 'XTSE0090', 'xsl:attribute has no attribute use-attribute-sets');
-        Result.UseSets := UseAttributeSets(M, E, V);
       end;
       ScopeNamespaces(M, E, Result);
       if L = 'attribute' then
@@ -3177,6 +3315,12 @@ begin
       Result := NewInstr(xskDocument, M, E);
       CompileBody(M, E, Scope, Result.Body, -1);
     end
+    else if Forwards(M, E) and not XsltElementAvailable(L) and HasFallback(M, E) then
+      { forwards compatible: an instruction of a later version runs its
+        xsl:fallback (as Saxon, only with one; without, XTSE0010; its
+        other children are not compiled; a known element in the wrong
+        place stays XTSE0010) }
+      Result := CompileExtension(M, E, Scope, False)
     else
       Fail(M, E, 'XTSE0010', 'unknown or misplaced XSLT element xsl:' + LandrixXmlUtf8ToString(L));
   except
@@ -3572,7 +3716,7 @@ begin
         (V <> 'xpath-default-namespace') and (V <> 'exclude-result-prefixes') and
         (V <> 'extension-element-prefixes') and (V <> 'use-when') and (V <> 'expand-text') and
         (V <> 'default-collation') and (V <> 'default-validation') and (V <> 'default-mode') and
-        (V <> 'input-type-annotations') then
+        (V <> 'input-type-annotations') and not Forwards(M, E) then
         Fail(M, E, 'XTSE0090', 'xsl:number has no attribute ' + LandrixXmlUtf8ToString(V));
       if V = 'start-at' then
         Unsupported(M, E, 'xsl:number start-at (XSLT 3.0)');
@@ -4139,7 +4283,12 @@ begin
         Fail(M, E, 'XTSE0020', 'xsl:decimal-format ' + LandrixXmlUtf8ToString(L) + ' must be one character');
     end
     else
-      Fail(M, E, 'XTSE0090', 'xsl:decimal-format has no attribute ' + LandrixXmlUtf8ToString(L));
+    begin
+      { forwards compatible: an unknown attribute is ignored }
+      if not Forwards(M, E) then
+        Fail(M, E, 'XTSE0090', 'xsl:decimal-format has no attribute ' + LandrixXmlUtf8ToString(L));
+      Continue;
+    end;
     { a property given twice with the same precedence and different values
       (XTSE1290); a higher precedence wins }
     if L <> 'name' then
@@ -4565,7 +4714,7 @@ begin
       (A = 'version') or (A = 'exclude-result-prefixes') or (A = 'extension-element-prefixes') or
       (A = 'xpath-default-namespace') or (A = 'default-collation') or (A = 'use-when') or
       (A = 'expand-text') or (A = 'default-mode') or (A = 'default-validation') or
-      (A = 'input-type-annotations')) then
+      (A = 'input-type-annotations')) and not Forwards(M, E) then
       Fail(M, E, 'XTSE0090', 'xsl:attribute-set has no attribute ' + LandrixXmlUtf8ToString(A));
   end;
   V := Trim8(ReqAttr(M, E, 'name'));
@@ -4681,7 +4830,7 @@ begin
       (A = 'exclude-result-prefixes') or (A = 'extension-element-prefixes') or
       (A = 'xpath-default-namespace') or (A = 'default-collation') or (A = 'use-when') or
       (A = 'expand-text') or (A = 'default-mode') or (A = 'default-validation') or
-      (A = 'input-type-annotations')) then
+      (A = 'input-type-annotations')) and not Forwards(M, E) then
       Fail(M, E, 'XTSE0090', 'xsl:character-map has no attribute ' + LandrixXmlUtf8ToString(A));
   end;
   V := Trim8(ReqAttr(M, E, 'name'));
@@ -4712,7 +4861,7 @@ begin
             (A = 'exclude-result-prefixes') or (A = 'extension-element-prefixes') or
             (A = 'xpath-default-namespace') or (A = 'default-collation') or (A = 'use-when') or
             (A = 'expand-text') or (A = 'default-mode') or (A = 'default-validation') or
-            (A = 'input-type-annotations')) then
+            (A = 'input-type-annotations')) and not Forwards(M, C) then
             Fail(M, C, 'XTSE0090', 'xsl:output-character has no attribute ' + LandrixXmlUtf8ToString(A));
         end;
         { one character, as it is (no white space trimmed) }
@@ -4878,7 +5027,7 @@ begin
       (A = 'exclude-result-prefixes') or (A = 'extension-element-prefixes') or
       (A = 'xpath-default-namespace') or (A = 'default-collation') or (A = 'use-when') or
       (A = 'expand-text') or (A = 'default-mode') or (A = 'default-validation') or
-      (A = 'input-type-annotations')) then
+      (A = 'input-type-annotations')) and not Forwards(M, E) then
       Fail(M, E, 'XTSE0090', 'xsl:namespace-alias has no attribute ' + LandrixXmlUtf8ToString(A));
   end;
   V := Trim8(ReqAttr(M, E, 'stylesheet-prefix'));
@@ -5165,7 +5314,12 @@ begin
       xosUnsupported:
         Unsupported(M, D.Element, 'xsl:output ' + LandrixXmlUtf8ToString(L) + '="' + LandrixXmlUtf8ToString(V) + '"');
       xosUnknown:
-        Fail(M, D.Element, 'XTSE0090', 'xsl:output has no attribute ' + LandrixXmlUtf8ToString(L));
+        begin
+          { forwards compatible: an unknown attribute is ignored }
+          if not Forwards(M, D.Element) then
+            Fail(M, D.Element, 'XTSE0090', 'xsl:output has no attribute ' + LandrixXmlUtf8ToString(L));
+          Continue;
+        end;
       xosInvalid:
         Fail(M, D.Element, 'XTSE0020', 'xsl:output ' + LandrixXmlUtf8ToString(L) + '="' +
           LandrixXmlUtf8ToString(V) + '" is not a valid value');
@@ -5525,6 +5679,8 @@ begin
       else if (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
         (L = 'use-package') or (L = 'global-context-item') then
         Unsupported(D.Module, D.Element, 'xsl:' + LandrixXmlUtf8ToString(L))
+      else if IgnoredDeclaration(D.Module, D.Element) then
+        { forwards compatible: ignored }
       else
         Fail(D.Module, D.Element, 'XTSE0010', 'unknown declaration xsl:' + LandrixXmlUtf8ToString(L));
     end;
