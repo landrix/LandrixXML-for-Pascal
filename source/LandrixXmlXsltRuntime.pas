@@ -377,6 +377,7 @@ type
       out Uri, Prefix, Local: TLandrixXmlUtf8);
     procedure CopyInstr(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
     procedure ExecCore(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+    procedure DoText(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; R: TReceiver);
     procedure DoValueOf(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
     procedure DoVariable(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
     function Test(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus): Boolean;
@@ -3176,6 +3177,22 @@ begin
     R.Characters(Text);
 end;
 
+{ xsl:text and text of a sequence constructor (a text value template:
+  TextAvt) }
+procedure TRun.DoText(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; R: TReceiver);
+var
+  S: TLandrixXmlUtf8;
+begin
+  if Instr.TextAvt <> nil then
+    S := EvalAvt(Instr, Instr.TextAvt, Focus)
+  else
+    S := Instr.Text;
+  if Instr.NoEscape then
+    R.RawCharacters(S)
+  else
+    R.Characters(S);
+end;
+
 procedure TRun.DoVariable(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
 begin
   FEvaluator.BindValue(Instr.Slot, VariableValue(Instr, Instr.BaseUri, Instr.Select, Instr.Body, Instr.HasAs, Instr.AsType,
@@ -4863,10 +4880,7 @@ var
 begin
   case Instr.Kind of
     xskText:
-      if Instr.NoEscape then
-        R.RawCharacters(Instr.Text)
-      else
-        R.Characters(Instr.Text);
+      DoText(Instr, Focus, R);
     xskLiteralElement:
       LiteralElement(Instr, Focus, Mode, R);
     xskValueOf:

@@ -58,6 +58,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: `[xsl:]expand-text` (XSLT 3.0 text value templates, as Saxon
+  also runs them in a stylesheet with `version="2.0"`): text in a sequence
+  constructor and in `xsl:text` with expressions in braces (`{{` and `}}`
+  for braces, empty braces for the empty sequence); `XTSE0350`,
+  `XTSE0370` and `XTSE0020` as for attribute value templates.
 - XSLT: `copy-namespaces="no"` on `xsl:copy` and `xsl:copy-of`: a copy
   has the namespaces its names need; below the top of a deep copy an
   element has those and the ones of the place the copy goes to, as

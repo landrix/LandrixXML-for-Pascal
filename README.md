@@ -449,6 +449,9 @@ unsupported value, and a computed collation another collation, which
 raise `xecUnsupported` when the instruction is evaluated. A stylesheet with
 `version="3.0"` is run with these rules (Saxon runs it as XSLT 3.0; the
 XSLT 3.0 instructions are rejected); XSLT 3.0 is to follow step by step.
+Of XSLT 3.0, `[xsl:]expand-text` (text value templates in sequence
+constructors and `xsl:text`) is supported, also in a stylesheet with
+`version="2.0"`, as Saxon runs it.
 A version above 3.0 means forwards compatible processing as in Saxon (an
 unknown declaration is ignored, an unknown instruction runs its
 `xsl:fallback` and is `XTSE0010` without one, unknown attributes of XSLT

@@ -263,6 +263,9 @@ type
     NoEscape: Boolean;
     { xsl:copy, xsl:copy-of: copy-namespaces="no" }
     NoNamespaces: Boolean;
+    { xskText: a text value template (expand-text="yes"; nil for literal
+      text, which is Text) }
+    TextAvt: TXsltAvt;
     { xsl:for-each, xsl:apply-templates, xsl:for-each-group,
       xsl:perform-sort: the sort keys (TXsltSortKey, owned; nil if none) }
     SortKeys: TObjectList;
@@ -948,6 +951,9 @@ type
     FNextPrecedence: Integer;
     FNextOrder: Integer;
     FC: TXsltCompiled;
+    { CompileAvt compiles a text value template: an empty expression is
+      the empty sequence }
+    FTextTemplate: Boolean;
     FAllModeTemplates: TList;
     { the evaluation of use-when: an empty tree, the definitions of the
       functions it answers, true() and false() (made on first use) }
@@ -998,6 +1004,8 @@ type
     procedure Fail(M: TModule; E: Integer; const Code, Msg: string);
     procedure Unsupported(M: TModule; E: Integer; const Msg: string);
     procedure CheckDefaultCollation(M: TModule; E: Integer; const V: TLandrixXmlUtf8);
+    function ExpandText(M: TModule; E: Integer): Boolean;
+    procedure CompileText(M: TModule; E: Integer; Instr: TXsltInstr; Scope: TScope);
     function NoEscape(M: TModule; E: Integer): Boolean;
     procedure XPathFailed(M: TModule; E: Integer; X: ELandrixXmlXPathError);
     function IsXsl(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
@@ -1678,8 +1686,11 @@ begin
     V := Trim8(M.Tree.ValueUtf8(I));
     if L = 'default-collation' then
       CheckDefaultCollation(M, E, V);
+    if (L = 'expand-text') and (V <> 'yes') and (V <> 'no') and (V <> 'true') and (V <> 'false') and
+      (V <> '1') and (V <> '0') then
+      Fail(M, E, 'XTSE0020', 'expand-text="' + LandrixXmlUtf8ToString(V) + '" is neither yes nor no');
     if (L = 'default-mode') or (L = 'default-validation') or (L = 'input-type-annotations') or
-      ((L = 'expand-text') and (V = 'yes')) or ((L = 'inherit-namespaces') and (V = 'no')) or
+      ((L = 'inherit-namespaces') and (V = 'no')) or
       ((L = 'validation') and (V <> 'strip') and (V <> 'preserve')) or (L = 'type') then
       Unsupported(M, E, LandrixXmlUtf8ToString(L) + '="' + LandrixXmlUtf8ToString(V) + '"');
     if L = 'extension-element-prefixes' then
@@ -2286,6 +2297,34 @@ begin
     Result := Compile(M, E, V, Scope);
 end;
 
+{ whether an expression is only white space and XPath comments (empty) }
+function OnlyComments(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, Depth: Integer;
+begin
+  Result := False;
+  I := 1;
+  Depth := 0;
+  while I <= Length(S) do
+  begin
+    if (S[I] = '(') and (I < Length(S)) and (S[I + 1] = ':') then
+    begin
+      Inc(Depth);
+      Inc(I, 2);
+    end
+    else if (Depth > 0) and (S[I] = ':') and (I < Length(S)) and (S[I + 1] = ')') then
+    begin
+      Dec(Depth);
+      Inc(I, 2);
+    end
+    else if (Depth > 0) or (S[I] in [#9, #10, #13, ' ']) then
+      Inc(I)
+    else
+      Exit;
+  end;
+  Result := Depth = 0;
+end;
+
 function TCompiler.CompileAvt(M: TModule; E: Integer; const Text: TLandrixXmlUtf8; Scope: TScope): TXsltAvt;
 var
   I, Start, Depth, N, Comment: Integer;
@@ -2360,7 +2399,9 @@ begin
       end;
       if I > Length(Text) then
         Fail(M, E, 'XTSE0350', 'an attribute value template without "}"');
-      AddPart('', Compile(M, E, Copy(Text, Start, I - Start), Scope));
+      { in a text value template empty braces are the empty sequence (Saxon) }
+      if not FTextTemplate or not OnlyComments(Copy(Text, Start, I - Start)) then
+        AddPart('', Compile(M, E, Copy(Text, Start, I - Start), Scope));
       Inc(I);
     end
     else if Text[I] = '}' then
@@ -2381,6 +2422,58 @@ begin
   end;
   if (Lit <> '') or (Length(Result.Parts) = 0) then
     AddPart(Lit, nil);
+end;
+
+{ expand-text in force for the content of element E: the nearest
+  [xsl:]expand-text of E and its ancestors in the module (default no) }
+function TCompiler.ExpandText(M: TModule; E: Integer): Boolean;
+var
+  A: Integer;
+  V: TLandrixXmlUtf8;
+  Xsl: Boolean;
+begin
+  Result := False;
+  while E >= 0 do
+  begin
+    if M.Tree.Kind[E] = xnkElement then
+    begin
+      Xsl := M.Tree.NamespaceUriUtf8(E) = XsltNamespace;
+      for A := E + 1 to E + M.Tree.AttributeCount[E] do
+        if (M.Tree.LocalNameUtf8(A) = 'expand-text') and (Xsl and (M.Tree.NamespaceUriUtf8(A) = '') or
+          not Xsl and (M.Tree.NamespaceUriUtf8(A) = XsltNamespace)) then
+        begin
+          V := Trim8(M.Tree.ValueUtf8(A));
+          Result := (V = 'yes') or (V = 'true') or (V = '1');
+          Exit;
+        end;
+    end;
+    E := M.Tree.Parent[E];
+  end;
+end;
+
+{ the text of Instr (xskText) as a text value template: literal text
+  stays in Text }
+procedure TCompiler.CompileText(M: TModule; E: Integer; Instr: TXsltInstr; Scope: TScope);
+var
+  A: TXsltAvt;
+  I: Integer;
+  V: TLandrixXmlUtf8;
+begin
+  FTextTemplate := True;
+  try
+    A := CompileAvt(M, E, Instr.Text, Scope);
+  finally
+    FTextTemplate := False;
+  end;
+  if A.IsLiteral then
+  begin
+    V := '';
+    for I := 0 to Integer(Length(A.Parts)) - 1 do
+      V := V + A.Parts[I];
+    Instr.Text := V;
+  end
+  else
+    Instr.TextAvt := A;
 end;
 
 function TCompiler.ParseType(M: TModule; E: Integer; Scope: TScope; out T: TLandrixXmlXPathSequenceType): Boolean;
@@ -2480,6 +2573,8 @@ begin
             I := NewInstr(xskText, M, C);
             I.Text := S;
             Body.Add(I);
+            if ExpandText(M, Parent) then
+              CompileText(M, Parent, I, Scope);
           end;
           C := Last;
         end;
@@ -3177,6 +3272,8 @@ begin
         C := M.Tree.NextSibling[C];
       end;
       Result.NoEscape := NoEscape(M, E);
+      if ExpandText(M, E) then
+        CompileText(M, E, Result, Scope);
     end
     else if L = 'value-of' then
     begin

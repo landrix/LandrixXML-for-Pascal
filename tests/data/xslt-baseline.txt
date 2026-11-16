@@ -53,6 +53,8 @@ analyze-string/analyze-string-081 pass
 analyze-string/analyze-string-082 pass
 analyze-string/analyze-string-083 pass
 analyze-string/analyze-string-085 pass
+analyze-string/analyze-string-090a pass
+analyze-string/analyze-string-091a pass
 analyze-string/analyze-string-095 pass
 analyze-string/analyze-string-096 pass
 apply-templates/apply-templates-001 wrong-code
