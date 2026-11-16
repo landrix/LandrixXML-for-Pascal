@@ -2609,11 +2609,17 @@ output/output-0107 pass
 output/output-0108 pass
 output/output-0109 pass
 output/output-0110 pass
+output/output-0111 pass
+output/output-0112 pass
+output/output-0113 pass
 output/output-0114 pass
 output/output-0115 pass
 output/output-0115b pass
 output/output-0115c pass
 output/output-0116 pass
+output/output-0117 pass
+output/output-0118 pass
+output/output-0119 pass
 output/output-0120 pass
 output/output-0121 pass
 output/output-0122 pass
@@ -2669,6 +2675,7 @@ output/output-0204 pass
 output/output-0205 pass
 output/output-0206 pass
 output/output-0207 pass
+output/output-0234 pass
 output/output-0285 pass
 output/output-0301 pass
 output/output-0302 pass
@@ -2679,6 +2686,9 @@ output/output-0306 pass
 output/output-0307 pass
 output/output-0309 pass
 output/output-0310 pass
+output/output-0311 pass
+output/output-0312 pass
+output/output-0313 pass
 output/output-0501 pass
 param/param-0101 pass
 param/param-0102 pass
@@ -4100,6 +4110,10 @@ result-document/result-document-0215 pass
 result-document/result-document-0216 pass
 result-document/result-document-0217 pass
 result-document/result-document-0218 pass
+result-document/result-document-0219 pass
+result-document/result-document-0220 pass
+result-document/result-document-0221 pass
+result-document/result-document-0222 pass
 result-document/result-document-0223 pass
 result-document/result-document-0224 pass
 result-document/result-document-0225 pass
@@ -4129,6 +4143,8 @@ result-document/result-document-0286 pass
 result-document/result-document-0287 pass
 result-document/result-document-0301 pass
 result-document/result-document-0401 pass
+result-document/result-document-0501 pass
+result-document/result-document-0601 pass
 result-document/result-document-0701 pass
 result-document/result-document-0702 pass
 result-document/result-document-0703 pass

@@ -121,6 +121,37 @@ begin
     Result := 'no';
 end;
 
+{ the characters Saxon accepts in doctype-public: the PubidChar of XML
+  and the tab }
+function IsPublicId(const S: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to Length(S) do
+    if not (S[I] in [#9, #10, #13, ' ', 'a'..'z', 'A'..'Z', '0'..'9', '-', '''', '(', ')', '+', ',', '.', '/',
+      ':', '=', '?', ';', '!', '*', '#', '@', '$', '_', '%']) then
+      Exit;
+  Result := True;
+end;
+
+{ whether S has both an apostrophe and a quotation mark (no system
+  literal can hold it) }
+function HasBothQuotes(const S: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+  A, Q: Boolean;
+begin
+  A := False;
+  Q := False;
+  for I := 1 to Length(S) do
+    if S[I] = '''' then
+      A := True
+    else if S[I] = '"' then
+      Q := True;
+  Result := A and Q;
+end;
+
 function XsltOutputPropertyStatus(const Name, AValue: TLandrixXmlUtf8): TXsltOutputStatus;
 var
   Value: TLandrixXmlUtf8;
@@ -137,10 +168,10 @@ begin
     if ((Name = 'indent') or (Name = 'omit-xml-declaration') or (Name = 'byte-order-mark') or
       (Name = 'escape-uri-attributes') or (Name = 'include-content-type') or (Name = 'undeclare-prefixes')) and
       (Value <> 'yes') and (Value <> 'no') or (Name = 'standalone') and (Value <> 'yes') and (Value <> 'no') and
-      (Value <> 'omit') then
+      (Value <> 'omit') or (Name = 'doctype-public') and not IsPublicId(Value) or
+      (Name = 'doctype-system') and HasBothQuotes(Value) then
       Result := xosInvalid
-    else if (Name = 'name') or (Name = 'use-character-maps') or (Name = 'doctype-public') or
-      (Name = 'doctype-system') or (Name = 'method') and (Value <> 'xml') and
+    else if (Name = 'name') or (Name = 'use-character-maps') or (Name = 'method') and (Value <> 'xml') and
       (Value <> 'text') and (Value <> 'html') and (Value <> 'xhtml') or (Name = 'encoding') and
       (EncodingMaxChar(Value) = 0) or
       (Name = 'byte-order-mark') and (Value = 'yes') or (Name = 'normalization-form') and (Value <> 'none') then
@@ -312,6 +343,19 @@ type
     { cdata-section-elements: the Clark names of the elements whose text
       is written as CDATA sections }
     FCData: TLandrixXmlUtf8Array;
+    { doctype-system and doctype-public ('' for none); FDocNewline: a line
+      break before the declaration (indent not "yes"); FWellFormed: one
+      element and no text but white space at the top (doctype-system or
+      standalone given; SEPM0004), FTopCount the elements there }
+    FDocSystem: TLandrixXmlUtf8;
+    FDocPublic: TLandrixXmlUtf8;
+    FDocNewline: Boolean;
+    FWellFormed: Boolean;
+    FTopCount: Integer;
+    procedure SetDocType(Props: TXsltOutputProperties; Xml: Boolean);
+    procedure PutDocType(const Name: TLandrixXmlUtf8);
+    procedure TopElement(I: Integer);
+    procedure TopText(I: Integer; const V: TLandrixXmlUtf8);
     procedure SetMap(Props: TXsltOutputProperties);
     procedure SetCData(Props: TXsltOutputProperties);
     function InCData(I: Integer): Boolean;
@@ -362,6 +406,83 @@ begin
     if FMapChars[I] < 128 then
       FAsciiMap[FMapChars[I]] := I;
   FHasMap := Length(FMapChars) > 0;
+end;
+
+function IsWhiteSpace(const S: TLandrixXmlUtf8): Boolean; forward;
+
+procedure TSerializer.SetDocType(Props: TXsltOutputProperties; Xml: Boolean);
+begin
+  FDocSystem := Props.Value('doctype-system', '');
+  FDocPublic := Props.Value('doctype-public', '');
+  FDocNewline := Props.Value('indent', '') <> 'yes';
+  FWellFormed := Xml and ((FDocSystem <> '') or Props.Has('standalone') and
+    (Props.Value('standalone', '') <> 'omit'));
+end;
+
+{ the document type declaration as Saxon writes it: the system literal in
+  single quotes if it has a double quote, the public one always in double
+  quotes }
+procedure TSerializer.PutDocType(const Name: TLandrixXmlUtf8);
+var
+  S, Sys: TLandrixXmlUtf8;
+  I, N: Integer;
+  Code: Cardinal;
+begin
+  { a character the encoding lacks is a question mark (as Saxon's writer
+    replaces it) }
+  Sys := '';
+  I := 1;
+  while I <= Length(FDocSystem) do
+  begin
+    N := 1;
+    Code := Ord(FDocSystem[I]);
+    if Code >= $80 then
+    begin
+      N := LandrixXmlDecodeUtf8(PAnsiChar(FDocSystem) + I - 1, Length(FDocSystem) - I + 1, Code);
+      if N = 0 then
+      begin
+        N := 1;
+        Code := $FFFD;
+      end;
+    end;
+    if Code > FMaxChar then
+      Sys := Sys + '?'
+    else
+      Sys := Sys + Copy(FDocSystem, I, N);
+    Inc(I, N);
+  end;
+  if Pos8Byte('"', Sys) then
+    S := '''' + Sys + ''''
+  else
+    S := '"' + Sys + '"';
+  Put('<!DOCTYPE ' + Name + #10);
+  if FDocPublic = '' then
+    Put('  SYSTEM ' + S + '>' + #10)
+  else if FDocSystem = '' then
+    Put('  PUBLIC "' + FDocPublic + '">' + #10)
+  else
+    Put('  PUBLIC "' + FDocPublic + '" ' + S + '>' + #10);
+end;
+
+{ an element at the top: the second one is an error where the document
+  must be well-formed }
+procedure TSerializer.TopElement(I: Integer);
+begin
+  if (FTree.Parent[I] < 0) or (FTree.Kind[FTree.Parent[I]] <> xnkDocument) then
+    Exit;
+  Inc(FTopCount);
+  if FWellFormed and (FTopCount > 1) then
+    raise ELandrixXmlXPathError.CreateXPath('SEPM0004', 'with standalone or doctype-system the document ' +
+      'must have one element at the top');
+end;
+
+procedure TSerializer.TopText(I: Integer; const V: TLandrixXmlUtf8);
+begin
+  { white space a character map makes text counts (Saxon) }
+  if FWellFormed and (FTree.Parent[I] >= 0) and (FTree.Kind[FTree.Parent[I]] = xnkDocument) and
+    (not IsWhiteSpace(V) or FHasMap and not IsWhiteSpace(MappedValue(V))) then
+    raise ELandrixXmlXPathError.CreateXPath('SEPM0004', 'with standalone or doctype-system the document ' +
+      'must not have text at the top');
 end;
 
 procedure TSerializer.SetCData(Props: TXsltOutputProperties);
@@ -905,6 +1026,13 @@ begin
     else
       FlushPending;
   end;
+  TopElement(I);
+  if (FTopCount = 1) and (FLevel = 0) and (FDocSystem <> '') then
+  begin
+    if FDocNewline then
+      Put(#10);
+    PutDocType(FTree.NameUtf8(I));
+  end;
   Inc(FLevel);
   Name := FTree.NameUtf8(I);
   FTree.GetDeclarations(I, Prefixes, Uris);
@@ -1014,6 +1142,7 @@ begin
     xnkText:
       begin
         V := FTree.ValueUtf8(I);
+        TopText(I, V);
         Cdata := InCData(I);
         if FIndent then
         begin
@@ -1628,10 +1757,23 @@ begin
           if Skip then
             Exit;
         end;
+        TopElement(I);
         if not FStarted then
         begin
           FStarted := True;
-          if (Local = 'html') and not FXhtml then
+          if FXhtml then
+          begin
+            { as xml: only with a system identifier }
+            if FDocSystem <> '' then
+            begin
+              if FDocNewline then
+                Put(#10);
+              PutDocType(Name);
+            end;
+          end
+          else if (FDocSystem <> '') or (FDocPublic <> '') then
+            PutDocType('html')
+          else if Local = 'html' then
           begin
             Put('<!DOCTYPE HTML>');
             if FIndent then
@@ -1707,6 +1849,7 @@ begin
     xnkText:
       begin
         V := FTree.ValueUtf8(I);
+        TopText(I, V);
         { xhtml: a CDATA section (not indented) }
         if InCData(I) then
         begin
@@ -1860,6 +2003,7 @@ begin
       { cdata-section-elements: not for html }
       if H.FXhtml then
         H.SetCData(Props);
+      H.SetDocType(Props, H.FXhtml);
       if H.FXhtml and (Props.Value('omit-xml-declaration', 'no') <> 'yes') then
       begin
         H.Put('<?xml version="1.0" encoding="' + Encoding + '"');
@@ -1886,6 +2030,7 @@ begin
     S.FMaxChar := MaxChar;
     S.SetMap(Props);
     S.SetCData(Props);
+    S.SetDocType(Props, True);
     if Props.Value('omit-xml-declaration', 'no') <> 'yes' then
     begin
       S.Put('<?xml version="1.0" encoding="' + Encoding + '"');
@@ -1894,6 +2039,10 @@ begin
       S.Put('?>');
       S.FAfterEnd := True;
     end;
+    { Saxon's indenter starts as after an end tag also when doctype-system
+      is given (even empty) }
+    if Props.Has('doctype-system') then
+      S.FAfterEnd := True;
     S.Node(0);
     if S.FIndent and S.FAfterEnd then
       S.Put(#10);

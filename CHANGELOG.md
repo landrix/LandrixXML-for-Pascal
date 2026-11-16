@@ -58,6 +58,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: `doctype-system` and `doctype-public` (xml and xhtml: with a
+  system identifier; html: either, the name `html`), written as Saxon
+  writes them before the first element; with `doctype-system` or
+  `standalone` a second element or text at the top is `SEPM0004`; a
+  public identifier with a character other than the XML PubidChar (or a
+  tab), or a system identifier with both quote characters, is
+  `XTSE0020`.
 - XSLT: `cdata-section-elements` on `xsl:output` (the union of every
   definition) and `xsl:result-document` (added to the format's), for the
   xml and xhtml methods. The text of those elements is written in CDATA

@@ -198,8 +198,10 @@ type
       namespaces xml, xs and fn) evaluated at the start of each run }
     procedure SetParameterXPath(const Name, Expression: TLandrixXmlUtf8);
     procedure ClearParameters;
-    { overrides of xsl:output (indent, method, omit-xml-declaration, ...);
-      raises for what xsl:output does not accept (xecUnsupported, and
+    { overrides of xsl:output (indent, method, omit-xml-declaration, ...;
+      cdata-section-elements as Clark names, the namespace URI in braces
+      before the local name, separated by spaces, as in JAXP); raises for
+      what xsl:output does not accept (xecUnsupported, and
       xecInvalidArgument for a name XSLT 2.0 does not define) }
     procedure SetOutputProperty(const Name, Value: TLandrixXmlUtf8);
     procedure ClearOutputProperties;
