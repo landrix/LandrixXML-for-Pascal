@@ -976,6 +976,38 @@ var
   var
     V: TLandrixXmlXPathSequence;
   begin
+    if Xp10 then
+      V := Atomize(FirstOnly(Arg(K)))
+    else
+      V := Atomize(Arg(K));
+    if V.Count > 1 then
+      Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' has more than one item');
+    Result := V.Count = 1;
+    if Result then
+      Value := V.Items[0];
+  end;
+
+  { an optional single atomic argument of type xs:string?: in XPath 1.0
+    compatibility mode fn:string of the first item, '' for the empty
+    sequence (as Saxon for an empty node selection; Saxon keeps a literal
+    () empty, which is decided when compiling) }
+  function OptStr(K: Integer; out Value: TLandrixXmlXPathItem): Boolean;
+  begin
+    if not Xp10 then
+    begin
+      Result := OptAtom(K, Value);
+      Exit;
+    end;
+    Value := StringItem(xikString, String10(Arg(K)));
+    Result := True;
+  end;
+
+  { the argument of a constructor function (a cast): at most one atomic
+    value, also in XPath 1.0 compatibility mode (as Saxon) }
+  function CastArg(K: Integer; out Value: TLandrixXmlXPathItem): Boolean;
+  var
+    V: TLandrixXmlXPathSequence;
+  begin
     V := Atomize(Arg(K));
     if V.Count > 1 then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' has more than one item');
@@ -989,6 +1021,11 @@ var
   var
     V: TLandrixXmlXPathItem;
   begin
+    if Xp10 then
+    begin
+      Result := String10(Arg(K));
+      Exit;
+    end;
     Result := '';
     if not OptAtom(K, V) then
       Exit;
@@ -1002,6 +1039,11 @@ var
   var
     V: TLandrixXmlXPathItem;
   begin
+    if Xp10 then
+    begin
+      Result := String10(Arg(K));
+      Exit;
+    end;
     if not OptAtom(K, V) then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' must not be empty');
     if not IsStringLike(V.Kind) then
@@ -1014,6 +1056,11 @@ var
   var
     V: TLandrixXmlXPathItem;
   begin
+    if Xp10 then
+    begin
+      Result := ToDouble(Number10(Arg(K)));
+      Exit;
+    end;
     if not OptAtom(K, V) then
       Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' is empty');
     V := NumericOperand(V, Xp20);
@@ -1094,6 +1141,8 @@ var
       V := ContextSeq
     else
       V := Arg(0);
+    if Xp10 then
+      V := FirstOnly(V);
     Result := -1;
     if V.Count = 0 then
       Exit;
@@ -1109,6 +1158,8 @@ var
     V: TLandrixXmlXPathSequence;
   begin
     V := Arg(Arg0);
+    if Xp10 then
+      V := FirstOnly(V);
     Result := -1;
     if (V.Count = 1) and (V.Items[0].Kind = xikNode) then
     begin
@@ -1367,7 +1418,10 @@ begin
             Exit;
           if ArgCount > 1 then
           begin
-            Result := Atomize(Arg(1));
+            if Xp10 then
+              Result := Atomize(FirstOnly(Arg(1)))
+            else
+              Result := Atomize(Arg(1));
             if Result.Count > 1 then
               Fail('XPTY0004', Name + ': the zero value must be a single item');
           end
@@ -1680,9 +1734,12 @@ begin
     xfnNumber:
       begin
         if ArgCount = 0 then
-          A := Atomize(ContextSeq)
+          A := ContextSeq
         else
-          A := Atomize(Arg(0));
+          A := Arg(0);
+        if Xp10 then
+          A := FirstOnly(A);
+        A := Atomize(A);
         if A.Count > 1 then
           Fail('XPTY0004', Name + ': more than one item');
         if A.Count = 0 then
@@ -1703,7 +1760,11 @@ begin
       end;
     xfnAbs, xfnRound, xfnRoundHalfToEven, xfnFloor, xfnCeiling:
       begin
-        if not OptAtom(0, Item) then
+        { XPath 1.0 compatibility mode: fn:number of the argument (NaN
+          for the empty sequence), as Saxon also for a decimal }
+        if Xp10 then
+          Item := Number10(Arg(0))
+        else if not OptAtom(0, Item) then
           Exit;
         { the argument as it was }
         Acc := Item;
@@ -1811,8 +1872,8 @@ begin
     xfnCompare, xfnCodepointEqual:
       begin
         { both arguments are checked, also when one is empty }
-        Found := OptAtom(0, Item);
-        Second := OptAtom(1, Acc);
+        Found := OptStr(0, Item);
+        Second := OptStr(1, Acc);
         if (Found and not IsStringLike(Item.Kind)) or (Second and not IsStringLike(Acc.Kind)) then
           Fail('XPTY0004', Name + ': the arguments must be strings');
         if not Found or not Second then
@@ -1874,6 +1935,8 @@ begin
           A := Arg(1)
         else
           A := ContextSeq;
+        if Xp10 then
+          A := FirstOnly(A);
         if (A.Count <> 1) or (A.Items[0].Kind <> xikNode) then
           Fail('XPTY0004', Name + ': a single node was expected');
         OwnTree := TreeOf(A.Items[0].Node, K);
@@ -1906,7 +1969,7 @@ begin
     xfnDoc, xfnDocAvailable:
       begin
         { a URI AddDocument knows, as document() }
-        Found := OptAtom(0, Item);
+        Found := OptStr(0, Item);
         if Found then
         begin
           if not IsStringLike(Item.Kind) then
@@ -1934,6 +1997,8 @@ begin
         { the URI of a document added with AddDocument; the evaluator's
           own document has its base URI (LoadFromFile: the file URI) }
         A := Arg(0);
+        if Xp10 then
+          A := FirstOnly(A);
         if (A.Count > 1) or ((A.Count = 1) and (A.Items[0].Kind <> xikNode)) then
           Fail('XPTY0004', Name + ': a single node was expected');
         if A.Count = 1 then
@@ -1951,6 +2016,8 @@ begin
           (also with xsi:nil="true", as untyped in Saxon); () for the
           other nodes }
         A := Arg(0);
+        if Xp10 then
+          A := FirstOnly(A);
         if (A.Count > 1) or ((A.Count = 1) and (A.Items[0].Kind <> xikNode)) then
           Fail('XPTY0004', Name + ': a single node was expected');
         if A.Count = 1 then
@@ -1969,6 +2036,8 @@ begin
           A := Arg(1)
         else
           A := ContextSeq;
+        if Xp10 then
+          A := FirstOnly(A);
         if (A.Count <> 1) or (A.Items[0].Kind <> xikNode) then
           Fail('XPTY0004', Name + ': a single node was expected');
         if TreeOf(A.Items[0].Node, K).Kind[0] <> xnkDocument then
@@ -2033,7 +2102,7 @@ begin
       begin
         { no collections are available (no default collection either):
           FODC0004 for an invalid URI, else FODC0002 }
-        if (ArgCount > 0) and OptAtom(0, Item) then
+        if (ArgCount > 0) and OptStr(0, Item) then
         begin
           if not IsStringLike(Item.Kind) then
             Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
@@ -2071,7 +2140,7 @@ begin
             if T[I] in ['a'..'z'] then
               T[I] := AnsiChar(Ord(T[I]) - 32);
         end;
-        Found := OptAtom(0, Item);
+        Found := OptStr(0, Item);
         if Found and not IsStringLike(Item.Kind) then
           Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
         S := '';
@@ -2102,7 +2171,7 @@ begin
           FONS0005 }
         if ArgCount > 1 then
           T := ReqStrArg(1);
-        if not OptAtom(0, Item) then
+        if not OptStr(0, Item) then
           Exit;
         if not IsStringLike(Item.Kind) then
           Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
@@ -2157,7 +2226,7 @@ begin
       begin
         { the element is checked also for an empty name, as Saxon does }
         I := ElementArg(1);
-        if not OptAtom(0, Item) then
+        if not OptStr(0, Item) then
           Exit;
         if not IsStringLike(Item.Kind) then
           Fail('XPTY0004', Name + ': argument 1 is ' + KindName(Item.Kind) + ', not xs:string');
@@ -2225,7 +2294,7 @@ begin
         end;
       end;
     xfnXsQName:
-      if OptAtom(0, Item) then
+      if CastArg(0, Item) then
         Result := SingleSeq(CastToQName(Item, FExpr, Xp20, FNodes[FNodes[Index].Children[0]].Kind = xakString));
     xfnName, xfnLocalName, xfnNamespaceUri:
       begin
@@ -2284,7 +2353,10 @@ begin
     xfnIndexOf:
       begin
         A := Atomize(Arg(0));
-        B := Atomize(Arg(1));
+        if Xp10 then
+          B := Atomize(FirstOnly(Arg(1)))
+        else
+          B := Atomize(Arg(1));
         if B.Count <> 1 then
           Fail('XPTY0004', Name + ': the search value must be a single item');
         for I := 0 to A.Count - 1 do
@@ -2409,7 +2481,7 @@ begin
     xfnXsNormalizedString .. xfnXsENTITY, xfnXsDuration .. xfnXsDayTimeDuration,
     xfnXsGYearMonth .. xfnXsBase64Binary:
       begin
-        if not OptAtom(0, Item) then
+        if not CastArg(0, Item) then
           Exit;
         case Id of
           xfnXsString: Result := SingleSeq(CastTo(Item, xikString, Xp20));

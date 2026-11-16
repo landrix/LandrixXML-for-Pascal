@@ -1,0 +1,136 @@
+# XPath 1.0 compatibility mode: expression, result without it, result with it
+# (the Saxon profile; checked with Saxon HE 12.9 through tools/XPathOracle.java,
+# "compat off" and "compat on"), separated by tabs. Context item: the document
+# node of <d><x>1</x><x>2</x><e/></d>. An empty field is the empty sequence.
+//x + 1	error XPTY0004	xs:double 2
+- //x	error XPTY0004	xs:double -1
++ 'a'	error XPTY0004	xs:double NaN
+'a' + 1	error XPTY0004	xs:double NaN
+() + 1		xs:double NaN
+//none * 2		xs:double NaN
+true() + 1	error XPTY0004	xs:double 2
+'3' * //x	error XPTY0004	xs:double 3
+1 + 2	xs:integer 3	xs:double 3
+1.5 * 2	xs:decimal 3	xs:double 3
+0.1 + 0.2	xs:decimal 0.3	xs:double 0.30000000000000004
+1 div 0	error FOAR0001	xs:double INF
+-1 div 0	error FOAR0001	xs:double -INF
+7 mod 2	xs:integer 1	xs:double 1
+5 idiv 2	xs:integer 2	xs:integer 2
+xs:date('2020-01-01') + xs:dayTimeDuration('P1D')	xs:date 2020-01-02	xs:date 2020-01-02
+xs:dayTimeDuration('P1D') * '2'	error XPTY0004	xs:dayTimeDuration P2D
+//x = 2	xs:boolean true	xs:boolean true
+//x != 1	xs:boolean true	xs:boolean true
+'abc' = //x	xs:boolean false	xs:boolean false
+true() = 'false'	error XPTY0004	xs:boolean true
+false() = //none	xs:boolean false	xs:boolean true
+1 = true()	error XPTY0004	xs:boolean true
+//x = true()	xs:boolean true	xs:boolean true
+'' = false()	error XPTY0004	xs:boolean true
+(true(), false()) = 'x'	error XPTY0004	xs:boolean false
+'a' < 'b'	xs:boolean true	xs:boolean false
+'10' > '9'	xs:boolean false	xs:boolean true
+//x > '1'	xs:boolean true	xs:boolean true
+xs:date('2020-01-01') < xs:date('2021-01-01')	xs:boolean true	xs:boolean false
+count(//x) = '2'	error XPTY0004	xs:boolean true
+(1, 2) = 2	xs:boolean true	xs:boolean true
+'1.0' = 1	error XPTY0004	xs:boolean true
+floor('2.5')	error XPTY0004	xs:double 2
+floor(())		xs:double NaN
+round('x')	error XPTY0004	xs:double NaN
+abs(-//x)	error XPTY0004	xs:double 1
+ceiling(//x)	error XPTY0004	xs:double 1
+round(2.5)	xs:decimal 3	xs:double 3
+substring('abcd', '2')	error XPTY0004	xs:string bcd
+substring('abcd', 2, '2')	error XPTY0004	xs:string bc
+substring('abcd', ())	error XPTY0004	xs:string 
+string-length(//x)	error XPTY0004	xs:integer 1
+concat(//x, '-')	error XPTY0004	xs:string 1-
+name(/*/*)	error XPTY0004	xs:string x
+local-name(//x)	error XPTY0004	xs:string x
+number(//x)	error XPTY0004	xs:double 1
+string(//x)	error XPTY0004	xs:string 1
+normalize-space(//x)	error XPTY0004	xs:string 1
+starts-with(//x, 1)	error XPTY0004	xs:boolean true
+contains(//x, 2)	error XPTY0004	xs:boolean false
+translate(//x, 1, 9)	error XPTY0004	xs:string 9
+upper-case(//x)	error XPTY0004	xs:string 1
+boolean(//x)	xs:boolean true	xs:boolean true
+sum(//x)	xs:double 3	xs:double 3
+count(//x)	xs:integer 2	xs:integer 2
+string-join(//x, 1)	error XPTY0004	xs:string 112
+lang('en', //x)	error XPTY0004	xs:boolean false
+not(//x)	xs:boolean false	xs:boolean false
+count(subsequence(//x, '2'))	error XPTY0004	xs:integer 1
+string-length(1 + 1)	error XPTY0004	xs:integer 1
+floor(5)	xs:integer 5	xs:double 5
+round-half-to-even(2.5)	xs:decimal 2	xs:double 2
+string(())	xs:string 	xs:string 
+xs:anyURI('2') + 1	error XPTY0004	error XPTY0004
+- xs:date('2020-01-01')	error XPTY0004	xs:double NaN
+- xs:dayTimeDuration('P1D')	error XPTY0004	xs:double NaN
++ xs:dayTimeDuration('P1D')	error XPTY0004	error XPTY0004
+- xs:anyURI('2')	error XPTY0004	xs:double NaN
+- true()	error XPTY0004	xs:double -1
+xs:dayTimeDuration('P1D') + xs:dayTimeDuration('P1D')	xs:dayTimeDuration P2D	xs:dayTimeDuration P2D
+xs:date('2020-01-01') - xs:date('2019-01-01')	xs:dayTimeDuration P365D	xs:dayTimeDuration P365D
+xs:untypedAtomic('2') * xs:dayTimeDuration('P1D')	xs:dayTimeDuration P2D	xs:dayTimeDuration P2D
+compare(1, '1')	error XPTY0004	xs:integer 0
+normalize-unicode(123)	error XPTY0004	xs:string 123
+resolve-uri(123, 'https://example.org/')	error XPTY0004	xs:anyURI https://example.org/123
+codepoint-equal(1, '1')	error XPTY0004	xs:boolean true
+nilled(//x)	error XPTY0004	xs:boolean false
+in-scope-prefixes(//x)	error XPTY0004	xs:string xml
+sum((), (1, 2))	error XPTY0004	xs:integer 1
+sum((), 'a')	xs:string a	xs:string a
+document-uri(//x)	error XPTY0004	
+count(id('a', //x))	error XPTY0004	xs:integer 0
+ends-with(//x, 1)	error XPTY0004	xs:boolean true
+matches(//x, 1)	error XPTY0004	xs:boolean true
+replace(//x, 1, 'z')	error XPTY0004	xs:string z
+tokenize(12, 1)	error XPTY0004	xs:string  | xs:string 2
+string-join(('a','b'), 1)	error XPTY0004	xs:string a1b
+upper-case(1)	error XPTY0004	xs:string 1
+escape-html-uri(1)	error XPTY0004	xs:string 1
+//x < //x	xs:boolean true	xs:boolean true
+xs:anyURI('a') = 'a'	xs:boolean true	xs:boolean true
+xs:anyURI('a') = xs:untypedAtomic('a')	xs:boolean true	xs:boolean true
+xs:integer((1, 2))	error XPTY0004	error XPTY0004
+xs:QName(('a', 'b'))	error XPTY0004	error XPTY0004
+xs:string(//x)	error XPTY0004	error XPTY0004
+doc-available(123)	error XPTY0004	xs:boolean false
+resolve-QName(true(), /*)	error XPTY0004	xs:QName true
+index-of((1, 2), (2, 3))	error XPTY0004	xs:integer 2
+xs:anyURI('true') = (true(), false())	error XPTY0004	xs:boolean false
+xs:anyURI('a') = true()	error XPTY0004	xs:boolean true
+xs:anyURI('1') = 1	error XPTY0004	xs:boolean false
+'2020-01-01' = xs:date('2020-01-01')	error XPTY0004	xs:boolean true
+count(id(5))	error XPTY0004	error XPTY0004
+translate('abc', //none, 'x')	error XPTY0004	xs:string abc
+contains('abc', //none)	xs:boolean true	xs:boolean true
+count(1 to 1 + 2)	xs:integer 3	error XPTY0004
+count(remove((1, 2), 1 + 0))	xs:integer 1	error XPTY0004
+count(subsequence((1, 2, 3), 1 + 1))	xs:integer 2	xs:integer 2
+xs:anyURI('true') != (true(), false())	error XPTY0004	xs:boolean true
+xs:anyURI('true') = (true(), true())	error XPTY0004	xs:boolean false
+(xs:anyURI('true'), 'true') = (true(), false())	error XPTY0004	xs:boolean true
+xs:dayTimeDuration('P1D') = (true(), true())	error XPTY0004	xs:boolean false
+xs:anyURI('true') = xs:untypedAtomic('true')	xs:boolean true	xs:boolean true
+(true(), false()) = (false(), false())	xs:boolean true	xs:boolean true
+xs:QName('a') = (true(), true())	error XPTY0004	xs:boolean false
+(xs:date('2020-01-01'), xs:date('2020-01-01')) = true()	error XPTY0004	error FORG0006
+xs:date('2020-01-01') = xs:dateTime('2020-01-01T00:00:00')	error XPTY0004	error XPTY0004
+xs:date('2020-01-01') != xs:time('00:00:00')	error XPTY0004	error XPTY0004
+xs:anyURI('a') = xs:QName('a')	error XPTY0004	xs:boolean false
+xs:hexBinary('AA') = xs:base64Binary('qg==')	error XPTY0004	xs:boolean false
+xs:gYear('2020') = xs:date('2020-01-01')	error XPTY0004	error XPTY0004
+compare(//none, 'x')		xs:integer -1
+codepoint-equal(//none, '')		xs:boolean true
+resolve-uri(//none, 'https://example.org/')		xs:anyURI https://example.org/
+doc-available(//none)	xs:boolean false	xs:boolean false
+count(resolve-QName(//none, /*))	xs:integer 0	error FOCA0002
+normalize-unicode(//none)	xs:string 	xs:string 
+count(doc(//none))	xs:integer 0	error FODC0002
+(1, 2) to 3	error XPTY0004	xs:integer 1 | xs:integer 2 | xs:integer 3
+1 to (2, 3)	error XPTY0004	xs:integer 1 | xs:integer 2
+count(//x to 3)	error XPTY0004	xs:integer 3

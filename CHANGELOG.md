@@ -153,6 +153,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `xppSaxon` profile, as Saxon accepts it in stylesheets that declare
   XSLT 2.0; `a || b || c` is `concat(a, b, c)`. The `xppXPath20` profile
   rejects it with XPST0003.
+- XPath: XPath 1.0 compatibility mode
+  (`TLandrixXmlXPathStaticContext.XPath10Compatible`, default `False`,
+  kept by each expression): function arguments take the first item and
+  are converted with `fn:string` or `fn:number`, arithmetic works on the
+  first items as `xs:double` (NaN for an empty operand), and general
+  comparisons follow XPath 1.0, all as in Saxon. Arguments of user
+  functions follow the caller's mode.
 
 ### Changed
 

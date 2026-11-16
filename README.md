@@ -721,6 +721,23 @@ Differences from Xerces, also on purpose:
   namespace of XPath 2.0: unprefixed element names in name tests (not on
   the attribute axis), `element()` and atomic type names are in it (a
   string cast to `xs:QName` is not, as in Saxon).
+  `XPath10Compatible` (default `False`) switches on XPath 1.0
+  compatibility mode, as XSLT uses it for stylesheets with a version below
+  2.0: a function argument of a single-item type takes the first item, an
+  `xs:string` argument its string value ('' for an empty selection) and a
+  numeric one `fn:number` of it; arithmetic takes the first item of each
+  operand as `xs:double` (NaN for the empty sequence; dates, durations and
+  `xs:anyURI` stay as they are), and unary minus makes any value a number
+  (NaN for a date); general comparisons convert a side to a boolean when
+  the other is a single boolean, compare numbers with `<`, `<=`, `>`,
+  `>=`, compare strings when one value is a string or both are untyped,
+  and treat values that cannot be compared as unequal (except dates and
+  times, which stay a type error). Arguments of user functions follow the
+  caller's mode: the first item for a single-item type, `fn:number` for
+  `xs:double` (not for the other numeric types) and the string value for
+  `xs:string` (a value of a string type stays as it is). All as in Saxon
+  (except that a literal `()` is converted too, which Saxon leaves empty);
+  tested against it in `tests/data/xpath/compat10.txt`.
 - The [KoSIT XRechnung test suite](https://github.com/itplr-kosit/xrechnung-testsuite)
   (`tools/run-kosit-suite.py`, pinned release 2026-08-31 with the
   matching KoSIT validator configuration): all 86 invoices are validated

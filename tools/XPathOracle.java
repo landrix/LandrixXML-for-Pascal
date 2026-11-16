@@ -15,8 +15,9 @@
  *   error CODE          a static or dynamic error (XPTY0004, FORG0001, ...)
  *
  * Control characters and the backslash in values appear as \xHH.
- * The cases file has lines "ns PREFIX URI" and "expr EXPRESSION"; the
- * context item is the document node.
+ * The cases file has lines "ns PREFIX URI", "compat on" or "compat off"
+ * (XPath 1.0 compatibility mode for the expressions that follow) and
+ * "expr EXPRESSION"; the context item is the document node.
  *
  *   javac -cp validator-1.6.3-standalone.jar -d OUT tools/XPathOracle.java
  *   java -cp OUT;validator-1.6.3-standalone.jar XPathOracle doc.xml cases.txt
@@ -57,6 +58,8 @@ public class XPathOracle {
             if (line.startsWith("ns ")) {
                 String[] p = line.substring(3).split(" ", 2);
                 xc.declareNamespace(p[0], p[1]);
+            } else if (line.startsWith("compat ")) {
+                xc.setBackwardsCompatible(line.substring(7).trim().equals("on"));
             } else if (line.startsWith("expr ")) {
                 String expr = line.substring(5);
                 out.println("# " + expr);

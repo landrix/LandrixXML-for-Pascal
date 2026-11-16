@@ -260,6 +260,7 @@ type
   TLandrixXmlXPathStaticContext = class
   private
     FProfile: TLandrixXmlXPathProfile;
+    FXPath10Compatible: Boolean;
     FDefaultElementNamespace: TLandrixXmlUtf8;
     FPrefixes: TLandrixXmlUtf8Array;
     FUris: TLandrixXmlUtf8Array;
@@ -289,6 +290,17 @@ type
     { xppXPath20 unless set; every expression keeps the profile it was
       compiled with }
     property Profile: TLandrixXmlXPathProfile read FProfile write FProfile;
+    { XPath 1.0 compatibility mode (XPath 2.0 section 2.1.1; False unless
+      set), as XSLT uses it for backwards compatible processing: a
+      function argument of a single-item type takes the first item, an
+      xs:string argument the string value, a numeric one the result of
+      fn:number; arithmetic takes the first item of each operand as
+      xs:double (NaN for the empty sequence); a general comparison
+      follows the rules of XPath 1.0 (a boolean operand makes the other
+      its effective boolean value, "<" and the like compare numbers).
+      Every expression keeps the mode it was compiled with; the argument
+      conversion of a user function follows the caller's mode. }
+    property XPath10Compatible: Boolean read FXPath10Compatible write FXPath10Compatible;
     { The default element/type namespace ('' unless set): the namespace
       of an unprefixed name in an element name test (not on the attribute
       axis), in element() and schema-element(), and of an unprefixed
@@ -308,6 +320,7 @@ type
     FFirstLocalSlot: Integer;
     FSerial: Int64;
     FProfile: TLandrixXmlXPathProfile;
+    FXPath10Compatible: Boolean;
     FDefaultElementNamespace: TLandrixXmlUtf8;
     FNsPrefixes: TLandrixXmlUtf8Array;
     FNsUris: TLandrixXmlUtf8Array;
@@ -341,6 +354,8 @@ type
     property Serial: Int64 read FSerial;
     { the static context's profile when compiled }
     property Profile: TLandrixXmlXPathProfile read FProfile;
+    { the static context's XPath 1.0 compatibility mode when compiled }
+    property XPath10Compatible: Boolean read FXPath10Compatible;
     { the static context's default element/type namespace when compiled }
     property DefaultElementNamespace: TLandrixXmlUtf8 read FDefaultElementNamespace;
   end;
@@ -2504,6 +2519,7 @@ begin
     FSlotCount := P.FSlotCount;
     FFirstLocalSlot := P.FContext.VariableCount;
     FProfile := P.FContext.Profile;
+    FXPath10Compatible := P.FContext.XPath10Compatible;
     FDefaultElementNamespace := P.FContext.DefaultElementNamespace;
     { a copy: the static context may change or go after compiling }
     FNsPrefixes := Copy(P.FContext.FPrefixes, 0, Length(P.FContext.FPrefixes));

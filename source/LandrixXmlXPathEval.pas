@@ -386,6 +386,29 @@ type
     { the expression being evaluated was compiled for XPath 2.0 (not the
       Saxon profile) }
     function Xp20: Boolean;
+    { the expression being evaluated was compiled in XPath 1.0
+      compatibility mode }
+    function Xp10: Boolean;
+    { XPath 1.0 compatibility mode: fn:number of the first item of S
+      (NaN for the empty sequence or a value that is no number), fn:string
+      of it ('' for the empty sequence), an operand of arithmetic or unary
+      plus (atomized: the first item, NaN for none; a boolean, string,
+      untypedAtomic or number other than xs:double through fn:number, the
+      rest such as dates, durations and xs:anyURI as it is, as in Saxon),
+      a general comparison }
+    function Number10(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathItem;
+    function String10(const S: TLandrixXmlXPathSequence): TLandrixXmlUtf8;
+    function Operand10(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathItem;
+    function GeneralCompare10(const A0, B0: TLandrixXmlXPathSequence; Op: TLandrixXmlXPathCompare): Boolean;
+    function NumbersOf10(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function ComparePair10(const X, Y: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare): Boolean;
+    { the conversion of a user function argument in XPath 1.0
+      compatibility mode, before the function conversion rules: the first
+      item for a single-item type, fn:number for xs:double (NaN for the
+      empty sequence), the string value for xs:string ('' for the empty
+      sequence) unless the value is a string already (as Saxon: no
+      conversion for xs:float, xs:decimal and xs:integer) }
+    function Argument10(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType): TLandrixXmlXPathSequence;
     function Atomize(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     { AsXPath20: the profile of the definition the type belongs to (the
       function, the variable), not that of the caller }
@@ -2107,6 +2130,179 @@ begin
   Result := (FExpr = nil) or (FExpr.Profile = xppXPath20);
 end;
 
+function TLandrixXmlXPathEvaluator.Xp10: Boolean;
+begin
+  Result := (FExpr <> nil) and FExpr.XPath10Compatible;
+end;
+
+{ S itself if it has at most one item, else its first item }
+function FirstOnly(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+begin
+  if S.Count <= 1 then
+    Result := S
+  else
+    Result := SingleSeq(S.Items[0]);
+end;
+
+function TLandrixXmlXPathEvaluator.Number10(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathItem;
+var
+  A: TLandrixXmlXPathSequence;
+begin
+  A := Atomize(FirstOnly(S));
+  if A.Count = 0 then
+    Result := DoubleItem(LandrixXmlDoubleNaN)
+  else if A.Items[0].Kind = xikDouble then
+    Result := A.Items[0]
+  else
+    try
+      Result := CastTo(A.Items[0], xikDouble, Xp20);
+    except
+      on E: ELandrixXmlXPathError do
+      begin
+        if (E.XPathCode <> 'FORG0001') and (E.XPathCode <> 'XPTY0004') then
+          raise;
+        Result := DoubleItem(LandrixXmlDoubleNaN);
+      end;
+    end;
+end;
+
+function TLandrixXmlXPathEvaluator.String10(const S: TLandrixXmlXPathSequence): TLandrixXmlUtf8;
+begin
+  if S.Count = 0 then
+    Result := ''
+  else
+    Result := StringOf(S.Items[0]);
+end;
+
+function TLandrixXmlXPathEvaluator.Operand10(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathItem;
+begin
+  if S.Count = 0 then
+    Result := DoubleItem(LandrixXmlDoubleNaN)
+  else
+  begin
+    Result := S.Items[0];
+    if (Result.Kind <> xikDouble) and (Result.Kind in StringKinds + [xikBoolean, xikUntypedAtomic] + IntegerKinds +
+      [xikDecimal, xikFloat]) then
+      Result := Number10(SingleSeq(Result));
+  end;
+end;
+
+{ XPath 2.0 section 3.5.2, XPath 1.0 compatibility mode: a single boolean
+  operand makes the other its effective boolean value; "<", "<=", ">"
+  and ">=" compare every item as fn:number; in a pair a number makes both
+  numbers, a string (or two untypedAtomic) both strings, the rest as in
+  XPath 2.0, except that values that cannot be compared are unequal }
+function TLandrixXmlXPathEvaluator.GeneralCompare10(const A0, B0: TLandrixXmlXPathSequence;
+  Op: TLandrixXmlXPathCompare): Boolean;
+var
+  A, B: TLandrixXmlXPathSequence;
+  I, J: Integer;
+  X, Y: TLandrixXmlXPathItem;
+  Numbers, StringX, StringY, Match: Boolean;
+begin
+  A := A0;
+  B := B0;
+  if (A.Count = 1) and (A.Items[0].Kind = xikBoolean) then
+    B := BooleanSeq(SequenceBoolean(B))
+  else if (B.Count = 1) and (B.Items[0].Kind = xikBoolean) then
+    A := BooleanSeq(SequenceBoolean(A));
+  A := Atomize(A);
+  B := Atomize(B);
+  Numbers := Op in [xpcLt, xpcLe, xpcGt, xpcGe];
+  { every item a number once, in new sequences (A or B may be the
+    storage of a variable) }
+  if Numbers then
+  begin
+    A := NumbersOf10(A);
+    B := NumbersOf10(B);
+  end;
+  for I := 0 to A.Count - 1 do
+    for J := 0 to B.Count - 1 do
+    begin
+      X := A.Items[I];
+      Y := B.Items[J];
+      if not Numbers and (IsNumeric(X.Kind) or IsNumeric(Y.Kind)) then
+      begin
+        X := Number10(SingleSeq(X));
+        Y := Number10(SingleSeq(Y));
+      end
+      else if not Numbers then
+      begin
+        StringX := X.Kind in StringKinds;
+        StringY := Y.Kind in StringKinds;
+        if StringX or StringY or (X.Kind = xikUntypedAtomic) and (Y.Kind = xikUntypedAtomic) then
+        begin
+          if not StringX then
+            X := StringItem(xikString, AtomicString(X));
+          if not StringY then
+            Y := StringItem(xikString, AtomicString(Y));
+        end;
+      end;
+      if Numbers then
+        Match := ComparePair(X, Y, Op, Xp20, FImplicitTimeZone, FExpr)
+      else
+        Match := ComparePair10(X, Y, Op);
+      if Match then
+      begin
+        Result := True;
+        Exit;
+      end;
+    end;
+  Result := False;
+end;
+
+{ "=" or "!=" on one pair: values without an equality between them
+  (xs:anyURI or a duration beside a boolean, xs:hexBinary beside
+  xs:base64Binary) are unequal, as in Saxon; a date or time value beside
+  another type stays a type error (XPTY0004, also as Saxon for two date
+  and time types) }
+function TLandrixXmlXPathEvaluator.ComparePair10(const X, Y: TLandrixXmlXPathItem;
+  Op: TLandrixXmlXPathCompare): Boolean;
+const
+  Calendar = [xikDate, xikDateTime, xikTime, xikGYearMonth .. xikGMonth];
+begin
+  if (X.Kind in Calendar) or (Y.Kind in Calendar) then
+  begin
+    Result := ComparePair(X, Y, Op, Xp20, FImplicitTimeZone, FExpr);
+    Exit;
+  end;
+  try
+    Result := ComparePair(X, Y, Op, Xp20, FImplicitTimeZone, FExpr);
+  except
+    on E: ELandrixXmlXPathError do
+    begin
+      if E.XPathCode <> 'XPTY0004' then
+        raise;
+      Result := Op = xpcNe;
+    end;
+  end;
+end;
+
+{ fn:number of every item of S, in a new sequence }
+function TLandrixXmlXPathEvaluator.NumbersOf10(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  I: Integer;
+begin
+  Result := LandrixXmlXPathEmpty;
+  for I := 0 to S.Count - 1 do
+    LandrixXmlXPathAppend(Result, Number10(SingleSeq(S.Items[I])));
+end;
+
+function TLandrixXmlXPathEvaluator.Argument10(const S: TLandrixXmlXPathSequence;
+  const T: TLandrixXmlXPathSequenceType): TLandrixXmlXPathSequence;
+begin
+  Result := S;
+  if not T.Declared or not (T.Occurrence in [xocOne, xocOptional]) then
+    Exit;
+  Result := FirstOnly(S);
+  if T.Kind <> xtkAtomic then
+    Exit;
+  if T.AtomicType = xikDouble then
+    Result := SingleSeq(Number10(Result))
+  else if (T.AtomicType = xikString) and ((Result.Count = 0) or not (Result.Items[0].Kind in StringKinds)) then
+    Result := LandrixXmlXPathStringItem(String10(Result));
+end;
+
 function TLandrixXmlXPathEvaluator.StringOf(const Item: TLandrixXmlXPathItem): TLandrixXmlUtf8;
 var
   T: TLandrixXmlXPathTree;
@@ -3820,6 +4016,11 @@ var
   V: TLandrixXmlXPathSequence;
 begin
   Id := TLandrixXmlXPathFunctionId(FNodes[Index].Op);
+  if Xp10 then
+  begin
+    Result := String10(Eval(FNodes[Index].Children[K], Context, Position, Size, ContextItem));
+    Exit;
+  end;
   V := Atomize(Eval(FNodes[Index].Children[K], Context, Position, Size, ContextItem));
   if V.Count > 1 then
     FailCall(Id, 'XPTY0004', ': argument ' + IntToStr(K + 1) + ' has more than one item');
@@ -3852,6 +4053,8 @@ begin
           CallContextSeq(Id, Context, ContextItem, A)
         else
           A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+        if Xp10 then
+          A := FirstOnly(A);
         if A.Count > 1 then
           FailCall(Id, 'XPTY0004', ': more than one item');
         if A.Count = 0 then
@@ -4016,6 +4219,13 @@ procedure TLandrixXmlXPathEvaluator.EvalGeneralCompare(Index: Integer; Context: 
 var
   A, B: TLandrixXmlXPathSequence;
 begin
+  if Xp10 then
+  begin
+    A := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+    B := Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem);
+    Output := BooleanSeq(GeneralCompare10(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op)));
+    Exit;
+  end;
   A := Atomize(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
   B := Atomize(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem));
   Output := BooleanSeq(GeneralCompare(A, B, TLandrixXmlXPathCompare(FNodes[Index].Op), Xp20, FImplicitTimeZone,
@@ -4027,7 +4237,35 @@ procedure TLandrixXmlXPathEvaluator.EvalOperator(Index: Integer; Context: Intege
   const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
 var
   A, B: TLandrixXmlXPathSequence;
+  X, Y: TLandrixXmlXPathItem;
 begin
+  { XPath 1.0 compatibility mode: arithmetic on the first items as
+    xs:double, NaN for an empty operand; unary minus makes any value a
+    number (a date gives NaN), as Saxon }
+  if Xp10 and (FNodes[Index].Kind = xakRange) then
+  begin
+    { the operands are xs:integer?: the first item of each }
+    A := Atomize(FirstOnly(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem)));
+    B := Atomize(FirstOnly(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem)));
+    Output := RangeOf(A, B, Xp20);
+    Exit;
+  end;
+  if Xp10 and not (FNodes[Index].Kind in [xakValueCompare, xakRange]) then
+  begin
+    A := FirstOnly(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
+    if FNodes[Index].Kind = xakNegate then
+      Output := SingleSeq(UnaryOp(Number10(A), True, Xp20))
+    else if FNodes[Index].Kind = xakUnaryPlus then
+      Output := SingleSeq(UnaryOp(Operand10(Atomize(A)), False, Xp20))
+    else
+    begin
+      X := Operand10(Atomize(A));
+      Y := Operand10(Atomize(FirstOnly(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem))));
+      Output := SingleSeq(Arithmetic(X, Y, TLandrixXmlXPathArithmetic(FNodes[Index].Op), Xp20,
+        FImplicitTimeZone));
+    end;
+    Exit;
+  end;
   A := Atomize(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
   if FNodes[Index].Kind in [xakNegate, xakUnaryPlus] then
   begin
@@ -4187,10 +4425,13 @@ var
   SavedPattern: Boolean;
   SavedExpr: TLandrixXmlXPathExpression;
   SavedBase: Integer;
-  Empty: TLandrixXmlXPathSequence;
+  Empty, Value: TLandrixXmlXPathSequence;
+  Compatible: Boolean;
 begin
   if FDepth >= FMaxDepth then
     Fail('FOER0000', 'user functions nested deeper than ' + IntToStr(FMaxDepth));
+  { the caller's mode decides the argument conversion }
+  Compatible := Xp10;
   Inc(FDepth);
   SavedFrame := FFrame;
   SavedCurrent := FCurrentNode;
@@ -4206,7 +4447,10 @@ begin
     for I := 0 to Integer(High(Args)) do
     begin
       FFrame[Def.ParamSlots[I]].State := xssValue;
-      FFrame[Def.ParamSlots[I]].Value := ConvertTo(Args[I], Def.ParamTypes[I], Def.Name,
+      Value := Args[I];
+      if Compatible then
+        Value := Argument10(Value, Def.ParamTypes[I]);
+      FFrame[Def.ParamSlots[I]].Value := ConvertTo(Value, Def.ParamTypes[I], Def.Name,
         Def.Body.Profile = xppXPath20);
     end;
     for I := 0 to Integer(Length(Def.LocalSlots)) - 1 do

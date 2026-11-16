@@ -1221,9 +1221,10 @@ begin
     end;
 end;
 
-{ The result of Text in a profile: "TYPE VALUE" per item (" | " between
-  items) or "error CODE". }
-function ProfileResult(const Text: TLandrixXmlUtf8; Profile: TLandrixXmlXPathProfile;
+{ The result of Text in a profile, with or without XPath 1.0
+  compatibility mode: "TYPE VALUE" per item (" | " between items) or
+  "error CODE". }
+function ModeResult(const Text: TLandrixXmlUtf8; Profile: TLandrixXmlXPathProfile; Compatible: Boolean;
   Evaluator: TLandrixXmlXPathEvaluator): TLandrixXmlUtf8;
 var
   Context: TLandrixXmlXPathStaticContext;
@@ -1236,8 +1237,10 @@ begin
   Expr := nil;
   try
     Context.Profile := Profile;
+    Context.XPath10Compatible := Compatible;
     try
       Expr := TLandrixXmlXPathExpression.Create(Text, Context);
+      Check(Expr.XPath10Compatible = Compatible, LandrixXmlUtf8ToString(Text) + ': mode kept by the expression');
       R := Evaluator.Evaluate(Expr, 0);
       try
         for K := 0 to R.Count - 1 do
@@ -1257,6 +1260,12 @@ begin
     Expr.Free;
     Context.Free;
   end;
+end;
+
+function ProfileResult(const Text: TLandrixXmlUtf8; Profile: TLandrixXmlXPathProfile;
+  Evaluator: TLandrixXmlXPathEvaluator): TLandrixXmlUtf8;
+begin
+  Result := ModeResult(Text, Profile, False, Evaluator);
 end;
 
 { fn:lang in both profiles: XPath 2.0 folds case as Unicode's caseless
@@ -1603,6 +1612,147 @@ begin
     Check(Count >= 10, 'rows present');
   finally
     Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
+{ tests/data/xpath/compat10.txt: each row without and with XPath 1.0
+  compatibility mode (Saxon profile) }
+procedure TestXPath10Compatible;
+var
+  Rows, F: TLandrixXmlUtf8Array;
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  I, Count: Integer;
+  Where: string;
+begin
+  F := nil;
+  Rows := Lines(IncludeTrailingPathDelimiter(RepositoryRoot) + 'tests' + PathDelim + 'data' + PathDelim + 'xpath' +
+    PathDelim + 'compat10.txt');
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  Count := 0;
+  try
+    Tree.LoadFromUtf8('<d><x>1</x><x>2</x><e/></d>');
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    for I := 0 to Integer(Length(Rows)) - 1 do
+      if (Rows[I] <> '') and (Rows[I][1] <> '#') then
+      begin
+        F := Fields(Rows[I]);
+        Where := LandrixXmlUtf8ToString(F[0]);
+        Check(Length(F) = 3, Where + ': three fields');
+        if Length(F) <> 3 then
+          Continue;
+        Inc(Count);
+        CheckEqualsUtf8(F[1], ModeResult(F[0], xppSaxon, False, Evaluator), Where + ' (XPath 2.0)');
+        CheckEqualsUtf8(F[2], ModeResult(F[0], xppSaxon, True, Evaluator), Where + ' (XPath 1.0 compatible)');
+      end;
+    Check(Count >= 50, 'rows present');
+  finally
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
+{ Arguments of a user function f:id($x) (an identity) in XPath 1.0
+  compatibility mode, as Saxon converts them: the caller's mode decides,
+  not that of the function body; results checked with Saxon HE 12.9. }
+procedure TestUserFunction10;
+const
+  Cases: array[0..19, 0..2] of string = (
+    ('xs:double', 'f:id(''7'') instance of xs:double', 'true'),
+    ('xs:double', 'f:id(//x)', '1'),
+    ('xs:double', 'f:id(true())', '1'),
+    ('xs:double', 'f:id(''abc'')', 'NaN'),
+    ('xs:double', 'f:id(xs:date(''2020-01-01''))', 'NaN'),
+    ('xs:double?', 'f:id(//none)', 'NaN'),
+    ('xs:float', 'f:id(''7'')', 'XPTY0004'),
+    ('xs:integer', 'f:id(''7'')', 'XPTY0004'),
+    ('xs:decimal', 'f:id(''7'')', 'XPTY0004'),
+    ('xs:integer', 'f:id(//x)', '1'),
+    ('xs:decimal?', 'f:id(//x)', '1'),
+    ('xs:string', 'f:id(xs:token(''abc'')) instance of xs:token', 'true'),
+    ('xs:string', 'f:id(5)', '5'),
+    ('xs:string?', 'f:id(())', ''),
+    ('xs:string', 'f:id(xs:anyURI(''u'')) instance of xs:anyURI', 'false'),
+    ('xs:anyAtomicType', 'f:id(//x) instance of xs:untypedAtomic', 'true'),
+    ('node()', 'count(f:id(//x))', '1'),
+    ('xs:string*', 'count(f:id(//x))', '2'),
+    ('xs:string', 'f:id(//none)', ''),
+    ('xs:string?', 'count(f:id(//none))', '1'));
+var
+  Tree: TLandrixXmlXPathTree;
+  Context, Context20, FnContext: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Body: TLandrixXmlXPathExpression;
+  Def: TLandrixXmlXPathFunctionDef;
+  Functions: TList;
+  I: Integer;
+
+  function Run(C: TLandrixXmlXPathStaticContext; const Text: string): string;
+  var
+    Expr: TLandrixXmlXPathExpression;
+  begin
+    Expr := TLandrixXmlXPathExpression.Create(U(Text), C);
+    try
+      try
+        Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0));
+      except
+        on X: ELandrixXmlXPathError do
+          Result := X.XPathCode;
+      end;
+    finally
+      Expr.Free;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Context20 := TLandrixXmlXPathStaticContext.Create;
+  FnContext := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Functions := TList.Create;
+  Def := TLandrixXmlXPathFunctionDef.Create;
+  Body := nil;
+  try
+    Tree.LoadFromUtf8(U('<d><x>1</x><x>2</x></d>'));
+    SetLength(Def.ParamSlots, 1);
+    SetLength(Def.ParamTypes, 1);
+    Def.ParamSlots[0] := FnContext.DeclareVariable(U('x'));
+    { the body without compatibility mode: the caller's mode counts }
+    Body := TLandrixXmlXPathExpression.Create(U('$x'), FnContext);
+    Def.Body := Body;
+    Def.FrameSize := FnContext.VariableCount;
+    Def.Name := 'f:id';
+    Functions.Add(Def);
+    Context.Profile := xppSaxon;
+    Context.XPath10Compatible := True;
+    Context.AddNamespace(U('f'), U('urn:f'));
+    Context.DeclareFunction(U('urn:f'), U('id'), 1);
+    Context20.Profile := xppSaxon;
+    Context20.AddNamespace(U('f'), U('urn:f'));
+    Context20.DeclareFunction(U('urn:f'), U('id'), 1);
+    Evaluator.Functions := Functions;
+    Evaluator.SetFrameSize(Context.VariableCount);
+    for I := 0 to High(Cases) do
+    begin
+      Def.ParamTypes[0] := LandrixXmlXPathParseSequenceType(U(Cases[I, 0]), FnContext);
+      CheckEqualsStr(Cases[I, 2], Run(Context, Cases[I, 1]), Cases[I, 0] + ': ' + Cases[I, 1]);
+    end;
+    { a caller without the mode: no conversion }
+    Def.ParamTypes[0] := LandrixXmlXPathParseSequenceType(U('xs:double'), FnContext);
+    CheckEqualsStr('XPTY0004', Run(Context20, 'f:id(''7'')'), 'XPath 2.0 caller');
+    Def.ParamTypes[0] := LandrixXmlXPathParseSequenceType(U('xs:string'), FnContext);
+    CheckEqualsStr('XPTY0004', Run(Context20, 'f:id(//x)'), 'XPath 2.0 caller, two items');
+  finally
+    Body.Free;
+    Def.Free;
+    Functions.Free;
+    Evaluator.Free;
+    FnContext.Free;
+    Context20.Free;
+    Context.Free;
     Tree.Free;
   end;
 end;
@@ -2446,6 +2596,8 @@ begin
   RegisterTest('XPathEval.DateContext', TestDateContext);
   RegisterTest('XPathEval.MixedProfiles', TestMixedProfiles);
   RegisterTest('XPathEval.Profiles', TestProfiles);
+  RegisterTest('XPathEval.XPath10Compatible', TestXPath10Compatible);
+  RegisterTest('XPathEval.UserFunction10', TestUserFunction10);
   RegisterTest('XPathEval.Variables', TestVariables);
   RegisterTest('XPathEval.SequenceTypeMatching', TestSequenceTypeMatching);
   RegisterTest('XPathEval.NoAliasing', TestNoAliasing);
