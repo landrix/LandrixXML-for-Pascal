@@ -4553,6 +4553,11 @@ begin
       DoUseAttributeSets(Instr, Focus, Mode, R);
     xskNamespace:
       DoNamespace(Instr, Focus, Mode, R);
+    xskExtension:
+      if Instr.HasFallback then
+        Exec(Instr.Body, Focus, Mode, R)
+      else
+        Fail(Instr, 'XTDE1450', 'unknown extension instruction <' + LandrixXmlUtf8ToString(Instr.Text) + '>');
   else
     { xsl:when is not compiled as an instruction of its own }
   end;

@@ -58,6 +58,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: `extension-element-prefixes` (also on `xsl:template` and other
+  XSLT elements, and as `xsl:extension-element-prefixes` on literal
+  result elements). No extension instruction is known: an element in an
+  extension namespace runs its `xsl:fallback` children, or raises
+  `XTDE1450` when it is evaluated without one; the extension namespaces
+  are not copied to literal result elements. As in Saxon, `#default`
+  means no namespace.
 - XSLT: `doctype-system` and `doctype-public` (xml and xhtml: with a
   system identifier; html: either, the name `html`), written as Saxon
   writes them before the first element; with `doctype-system` or
@@ -107,6 +114,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XPath: `distinct-values()` finds repeated strings through a hash table:
   120,000 values with 60,000 distinct strings took more than ten
   minutes, now about two seconds.
+
+### Fixed
+
+- XSLT: `exclude-result-prefixes` on XSLT elements other than
+  `xsl:stylesheet` (for example `xsl:template`) was ignored.
 
 ## [0.4.0] - 2026-11-12
 

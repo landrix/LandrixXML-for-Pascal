@@ -401,7 +401,9 @@ module), `xpath-default-namespace` (expressions, patterns, sequence
 types and the names of `xsl:strip-space` and `xsl:preserve-space`), `xml:base` in a
 stylesheet (the static base URI of the instructions below it, of the
 `href` of `xsl:include` and `xsl:import`, and of temporary trees),
-`xsl:key` and `xsl:decimal-format`; `key()`, `generate-id()`, `regex-group()`,
+`xsl:key` and `xsl:decimal-format`, `extension-element-prefixes` (no
+extension instruction is known: their `xsl:fallback` runs, without one
+`XTDE1450` when evaluated); `key()`, `generate-id()`, `regex-group()`,
 `current-group()`, `current-grouping-key()`, `format-number()`,
 `unparsed-text()` (UTF-8, UTF-16, ISO-8859-1), `function-available()`,
 `element-available()` (true for what this subset translates),

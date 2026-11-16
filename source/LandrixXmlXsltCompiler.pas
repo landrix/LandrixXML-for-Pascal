@@ -128,7 +128,7 @@ type
     xskVariable, xskIf, xskChoose, xskWhen, xskForEach, xskSequence, xskCopyOf, xskCopy,
     xskElement, xskAttribute, xskComment, xskProcessingInstruction, xskMessage, xskDocument,
     xskNumber, xskNamespace, xskForEachGroup, xskPerformSort, xskAnalyzeString, xskNextMatch,
-    xskApplyImports, xskResultDocument, xskUseAttributeSets);
+    xskApplyImports, xskResultDocument, xskUseAttributeSets, xskExtension);
 
   { a value with literal parts and expressions in curly brackets: Exprs[I] nil for a
     literal part }
@@ -229,6 +229,10 @@ type
     Required: Boolean;
     HasAs: Boolean;
     AsType: TLandrixXmlXPathSequenceType;
+    { an extension instruction (no extension is known): whether it has
+      xsl:fallback (Body: the content of each, in order; none:
+      XTDE1450 when it is evaluated), Text its name }
+    HasFallback: Boolean;
     { xsl:choose: the xsl:when branches (owned); Body is xsl:otherwise }
     Branches: TObjectList;
     { xsl:number: the level (0 single, 1 multiple, 2 any), the branches of
@@ -252,7 +256,8 @@ type
     SortKeys: TObjectList;
     { xsl:analyze-string: regex and flags (nil if absent); Body is
       xsl:matching-substring, NonMatching xsl:non-matching-substring
-      (owned) }
+      (owned; xskExtension: its other children, compiled for their static
+      errors only) }
     RegexAvt: TXsltAvt;
     FlagsAvt: TXsltAvt;
     NonMatching: TObjectList;
@@ -996,6 +1001,7 @@ type
     procedure CompileBody(M: TModule; Parent: Integer; Scope: TScope; Body: TObjectList; First: Integer);
     function CompileInstr(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     function CompileLiteral(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
+    function CompileExtension(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
     function YesNoAttr(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
     procedure CompileWithParams(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
     function CompileResultDocument(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
@@ -1409,13 +1415,98 @@ begin
   CollectDecls(M, P);
 end;
 
+{ the first prefix of extension-element-prefixes that is not declared
+  (#default always is: Saxon takes it for no namespace; #all is a prefix
+  that is not declared, as in Saxon), or '#' and the first one bound to a
+  reserved namespace; '' if none }
+function BadExtensionPrefix(M: TModule; E: Integer; const V: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  K, Start: Integer;
+  W, U, S: TLandrixXmlUtf8;
+begin
+  Result := '';
+  S := V + ' ';
+  Start := 1;
+  for K := 1 to Length(S) do
+    if S[K] in [#9, #10, #13, ' '] then
+    begin
+      W := Copy(S, Start, K - Start);
+      Start := K + 1;
+      if (W = '') or (W = '#default') then
+        Continue;
+      if not M.Tree.LookupNamespace(E, W, U) then
+      begin
+        Result := W;
+        Exit;
+      end;
+      { a reserved namespace (Saxon: XTSE0085) }
+      if (U = XsltNamespace) or (U = LandrixXmlNamespaceXml) or (U = 'http://www.w3.org/2001/XMLSchema') or
+        (U = 'http://www.w3.org/2001/XMLSchema-instance') or (U = 'http://www.w3.org/2005/xqt-errors') or
+        (U = 'http://www.w3.org/2005/xpath-functions') or (U = 'http://www.w3.org/2005/xpath-functions/math') or
+        (U = 'http://www.w3.org/2005/xpath-functions/map') or (U = 'http://www.w3.org/2005/xpath-functions/array') then
+      begin
+        Result := '#' + W;
+        Exit;
+      end;
+    end;
+end;
+
+{ whether the element E of the stylesheet is in an extension namespace:
+  one extension-element-prefixes of E or an ancestor names (on an XSLT
+  element without, on another with the XSLT namespace); #default is no
+  namespace, as in Saxon }
+function IsExtension(M: TModule; E: Integer): Boolean;
+var
+  N, K, J, Start: Integer;
+  Uri, V, W, U: TLandrixXmlUtf8;
+  Xsl: Boolean;
+begin
+  Result := False;
+  Uri := M.Tree.NamespaceUriUtf8(E);
+  if Uri = XsltNamespace then
+    Exit;
+  N := E;
+  while N >= 0 do
+  begin
+    if M.Tree.Kind[N] = xnkElement then
+    begin
+      Xsl := M.Tree.NamespaceUriUtf8(N) = XsltNamespace;
+      for K := N + 1 to N + M.Tree.AttributeCount[N] do
+        if (M.Tree.LocalNameUtf8(K) = 'extension-element-prefixes') and
+          (Xsl and (M.Tree.NamespaceUriUtf8(K) = '') or not Xsl and (M.Tree.NamespaceUriUtf8(K) = XsltNamespace)) then
+        begin
+          V := M.Tree.ValueUtf8(K) + ' ';
+          Start := 1;
+          for J := 1 to Length(V) do
+            if V[J] in [#9, #10, #13, ' '] then
+            begin
+              W := Copy(V, Start, J - Start);
+              Start := J + 1;
+              if W = '' then
+                Continue;
+              if W = '#default' then
+                U := ''
+              else if not M.Tree.LookupNamespace(N, W, U) then
+                Continue;
+              if U = Uri then
+              begin
+                Result := True;
+                Exit;
+              end;
+            end;
+        end;
+    end;
+    N := M.Tree.Parent[N];
+  end;
+end;
+
 { The attributes every XSLT element may have (an XSLT element: E, a
   literal result element: those in the XSLT namespace), rejected if they
   ask for what is not supported. }
 procedure TCompiler.CheckStandard(M: TModule; E: Integer);
 var
   I: Integer;
-  L, V: TLandrixXmlUtf8;
+  L, V, Bad: TLandrixXmlUtf8;
   Xsl: Boolean;
 begin
   Xsl := M.Tree.NamespaceUriUtf8(E) = XsltNamespace;
@@ -1436,9 +1527,18 @@ begin
     if (L = 'default-collation') or
       (L = 'default-mode') or (L = 'default-validation') or (L = 'input-type-annotations') or
       ((L = 'expand-text') and (V = 'yes')) or ((L = 'inherit-namespaces') and (V = 'no')) or
-      ((L = 'extension-element-prefixes') and (V <> '')) or
       ((L = 'validation') and (V <> 'strip') and (V <> 'preserve')) or (L = 'type') then
       Unsupported(M, E, LandrixXmlUtf8ToString(L) + '="' + LandrixXmlUtf8ToString(V) + '"');
+    if L = 'extension-element-prefixes' then
+    begin
+      Bad := BadExtensionPrefix(M, E, V);
+      if Copy(Bad, 1, 1) = '#' then
+        Fail(M, E, 'XTSE0085', 'extension-element-prefixes names a reserved namespace (prefix ' +
+          LandrixXmlUtf8ToString(Copy(Bad, 2, MaxInt)) + ')')
+      else if Bad <> '' then
+        Fail(M, E, 'XTSE1430', 'the prefix ' + LandrixXmlUtf8ToString(Bad) + ' of extension-element-prefixes ' +
+          'is not declared');
+    end;
     if (L = 'version') and (V <> '2.0') and (V <> '3.0') and not (Xsl and IsXsl(M, E, 'output')) then
       Unsupported(M, E, 'version="' + LandrixXmlUtf8ToString(V) + '" (only 2.0 is processed as such)');
   end;
@@ -2213,6 +2313,8 @@ begin
         begin
           if IsXsl(M, C, '') then
             I := CompileInstr(M, C, Scope)
+          else if IsExtension(M, C) then
+            I := CompileExtension(M, C, Scope)
           else
             I := CompileLiteral(M, C, Scope);
           if I <> nil then
@@ -2227,9 +2329,10 @@ begin
 end;
 
 { The namespaces a literal result element copies: those in scope at E but
-  the XSLT namespace, xml and the excluded prefixes of E, its literal
-  ancestors (xsl:exclude-result-prefixes) and the xsl:stylesheet element
-  (exclude-result-prefixes). }
+  the XSLT namespace, xml and the excluded prefixes of E and its ancestors
+  (exclude-result-prefixes on XSLT elements, xsl:exclude-result-prefixes
+  on literal result elements), and the extension namespaces
+  (extension-element-prefixes, the same way). }
 procedure LiteralNamespaces(M: TModule; E: Integer; Instr: TXsltInstr);
 var
   Prefixes, Excluded: TLandrixXmlUtf8Array;
@@ -2250,7 +2353,7 @@ var
 
   { the namespace URIs exclude-result-prefixes names, resolved where it
     is (a prefix bound to another URI further in is not excluded) }
-  procedure AddExcluded(Element: Integer; Stylesheet: Boolean);
+  procedure AddExcluded(Element: Integer; Stylesheet: Boolean; const Name: TLandrixXmlUtf8);
   var
     K, L, Start: Integer;
     W: TLandrixXmlUtf8;
@@ -2259,7 +2362,7 @@ var
     InScope := nil;
     V := '';
     for K := Element + 1 to Element + M.Tree.AttributeCount[Element] do
-      if (M.Tree.LocalNameUtf8(K) = 'exclude-result-prefixes') and
+      if (M.Tree.LocalNameUtf8(K) = Name) and
         ((Stylesheet and (M.Tree.NamespaceUriUtf8(K) = '')) or
         (not Stylesheet and (M.Tree.NamespaceUriUtf8(K) = XsltNamespace))) then
         V := M.Tree.ValueUtf8(K);
@@ -2271,6 +2374,9 @@ var
         W := Copy(V, Start, K - Start);
         Start := K + 1;
         if W = '' then
+          Continue;
+        { extension-element-prefixes: #default is no namespace (Saxon) }
+        if (Name = 'extension-element-prefixes') and ((W = '#default') or (W = '#all')) then
           Continue;
         if W = '#all' then
         begin
@@ -2294,13 +2400,8 @@ begin
   begin
     if M.Tree.Kind[N] = xnkElement then
     begin
-      if M.Tree.NamespaceUriUtf8(N) = XsltNamespace then
-      begin
-        if (M.Tree.Parent[N] >= 0) and (M.Tree.Kind[M.Tree.Parent[N]] = xnkDocument) then
-          AddExcluded(N, True);
-      end
-      else
-        AddExcluded(N, False);
+      AddExcluded(N, M.Tree.NamespaceUriUtf8(N) = XsltNamespace, 'exclude-result-prefixes');
+      AddExcluded(N, M.Tree.NamespaceUriUtf8(N) = XsltNamespace, 'extension-element-prefixes');
     end;
     N := M.Tree.Parent[N];
   end;
@@ -2338,6 +2439,36 @@ begin
   end;
   SetLength(Instr.NsPrefixes, Count);
   SetLength(Instr.NsUris, Count);
+end;
+
+{ an extension instruction: no extension is known, so its xsl:fallback
+  children are what it does (the other children are ignored) }
+function TCompiler.CompileExtension(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
+var
+  C: Integer;
+begin
+  Result := NewInstr(xskExtension, M, E);
+  try
+    Result.Text := M.Tree.NameUtf8(E);
+    { the other children are compiled only for their static errors (as
+      Saxon checks them); kept in NonMatching (never run), as compiled
+      instructions may be registered for later checks }
+    Result.NonMatching := TObjectList.Create;
+    CompileBody(M, E, Scope, Result.NonMatching, -1);
+    C := M.Tree.FirstChild(E);
+    while C >= 0 do
+    begin
+      if (M.Tree.Kind[C] = xnkElement) and IsXsl(M, C, 'fallback') then
+      begin
+        Result.HasFallback := True;
+        CompileBody(M, C, Scope, Result.Body, -1);
+      end;
+      C := M.Tree.NextSibling[C];
+    end;
+  except
+    Result.Free;
+    raise;
+  end;
 end;
 
 function TCompiler.CompileLiteral(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
@@ -4900,8 +5031,8 @@ end;
 
 { the document element of a module: xsl:stylesheet or xsl:transform, or
   a literal result element with xsl:version (a simplified stylesheet
-  module; XTSE0150 without it, and for another XSLT element, where Saxon
-  reports XPST0010) }
+  module; XTSE0150 without it, and for another XSLT element or an
+  extension instruction, where Saxon reports XPST0010) }
 procedure TCompiler.CheckRoot(M: TModule);
 var
   E, A: Integer;
@@ -4924,6 +5055,10 @@ begin
   if (M.Tree.NamespaceUriUtf8(E) = XsltNamespace) or not Found then
     Fail(M, E, 'XTSE0150', 'the document element is neither xsl:stylesheet nor a literal result element ' +
       'with xsl:version');
+  { an extension instruction is no literal result element (Saxon:
+    XPST0010) }
+  if IsExtension(M, E) then
+    Fail(M, E, 'XTSE0150', 'the document element of a simplified stylesheet module is an extension instruction');
   if Trim8(V) = '1.0' then
     Unsupported(M, E, 'an XSLT 1.0 stylesheet (backwards compatible processing)');
   { the document element is not subject to use-when (Saxon rejects it,

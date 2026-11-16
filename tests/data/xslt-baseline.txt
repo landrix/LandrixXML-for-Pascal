@@ -598,6 +598,7 @@ bug/bug-2501 pass
 bug/bug-2502 pass
 bug/bug-2601 pass
 bug/bug-2701 pass
+bug/bug-2702 pass
 bug/bug-2703 pass
 bug/bug-2801 pass
 bug/bug-2901 pass
@@ -1394,8 +1395,10 @@ error/error-1390c pass
 error/error-1400a pass
 error/error-1400b pass
 error/error-1400c pass
+error/error-1430a pass
 error/error-1440a pass
 error/error-1440b pass
+error/error-1450b pass
 error/error-1460a pass
 error/error-1460b pass
 error/error-1460c pass
@@ -1749,6 +1752,7 @@ function/function-1019 pass
 function/function-1020 wrong-code
 function/function-1021 pass
 function/function-1022 pass
+function/function-1023 wrong-code
 function/function-1101 pass
 function/function-1201 pass
 function/function-1301 pass
@@ -1901,10 +1905,13 @@ lre/lre-006 pass
 lre/lre-007 pass
 lre/lre-008 pass
 lre/lre-009 pass
+lre/lre-010 pass
 lre/lre-011 pass
 lre/lre-012 pass
 lre/lre-013 pass
 lre/lre-014 pass
+lre/lre-015 pass
+lre/lre-016 pass
 lre/lre-017 pass
 lre/lre-018 pass
 lre/lre-022 pass
@@ -2350,6 +2357,7 @@ namespace/namespace-3501 pass
 namespace/namespace-3502 pass
 namespace/namespace-3503 pass
 namespace/namespace-3504 pass
+namespace/namespace-3505 pass
 namespace/namespace-3601 pass
 namespace/namespace-3701 pass
 namespace/namespace-3702 pass
@@ -4762,6 +4770,7 @@ use-when/use-when-0104 pass
 use-when/use-when-0105 pass
 use-when/use-when-0106 pass
 use-when/use-when-0107 pass
+use-when/use-when-0108 pass
 use-when/use-when-0109 pass
 use-when/use-when-0110 pass
 use-when/use-when-0111 pass
@@ -4933,8 +4942,10 @@ version/version-010 pass
 version/version-011 pass
 version/version-015 pass
 version/version-016 pass
+version/version-020 pass
 version/version-025a pass
 version/version-030 pass
+version/version-032 pass
 whitespace/whitespace-001 pass
 whitespace/whitespace-002 pass
 whitespace/whitespace-003 pass
