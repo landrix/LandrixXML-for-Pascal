@@ -58,6 +58,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: `cdata-section-elements` on `xsl:output` (the union of every
+  definition) and `xsl:result-document` (added to the format's), for the
+  xml and xhtml methods. The text of those elements is written in CDATA
+  sections as Saxon writes them: `]]>` split, a character the encoding
+  does not have as a character reference between sections, no character
+  map. The output property holds the Clark names.
 - XSLT: `document()` with a second argument (the base URI of that node for
   every relative URI; `XPTY0004` for no single node, `XTDE1162` without a
   base URI).

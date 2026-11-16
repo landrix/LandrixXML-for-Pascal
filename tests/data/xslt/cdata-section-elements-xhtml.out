@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <title>t</title>
+   </head>
+   <body>
+      <p><![CDATA[a<b
+  c]]></p>
+      <div><![CDATA[  ]]><span>s</span><![CDATA[t ]]>
+         <p><![CDATA[q]]></p><![CDATA[u]]></div>
+      <example xmlns=""><![CDATA[e]]></example>
+      <pre>x</pre>
+   </body>
+</html>

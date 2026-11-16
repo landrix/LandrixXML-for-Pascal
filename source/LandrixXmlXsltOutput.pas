@@ -49,6 +49,9 @@ type
     { maps Code to S (replacing an earlier mapping of Code) }
     procedure AddMapping(Code: Cardinal; const S: TLandrixXmlUtf8);
     procedure AddMappings(Source: TXsltOutputProperties);
+    { adds Clark names (separated by spaces) to cdata-section-elements (the
+      union of every definition) }
+    procedure AddCDataElements(const Names: TLandrixXmlUtf8);
     function Value(const Name, Default: TLandrixXmlUtf8): TLandrixXmlUtf8;
     function Has(const Name: TLandrixXmlUtf8): Boolean;
     function Clone: TXsltOutputProperties;
@@ -136,8 +139,8 @@ begin
       (Value <> 'yes') and (Value <> 'no') or (Name = 'standalone') and (Value <> 'yes') and (Value <> 'no') and
       (Value <> 'omit') then
       Result := xosInvalid
-    else if (Name = 'name') or (Name = 'use-character-maps') or (Name = 'cdata-section-elements') or
-      (Name = 'doctype-public') or (Name = 'doctype-system') or (Name = 'method') and (Value <> 'xml') and
+    else if (Name = 'name') or (Name = 'use-character-maps') or (Name = 'doctype-public') or
+      (Name = 'doctype-system') or (Name = 'method') and (Value <> 'xml') and
       (Value <> 'text') and (Value <> 'html') and (Value <> 'xhtml') or (Name = 'encoding') and
       (EncodingMaxChar(Value) = 0) or
       (Name = 'byte-order-mark') and (Value = 'yes') or (Name = 'normalization-form') and (Value <> 'none') then
@@ -230,6 +233,19 @@ begin
     AddMapping(Source.MapChars[I], Source.MapStrings[I]);
 end;
 
+procedure TXsltOutputProperties.AddCDataElements(const Names: TLandrixXmlUtf8);
+var
+  Old: TLandrixXmlUtf8;
+begin
+  if Names = '' then
+    Exit;
+  Old := Value('cdata-section-elements', '');
+  if Old = '' then
+    SetValue('cdata-section-elements', Names)
+  else
+    SetValue('cdata-section-elements', Old + ' ' + Names);
+end;
+
 { --- serializer ------------------------------------------------------------ }
 
 { S without leading and trailing XML white space }
@@ -293,7 +309,13 @@ type
     FHasMap: Boolean;
     FInMap: Boolean;
     FPlain: Boolean;
+    { cdata-section-elements: the Clark names of the elements whose text
+      is written as CDATA sections }
+    FCData: TLandrixXmlUtf8Array;
     procedure SetMap(Props: TXsltOutputProperties);
+    procedure SetCData(Props: TXsltOutputProperties);
+    function InCData(I: Integer): Boolean;
+    procedure PutCData(const S: TLandrixXmlUtf8);
     function MappedAt(const S: TLandrixXmlUtf8; I: Integer; out N: Integer): Integer;
     procedure PutMapped(const S: TLandrixXmlUtf8; Attribute: Boolean);
     procedure PutUnmapped(const S: TLandrixXmlUtf8);
@@ -340,6 +362,114 @@ begin
     if FMapChars[I] < 128 then
       FAsciiMap[FMapChars[I]] := I;
   FHasMap := Length(FMapChars) > 0;
+end;
+
+procedure TSerializer.SetCData(Props: TXsltOutputProperties);
+var
+  V: TLandrixXmlUtf8;
+  I, Start, N: Integer;
+begin
+  V := Props.Value('cdata-section-elements', '');
+  N := 0;
+  I := 1;
+  while I <= Length(V) do
+  begin
+    while (I <= Length(V)) and (V[I] = ' ') do
+      Inc(I);
+    Start := I;
+    while (I <= Length(V)) and (V[I] <> ' ') do
+      Inc(I);
+    if I > Start then
+    begin
+      SetLength(FCData, N + 1);
+      FCData[N] := Copy(V, Start, I - Start);
+      Inc(N);
+    end;
+  end;
+end;
+
+{ whether the text node I is a child of a cdata-section-elements element }
+function TSerializer.InCData(I: Integer): Boolean;
+var
+  P, K: Integer;
+  Name: TLandrixXmlUtf8;
+begin
+  Result := False;
+  if Length(FCData) = 0 then
+    Exit;
+  P := FTree.Parent[I];
+  if (P < 0) or (FTree.Kind[P] <> xnkElement) then
+    Exit;
+  if FTree.NamespaceUriUtf8(P) = '' then
+    Name := FTree.LocalNameUtf8(P)
+  else
+    Name := '{' + FTree.NamespaceUriUtf8(P) + '}' + FTree.LocalNameUtf8(P);
+  for K := 0 to Integer(Length(FCData)) - 1 do
+    if FCData[K] = Name then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
+{ a text in CDATA sections, as Saxon writes it: nothing escaped or mapped;
+  "]]>" split between two sections; a character the encoding lacks as a
+  character reference between sections (no empty section) }
+procedure TSerializer.PutCData(const S: TLandrixXmlUtf8);
+var
+  I, N, Start: Integer;
+  Code: Cardinal;
+  Open: Boolean;
+begin
+  Open := False;
+  Start := 1;
+  I := 1;
+  while I <= Length(S) do
+  begin
+    N := 1;
+    Code := Ord(S[I]);
+    if Code >= $80 then
+    begin
+      N := LandrixXmlDecodeUtf8(PAnsiChar(S) + I - 1, Length(S) - I + 1, Code);
+      if N = 0 then
+      begin
+        N := 1;
+        Code := $FFFD;
+      end;
+    end;
+    if Code > FMaxChar then
+    begin
+      if Open then
+      begin
+        Put(Copy(S, Start, I - Start));
+        Put(']]>');
+        Open := False;
+      end;
+      Put('&#x' + LandrixXmlStringToUtf8(LowerCase(IntToHex(Code, 1))) + ';');
+      Inc(I, N);
+      Continue;
+    end;
+    if not Open then
+    begin
+      Put('<![CDATA[');
+      Open := True;
+      Start := I;
+    end;
+    if (S[I] = ']') and (I + 2 <= Length(S)) and (S[I + 1] = ']') and (S[I + 2] = '>') then
+    begin
+      Put(Copy(S, Start, I + 2 - Start));
+      Put(']]><![CDATA[');
+      Start := I + 2;
+      Inc(I, 2);
+    end
+    else
+      Inc(I, N);
+  end;
+  if Open then
+  begin
+    Put(Copy(S, Start, Length(S) - Start + 1));
+    Put(']]>');
+  end;
 end;
 
 { the index of the mapped character at S[I] (-1: none); N its length in
@@ -867,6 +997,7 @@ procedure TSerializer.Node(I: Integer);
 var
   C: Integer;
   V: TLandrixXmlUtf8;
+  Cdata: Boolean;
 begin
   case FTree.Kind[I] of
     xnkDocument:
@@ -883,10 +1014,12 @@ begin
     xnkText:
       begin
         V := FTree.ValueUtf8(I);
+        Cdata := InCData(I);
         if FIndent then
         begin
-          { white space with a mapped character is text (Saxon) }
-          if (FSuppressedAt < 0) and IsWhiteSpace(V) and not (FHasMap and HasMapped(V)) then
+          { white space with a mapped character, or in a CDATA section, is
+            text (Saxon) }
+          if (FSuppressedAt < 0) and IsWhiteSpace(V) and not (FHasMap and HasMapped(V)) and not Cdata then
           begin
             FlushPending;
             FPending := V;
@@ -899,7 +1032,10 @@ begin
           FAfterStart := False;
           FAfterEnd := False;
         end;
-        PutText(V);
+        if Cdata then
+          PutCData(V)
+        else
+          PutText(V);
       end;
     xnkComment, xnkProcessingInstruction:
       begin
@@ -1571,8 +1707,14 @@ begin
     xnkText:
       begin
         V := FTree.ValueUtf8(I);
+        { xhtml: a CDATA section (not indented) }
+        if InCData(I) then
+        begin
+          CloseTag;
+          PutCData(V);
+        end
         { a text with a mapped character is not indented (Saxon) }
-        if not FIndent or FInFormatted or FHasMap and HasMapped(V) then
+        else if not FIndent or FInFormatted or FHasMap and HasMapped(V) then
         begin
           CloseTag;
           HtmlText(V, False);
@@ -1715,6 +1857,9 @@ begin
       H.FEncoding := Encoding;
       H.FMaxChar := MaxChar;
       H.SetMap(Props);
+      { cdata-section-elements: not for html }
+      if H.FXhtml then
+        H.SetCData(Props);
       if H.FXhtml and (Props.Value('omit-xml-declaration', 'no') <> 'yes') then
       begin
         H.Put('<?xml version="1.0" encoding="' + Encoding + '"');
@@ -1740,6 +1885,7 @@ begin
   try
     S.FMaxChar := MaxChar;
     S.SetMap(Props);
+    S.SetCData(Props);
     if Props.Value('omit-xml-declaration', 'no') <> 'yes' then
     begin
       S.Put('<?xml version="1.0" encoding="' + Encoding + '"');

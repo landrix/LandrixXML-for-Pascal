@@ -105,6 +105,13 @@ function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
   Saxon accepts it); '' if it is neither or the prefix is not declared. }
 function XsltFormatClark(const Name: TLandrixXmlUtf8; const Prefixes, Uris: TLandrixXmlUtf8Array): TLandrixXmlUtf8;
 
+{ The Clark names (separated by spaces) of a cdata-section-elements value:
+  QNames separated by white space (an unprefixed one in the default
+  namespace of Prefixes and Uris) or EQNames. False, with Bad the first
+  one, if a name is neither or its prefix is not declared. }
+function XsltCDataNames(const Value: TLandrixXmlUtf8; const Prefixes, Uris: TLandrixXmlUtf8Array;
+  out Names, Bad: TLandrixXmlUtf8): Boolean;
+
 type
   { a string list that compares byte by byte (TStringList compares by the
     locale: AnsiCompareStr) }
@@ -256,6 +263,9 @@ type
     HrefAvt: TXsltAvt;
     OutputNames: TLandrixXmlUtf8Array;
     OutputAvts: array of TXsltAvt;
+    { cdata-section-elements (nil if absent): added to the output
+      definition's }
+    CDataAvt: TXsltAvt;
     { a literal result element, xsl:element, xsl:copy: the attribute sets
       it uses (an xskUseAttributeSets, owned; nil if none);
       xskUseAttributeSets: the names (Clark) and, resolved, the
@@ -2383,7 +2393,7 @@ end;
 function TCompiler.CompileResultDocument(M: TModule; E: Integer; Scope: TScope): TXsltInstr;
 var
   I, N: Integer;
-  L, V, Name: TLandrixXmlUtf8;
+  L, V, Name, Bad: TLandrixXmlUtf8;
   A: TXsltAvt;
 begin
   Result := NewInstr(xskResultDocument, M, E);
@@ -2423,6 +2433,15 @@ begin
         if Result.MapProps = nil then
           Result.MapProps := TXsltOutputProperties.Create;
         AddMapRef(TXsltOutputProperties(Result.MapProps), M, E, V);
+        Continue;
+      end;
+      if L = 'cdata-section-elements' then
+      begin
+        Result.CDataAvt := CompileAvt(M, E, V, Scope);
+        if Result.CDataAvt.IsLiteral and not XsltCDataNames(LiteralOf(Result.CDataAvt), Result.ScopePrefixes,
+          Result.ScopeUris, V, Bad) then
+          Fail(M, E, 'XTSE0020', 'not a QName (or its prefix is not declared) in cdata-section-elements: "' +
+            LandrixXmlUtf8ToString(Bad) + '"');
         Continue;
       end;
       if L = 'output-version' then
@@ -3583,6 +3602,50 @@ begin
   for I := 0 to Integer(Length(Prefixes)) - 1 do
     if Prefixes[I] = Prefix then
       Result := XsltClarkOf(Uris[I], Local);
+end;
+
+function XsltCDataNames(const Value: TLandrixXmlUtf8; const Prefixes, Uris: TLandrixXmlUtf8Array;
+  out Names, Bad: TLandrixXmlUtf8): Boolean;
+var
+  I, J, Start: Integer;
+  T, C, Default: TLandrixXmlUtf8;
+begin
+  Result := False;
+  Names := '';
+  Bad := '';
+  Default := '';
+  for J := 0 to Integer(Length(Prefixes)) - 1 do
+    if Prefixes[J] = '' then
+      Default := Uris[J];
+  I := 1;
+  while I <= Length(Value) do
+  begin
+    while (I <= Length(Value)) and (Value[I] in [#9, #10, #13, ' ']) do
+      Inc(I);
+    Start := I;
+    while (I <= Length(Value)) and not (Value[I] in [#9, #10, #13, ' ']) do
+      Inc(I);
+    if I = Start then
+      Continue;
+    T := Copy(Value, Start, I - Start);
+    if (Copy(T, 1, 2) <> 'Q{') and (Pos8(':', T) = 0) then
+    begin
+      C := '';
+      if IsNCName8(T) then
+        C := XsltClarkOf(Default, T);
+    end
+    else
+      C := XsltFormatClark(T, Prefixes, Uris);
+    if C = '' then
+    begin
+      Bad := T;
+      Exit;
+    end;
+    if Names <> '' then
+      Names := Names + ' ';
+    Names := Names + C;
+  end;
+  Result := True;
 end;
 
 procedure XsltNameArgument(Evaluator: TLandrixXmlXPathEvaluator; const Arg: TLandrixXmlXPathSequence;
@@ -4902,12 +4965,15 @@ end;
 
 procedure TCompiler.CompileOutput(D: TDecl);
 var
-  I, P: Integer;
+  I, P, K: Integer;
   M: TModule;
-  L, V, Name: TLandrixXmlUtf8;
+  L, V, Name, Bad: TLandrixXmlUtf8;
   Target: TXsltOutputProperties;
+  Prefixes, Uris: TLandrixXmlUtf8Array;
 begin
   M := D.Module;
+  Prefixes := nil;
+  Uris := nil;
   { a named one: its own definition, the unnamed ones the default }
   Target := FC.Output;
   if Attr(M, D.Element, 'name', Name) then
@@ -4944,6 +5010,19 @@ begin
     begin
       { the maps of every xsl:output are used, in declaration order }
       AddMapRef(Target, M, D.Element, M.Tree.ValueUtf8(I));
+      Continue;
+    end;
+    if L = 'cdata-section-elements' then
+    begin
+      { the union of every xsl:output's }
+      Prefixes := M.Tree.InScopePrefixesUtf8(D.Element);
+      SetLength(Uris, Length(Prefixes));
+      for K := 0 to Integer(Length(Prefixes)) - 1 do
+        M.Tree.LookupNamespace(D.Element, Prefixes[K], Uris[K]);
+      if not XsltCDataNames(M.Tree.ValueUtf8(I), Prefixes, Uris, V, Bad) then
+        Fail(M, D.Element, 'XTSE0020', 'not a QName (or its prefix is not declared) in cdata-section-elements: "' +
+          LandrixXmlUtf8ToString(Bad) + '"');
+      Target.AddCDataElements(V);
       Continue;
     end;
     V := Trim8(M.Tree.ValueUtf8(I));

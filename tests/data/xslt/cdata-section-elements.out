@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<out xmlns:p="urn:p">
+   <p:a><![CDATA[x]]]]><![CDATA[>y]]>&#xaa;&#xab;<![CDATA[z]]]]]]><![CDATA[>>]]></p:a>
+   <p:a>&#xaa;</p:a>
+   <p:a/>
+   <b xmlns="urn:d"><![CDATA[in default]]></b>
+   <b>no namespace: XX</b>
+   <c><![CDATA[  ]]><i/><![CDATA[ ]]><i/><![CDATA[t]]><i/>
+   </c>
+   <c><![CDATA[line
+  break]]></c>
+   <d>XX</d>
+</out>

@@ -1,0 +1,4 @@
+<!DOCTYPE HTML>
+<html>
+   <body><a>x&lt;y</a><script>if (a < b) x;</script></body>
+</html>

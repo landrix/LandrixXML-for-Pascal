@@ -2628,7 +2628,7 @@ end;
   principal result }
 procedure TRun.DoResultDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
 var
-  Href, Uri, Name, V: TLandrixXmlUtf8;
+  Href, Uri, Name, V, Names, Bad: TLandrixXmlUtf8;
   Props: TXsltOutputProperties;
   T: TLandrixXmlXPathTree;
   R: TTreeReceiver;
@@ -2658,6 +2658,15 @@ begin
     { use-character-maps: added to the maps of the output definition }
     if Instr.MapProps <> nil then
       Props.AddMappings(TXsltOutputProperties(Instr.MapProps));
+    { cdata-section-elements: added to the output definition's }
+    if Instr.CDataAvt <> nil then
+    begin
+      V := EvalAvt(Instr, Instr.CDataAvt, Focus);
+      if not XsltCDataNames(V, Instr.ScopePrefixes, Instr.ScopeUris, Names, Bad) then
+        Fail(Instr, 'XTDE0030', 'not a QName (or its prefix is not declared) in cdata-section-elements: "' +
+          LandrixXmlUtf8ToString(Bad) + '"');
+      Props.AddCDataElements(Names);
+    end;
     for I := 0 to Integer(Length(Instr.OutputNames)) - 1 do
     begin
       V := Trim8(EvalAvt(Instr, Instr.OutputAvts[I], Focus));

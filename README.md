@@ -412,7 +412,9 @@ output methods xml, html (HTML5), xhtml (XHTML 1.0 elements with the
 HTML indentation, as Saxon writes it; also the default for an `html`
 root element in the XHTML namespace, as in Saxon) and text in UTF-8, US-ASCII or
 ISO-8859-1 (a character the encoding does not have is a character
-reference, as in Saxon), indented as Saxon indents. Where XSLT 2.0 and
+reference, as in Saxon), indented as Saxon indents, with
+`cdata-section-elements` (xml and xhtml; CDATA sections as Saxon writes
+them). Where XSLT 2.0 and
 Saxon (which runs XSLT 2.0 stylesheets as XSLT 3.0) differ, Saxon is
 followed (`xsl:analyze-string` of an empty sequence, regular expressions
 with `(?:...)` and the flag `q`), except that a regular expression
