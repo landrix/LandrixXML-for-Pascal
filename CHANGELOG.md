@@ -58,6 +58,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: the output property `byte-order-mark` for every output method:
+  as in Saxon the byte order mark is written for UTF-8 only (none for
+  US-ASCII or ISO-8859-1); `TransformToUtf8` and `SerializeToUtf8` begin
+  with it when the encoding asked for is UTF-8.
 - XSLT: `disable-output-escaping` on `xsl:text` and `xsl:value-of`, as
   in Saxon: text written to the final result tree (also by
   `xsl:result-document`) is serialized without escaping; the character

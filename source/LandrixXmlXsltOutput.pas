@@ -183,8 +183,7 @@ begin
       Result := xosInvalid
     else if (Name = 'name') or (Name = 'use-character-maps') or (Name = 'method') and (Value <> 'xml') and
       (Value <> 'text') and (Value <> 'html') and (Value <> 'xhtml') or (Name = 'encoding') and
-      (EncodingMaxChar(Value) = 0) or
-      (Name = 'byte-order-mark') and (Value = 'yes') then
+      (EncodingMaxChar(Value) = 0) then
       Result := xosUnsupported;
   end
   else if (Name = 'item-separator') or (Name = 'html-version') or (Name = 'suppress-indentation') or
@@ -2116,6 +2115,9 @@ begin
   end;
 end;
 
+const
+  Utf8Bom: array[0..2] of Byte = ($EF, $BB, $BF);
+
 procedure XsltSerialize(Tree: TLandrixXmlXPathTree; Props: TXsltOutputProperties; Stream: TStream;
   ForceUtf8: Boolean);
 var
@@ -2124,7 +2126,7 @@ var
   H: THtmlSerializer;
   E, C: Integer;
   MaxChar: Cardinal;
-  Normalize: Boolean;
+  Normalize, Bom: Boolean;
   Form: TLandrixXmlNormalizationForm;
 begin
   { normalization-form: NFC, NFD, NFKC, NFKD or none (Saxon: SESU0011
@@ -2171,8 +2173,15 @@ begin
   if MaxChar = 0 then
     raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT output: the encoding ' +
       LandrixXmlUtf8ToString(Encoding) + ' is not supported (UTF-8, US-ASCII and ISO-8859-1 only)');
+  { byte-order-mark: as Saxon only for UTF-8 (the encoding asked for, also
+    when the result is returned as UTF-8 anyway); written once the settings
+    are checked }
+  Bom := (Props.Value('byte-order-mark', 'no') = 'yes') and
+    (EncodingMaxChar(Trim8Ws(Props.Value('encoding', 'UTF-8'))) = $10FFFF);
   if Method = 'text' then
   begin
+    if Bom then
+      Stream.WriteBuffer(Utf8Bom, 3);
     WriteText(Tree, Props, Stream, MaxChar, Normalize, Form);
     Exit;
   end;
@@ -2186,6 +2195,8 @@ begin
       (Props.Value('undeclare-prefixes', 'no') = 'yes')) then
       raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT output: xhtml with a version other than 1.0 or ' +
         'undeclare-prefixes is not supported');
+    if Bom then
+      Stream.WriteBuffer(Utf8Bom, 3);
     H := THtmlSerializer.Create(Tree, Stream, Props.Value('indent', 'yes') = 'yes');
     try
       H.FXhtml := Method = 'xhtml';
@@ -2224,6 +2235,8 @@ begin
     (Props.Value('undeclare-prefixes', 'no') = 'yes') then
     raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT output: XML 1.1 (version, undeclare-prefixes) ' +
       'is not supported');
+  if Bom then
+    Stream.WriteBuffer(Utf8Bom, 3);
   S := TSerializer.Create(Tree, Stream, Props.Value('indent', 'no') = 'yes');
   try
     S.FMaxChar := MaxChar;

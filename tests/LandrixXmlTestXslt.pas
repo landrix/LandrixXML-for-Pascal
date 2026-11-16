@@ -488,6 +488,70 @@ begin
   end;
 end;
 
+{ byte-order-mark: written for UTF-8 only, also by TransformToUtf8 (not
+  when another encoding is asked for) }
+procedure TestByteOrderMark;
+const
+  Sheet1 = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+    '<xsl:output omit-xml-declaration="yes" byte-order-mark="yes" encoding="%s"/>' +
+    '<xsl:template name="main"><a/></xsl:template></xsl:stylesheet>';
+  Encodings: array[0..2] of string = ('UTF-8', 'utf8', 'ISO-8859-1');
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  I: Integer;
+  Bom, Expected: TLandrixXmlUtf8;
+  Stream: TMemoryStream;
+  Code: string;
+begin
+  Bom := '';
+  SetLength(Bom, 3);
+  Bom[1] := AnsiChar($EF);
+  Bom[2] := AnsiChar($BB);
+  Bom[3] := AnsiChar($BF);
+  for I := 0 to High(Encodings) do
+  begin
+    Expected := U('<a/>');
+    if I < 2 then
+      Expected := Bom + Expected;
+    Sheet := TLandrixXmlXsltStylesheet.Create;
+    T := nil;
+    try
+      Sheet.LoadFromUtf8(U(StringReplace(Sheet1, '%s', Encodings[I], [])), U('urn:case'));
+      T := TLandrixXmlXsltTransformer.Create(Sheet);
+      T.InitialTemplate := U('main');
+      CheckEqualsUtf8(Expected, T.TransformToUtf8(nil), 'byte-order-mark: ' + Encodings[I]);
+    finally
+      T.Free;
+      Sheet.Free;
+    end;
+  end;
+  { an unsupported setting is rejected before the byte order mark }
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  T := nil;
+  Stream := TMemoryStream.Create;
+  try
+    Sheet.LoadFromUtf8(U('<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+      '<xsl:output method="html" version="4.0" byte-order-mark="yes"/>' +
+      '<xsl:template name="main"><html/></xsl:template></xsl:stylesheet>'), U('urn:case'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    T.InitialTemplate := U('main');
+    Code := 'none';
+    try
+      T.Transform(nil, Stream);
+    except
+      on E: ELandrixXmlError do
+        Code := IntToStr(Ord(E.Code));
+    end;
+    CheckEqualsStr(IntToStr(Ord(xecUnsupported)), Code, 'byte-order-mark: html version 4.0');
+    CheckEquals(0, Integer(Stream.Size), 'byte-order-mark: nothing written before the error');
+  finally
+    Stream.Free;
+    T.Free;
+    Sheet.Free;
+  end;
+end;
+
 { disable-output-escaping where Saxon keeps it but this processor cannot
   (raw text in a node built in a sequence, a raw text item put into a
   temporary tree, in xsl:document or xsl:copy of a document node):
@@ -544,12 +608,11 @@ end;
 procedure TestRejected;
 const
   Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">';
-  Cases: array[0..14] of string = (
+  Cases: array[0..13] of string = (
     '<xsl:accumulator name="a" initial-value="0"/><xsl:template match="/"/>',
     '<xsl:mode name="m"/><xsl:template match="/"/>',
     '<xsl:template match="/"><x xsl:expand-text="yes">{1}</x></xsl:template>',
     '<xsl:output html-version="5"/><xsl:template match="/"/>',
-    '<xsl:output byte-order-mark="yes"/><xsl:template match="/"/>',
     '<xsl:output encoding="UTF-16"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
     '<xsl:template match="/"><xsl:number lang="de"/></xsl:template>',
@@ -614,6 +677,7 @@ begin
   RegisterTest('Xslt.ResultDocuments', TestResultDocuments);
   RegisterTest('Xslt.Rejected', TestRejected);
   RegisterTest('Xslt.RawUnsupported', TestRawUnsupported);
+  RegisterTest('Xslt.ByteOrderMark', TestByteOrderMark);
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
 end;
 
