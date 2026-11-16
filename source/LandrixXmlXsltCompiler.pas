@@ -112,6 +112,12 @@ function XsltFormatClark(const Name: TLandrixXmlUtf8; const Prefixes, Uris: TLan
 function XsltCDataNames(const Value: TLandrixXmlUtf8; const Prefixes, Uris: TLandrixXmlUtf8Array;
   out Names, Bad: TLandrixXmlUtf8): Boolean;
 
+{ How a collation URI is treated: 0 the Unicode codepoint collation (the
+  only one supported), 1 a collation Saxon recognizes (UCA, Saxon's own,
+  html-ascii-case-insensitive): not supported, 2 a URI that is not
+  recognized as a collation (the error of the instruction). }
+function XsltCollationKind(const Uri: TLandrixXmlUtf8): Integer;
+
 type
   { a string list that compares byte by byte (TStringList compares by the
     locale: AnsiCompareStr) }
@@ -251,6 +257,8 @@ type
     FormatAvt: TXsltAvt;
     GroupingSeparator: TXsltAvt;
     GroupingSize: TXsltAvt;
+    { xsl:for-each-group: the collation (nil if absent) }
+    CollationAvt: TXsltAvt;
     { xsl:for-each, xsl:apply-templates, xsl:for-each-group,
       xsl:perform-sort: the sort keys (TXsltSortKey, owned; nil if none) }
     SortKeys: TObjectList;
@@ -985,6 +993,7 @@ type
     procedure AddModuleFunctions;
     procedure Fail(M: TModule; E: Integer; const Code, Msg: string);
     procedure Unsupported(M: TModule; E: Integer; const Msg: string);
+    procedure CheckDefaultCollation(M: TModule; E: Integer; const V: TLandrixXmlUtf8);
     procedure XPathFailed(M: TModule; E: Integer; X: ELandrixXmlXPathError);
     function IsXsl(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): Boolean;
     function Attr(M: TModule; E: Integer; const Local: TLandrixXmlUtf8; out Value: TLandrixXmlUtf8): Boolean;
@@ -1173,6 +1182,35 @@ procedure TCompiler.Unsupported(M: TModule; E: Integer; const Msg: string);
 begin
   raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000', Msg + ' is not supported', M.Uri,
     M.LineOf(E), M.ColumnOf(E));
+end;
+
+{ [xsl:]default-collation: the first URI of the list (resolved against
+  the static base URI) that is recognized as a collation is the default
+  collation (XTSE0125 if there is none); only the codepoint collation is
+  supported }
+procedure TCompiler.CheckDefaultCollation(M: TModule; E: Integer; const V: TLandrixXmlUtf8);
+var
+  K, Start: Integer;
+  W, S: TLandrixXmlUtf8;
+begin
+  S := V + ' ';
+  Start := 1;
+  for K := 1 to Length(S) do
+    if S[K] in [#9, #10, #13, ' '] then
+    begin
+      W := Copy(S, Start, K - Start);
+      Start := K + 1;
+      if W = '' then
+        Continue;
+      case XsltCollationKind(LandrixXmlXPathResolveUri(W, StaticBase(M, E))) of
+        0:
+          Exit;
+        1:
+          Unsupported(M, E, 'default-collation="' + LandrixXmlUtf8ToString(W) + '"');
+      end;
+    end;
+  Fail(M, E, 'XTSE0125', 'default-collation names no known collation: "' +
+    LandrixXmlUtf8ToString(V) + '"');
 end;
 
 { an XPath error of an expression at E, as an XSLT error with E's position }
@@ -1617,8 +1655,9 @@ begin
       Continue;
     L := M.Tree.LocalNameUtf8(I);
     V := Trim8(M.Tree.ValueUtf8(I));
-    if (L = 'default-collation') or
-      (L = 'default-mode') or (L = 'default-validation') or (L = 'input-type-annotations') or
+    if L = 'default-collation' then
+      CheckDefaultCollation(M, E, V);
+    if (L = 'default-mode') or (L = 'default-validation') or (L = 'input-type-annotations') or
       ((L = 'expand-text') and (V = 'yes')) or ((L = 'inherit-namespaces') and (V = 'no')) or
       ((L = 'validation') and (V <> 'strip') and (V <> 'preserve')) or (L = 'type') then
       Unsupported(M, E, LandrixXmlUtf8ToString(L) + '="' + LandrixXmlUtf8ToString(V) + '"');
@@ -2799,6 +2838,38 @@ end;
 const
   CodepointCollation = 'http://www.w3.org/2005/xpath-functions/collation/codepoint';
 
+function XsltCollationKind(const Uri: TLandrixXmlUtf8): Integer;
+
+  function Starts(const Prefix: TLandrixXmlUtf8): Boolean;
+  begin
+    Result := Copy(Uri, 1, Length(Prefix)) = Prefix;
+  end;
+
+begin
+  if Uri = CodepointCollation then
+    Result := 0
+  else if (Uri = 'http://www.w3.org/2013/collation/UCA') or Starts('http://www.w3.org/2013/collation/UCA?') or
+    (Uri = 'http://saxon.sf.net/collation') or Starts('http://saxon.sf.net/collation?') or
+    (Uri = 'http://www.w3.org/2005/xpath-functions/collation/html-ascii-case-insensitive') then
+    Result := 1
+  else
+    Result := 2;
+end;
+
+{ a collation attribute (literal, after trimming; resolved against the
+  static base URI): XTDE1035 (xsl:sort), XTDE1110 (xsl:for-each-group)
+  or XTSE1210 (xsl:key) for an unknown one (Saxon raises the dynamic ones
+  when compiling too) }
+procedure CheckCollation(C: TCompiler; M: TModule; E: Integer; const V, Code: TLandrixXmlUtf8);
+begin
+  case XsltCollationKind(LandrixXmlXPathResolveUri(V, C.StaticBase(M, E))) of
+    1:
+      C.Unsupported(M, E, 'a collation other than the codepoint collation');
+    2:
+      C.Fail(M, E, LandrixXmlUtf8ToString(Code), 'the collation "' + LandrixXmlUtf8ToString(V) + '" is not known');
+  end;
+end;
+
 { the value of an attribute value template without expressions }
 function AvtLiteral(A: TXsltAvt; out Value: TLandrixXmlUtf8): Boolean;
 var
@@ -2873,8 +2944,8 @@ begin
   if Attr(M, E, 'collation', V) then
   begin
     K.Collation := CompileAvt(M, E, V, Scope);
-    if AvtLiteral(K.Collation, V) and (Trim8(V) <> CodepointCollation) then
-      Unsupported(M, E, 'a collation other than the codepoint collation');
+    if AvtLiteral(K.Collation, V) then
+      CheckCollation(Self, M, E, Trim8(V), 'XTDE1035');
   end;
   if Attr(M, E, 'stable', V) then
   begin
@@ -3789,8 +3860,6 @@ var
   I, Count, C: Integer;
 begin
   Branches := nil;
-  if Attr(M, E, 'collation', V) and (Trim8(V) <> 'http://www.w3.org/2005/xpath-functions/collation/codepoint') then
-    Unsupported(M, E, 'a collation other than the codepoint collation');
   Instr.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
   Count := 0;
   if Attr(M, E, 'group-by', V) then
@@ -3820,6 +3889,12 @@ begin
   if Count <> 1 then
     Fail(M, E, 'XTSE1080', 'xsl:for-each-group needs exactly one of group-by, group-adjacent, ' +
       'group-starting-with and group-ending-with');
+  if (Instr.GroupKind <= 1) and Attr(M, E, 'collation', V) then
+  begin
+    Instr.CollationAvt := CompileAvt(M, E, V, Scope);
+    if AvtLiteral(Instr.CollationAvt, V) then
+      CheckCollation(Self, M, E, Trim8(V), 'XTDE1110');
+  end;
   if Instr.GroupKind >= 2 then
   begin
     if Attr(M, E, 'collation', V) then
@@ -4159,8 +4234,8 @@ begin
   if not IsQName8(V) then
     Fail(M, E, 'XTSE0020', 'the name of xsl:key is not a QName: "' + LandrixXmlUtf8ToString(V) + '"');
   Name := QNameToClark(M, E, V, False);
-  if Attr(M, E, 'collation', V) and (Trim8(V) <> 'http://www.w3.org/2005/xpath-functions/collation/codepoint') then
-    Unsupported(M, E, 'a collation other than the codepoint collation');
+  if Attr(M, E, 'collation', V) then
+    CheckCollation(Self, M, E, Trim8(V), 'XTSE1210');
   HasUse := Attr(M, E, 'use', V);
   I := M.Tree.FirstChild(E);
   HasBody := False;

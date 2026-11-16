@@ -58,6 +58,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: a collation URI that is not known as a collation is the error
+  of the specification: `XTDE1035` (`xsl:sort`), `XTDE1110`
+  (`xsl:for-each-group`; `FOCH0002` for a computed one, as in Saxon),
+  `XTSE1210` (`xsl:key`), `XTSE0125` (`default-collation` without a known
+  collation). `default-collation` takes the first known collation of its
+  list, and the collation of `xsl:for-each-group` may be an attribute
+  value template. UCA, Saxon and `html-ascii-case-insensitive`
+  collations remain unsupported.
 - XSLT: the output property `normalization-form` (NFC, NFD, NFKC, NFKD,
   none) for every output method: text, attribute values and CDATA
   sections are normalized, names and comments are not; as in Saxon the

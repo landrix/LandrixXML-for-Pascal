@@ -201,6 +201,7 @@ avt/avt-0202 pass
 avt/avt-0301 pass
 avt/avt-0302 pass
 avt/avt-0303 pass
+avt/avt-0401 pass
 avt/avt-0501 pass
 avt/avt-0601 pass
 avt/avt-1101 pass
@@ -757,7 +758,9 @@ choose/choose-1904 pass
 choose/choose-1905 pass
 collations/collations-1001 pass
 collations/collations-1002 pass
+collations/collations-1003 pass
 collations/collations-1004 pass
+collations/collations-1005 pass
 construct-node/construct-node-001 pass
 construct-node/construct-node-002 pass
 construct-node/construct-node-003 pass
@@ -1206,6 +1209,7 @@ error/error-0090n pass
 error/error-0110a pass
 error/error-0120a pass
 error/error-0120b pass
+error/error-0125a pass
 error/error-0150a pass
 error/error-0150b pass
 error/error-0150c pass
@@ -1350,6 +1354,7 @@ error/error-1015a pass
 error/error-1017a pass
 error/error-1020a pass
 error/error-1030a pass
+error/error-1035a pass
 error/error-1040a pass
 error/error-1080a pass
 error/error-1080b pass
@@ -1357,6 +1362,7 @@ error/error-1080c pass
 error/error-1090a pass
 error/error-1100a pass
 error/error-1100b pass
+error/error-1110a pass
 error/error-1120a pass
 error/error-1130a pass
 error/error-1140a pass
@@ -1365,6 +1371,9 @@ error/error-1150a pass
 error/error-1160a wrong-code
 error/error-1205a pass
 error/error-1205b pass
+error/error-1210a pass
+error/error-1210b pass
+error/error-1220a pass
 error/error-1260a pass
 error/error-1260b pass
 error/error-1260c pass
@@ -1606,6 +1615,7 @@ for-each-group/for-each-group-040 pass
 for-each-group/for-each-group-046 pass
 for-each-group/for-each-group-049 pass
 for-each-group/for-each-group-050 pass
+for-each-group/for-each-group-051 pass
 for-each-group/for-each-group-052 pass
 for-each-group/for-each-group-053 pass
 for-each-group/for-each-group-054 pass
@@ -4454,6 +4464,7 @@ sort/sort-023 pass
 sort/sort-024 pass
 sort/sort-025 pass
 sort/sort-026 pass
+sort/sort-027 pass
 sort/sort-030 pass
 sort/sort-031 pass
 sort/sort-032 pass

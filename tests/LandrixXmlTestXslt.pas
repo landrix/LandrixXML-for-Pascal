@@ -502,7 +502,7 @@ const
     '<xsl:output encoding="UTF-16"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
     '<xsl:template match="/"><xsl:number lang="de"/></xsl:template>',
-    '<xsl:key name="k" match="a" use="." collation="urn:c"/><xsl:template match="/"/>',
+    '<xsl:key name="k" match="a" use="." collation="http://www.w3.org/2013/collation/UCA"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:try/></xsl:template>',
     '<xsl:import-schema namespace="urn:x"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:result-document validation="strict"/></xsl:template>',

@@ -307,6 +307,7 @@ type
     function Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
       const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
     procedure Fail(Instr: TXsltInstr; const Code, Msg: string);
+    procedure CheckCollation(Instr: TXsltInstr; const Uri: TLandrixXmlUtf8; const Code: string);
     function Eval(Instr: TXsltInstr; Expr: TLandrixXmlXPathExpression;
       const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
     function SimpleContent(const S: TLandrixXmlXPathSequence; const Separator: TLandrixXmlUtf8): TLandrixXmlUtf8;
@@ -1498,6 +1499,19 @@ begin
     raise ELandrixXmlXsltError.CreateXslt(xecXslt, Code, Msg, Instr.Module, Instr.Line, Instr.Column)
   else
     raise ELandrixXmlXsltError.CreateXslt(xecXslt, Code, Msg, '', 0, 0);
+end;
+
+{ the value of a collation attribute value template (resolved against the
+  static base URI): Code if it is not known as a collation }
+procedure TRun.CheckCollation(Instr: TXsltInstr; const Uri: TLandrixXmlUtf8; const Code: string);
+begin
+  case XsltCollationKind(LandrixXmlXPathResolveUri(Uri, Instr.BaseUri)) of
+    1:
+      raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000',
+        'a collation other than the codepoint collation is not supported', Instr.Module, Instr.Line, Instr.Column);
+    2:
+      Fail(Instr, Code, 'the collation "' + LandrixXmlUtf8ToString(Uri) + '" is not known');
+  end;
 end;
 
 function TRun.Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
@@ -3002,9 +3016,7 @@ begin
     end;
     if Key.Collation <> nil then
     begin
-      if Trim8(EvalAvt(Where, Key.Collation, Focus)) <> 'http://www.w3.org/2005/xpath-functions/collation/codepoint' then
-        raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000',
-          'a collation other than the codepoint collation is not supported', Where.Module, Where.Line, Where.Column);
+      CheckCollation(Where, Trim8(EvalAvt(Where, Key.Collation, Focus)), 'XTDE1035');
       { a collation given: case-order does not apply }
       CaseOrder[K] := 0;
     end;
@@ -4364,6 +4376,10 @@ begin
   Groups := nil;
   GroupKeys := nil;
   Count := 0;
+  { a computed unknown collation: FOCH0002 as Saxon (XTDE1110 in the
+    specification; Saxon raises that for a literal one) }
+  if Instr.CollationAvt <> nil then
+    CheckCollation(Instr, Trim8(EvalAvt(Instr, Instr.CollationAvt, Focus)), 'FOCH0002');
   Population := Eval(Instr, Instr.Select, Focus);
   Map := TXsltStringList.Create;
   try

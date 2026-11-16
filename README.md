@@ -386,7 +386,10 @@ when the stylesheet is loaded, with `system-property()`,
 `xsl:strip-space` and `xsl:preserve-space` (for the source and the
 documents `doc()` and `document()` read), `xsl:sort` (in `xsl:for-each`, `xsl:apply-templates`,
 `xsl:for-each-group` and `xsl:perform-sort`; the codepoint collation,
-`case-order`, no `lang`), `xsl:analyze-string`, `xsl:next-match`,
+`case-order`, no `lang`; a collation URI that names no collation is the
+error of the instruction, `default-collation` takes the first URI of its
+list that names one, the other collations Saxon knows are rejected as
+unsupported), `xsl:analyze-string`, `xsl:next-match`,
 `xsl:apply-imports`, `xsl:result-document` (with named `xsl:output`
 formats), `xsl:attribute-set` (with `use-attribute-sets` on literal
 result elements, `xsl:element` and `xsl:copy`), `xsl:character-map`
@@ -433,8 +436,8 @@ are the ones Saxon writes, byte for byte (`tools/xslt-crosscheck.py`).
 Anything else is rejected when the stylesheet is loaded
 (`xecUnsupported`), never run differently; only a serialization
 attribute of `xsl:result-document` computed at run time can ask for an
-unsupported value, which raises `xecUnsupported` when the instruction is
-evaluated. A stylesheet with
+unsupported value, and a computed collation another collation, which
+raise `xecUnsupported` when the instruction is evaluated. A stylesheet with
 `version="3.0"` is run with these rules (Saxon runs it as XSLT 3.0; the
 XSLT 3.0 instructions are rejected); XSLT 3.0 is to follow step by step.
 A version above 3.0 means forwards compatible processing as in Saxon (an
