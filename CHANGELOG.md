@@ -55,6 +55,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `xsl:import`, and the base URI of the temporary trees an instruction
   makes and of nodes made or copied at the top of a sequence, as Saxon
   gives them.
+- XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
+  names with a prefix (`key()` resolves it with the namespaces of the
+  calling expression).
 - XSLT: `document()` with a second argument (the base URI of that node for
   every relative URI; `XPTY0004` for no single node, `XTDE1162` without a
   base URI).

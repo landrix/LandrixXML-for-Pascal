@@ -348,7 +348,13 @@ type
   public
     Patterns: array of TLandrixXmlXPathExpression;
     Relative: array of Boolean;
+    { the use expression, or nil and the sequence constructor in Body
+      (TXsltInstr, owned) with its frame size }
     Use: TLandrixXmlXPathExpression;
+    Body: TObjectList;
+    FrameSize: Integer;
+    constructor Create;
+    destructor Destroy; override;
   end;
 
   { the declarations of a key name (TXsltKeyDecl, owned) }
@@ -471,6 +477,18 @@ function TXsltStringList.CompareStrings(const S1, S2: string): Integer;
 {$ENDIF}
 begin
   Result := CompareStr(S1, S2);
+end;
+
+constructor TXsltKeyDecl.Create;
+begin
+  inherited Create;
+  Body := TObjectList.Create;
+end;
+
+destructor TXsltKeyDecl.Destroy;
+begin
+  Body.Free;
+  inherited Destroy;
 end;
 
 constructor TXsltKey.Create;
@@ -3780,9 +3798,11 @@ begin
   end;
 end;
 
+function IsQName8(const S: TLandrixXmlUtf8): Boolean; forward;
+
 { xsl:key: the declarations of one name are combined (all precedences);
-  a name with a prefix is not supported (key() gets the name as a string
-  and resolves no prefixes). }
+  key() resolves a prefix of the name with the namespaces of the calling
+  expression. }
 procedure TCompiler.CompileKey(D: TDecl);
 var
   M: TModule;
@@ -3791,25 +3811,32 @@ var
   Branches: TLandrixXmlUtf8Array;
   K: TXsltKey;
   Decl: TXsltKeyDecl;
+  HasUse, HasBody: Boolean;
+  Scope: TScope;
 begin
   M := D.Module;
   E := D.Element;
   Branches := nil;
   V := Trim8(ReqAttr(M, E, 'name'));
-  if Pos8(':', V) > 0 then
-    Unsupported(M, E, 'a key name with a prefix');
+  if not IsQName8(V) then
+    Fail(M, E, 'XTSE0020', 'the name of xsl:key is not a QName: "' + LandrixXmlUtf8ToString(V) + '"');
   Name := QNameToClark(M, E, V, False);
   if Attr(M, E, 'collation', V) and (Trim8(V) <> 'http://www.w3.org/2005/xpath-functions/collation/codepoint') then
     Unsupported(M, E, 'a collation other than the codepoint collation');
-  if not Attr(M, E, 'use', V) then
-    Unsupported(M, E, 'xsl:key without use (a sequence constructor)');
+  HasUse := Attr(M, E, 'use', V);
   I := M.Tree.FirstChild(E);
+  HasBody := False;
   while I >= 0 do
   begin
-    if (M.Tree.Kind[I] = xnkElement) or (M.Tree.Kind[I] = xnkText) and (Trim8(M.Tree.ValueUtf8(I)) <> '') then
-      Fail(M, E, 'XTSE1205', 'xsl:key has use and content');
+    if (M.Tree.Kind[I] = xnkElement) or (M.Tree.Kind[I] = xnkText) and
+      ((Trim8(M.Tree.ValueUtf8(I)) <> '') or PreservesSpace(M.Tree, I)) then
+      HasBody := True;
     I := M.Tree.NextSibling[I];
   end;
+  if HasUse and HasBody then
+    Fail(M, E, 'XTSE1205', 'xsl:key has use and content');
+  if not HasUse and not HasBody then
+    Fail(M, E, 'XTSE1205', 'xsl:key needs use or content');
   I := FC.Keys.IndexOf(LandrixXmlUtf8ToString(Name));
   if I >= 0 then
     K := TXsltKey(FC.Keys.Objects[I])
@@ -3822,7 +3849,21 @@ begin
   end;
   Decl := TXsltKeyDecl.Create;
   K.Decls.Add(Decl);
-  Decl.Use := Compile(M, E, V, nil);
+  if HasUse then
+    Decl.Use := Compile(M, E, V, nil)
+  else
+  begin
+    { the sequence constructor with the globals in scope }
+    Scope := TScope.Create;
+    try
+      Scope.NextSlot := FC.GlobalCount;
+      Scope.MaxSlot := FC.GlobalCount;
+      CompileBody(M, E, Scope, Decl.Body, -1);
+      Decl.FrameSize := Scope.MaxSlot;
+    finally
+      Scope.Free;
+    end;
+  end;
   Branches := SplitPattern(ReqAttr(M, E, 'match'));
   SetLength(Decl.Patterns, Length(Branches));
   SetLength(Decl.Relative, Length(Branches));
@@ -5100,6 +5141,9 @@ begin
   end;
   for I := 0 to Integer(FC.Globals.Count) - 1 do
     Resolve(TXsltGlobal(FC.Globals[I]).Body);
+  for I := 0 to Integer(FC.Keys.Count) - 1 do
+    for J := 0 to Integer(TXsltKey(FC.Keys.Objects[I]).Decls.Count) - 1 do
+      Resolve(TXsltKeyDecl(TXsltKey(FC.Keys.Objects[I]).Decls[J]).Body);
   ModeOf('');
   for I := 0 to Integer(FC.Modes.Count) - 1 do
   begin

@@ -4173,7 +4173,18 @@ begin
           end;
         if not Matched then
           Continue;
-        V := FEvaluator.EvaluateInFocus(Decl.Use, NodeFocus(I + B, 1, 1));
+        if Decl.Use <> nil then
+          V := FEvaluator.EvaluateInFocus(Decl.Use, NodeFocus(I + B, 1, 1))
+        else
+        begin
+          { the sequence constructor, in a frame of its own }
+          FEvaluator.PushFrame(Decl.FrameSize);
+          try
+            V := TemporarySequence(Decl.Body, NodeFocus(I + B, 1, 1), FC.FindMode(''));
+          finally
+            FEvaluator.PopFrame;
+          end;
+        end;
         for J := 0 to Integer(V.Count) - 1 do
         begin
           Value := LandrixXmlUtf8ToString(AtomKey(V.Items[J]));
@@ -4213,7 +4224,7 @@ end;
 function TRun.KeyFunction(const Args: array of TLandrixXmlXPathSequence;
   const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
 var
-  Name: TLandrixXmlUtf8;
+  Name, Uri, Local: TLandrixXmlUtf8;
   I, J, Top, Root, B, N, X: Integer;
   K: TXsltKey;
   Index: TKeyIndex;
@@ -4227,7 +4238,9 @@ begin
   Found := nil;
   if (Args[0].Count <> 1) then
     raise ELandrixXmlXPathError.CreateXPath('XPTY0004', 'key(): the name must be one string');
-  Name := LandrixXmlStringToUtf8(Trim(LandrixXmlUtf8ToString(FEvaluator.ItemString(Args[0].Items[0]))));
+  { a lexical QName, its prefix bound by the calling expression }
+  XsltNameArgument(FEvaluator, Args[0], 'XTDE1260', 'key()', '', Uri, Local);
+  Name := XsltClarkOf(Uri, Local);
   I := FC.Keys.IndexOf(LandrixXmlUtf8ToString(Name));
   if I < 0 then
     raise ELandrixXmlXPathError.CreateXPath('XTDE1260', 'key(): there is no key ' + LandrixXmlUtf8ToString(Name));
