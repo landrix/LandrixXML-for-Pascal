@@ -387,7 +387,9 @@ runs), `xsl:if`, `xsl:choose`,
 `xsl:for-each`, `xsl:sequence`, `xsl:copy` and `xsl:copy-of` (also with
 `copy-namespaces="no"`, the namespaces as Saxon writes them),
 `xsl:document`, `xsl:comment`, `xsl:processing-instruction`,
-`xsl:message`, `xsl:number`, `xsl:function`, `xsl:for-each-group`,
+`xsl:message`, `xsl:number` (also English words, ordinals, `lang` and
+`letter-value`; Saxon HE numbers in English whatever the language),
+`xsl:function`, `xsl:for-each-group`,
 `use-when` (and `xsl:use-when` on literal result elements; evaluated
 when the stylesheet is loaded, with `system-property()`,
 `function-available()`, `element-available()` and `static-base-uri()`),
@@ -420,7 +422,8 @@ extension instruction is known: their `xsl:fallback` runs, without one
 `element-available()` (true for what this subset translates),
 `system-property()` (`xsl:version` is `2.0`, vendor and product are
 this library's) and `format-date()`, `format-time()` and
-`format-dateTime()` in English (numbers, roman numerals, names, widths);
+`format-dateTime()` in English (numbers, roman numerals, letters, words,
+ordinals, names, widths);
 output methods xml, html (HTML5), xhtml (XHTML 1.0 elements with the
 HTML indentation, as Saxon writes it; also the default for an `html`
 root element in the XHTML namespace, as in Saxon) and text in UTF-8, US-ASCII or

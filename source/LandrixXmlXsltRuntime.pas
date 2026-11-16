@@ -1882,8 +1882,7 @@ begin
       raise;
     on E: ELandrixXmlXPathError do
       if Instr <> nil then
-        raise ELandrixXmlXsltError.CreateXslt(xecXslt, E.XPathCode,
-          System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), Instr.Module, Instr.Line, Instr.Column)
+        Located(Instr, E)
       else
         raise;
   end;
@@ -3871,9 +3870,12 @@ begin
 end;
 
 { The text of one number in a format token: decimal digits (their number
-  the minimum width), a, A, i, I. }
+  the minimum width), a, A, i, I, English words (W, w, Ww). Ordinal: an
+  ordinal (digits and words; Saxon ignores it for letters and roman
+  numerals); Alphabetic: letter-value="alphabetic", i and I are letters
+  from i to z (as Saxon). }
 function NumberToken(N: Integer; const Token: TLandrixXmlUtf8; const GroupSep: TLandrixXmlUtf8;
-  GroupSize: Integer): TLandrixXmlUtf8;
+  GroupSize: Integer; Ordinal, Alphabetic: Boolean): TLandrixXmlUtf8;
 const
   Values: array[0..12] of Integer = (1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1);
   Symbols: array[0..12] of string = ('M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I');
@@ -3883,6 +3885,16 @@ var
   S, Letters: TLandrixXmlUtf8;
 begin
   Result := '';
+  if (Token = 'W') or (Token = 'w') or (Token = 'Ww') then
+  begin
+    Result := XsltWordsCase(XsltNumberWords(N, Ordinal), Token);
+    Exit;
+  end;
+  if Alphabetic and ((Token = 'i') or (Token = 'I')) then
+  begin
+    Result := XsltLetters(N, Token[1]);
+    Exit;
+  end;
   Letters := 'abcdefghijklmnopqrstuvwxyz';
   if Token = 'A' then
     Letters := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -3939,13 +3951,15 @@ begin
     end;
     Result := S;
   end;
+  if Ordinal then
+    Result := Result + XsltOrdinalSuffix(N);
 end;
 
 { Numbers formatted as XSLT 2.0 12.3 says: the alphanumeric tokens of the
   format and the separators between them (prefix and suffix kept; the
   last token and separator for further numbers). }
 function FormatNumbers(const Numbers: array of Integer; const Format, GroupSep: TLandrixXmlUtf8;
-  GroupSize: Integer): TLandrixXmlUtf8;
+  GroupSize: Integer; Ordinal, Alphabetic: Boolean): TLandrixXmlUtf8;
 var
   Tokens, Seps: TLandrixXmlUtf8Array;
   Prefix, Suffix, Sep, Token: TLandrixXmlUtf8;
@@ -4012,7 +4026,7 @@ begin
       Token := Tokens[I]
     else
       Token := Tokens[High(Tokens)];
-    Result := Result + NumberToken(Numbers[I], Token, GroupSep, GroupSize);
+    Result := Result + NumberToken(Numbers[I], Token, GroupSep, GroupSize, Ordinal, Alphabetic);
   end;
   Result := Result + Suffix;
 end;
@@ -4026,6 +4040,7 @@ var
   GroupSep, V: TLandrixXmlUtf8;
   GroupSize: Integer;
   Chain: array of Integer;
+  Ordinal, Alphabetic: Boolean;
 
   procedure Add(N: Integer);
   begin
@@ -4056,6 +4071,20 @@ var
 begin
   Numbers := nil;
   Chain := nil;
+  { lang, ordinal and letter-value first (Saxon: a bad lang before an
+    empty select). Saxon HE numbers in English whatever the language;
+    any ordinal value but the empty string is an ordinal. }
+  if (Instr.NumberLang <> nil) and not XsltIsLanguage(Trim8(EvalAvt(Instr, Instr.NumberLang, Focus))) then
+    Fail(Instr, 'XTDE0030', 'xsl:number: lang must be a language code');
+  Ordinal := (Instr.NumberOrdinal <> nil) and (EvalAvt(Instr, Instr.NumberOrdinal, Focus) <> '');
+  Alphabetic := False;
+  if Instr.LetterValue <> nil then
+  begin
+    V := EvalAvt(Instr, Instr.LetterValue, Focus);
+    if (V <> 'alphabetic') and (V <> 'traditional') then
+      Fail(Instr, 'XTDE0030', 'xsl:number: letter-value must be alphabetic or traditional');
+    Alphabetic := V = 'alphabetic';
+  end;
   if Instr.NumberValue <> nil then
   begin
     S := Eval(Instr, Instr.NumberValue, Focus);
@@ -4150,7 +4179,8 @@ begin
     if A = 2 then
       GroupSize := 0;
   end;
-  R.Characters(FormatNumbers(Numbers, EvalAvt(Instr, Instr.FormatAvt, Focus), GroupSep, GroupSize));
+  R.Characters(FormatNumbers(Numbers, EvalAvt(Instr, Instr.FormatAvt, Focus), GroupSep, GroupSize, Ordinal,
+    Alphabetic));
 end;
 
 { whether Href can name a text resource: no fragment, no query, none of

@@ -603,18 +603,58 @@ begin
   end;
 end;
 
+{ Number formats Saxon writes in a way this library does not follow:
+  xecUnsupported when they run }
+procedure TestNumberFormatUnsupported;
+const
+  Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" ' +
+    'xmlns:xs="http://www.w3.org/2001/XMLSchema"><xsl:template name="main"><out>';
+  Cases: array[0..4] of string = (
+    '<xsl:value-of select="format-date(xs:date(''2013-09-23''), ''[Da,3]'')"/>',
+    '<xsl:value-of select="format-date(xs:date(''2013-09-23''), ''[Da,3]'') = ''w'' and true()"/>',
+    '<xsl:value-of select="format-date(xs:date(''2013-09-23''), ''[Dw,15]'')"/>',
+    '<xsl:value-of select="format-date(xs:date(''2013-09-23''), ''[DWc]'')"/>',
+    '<xsl:number value="3" format="wW"/>');
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  I: Integer;
+  Code: string;
+begin
+  for I := 0 to High(Cases) do
+  begin
+    Sheet := TLandrixXmlXsltStylesheet.Create;
+    T := nil;
+    try
+      Sheet.LoadFromUtf8(U(Head + Cases[I] + '</out></xsl:template></xsl:stylesheet>'), U('urn:case'));
+      T := TLandrixXmlXsltTransformer.Create(Sheet);
+      T.InitialTemplate := U('main');
+      Code := 'none';
+      try
+        T.TransformToUtf8(nil);
+      except
+        on E: ELandrixXmlError do
+          Code := IntToStr(Ord(E.Code));
+      end;
+      CheckEqualsStr(IntToStr(Ord(xecUnsupported)), Code, 'unsupported: ' + Cases[I]);
+    finally
+      T.Free;
+      Sheet.Free;
+    end;
+  end;
+end;
+
 { What the subset does not support is rejected when the stylesheet is
   loaded (xecUnsupported); errors name module and line. }
 procedure TestRejected;
 const
   Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">';
-  Cases: array[0..12] of string = (
+  Cases: array[0..11] of string = (
     '<xsl:accumulator name="a" initial-value="0"/><xsl:template match="/"/>',
     '<xsl:mode name="m"/><xsl:template match="/"/>',
     '<xsl:output html-version="5"/><xsl:template match="/"/>',
     '<xsl:output encoding="UTF-16"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
-    '<xsl:template match="/"><xsl:number lang="de"/></xsl:template>',
     '<xsl:key name="k" match="a" use="." collation="http://www.w3.org/2013/collation/UCA"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:try/></xsl:template>',
     '<xsl:import-schema namespace="urn:x"/><xsl:template match="/"/>',
@@ -676,6 +716,7 @@ begin
   RegisterTest('Xslt.ResultDocuments', TestResultDocuments);
   RegisterTest('Xslt.Rejected', TestRejected);
   RegisterTest('Xslt.RawUnsupported', TestRawUnsupported);
+  RegisterTest('Xslt.NumberFormatUnsupported', TestNumberFormatUnsupported);
   RegisterTest('Xslt.ByteOrderMark', TestByteOrderMark);
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
 end;

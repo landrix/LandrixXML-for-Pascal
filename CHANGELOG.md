@@ -58,6 +58,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XSLT: `xsl:key` with a sequence constructor instead of `use`, and key
   names with a prefix (`key()` resolves it with the namespaces of the
   calling expression).
+- XSLT: English words and ordinals as Saxon HE writes them, in
+  `xsl:number` (`format="w"`, `"W"`, `"Ww"`, `ordinal`) and in the
+  pictures of `format-date()` and its relatives (`[Dwo]`, `[D1o]`, also
+  letters `[Da]`). `xsl:number` accepts `lang` (an invalid language code
+  is `XTDE0030`; the numbers stay English, as in Saxon HE) and
+  `letter-value`. A year cut to a maximum width is its last digits as a
+  number, as in Saxon (`[Y1,*-3]` of 2013 is `13`, no longer `013`).
 - XSLT: `[xsl:]expand-text` (XSLT 3.0 text value templates, as Saxon
   also runs them in a stylesheet with `version="2.0"`): text in a sequence
   constructor and in `xsl:text` with expressions in braces (`{{` and `}}`

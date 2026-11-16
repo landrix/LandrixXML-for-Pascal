@@ -13,10 +13,13 @@
   Components Y M D d F W H h P m s f Z z C E with decimal presentations
   (a format token of ASCII digits, its digits the minimum width; a year
   with two or more digits in it is cut to as many), roman numerals (I,
-  i), names (N, n, Nn) and width modifiers. Words (W, w), ordinals (o),
-  the week in the month (w) and other format tokens raise
+  i), letters (a, A), English words (W, w, Ww), ordinals (o) and width
+  modifiers. The week in the month (w) and other format tokens raise
   xecUnsupported; a malformed picture FOFD1340, a component the value
-  does not have FOFD1350 (the codes Saxon gives). }
+  does not have FOFD1350 (the codes Saxon gives).
+
+  The English words and ordinals are also those of xsl:number: Saxon HE
+  numbers in English whatever the language. }
 
 unit LandrixXmlXsltFormat;
 
@@ -64,6 +67,23 @@ function XsltFormatNumber(const Value: TLandrixXmlUtf8; const Picture: TLandrixX
   formatted (Scaled), as Saxon does. Checks the picture (FODF1310). }
 function XsltPictureScale(const Picture: TLandrixXmlUtf8; DF: TXsltDecimalFormat; Negative: Boolean): Integer;
 
+{ N (0 or more) in English words as Saxon writes them: title case with
+  "and" in lower case ("One Hundred and Twenty One"); Ordinal: the
+  ordinal ("One Hundred and Twenty-First"). }
+function XsltNumberWords(N: Integer; Ordinal: Boolean): TLandrixXmlUtf8;
+{ Words of XsltNumberWords in the case of the format token W (upper
+  case), w (lower case) or Ww (as they are) }
+function XsltWordsCase(const Words, Token: TLandrixXmlUtf8): TLandrixXmlUtf8;
+{ the English ordinal suffix of N: st, nd, rd or th }
+function XsltOrdinalSuffix(N: Integer): TLandrixXmlUtf8;
+{ N (1 or more) in the letters from First to z (Z when First is upper
+  case) as a bijective numeral: a, b, ..., z, aa, ab, ...; 0 or less as
+  digits }
+function XsltLetters(N: Integer; First: AnsiChar): TLandrixXmlUtf8;
+{ S is an xs:language: 1 to 8 ASCII letters, then any number of
+  subtags of "-" and 1 to 8 ASCII letters or digits }
+function XsltIsLanguage(const S: TLandrixXmlUtf8): Boolean;
+
 implementation
 
 uses
@@ -93,9 +113,11 @@ begin
   raise ELandrixXmlXPathError.CreateXPath(Code, Msg);
 end;
 
+{ an XPath error that keeps xecUnsupported (the evaluator would make a
+  plain ELandrixXmlError FOER0000 of code xecXPath) }
 procedure Unsupported(const Msg: string);
 begin
-  raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT: ' + Msg + ' is not supported');
+  raise ELandrixXmlXPathError.CreateXPathAt(xecUnsupported, 'FOER0000', 'XSLT: ' + Msg + ' is not supported', 0, 0);
 end;
 
 function Digits(const S: TLandrixXmlUtf8; var I: Integer; N: Integer): Integer;
@@ -289,6 +311,159 @@ begin
       Result[I] := AnsiChar(Ord(Result[I]) + 32);
 end;
 
+const
+  UnitWords: array[0..19] of string = ('Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight',
+    'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen',
+    'Nineteen');
+  OrdinalUnitWords: array[0..19] of string = ('Zeroth', 'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth',
+    'Seventh', 'Eighth', 'Ninth', 'Tenth', 'Eleventh', 'Twelfth', 'Thirteenth', 'Fourteenth', 'Fifteenth',
+    'Sixteenth', 'Seventeenth', 'Eighteenth', 'Nineteenth');
+  TenWords: array[2..9] of string = ('Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty',
+    'Ninety');
+  OrdinalTenWords: array[2..9] of string = ('Twentieth', 'Thirtieth', 'Fortieth', 'Fiftieth', 'Sixtieth',
+    'Seventieth', 'Eightieth', 'Ninetieth');
+
+{ the words of N below a thousand, a million or a billion (Scale) and
+  the rest: "and" before a rest below 100 (as Saxon) }
+function ScaleWords(N, Scale: Integer; const Name: string; Ordinal: Boolean): TLandrixXmlUtf8; forward;
+
+function XsltNumberWords(N: Integer; Ordinal: Boolean): TLandrixXmlUtf8;
+begin
+  if N >= 1000000000 then
+    Result := ScaleWords(N, 1000000000, 'Billion', Ordinal)
+  else if N >= 1000000 then
+    Result := ScaleWords(N, 1000000, 'Million', Ordinal)
+  else if N >= 1000 then
+    Result := ScaleWords(N, 1000, 'Thousand', Ordinal)
+  else if N >= 100 then
+  begin
+    Result := XsltNumberWords(N div 100, False) + ' Hundred';
+    if N mod 100 = 0 then
+    begin
+      if Ordinal then
+        Result := Result + 'th';
+    end
+    else
+      Result := Result + ' and ' + XsltNumberWords(N mod 100, Ordinal);
+  end
+  else if N < 20 then
+  begin
+    if N < 0 then
+      N := 0;
+    if Ordinal then
+      Result := LandrixXmlStringToUtf8(OrdinalUnitWords[N])
+    else
+      Result := LandrixXmlStringToUtf8(UnitWords[N]);
+  end
+  else if N mod 10 = 0 then
+  begin
+    if Ordinal then
+      Result := LandrixXmlStringToUtf8(OrdinalTenWords[N div 10])
+    else
+      Result := LandrixXmlStringToUtf8(TenWords[N div 10]);
+  end
+  else if Ordinal then
+    Result := LandrixXmlStringToUtf8(TenWords[N div 10] + '-' + OrdinalUnitWords[N mod 10])
+  else
+    Result := LandrixXmlStringToUtf8(TenWords[N div 10] + ' ' + UnitWords[N mod 10]);
+end;
+
+function ScaleWords(N, Scale: Integer; const Name: string; Ordinal: Boolean): TLandrixXmlUtf8;
+var
+  Rest: Integer;
+begin
+  Result := XsltNumberWords(N div Scale, False) + ' ' + LandrixXmlStringToUtf8(Name);
+  Rest := N mod Scale;
+  if Rest = 0 then
+  begin
+    if Ordinal then
+      Result := Result + 'th';
+  end
+  else if Rest < 100 then
+    Result := Result + ' and ' + XsltNumberWords(Rest, Ordinal)
+  else
+    Result := Result + ' ' + XsltNumberWords(Rest, Ordinal);
+end;
+
+function XsltWordsCase(const Words, Token: TLandrixXmlUtf8): TLandrixXmlUtf8;
+begin
+  if Token = 'W' then
+    Result := Upper8(Words)
+  else if Token = 'w' then
+    Result := Lower8(Words)
+  else
+    Result := Words;
+end;
+
+function XsltOrdinalSuffix(N: Integer): TLandrixXmlUtf8;
+begin
+  N := Abs(N);
+  if (N mod 100 >= 11) and (N mod 100 <= 13) then
+    Result := 'th'
+  else
+    case N mod 10 of
+      1: Result := 'st';
+      2: Result := 'nd';
+      3: Result := 'rd';
+    else
+      Result := 'th';
+    end;
+end;
+
+function XsltLetters(N: Integer; First: AnsiChar): TLandrixXmlUtf8;
+var
+  Base: Integer;
+  Last: AnsiChar;
+  Digit: TLandrixXmlUtf8;
+begin
+  Result := '';
+  if N <= 0 then
+  begin
+    Result := LandrixXmlStringToUtf8(IntToStr(N));
+    Exit;
+  end;
+  if First in ['A'..'Z'] then
+    Last := 'Z'
+  else
+    Last := 'z';
+  Base := Ord(Last) - Ord(First) + 1;
+  while N > 0 do
+  begin
+    Dec(N);
+    Digit := 'a';
+    Digit[1] := AnsiChar(Ord(First) + N mod Base);
+    Result := Digit + Result;
+    N := N div Base;
+  end;
+end;
+
+function XsltIsLanguage(const S: TLandrixXmlUtf8): Boolean;
+var
+  I, Run: Integer;
+  First: Boolean;
+begin
+  Result := False;
+  Run := 0;
+  First := True;
+  for I := 1 to Length(S) do
+    if S[I] = '-' then
+    begin
+      if Run = 0 then
+        Exit;
+      Run := 0;
+      First := False;
+    end
+    else if (S[I] in ['a'..'z', 'A'..'Z']) or not First and (S[I] in ['0'..'9']) then
+    begin
+      Inc(Run);
+      if Run > 8 then
+        Exit;
+    end
+    else
+      Exit;
+  Result := Run > 0;
+end;
+
 function Pad(const S: TLandrixXmlUtf8; Width: Integer; C: AnsiChar; Left: Boolean): TLandrixXmlUtf8;
 var
   Fill: TLandrixXmlUtf8;
@@ -356,11 +531,14 @@ begin
   Result := Copy(Result, 1, MaxW);
 end;
 
-{ a number in a decimal format token (its digits the minimum width) or as
-  a roman numeral }
-function NumberValue(N: Integer; const Token: TLandrixXmlUtf8; MinW, MaxW: Integer; IsYear: Boolean): TLandrixXmlUtf8;
+{ a number (0 or more) in a decimal format token (its digits the minimum
+  width), as a roman numeral, in letters or in words; Ordinal: an
+  ordinal (not for roman numerals and letters, as Saxon) }
+function NumberValue(N: Integer; const Token: TLandrixXmlUtf8; MinW, MaxW: Integer; IsYear,
+  Ordinal: Boolean): TLandrixXmlUtf8;
 var
-  I, Width: Integer;
+  I, Width, Limit: Integer;
+  Words: Boolean;
 begin
   if (Token = 'I') or (Token = 'i') then
   begin
@@ -369,26 +547,46 @@ begin
       Result := Lower8(Result);
     Exit;
   end;
+  Words := (Token = 'W') or (Token = 'w') or (Token = 'Ww');
   Width := 0;
-  for I := 1 to Length(Token) do
-    if Token[I] in ['0'..'9'] then
-      Inc(Width)
-    else
+  if not Words and (Token <> 'a') and (Token <> 'A') then
+  begin
+    for I := 1 to Length(Token) do
+      if Token[I] in ['0'..'9'] then
+        Inc(Width)
+      else
+        Unsupported('the format token "' + LandrixXmlUtf8ToString(Token) + '"');
+    if Width = 0 then
       Unsupported('the format token "' + LandrixXmlUtf8ToString(Token) + '"');
-  if Width = 0 then
-    Unsupported('the format token "' + LandrixXmlUtf8ToString(Token) + '"');
-  Result := LandrixXmlStringToUtf8(IntToStr(Abs(N)));
+  end;
   { a year is cut to the width of a token with two digits or more, or to
-    the maximum width }
+    the maximum width: its last digits as a number (Saxon) }
   if IsYear and (MaxW < 0) and (Width >= 2) then
     MaxW := Width;
-  if IsYear and (MaxW > 0) and (Length(Result) > MaxW) then
-    Result := Copy(Result, Length(Result) - MaxW + 1, MaxW);
+  if IsYear and (MaxW > 0) and (MaxW <= 9) then
+  begin
+    Limit := 1;
+    for I := 1 to MaxW do
+      Limit := Limit * 10;
+    N := N mod Limit;
+  end;
+  if Words or (Width = 0) then
+  begin
+    if Words then
+      Result := XsltWordsCase(XsltNumberWords(N, Ordinal), Token)
+    else
+      Result := XsltLetters(N, Token[1]);
+    { Saxon pads words and letters to a minimum width with U+FFFF }
+    if Length(Result) < MinW then
+      Unsupported('a minimum width longer than words or letters');
+    Exit;
+  end;
+  Result := LandrixXmlStringToUtf8(IntToStr(N));
   if MinW > Width then
     Width := MinW;
   Result := Pad(Result, Width, '0', True);
-  if N < 0 then
-    Result := '-' + Result;
+  if Ordinal then
+    Result := Result + XsltOrdinalSuffix(N);
 end;
 
 { a time zone: tokens "01:01" (the default), "00:00", "0000", "01", "0" }
@@ -441,8 +639,10 @@ var
   Token, Width: TLandrixXmlUtf8;
   K, MinW, MaxW, N: Integer;
   MinS, MaxS: TLandrixXmlUtf8;
+  Ordinal: Boolean;
 begin
   Result := '';
+  Ordinal := False;
   if Spec = '' then
     Fail('FOFD1340', 'an empty variable marker in a picture');
   C := Spec[1];
@@ -484,14 +684,14 @@ begin
     Fail('FOFD1350', 'the component "' + LandrixXmlUtf8ToString(Copy(Spec, 1, 1)) + '" is not available');
   if (Token <> '') and (Token[Length(Token)] in ['o', 't', 'c']) and (Length(Token) > 1) then
   begin
-    if Token[Length(Token)] = 'o' then
-      Unsupported('ordinal numbers in a picture');
+    Ordinal := Token[Length(Token)] = 'o';
     if Token[Length(Token)] = 't' then
       Unsupported('the traditional modifier "t" in a picture');
+    { Saxon writes words with "c" in title case whatever the token }
+    if (Token[Length(Token)] = 'c') and (Token[1] in ['W', 'w']) then
+      Unsupported('words with the modifier "c" in a picture');
     Token := Copy(Token, 1, Length(Token) - 1);
   end;
-  if (Token = 'W') or (Token = 'w') or (Token = 'Ww') then
-    Unsupported('numbers in words in a picture');
   case C of
     'Y', 'M', 'D', 'd', 'W', 'H', 'h', 'm', 's':
       begin
@@ -523,7 +723,7 @@ begin
             else
               Token := '1';
           end;
-          Result := NumberValue(N, Token, MinW, MaxW, C = 'Y');
+          Result := NumberValue(N, Token, MinW, MaxW, C = 'Y', Ordinal);
         end;
       end;
     'F':
@@ -534,7 +734,7 @@ begin
         if (Token = 'N') or (Token = 'n') or (Token = 'Nn') then
           Result := NameValue(DayName(N, MaxW), Token, MinW, -1)
         else
-          Result := NumberValue(N, Token, MinW, MaxW, False);
+          Result := NumberValue(N, Token, MinW, MaxW, False, Ordinal);
       end;
     'P':
       begin

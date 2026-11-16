@@ -3965,6 +3965,7 @@ var
   LeftError: ELandrixXmlXPathError;
   LeftRaised: Boolean;
   ErrCode, ErrMsg: string;
+  ErrLib: TLandrixXmlErrorCode;
 begin
   { like Saxon: an error in one operand does not matter if the other one
     decides }
@@ -3973,6 +3974,7 @@ begin
   Left := False;
   ErrCode := '';
   ErrMsg := '';
+  ErrLib := xecXPath;
   try
     Left := SequenceBoolean(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
   except
@@ -3982,6 +3984,7 @@ begin
       LeftRaised := E is ELandrixXmlXPathRaised;
       ErrCode := E.XPathCode;
       ErrMsg := Copy(E.Message, Length(E.XPathCode) + 3, MaxInt);
+      ErrLib := E.Code;
     end;
   end;
   if (LeftError = nil) and (Left = (FNodes[Index].Kind = xakOr)) then
@@ -4000,7 +4003,8 @@ begin
     if LeftRaised then
       raise ELandrixXmlXPathRaised.CreateXPath(ErrCode, ErrMsg)
     else
-      raise ELandrixXmlXPathError.CreateXPath(ErrCode, ErrMsg);
+      { the library code too (xecUnsupported stays unsupported) }
+      raise ELandrixXmlXPathError.CreateXPathAt(ErrLib, ErrCode, ErrMsg, 0, 0);
   end;
   Output := BooleanSeq(Right);
 end;

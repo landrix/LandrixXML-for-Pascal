@@ -255,6 +255,9 @@ type
     FromRelative: array of Boolean;
     NumberValue: TLandrixXmlXPathExpression;
     FormatAvt: TXsltAvt;
+    { xsl:number lang, ordinal and letter-value (nil if absent; a
+      literal empty lang counts as absent, as Saxon) }
+    NumberLang, NumberOrdinal, LetterValue: TXsltAvt;
     GroupingSeparator: TXsltAvt;
     GroupingSize: TXsltAvt;
     { xsl:for-each-group: the collation (nil if absent) }
@@ -3882,8 +3885,8 @@ begin
 end;
 
 { xsl:number (XSLT 2.0 12): value or the place of the selected node
-  (level, count, from), the format and the grouping as templates; lang,
-  letter-value and ordinal are not supported. }
+  (level, count, from), the format, lang, ordinal, letter-value and the
+  grouping as templates. }
 procedure TCompiler.CompileNumber(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
 var
   V: TLandrixXmlUtf8;
@@ -3913,8 +3916,6 @@ begin
       Fail(M, E, 'XTSE0260', 'xsl:number must be empty');
     I := M.Tree.NextSibling[I];
   end;
-  if Attr(M, E, 'lang', V) or Attr(M, E, 'letter-value', V) or Attr(M, E, 'ordinal', V) then
-    Unsupported(M, E, 'xsl:number with lang, letter-value or ordinal');
   Instr.NumberValue := CompileAttr(M, E, 'value', Scope);
   Instr.Select := CompileAttr(M, E, 'select', Scope);
   if (Instr.NumberValue <> nil) and ((Instr.Select <> nil) or Attr(M, E, 'level', V) or Attr(M, E, 'count', V) or
@@ -3958,6 +3959,13 @@ begin
   if not Attr(M, E, 'format', V) then
     V := '1';
   Instr.FormatAvt := CompileAvt(M, E, V, Scope);
+  if Attr(M, E, 'lang', V) and (V <> '') then
+    Instr.NumberLang := CompileAvt(M, E, V, Scope);
+  if Attr(M, E, 'ordinal', V) then
+    Instr.NumberOrdinal := CompileAvt(M, E, V, Scope);
+  { Saxon trims a literal letter-value, not the value of an expression }
+  if Attr(M, E, 'letter-value', V) then
+    Instr.LetterValue := CompileAvt(M, E, Trim8(V), Scope);
   if Attr(M, E, 'grouping-separator', V) then
     Instr.GroupingSeparator := CompileAvt(M, E, V, Scope);
   if Attr(M, E, 'grouping-size', V) then
