@@ -7,7 +7,7 @@ only.
 
 | Version | Supported |
 |---|---|
-| 0.4.x | yes |
+| 0.5.x | yes |
 | older | no |
 
 ## Reporting a vulnerability

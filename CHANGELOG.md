@@ -5,6 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-17
+
+An XSLT 2.0 processor (`LandrixXmlXslt`, optional) that runs the KoSIT
+report stylesheets and the XRechnung visualization with the output
+Saxon HE writes, byte for byte; XPath 1.0 compatibility mode, SVRL into
+an open writer with the message text as the rule file has it, and a
+stack budget for deep recursion. The documented API only gains
+additions.
+
 ### Added
 
 - XSLT (`LandrixXmlXslt`, optional): a subset of XSLT 2.0 run as Saxon
@@ -110,7 +119,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Saxon: unknown declarations are ignored with their content, an unknown
   instruction runs its `xsl:fallback` (`XTSE0010` without one), unknown
   attributes of XSLT elements are ignored. A version that is no decimal
-  is `XTSE0110`; one below 2.0 is still rejected.
+  is `XTSE0110` (one below 2.0: backwards compatible processing, below).
 - XSLT: `extension-element-prefixes` (also on `xsl:template` and other
   XSLT elements, and as `xsl:extension-element-prefixes` on literal
   result elements). No extension instruction is known: an element in an
@@ -167,7 +176,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   item, `key()` compares strings, an undeclared parameter is ignored and
   function arguments are converted as in XPath 1.0, as Saxon does.
   `system-property('xsl:supports-backwards-compatibility')` is `yes`.
-
+- `tools/xslt-crosscheck.py --config bis|zugferd|all` also checks the
+  report stylesheets of the Peppol BIS and ZUGFeRD configurations of the
+  KoSIT validator (each with its own `default-report.xsl`), and every
+  configuration with a schema error, a document that is not well-formed
+  and one no scenario matches.
 - Schematron: `SaveSvrlToWriter` writes the SVRL element into an open
   writer (`SaveSvrlToStream` calls it, its output is unchanged);
   `RawMessage` on the results is the message with the white space of the
@@ -1143,7 +1156,8 @@ First release.
   copies must be rejected cleanly, and `tools/check-local.py` cross-checks
   the classification with expat.
 
-[Unreleased]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/landrix/LandrixXML-for-Pascal/compare/v0.1.0...v0.2.0
