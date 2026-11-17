@@ -12,6 +12,8 @@
     -it NAME          the initial template (Clark name)
     -p NAME=VALUE     a parameter as xs:untypedAtomic
     -d NAME=FILE      a parameter: the document node of FILE
+    -x NAME=XPATH     a parameter: the value of an XPath expression, such
+                      as () for the empty sequence
   "-" as source: no source document. Exit code 0 and nothing on the
   console when the transformation succeeded; otherwise exit code 1 and
   one line "error CODE MESSAGE" (an XPath or XSLT error) or "exception
@@ -47,7 +49,7 @@ var
 begin
   if ParamCount < 3 then
   begin
-    WriteLn('usage: LandrixXmlXsltRun <stylesheet> <source|-> <output> [-it NAME] [-p NAME=VALUE] [-d NAME=FILE]');
+    WriteLn('usage: LandrixXmlXsltRun <stylesheet> <source|-> <output> [-it NAME] [-p NAME=VALUE] [-d NAME=FILE] [-x NAME=XPATH]');
     Halt(2);
   end;
   Failed := False;
@@ -92,6 +94,8 @@ begin
           Param.LoadFromFile(Value);
           Transformer.SetParameterTree(LandrixXmlStringToUtf8(Name), Param);
         end
+        else if Option = '-x' then
+          Transformer.SetParameterXPath(LandrixXmlStringToUtf8(Name), LandrixXmlStringToUtf8(Value))
         else
           raise Exception.Create('unknown option ' + Option);
       end;

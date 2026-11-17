@@ -455,7 +455,10 @@ to the string), and that `xsl:result-document` in the content of
 `xsl:attribute` is `XTDE1480` as in XSLT 2.0 (Saxon reports `XTDE1490`). The report stylesheet of the KoSIT validator and the XRechnung
 visualization (invoice to XR XML to HTML) run with it: for the 86
 invoices of the KoSIT test suite the report, the XR XML and the HTML
-are the ones Saxon writes, byte for byte (`tools/xslt-crosscheck.py`).
+are the ones Saxon writes, byte for byte, and so are the reports of the
+Peppol BIS and ZUGFeRD configurations, also for a schema error, a
+document that is not well-formed and one no scenario matches
+(`tools/xslt-crosscheck.py`).
 Anything else is rejected when the stylesheet is loaded
 (`xecUnsupported`), never run differently; only a serialization
 attribute of `xsl:result-document` computed at run time can ask for an
@@ -800,7 +803,15 @@ Differences from Xerces, also on purpose:
   input of each of the 86 invoices and compares the report the XSLT
   units write with Saxon's, byte for byte, and does the same for both
   stages of the XRechnung visualization (pinned release 2026-01-31):
-  all 3 x 86 outputs are equal. It needs Java and the validator jar.
+  all 3 x 86 outputs are equal. With `--config bis` and
+  `--config zugferd` it checks the report stylesheets (each with its
+  own `default-report.xsl`) of the Peppol BIS 3.0.21 configuration on
+  the 10 Peppol examples and of the ZUGFeRD 2.5.2 configuration on the
+  41 CII invoices of the KoSIT suite, given the ZUGFeRD profiles EN16931
+  and Extended in turn; every configuration also gets a
+  document with a schema error, one that is not well-formed (a
+  processing error) and one no scenario matches: all equal. It needs
+  Java and the validator jar.
 - The XSLT cases in `tests/data/xslt` hold the output (or the error
   code) of Saxon HE for each stylesheet, generated with
   `tools/gen-xslt-testdata.py`, and are compared byte for byte.
