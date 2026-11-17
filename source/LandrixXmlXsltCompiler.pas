@@ -2115,6 +2115,8 @@ var
           T.BuildProcessingInstruction(M.Tree.LocalNameUtf8(I), M.Tree.ValueUtf8(I));
           Note(I);
         end;
+    else
+      { attributes come with their element; the document node is not copied }
     end;
   end;
 
