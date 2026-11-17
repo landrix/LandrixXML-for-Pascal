@@ -354,7 +354,7 @@ begin
     begin
       Add(DocChecks, Unesc(Rest));
       SetLength(DocCheckOwners, Length(DocCheckOwners) + 1);
-      DocCheckOwners[High(DocCheckOwners)] := High(DocUris);
+      DocCheckOwners[High(DocCheckOwners)] := Integer(High(DocUris));
     end;
   end;
   Output := TFileStream.Create(ParamStr(2), fmCreate);

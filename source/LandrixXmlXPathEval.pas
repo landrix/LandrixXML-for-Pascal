@@ -356,6 +356,8 @@ type
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalOperator(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalOperator10(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalUnion(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalNodeCompare(Index: Integer; Context: Integer; Position, Size: Integer;
@@ -4246,37 +4248,47 @@ begin
 end;
 
 { The value comparisons, the range and the arithmetic operators }
-procedure TLandrixXmlXPathEvaluator.EvalOperator(Index: Integer; Context: Integer; Position, Size: Integer;
+{ EvalOperator in XPath 1.0 compatibility mode (a method of its own:
+  its temporaries do not enlarge the frame of EvalOperator, which deep
+  recursion goes through): arithmetic on the first items as xs:double,
+  NaN for an empty operand; unary minus makes any value a number (a date
+  gives NaN), as Saxon; the range operands are xs:integer?, the first
+  item of each }
+procedure TLandrixXmlXPathEvaluator.EvalOperator10(Index: Integer; Context: Integer; Position, Size: Integer;
   const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
 var
   A, B: TLandrixXmlXPathSequence;
   X, Y: TLandrixXmlXPathItem;
 begin
-  { XPath 1.0 compatibility mode: arithmetic on the first items as
-    xs:double, NaN for an empty operand; unary minus makes any value a
-    number (a date gives NaN), as Saxon }
-  if Xp10 and (FNodes[Index].Kind = xakRange) then
+  if FNodes[Index].Kind = xakRange then
   begin
-    { the operands are xs:integer?: the first item of each }
     A := Atomize(FirstOnly(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem)));
     B := Atomize(FirstOnly(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem)));
     Output := RangeOf(A, B, Xp20);
     Exit;
   end;
-  if Xp10 and not (FNodes[Index].Kind in [xakValueCompare, xakRange]) then
+  A := FirstOnly(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
+  if FNodes[Index].Kind = xakNegate then
+    Output := SingleSeq(UnaryOp(Number10(A), True, Xp20))
+  else if FNodes[Index].Kind = xakUnaryPlus then
+    Output := SingleSeq(UnaryOp(Operand10(Atomize(A)), False, Xp20))
+  else
   begin
-    A := FirstOnly(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));
-    if FNodes[Index].Kind = xakNegate then
-      Output := SingleSeq(UnaryOp(Number10(A), True, Xp20))
-    else if FNodes[Index].Kind = xakUnaryPlus then
-      Output := SingleSeq(UnaryOp(Operand10(Atomize(A)), False, Xp20))
-    else
-    begin
-      X := Operand10(Atomize(A));
-      Y := Operand10(Atomize(FirstOnly(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem))));
-      Output := SingleSeq(Arithmetic(X, Y, TLandrixXmlXPathArithmetic(FNodes[Index].Op), Xp20,
-        FImplicitTimeZone));
-    end;
+    X := Operand10(Atomize(A));
+    Y := Operand10(Atomize(FirstOnly(Eval(FNodes[Index].Children[1], Context, Position, Size, ContextItem))));
+    Output := SingleSeq(Arithmetic(X, Y, TLandrixXmlXPathArithmetic(FNodes[Index].Op), Xp20,
+      FImplicitTimeZone));
+  end;
+end;
+
+procedure TLandrixXmlXPathEvaluator.EvalOperator(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  A, B: TLandrixXmlXPathSequence;
+begin
+  if Xp10 and (FNodes[Index].Kind <> xakValueCompare) then
+  begin
+    EvalOperator10(Index, Context, Position, Size, ContextItem, Output);
     Exit;
   end;
   A := Atomize(Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem));

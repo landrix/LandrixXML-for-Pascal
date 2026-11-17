@@ -290,6 +290,9 @@ type
       its properties; the tree and receiver of the implicit principal
       result }
     FTemporary: Boolean;
+    { set by HostCompatible for the Host call it makes with the converted
+      arguments }
+    FArgumentsConverted: Boolean;
     { disable-output-escaping: the text nodes made at the top of a sequence
       (xsl:function, a template with as) from raw text, in the order made;
       written raw when they are added to a final result tree (as Saxon;
@@ -350,12 +353,9 @@ type
     function DocFunction(Kind, Module: Integer; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
       const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
-    { Host without (HostPlain) and with (HostCompatible) XPath 1.0
-      compatibility mode of the caller, which converts the arguments
-      first; FirstStringSeq and FirstNumberSeq: fn:string and fn:number of
-      the first item }
-    function HostPlain(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
-      const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+    { Host for a caller in XPath 1.0 compatibility mode: the arguments
+      converted, then Host; FirstStringSeq and FirstNumberSeq: fn:string
+      and fn:number of the first item }
     function FirstStringSeq(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function FirstNumberSeq(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function HostCompatible(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
@@ -1824,19 +1824,11 @@ begin
   else
     { the others take no argument, or one XPath 1.0 does not have }
   end;
-  Result := HostPlain(Evaluator, Def, A, Focus);
+  FArgumentsConverted := True;
+  Result := Host(Evaluator, Def, A, Focus);
 end;
 
 function TRun.Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
-  const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
-begin
-  if (Evaluator.CallerExpression <> nil) and Evaluator.CallerExpression.XPath10Compatible then
-    Result := HostCompatible(Evaluator, Def, Args, Focus)
-  else
-    Result := HostPlain(Evaluator, Def, Args, Focus);
-end;
-
-function TRun.HostPlain(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
   const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
 var
   G: TXsltGlobal;
@@ -1848,6 +1840,15 @@ var
 begin
   SavedTunnel := nil;
   Result := LandrixXmlXPathEmpty;
+  { a caller in XPath 1.0 compatibility mode: HostCompatible converts the
+    arguments and comes back here (FArgumentsConverted) }
+  if not FArgumentsConverted and (Evaluator.CallerExpression <> nil) and
+    Evaluator.CallerExpression.XPath10Compatible then
+  begin
+    Result := HostCompatible(Evaluator, Def, Args, Focus);
+    Exit;
+  end;
+  FArgumentsConverted := False;
   if Def.Tag >= FC.UserFunctionBase then
   begin
     Result := CallFunction(TXsltTemplate(FC.UserFunctions[Def.Tag - FC.UserFunctionBase]), Args);
