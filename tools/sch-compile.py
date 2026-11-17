@@ -13,7 +13,8 @@ marks such a check with original="..." (the test of the source).
 Handled: sch:include (whole documents), sch:ns, sch:let (in the schema and in
 patterns: global; in rules: per rule), sch:pattern, sch:rule (context, id,
 abstract rules are rejected), sch:assert and sch:report (id, flag, role, test,
-message text with sch:name and sch:value-of), sch:phase (the phases must
+message text with sch:name and sch:value-of; text that is only white space
+is left out, as XSLT strips it from the stylesheet SchXslt generates), sch:phase (the phases must
 name a default phase that activates every pattern with a rule, else the
 file is rejected; without a default phase all patterns run, as in SchXslt), and the subset
 of XSLT functions the XRechnung and Peppol rules use: xsl:function with
@@ -577,10 +578,16 @@ class Compiler:
             self.fail("the subject of a check is not supported", el, doc)
         parts = []
 
+        def text(t):
+            if t:
+                if parts and parts[-1][0] == "text":
+                    parts[-1] = ("text", parts[-1][1] + t)
+                else:
+                    parts.append(("text", t))
+
         def content(e):
             """Text, sch:name and sch:value-of; emph, dir and span only add their content."""
-            if e.text:
-                parts.append(("text", e.text))
+            text(e.text)
             for c in e:
                 ns, local = tag(c)
                 if (ns, local) == (SCH, "name"):
@@ -591,9 +598,12 @@ class Compiler:
                     content(c)
                 else:
                     self.fail("%s inside sch:%s is not supported" % (local, kind), c, doc)
-                if c.tail:
-                    parts.append(("text", c.tail))
+                text(c.tail)
         content(el)
+        # the text between two values (or at either end) that is only white
+        # space is left out, as the XSLT processor strips it from the
+        # stylesheet SchXslt generates (svrl:text)
+        parts = [p for p in parts if p[0] != "text" or p[1].strip(WS)]
         return {"kind": kind, "id": el.get("id") or "", "flag": el.get("flag") or "", "role": el.get("role") or "",
                 "test": collapse(el.get("test")), "line": self.where(el, doc), "parts": parts,
                 "el": el, "doc": doc}

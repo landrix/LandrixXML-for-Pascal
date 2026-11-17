@@ -14,7 +14,8 @@
   the schema and in patterns (global) and in rules (per rule), sch:pattern,
   sch:rule, sch:assert and sch:report (id, flag, role, test, the message
   with sch:name and sch:value-of; sch:emph, sch:dir and sch:span add their
-  content), sch:phase (a default phase must activate every pattern with a
+  content; text that is only white space is left out, as XSLT strips it
+  from the stylesheet SchXslt generates), sch:phase (a default phase must activate every pattern with a
   rule; without one all patterns run, as in SchXslt), and the XSLT
   functions the XRechnung and Peppol rules use: xsl:function with
   xsl:param, xsl:variable (select, text content, or one xsl:sequence child
@@ -1288,6 +1289,8 @@ function TLandrixXmlSchematronCompiler.CompileCheck(Node: TLandrixXmlNode): TObj
 var
   Check: TCheck;
   Kind: string;
+  { the static text since the last value (across emph, dir and span) }
+  Text: TLandrixXmlUtf8;
 
   procedure AddPart(const PartKind, Value: TLandrixXmlUtf8);
   var
@@ -1299,14 +1302,22 @@ var
     P.Value := Value;
   end;
 
+  { the text before a value or at the end; left out when it is only white
+    space, as the XSLT processor strips it from the stylesheet SchXslt
+    generates (svrl:text) }
+  procedure FlushText;
+  begin
+    if not IsBlank(Text) then
+      AddPart('text', Text);
+    Text := '';
+  end;
+
   { text, sch:name and sch:value-of; emph, dir and span add their content }
   procedure Content(E: TLandrixXmlNode);
   var
     C: TLandrixXmlNode;
-    Text: TLandrixXmlUtf8;
     L: string;
   begin
-    Text := '';
     C := E.FirstChild;
     while C <> nil do
     begin
@@ -1314,14 +1325,17 @@ var
         Text := Text + C.ValueUtf8
       else if C.NodeType = LandrixXmlDom.xntElement then
       begin
-        if Text <> '' then
-          AddPart('text', Text);
-        Text := '';
         L := S8(C.LocalNameUtf8);
         if IsSch(C, 'name') then
-          AddPart('name', Attr(C, 'path'))
+        begin
+          FlushText;
+          AddPart('name', Attr(C, 'path'));
+        end
         else if IsSch(C, 'value-of') then
-          AddPart('value-of', LandrixXmlSchematronCollapse(Attr(C, 'select')))
+        begin
+          FlushText;
+          AddPart('value-of', LandrixXmlSchematronCollapse(Attr(C, 'select')));
+        end
         else if IsSch(C, 'emph') or IsSch(C, 'dir') or IsSch(C, 'span') then
           Content(C)
         else
@@ -1329,8 +1343,6 @@ var
       end;
       C := C.NextSibling;
     end;
-    if Text <> '' then
-      AddPart('text', Text);
   end;
 
 begin
@@ -1352,7 +1364,9 @@ begin
     Check.Test := LandrixXmlSchematronCollapse(Attr(Node, 'test'));
     Check.Node := Node;
     Check.Line := U(Where(Node));
+    Text := '';
     Content(Node);
+    FlushText;
   except
     Check.Free;
     raise;

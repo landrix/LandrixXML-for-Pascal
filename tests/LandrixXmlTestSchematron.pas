@@ -32,6 +32,7 @@ uses
   LandrixXmlDom,
   LandrixXmlXPathTree,
   LandrixXmlXPath,
+  LandrixXmlWriter,
   LandrixXmlSchematron,
   LandrixXmlSchematronCompiler,
   LandrixXmlTestFramework;
@@ -465,6 +466,89 @@ begin
   end;
 end;
 
+{ SaveSvrlToWriter into a report of one's own, RawMessage and
+  SvrlPreserveWhitespace. }
+procedure TestSvrlToWriter;
+const
+  SvrlNs = 'http://purl.oclc.org/dsdl/svrl';
+var
+  Rules: TLandrixXmlSchematronRules;
+  V: TLandrixXmlSchematronValidator;
+  Tree: TLandrixXmlXPathTree;
+  Stream: TMemoryStream;
+  W: TLandrixXmlWriter;
+  Raw: TLandrixXmlUtf8;
+
+  function Text: TLandrixXmlUtf8;
+  begin
+    Result := '';
+    SetLength(Result, Integer(Stream.Size));
+    if Length(Result) > 0 then
+      Move(Stream.Memory^, Result[1], Length(Result));
+    Stream.Clear;
+  end;
+
+begin
+  Rules := SmallRules(
+    '<pattern id="A"><rule context="p:a" id="" line="1">' +
+    '<assert id="A1" flag="fatal" role="" test="@k = ''1''" line="2"><text>' + #10 + '    k  is </text>' +
+    '<value-of select="@k"/><text>' + #10 + '  </text></assert>' +
+    '<assert id="A2" flag="" role="" test="false()" line="3"><text>plain</text></assert>' +
+    '</rule></pattern>');
+  V := TLandrixXmlSchematronValidator.Create(Rules);
+  Tree := TLandrixXmlXPathTree.Create;
+  Stream := TMemoryStream.Create;
+  W := nil;
+  try
+    Tree.LoadFromUtf8(U('<p:r xmlns:p="urn:p"><p:a k="x"/></p:r>'));
+    V.ValidateTree(Tree);
+    CheckEquals(2, V.ResultCount, 'two failed asserts');
+    Raw := U(#10 + '    k  is x' + #10 + '  ');
+    CheckEqualsUtf8(U('k is x'), V.Results[0].Message, 'Message normalized');
+    CheckEqualsUtf8(Raw, V.Results[0].RawMessage, 'RawMessage as the rule file has it');
+    CheckEqualsUtf8(U('plain'), V.Results[1].RawMessage, 'nothing to normalize');
+    Check(not V.SvrlPreserveWhitespace, 'normalized by default');
+    V.SaveSvrlToStream(Stream);
+    Check(PosFrom(U('<svrl:text>k is x</svrl:text>'), Text, 1) > 0, 'svrl:text normalized');
+    V.SvrlPreserveWhitespace := True;
+    V.SaveSvrlToStream(Stream);
+    Check(PosFrom(U('<svrl:text>') + Raw + U('</svrl:text>'), Text, 1) > 0, 'svrl:text with its white space');
+    { into an open writer that has svrl in scope already, not indented }
+    W := TLandrixXmlWriter.Create;
+    W.WriteDeclaration := False;
+    W.StartElementNs(U('urn:in'), U('in'), U('results'));
+    W.DeclareNamespace(U('svrl'), U(SvrlNs));
+    V.SaveSvrlToWriter(W);
+    W.EndElement;
+    W.EndDocument;
+    CheckEqualsUtf8(U('<in:results xmlns:in="urn:in" xmlns:svrl="' + SvrlNs + '">' +
+      '<svrl:schematron-output xmlns:svrl="' + SvrlNs + '" title="t">' +
+      '<svrl:ns-prefix-in-attribute-values prefix="p" uri="urn:p"/>' +
+      '<svrl:active-pattern name="A" id="A"/><svrl:fired-rule context="p:a"/>' +
+      '<svrl:failed-assert location="/Q{urn:p}r[1]/Q{urn:p}a[1]" flag="fatal" id="A1" test="@k = ''1''">' +
+      '<svrl:text>') + Raw + U('</svrl:text></svrl:failed-assert>' +
+      '<svrl:failed-assert location="/Q{urn:p}r[1]/Q{urn:p}a[1]" id="A2" test="false()">' +
+      '<svrl:text>plain</svrl:text></svrl:failed-assert></svrl:schematron-output></in:results>'), W.AsUtf8,
+      'the element in the writer');
+    W.Free;
+    { the prefix svrl bound to another namespace outside }
+    W := TLandrixXmlWriter.Create;
+    W.WriteDeclaration := False;
+    W.StartElementNs(U('urn:other'), U('svrl'), U('results'));
+    V.SaveSvrlToWriter(W);
+    W.EndElement;
+    W.EndDocument;
+    Check(PosFrom(U('<svrl:results xmlns:svrl="urn:other"><svrl:schematron-output xmlns:svrl="' + SvrlNs + '"'),
+      W.AsUtf8, 1) = 1, 'declared again on the element');
+  finally
+    W.Free;
+    Stream.Free;
+    Tree.Free;
+    V.Free;
+    Rules.Free;
+  end;
+end;
+
 { An error in a predicate of a rule context: the node does not match that
   rule (as in XSLT) and goes on to the next rule of the pattern. }
 procedure TestContextErrors;
@@ -805,7 +889,8 @@ begin
       S := S + LandrixXmlUtf8ToString(V.Results[I].Id + ' ' + V.Results[I].Flag + ' ' + V.Results[I].Role + ' ' +
         V.Results[I].Location + ' ' + V.Results[I].Message) + ' / ';
     CheckEqualsStr('A1 fatal  /Q{urn:p}r[1]/Q{urn:p}a[3] a with n = ''11'' is big / ' +
-      'R1 information info /Q{urn:p}r[1] total 24, half of 12 in p:r / ', S, 'results');
+      'R1 information info /Q{urn:p}r[1] total 24, half of 12 in p:r / ' +
+      'R2 information  /Q{urn:p}r[1] 2412 / R3 information  /Q{urn:p}r[1] A B 1 / ', S, 'results');
   finally
     V.Free;
     Rules.Free;
@@ -1121,6 +1206,7 @@ begin
   RegisterTest('Schematron.ContextErrors', TestContextErrors);
   RegisterTest('Schematron.CompilerDocuments', TestCompilerDocuments);
   RegisterTest('Schematron.Svrl', TestSvrl);
+  RegisterTest('Schematron.SvrlToWriter', TestSvrlToWriter);
   RegisterTest('Schematron.VariablesAndContexts', TestVariablesAndContexts);
   RegisterTest('Schematron.LoadErrors', TestLoadErrors);
   RegisterTest('Schematron.CompilerSources', TestCompilerSources);

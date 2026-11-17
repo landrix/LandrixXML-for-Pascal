@@ -265,6 +265,17 @@ XML; a file that cannot be opened raises the RTL's stream error. A loaded
 `TLandrixXmlSchematronRules` is read-only and can be shared by validators
 in several threads; each validator belongs to one thread.
 
+`SaveSvrlToStream` and `SaveSvrlToFile` write the last validation as SVRL
+in the layout of SchXslt, which the KoSIT validator reports;
+`SaveSvrlToWriter` writes only the `svrl:schematron-output` element into
+an open `TLandrixXmlWriter` (for a report of one's own, with the writer's
+settings; `xmlns:svrl` is declared on the element). `Message` is the text
+of an assert or report with its white space normalized, `RawMessage` the
+text as the rule file has it (line breaks and indentation of the source,
+as SchXslt writes `svrl:text`); `SvrlPreserveWhitespace := True` writes
+`RawMessage` into the SVRL, so that a report made from it (such as the
+KoSIT report, whose messages keep that white space) is the same.
+
 ### Querying with XPath
 
 ```pascal

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rules xmlns="urn:landrix:schematron-rules" format="1" source="ok.sch" sha256="3638ec2288a2c249cf69833526663c7d105209198b2705a3b37dc8be1c3cce71" title="Small test rules">
+<rules xmlns="urn:landrix:schematron-rules" format="1" source="ok.sch" sha256="d16a5564d6850882ee0fb17b8387a14bf87c742f5b705990581acae4557b1f61" title="Small test rules">
   <ns prefix="p" uri="urn:p"/>
   <ns prefix="f" uri="urn:f"/>
   <let name="total" value="sum(//p:a/@n)" line="ok.sch:10"/>
@@ -20,7 +20,9 @@
   <pattern id="B">
     <rule context="p:r" id="" line="ok.sch:29">
       <report id="R1" flag="information" role="info" test="$total = 24" line="ok.sch:30"><text>total </text><value-of select="$total"/><text>,
-        half </text><text>of </text><value-of select="$half"/><text> in </text><name path=""/></report>
+        half of </text><value-of select="$half"/><text> in </text><name path=""/></report>
+      <report id="R2" flag="information" role="" test="true()" line="ok.sch:33"><value-of select="$total"/><value-of select="$half"/></report>
+      <report id="R3" flag="information" role="" test="true()" line="ok.sch:35"><text>A B </text><value-of select="1"/></report>
     </rule>
   </pattern>
 </rules>

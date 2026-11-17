@@ -168,6 +168,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   function arguments are converted as in XPath 1.0, as Saxon does.
   `system-property('xsl:supports-backwards-compatibility')` is `yes`.
 
+- Schematron: `SaveSvrlToWriter` writes the SVRL element into an open
+  writer (`SaveSvrlToStream` calls it, its output is unchanged);
+  `RawMessage` on the results is the message with the white space of the
+  rule file, and `SvrlPreserveWhitespace` writes it into `svrl:text` as
+  SchXslt and the KoSIT validator do.
 - XPath and XSLT: `MaxStackBytes` on `TLandrixXmlXPathEvaluator` and
   `TLandrixXmlXsltTransformer`, a budget for the stack nested user
   functions and templates may use; beyond it the run stops with
@@ -177,6 +182,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Schematron: text in an assert or report that is only white space
+  (between two `sch:value-of`, for example) is left out by the compiler
+  and `tools/sch-compile.py`, as the XSLT processor strips it from the
+  stylesheet SchXslt generates.
 - XPath: a call of a user function no longer goes through the frame of
   the built-in functions; a level of the stylesheet recursion of the W3C
   case function-0701 takes 2.4 KB of stack instead of 8.4 KB with Delphi

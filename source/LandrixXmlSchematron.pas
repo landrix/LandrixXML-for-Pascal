@@ -29,14 +29,16 @@
   then True, and Valid is False); with AbortOnDynamicError the validation
   stops at the first one, as Saxon does.
 
-  SaveSvrlToStream and SaveSvrlToFile write the last validation as SVRL in
-  the layout of SchXslt (as the KoSIT validator reports EN16931 and
+  SaveSvrlToStream and SaveSvrlToFile write the last validation as SVRL
+  (SaveSvrlToWriter: its svrl:schematron-output element into an open
+  writer) in the layout of SchXslt (as the KoSIT validator reports EN16931 and
   XRechnung): per pattern svrl:active-pattern, then in document order
   svrl:fired-rule (context, id, role, flag of the rule) with its
   svrl:failed-assert and svrl:successful-report,
   and for later rules of the pattern that match the same node a comment
   and svrl:suppressed-rule. Locations as in the results; svrl:text is the
-  message with white space normalized; no svrl:metadata. A dynamic error
+  message with white space normalized, or as the rule file has it with
+  SvrlPreserveWhitespace (as SchXslt writes it); no svrl:metadata. A dynamic error
   is an XML comment where it occurred (SVRL has no element for it).
 
   TLandrixXmlSchematronRules is immutable after loading and can be shared
@@ -54,6 +56,7 @@ uses
   Contnrs,
   LandrixXmlBase,
   LandrixXmlDom,
+  LandrixXmlWriter,
   LandrixXmlXPathTree,
   LandrixXmlXsdTypes,
   LandrixXmlXPath,
@@ -166,6 +169,7 @@ type
     FRole: TLandrixXmlUtf8;
     FTest: TLandrixXmlUtf8;
     FMessage: TLandrixXmlUtf8;
+    FRawMessage: TLandrixXmlUtf8;
     FLocation: TLandrixXmlUtf8;
     FLine: Integer;
     FColumn: Integer;
@@ -188,6 +192,10 @@ type
     { the message text with value-of and name filled in, white space
       normalized; for a dynamic error the error message }
     property Message: TLandrixXmlUtf8 read FMessage;
+    { the message text with value-of and name filled in, its white space
+      (line breaks, indentation) as the rule file has it; for a dynamic
+      error the error message }
+    property RawMessage: TLandrixXmlUtf8 read FRawMessage;
     { as SchXslt writes it (see TLandrixXmlXPathTree.LocationPathUtf8) }
     property Location: TLandrixXmlUtf8 read FLocation;
     property Line: Integer read FLine;
@@ -208,6 +216,7 @@ type
     FAbortOnDynamicError: Boolean;
     FFiredRules: TStringList;
     FRecordFiredRules: Boolean;
+    FSvrlPreserveWhitespace: Boolean;
     FDocumentUri: TLandrixXmlUtf8;
     FImplicitTimeZone: Integer;
     FCurrentDateTime: TLandrixXmlXsdDateTime;
@@ -256,6 +265,14 @@ type
     { The last validation as SVRL (see the unit comment); UTF-8, indented. }
     procedure SaveSvrlToStream(Stream: TStream);
     procedure SaveSvrlToFile(const FileName: string);
+    { The svrl:schematron-output element alone, into a writer that is
+      open (for example inside a report of one's own), with the writer's
+      settings (Indent, ...); xmlns:svrl is declared on the element even
+      if the writer has it in scope. }
+    procedure SaveSvrlToWriter(Writer: TLandrixXmlWriter);
+    { svrl:text with RawMessage instead of Message, as SchXslt (the KoSIT
+      validator) writes it; default False }
+    property SvrlPreserveWhitespace: Boolean read FSvrlPreserveWhitespace write FSvrlPreserveWhitespace;
     { the URI svrl:active-pattern/@documents names; ValidateFile sets it to
       the file's URI, the other Validate methods keep it }
     property DocumentUri: TLandrixXmlUtf8 read FDocumentUri write FDocumentUri;
@@ -273,7 +290,6 @@ type
 implementation
 
 uses
-  LandrixXmlWriter,
   LandrixXmlSchematronCompiler;
 
 type
@@ -1098,39 +1114,6 @@ begin
   Result := TLandrixXmlSchematronResult(FResults[Index]);
 end;
 
-procedure TLandrixXmlSchematronValidator.AddResult(Tree: TLandrixXmlXPathTree; Kind: TLandrixXmlSchematronResultKind;
-  Check: TLandrixXmlSchematronCheck; Pattern: TLandrixXmlSchematronPattern; Rule: TLandrixXmlSchematronRule;
-  Node: Integer; const Message: TLandrixXmlUtf8; const Code: string);
-var
-  R: TLandrixXmlSchematronResult;
-begin
-  R := TLandrixXmlSchematronResult.Create;
-  FResults.Add(R);
-  R.FKind := Kind;
-  if Check <> nil then
-  begin
-    R.FId := Check.Id;
-    R.FFlag := Check.Flag;
-    R.FRole := Check.Role;
-    R.FTest := Check.TestText;
-  end;
-  R.FMessage := Message;
-  R.FErrorCode := Code;
-  R.FPatternIndex := FCurrentPattern;
-  R.FEvent := FCurrentEvent;
-  if Node >= 0 then
-  begin
-    R.FLocation := Tree.LocationPathUtf8(Node);
-    R.FLine := Tree.Line[Node];
-    R.FColumn := Tree.Column[Node];
-    R.FNode := Tree.DomNode[Node];
-  end;
-  if Pattern <> nil then
-    R.FPattern := Pattern.Id;
-  if Rule <> nil then
-    R.FRuleContext := Rule.ContextText;
-end;
-
 function NormalizedText(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
 var
   I, N: Integer;
@@ -1155,6 +1138,48 @@ begin
       Result[N] := S[I];
     end;
   SetLength(Result, N);
+end;
+
+procedure TLandrixXmlSchematronValidator.AddResult(Tree: TLandrixXmlXPathTree; Kind: TLandrixXmlSchematronResultKind;
+  Check: TLandrixXmlSchematronCheck; Pattern: TLandrixXmlSchematronPattern; Rule: TLandrixXmlSchematronRule;
+  Node: Integer; const Message: TLandrixXmlUtf8; const Code: string);
+var
+  R: TLandrixXmlSchematronResult;
+begin
+  R := TLandrixXmlSchematronResult.Create;
+  FResults.Add(R);
+  R.FKind := Kind;
+  if Check <> nil then
+  begin
+    R.FId := Check.Id;
+    R.FFlag := Check.Flag;
+    R.FRole := Check.Role;
+    R.FTest := Check.TestText;
+  end;
+  R.FRawMessage := Message;
+  if Kind = xsrDynamicError then
+    R.FMessage := Message
+  else
+  begin
+    R.FMessage := NormalizedText(Message);
+    { one string when there is nothing to normalize }
+    if R.FMessage = Message then
+      R.FMessage := R.FRawMessage;
+  end;
+  R.FErrorCode := Code;
+  R.FPatternIndex := FCurrentPattern;
+  R.FEvent := FCurrentEvent;
+  if Node >= 0 then
+  begin
+    R.FLocation := Tree.LocationPathUtf8(Node);
+    R.FLine := Tree.Line[Node];
+    R.FColumn := Tree.Column[Node];
+    R.FNode := Tree.DomNode[Node];
+  end;
+  if Pattern <> nil then
+    R.FPattern := Pattern.Id;
+  if Rule <> nil then
+    R.FRuleContext := Rule.ContextText;
 end;
 
 function TLandrixXmlSchematronValidator.ValidateTree(Tree: TLandrixXmlXPathTree): Boolean;
@@ -1192,7 +1217,6 @@ var
         Result := Result + C.Parts[Q].Text
       else
         Result := Result + E.EvaluateString(C.Parts[Q].Expression, AtNode);
-    Result := NormalizedText(Result);
   end;
 
 begin
@@ -1361,7 +1385,7 @@ begin
     Result := Result + ' ';
 end;
 
-procedure TLandrixXmlSchematronValidator.SaveSvrlToStream(Stream: TStream);
+procedure TLandrixXmlSchematronValidator.SaveSvrlToWriter(Writer: TLandrixXmlWriter);
 const
   Svrl = 'http://purl.oclc.org/dsdl/svrl';
 var
@@ -1402,70 +1426,85 @@ var
       if R.Role <> '' then
         W.AttributeUtf8('role', R.Role);
       W.AttributeUtf8('test', R.Test);
-      W.ElementNsUtf8(Svrl, 'svrl', 'text', R.Message);
+      if FSvrlPreserveWhitespace then
+        W.ElementNsUtf8(Svrl, 'svrl', 'text', R.RawMessage)
+      else
+        W.ElementNsUtf8(Svrl, 'svrl', 'text', R.Message);
       W.EndElement;
     end;
   end;
 
 begin
+  if Writer = nil then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'SaveSvrlToWriter needs a writer');
+  W := Writer;
+  { declared here also when the caller's writer has svrl in scope }
+  W.StartElement('svrl:schematron-output');
+  W.DeclareNamespace('svrl', Svrl);
+  if FRules.Title <> '' then
+    W.AttributeUtf8('title', FRules.Title);
+  for I := 0 to Integer(Length(FRules.FNsPrefixes)) - 1 do
+  begin
+    W.StartElementNs(Svrl, 'svrl', 'ns-prefix-in-attribute-values');
+    W.AttributeUtf8('prefix', FRules.FNsPrefixes[I]);
+    W.AttributeUtf8('uri', FRules.FNsUris[I]);
+    W.EndElement;
+  end;
+  Next := 0;
+  Ev := 0;
+  for P := 0 to FRules.PatternCount - 1 do
+  begin
+    Pattern := FRules.Patterns[P];
+    W.StartElementNs(Svrl, 'svrl', 'active-pattern');
+    if Pattern.Id <> '' then
+    begin
+      W.AttributeUtf8('name', Pattern.Id);
+      W.AttributeUtf8('id', Pattern.Id);
+    end;
+    if FDocumentUri <> '' then
+      W.AttributeUtf8('documents', FDocumentUri);
+    W.EndElement;
+    { errors in a rule context of the pattern }
+    Results(-1);
+    while (Ev < FEventCount) and (FEventPatterns[Ev] = P) do
+    begin
+      Rule := TLandrixXmlSchematronRule(Pattern.Rules[FEventRules[Ev]]);
+      if FEventFired[Ev] then
+      begin
+        W.StartElementNs(Svrl, 'svrl', 'fired-rule');
+        W.AttributeUtf8('context', Rule.ContextText);
+        if Rule.Id <> '' then
+          W.AttributeUtf8('id', Rule.Id);
+        if Rule.Role <> '' then
+          W.AttributeUtf8('role', Rule.Role);
+        if Rule.Flag <> '' then
+          W.AttributeUtf8('flag', Rule.Flag);
+        W.EndElement;
+        Results(Ev);
+      end
+      else
+      begin
+        W.CommentUtf8('WARNING: Rule for context "' + CommentText(Rule.ContextText) +
+          '" shadowed by preceding rule');
+        W.StartElementNs(Svrl, 'svrl', 'suppressed-rule');
+        W.AttributeUtf8('context', Rule.ContextText);
+        W.EndElement;
+      end;
+      Inc(Ev);
+    end;
+  end;
+  W.EndElement;
+end;
+
+procedure TLandrixXmlSchematronValidator.SaveSvrlToStream(Stream: TStream);
+var
+  W: TLandrixXmlWriter;
+begin
   W := TLandrixXmlWriter.Create(Stream);
   try
     W.Indent := True;
     W.StartDocument;
-    W.StartElementNs(Svrl, 'svrl', 'schematron-output');
-    if FRules.Title <> '' then
-      W.AttributeUtf8('title', FRules.Title);
-    for I := 0 to Integer(Length(FRules.FNsPrefixes)) - 1 do
-    begin
-      W.StartElementNs(Svrl, 'svrl', 'ns-prefix-in-attribute-values');
-      W.AttributeUtf8('prefix', FRules.FNsPrefixes[I]);
-      W.AttributeUtf8('uri', FRules.FNsUris[I]);
-      W.EndElement;
-    end;
-    Next := 0;
-    Ev := 0;
-    for P := 0 to FRules.PatternCount - 1 do
-    begin
-      Pattern := FRules.Patterns[P];
-      W.StartElementNs(Svrl, 'svrl', 'active-pattern');
-      if Pattern.Id <> '' then
-      begin
-        W.AttributeUtf8('name', Pattern.Id);
-        W.AttributeUtf8('id', Pattern.Id);
-      end;
-      if FDocumentUri <> '' then
-        W.AttributeUtf8('documents', FDocumentUri);
-      W.EndElement;
-      { errors in a rule context of the pattern }
-      Results(-1);
-      while (Ev < FEventCount) and (FEventPatterns[Ev] = P) do
-      begin
-        Rule := TLandrixXmlSchematronRule(Pattern.Rules[FEventRules[Ev]]);
-        if FEventFired[Ev] then
-        begin
-          W.StartElementNs(Svrl, 'svrl', 'fired-rule');
-          W.AttributeUtf8('context', Rule.ContextText);
-          if Rule.Id <> '' then
-            W.AttributeUtf8('id', Rule.Id);
-          if Rule.Role <> '' then
-            W.AttributeUtf8('role', Rule.Role);
-          if Rule.Flag <> '' then
-            W.AttributeUtf8('flag', Rule.Flag);
-          W.EndElement;
-          Results(Ev);
-        end
-        else
-        begin
-          W.CommentUtf8('WARNING: Rule for context "' + CommentText(Rule.ContextText) +
-            '" shadowed by preceding rule');
-          W.StartElementNs(Svrl, 'svrl', 'suppressed-rule');
-          W.AttributeUtf8('context', Rule.ContextText);
-          W.EndElement;
-        end;
-        Inc(Ev);
-      end;
-    end;
-    W.EndElement;
+    SaveSvrlToWriter(W);
     W.EndDocument;
   finally
     W.Free;

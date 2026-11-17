@@ -29,6 +29,10 @@
     <rule context="p:r">
       <report id="R1" flag="information" role="info" test="$total = 24">total <value-of select="$total"/>,
         half <emph>of <value-of select="$half"/></emph> in <name/></report>
+      <!-- white space alone between two values: stripped, as in XSLT -->
+      <report id="R2" flag="information" test="true()"><value-of select="$total"/> <value-of select="$half"/></report>
+      <!-- white space around emph belongs to the text: kept -->
+      <report id="R3" flag="information" test="true()"><emph>A</emph> <emph>B</emph> <value-of select="1"/></report>
     </rule>
   </pattern>
 </schema>
