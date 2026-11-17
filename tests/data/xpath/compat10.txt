@@ -134,3 +134,11 @@ count(doc(//none))	xs:integer 0	error FODC0002
 (1, 2) to 3	error XPTY0004	xs:integer 1 | xs:integer 2 | xs:integer 3
 1 to (2, 3)	error XPTY0004	xs:integer 1 | xs:integer 2
 count(//x to 3)	error XPTY0004	xs:integer 3
+format-number(12, 0)	error XPTY0004	xs:string 12
+format-number(//x, '0.0')	error XPTY0004	xs:string 1.0
+format-number('12', '0')	error XPTY0004	xs:string 12
+format-number(12, '0', /d/e/f)	xs:string 12	error FODF1280
+format-date(xs:date('2026-11-17'), 0)	error XPTY0004	xs:string 0
+format-date(xs:date('2026-11-17'), '[Y]', /d/e/f, (), ())	xs:string 2026	xs:string [Language: en]2026
+format-date(xs:date('2026-11-17'), ('[Y]', '[M]'))	error XPTY0004	xs:string 2026
+format-time(xs:time('10:00:00'), '[H]', 'de', (), //x)	error XPTY0004	xs:string [Language: en]10

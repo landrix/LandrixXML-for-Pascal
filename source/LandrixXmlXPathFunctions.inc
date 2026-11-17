@@ -931,6 +931,150 @@ begin
   end;
 end;
 
+{ format-number(), format-dateTime(), format-date() and format-time() of
+  XPath 3.0 (profile xppSaxon), as Saxon HE formats them: format-number()
+  knows the default decimal format only (a name is FODF1280); XSLT
+  replaces all four with its own (xsl:decimal-format). A separate method
+  keeps the locals out of the frame of CallFunction. }
+function TLandrixXmlXPathEvaluator.CallFormat(Index: Integer; Context, Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+const
+  DateKinds: array[xfnFormatDateTime..xfnFormatTime] of TXPathDateKind = (xdkDateTime, xdkDate, xdkTime);
+  DateTypes: array[xfnFormatDateTime..xfnFormatTime] of TLandrixXmlXPathItemKind = (xikDateTime, xikDate,
+    xikTime);
+var
+  Id: TLandrixXmlXPathFunctionId;
+  Name: string;
+  Item: TLandrixXmlXPathItem;
+  HasValue, HasName, HasLanguage, HasCalendar, Present, Scaled: Boolean;
+  Value, Picture, FormatName, Language, Calendar: TLandrixXmlUtf8;
+  Scale: Integer;
+  DF: TXPathDecimalFormat;
+
+  { argument K atomized: at most one item (XPath 1.0 compatibility mode:
+    the first) }
+  function OptAtom(K: Integer; out Value: TLandrixXmlXPathItem): Boolean;
+  var
+    S: TLandrixXmlXPathSequence;
+  begin
+    S := Eval(FNodes[Index].Children[K], Context, Position, Size, ContextItem);
+    if Xp10 then
+      S := FirstOnly(S);
+    S := Atomize(S);
+    if S.Count > 1 then
+      Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' has more than one item');
+    Result := S.Count = 1;
+    if Result then
+      Value := S.Items[0];
+  end;
+
+  { argument K is the literal () }
+  function LiteralEmpty(K: Integer): Boolean;
+  begin
+    Result := FNodes[FNodes[Index].Children[K]].Kind = xakEmpty;
+  end;
+
+  { argument K as xs:string? (One: xs:string); Present: not empty. XPath
+    1.0 compatibility mode: fn:string of the first item, also '' for an
+    empty sequence; Saxon keeps only a literal () empty }
+  function Str(K: Integer; One: Boolean; out Present: Boolean): TLandrixXmlUtf8;
+  var
+    S: TLandrixXmlXPathItem;
+  begin
+    Result := '';
+    if Xp10 and not LiteralEmpty(K) then
+    begin
+      Present := True;
+      Result := String10(Eval(FNodes[Index].Children[K], Context, Position, Size, ContextItem));
+      Exit;
+    end;
+    Present := OptAtom(K, S);
+    if not Present then
+    begin
+      if One then
+        Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' must not be empty');
+      Exit;
+    end;
+    if not IsStringLike(S.Kind) then
+      Fail('XPTY0004', Name + ': argument ' + IntToStr(K + 1) + ' is ' + KindName(S.Kind) + ', not xs:string');
+    Result := S.Text;
+  end;
+
+begin
+  Id := TLandrixXmlXPathFunctionId(FNodes[Index].Op);
+  Name := LandrixXmlXPathFunctionName(Id) + '()';
+  Result := LandrixXmlXPathEmpty;
+  HasValue := OptAtom(0, Item);
+  if Id = xfnFormatNumber then
+  begin
+    { the value as xs:numeric?: an untyped value as xs:double, a float
+      widened; the empty sequence is NaN. XPath 1.0 compatibility mode:
+      another value converted as by fn:number (as Saxon) }
+    if HasValue then
+    begin
+      if Xp10 and not IsNumeric(Item.Kind) then
+        Item := Number10(SingleSeq(Item));
+      if (Item.Kind = xikUntypedAtomic) or (Item.Kind = xikFloat) then
+        Item := CastTo(Item, xikDouble, False)
+      else if not IsNumeric(Item.Kind) then
+        Fail('XPTY0004', Name + ': the value is ' + KindName(Item.Kind) + ', not a number');
+      Value := ItemString(Item);
+    end
+    else
+      Value := 'NaN';
+    Picture := Str(1, True, Present);
+    HasName := False;
+    if Length(FNodes[Index].Children) > 2 then
+      FormatName := Str(2, False, HasName);
+    if HasName then
+      Fail('FODF1280', Name + ': there is no decimal format ' + LandrixXmlUtf8ToString(FormatName));
+    DF := TXPathDecimalFormat.Create;
+    try
+      { a double in a picture with percent or per mille: multiplied as a
+        double (Saxon: 0.545 is 55%) }
+      Scaled := False;
+      if HasValue and (Item.Kind = xikDouble) then
+      begin
+        Scale := XPathPictureScale(Picture, DF, (Value <> '') and (Value[1] = '-'));
+        if Scale > 1 then
+        begin
+          Value := ItemString(DoubleItem(LandrixXmlDoubleMultiply(ItemDouble(Item),
+            LandrixXmlDoubleFromNative(Scale))));
+          Scaled := True;
+        end;
+      end;
+      Result := SingleSeq(StringItem(xikString, XPathFormatNumber(Value, Picture, DF, Scaled)));
+    finally
+      DF.Free;
+    end;
+    Exit;
+  end;
+  { format-dateTime(), format-date(), format-time(): the value of the type
+    (an untyped value cast), the picture, then language, calendar and
+    place as xs:string? }
+  if HasValue then
+  begin
+    if Item.Kind = xikUntypedAtomic then
+      Item := CastTo(Item, DateTypes[Id], False)
+    else if Item.Kind <> DateTypes[Id] then
+      Fail('XPTY0004', Name + ': the value is ' + KindName(Item.Kind) + ', not ' + KindName(DateTypes[Id]));
+  end;
+  Picture := Str(1, True, Present);
+  HasLanguage := False;
+  HasCalendar := False;
+  Language := '';
+  Calendar := '';
+  if Length(FNodes[Index].Children) > 2 then
+  begin
+    Language := Str(2, False, HasLanguage);
+    Calendar := Str(3, False, HasCalendar);
+    Str(4, False, Present);
+  end;
+  if HasValue then
+    Result := SingleSeq(StringItem(xikString, XPathFormatDateTime(ItemString(Item), DateKinds[Id], Picture,
+      Language, Calendar, HasLanguage, HasCalendar)));
+end;
+
 function TLandrixXmlXPathEvaluator.CallFunction(Index: Integer; Context, Position, Size: Integer;
   const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
 var
@@ -2455,6 +2599,8 @@ begin
       Result := SingleSeq(ClockItem(xikDate));
     xfnCurrentTime:
       Result := SingleSeq(ClockItem(xikTime));
+    xfnFormatNumber, xfnFormatDateTime, xfnFormatDate, xfnFormatTime:
+      Result := CallFormat(Index, Context, Position, Size, ContextItem);
     xfnImplicitTimezone:
       Result := SingleSeq(DurationItem(xikDayTimeDuration, LandrixXmlDecimalZero,
         LandrixXmlDecimalFromInt64(Int64(FImplicitTimeZone) * 60)));

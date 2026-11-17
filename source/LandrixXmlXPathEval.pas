@@ -343,6 +343,8 @@ type
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     function CallStrArg(Index, K: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlUtf8;
+    function CallFormat(Index: Integer; Context, Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure CallFunctionInto(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalSequenceExpr(Index: Integer; Context: Integer; Position, Size: Integer;
@@ -587,6 +589,9 @@ function LandrixXmlXPathNodeBaseUri(Tree: TLandrixXmlXPathTree; Node: Integer; o
 function LandrixXmlDefaultMaxStackBytes: Integer;
 
 implementation
+
+uses
+  LandrixXmlXPathFormat;
 
 {$I LandrixXmlCaseData.inc}
 

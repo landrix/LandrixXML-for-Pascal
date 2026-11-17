@@ -54,3 +54,17 @@ matches('A', '^[a-[x]]$', 'i')	xs:boolean true	xs:boolean false	the same before 
 ('a', 'b') || 'c'	error XPST0003	error XPTY0004	the same; every operand is at most one item, as in concat
 1 || 2 = '12'	error XPST0003	xs:boolean true	the same; || binds more tightly than a comparison
 'x' || 1 to 2	error XPST0003	error XPTY0004	the same; a range binds more tightly than ||
+format-number(1234.5, '#,##0.00')	error XPST0017	xs:string 1,234.50	format-number is XPath 3.0 (XSLT 2.0 has it as an XSLT function)
+format-number(xs:double('0.545'), '0%')	error XPST0017	xs:string 55%	the same; a double is multiplied by 100 as a double
+format-number((), '0')	error XPST0017	xs:string NaN	the same; the empty sequence is NaN
+format-number(xs:untypedAtomic('12.5'), '000.0')	error XPST0017	xs:string 012.5	the same; an untyped value is cast to xs:double
+format-number(1, '0', 'x')	error XPST0017	error FODF1280	the same; only the default decimal format is known
+format-number(1, '0', ())	error XPST0017	xs:string 1	the same; an empty name is the default decimal format
+format-number('1', '0')	error XPST0017	error XPTY0004	the same; a string is no number
+format-date(xs:date('2026-11-17'), '[D1o] [MNn] [Y]')	error XPST0017	xs:string 17th November 2026	format-date is XPath 3.0
+format-time(xs:time('13:05:00'), '[h]:[m01] [P]')	error XPST0017	xs:string 1:05 p.m.	format-time is XPath 3.0
+format-dateTime(xs:untypedAtomic('2026-11-17T10:00:00'), '[Y]-[M01]')	error XPST0017	xs:string 2026-11	format-dateTime is XPath 3.0; an untyped value is cast
+format-date(xs:date('2026-11-17'), '[Y]', 'de', (), ())	error XPST0017	xs:string [Language: en]2026	the same with five arguments; Saxon HE formats in English
+count(format-date((), '[Y]'))	error XPST0017	xs:integer 0	the same; the empty sequence gives the empty sequence
+format-date(xs:dateTime('2026-11-17T10:00:00'), '[Y]')	error XPST0017	error XPTY0004	the same; an xs:dateTime is no xs:date
+format-date(xs:date('2026-11-17'), ())	error XPST0017	error XPTY0004	the same; the picture must not be empty

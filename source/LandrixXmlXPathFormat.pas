@@ -4,11 +4,12 @@
   Licensed under the MIT License. See the LICENSE file in the project root
   or https://opensource.org/licenses/MIT for the full license text.
 
-  Internal unit of the XSLT processor (LandrixXmlXslt), not part of the
-  documented API: format-number() (XSLT 2.0 16.4) and format-date(),
-  format-time() and format-dateTime() (XSLT 2.0 16.5) as Saxon HE formats
-  them, in English (another language is named as Saxon names it:
-  "[Language: en]" before the result).
+  Internal unit of the XPath evaluator and the XSLT processor, not part
+  of the documented API: format-number() (XSLT 2.0 16.4, XPath functions
+  3.0 4.7) and format-date(), format-time() and format-dateTime() (XSLT
+  2.0 16.5, XPath functions 3.0 9.8) as Saxon HE formats them, in
+  English (another language is named as Saxon names it: "[Language: en]"
+  before the result).
 
   Components Y M D d F W H h P m s f Z z C E with decimal presentations
   (a format token of ASCII digits, its digits the minimum width; a year
@@ -21,7 +22,7 @@
   The English words and ordinals are also those of xsl:number: Saxon HE
   numbers in English whatever the language. }
 
-unit LandrixXmlXsltFormat;
+unit LandrixXmlXPathFormat;
 
 {$I LandrixXml.inc}
 
@@ -32,10 +33,10 @@ uses
   LandrixXmlBase;
 
 type
-  TXsltDateKind = (xdkDate, xdkTime, xdkDateTime);
+  TXPathDateKind = (xdkDate, xdkTime, xdkDateTime);
 
   { an xsl:decimal-format: its characters and strings (UTF-8) }
-  TXsltDecimalFormat = class
+  TXPathDecimalFormat = class
   public
     DecimalSeparator, GroupingSeparator, Infinity, MinusSign, NaN, Percent, PerMille, ZeroDigit, Digit,
       PatternSeparator: TLandrixXmlUtf8;
@@ -52,7 +53,7 @@ type
   xs:dateTime (Kind); HasLanguage, HasCalendar: a language or calendar
   was given (an empty language Saxon names too, an empty calendar is
   FOFD1340). }
-function XsltFormatDateTime(const Value: TLandrixXmlUtf8; Kind: TXsltDateKind;
+function XPathFormatDateTime(const Value: TLandrixXmlUtf8; Kind: TXPathDateKind;
   const Picture, Language, Calendar: TLandrixXmlUtf8; HasLanguage, HasCalendar: Boolean): TLandrixXmlUtf8;
 
 { format-number() (XSLT 2.0 16.4) as Saxon HE formats: Value is 'NaN',
@@ -60,29 +61,29 @@ function XsltFormatDateTime(const Value: TLandrixXmlUtf8; Kind: TXsltDateKind;
   xs:double (its shortest decimal form, so a double is rounded as Saxon
   rounds it: half to even on those digits). Picture errors are FODF1310 (as Saxon);
   a zero digit other than 0 is not supported. }
-function XsltFormatNumber(const Value: TLandrixXmlUtf8; const Picture: TLandrixXmlUtf8;
-  DF: TXsltDecimalFormat; Scaled: Boolean): TLandrixXmlUtf8;
+function XPathFormatNumber(const Value: TLandrixXmlUtf8; const Picture: TLandrixXmlUtf8;
+  DF: TXPathDecimalFormat; Scaled: Boolean): TLandrixXmlUtf8;
 { 100 or 1000 if the sub-picture for the sign (Negative) has a percent or
   per-mille sign, else 1: a double is multiplied as a double before it is
   formatted (Scaled), as Saxon does. Checks the picture (FODF1310). }
-function XsltPictureScale(const Picture: TLandrixXmlUtf8; DF: TXsltDecimalFormat; Negative: Boolean): Integer;
+function XPathPictureScale(const Picture: TLandrixXmlUtf8; DF: TXPathDecimalFormat; Negative: Boolean): Integer;
 
 { N (0 or more) in English words as Saxon writes them: title case with
   "and" in lower case ("One Hundred and Twenty One"); Ordinal: the
   ordinal ("One Hundred and Twenty-First"). }
-function XsltNumberWords(N: Integer; Ordinal: Boolean): TLandrixXmlUtf8;
-{ Words of XsltNumberWords in the case of the format token W (upper
+function XPathNumberWords(N: Integer; Ordinal: Boolean): TLandrixXmlUtf8;
+{ Words of XPathNumberWords in the case of the format token W (upper
   case), w (lower case) or Ww (as they are) }
-function XsltWordsCase(const Words, Token: TLandrixXmlUtf8): TLandrixXmlUtf8;
+function XPathWordsCase(const Words, Token: TLandrixXmlUtf8): TLandrixXmlUtf8;
 { the English ordinal suffix of N: st, nd, rd or th }
-function XsltOrdinalSuffix(N: Integer): TLandrixXmlUtf8;
+function XPathOrdinalSuffix(N: Integer): TLandrixXmlUtf8;
 { N (1 or more) in the letters from First to z (Z when First is upper
   case) as a bijective numeral: a, b, ..., z, aa, ab, ...; 0 or less as
   digits }
-function XsltLetters(N: Integer; First: AnsiChar): TLandrixXmlUtf8;
+function XPathLetters(N: Integer; First: AnsiChar): TLandrixXmlUtf8;
 { S is an xs:language: 1 to 8 ASCII letters, then any number of
   subtags of "-" and 1 to 8 ASCII letters or digits }
-function XsltIsLanguage(const S: TLandrixXmlUtf8): Boolean;
+function XPathIsLanguage(const S: TLandrixXmlUtf8): Boolean;
 
 implementation
 
@@ -117,7 +118,7 @@ end;
   plain ELandrixXmlError FOER0000 of code xecXPath) }
 procedure Unsupported(const Msg: string);
 begin
-  raise ELandrixXmlXPathError.CreateXPathAt(xecUnsupported, 'FOER0000', 'XSLT: ' + Msg + ' is not supported', 0, 0);
+  raise ELandrixXmlXPathError.CreateXPathAt(xecUnsupported, 'FOER0000', Msg + ' is not supported', 0, 0);
 end;
 
 function Digits(const S: TLandrixXmlUtf8; var I: Integer; N: Integer): Integer;
@@ -135,7 +136,7 @@ begin
 end;
 
 { the parts of a canonical lexical form }
-function ParseValue(const S: TLandrixXmlUtf8; Kind: TXsltDateKind): TDateParts;
+function ParseValue(const S: TLandrixXmlUtf8; Kind: TXPathDateKind): TDateParts;
 var
   I, Start: Integer;
   Negative: Boolean;
@@ -327,7 +328,7 @@ const
   the rest: "and" before a rest below 100 (as Saxon) }
 function ScaleWords(N, Scale: Integer; const Name: string; Ordinal: Boolean): TLandrixXmlUtf8; forward;
 
-function XsltNumberWords(N: Integer; Ordinal: Boolean): TLandrixXmlUtf8;
+function XPathNumberWords(N: Integer; Ordinal: Boolean): TLandrixXmlUtf8;
 begin
   if N >= 1000000000 then
     Result := ScaleWords(N, 1000000000, 'Billion', Ordinal)
@@ -337,14 +338,14 @@ begin
     Result := ScaleWords(N, 1000, 'Thousand', Ordinal)
   else if N >= 100 then
   begin
-    Result := XsltNumberWords(N div 100, False) + ' Hundred';
+    Result := XPathNumberWords(N div 100, False) + ' Hundred';
     if N mod 100 = 0 then
     begin
       if Ordinal then
         Result := Result + 'th';
     end
     else
-      Result := Result + ' and ' + XsltNumberWords(N mod 100, Ordinal);
+      Result := Result + ' and ' + XPathNumberWords(N mod 100, Ordinal);
   end
   else if N < 20 then
   begin
@@ -372,7 +373,7 @@ function ScaleWords(N, Scale: Integer; const Name: string; Ordinal: Boolean): TL
 var
   Rest: Integer;
 begin
-  Result := XsltNumberWords(N div Scale, False) + ' ' + LandrixXmlStringToUtf8(Name);
+  Result := XPathNumberWords(N div Scale, False) + ' ' + LandrixXmlStringToUtf8(Name);
   Rest := N mod Scale;
   if Rest = 0 then
   begin
@@ -380,12 +381,12 @@ begin
       Result := Result + 'th';
   end
   else if Rest < 100 then
-    Result := Result + ' and ' + XsltNumberWords(Rest, Ordinal)
+    Result := Result + ' and ' + XPathNumberWords(Rest, Ordinal)
   else
-    Result := Result + ' ' + XsltNumberWords(Rest, Ordinal);
+    Result := Result + ' ' + XPathNumberWords(Rest, Ordinal);
 end;
 
-function XsltWordsCase(const Words, Token: TLandrixXmlUtf8): TLandrixXmlUtf8;
+function XPathWordsCase(const Words, Token: TLandrixXmlUtf8): TLandrixXmlUtf8;
 begin
   if Token = 'W' then
     Result := Upper8(Words)
@@ -395,7 +396,7 @@ begin
     Result := Words;
 end;
 
-function XsltOrdinalSuffix(N: Integer): TLandrixXmlUtf8;
+function XPathOrdinalSuffix(N: Integer): TLandrixXmlUtf8;
 begin
   N := Abs(N);
   if (N mod 100 >= 11) and (N mod 100 <= 13) then
@@ -410,7 +411,7 @@ begin
     end;
 end;
 
-function XsltLetters(N: Integer; First: AnsiChar): TLandrixXmlUtf8;
+function XPathLetters(N: Integer; First: AnsiChar): TLandrixXmlUtf8;
 var
   Base: Integer;
   Last: AnsiChar;
@@ -437,7 +438,7 @@ begin
   end;
 end;
 
-function XsltIsLanguage(const S: TLandrixXmlUtf8): Boolean;
+function XPathIsLanguage(const S: TLandrixXmlUtf8): Boolean;
 var
   I, Run: Integer;
   First: Boolean;
@@ -573,9 +574,9 @@ begin
   if Words or (Width = 0) then
   begin
     if Words then
-      Result := XsltWordsCase(XsltNumberWords(N, Ordinal), Token)
+      Result := XPathWordsCase(XPathNumberWords(N, Ordinal), Token)
     else
-      Result := XsltLetters(N, Token[1]);
+      Result := XPathLetters(N, Token[1]);
     { Saxon pads words and letters to a minimum width with U+FFFF }
     if Length(Result) < MinW then
       Unsupported('a minimum width longer than words or letters');
@@ -586,7 +587,7 @@ begin
     Width := MinW;
   Result := Pad(Result, Width, '0', True);
   if Ordinal then
-    Result := Result + XsltOrdinalSuffix(N);
+    Result := Result + XPathOrdinalSuffix(N);
 end;
 
 { a time zone: tokens "01:01" (the default), "00:00", "0000", "01", "0" }
@@ -813,7 +814,7 @@ begin
   end;
 end;
 
-function XsltFormatDateTime(const Value: TLandrixXmlUtf8; Kind: TXsltDateKind;
+function XPathFormatDateTime(const Value: TLandrixXmlUtf8; Kind: TXPathDateKind;
   const Picture, Language, Calendar: TLandrixXmlUtf8; HasLanguage, HasCalendar: Boolean): TLandrixXmlUtf8;
 var
   D: TDateParts;
@@ -872,7 +873,7 @@ end;
 
 { --- format-number --------------------------------------------------------- }
 
-constructor TXsltDecimalFormat.Create;
+constructor TXPathDecimalFormat.Create;
 var
   I: Integer;
 begin
@@ -896,7 +897,7 @@ begin
     Precedences[I] := -1;
 end;
 
-function TXsltDecimalFormat.PropertyIndex(const Name: TLandrixXmlUtf8): Integer;
+function TXPathDecimalFormat.PropertyIndex(const Name: TLandrixXmlUtf8): Integer;
 begin
   if Name = 'decimal-separator' then
     Result := 0
@@ -1055,7 +1056,7 @@ begin
     LandrixXmlUtf8ToString(Picture) + '" ' + Why);
 end;
 
-function ParseSubPicture(const P: TLandrixXmlUtf8Array; First, Last: Integer; DF: TXsltDecimalFormat;
+function ParseSubPicture(const P: TLandrixXmlUtf8Array; First, Last: Integer; DF: TXPathDecimalFormat;
   const Picture: TLandrixXmlUtf8): TSubPicture;
 var
   I, A, Z, Point, Digits: Integer;
@@ -1237,7 +1238,7 @@ begin
 end;
 
 { the sub-picture for the sign: both are checked }
-function ChooseSubPicture(const Picture: TLandrixXmlUtf8; DF: TXsltDecimalFormat; Negative: Boolean;
+function ChooseSubPicture(const Picture: TLandrixXmlUtf8; DF: TXPathDecimalFormat; Negative: Boolean;
   out HasNegative: Boolean): TSubPicture;
 var
   P: TLandrixXmlUtf8Array;
@@ -1245,7 +1246,7 @@ var
   Other: TSubPicture;
 begin
   if DF.ZeroDigit <> '0' then
-    raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT: a zero digit other than 0 is not supported');
+    raise ELandrixXmlError.CreateCode(xecUnsupported, 'format-number(): a zero digit other than 0 is not supported');
   P := Chars(Picture);
   Sep := -1;
   for I := 0 to Integer(Length(P)) - 1 do
@@ -1267,7 +1268,7 @@ begin
   end;
 end;
 
-function XsltPictureScale(const Picture: TLandrixXmlUtf8; DF: TXsltDecimalFormat; Negative: Boolean): Integer;
+function XPathPictureScale(const Picture: TLandrixXmlUtf8; DF: TXPathDecimalFormat; Negative: Boolean): Integer;
 var
   Sub: TSubPicture;
   HasNegative: Boolean;
@@ -1280,8 +1281,8 @@ begin
     Result := 1000;
 end;
 
-function XsltFormatNumber(const Value: TLandrixXmlUtf8; const Picture: TLandrixXmlUtf8;
-  DF: TXsltDecimalFormat; Scaled: Boolean): TLandrixXmlUtf8;
+function XPathFormatNumber(const Value: TLandrixXmlUtf8; const Picture: TLandrixXmlUtf8;
+  DF: TXPathDecimalFormat; Scaled: Boolean): TLandrixXmlUtf8;
 var
   I, Sep: Integer;
   Sub: TSubPicture;

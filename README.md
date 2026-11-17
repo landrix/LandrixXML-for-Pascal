@@ -59,7 +59,8 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlSchematronCompiler` | compiles ISO Schematron (`.sch`) into rule files, optional validation unit |
 | `LandrixXmlSha256` | SHA-256, used for the source fingerprint of compiled rules |
 | `LandrixXmlXslt` | XSLT 2.0 transformations (a subset, see below): `TLandrixXmlXsltStylesheet`, `TLandrixXmlXsltTransformer`, optional unit |
-| `LandrixXmlXsltCompiler`, `LandrixXmlXsltRuntime`, `LandrixXmlXsltOutput`, `LandrixXmlXsltFormat` | internals of `LandrixXmlXslt` |
+| `LandrixXmlXsltCompiler`, `LandrixXmlXsltRuntime`, `LandrixXmlXsltOutput` | internals of `LandrixXmlXslt` |
+| `LandrixXmlXPathFormat` | picture formatting (`format-number`, `format-date` and the like, number words), internal, shared by `LandrixXmlXslt` and the XPath evaluator |
 
 Add the `source` folder to the search path (Delphi: unit and include path;
 Free Pascal: `-Fusource -Fisource`).
@@ -768,7 +769,10 @@ Differences from Xerces, also on purpose:
   `tests/data/xpath/profiles.txt`. `xppSaxon` grows towards XPath 3.1:
   its QT3 run takes the cases of an XPath 3.1 processor (spec XP20+,
   XP30+, XP31 or XP31+, so the XPath 2.0 only cases drop out); of 19,090
-  applicable cases 16,560 pass today. The static context's
+  applicable cases 16,877 pass today. The XPath 3.0 functions it has so
+  far: `format-number` (the default decimal format only),
+  `format-dateTime`, `format-date` and `format-time`, formatted as Saxon
+  HE formats them (in English). The static context's
   `DefaultElementNamespace` (default '') is the default element/type
   namespace of XPath 2.0: unprefixed element names in name tests (not on
   the attribute axis), `element()` and atomic type names are in it (a

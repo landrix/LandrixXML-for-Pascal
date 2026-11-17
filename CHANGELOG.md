@@ -5,7 +5,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- XPath profile `xppSaxon`: the XPath 3.0 functions `format-number`
+  (default decimal format; a decimal format name is FODF1280),
+  `format-dateTime`, `format-date` and `format-time`, formatted as the
+  XSLT processor formats them (Saxon HE, English). In `xppXPath20` they
+  stay unknown (XPST0017); XSLT keeps its own (xsl:decimal-format).
+  QT3 (Saxon profile): 317 more cases pass.
+
 ### Changed
+
+- The picture formatting unit is now `LandrixXmlXPathFormat` (was
+  `LandrixXmlXsltFormat`, internal) and is shared by the XPath evaluator
+  and the XSLT processor; its "not supported" messages no longer start
+  with "XSLT:".
 
 - `tools/run-qt3.py --profile saxon` runs the QT3 cases of an XPath 3.1
   processor (spec XP20+, XP30+, XP31 or XP31+) instead of the XPath 2.0

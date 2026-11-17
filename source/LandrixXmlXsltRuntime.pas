@@ -39,7 +39,7 @@ uses
   LandrixXmlXPathEval,
   LandrixXmlXslt,
   LandrixXmlXsltCompiler,
-  LandrixXmlXsltFormat;
+  LandrixXmlXPathFormat;
 
 type
   TXsltRunSettings = class
@@ -322,9 +322,9 @@ type
     FBaseExprs: TObjectList;
     { xs:dateTime?, xs:date?, xs:time? (the first argument of the format
       functions) }
-    FDateTypes: array[TXsltDateKind] of TLandrixXmlXPathSequenceType;
+    FDateTypes: array[TXPathDateKind] of TLandrixXmlXPathSequenceType;
     FStringType, FOptionalStringType, FIntegerType: TLandrixXmlXPathSequenceType;
-    function FormatDate(Kind: TXsltDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function FormatDate(Kind: TXPathDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function AtomKey(const It: TLandrixXmlXPathItem): TLandrixXmlUtf8;
     { a declaration of K in backwards compatible mode: all values of K
       are compared as strings (XSLT 2.0 section 16.3.1) }
@@ -1969,9 +1969,9 @@ end;
 
 { format-dateTime(), format-date(), format-time(): the value converted as
   a function argument, the picture, language and calendar as strings }
-function TRun.FormatDate(Kind: TXsltDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+function TRun.FormatDate(Kind: TXPathDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
 const
-  Names: array[TXsltDateKind] of string = ('format-date', 'format-time', 'format-dateTime');
+  Names: array[TXPathDateKind] of string = ('format-date', 'format-time', 'format-dateTime');
 var
   V: TLandrixXmlXPathSequence;
   Picture, Language, Calendar: TLandrixXmlUtf8;
@@ -2003,7 +2003,7 @@ begin
   Str(4, False);
   if V.Count = 0 then
     Exit;
-  Result := LandrixXmlXPathStringItem(XsltFormatDateTime(FEvaluator.ItemString(V.Items[0]), Kind, Picture,
+  Result := LandrixXmlXPathStringItem(XPathFormatDateTime(FEvaluator.ItemString(V.Items[0]), Kind, Picture,
     Language, Calendar, (High(Args) >= 2) and (Args[2].Count > 0), (High(Args) >= 3) and (Args[3].Count > 0)));
 end;
 
@@ -4076,12 +4076,12 @@ begin
   Result := '';
   if (Token = 'W') or (Token = 'w') or (Token = 'Ww') then
   begin
-    Result := XsltWordsCase(XsltNumberWords(N, Ordinal), Token);
+    Result := XPathWordsCase(XPathNumberWords(N, Ordinal), Token);
     Exit;
   end;
   if Alphabetic and ((Token = 'i') or (Token = 'I')) then
   begin
-    Result := XsltLetters(N, Token[1]);
+    Result := XPathLetters(N, Token[1]);
     Exit;
   end;
   Letters := 'abcdefghijklmnopqrstuvwxyz';
@@ -4141,7 +4141,7 @@ begin
     Result := S;
   end;
   if Ordinal then
-    Result := Result + XsltOrdinalSuffix(N);
+    Result := Result + XPathOrdinalSuffix(N);
 end;
 
 { Numbers formatted as XSLT 2.0 12.3 says: the alphanumeric tokens of the
@@ -4266,7 +4266,7 @@ begin
   { lang, ordinal and letter-value first (Saxon: a bad lang before an
     empty select). Saxon HE numbers in English whatever the language;
     any ordinal value but the empty string is an ordinal. }
-  if (Instr.NumberLang <> nil) and not XsltIsLanguage(Trim8(EvalAvt(Instr, Instr.NumberLang, Focus))) then
+  if (Instr.NumberLang <> nil) and not XPathIsLanguage(Trim8(EvalAvt(Instr, Instr.NumberLang, Focus))) then
     Fail(Instr, 'XTDE0030', 'xsl:number: lang must be a language code');
   Ordinal := (Instr.NumberOrdinal <> nil) and (EvalAvt(Instr, Instr.NumberOrdinal, Focus) <> '');
   Alphabetic := False;
@@ -4661,7 +4661,7 @@ begin
   Scaled := False;
   if (Args[0].Count > 0) and (It.Kind = xikDouble) then
   begin
-    Scale := XsltPictureScale(Picture, TXsltDecimalFormat(FC.DecimalFormats.Objects[K]),
+    Scale := XPathPictureScale(Picture, TXPathDecimalFormat(FC.DecimalFormats.Objects[K]),
       (Value <> '') and (Value[1] = '-'));
     if Scale > 1 then
     begin
@@ -4672,8 +4672,8 @@ begin
       Scaled := True;
     end;
   end;
-  Result := LandrixXmlXPathStringItem(XsltFormatNumber(Value, Picture,
-    TXsltDecimalFormat(FC.DecimalFormats.Objects[K]), Scaled));
+  Result := LandrixXmlXPathStringItem(XPathFormatNumber(Value, Picture,
+    TXPathDecimalFormat(FC.DecimalFormats.Objects[K]), Scaled));
 end;
 
 { The value an atomic item (or a node: its string value) is compared by

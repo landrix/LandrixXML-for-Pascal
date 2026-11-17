@@ -234,7 +234,9 @@ type
     xfnRemove, xfnInsertBefore, xfnUnordered, xfnError,
     xfnEncodeForUri, xfnIriToUri, xfnEscapeHtmlUri, xfnResolveUri,
     xfnLang, xfnTrace, xfnDoc, xfnDocAvailable, xfnDocumentUri,
-    xfnNormalizeUnicode, xfnNilled, xfnStaticBaseUri, xfnBaseUri, xfnCollection, xfnId, xfnIdref
+    xfnNormalizeUnicode, xfnNilled, xfnStaticBaseUri, xfnBaseUri, xfnCollection, xfnId, xfnIdref,
+    { XPath 3.0: not in profile xppXPath20 }
+    xfnFormatNumber, xfnFormatDateTime, xfnFormatDate, xfnFormatTime
   );
 
   { A user function (Schematron rule sets declare them): name, parameter
@@ -558,7 +560,11 @@ const
     (Name: 'base-uri'; MinArgs: 0; MaxArgs: 1; Xs: False),
     (Name: 'collection'; MinArgs: 0; MaxArgs: 1; Xs: False),
     (Name: 'id'; MinArgs: 1; MaxArgs: 2; Xs: False),
-    (Name: 'idref'; MinArgs: 1; MaxArgs: 2; Xs: False)
+    (Name: 'idref'; MinArgs: 1; MaxArgs: 2; Xs: False),
+    (Name: 'format-number'; MinArgs: 2; MaxArgs: 3; Xs: False),
+    (Name: 'format-dateTime'; MinArgs: 2; MaxArgs: 5; Xs: False),
+    (Name: 'format-date'; MinArgs: 2; MaxArgs: 5; Xs: False),
+    (Name: 'format-time'; MinArgs: 2; MaxArgs: 5; Xs: False)
   );
 
   { local names in the xs namespace; empty for the labels without one }
@@ -586,10 +592,17 @@ begin
     Result := 'xs:' + AtomicNames[T];
 end;
 
-{ XPath 2.0 knows fewer forms of some functions than XPath 3.0 }
+{ XPath 2.0 knows fewer functions, and fewer forms of some, than XPath 3.0 }
+function InProfile(F: TLandrixXmlXPathFunctionId; Profile: TLandrixXmlXPathProfile): Boolean;
+begin
+  Result := (F < xfnFormatNumber) or (Profile <> xppXPath20);
+end;
+
 function ArityInProfile(F: TLandrixXmlXPathFunctionId; Count: Integer; Profile: TLandrixXmlXPathProfile): Boolean;
 begin
-  if Profile <> xppXPath20 then
+  if F in [xfnFormatDateTime, xfnFormatDate, xfnFormatTime] then
+    Result := (Count = 2) or (Count = 5)
+  else if Profile <> xppXPath20 then
     Result := True
   else
     case F of
@@ -609,7 +622,7 @@ var
 begin
   Result := True;
   for Id := Low(TLandrixXmlXPathFunctionId) to High(TLandrixXmlXPathFunctionId) do
-    if (LandrixXmlStringToUtf8(Functions[Id].Name) = LocalName) and
+    if (LandrixXmlStringToUtf8(Functions[Id].Name) = LocalName) and InProfile(Id, Profile) and
       ((Functions[Id].Xs and (NamespaceUri = LandrixXmlXPathSchemaNamespace)) or
       (not Functions[Id].Xs and (NamespaceUri = LandrixXmlXPathFunctionNamespace))) then
     begin
@@ -2397,7 +2410,7 @@ begin
   end;
   Found := False;
   for Id := Low(TLandrixXmlXPathFunctionId) to High(TLandrixXmlXPathFunctionId) do
-    if (LandrixXmlStringToUtf8(Functions[Id].Name) = Local) and
+    if (LandrixXmlStringToUtf8(Functions[Id].Name) = Local) and InProfile(Id, FContext.Profile) and
       ((Functions[Id].Xs and (Uri = LandrixXmlXPathSchemaNamespace)) or
       (not Functions[Id].Xs and (Uri = LandrixXmlXPathFunctionNamespace))) then
     begin

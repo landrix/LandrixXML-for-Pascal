@@ -43,7 +43,7 @@ uses
   LandrixXmlXPathEval,
   LandrixXmlXslt,
   LandrixXmlXsltOutput,
-  LandrixXmlXsltFormat;
+  LandrixXmlXPathFormat;
 
 const
   XsltNamespace = 'http://www.w3.org/1999/XSL/Transform';
@@ -437,7 +437,7 @@ type
     UserFunctionBase: Integer;
     { key name (Clark) -> TXsltKey, owned }
     Keys: TStringList;
-    { decimal format name ('' the default) -> TXsltDecimalFormat, owned }
+    { decimal format name ('' the default) -> TXPathDecimalFormat, owned }
     DecimalFormats: TStringList;
     { the name tests of xsl:strip-space and xsl:preserve-space: kind 0 a
       name (URI and local name), 1 "prefix:*" (URI), 2 "*", 3 "*:name"
@@ -757,7 +757,7 @@ begin
   Keys.CaseSensitive := True;
   DecimalFormats := TXsltStringList.Create;
   DecimalFormats.CaseSensitive := True;
-  DecimalFormats.AddObject('', TXsltDecimalFormat.Create);
+  DecimalFormats.AddObject('', TXPathDecimalFormat.Create);
 end;
 
 destructor TXsltCompiled.Destroy;
@@ -4450,7 +4450,7 @@ var
   M: TModule;
   E, I, J, K: Integer;
   Name, L, V: TLandrixXmlUtf8;
-  F: TXsltDecimalFormat;
+  F: TXPathDecimalFormat;
 
   function CharCount(const S: TLandrixXmlUtf8): Integer;
   var
@@ -4477,10 +4477,10 @@ begin
   end;
   K := FC.DecimalFormats.IndexOf(LandrixXmlUtf8ToString(Name));
   if K >= 0 then
-    F := TXsltDecimalFormat(FC.DecimalFormats.Objects[K])
+    F := TXPathDecimalFormat(FC.DecimalFormats.Objects[K])
   else
   begin
-    F := TXsltDecimalFormat.Create;
+    F := TXPathDecimalFormat.Create;
     FC.DecimalFormats.AddObject(LandrixXmlUtf8ToString(Name), F);
   end;
   for I := E + 1 to E + M.Tree.AttributeCount[E] do
