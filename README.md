@@ -765,7 +765,10 @@ Differences from Xerces, also on purpose:
   Schematron validator uses; it also accepts the XPath 3.0 string
   concatenation operator `||`, which XSLT 2.0 stylesheets run by Saxon
   use. Both profiles have a QT3 baseline; the differences are tested in
-  `tests/data/xpath/profiles.txt`. The static context's
+  `tests/data/xpath/profiles.txt`. `xppSaxon` grows towards XPath 3.1:
+  its QT3 run takes the cases of an XPath 3.1 processor (spec XP20+,
+  XP30+, XP31 or XP31+, so the XPath 2.0 only cases drop out); of 19,090
+  applicable cases 16,560 pass today. The static context's
   `DefaultElementNamespace` (default '') is the default element/type
   namespace of XPath 2.0: unprefixed element names in name tests (not on
   the attribute axis), `element()` and atomic type names are in it (a

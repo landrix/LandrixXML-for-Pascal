@@ -1,4 +1,4 @@
-# QT3 baseline: the XPath 2.0 cases that pass (or give another error code)
+# QT3 baseline: the cases of the profile that pass (or give another error code)
 # profile xpath20, suite commit 201a6e466940cdfc727f4babfedcde5332b9f578, harness 2; written by tools/run-qt3.py --update-baseline
 app-FunctxFn/functx-fn-QName-1 pass
 app-FunctxFn/functx-fn-QName-2 pass

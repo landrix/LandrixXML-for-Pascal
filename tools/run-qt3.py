@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""Run the W3C XPath/XQuery test suite QT3 (XPath 2.0 cases) against LandrixXml.
+"""Run the W3C XPath/XQuery test suite QT3 (XPath cases) against LandrixXml.
 
 Downloads the suite at a pinned commit into tests/data/qt3-suite/
 (git-ignored, not redistributed), selects the test cases that apply to
-XPath 2.0 and lets the helper tests/LandrixXmlQt3.dpr evaluate them; this
-script checks the assertions and compares the outcome with the committed
-baseline tests/data/qt3-baseline.txt.
+the profile (XPath 2.0, or XPath 3.1 for the Saxon profile) and lets
+the helper tests/LandrixXmlQt3.dpr evaluate them; this script checks
+the assertions and compares the outcome with the committed baseline of
+the profile (tests/data/qt3-baseline.txt, qt3-baseline-saxon.txt).
 
 Applicability: the dependencies of the test set and of the test case
 must all hold (the tokens of one spec value are alternatives): spec
-XP20 or XP20+, no optional feature, XML 1.0 (fifth edition), XSD 1.0,
-the normalization forms NFC, NFD, NFKC and NFKD (not FULLY-NORMALIZED).
+XP20 or XP20+ (profile saxon: XP20+, XP30+, XP31 or XP31+), no optional
+feature, XML 1.0 (fifth edition), XSD 1.0, the normalization forms NFC,
+NFD, NFKC and NFKD (not FULLY-NORMALIZED).
 Environments with schemas, typed sources, collections, collations, a
 static base URI, decimal formats or resources are not provided.
 
@@ -87,7 +89,12 @@ PLATFORM_DEPENDENT = {
     "fn-count/cbcl-count-001": "10^7 items do not fit into a 32-bit process",
 }
 
-SPECS = {"XP20", "XP20+"}
+# Spec tokens per profile: the XPath 2.0 profile runs the XPath 2.0 cases, the
+# Saxon profile those of an XPath 3.1 processor (Saxon HE 12 evaluates XPath
+# 3.1 also in XSLT 2.0 stylesheets), so cases of XPath 2.0 only drop out.
+SPECS_BY_PROFILE = {"xpath20": {"XP20", "XP20+"},
+                    "saxon": {"XP20+", "XP30+", "XP31", "XP31+"}}
+SPECS = SPECS_BY_PROFILE["xpath20"]
 XML_VERSIONS = {"1.0", "1.0:5+"}
 XSD_VERSIONS = {"1.0"}
 NORMALIZATION_FORMS = {"NFC", "NFD", "NFKC", "NFKD"}
@@ -1060,7 +1067,7 @@ def read_baseline():
 
 def write_baseline(cases):
     with open(BASELINE, "w", encoding="utf-8", newline="\n") as f:
-        f.write("# QT3 baseline: the XPath 2.0 cases that pass (or give another error code)\n")
+        f.write("# QT3 baseline: the cases of the profile that pass (or give another error code)\n")
         f.write("# profile %s, suite commit %s, harness %s; written by tools/run-qt3.py --update-baseline\n"
                 % (PROFILE, COMMIT, HARNESS_VERSION))
         for c in sorted(cases, key=lambda c: c.key):
@@ -1272,8 +1279,9 @@ def main():
     args = ap.parse_args()
     if args.self_test:
         return self_test()
-    global BASELINE, PROFILE
+    global BASELINE, PROFILE, SPECS
     PROFILE = args.profile
+    SPECS = SPECS_BY_PROFILE[PROFILE]
     BASELINE = BASELINES[PROFILE]
     if not os.path.exists(os.path.join(SUITE, "catalog.xml")):
         download()

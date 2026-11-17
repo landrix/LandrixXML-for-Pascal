@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `tools/run-qt3.py --profile saxon` runs the QT3 cases of an XPath 3.1
+  processor (spec XP20+, XP30+, XP31 or XP31+) instead of the XPath 2.0
+  ones, the first step towards XPath 3.1 in that profile: 19,090
+  applicable cases, 16,560 pass (1,476 XPath 3.0/3.1 cases pass already
+  and 447 raise an error where one is expected, but with another code;
+  25 cases of XPath 2.0 only drop out). The XPath 2.0 profile is
+  unchanged.
+
 ## [0.5.0] - 2026-11-17
 
 An XSLT 2.0 processor (`LandrixXmlXslt`, optional) that runs the KoSIT
