@@ -320,6 +320,9 @@ type
     FStringType, FOptionalStringType, FIntegerType: TLandrixXmlXPathSequenceType;
     function FormatDate(Kind: TXsltDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function AtomKey(const It: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+    { a declaration of K in backwards compatible mode: all values of K
+      are compared as strings (XSLT 2.0 section 16.3.1) }
+    function KeyStrings(K: TXsltKey): Boolean;
     function KeyFunction(const Args: array of TLandrixXmlXPathSequence;
       const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
     function KeyIndex(K: TXsltKey; Root: Integer): TObject;
@@ -347,6 +350,16 @@ type
     function DocFunction(Kind, Module: Integer; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
       const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+    { Host without (HostPlain) and with (HostCompatible) XPath 1.0
+      compatibility mode of the caller, which converts the arguments
+      first; FirstStringSeq and FirstNumberSeq: fn:string and fn:number of
+      the first item }
+    function HostPlain(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+      const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+    function FirstStringSeq(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function FirstNumberSeq(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function HostCompatible(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+      const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
     procedure Fail(Instr: TXsltInstr; const Code, Msg: string);
     procedure CheckCollation(Instr: TXsltInstr; const Uri: TLandrixXmlUtf8; const Code: string);
     function Eval(Instr: TXsltInstr; Expr: TLandrixXmlXPathExpression;
@@ -354,6 +367,11 @@ type
     function SimpleContent(const S: TLandrixXmlXPathSequence; const Separator: TLandrixXmlUtf8): TLandrixXmlUtf8;
     function EvalString(Instr: TXsltInstr; Expr: TLandrixXmlXPathExpression;
       const Focus: TLandrixXmlXPathFocus; const Separator: TLandrixXmlUtf8): TLandrixXmlUtf8;
+    { the string value of the first item of Expr's value ('' for none):
+      xsl:value-of and attribute value templates in backwards compatible
+      mode }
+    function FirstString(Instr: TXsltInstr; Expr: TLandrixXmlXPathExpression;
+      const Focus: TLandrixXmlXPathFocus): TLandrixXmlUtf8;
     function EvalAvt(Instr: TXsltInstr; Avt: TXsltAvt; const Focus: TLandrixXmlXPathFocus): TLandrixXmlUtf8;
     function BodyString(Body: TObjectList; const Focus: TLandrixXmlXPathFocus;
       const Mode: TXsltMode; const Separator: TLandrixXmlUtf8): TLandrixXmlUtf8;
@@ -457,6 +475,18 @@ begin
     LandrixXmlXPathAppend(Result.Item, It);
     Result.Position := Position;
     Result.Size := Size;
+  end;
+end;
+
+{ S itself if it has at most one item, else a sequence of its first item }
+function FirstOf(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+begin
+  if S.Count <= 1 then
+    Result := S
+  else
+  begin
+    Result := LandrixXmlXPathEmpty;
+    LandrixXmlXPathAppend(Result, S.Items[0]);
   end;
 end;
 
@@ -1702,7 +1732,111 @@ begin
   end;
 end;
 
+{ fn:string of the first item ('' for none), fn:number of it (NaN for
+  none) }
+function TRun.FirstStringSeq(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+begin
+  if S.Count = 0 then
+    Result := LandrixXmlXPathStringItem('')
+  else
+    Result := LandrixXmlXPathStringItem(FEvaluator.ItemString(S.Items[0]));
+end;
+
+function TRun.FirstNumberSeq(const S: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  A: TLandrixXmlXPathSequence;
+begin
+  A := FEvaluator.DataOf(FirstOf(S));
+  Result := LandrixXmlXPathEmpty;
+  if A.Count = 0 then
+    LandrixXmlXPathAppend(Result, FEvaluator.NumberOf(LandrixXmlXPathStringItem('NaN').Items[0]))
+  else
+    LandrixXmlXPathAppend(Result, FEvaluator.NumberOf(A.Items[0]));
+end;
+
+{ XSLT 2.0 section 3.8 for the functions of XSLT: the first item of a
+  single-item argument (all but the values of key() and the URIs of
+  document()), fn:string of a string argument and fn:number of a numeric
+  one; user functions as XPath converts them (see CompatibleArgument).
+  key() compares strings by its declarations, not by the caller. }
+function TRun.HostCompatible(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+  const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+var
+  A: array of TLandrixXmlXPathSequence;
+  I: Integer;
+  T: TXsltTemplate;
+  P: TXsltInstr;
+begin
+  A := nil;
+  SetLength(A, Length(Args));
+  for I := 0 to Integer(High(Args)) do
+    A[I] := Args[I];
+  if Def.Tag >= FC.UserFunctionBase then
+  begin
+    T := TXsltTemplate(FC.UserFunctions[Def.Tag - FC.UserFunctionBase]);
+    for I := 0 to Integer(T.Params.Count) - 1 do
+    begin
+      P := TXsltInstr(T.Params[I]);
+      if (I <= High(A)) and P.HasAs then
+        A[I] := FEvaluator.CompatibleArgument(A[I], P.AsType);
+    end;
+    Result := CallFunction(T, A);
+    Exit;
+  end;
+  if Def.Tag >= XfnFixedCount then
+  begin
+    { doc, doc-available, unparsed-text and the others: string
+      arguments, except the sequence of document() }
+    case (Def.Tag - XfnFixedCount) mod XfnPerModule of
+      XfnDocument, XfnDocument2:
+        { the URIs stay a sequence; the base node: the first }
+        for I := 1 to Integer(High(A)) do
+          A[I] := FirstOf(A[I]);
+    else
+      for I := 0 to Integer(High(A)) do
+        A[I] := FirstStringSeq(A[I]);
+    end;
+    Result := DocFunction((Def.Tag - XfnFixedCount) mod XfnPerModule, (Def.Tag - XfnFixedCount) div XfnPerModule,
+      A);
+    Exit;
+  end;
+  { every argument a single item, except the values of key() }
+  for I := 0 to Integer(High(A)) do
+    if not (((Def.Tag = XfnKey2) or (Def.Tag = XfnKey3)) and (I = 1)) then
+      A[I] := FirstOf(A[I]);
+  case Def.Tag of
+    XfnKey2, XfnKey3:
+      A[0] := FirstStringSeq(A[0]);
+    XfnFormatNumber2, XfnFormatNumber3:
+      begin
+        A[0] := FirstNumberSeq(A[0]);
+        for I := 1 to Integer(High(A)) do
+          A[I] := FirstStringSeq(A[I]);
+      end;
+    XfnSystemProperty, XfnFunctionAvailable1, XfnElementAvailable, XfnFunctionAvailable2:
+      A[0] := FirstStringSeq(A[0]);
+    XfnFormatDateTime2, XfnFormatDateTime5, XfnFormatDate2, XfnFormatDate5, XfnFormatTime2, XfnFormatTime5:
+      { the picture a string; language, calendar and place too, but they
+        stay empty if they are }
+      for I := 1 to Integer(High(A)) do
+        if (I = 1) or (A[I].Count > 0) then
+          A[I] := FirstStringSeq(A[I]);
+  else
+    { the others take no argument, or one XPath 1.0 does not have }
+  end;
+  Result := HostPlain(Evaluator, Def, A, Focus);
+end;
+
 function TRun.Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
+  const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
+begin
+  if (Evaluator.CallerExpression <> nil) and Evaluator.CallerExpression.XPath10Compatible then
+    Result := HostCompatible(Evaluator, Def, Args, Focus)
+  else
+    Result := HostPlain(Evaluator, Def, Args, Focus);
+end;
+
+function TRun.HostPlain(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
   const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
 var
   G: TXsltGlobal;
@@ -1925,6 +2059,18 @@ begin
   Result := SimpleContent(Eval(Instr, Expr, Focus), Separator);
 end;
 
+function TRun.FirstString(Instr: TXsltInstr; Expr: TLandrixXmlXPathExpression;
+  const Focus: TLandrixXmlXPathFocus): TLandrixXmlUtf8;
+var
+  V, W: TLandrixXmlXPathSequence;
+begin
+  V := Eval(Instr, Expr, Focus);
+  W := LandrixXmlXPathEmpty;
+  if V.Count > 0 then
+    LandrixXmlXPathAppend(W, V.Items[0]);
+  Result := SimpleContent(W, '');
+end;
+
 function TRun.EvalAvt(Instr: TXsltInstr; Avt: TXsltAvt; const Focus: TLandrixXmlXPathFocus): TLandrixXmlUtf8;
 var
   I: Integer;
@@ -1933,6 +2079,9 @@ begin
   for I := 0 to Integer(Length(Avt.Parts)) - 1 do
     if Avt.Exprs[I] = nil then
       Result := Result + Avt.Parts[I]
+    else if Avt.Exprs[I].XPath10Compatible then
+      { backwards compatible mode: the first item }
+      Result := Result + FirstString(Instr, Avt.Exprs[I], Focus)
     else
       Result := Result + EvalString(Instr, Avt.Exprs[I], Focus, ' ');
 end;
@@ -3166,7 +3315,10 @@ begin
     Sep := '';
   if Instr.Separator <> nil then
     Sep := EvalAvt(Instr, Instr.Separator, Focus);
-  if Instr.Select <> nil then
+  if (Instr.Select <> nil) and (Instr.Separator = nil) and Instr.Select.XPath10Compatible then
+    { backwards compatible mode without a separator: the first item }
+    Text := FirstString(Instr, Instr.Select, Focus)
+  else if Instr.Select <> nil then
     Text := EvalString(Instr, Instr.Select, Focus, Sep)
   else
     Text := BodyString(Instr.Body, Focus, Mode, Sep);
@@ -3417,6 +3569,9 @@ begin
         else
           V := TemporarySequence(Key.Body, F, Mode);
         V := FEvaluator.DataOf(V);
+        { backwards compatible mode: the first value }
+        if (V.Count > 1) and Key.Where.Backwards then
+          V := FirstOf(V);
         if V.Count > 1 then
           Fail(Key.Where, 'XTTE1020', 'a sort key is more than one value');
         if DataType[K] = 2 then
@@ -4026,7 +4181,10 @@ begin
       Token := Tokens[I]
     else
       Token := Tokens[High(Tokens)];
-    Result := Result + NumberToken(Numbers[I], Token, GroupSep, GroupSize, Ordinal, Alphabetic);
+    if Numbers[I] < 0 then
+      Result := Result + 'NaN'
+    else
+      Result := Result + NumberToken(Numbers[I], Token, GroupSep, GroupSize, Ordinal, Alphabetic);
   end;
   Result := Result + Suffix;
 end;
@@ -4088,15 +4246,29 @@ begin
   if Instr.NumberValue <> nil then
   begin
     S := Eval(Instr, Instr.NumberValue, Focus);
+    { backwards compatible mode: the first item, NaN for none }
+    if Instr.Backwards then
+    begin
+      S := FirstOf(S);
+      if S.Count = 0 then
+        S := LandrixXmlXPathStringItem('NaN');
+    end;
     for I := 0 to Integer(S.Count) - 1 do
     begin
       { round(number(.)), -1 for NaN }
       K := StrToIntDef(LandrixXmlUtf8ToString(FEvaluator.ItemString(FEvaluator.EvaluateInFocus(FRoundExpr,
         ItemFocus(S.Items[I], 1, 1)).Items[0])), -1);
+      if (K = -2) and Instr.Backwards and (FEvaluator.DataOf(FirstOf(S)).Count = 1) and
+        (FEvaluator.ItemString(FEvaluator.NumberOf(FEvaluator.DataOf(FirstOf(S)).Items[0])) = 'INF') then
+        K := -1;
       if K = -2 then
         raise ELandrixXmlXsltError.CreateXslt(xecUnsupported, 'FOER0000', 'xsl:number: a value above ' +
           IntToStr(MaxInt) + ' is not supported', Instr.Module, Instr.Line, Instr.Column);
-      if K < 0 then
+      { backwards compatible mode: NaN, a negative number and infinity
+        are formatted as NaN (-1 here), as Saxon }
+      if (K < 0) and Instr.Backwards then
+        K := -1
+      else if K < 0 then
         Fail(Instr, 'XTDE0980', 'xsl:number: ' + LandrixXmlUtf8ToString(FEvaluator.ItemString(S.Items[I])) +
           ' is no number from 0 on');
       Add(K);
@@ -4556,9 +4728,10 @@ var
   Nodes: TKeyNodes;
   SavedNode: Integer;
   SavedCurrent: TLandrixXmlXPathSequence;
-  Matched, SavedRegex: Boolean;
+  Matched, SavedRegex, Strings: Boolean;
   SavedRule: TXsltRule;
 begin
+  Strings := KeyStrings(K);
   for I := 0 to Integer(FKeyIndexes.Count) - 1 do
   begin
     Index := TKeyIndex(FKeyIndexes[I]);
@@ -4616,7 +4789,12 @@ begin
         end;
         for J := 0 to Integer(V.Count) - 1 do
         begin
-          Value := LandrixXmlUtf8ToString(AtomKey(V.Items[J]));
+          { a declaration of the key in backwards compatible mode: all
+            values as strings }
+          if Strings then
+            Value := 's' + LandrixXmlUtf8ToString(FEvaluator.ItemString(V.Items[J]))
+          else
+            Value := LandrixXmlUtf8ToString(AtomKey(V.Items[J]));
           { NaN is equal to no value }
           if Value = 'nNaN' then
             Continue;
@@ -4647,6 +4825,16 @@ begin
   FRule := SavedRule;
 end;
 
+function TRun.KeyStrings(K: TXsltKey): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to Integer(K.Decls.Count) - 1 do
+    if TXsltKeyDecl(K.Decls[I]).Backwards then
+      Result := True;
+end;
+
 { key(name, values[, top]): the nodes of the tree of top (the context
   node) that have one of the values under the key, inside top, in
   document order }
@@ -4656,6 +4844,7 @@ var
   Name, Uri, Local: TLandrixXmlUtf8;
   I, J, Top, Root, B, N, X: Integer;
   K: TXsltKey;
+  Strings: Boolean;
   Index: TKeyIndex;
   T: TLandrixXmlXPathTree;
   Found: array of Integer;
@@ -4674,6 +4863,7 @@ begin
   if I < 0 then
     raise ELandrixXmlXPathError.CreateXPath('XTDE1260', 'key(): there is no key ' + LandrixXmlUtf8ToString(Name));
   K := TXsltKey(FC.Keys.Objects[I]);
+  Strings := KeyStrings(K);
   if High(Args) >= 2 then
   begin
     if (Args[2].Count <> 1) or (Args[2].Items[0].Kind <> xikNode) then
@@ -4699,7 +4889,10 @@ begin
   Count := 0;
   for I := 0 to Integer(Args[1].Count) - 1 do
   begin
-    J := Index.Map.IndexOf(LandrixXmlUtf8ToString(AtomKey(Args[1].Items[I])));
+    if Strings then
+      J := Index.Map.IndexOf('s' + LandrixXmlUtf8ToString(FEvaluator.ItemString(Args[1].Items[I])))
+    else
+      J := Index.Map.IndexOf(LandrixXmlUtf8ToString(AtomKey(Args[1].Items[I])));
     if J < 0 then
       Continue;
     Nodes := TKeyNodes(Index.Map.Objects[J]);

@@ -160,6 +160,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   first items as `xs:double` (NaN for an empty operand), and general
   comparisons follow XPath 1.0, all as in Saxon. Arguments of user
   functions follow the caller's mode.
+- XSLT: backwards compatible processing. A stylesheet or element with a
+  version below 2.0 (an XSLT 1.0 stylesheet) is no longer rejected: its
+  expressions run in XPath 1.0 compatibility mode, `xsl:value-of`,
+  attribute value templates, `xsl:number` and sort keys take the first
+  item, `key()` compares strings, an undeclared parameter is ignored and
+  function arguments are converted as in XPath 1.0, as Saxon does.
+  `system-property('xsl:supports-backwards-compatibility')` is `yes`.
 
 ### Changed
 

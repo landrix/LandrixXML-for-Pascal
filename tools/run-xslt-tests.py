@@ -10,10 +10,10 @@ outcome with the committed baseline tests/data/xslt-baseline.txt.
 Applicability: the spec of the case (or its test set) names XSLT 1.0+,
 2.0+ or 2.0 (XSLT 3.0 cases follow later); no optional feature that is
 not provided (streaming, schema awareness, higher-order functions,
-XPath 3.1, backwards compatibility, XML 1.1, dynamic evaluation, the
-namespace axis, disable-output-escaping, DTD processing, HTML 4, the
-xml-stylesheet processing instruction); no other implementation-defined
-dependency except the Unicode version and HTML 5 as the default. The
+XPath 3.1, XML 1.1, dynamic evaluation, the namespace axis,
+disable-output-escaping, DTD processing, HTML 4, the xml-stylesheet
+processing instruction); no other implementation-defined dependency
+except the Unicode version and HTML 5 as the default. The
 environment may hold the source document ("." from a file or inline, a
 document under its own file name) and a stylesheet; the test the
 stylesheet, an initial template or mode and parameters (no static ones,
@@ -74,7 +74,8 @@ TIMEOUT = 60
 SPECS = {"XSLT10+", "XSLT20+", "XSLT20"}
 # features: provided (True) or not (False); a feature not listed is not
 # provided
-FEATURES = {"serialization": True, "HTML5": True, "disabling_output_escaping": True}
+FEATURES = {"serialization": True, "HTML5": True, "disabling_output_escaping": True,
+            "backwards_compatibility": True}
 # test sets left out as a whole, with the reason: unicode-90 never passes
 # the charclass parameter its generated cases need (Saxon fails them too)
 # and runs every code point through regular expressions (the catalog marks
@@ -163,8 +164,9 @@ def clark(qname, ns, default=""):
 
 
 class Case:
-    def __init__(self, set_name, el, set_dir):
+    def __init__(self, set_name, el, set_dir, set_file):
         self.set = set_name
+        self.set_file = set_file
         self.name = el.get("name")
         self.key = set_name + "/" + self.name
         self.el = el
@@ -224,7 +226,9 @@ def environment_problem(env, case):
                     if content is None:
                         return "source without content"
                     case.inline_source = content.text or ""
-                    case.inline_base = base
+                    # the base URI of inline content is the test set file,
+                    # as in the W3C harness (base-uri() of the source)
+                    case.inline_base = env.base_file
             elif role is None:
                 # a document doc() reads by its own (relative) file name
                 if ch.get("uri") is None or os.path.normpath(os.path.join(base, ch.get("uri"))) != \
@@ -268,10 +272,11 @@ def load_cases(filt):
         envs = {}
         for env in root.findall(NS + "environment"):
             env.base_dir = set_dir
+            env.base_file = path
             envs[env.get("name")] = env
         set_deps = root.find(NS + "dependencies")
         for el in root.iter(NS + "test-case"):
-            case = Case(name, el, set_dir)
+            case = Case(name, el, set_dir, path)
             cases.append(case)
             case.reason = EXCLUDED_SETS.get(name) or plan(case, el, set_deps, envs)
             if case.reason:
@@ -337,6 +342,7 @@ def plan(case, el, set_deps, envs):
             env = envs[env.get("ref")]
         else:
             env.base_dir = case.dir
+            env.base_file = case.set_file
         problem = environment_problem(env, case)
         if problem:
             return problem
@@ -406,7 +412,7 @@ def run_case(exe, case):
         with open(stem + ".source.xml", "w", encoding="utf-8", newline="") as f:
             f.write(case.inline_source)
         lines.append("source " + esc(stem + ".source.xml"))
-        lines.append("sourcebase " + esc(pathlib.Path(case.inline_base).resolve().as_uri() + "/"))
+        lines.append("sourcebase " + esc(pathlib.Path(case.inline_base).resolve().as_uri()))
     elif case.source:
         lines.append("source " + esc(case.source))
     if case.template:

@@ -474,6 +474,13 @@ type
     function CompiledRegex(const Pattern, Flags: TLandrixXmlUtf8; AsXPath20: Boolean): TLandrixXmlRegex;
     function ConvertSequence(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType;
       const Name: string): TLandrixXmlXPathSequence;
+    { the conversion of a function argument to T in XPath 1.0
+      compatibility mode before ConvertSequence (the first item for a
+      single-item type, fn:number for xs:double, the string value for
+      xs:string), as for user functions; for the XSLT units, not part of
+      the documented API yet }
+    function CompatibleArgument(const S: TLandrixXmlXPathSequence;
+      const T: TLandrixXmlXPathSequenceType): TLandrixXmlXPathSequence;
     function TreeOfNode(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;
     { the number of the tree of Node in the order the trees were added: 0
       for the evaluator's own tree }
@@ -2523,6 +2530,12 @@ function TLandrixXmlXPathEvaluator.ConvertSequence(const S: TLandrixXmlXPathSequ
   const T: TLandrixXmlXPathSequenceType; const Name: string): TLandrixXmlXPathSequence;
 begin
   Result := ConvertTo(S, T, Name, False);
+end;
+
+function TLandrixXmlXPathEvaluator.CompatibleArgument(const S: TLandrixXmlXPathSequence;
+  const T: TLandrixXmlXPathSequenceType): TLandrixXmlXPathSequence;
+begin
+  Result := Argument10(S, T);
 end;
 
 function TLandrixXmlXPathEvaluator.TreeOfNode(Node: Integer; out Base: Integer): TLandrixXmlXPathTree;

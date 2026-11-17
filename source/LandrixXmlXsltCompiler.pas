@@ -197,6 +197,8 @@ type
     BaseUri: TLandrixXmlUtf8;
     Line: Integer;
     Column: Integer;
+    { processed in backwards compatible mode (a version below 2.0) }
+    Backwards: Boolean;
     { the sequence constructor (TXsltInstr, owned) }
     Body: TObjectList;
     Select: TLandrixXmlXPathExpression;
@@ -386,6 +388,8 @@ type
     Use: TLandrixXmlXPathExpression;
     Body: TObjectList;
     FrameSize: Integer;
+    { backwards compatible mode: the values are indexed as strings }
+    Backwards: Boolean;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -1537,15 +1541,15 @@ begin
     Result := 2;
 end;
 
-{ whether E is processed in forwards compatible mode: the nearest version
-  (version on an XSLT element, but the output version of xsl:output;
-  xsl:version on another element) is above 3.0 }
-function Forwards(M: TModule; E: Integer): Boolean;
+{ the class of the version E is processed with (see VersionClass; 1 for
+  none): the nearest version (version on an XSLT element, but the output
+  version of xsl:output; xsl:version on another element) }
+function VersionAt(M: TModule; E: Integer): Integer;
 var
   N, K: Integer;
   Xsl: Boolean;
 begin
-  Result := False;
+  Result := 1;
   N := E;
   while N >= 0 do
   begin
@@ -1557,12 +1561,26 @@ begin
           if (M.Tree.LocalNameUtf8(K) = 'version') and
             (Xsl and (M.Tree.NamespaceUriUtf8(K) = '') or not Xsl and (M.Tree.NamespaceUriUtf8(K) = XsltNamespace)) then
           begin
-            Result := VersionClass(M.Tree.ValueUtf8(K)) = 2;
+            Result := VersionClass(M.Tree.ValueUtf8(K));
             Exit;
           end;
     end;
     N := M.Tree.Parent[N];
   end;
+end;
+
+{ whether E is processed in forwards compatible mode (a version above
+  3.0) }
+function Forwards(M: TModule; E: Integer): Boolean;
+begin
+  Result := VersionAt(M, E) = 2;
+end;
+
+{ whether E is processed in backwards compatible mode (a version below
+  2.0): its expressions in XPath 1.0 compatibility mode }
+function Backwards(M: TModule; E: Integer): Boolean;
+begin
+  Result := VersionAt(M, E) = 0;
 end;
 
 { a top-level element in the XSLT namespace that is no declaration XSLT
@@ -1710,10 +1728,9 @@ begin
       case VersionClass(V) of
         -1:
           Fail(M, E, 'XTSE0110', 'the version "' + LandrixXmlUtf8ToString(V) + '" is not a number');
-        0:
-          Unsupported(M, E, 'version="' + LandrixXmlUtf8ToString(V) + '" (backwards compatible processing)');
       else
-        { 2.0 and 3.0 by the rules of XSLT 2.0; above, forwards compatible }
+        { below 2.0 backwards compatible, 2.0 and 3.0 by the rules of XSLT
+          2.0, above forwards compatible }
       end;
   end;
 end;
@@ -2204,6 +2221,7 @@ begin
   Result := TLandrixXmlXPathStaticContext.Create;
   try
     Result.Profile := xppSaxon;
+    Result.XPath10Compatible := Backwards(M, E);
     Result.DefaultElementNamespace := XPathDefaultNamespace(M, E);
     Prefixes := M.Tree.InScopePrefixesUtf8(E);
     for I := 0 to Integer(Length(Prefixes)) - 1 do
@@ -2510,6 +2528,7 @@ begin
   Result.BaseUri := StaticBase(M, E);
   Result.Line := M.LineOf(E);
   Result.Column := M.ColumnOf(E);
+  Result.Backwards := Backwards(M, E);
 end;
 
 { xml:space="preserve" on the node or an ancestor (nearest wins) }
@@ -4171,9 +4190,9 @@ begin
     Result := 'LandrixXML'
   else if Local = 'product-version' then
     Result := LandrixXmlVersion
-  else if (Local = 'is-schema-aware') or (Local = 'supports-backwards-compatibility') then
+  else if Local = 'is-schema-aware' then
     Result := 'no'
-  else if Local = 'supports-serialization' then
+  else if (Local = 'supports-serialization') or (Local = 'supports-backwards-compatibility') then
     Result := 'yes';
 end;
 
@@ -4384,6 +4403,7 @@ begin
   end;
   Decl := TXsltKeyDecl.Create;
   K.Decls.Add(Decl);
+  Decl.Backwards := Backwards(M, E);
   if HasUse then
     Decl.Use := Compile(M, E, V, nil)
   else
@@ -5383,7 +5403,6 @@ procedure TCompiler.CheckRoot(M: TModule);
 var
   E, A: Integer;
   Found: Boolean;
-  V: TLandrixXmlUtf8;
 begin
   E := M.Tree.DocumentElement;
   if E < 0 then
@@ -5391,13 +5410,9 @@ begin
   if IsXsl(M, E, 'stylesheet') or IsXsl(M, E, 'transform') then
     Exit;
   Found := False;
-  V := '';
   for A := E + 1 to E + M.Tree.AttributeCount[E] do
     if (M.Tree.NamespaceUriUtf8(A) = XsltNamespace) and (M.Tree.LocalNameUtf8(A) = 'version') then
-    begin
       Found := True;
-      V := M.Tree.ValueUtf8(A);
-    end;
   if (M.Tree.NamespaceUriUtf8(E) = XsltNamespace) or not Found then
     Fail(M, E, 'XTSE0150', 'the document element is neither xsl:stylesheet nor a literal result element ' +
       'with xsl:version');
@@ -5405,8 +5420,6 @@ begin
     XPST0010) }
   if IsExtension(M, E) then
     Fail(M, E, 'XTSE0150', 'the document element of a simplified stylesheet module is an extension instruction');
-  if Trim8(V) = '1.0' then
-    Unsupported(M, E, 'an XSLT 1.0 stylesheet (backwards compatible processing)');
   { the document element is not subject to use-when (Saxon rejects it,
     XPST0010) }
   for A := E + 1 to E + M.Tree.AttributeCount[E] do
@@ -5566,7 +5579,9 @@ var
         if (TXsltInstr(TXsltTemplate(Instr.Template).Params[A]).VarName = TXsltWithParam(Instr.Params[B]).Name) and
           not TXsltInstr(TXsltTemplate(Instr.Template).Params[A]).Tunnel then
           Found := True;
-      if not Found then
+      { backwards compatible mode: a parameter the template does not
+        declare is ignored }
+      if not Found and not Instr.Backwards then
         raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTSE0680', 'the template ' +
           LandrixXmlUtf8ToString(TXsltTemplate(Instr.Template).Name) + ' has no parameter ' +
           LandrixXmlUtf8ToString(TXsltWithParam(Instr.Params[B]).Name), Instr.Module, Instr.Line, Instr.Column);
@@ -5835,8 +5850,6 @@ begin
     begin
       if not Attr(Main, E, 'version', V) then
         Fail(Main, E, 'XTSE0010', 'xsl:stylesheet needs a version attribute');
-      if Trim8(V) = '1.0' then
-        Unsupported(Main, E, 'an XSLT 1.0 stylesheet (backwards compatible processing)');
     end;
     CheckModule(Main);
     Collect(Main);

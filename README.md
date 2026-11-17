@@ -458,8 +458,27 @@ constructors and `xsl:text`) is supported, also in a stylesheet with
 A version above 3.0 means forwards compatible processing as in Saxon (an
 unknown declaration is ignored, an unknown instruction runs its
 `xsl:fallback` and is `XTSE0010` without one, unknown attributes of XSLT
-elements are ignored); a version below 2.0 (backwards compatible
-processing) is rejected, one that is no decimal is `XTSE0110`.
+elements are ignored); one that is no decimal is `XTSE0110`.
+A version below 2.0, such as an XSLT 1.0 stylesheet, means backwards
+compatible processing for the elements it applies to, as in Saxon: their
+XPath expressions run in XPath 1.0 compatibility mode (see
+`XPath10Compatible` below), `xsl:value-of` without `separator`, attribute
+value templates and sort keys take the first item, `xsl:number` takes
+the first item and writes `NaN` for a value that is no positive number,
+`key()` also compares the values as strings, a parameter the called
+template does not declare is ignored (no `XTSE0680`), and the functions
+of XSLT and stylesheet functions convert their arguments as XPath 1.0
+does. `system-property('xsl:supports-backwards-compatibility')` is
+`yes`. This is still an XSLT 2.0 processor: a double of a million or
+more is written as `1.0E6` without `format-number()` (Saxon does the
+same, an XSLT 1.0 processor writes `1000000`), the EXSLT and MSXML
+extension functions (`exsl:node-set()`, `msxsl:node-set()` and others)
+are not available, the namespace axis is not supported, and errors an
+XSLT 1.0 processor may recover from are reported as Saxon reports them.
+Not yet: a call of an unknown function is a static error (XSLT 2.0
+reports it only when the call is evaluated), and the default output
+method for an XHTML `html` element stays `xhtml` (XSLT 3.0: `xml` when
+the principal stylesheet module has version 1.0).
 `unparsed-entity-uri()` and `unparsed-entity-public-id()` are unknown
 functions (`XPST0017`). Work in progress: the cases in
 `tests/data/xslt` give the output Saxon gives, byte for byte. Errors
@@ -760,12 +779,12 @@ Differences from Xerces, also on purpose:
   `tools/gen-xslt-testdata.py`, and are compared byte for byte.
 - The [W3C XSLT test suite](https://github.com/w3c/xslt30-test)
   (`tools/run-xslt-tests.py`, pinned revision) measures how much of
-  XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,389 are XSLT 1.0
+  XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,508 are XSLT 1.0
   or 2.0 cases without features this library leaves out (schema
-  awareness, backwards compatibility, the namespace axis, DTDs and the
-  like); 4,589 of them pass and 67 more raise an error where one is
-  expected, but with another code. 489 use an instruction or option
-  that is not supported yet and are rejected as such. The test set
+  awareness, the namespace axis, DTDs and the like); 5,134 of them pass
+  and 69 more raise an error where one is expected, but with another
+  code. 56 use an instruction or option that is not supported yet and
+  are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)

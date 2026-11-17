@@ -295,7 +295,7 @@ begin
     T := TLandrixXmlXsltTransformer.Create(Sheet);
     T.InitialTemplate := U('main');
     CheckEqualsUtf8(U('2.0|Landrix Software|https://github.com/landrix/LandrixXML-for-Pascal|LandrixXML|' +
-      LandrixXmlVersion + '|no'), T.TransformToUtf8(nil), 'system-property()');
+      LandrixXmlVersion + '|yes'), T.TransformToUtf8(nil), 'system-property()');
   finally
     T.Free;
     Sheet.Free;
