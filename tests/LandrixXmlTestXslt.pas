@@ -24,6 +24,7 @@ uses
   LandrixXmlBase,
   LandrixXmlXPathTree,
   LandrixXmlXPath,
+  LandrixXmlXPathEval,
   LandrixXmlXslt,
   LandrixXmlTestFramework;
 
@@ -705,6 +706,84 @@ begin
   end;
 end;
 
+{ MaxStackBytes of the transformer: recursive templates and functions
+  against the stack budget (FOER0000, xecLimit); 0 turns it off. }
+procedure TestStackBudget;
+const
+  Sheet1 = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
+    ' xmlns:f="urn:f" xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="f xs">' +
+    '<xsl:output omit-xml-declaration="yes"/><xsl:param name="n" select="50" as="xs:integer"/>' +
+    '<xsl:function name="f:down" as="xs:integer"><xsl:param name="k" as="xs:integer"/>' +
+    '<xsl:sequence select="if ($k le 0) then 0 else f:down($k - 1) + 1"/></xsl:function>' +
+    '<xsl:template match="/"><r><xsl:value-of select="f:down($n)"/>' +
+    '<xsl:call-template name="t"><xsl:with-param name="k" select="$n"/></xsl:call-template></r></xsl:template>' +
+    '<xsl:template name="t"><xsl:param name="k" as="xs:integer"/>' +
+    '<xsl:if test="$k gt 0"><xsl:call-template name="t"><xsl:with-param name="k" select="$k - 1"/>' +
+    '</xsl:call-template></xsl:if></xsl:template></xsl:stylesheet>';
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  Text: string;
+  I: Integer;
+
+  function Run: string;
+  begin
+    try
+      Result := LandrixXmlUtf8ToString(T.TransformToUtf8(Source));
+    except
+      on E: ELandrixXmlXsltError do
+        Result := E.XPathCode + ' ' + IntToStr(Ord(E.Code));
+    end;
+  end;
+
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U(Sheet1), U('urn:test'));
+    Source.LoadFromUtf8(U('<doc/>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    CheckEquals(LandrixXmlDefaultMaxStackBytes, T.MaxStackBytes, 'the default budget');
+    T.SetParameterXPath(U('n'), U('50'));
+    CheckEqualsStr('<r>50</r>', Run, '50 levels');
+    T.MaxDepth := 100000;
+    T.MaxTemplateDepth := 100000;
+    T.MaxStackBytes := 16384;
+    T.SetParameterXPath(U('n'), U('100000'));
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run, 'functions beyond 16 KB of stack');
+    T.MaxStackBytes := 1;
+    T.SetParameterXPath(U('n'), U('2'));
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run, 'a budget of one byte');
+    T.MaxStackBytes := 0;
+    CheckEqualsStr('<r>2</r>', Run, 'no budget');
+    { global variables with a sequence constructor that need each other
+      nest without a template or function call }
+    T.Free;
+    T := nil;
+    Sheet.Free;
+    Sheet := nil;
+    Text := '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
+      ' xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs">' +
+      '<xsl:output omit-xml-declaration="yes"/><xsl:variable name="v100" select="1"/>';
+    for I := 99 downto 0 do
+      Text := Text + '<xsl:variable name="v' + IntToStr(I) + '" as="xs:integer"><xsl:sequence select="$v' +
+        IntToStr(I + 1) + ' + 1"/></xsl:variable>';
+    Text := Text + '<xsl:template match="/"><r><xsl:value-of select="$v0"/></r></xsl:template></xsl:stylesheet>';
+    Sheet := TLandrixXmlXsltStylesheet.Create;
+    Sheet.LoadFromUtf8(U(Text), U('urn:test'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    CheckEqualsStr('<r>101</r>', Run, 'nested global variables');
+    T.MaxStackBytes := 4096;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run, 'nested global variables beyond 4 KB of stack');
+  finally
+    T.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('Xslt.Cases', TestCases);
@@ -719,6 +798,7 @@ begin
   RegisterTest('Xslt.NumberFormatUnsupported', TestNumberFormatUnsupported);
   RegisterTest('Xslt.ByteOrderMark', TestByteOrderMark);
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
+  RegisterTest('Xslt.StackBudget', TestStackBudget);
 end;
 
 end.

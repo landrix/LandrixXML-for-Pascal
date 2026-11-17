@@ -944,8 +944,6 @@ var
   Parts: TLandrixXmlUtf8Array;
   Start, Stop: TLandrixXmlDouble;
   V64: Int64;
-  Def: TLandrixXmlXPathFunctionDef;
-  Args: array of TLandrixXmlXPathSequence;
   Re: TLandrixXmlRegex;
   Found, HasDouble, HasFloat, Second: Boolean;
   NaNAt: Integer;
@@ -1377,22 +1375,6 @@ begin
   K := 0;
   N := @FNodes[Index];
   ArgCount := Integer(Length(N^.Children));
-  if N^.Op < 0 then
-  begin
-    { a user function }
-    if (FFunctions = nil) or (-1 - N^.Op >= FFunctions.Count) then
-      Fail('XPST0017', 'user function ' + IntToStr(-1 - N^.Op) + ' is not defined');
-    Def := TLandrixXmlXPathFunctionDef(FFunctions[-1 - N^.Op]);
-    Args := nil;
-    SetLength(Args, ArgCount);
-    for I := 0 to ArgCount - 1 do
-      Args[I] := Arg(I);
-    if Assigned(Def.Host) then
-      Result := CallHost(Def, Args, Context, Position, Size, ContextItem)
-    else
-      Result := CallUser(Def, Args);
-    Exit;
-  end;
   Id := TLandrixXmlXPathFunctionId(N^.Op);
   Name := LandrixXmlXPathFunctionName(Id) + '()';
   Result := LandrixXmlXPathEmpty;

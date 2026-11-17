@@ -168,8 +168,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   function arguments are converted as in XPath 1.0, as Saxon does.
   `system-property('xsl:supports-backwards-compatibility')` is `yes`.
 
+- XPath and XSLT: `MaxStackBytes` on `TLandrixXmlXPathEvaluator` and
+  `TLandrixXmlXsltTransformer`, a budget for the stack nested user
+  functions and templates may use; beyond it the run stops with
+  `FOER0000` (`xecLimit`) instead of overflowing the stack. The default,
+  `LandrixXmlDefaultMaxStackBytes`, is 3/4 of the program's stack size on
+  Windows and 0 (no budget) elsewhere.
+
 ### Changed
 
+- XPath: a call of a user function no longer goes through the frame of
+  the built-in functions; a level of the stylesheet recursion of the W3C
+  case function-0701 takes 2.4 KB of stack instead of 8.4 KB with Delphi
+  Win64, where it overflowed the 1 MB stack.
 - XSLT: the XML output writes U+007F to U+009F and U+2028 as character
   references, as Saxon does.
 - XSLT: an XPath comment inside the braces of an attribute value

@@ -250,6 +250,9 @@ type
     FLazyDepth: Integer;
     FDepth: Integer;
     FMaxDepth: Integer;
+    FMaxStackBytes: Integer;
+    { the stack address at the outermost user function call }
+    FStackBase: Pointer;
     { the implicit time zone and the current dateTime (FHasClock: read
       or set) }
     FImplicitTimeZone: Integer;
@@ -377,6 +380,9 @@ type
       const ContextItem: TLandrixXmlXPathSequence; Kind: TLandrixXmlXPathAstKind;
       var Output: TLandrixXmlXPathSequence): Boolean;
     function CallFunction(Index: Integer; Context, Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    procedure EnterUser(Local: Pointer);
+    function CallDefined(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function CallUser(Def: TLandrixXmlXPathFunctionDef; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function CallHost(Def: TLandrixXmlXPathFunctionDef; const Args: array of TLandrixXmlXPathSequence;
@@ -536,6 +542,13 @@ type
     property Tree: TLandrixXmlXPathTree read FTree;
     { the maximum nesting of user function calls (default 500) }
     property MaxDepth: Integer read FMaxDepth write FMaxDepth;
+    { the stack the nested user function calls of one evaluation may use,
+      counted from the outermost call (default
+      LandrixXmlDefaultMaxStackBytes; 0 or less: no budget). Deeper
+      raises FOER0000 (xecLimit) instead of overflowing the stack: MaxDepth
+      alone does not keep 500 levels within a 1 MB stack. Set it for
+      threads with a smaller stack. }
+    property MaxStackBytes: Integer read FMaxStackBytes write FMaxStackBytes;
     { The implicit time zone in minutes east of UTC (-840 to 840; default
       0, UTC): values without a time zone are compared with and
       subtracted from others in it, and current-dateTime() has it. }
@@ -565,6 +578,13 @@ function LandrixXmlXPathResolveUri(const Relative, Base: TLandrixXmlUtf8): TLand
 { The base URI of node Node of Tree (as fn:base-uri: xml:base included),
   False for none; for the XSLT units, not part of the documented API yet. }
 function LandrixXmlXPathNodeBaseUri(Tree: TLandrixXmlXPathTree; Node: Integer; out Uri: TLandrixXmlUtf8): Boolean;
+{ The default of MaxStackBytes (TLandrixXmlXPathEvaluator and
+  TLandrixXmlXsltTransformer): on Windows 3/4 of the stack size of the
+  program (SizeOfStackReserve of its PE header, 1 MB unless set with
+  $MAXSTACKSIZE or a linker option; also what threads get that do not
+  ask for another size); 0 (no budget) on other platforms, whose 8 MB
+  main stack holds MaxDepth and MaxTemplateDepth. }
+function LandrixXmlDefaultMaxStackBytes: Integer;
 
 implementation
 
@@ -1169,6 +1189,41 @@ begin
   Result := SequenceBoolean(FItems);
 end;
 
+{$IFDEF MSWINDOWS}
+function GetModuleHandleA(ModuleName: PAnsiChar): Pointer; stdcall; external 'kernel32.dll';
+{$ENDIF}
+
+function LandrixXmlDefaultMaxStackBytes: Integer;
+{$IFDEF MSWINDOWS}
+var
+  Base, Pe: PAnsiChar;
+  Reserve: Int64;
+begin
+  Result := 0;
+  Base := GetModuleHandleA(nil);
+  if Base = nil then
+    Exit;
+  { the PE header of the program: SizeOfStackReserve at offset 72 of the
+    optional header, 4 bytes in PE32, 8 in PE32+ }
+  Pe := Base + PInteger(Base + $3C)^;
+  if (Pe[0] <> 'P') or (Pe[1] <> 'E') then
+    Exit;
+  if PWord(Pe + 24)^ = $20B then
+    Reserve := PInt64(Pe + 24 + 72)^
+  else
+    Reserve := PCardinal(Pe + 24 + 72)^;
+  Reserve := Reserve div 4 * 3;
+  if Reserve > MaxInt then
+    Result := MaxInt
+  else
+    Result := Integer(Reserve);
+end;
+{$ELSE}
+begin
+  Result := 0;
+end;
+{$ENDIF}
+
 { --- TLandrixXmlXPathEvaluator ---------------------------------------------- }
 
 constructor TLandrixXmlXPathEvaluator.Create(Tree: TLandrixXmlXPathTree);
@@ -1176,6 +1231,7 @@ begin
   inherited Create;
   FTree := Tree;
   FMaxDepth := 500;
+  FMaxStackBytes := LandrixXmlDefaultMaxStackBytes;
   FImplicitTimeZone := 0;
   FHasClock := False;
   FCurrentNode := -1;
@@ -3946,28 +4002,78 @@ begin
 end;
 
 { The most frequent functions of the rule sets (not, count, exists,
-  normalize-space, string-length, ...) have methods of their own: the
-  frame of CallFunction, with its many temporaries and the function name
-  for messages, is only set up for the others. }
+  normalize-space, string-length, ...) and the user functions have
+  methods of their own: the frame of CallFunction, with its many
+  temporaries and the function name for messages, is only set up for the
+  others (several KB on 64-bit targets: a recursive user function would
+  need it once per level). }
 procedure TLandrixXmlXPathEvaluator.CallFunctionInto(Index: Integer; Context: Integer; Position, Size: Integer;
   const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
 begin
-  if FNodes[Index].Op >= 0 then
-    case TLandrixXmlXPathFunctionId(FNodes[Index].Op) of
-      xfnNot, xfnTrue, xfnFalse, xfnBoolean, xfnCount, xfnExists, xfnEmpty:
-        begin
-          CallBooleanFunction(Index, Context, Position, Size, ContextItem, Output);
-          Exit;
-        end;
-      xfnString, xfnStringLength, xfnNormalizeSpace, xfnUpperCase, xfnLowerCase:
-        begin
-          CallStringFunction(Index, Context, Position, Size, ContextItem, Output);
-          Exit;
-        end;
-    else
-      { the others below }
-    end;
+  if FNodes[Index].Op < 0 then
+  begin
+    Output := CallDefined(Index, Context, Position, Size, ContextItem);
+    Exit;
+  end;
+  case TLandrixXmlXPathFunctionId(FNodes[Index].Op) of
+    xfnNot, xfnTrue, xfnFalse, xfnBoolean, xfnCount, xfnExists, xfnEmpty:
+      begin
+        CallBooleanFunction(Index, Context, Position, Size, ContextItem, Output);
+        Exit;
+      end;
+    xfnString, xfnStringLength, xfnNormalizeSpace, xfnUpperCase, xfnLowerCase:
+      begin
+        CallStringFunction(Index, Context, Position, Size, ContextItem, Output);
+        Exit;
+      end;
+  else
+    { the others below }
+  end;
   Output := CallFunction(Index, Context, Position, Size, ContextItem);
+end;
+
+{ Before a user function call (Local: a variable of the caller's frame):
+  the limits of MaxDepth and MaxStackBytes. The stack is measured from the
+  outermost call; a distance below zero or beyond 1 GB means another stack
+  (a fiber, a thread) and is not checked. }
+procedure TLandrixXmlXPathEvaluator.EnterUser(Local: Pointer);
+var
+  Used: Integer;
+begin
+  if FDepth >= FMaxDepth then
+    Fail('FOER0000', 'user functions nested deeper than ' + IntToStr(FMaxDepth));
+  if FDepth = 0 then
+    FStackBase := Local
+  else if FMaxStackBytes > 0 then
+  begin
+    Used := Integer(PAnsiChar(FStackBase) - PAnsiChar(Local));
+    if (Used > FMaxStackBytes) and (Used < 1073741824) then
+      raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'user functions nested ' +
+        IntToStr(FDepth) + ' deep use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
+  end;
+end;
+
+{ A user function (of the static context or implemented by the host) }
+function TLandrixXmlXPathEvaluator.CallDefined(Index: Integer; Context, Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+var
+  N: ^TLandrixXmlXPathAstNode;
+  Def: TLandrixXmlXPathFunctionDef;
+  Args: array of TLandrixXmlXPathSequence;
+  I: Integer;
+begin
+  N := @FNodes[Index];
+  if (FFunctions = nil) or (-1 - N^.Op >= FFunctions.Count) then
+    Fail('XPST0017', 'user function ' + IntToStr(-1 - N^.Op) + ' is not defined');
+  Def := TLandrixXmlXPathFunctionDef(FFunctions[-1 - N^.Op]);
+  Args := nil;
+  SetLength(Args, Length(N^.Children));
+  for I := 0 to Integer(Length(Args)) - 1 do
+    Args[I] := Eval(FNodes[Index].Children[I], Context, Position, Size, ContextItem);
+  if Assigned(Def.Host) then
+    Result := CallHost(Def, Args, Context, Position, Size, ContextItem)
+  else
+    Result := CallUser(Def, Args);
 end;
 
 { The message of a failed call, outside the callers so that it is no
@@ -4453,8 +4559,7 @@ var
   Empty, Value: TLandrixXmlXPathSequence;
   Compatible: Boolean;
 begin
-  if FDepth >= FMaxDepth then
-    Fail('FOER0000', 'user functions nested deeper than ' + IntToStr(FMaxDepth));
+  EnterUser(@SavedBase);
   { the caller's mode decides the argument conversion }
   Compatible := Xp10;
   Inc(FDepth);
@@ -4511,8 +4616,7 @@ var
   Focus: TLandrixXmlXPathFocus;
   SavedPattern, SavedFinal: Boolean;
 begin
-  if FDepth >= FMaxDepth then
-    Fail('FOER0000', 'user functions nested deeper than ' + IntToStr(FMaxDepth));
+  EnterUser(@Focus);
   { the focus as EvaluateInFocus takes it: a context node is never also
     the item (predicates and steps pass both) }
   Focus.Node := Context;

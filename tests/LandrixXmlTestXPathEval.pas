@@ -324,6 +324,92 @@ begin
   end;
 end;
 
+{ MaxStackBytes: a recursive user function f:down($n) (n levels) against
+  the stack budget; 0 turns it off, the count limit MaxDepth stays. }
+procedure TestStackBudget;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context, FnContext: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Body: TLandrixXmlXPathExpression;
+  Def: TLandrixXmlXPathFunctionDef;
+  Functions: TList;
+  P: Integer;
+
+  function Run(const Text: string): string;
+  var
+    Expr: TLandrixXmlXPathExpression;
+  begin
+    Expr := TLandrixXmlXPathExpression.Create(U(Text), Context);
+    try
+      try
+        Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0));
+      except
+        on E: ELandrixXmlXPathError do
+          Result := E.XPathCode + ' ' + IntToStr(Ord(E.Code));
+      end;
+    finally
+      Expr.Free;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  FnContext := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  Functions := TList.Create;
+  Def := TLandrixXmlXPathFunctionDef.Create;
+  Body := nil;
+  try
+    Tree.LoadFromUtf8(U('<r/>'));
+    P := FnContext.DeclareVariable(U('n'));
+    FnContext.AddNamespace(U('f'), U('urn:f'));
+    FnContext.DeclareFunction(U('urn:f'), U('down'), 1);
+    Context.AddNamespace(U('f'), U('urn:f'));
+    Context.DeclareFunction(U('urn:f'), U('down'), 1);
+    Body := TLandrixXmlXPathExpression.Create(U('if ($n le 0) then 0 else f:down($n - 1) + 1'), FnContext);
+    SetLength(Def.ParamSlots, 1);
+    SetLength(Def.ParamTypes, 1);
+    Def.ParamSlots[0] := P;
+    Def.ParamTypes[0].Declared := True;
+    Def.ParamTypes[0].Kind := xtkAtomic;
+    Def.ParamTypes[0].AtomicType := xikInteger;
+    Def.ParamTypes[0].Occurrence := xocOne;
+    Def.Body := Body;
+    Def.FrameSize := FnContext.VariableCount;
+    Def.Name := 'f:down';
+    Functions.Add(Def);
+    Evaluator.Functions := Functions;
+    CheckEquals(LandrixXmlDefaultMaxStackBytes, Evaluator.MaxStackBytes, 'the default budget');
+{$IFDEF MSWINDOWS}
+    { 3/4 of the stack of the test program (Delphi and FPC: 1 MB or more) }
+    Check(LandrixXmlDefaultMaxStackBytes >= 768 * 1024, 'the budget from the program''s stack size');
+{$ELSE}
+    CheckEquals(0, LandrixXmlDefaultMaxStackBytes, 'no budget');
+{$ENDIF}
+    CheckEqualsStr('100', Run('f:down(100)'), '100 levels within the default budget');
+    Evaluator.MaxDepth := 100000;
+    Evaluator.MaxStackBytes := 16384;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run('f:down(100000)'), 'beyond 16 KB of stack');
+    CheckEqualsStr('3', Run('f:down(3)'), 'the next evaluation starts again');
+    Evaluator.MaxStackBytes := 1;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run('f:down(3)'), 'a budget of one byte');
+    Evaluator.MaxStackBytes := 0;
+    CheckEqualsStr('3', Run('f:down(3)'), 'no budget');
+    Evaluator.MaxDepth := 10;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecXPath)), Run('f:down(20)'), 'MaxDepth still counts');
+  finally
+    Body.Free;
+    Def.Free;
+    Functions.Free;
+    Evaluator.Free;
+    FnContext.Free;
+    Context.Free;
+    Tree.Free;
+  end;
+end;
+
 { The kind tests of sequence types on a parameter: f:id($x) with $x of
   the declared type, called with an argument; XPTY0004 if it does not
   match. }
@@ -2614,6 +2700,7 @@ begin
   RegisterTest('XPathEval.HostFunctions', TestHostFunctions);
   RegisterTest('XPathEval.MatchesPattern', TestMatchesPattern);
   RegisterTest('XPathEval.Frames', TestFrames);
+  RegisterTest('XPathEval.StackBudget', TestStackBudget);
   RegisterTest('XPathEval.DefaultElementNamespace', TestDefaultElementNamespace);
 end;
 

@@ -56,6 +56,7 @@ type
     Clock: TLandrixXmlXsdDateTime;
     MaxDepth: Integer;
     MaxTemplateDepth: Integer;
+    MaxStackBytes: Integer;
     { TLandrixXmlXsltMessage, owned by the transformer }
     Messages: TObjectList;
     { xsl:result-document: the base output URI, the list the secondary
@@ -236,6 +237,8 @@ type
     FFunctions: TList;
     FDefs: TObjectList;
     FTemplateDepth: Integer;
+    { the stack address at the start of the run (MaxStackBytes) }
+    FStackBase: Pointer;
     FParamExprs: TObjectList;
     { current(): an atomic item of the instruction (a node: CurrentNode) }
     FCurrent: TLandrixXmlXPathSequence;
@@ -424,6 +427,7 @@ type
     function Tunnelled(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode): TSuppliedArray;
     procedure ApplyTemplates(Instr: TXsltInstr; const Nodes: TLandrixXmlXPathSequence; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
+    procedure CheckStack(Local: Pointer; const Module: TLandrixXmlUtf8; Line, Column: Integer);
     procedure Invoke(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
     procedure BindParams(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
@@ -1506,6 +1510,9 @@ begin
   end;
   FEvaluator.Functions := FFunctions;
   FEvaluator.MaxDepth := Settings.MaxDepth;
+  { the stack is measured here, from the start of the run (CheckStack in
+    Host and at template and function calls) }
+  FEvaluator.MaxStackBytes := 0;
   FEvaluator.ImplicitTimeZone := Settings.ImplicitTimeZone;
   if Settings.HasClock then
     FEvaluator.CurrentDateTime := Settings.Clock;
@@ -1840,6 +1847,9 @@ var
 begin
   SavedTunnel := nil;
   Result := LandrixXmlXPathEmpty;
+  { every host function, also what nests without a function or template
+    (global variables, keys) }
+  CheckStack(@Slot, '', 0, 0);
   { a caller in XPath 1.0 compatibility mode: HostCompatible converts the
     arguments and comes back here (FArgumentsConverted) }
   if not FArgumentsConverted and (Evaluator.CallerExpression <> nil) and
@@ -2943,6 +2953,7 @@ begin
   if FTemplateDepth >= FSettings.MaxTemplateDepth then
     raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested deeper than ' +
       IntToStr(FSettings.MaxTemplateDepth), T.Module, T.Line, T.Column);
+  CheckStack(@I, T.Module, T.Line, T.Column);
   Inc(FTemplateDepth);
   { the caller's current() is still needed after the call; there is no
     current group inside a function }
@@ -3006,12 +3017,30 @@ begin
   end;
 end;
 
+{ Before a template or function call (Local: a variable of the caller's
+  frame): the stack used since the start of the run against
+  MaxStackBytes; a distance below zero or beyond 1 GB means another stack
+  and is not checked. }
+procedure TRun.CheckStack(Local: Pointer; const Module: TLandrixXmlUtf8; Line, Column: Integer);
+var
+  Used: Integer;
+begin
+  if FSettings.MaxStackBytes <= 0 then
+    Exit;
+  Used := Integer(PAnsiChar(FStackBase) - PAnsiChar(Local));
+  if (Used > FSettings.MaxStackBytes) and (Used < 1073741824) then
+    raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested ' +
+      IntToStr(FTemplateDepth) + ' deep use more than ' + IntToStr(FSettings.MaxStackBytes) + ' bytes of stack',
+      Module, Line, Column);
+end;
+
 procedure TRun.Invoke(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
   const Params: TSuppliedArray; R: TReceiver);
 begin
   if FTemplateDepth >= FSettings.MaxTemplateDepth then
     raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates nested deeper than ' +
       IntToStr(FSettings.MaxTemplateDepth), T.Module, T.Line, T.Column);
+  CheckStack(@T, T.Module, T.Line, T.Column);
   Inc(FTemplateDepth);
   FEvaluator.PushFrame(T.FrameSize);
   try
@@ -3059,6 +3088,10 @@ begin
           raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates nested deeper than ' +
             IntToStr(FSettings.MaxTemplateDepth), Instr.Module, Instr.Line, Instr.Column);
         end;
+        if Instr = nil then
+          CheckStack(@Base, '', 0, 0)
+        else
+          CheckStack(@Base, Instr.Module, Instr.Line, Instr.Column);
         Inc(FTemplateDepth);
         try
           ApplyTemplates(Instr, Children, Mode, Params, R);
@@ -5277,6 +5310,7 @@ var
   I: Integer;
   Params: TSuppliedArray;
 begin
+  FStackBase := @R;
   BindGlobals;
   Params := nil;
   Target.BeginBuild(True);

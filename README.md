@@ -485,6 +485,22 @@ functions (`XPST0017`). Work in progress: the cases in
 raise `ELandrixXmlXsltError` with the W3C code, the stylesheet module and
 the line of the instruction.
 
+Recursion is limited three ways: `MaxDepth` (nested stylesheet and
+XPath user functions, default 500), `MaxTemplateDepth` (templates and
+functions together, default 1000) and `MaxStackBytes`, the stack a run
+may use from its start (also on `TLandrixXmlXPathEvaluator` for user
+functions). Beyond a limit the run stops with `FOER0000` (`xecLimit` for
+`MaxTemplateDepth` and `MaxStackBytes`) instead of overflowing the stack. The default of `MaxStackBytes`
+(`LandrixXmlDefaultMaxStackBytes`) is on Windows 3/4 of the program's
+stack size (the `SizeOfStackReserve` of its PE header, 1 MB unless set
+with `{$MAXSTACKSIZE}` or a linker option) and 0 (no budget) elsewhere,
+where the 8 MB main stack holds the depth limits. A level takes about
+0.5 KB (template) and 1.5 KB (function) with Delphi Win32 and 1 KB and
+3 KB with Delphi Win64, so 1 MB allows some 800 nested templates or 250
+nested functions there; for deeper recursion give the program a larger
+stack. Set
+`MaxStackBytes` for a thread with a stack of its own size.
+
 Without a resolver of its own (`TLandrixXmlXsltResolver`), a stylesheet
 reads any `file:` URI it names, with `xsl:include`, `xsl:import`,
 `doc()` and `document()`, as XSLT processors do. For a stylesheet you do

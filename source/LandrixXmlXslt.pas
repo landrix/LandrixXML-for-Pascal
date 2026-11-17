@@ -173,6 +173,7 @@ type
     FHasClock: Boolean;
     FMaxDepth: Integer;
     FMaxTemplateDepth: Integer;
+    FMaxStackBytes: Integer;
     FMessages: TObjectList;
     FBaseOutputUri: TLandrixXmlUtf8;
     FResultDocuments: TObjectList;
@@ -229,6 +230,12 @@ type
       template calls (default 1000); deeper raises xecLimit }
     property MaxDepth: Integer read FMaxDepth write FMaxDepth;
     property MaxTemplateDepth: Integer read FMaxTemplateDepth write FMaxTemplateDepth;
+    { the stack templates and functions may use, counted from the start of
+      the run (default LandrixXmlDefaultMaxStackBytes: on Windows 3/4 of
+      the program's stack size; 0 or less: no budget); more raises
+      FOER0000 (xecLimit) instead of overflowing the stack. Set it for
+      threads with a smaller stack. }
+    property MaxStackBytes: Integer read FMaxStackBytes write FMaxStackBytes;
     { the messages of the last run (also after XTMM9000) }
     property MessageCount: Integer read GetMessageCount;
     property Messages[Index: Integer]: TLandrixXmlXsltMessage read GetMessage;
@@ -617,6 +624,7 @@ begin
   FResultDocuments := TObjectList.Create;
   FMaxDepth := 500;
   FMaxTemplateDepth := 1000;
+  FMaxStackBytes := LandrixXmlDefaultMaxStackBytes;
 end;
 
 destructor TLandrixXmlXsltTransformer.Destroy;
@@ -799,6 +807,7 @@ begin
     Settings.Clock := FClock;
     Settings.MaxDepth := FMaxDepth;
     Settings.MaxTemplateDepth := FMaxTemplateDepth;
+    Settings.MaxStackBytes := FMaxStackBytes;
     Settings.Messages := FMessages;
     Settings.BaseOutputUri := FBaseOutputUri;
     Settings.ResultDocuments := FResultDocuments;
