@@ -174,6 +174,15 @@ type
   end;
   TLandrixXmlXPathSlots = array of TLandrixXmlXPathSlot;
 
+  { a let binding not evaluated yet (internal) }
+  TLandrixXmlXPathLetBinding = record
+    Node: Integer;
+    Context: Integer;
+    Position: Integer;
+    Size: Integer;
+    ContextItem: TLandrixXmlXPathSequence;
+  end;
+
   { A user function: parameters and local variables are slots of the
     static context its expressions were compiled with (whose first
     GlobalCount variables are the globals); locals are evaluated lazily,
@@ -244,6 +253,9 @@ type
     FFrameTop: Integer;
     { slots of for, some and every: a stack, one block per expression being evaluated }
     FLocals: array of TLandrixXmlXPathSequence;
+    { per local slot of a let not read yet (FLocals[K].Count -1): the
+      binding and the focus it is evaluated in }
+    FLetBindings: array of TLandrixXmlXPathLetBinding;
     FLocalTop: Integer;
     FFunctions: TList;
     FCurrentNode: Integer;
@@ -319,7 +331,9 @@ type
     function DocumentRootOf(Node: Integer): Integer;
     function SlotRef(Slot: Integer): Pointer;
     function ReadVariable(Slot: Integer): TLandrixXmlXPathSequence;
+    function ReadSlot(Slot: Integer): TLandrixXmlXPathSequence;
     procedure WriteLocal(Slot: Integer; const Value: TLandrixXmlXPathSequence);
+    function ReadLetBinding(K: Integer): TLandrixXmlXPathSequence;
     function Eval(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure EvalInto(Index: Integer; Context: Integer; Position, Size: Integer;
@@ -350,6 +364,8 @@ type
     procedure EvalSequenceExpr(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalFilter(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalLet(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalForSomeEvery(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
@@ -2062,7 +2078,10 @@ begin
   if Need > 0 then
   begin
     if FLocalTop + Need > Length(FLocals) then
+    begin
       SetLength(FLocals, 2 * (FLocalTop + Need) + 8);
+      SetLength(FLetBindings, Length(FLocals));
+    end;
     for I := FLocalTop to FLocalTop + Need - 1 do
       FLocals[I] := LandrixXmlXPathEmpty;
     Inc(FLocalTop, Need);
@@ -2082,7 +2101,30 @@ begin
   FCache := FindCache(FExpr);
 end;
 
+{ A variable: a local slot (for, some, every, let) or a slot of the
+  frame or the globals. Small, as every variable read in a recursion goes
+  through it: a lazy slot, an error and the rest are in ReadSlot. }
 function TLandrixXmlXPathEvaluator.ReadVariable(Slot: Integer): TLandrixXmlXPathSequence;
+var
+  P: PSlot;
+begin
+  if Slot >= FExpr.FirstLocalSlot then
+  begin
+    Result := FLocals[FLocalBase + Slot - FExpr.FirstLocalSlot];
+    if Result.Count < 0 then
+      Result := ReadLetBinding(FLocalBase + Slot - FExpr.FirstLocalSlot);
+    Exit;
+  end;
+  P := SlotRef(Slot);
+  if P^.State = xssValue then
+    Result := P^.Value
+  else
+    Result := ReadSlot(Slot);
+end;
+
+{ ReadVariable for a slot of the frame or the globals that has no value
+  yet: evaluated (lazy), its kept error, a circular definition }
+function TLandrixXmlXPathEvaluator.ReadSlot(Slot: Integer): TLandrixXmlXPathSequence;
 var
   P: PSlot;
   SavedExpr: TLandrixXmlXPathExpression;
@@ -2091,11 +2133,6 @@ var
   Empty: TLandrixXmlXPathSequence;
   SavedPattern, SavedFinal: Boolean;
 begin
-  if Slot >= FExpr.FirstLocalSlot then
-  begin
-    Result := FLocals[FLocalBase + Slot - FExpr.FirstLocalSlot];
-    Exit;
-  end;
   P := SlotRef(Slot);
   case P^.State of
     xssValue:
@@ -3074,7 +3111,7 @@ const
   PassOn = [xfnReverse, xfnDistinctValues, xfnSubsequence, xfnData, xfnExactlyOne, xfnZeroOrOne,
     xfnOneOrMore, xfnRemove, xfnUnordered, xfnTrace];
 var
-  J: Integer;
+  J, R: Integer;
 begin
   case Nodes[Index].Kind of
     { "." too: a pattern's predicates are evaluated on nodes }
@@ -3088,7 +3125,19 @@ begin
     xakIf:
       Result := MayBeNumeric(Nodes, Nodes[Index].Children[1]) or MayBeNumeric(Nodes, Nodes[Index].Children[2]);
     xakLet:
-      Result := MayBeNumeric(Nodes, Nodes[Index].Children[1]);
+      begin
+        { the return expression; a variable of this let: its binding (also
+          through a chain of them, which only refers to earlier bindings) }
+        R := Nodes[Index].Children[Integer(High(Nodes[Index].Children))];
+        J := Integer(High(Nodes[Index].Slots));
+        while (J >= 0) and (Nodes[R].Kind = xakVariable) do
+        begin
+          if Nodes[Index].Slots[J] = Nodes[R].Slot then
+            R := Nodes[Index].Children[J];
+          Dec(J);
+        end;
+        Result := MayBeNumeric(Nodes, R);
+      end;
     { a filter keeps items of its input }
     xakFilter:
       Result := MayBeNumeric(Nodes, Nodes[Index].Children[0]);
@@ -3856,14 +3905,18 @@ begin
   end;
   Values := Eval(FNodes[Index].Children[Binding], Context, Position, Size, ContextItem);
   Slot := FNodes[Index].Slots[Binding];
-  for I := 0 to Values.Count - 1 do
-  begin
-    WriteLocal(Slot, SingleSeq(Values.Items[I]));
-    if EvalQuantified(Index, Binding + 1, Context, Position, Size, ContextItem, Kind, Output) then
+  try
+    for I := 0 to Values.Count - 1 do
     begin
-      Result := True;
-      Exit;
+      WriteLocal(Slot, SingleSeq(Values.Items[I]));
+      if EvalQuantified(Index, Binding + 1, Context, Position, Size, ContextItem, Kind, Output) then
+      begin
+        Result := True;
+        Break;
+      end;
     end;
+  finally
+    WriteLocal(Slot, LandrixXmlXPathEmpty);
   end;
 end;
 
@@ -3943,6 +3996,8 @@ begin
       EvalFilter(Index, Context, Position, Size, ContextItem, Output);
     xakFor, xakSome, xakEvery:
       EvalForSomeEvery(Index, Context, Position, Size, ContextItem, Output);
+    xakLet:
+      EvalLet(Index, Context, Position, Size, ContextItem, Output);
     xakIf:
       EvalIf(Index, Context, Position, Size, ContextItem, Output);
     xakAnd, xakOr:
@@ -4273,6 +4328,69 @@ begin
   else
     { for: the collected items }
   end;
+end;
+
+{ let: each binding in turn, then the return expression. A binding is
+  evaluated when its variable is first read (ReadLetBinding), in the
+  focus of the let, as Saxon: a binding the result does not use is never
+  evaluated (no error, no xsl:message). The slots are emptied afterwards
+  so that the values do not outlive the expression. }
+procedure TLandrixXmlXPathEvaluator.EvalLet(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  I, Last, K: Integer;
+begin
+  Last := Integer(High(FNodes[Index].Children));
+  for I := 0 to Last - 1 do
+  begin
+    K := FLocalBase + FNodes[Index].Slots[I] - FExpr.FirstLocalSlot;
+    FLetBindings[K].Node := FNodes[Index].Children[I];
+    FLetBindings[K].Context := Context;
+    FLetBindings[K].Position := Position;
+    FLetBindings[K].Size := Size;
+    FLetBindings[K].ContextItem := ContextItem;
+    FLocals[K].Items := nil;
+    FLocals[K].Count := -1;
+  end;
+  try
+    Output := Eval(FNodes[Index].Children[Last], Context, Position, Size, ContextItem);
+  finally
+    for I := 0 to Last - 1 do
+    begin
+      K := FLocalBase + FNodes[Index].Slots[I] - FExpr.FirstLocalSlot;
+      FLocals[K] := LandrixXmlXPathEmpty;
+      FLetBindings[K].ContextItem := LandrixXmlXPathEmpty;
+    end;
+  end;
+end;
+
+{ the value of the let binding in local K (FLocals[K].Count is -1 until
+  then): evaluated in the let's focus, then kept. An error leaves the
+  binding unevaluated. }
+function TLandrixXmlXPathEvaluator.ReadLetBinding(K: Integer): TLandrixXmlXPathSequence;
+var
+  Node, Context, Position, Size: Integer;
+  ContextItem: TLandrixXmlXPathSequence;
+  SavedPattern, SavedFinal: Boolean;
+begin
+  Node := FLetBindings[K].Node;
+  Context := FLetBindings[K].Context;
+  Position := FLetBindings[K].Position;
+  Size := FLetBindings[K].Size;
+  ContextItem := FLetBindings[K].ContextItem;
+  { a variable read in a pattern still has its value as an expression }
+  SavedPattern := FPattern;
+  SavedFinal := FFinal;
+  FPattern := False;
+  try
+    Result := Eval(Node, Context, Position, Size, ContextItem);
+  finally
+    FPattern := SavedPattern;
+    FFinal := SavedFinal;
+  end;
+  { FLocals may have grown during the evaluation }
+  FLocals[K] := Result;
+  FLetBindings[K].ContextItem := LandrixXmlXPathEmpty;
 end;
 
 procedure TLandrixXmlXPathEvaluator.EvalIf(Index: Integer; Context: Integer; Position, Size: Integer;

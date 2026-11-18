@@ -769,8 +769,11 @@ Differences from Xerces, also on purpose:
   `tests/data/xpath/profiles.txt`. `xppSaxon` grows towards XPath 3.1:
   its QT3 run takes the cases of an XPath 3.1 processor (spec XP20+,
   XP30+, XP31 or XP31+, so the XPath 2.0 only cases drop out); of 19,090
-  applicable cases 16,877 pass today. The XPath 3.0 functions it has so
-  far: `format-number` (the default decimal format only),
+  applicable cases 17,136 pass today. The XPath 3.0 parts it has so far:
+  `let` (a binding is evaluated when its variable is first read, as in
+  Saxon: one the result does not use raises no dynamic error; static
+  errors such as an unknown variable are reported as always); the
+  functions `format-number` (the default decimal format only),
   `format-dateTime`, `format-date` and `format-time`, formatted as Saxon
   HE formats them (in English). The static context's
   `DefaultElementNamespace` (default '') is the default element/type

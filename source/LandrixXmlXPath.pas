@@ -92,7 +92,7 @@ type
     xakVariable,      { Slot }
     xakContextItem,   { . }
     xakFunction,      { Op = function id (built-in) or -1 - user function index; Children = arguments }
-    xakLet,           { internal binding: Slot, Children = value, body }
+    xakLet,           { let (XPath 3.0): as for, last = return; Slots }
     xakInstanceOf,    { Children = operand; SequenceType }
     xakTreat          { Children = operand; SequenceType }
   );
@@ -1171,7 +1171,7 @@ begin
       else
         Symbol(1);
     ':':
-      if PeekChar(1) = ':' then
+      if (PeekChar(1) = ':') or (PeekChar(1) = '=') then
         Symbol(2)
       else
         Error('unexpected character ":"', Start);
@@ -1379,6 +1379,11 @@ begin
       Result := ParseQuantified(xakEvery, 'satisfies');
       Exit;
     end;
+    if (FToken.Text = 'let') and (FContext.Profile <> xppXPath20) then
+    begin
+      Result := ParseQuantified(xakLet, 'return');
+      Exit;
+    end;
   end;
   if IsName('if') and NextIsSymbol('(') then
   begin
@@ -1388,7 +1393,8 @@ begin
   Result := ParseOr;
 end;
 
-{ for/some/every $a in E (, $b in E)* return|satisfies E }
+{ for/some/every $a in E (, $b in E)* return|satisfies E; let $a := E
+  (, $b := E)* return E }
 function TParser.ParseQuantified(Kind: TLandrixXmlXPathAstKind; const Keyword: TLandrixXmlUtf8): Integer;
 var
   SavedLocals: Integer;
@@ -1404,7 +1410,12 @@ begin
     Name := FToken.Text;
     ResolveName(Name, FToken.Position, ndNone, Uri, Local);
     Next;
-    if not IsName('in') then
+    if Kind = xakLet then
+    begin
+      if not IsSymbol(':=') then
+        Error('":=" was expected', FToken.Position);
+    end
+    else if not IsName('in') then
       Error('"in" was expected', FToken.Position);
     Next;
     { the binding expression does not see its own variable }

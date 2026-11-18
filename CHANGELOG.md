@@ -7,6 +7,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- XPath profile `xppSaxon`: the `let` expression of XPath 3.0
+  (`let $a := E, $b := E return E`). As in Saxon, a binding is evaluated
+  when its variable is first read, so one the result does not use raises
+  no dynamic error. QT3 (Saxon profile): 259 more cases pass.
+- The slots of `for` and `let` are emptied when the expression is done,
+  so their values do not stay in memory until the evaluator is freed.
 - XPath profile `xppSaxon`: the XPath 3.0 functions `format-number`
   (default decimal format; a decimal format name is FODF1280),
   `format-dateTime`, `format-date` and `format-time`, formatted as the
