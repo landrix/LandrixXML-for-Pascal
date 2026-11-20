@@ -1076,7 +1076,7 @@ begin
   if FTree.Count > N then
     FRawProps.AddRaw(N, 1, Length(S))
   else
-    FRawProps.AddRaw(N - 1, Length(FTree.ValueUtf8(N - 1)) - Length(S) + 1, Length(S));
+    FRawProps.AddRaw(N - 1, FTree.ValueLength(N - 1) - Length(S) + 1, Length(S));
 end;
 
 procedure TTreeReceiver.Comment(const S: TLandrixXmlUtf8);

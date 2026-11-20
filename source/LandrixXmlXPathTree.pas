@@ -83,6 +83,11 @@ type
     { the position among the siblings of the same kind and name, computed
       for all children of a parent when first needed; 0 = not yet }
     FPositions: TLandrixXmlXPathIntArray;
+    { counters per expanded name for ComputePositions, all 0 between calls
+      (only the entries a call used are reset, so a call costs the number
+      of children, not the number of names) }
+    FPositionElements: TLandrixXmlXPathIntArray;
+    FPositionInstructions: TLandrixXmlXPathIntArray;
     { names: local name, namespace URI and prefix per name id; the
       expanded name id shared by names that differ only in the prefix }
     FNameCount: Integer;
@@ -103,6 +108,12 @@ type
       document node }
     FBuilding: Boolean;
     FBuildDocument: Boolean;
+    { the text node that adjacent text is still appended to (-1 = none):
+      its value grows by doubling and holds FTextLen bytes; FlushText cuts
+      it to that length before anything else is added or read }
+    FTextNode: Integer;
+    FTextLen: Integer;
+    procedure FlushText;
     procedure Clear;
     procedure CheckBuild(Top: Boolean);
     function NameId(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8): Integer;
@@ -182,6 +193,9 @@ type
     { the value of an attribute, text, comment or processing instruction;
       '' for elements and the document }
     function ValueUtf8(Index: Integer): TLandrixXmlUtf8;
+    { Length(ValueUtf8(Index)) in bytes, also while a text node is being
+      built (without cutting its spare capacity) }
+    function ValueLength(Index: Integer): Integer;
     { XPath's string value: for elements and the document the text of
       all descendant text nodes }
     function StringValueUtf8(Index: Integer): TLandrixXmlUtf8;
@@ -335,6 +349,10 @@ begin
   FBuilding := False;
   FBuildDocument := False;
   FPositions := nil;
+  FPositionElements := nil;
+  FPositionInstructions := nil;
+  FTextNode := -1;
+  FTextLen := 0;
   NewNode(xnkDocument, 1, 1);
 end;
 
@@ -399,6 +417,7 @@ function TLandrixXmlXPathTree.NewNode(Kind: TLandrixXmlXPathNodeKind; Line, Colu
 var
   N: Integer;
 begin
+  FlushText;
   if FCount = Length(FKinds) then
   begin
     N := 2 * FCount + 64;
@@ -463,13 +482,42 @@ begin
     I := FLastChild[FDepth - 1];
     if (I >= 0) and (FKinds[I] = xnkText) then
     begin
-      FValues[I] := FValues[I] + Value;
+      { adjacent text and CDATA sections: append with doubling capacity,
+        so many small pieces stay linear }
+      if FTextNode <> I then
+      begin
+        FlushText;
+        FTextNode := I;
+        FTextLen := Length(FValues[I]);
+      end;
+      if Length(Value) > MaxInt - FTextLen then
+        raise ELandrixXmlError.CreateCode(xecLimit, 'XPath tree: text node larger than 2 GB');
+      if Length(Value) > Length(FValues[I]) - FTextLen then
+      begin
+        { doubled, but without Integer overflow near 1 GB }
+        if FTextLen + Length(Value) < MaxInt div 2 then
+          SetLength(FValues[I], 2 * (FTextLen + Length(Value)))
+        else
+          SetLength(FValues[I], FTextLen + Length(Value));
+      end;
+      { the indexed var argument makes the string unique first (it may
+        still be shared with the first piece the caller passed) }
+      Move(PAnsiChar(Value)^, FValues[I][FTextLen + 1], Length(Value));
+      Inc(FTextLen, Length(Value));
       Exit;
     end;
   end;
   AddChild(xnkText, Line, Column, I);
   FValues[I] := Value;
   FDomNodes[I] := DomNode;
+end;
+
+procedure TLandrixXmlXPathTree.FlushText;
+begin
+  if FTextNode < 0 then
+    Exit;
+  SetLength(FValues[FTextNode], FTextLen);
+  FTextNode := -1;
 end;
 
 procedure TLandrixXmlXPathTree.StartElement(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8;
@@ -531,12 +579,14 @@ end;
 
 procedure TLandrixXmlXPathTree.EndElement;
 begin
+  FlushText;
   Dec(FDepth);
   FEnds[FStack[FDepth]] := FCount - 1;
 end;
 
 procedure TLandrixXmlXPathTree.Finish;
 begin
+  FlushText;
   FEnds[0] := FCount - 1;
   FStack := nil;
   FLastChild := nil;
@@ -1134,13 +1184,23 @@ end;
 
 function TLandrixXmlXPathTree.ValueUtf8(Index: Integer): TLandrixXmlUtf8;
 begin
+  FlushText;
   Result := FValues[Index];
+end;
+
+function TLandrixXmlXPathTree.ValueLength(Index: Integer): Integer;
+begin
+  if Index = FTextNode then
+    Result := FTextLen
+  else
+    Result := Length(FValues[Index]);
 end;
 
 function TLandrixXmlXPathTree.StringValueUtf8(Index: Integer): TLandrixXmlUtf8;
 var
   I, N, Len: Integer;
 begin
+  FlushText;
   if not (FKinds[Index] in [xnkDocument, xnkElement]) then
   begin
     Result := FValues[Index];
@@ -1182,7 +1242,6 @@ end;
   for elements and processing instructions) counted from 1. }
 procedure TLandrixXmlXPathTree.ComputePositions(Parent: Integer);
 var
-  Elements, Instructions: TLandrixXmlXPathIntArray;
   P, E, Texts, Comments: Integer;
 begin
   if Length(FPositions) < FCount then
@@ -1192,14 +1251,21 @@ begin
     for P := E to FCount - 1 do
       FPositions[P] := 0;
   end;
-  Elements := nil;
-  Instructions := nil;
-  SetLength(Elements, FExpandedCount);
-  SetLength(Instructions, FExpandedCount);
-  for P := 0 to FExpandedCount - 1 do
+  { each array on its own: a failed SetLength of the second must not
+    leave it short }
+  if Length(FPositionElements) < FExpandedCount then
   begin
-    Elements[P] := 0;
-    Instructions[P] := 0;
+    E := Integer(Length(FPositionElements));
+    SetLength(FPositionElements, FExpandedCount);
+    for P := E to FExpandedCount - 1 do
+      FPositionElements[P] := 0;
+  end;
+  if Length(FPositionInstructions) < FExpandedCount then
+  begin
+    E := Integer(Length(FPositionInstructions));
+    SetLength(FPositionInstructions, FExpandedCount);
+    for P := E to FExpandedCount - 1 do
+      FPositionInstructions[P] := 0;
   end;
   Texts := 0;
   Comments := 0;
@@ -1210,14 +1276,14 @@ begin
       xnkElement:
         begin
           E := FNameExpanded[FNameIds[P]];
-          Inc(Elements[E]);
-          FPositions[P] := Elements[E];
+          Inc(FPositionElements[E]);
+          FPositions[P] := FPositionElements[E];
         end;
       xnkProcessingInstruction:
         begin
           E := FNameExpanded[FNameIds[P]];
-          Inc(Instructions[E]);
-          FPositions[P] := Instructions[E];
+          Inc(FPositionInstructions[E]);
+          FPositions[P] := FPositionInstructions[E];
         end;
       xnkText:
         begin
@@ -1232,6 +1298,15 @@ begin
     else
       { attributes are not children }
     end;
+    P := FNexts[P];
+  end;
+  P := FirstChild(Parent);
+  while P >= 0 do
+  begin
+    if FKinds[P] = xnkElement then
+      FPositionElements[FNameExpanded[FNameIds[P]]] := 0
+    else if FKinds[P] = xnkProcessingInstruction then
+      FPositionInstructions[FNameExpanded[FNameIds[P]]] := 0;
     P := FNexts[P];
   end;
 end;

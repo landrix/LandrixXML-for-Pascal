@@ -48,6 +48,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `LandrixXmlBase`: `LandrixXmlHashSalt` and `LandrixXmlHashFinish` for hash
   tables keyed by names from untrusted documents; the salt is chosen per
   process, so colliding names cannot be prepared in advance.
+- XPath tree: many adjacent CDATA sections or text pieces are joined in
+  linear time (16 MB in 16,000 pieces on FPC: 195 s, now 2 s), and the
+  location paths of Schematron results no longer cost the number of
+  distinct names per parent (40,000 parents with their own names: 25 s,
+  now 0.7 s). New `TLandrixXmlXPathTree.ValueLength`.
 
 ## [0.5.0] - 2026-11-17
 

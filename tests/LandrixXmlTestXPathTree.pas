@@ -306,6 +306,83 @@ begin
   end;
 end;
 
+{ Positions of siblings under many parents: the counters per name are
+  reset after each parent, and a name seen under an earlier parent starts
+  at 1 again. }
+procedure TestPositionsPerParent;
+var
+  T: TLandrixXmlXPathTree;
+  S: string;
+  I: Integer;
+begin
+  S := '<r>';
+  for I := 0 to 49 do
+    S := S + '<x><n' + IntToStr(I) + '/><a/><?p?><a/><?p?></x>';
+  S := S + '</r>';
+  T := TLandrixXmlXPathTree.Create;
+  try
+    T.LoadFromUtf8(U(S));
+    { node 1 is r; each x has 5 children, so x number K starts at 2 + 6 * K }
+    CheckEqualsUtf8(U('/Q{}r[1]/Q{}x[1]/Q{}a[2]'), T.LocationPathUtf8(2 + 4), 'second a, first x');
+    CheckEqualsUtf8(U('/Q{}r[1]/Q{}x[50]/Q{}n49[1]'), T.LocationPathUtf8(2 + 6 * 49 + 1), 'own name, last x');
+    CheckEqualsUtf8(U('/Q{}r[1]/Q{}x[50]/Q{}a[2]'), T.LocationPathUtf8(2 + 6 * 49 + 4), 'second a, last x');
+    CheckEqualsUtf8(U('/Q{}r[1]/Q{}x[50]/processing-instruction("p")[2]'), T.LocationPathUtf8(2 + 6 * 49 + 5),
+      'second PI, last x');
+    CheckEqualsUtf8(U('/Q{}r[1]/Q{}x[2]/Q{}a[1]'), T.LocationPathUtf8(2 + 6 + 2), 'first a, second x');
+  finally
+    T.Free;
+  end;
+end;
+
+{ Many adjacent CDATA sections and text pieces become one text node with
+  all bytes (appended with growing capacity), from the reader, from the
+  DOM and when built. }
+procedure TestAdjacentText;
+var
+  T: TLandrixXmlXPathTree;
+  Doc: TLandrixXmlDocument;
+  S, Expected: TLandrixXmlUtf8;
+  I: Integer;
+begin
+  S := '<a>';
+  Expected := '';
+  for I := 0 to 999 do
+  begin
+    S := S + '<![CDATA[' + LandrixXmlStringToUtf8(IntToStr(I)) + ']]>x';
+    Expected := Expected + LandrixXmlStringToUtf8(IntToStr(I)) + 'x';
+  end;
+  S := S + '<b/>y</a>';
+  T := TLandrixXmlXPathTree.Create;
+  Doc := TLandrixXmlDocument.Create;
+  try
+    T.LoadFromUtf8(S);
+    CheckEquals(5, T.Count, 'document, a, text, b, text');
+    CheckEqualsUtf8(Expected, T.ValueUtf8(2), 'reader: merged text');
+    CheckEqualsUtf8(Expected + 'y', T.StringValueUtf8(1), 'reader: string value');
+    Doc.LoadFromUtf8(S);
+    T.LoadFromDocument(Doc);
+    CheckEqualsUtf8(Expected, T.ValueUtf8(2), 'DOM: merged text');
+    T.BeginBuild(True);
+    T.BuildStartElement('', '', 'a');
+    S := '';
+    for I := 0 to 999 do
+    begin
+      T.BuildText(LandrixXmlStringToUtf8(IntToStr(I)));
+      T.BuildText('x');
+      S := S + LandrixXmlStringToUtf8(IntToStr(I)) + 'x';
+      { XSLT reads the text while it builds (disable-output-escaping) }
+      if I = 500 then
+        CheckEqualsUtf8(S, T.ValueUtf8(2), 'read while building');
+    end;
+    T.BuildEndElement;
+    T.EndBuild;
+    CheckEqualsUtf8(Expected, T.ValueUtf8(2), 'built: merged text');
+  finally
+    Doc.Free;
+    T.Free;
+  end;
+end;
+
 const
   NsSample =
     '<r xmlns:z="urn:z" xmlns="urn:d" xmlns:xml="http://www.w3.org/XML/1998/namespace" a="1">' +
@@ -604,6 +681,8 @@ begin
   RegisterTest('XPathTree.EmptyAndReload', TestEmptyAndReload);
   RegisterTest('XPathTree.Tricky', TestTricky);
   RegisterTest('XPathTree.ManyNames', TestManyNames);
+  RegisterTest('XPathTree.PositionsPerParent', TestPositionsPerParent);
+  RegisterTest('XPathTree.AdjacentText', TestAdjacentText);
   RegisterTest('XPathTree.Namespaces', TestNamespaces);
   RegisterTest('XPathTree.FailedLoad', TestFailedLoad);
   RegisterTest('XPathTree.BuildDocument', TestBuildDocument);
