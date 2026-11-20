@@ -825,10 +825,102 @@ begin
   end;
 end;
 
+{ Edge cases from the review of the DOM: declarations that would change
+  the namespace of a descendant or of the element itself, xmlns as a plain
+  attribute, the document type before the root, a late default namespace
+  on a moved element. }
+procedure TestReviewNamespaces;
+var
+  Doc, Doc2: TLandrixXmlDocument;
+  Root, C: TLandrixXmlNode;
+begin
+  Doc := TLandrixXmlDocument.Create;
+  Doc2 := TLandrixXmlDocument.Create;
+  try
+    Doc.WriteDeclaration := False;
+    { a prefix a descendant takes from outside }
+    Doc.LoadFromUtf8('<a xmlns:p="urn:b"><e><p:c/></e><f xmlns:p="urn:x"><p:d/></f></a>');
+    try
+      Doc.Root[0].SetAttributeNsUtf8('urn:a', 'p', 'z', 'v');
+      FailNotRaised('ELandrixXmlError for rebinding a descendant prefix');
+    except
+      on E: Exception do
+        ExpectCode(xecNamespace, E, 'rebinding a descendant prefix');
+    end;
+    CheckEquals(0, Doc.Root[0].AttributeCount, 'nothing added');
+    { below its own declaration a descendant is not affected }
+    Doc.LoadFromUtf8('<a xmlns:p="urn:a"><e><f xmlns:p="urn:b"><p:x/></f></e></a>');
+    Doc.Root[0].DeclareNamespace('p', 'urn:c');
+    Doc2.LoadFromUtf8(Doc.SaveToUtf8);
+    CheckEqualsUtf8('urn:b', Doc2.Root[0][0][0].NamespaceUriUtf8, 'a shadowed declaration');
+    { the default namespace of the element itself }
+    Doc.Clear;
+    Root := Doc.AddElement('urn:a', '', 'r');
+    C := Root.AddElement('urn:a', '', 'c');
+    try
+      C.DeclareNamespace('', 'urn:b');
+      FailNotRaised('ELandrixXmlError for rebinding the default namespace');
+    except
+      on E: Exception do
+        ExpectCode(xecNamespace, E, 'rebinding the default namespace');
+    end;
+    { late on an element without namespace it stays allowed, and moving
+      that element keeps it }
+    Doc.Clear;
+    Root := Doc.AddElement('r');
+    C := Root.AddElement('n');
+    C.AddElement('k');
+    Root.AddElement('m');
+    C.DeclareNamespace('', 'urn:late');
+    Root.AppendChild(C);
+    CheckEqualsUtf8('<r><m/><n xmlns="urn:late"><k/></n></r>', Doc.SaveToUtf8,
+      'a late default namespace survives a move');
+    Root.SetAttributeUtf8('xmlns', 'urn:gaeb');
+    Root.AppendChild(Root[0]);
+    CheckEqualsUtf8('<r xmlns="urn:gaeb"><n xmlns="urn:late"><k/></n><m/></r>', Doc.SaveToUtf8,
+      'a move below a late default namespace adds no xmlns=""');
+    { xmlns is no plain attribute }
+    try
+      C.SetAttributeNsUtf8('', '', 'xmlns', 'urn:z');
+      FailNotRaised('ELandrixXmlError for an attribute named xmlns');
+    except
+      on E: Exception do
+        ExpectCode(xecNamespace, E, 'an attribute named xmlns');
+    end;
+    { also on a prefixed element: declaring and moving agree }
+    Doc.LoadFromUtf8('<p:r xmlns:p="urn:p"><c/></p:r>');
+    Doc.Root.SetAttributeUtf8('xmlns', 'urn:z');
+    Doc.Root.AppendChild(Doc.Root[0]);
+    CheckEqualsUtf8('<p:r xmlns:p="urn:p" xmlns="urn:z"><c/></p:r>', Doc.SaveToUtf8,
+      'a late default namespace on a prefixed element');
+    { the document type declaration stays before the root element }
+    Doc.LoadFromUtf8('<!DOCTYPE r><r/>');
+    try
+      Doc.AppendChild(Doc[0]);
+      FailNotRaised('ELandrixXmlError for the DOCTYPE after the root');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidOperation, E, 'the DOCTYPE after the root');
+    end;
+    try
+      Doc.InsertChild(0, Doc.Root);
+      FailNotRaised('ELandrixXmlError for the root before the DOCTYPE');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidOperation, E, 'the root before the DOCTYPE');
+    end;
+    CheckEqualsUtf8('<!DOCTYPE r><r/>', Doc.SaveToUtf8, 'the document is unchanged');
+  finally
+    Doc2.Free;
+    Doc.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('Dom.NamespaceConsistency', TestNamespaceConsistency);
   RegisterTest('Dom.InsertChildChecks', TestInsertChildChecks);
+  RegisterTest('Dom.ReviewNamespaces', TestReviewNamespaces);
   RegisterTest('Dom.LoadAndNavigate', TestLoadAndNavigate);
   RegisterTest('Dom.SearchHelpers', TestSearchHelpers);
   RegisterTest('Dom.SmallNodes', TestSmallNodes);

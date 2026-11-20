@@ -64,6 +64,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (XTDE1061); one tree passed for two parameters has one identity; the
   implicit principal result of `TransformToTree` gets the base output URI;
   an empty string or text node besides `xsl:result-document` is XTDE1490.
+- DOM, edge cases from the review: `DeclareNamespace` (and
+  `SetAttributeNsUtf8`) rejects a declaration that would change the
+  namespace of a descendant that takes the prefix from outside (and, as
+  for prefixes before, the default namespace of the element itself);
+  `SetAttributeNsUtf8` with the local name `xmlns` and no namespace is
+  rejected (it was written as a namespace declaration); the document type declaration cannot be moved
+  after the root element (it failed only when saving); moving an element
+  without namespace that declares a default namespace itself no longer
+  raises, and elements without namespace moved below a late default
+  namespace get no `xmlns=""`.
 - XSLT: `xsl:number level="single"` with `count` and `from` gives a
   number only when the counted node or one of its ancestors matches
   `from`, as Saxon (the specification lets the root stand in for it,

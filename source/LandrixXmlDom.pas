@@ -40,10 +40,19 @@
     when necessary (xmlns="" for a no-namespace element under a default
     namespace); moving a node with AppendChild/InsertChild adds the
     declarations it needs at its new place. A declaration that would give a
-    prefix already used by the element or its attributes another namespace
-    is rejected. A default namespace declared later on an element created
-    without namespace (xmlns="..." set at the end) is allowed: the node keeps
-    NamespaceUri '' until the document is saved and reloaded.
+    prefix already used by the element, its attributes or its descendants
+    another namespace is rejected. A default namespace declared later on an
+    element created without namespace (xmlns="..." set at the end) is
+    allowed: the node keeps NamespaceUri '' until the document is saved and
+    reloaded, and keeps the declaration when it is moved; elements without
+    namespace below such a late declaration (on an element whose own name
+    is not in the default namespace) are taken as part of it, also when
+    they are moved there. Only prefixes in
+    element and attribute names are declared, not prefixes in QName values
+    (xsi:type="t:..."); removing an xmlns attribute does not rebind the
+    names that use it (saving writes them as they are). A detached element
+    written on its own (WriteTo) does not repeat the declarations of its
+    former ancestors: insert it before writing it.
   - Values are checked for valid UTF-8 when they are set; XML rules (e.g.
     "--" in comments, "]]>" in CDATA, control characters) are checked when
     the document is saved.
@@ -201,6 +210,8 @@ type
     procedure Unlink;
     procedure FreeChildren;
     procedure EnsureDeclarations;
+    procedure CheckRebinding(const Prefix, NamespaceUri: TLandrixXmlUtf8);
+    procedure DeclareCore(const Prefix, NamespaceUri: TLandrixXmlUtf8; CheckSubtree: Boolean);
   public
     { Internal: nodes are created by the document and by AddElement & co.
       Raises xecInvalidArgument when the class does not fit the node type. }
@@ -1020,8 +1031,9 @@ end;
 
 procedure TLandrixXmlNode.InsertChild(Index: Integer; Node: TLandrixXmlNode);
 var
-  A: TLandrixXmlNode;
+  A, Other: TLandrixXmlNode;
   C: TLandrixXmlContainerNode;
+  I, P: Integer;
 begin
   CheckContainer('InsertChild');
   C := Cont(Self);
@@ -1057,6 +1069,23 @@ begin
   end
   else if (Index < 0) or (Index > C.FChildCount) then
     RaiseArg('Child index out of range');
+  { the document type declaration stays before the root element }
+  if (FNodeType = xntDocument) and (Node.FNodeType in [xntElement, xntDocumentType]) then
+    for I := 0 to C.FChildCount - 1 do
+    begin
+      Other := C.FChildren[I];
+      if (Other = Node) or not (Other.FNodeType in [xntElement, xntDocumentType]) or
+        (Other.FNodeType = Node.FNodeType) then
+        Continue;
+      { its index once Node has left its place }
+      P := I;
+      if (Node.FParent = C) and (Node.FIndex < I) then
+        Dec(P);
+      if (Node.FNodeType = xntDocumentType) and (Index > P) then
+        RaiseOp('The document type declaration must come before the root element');
+      if (Node.FNodeType = xntElement) and (Index <= P) then
+        RaiseOp('The root element must come after the document type declaration');
+    end;
   if Node.FParent <> nil then
     Node.Unlink
   else if Node.FIndex >= 0 then
@@ -1559,7 +1588,73 @@ begin
   Result := False;
 end;
 
+{ Raises if declaring Prefix as NamespaceUri here would change the
+  namespace of this element, an attribute or a descendant that takes the
+  prefix correctly from outside (not below an element that declares it
+  itself; a name not bound correctly yet, e.g. in a detached subtree, is
+  fixed when the subtree is inserted).
+  For the default namespace only names in a namespace count: declaring it
+  late on elements built without one is allowed (GAEB pattern). }
+procedure TLandrixXmlNode.CheckRebinding(const Prefix, NamespaceUri: TLandrixXmlUtf8);
+var
+  Stack: TList;
+  N: TLandrixXmlContainerNode;
+  I: Integer;
+  Outer: TLandrixXmlUtf8;
+  HasOuter: Boolean;
+
+  function Changes(Name: TLandrixXmlName): Boolean;
+  begin
+    Result := (Name.FPrefix = Prefix) and (Name.FNamespaceUri <> LandrixXmlNamespaceXmlns) and
+      (Name.FNamespaceUri <> NamespaceUri) and ((Prefix <> '') or (Name.FNamespaceUri <> '')) and
+      ((N = Self) or (HasOuter and (Name.FNamespaceUri = Outer)));
+  end;
+
+begin
+  HasOuter := LookupNamespace(Prefix, Outer);
+  Stack := TList.Create;
+  try
+    Stack.Add(Self);
+    while Stack.Count > 0 do
+    begin
+      N := TLandrixXmlContainerNode(Stack[Stack.Count - 1]);
+      Stack.Delete(Stack.Count - 1);
+      if N.FNodeType <> xntElement then
+        Continue;
+      { below its own declaration the prefix is not this one }
+      if (N <> Self) and (N.DeclaredPrefixIndex(Prefix) >= 0) then
+        Continue;
+      if Changes(N.FName) then
+      begin
+        if N = Self then
+          RaiseNs('The declaration would change the namespace of the element')
+        else
+          RaiseNs('The declaration would change the namespace of a descendant');
+      end;
+      { unprefixed attributes are in no namespace whatever the default }
+      if Prefix <> '' then
+        for I := 0 to N.FAttrCount - 1 do
+          if Changes(N.FAttrs[I].Name) then
+            RaiseNs('The declaration would change the namespace of an attribute');
+      { no binding from outside to lose: the descendants keep theirs }
+      if (N = Self) and (not HasOuter or (Outer = NamespaceUri)) then
+        Continue;
+      for I := N.FChildCount - 1 downto 0 do
+        Stack.Add(N.FChildren[I]);
+    end;
+  finally
+    Stack.Free;
+  end;
+end;
+
 procedure TLandrixXmlNode.DeclareNamespace(const Prefix, NamespaceUri: TLandrixXmlUtf8);
+begin
+  DeclareCore(Prefix, NamespaceUri, True);
+end;
+
+{ CheckSubtree False: for EnsureDeclarations, which declares only what
+  the names at that place need }
+procedure TLandrixXmlNode.DeclareCore(const Prefix, NamespaceUri: TLandrixXmlUtf8; CheckSubtree: Boolean);
 var
   I: Integer;
   Name: TLandrixXmlName;
@@ -1591,18 +1686,8 @@ begin
       RaiseNs('The prefix is already declared with another namespace on this element');
     Exit;
   end;
-  { not for the default namespace: declaring it late on an element built
-    without one is allowed (GAEB pattern) }
-  if Prefix <> '' then
-  begin
-    if (C.FName.FPrefix = Prefix) and (C.FName.FNamespaceUri <> NamespaceUri) then
-      RaiseNs('The declaration would change the namespace of the element');
-    for I := 0 to C.FAttrCount - 1 do
-      if (C.FAttrs[I].Name.FPrefix = Prefix) and
-        (C.FAttrs[I].Name.FNamespaceUri <> LandrixXmlNamespaceXmlns) and
-        (C.FAttrs[I].Name.FNamespaceUri <> NamespaceUri) then
-        RaiseNs('The declaration would change the namespace of an attribute');
-  end;
+  if CheckSubtree then
+    CheckRebinding(Prefix, NamespaceUri);
   if Prefix = '' then
     Name := FDocument.FNames.Intern(nil, 0, 'xmlns', 5, LandrixXmlNamespaceXmlns,
       Length(LandrixXmlNamespaceXmlns))
@@ -1628,6 +1713,8 @@ begin
   begin
     if Prefix <> '' then
       RaiseArg('A prefix needs a non-empty namespace name');
+    if SameAscii(LocalName, 'xmlns') then
+      RaiseNs('Use DeclareNamespace for namespace declarations');
   end
   else
   begin
@@ -2157,12 +2244,37 @@ var
       Mixed[P] := True;
   end;
 
+  { whether the nearest default namespace declaration of N is a late one:
+    on an element whose own name is not in the default namespace (no
+    namespace or a prefix) }
+  function LateDefault: Boolean;
+  var
+    E: TLandrixXmlContainerNode;
+  begin
+    Result := False;
+    E := N;
+    while (E <> nil) and (E.FNodeType = xntElement) do
+    begin
+      if E.DeclaredPrefixIndex('') >= 0 then
+      begin
+        Result := (E.FName.FPrefix <> '') or (E.FName.FNamespaceUri = '');
+        Exit;
+      end;
+      E := E.FParent;
+    end;
+  end;
+
   procedure Need(Name: TLandrixXmlName; IsElementName: Boolean);
   var
     Found: Boolean;
     P: Integer;
   begin
     if not Relevant(Name, IsElementName) then
+      Exit;
+    { an element without namespace under a default namespace declared
+      late (on an element without namespace, as documented) stays below
+      it: no xmlns="" }
+    if IsElementName and (Name.FPrefix = '') and (Name.FNamespaceUri = '') and LateDefault then
       Exit;
     Found := N.LookupNamespace(Name.FPrefix, Uri);
     if Found and (Uri = Name.FNamespaceUri) then
@@ -2176,9 +2288,9 @@ var
     if not DeclaredInside(Name.FPrefix) then
       P := Find(Name.FPrefix, False);
     if (P < 0) or Mixed[P] then
-      N.DeclareNamespace(Name.FPrefix, Name.FNamespaceUri)
+      N.DeclareCore(Name.FPrefix, Name.FNamespaceUri, False)
     else
-      DeclareNamespace(Name.FPrefix, Name.FNamespaceUri);
+      DeclareCore(Name.FPrefix, Name.FNamespaceUri, False);
   end;
 
 begin
