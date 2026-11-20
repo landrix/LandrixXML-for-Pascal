@@ -777,6 +777,16 @@ begin
         Raised := E.XPathCode;
     end;
     CheckEqualsStr('FOER0000', Raised, 'a regular expression beyond the limits');
+    { the step limit of a back-reference search in replace: a limit, not
+      an error in the replacement string (FORX0004) }
+    Raised := '';
+    try
+      Count('//a[replace(''aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab'', ''^(a|a)*\1c$'', ''X'') = '''']');
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode;
+    end;
+    CheckEqualsStr('FOER0000', Raised, 'replace beyond the backtracking limit');
     Raised := '';
     try
       Count('//a except //a[xs:integer(v[1]) > 0]');

@@ -127,6 +127,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of declarations in the output. New
   `TLandrixXmlXPathTree.InScopeNamespacesUtf8` returns the in-scope
   prefixes with their URIs in one pass.
+- XPath: `fn:replace` reported the step limit of a back-reference search
+  as FORX0004 (an error in the replacement string), which an XSLT match
+  pattern then treated as no match; it is now the limit error.
+  `xsl:analyze-string` checks the size of its match table.
 - XML Schema validator: after a reference to an external or undeclared
   parameter entity in the internal subset, later entity declarations no
   longer count for `xs:ENTITY` values unless the document is

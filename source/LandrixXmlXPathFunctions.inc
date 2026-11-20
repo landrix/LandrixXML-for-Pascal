@@ -1813,7 +1813,9 @@ begin
         except
           on E: ELandrixXmlError do
           begin
-            if E is ELandrixXmlXPathError then
+            { a limit of the regular expression engine (backtracking
+              steps) is no error in the replacement string }
+            if (E is ELandrixXmlXPathError) or (E.Code = xecLimit) then
               raise;
             Fail('FORX0004', Name + ': ' + E.Message);
           end;

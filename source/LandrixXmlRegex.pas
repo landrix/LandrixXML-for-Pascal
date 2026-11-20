@@ -19,7 +19,8 @@
   captures (as Saxon). Every character a back-reference compares counts
   as a step; a search that is quadratic in the input (such as
   <([a-z]+)>.*</\1> without a match) reaches the limit at a few thousand
-  characters.
+  characters. Its undo trail grows with the steps (a few hundred MB at
+  the limit) and is freed after the call.
   Replace and Tokenize search again after every match, so a pattern whose
   match attempts run to the end of the input can take quadratic time
   there, as with Saxon. Matches are leftmost-first, as with a backtracking
@@ -1885,7 +1886,16 @@ begin
   while (Position <= Length(Text)) and RunMatch(Self, State, Text, Position, True, Captures) do
   begin
     if N + Slots > Length(Result) then
-      SetLength(Result, 2 * N + 4 * Slots);
+    begin
+      { the offsets of every match are kept: checked in Int64, at most
+        1 GB, so the array header and the allocator never overflow }
+      if Int64(N) + Slots > MaxInt div 8 then
+        raise ELandrixXmlError.CreateCode(xecLimit, 'Too many matches in xsl:analyze-string');
+      if Int64(2) * N + Int64(4) * Slots > MaxInt div 8 then
+        SetLength(Result, MaxInt div 8)
+      else
+        SetLength(Result, 2 * N + 4 * Slots);
+    end;
     for I := 0 to Slots - 1 do
       if I < Length(Captures) then
         Result[N + I] := Captures[I]
