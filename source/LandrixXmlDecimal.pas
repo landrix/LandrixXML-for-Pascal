@@ -318,7 +318,7 @@ begin
     Result := nil;
     Exit;
   end;
-  CheckWork(Length(A), Length(B));
+  CheckWork(Integer(Length(A)), Integer(Length(B)));
   SetLength(Result, Length(A) + Length(B));
   for I := 0 to Integer(Length(Result)) - 1 do
     Result[I] := 0;
@@ -414,7 +414,7 @@ begin
     Remainder := NatFromInteger(R);
     Exit;
   end;
-  CheckWork(Length(A), Length(B));
+  CheckWork(Integer(Length(A)), Integer(Length(B)));
   SetLength(Quotient, Length(A));
   for I := Integer(Length(A)) - 1 downto 0 do
   begin

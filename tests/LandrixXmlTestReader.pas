@@ -220,12 +220,12 @@ end;
 procedure TestManyNamespaces;
 var
   Reader: TLandrixXmlReader;
-  Xml, LongUri: AnsiString;
+  Xml, LongUri: TLandrixXmlUtf8;
   I: Integer;
 begin
   Xml := '<r';
   for I := 0 to 299 do
-    Xml := Xml + ' xmlns:p' + AnsiString(IntToStr(I)) + '="u' + AnsiString(IntToStr(I)) + '"';
+    Xml := Xml + ' xmlns:p' + LandrixXmlStringToUtf8(IntToStr(I)) + '="u' + LandrixXmlStringToUtf8(IntToStr(I)) + '"';
   Xml := Xml + '><p5:a xmlns:p5="v5" xmlns:q="w"><p5:b/><q:c/><p299:d/></p5:a><p5:e/><p0:f/><p150:g/></r>';
   Reader := TLandrixXmlReader.Create;
   try
@@ -252,7 +252,7 @@ begin
     LongUri := LongUri + 'x';
   Xml := '<r xmlns:p="' + LongUri + '" xmlns:s="' + LongUri + '"';
   for I := 0 to 199 do
-    Xml := Xml + ' p:a' + AnsiString(IntToStr(I)) + '="1"';
+    Xml := Xml + ' p:a' + LandrixXmlStringToUtf8(IntToStr(I)) + '="1"';
   Xml := Xml + ' s:a7="2"/>';
   Reader := TLandrixXmlReader.Create;
   try

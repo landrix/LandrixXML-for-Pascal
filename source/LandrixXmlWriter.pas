@@ -939,7 +939,7 @@ begin
   end;
   if FBindingCount > 2 * Length(FPrefixHeads) then
   begin
-    Size := 4 * Length(FPrefixHeads);
+    Size := 4 * Integer(Length(FPrefixHeads));
     SetLength(FPrefixHeads, Size);
     for I := 0 to Size - 1 do
       FPrefixHeads[I] := -1;

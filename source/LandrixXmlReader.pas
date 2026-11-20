@@ -1244,7 +1244,7 @@ begin
   FPrefixHeads[B] := FBindingCount;
   Inc(FBindingCount);
   if FBindingCount > 2 * Length(FPrefixHeads) then
-    RebuildPrefixHeads(4 * Length(FPrefixHeads));
+    RebuildPrefixHeads(4 * Integer(Length(FPrefixHeads)));
 end;
 
 procedure TLandrixXmlReader.CheckDuplicates(Expanded: Boolean);

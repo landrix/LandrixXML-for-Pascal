@@ -495,7 +495,7 @@ var
 begin
   Result := '';
   SetLength(Result, Length(Codes));
-  for I := 0 to High(Codes) do
+  for I := 0 to Integer(High(Codes)) do
     Result[I + 1] := AnsiChar(Codes[I]);
 end;
 

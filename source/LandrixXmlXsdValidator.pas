@@ -1523,7 +1523,7 @@ begin
   if UseTable then
   begin
     H := ChildHash(FFrames[P], NamespaceUri, LocalName);
-    Mask := Length(FFrames[P].ChildSlots) - 1;
+    Mask := Integer(Length(FFrames[P].ChildSlots)) - 1;
     Slot := Integer(H and Cardinal(Mask));
     while FFrames[P].ChildSlots[Slot] >= 0 do
     begin
