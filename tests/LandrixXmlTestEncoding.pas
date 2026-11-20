@@ -41,6 +41,20 @@ begin
   Result := inherited Read(Buffer, Count);
 end;
 
+type
+  { Memory stream that reports a read error (-1) once its data is read. }
+  TBrokenStream = class(TMemoryStream)
+  public
+    function Read(var Buffer; Count: Longint): Longint; override;
+  end;
+
+function TBrokenStream.Read(var Buffer; Count: Longint): Longint;
+begin
+  Result := inherited Read(Buffer, Count);
+  if Result = 0 then
+    Result := -1;
+end;
+
 { --- helpers ------------------------------------------------------------- }
 
 function DataDir: string;
@@ -468,6 +482,7 @@ end;
 procedure TestEmptyAndState;
 var
   Input: TLandrixXmlInput;
+  Broken: TBrokenStream;
 begin
   Input := TLandrixXmlInput.Create;
   try
@@ -496,6 +511,43 @@ begin
     LoadBytes(Input, '<?xml version="1.0"?><r/>');
     Input.LoadFromBuffer(Input.Data^, Input.Size);
     CheckEqualsUtf8(A('<?xml version="1.0"?><r/>'), InputText(Input), 'reload from own Data');
+
+    { a buffer that is too large: refused before it is read, and the old
+      document is gone }
+    try
+      Input.LoadFromBuffer(Input.Data^, MaxInt);
+      FailNotRaised('buffer beyond the limit');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecLimit), Ord(E.Code), 'buffer beyond the limit');
+    end;
+    CheckEquals(0, Input.Size, 'failed LoadFromBuffer leaves the input empty');
+    LoadBytes(Input, '<r/>');
+    try
+      Input.LoadFromBuffer(Input.Data^, -1);
+      FailNotRaised('negative size');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'negative size');
+    end;
+    CheckEquals(0, Input.Size, 'negative size leaves the input empty');
+
+    { a read error of the stream is not the end of the document }
+    Broken := TBrokenStream.Create;
+    try
+      Broken.WriteBuffer(PAnsiChar('<r/>')^, 4);
+      Broken.Position := 0;
+      try
+        Input.LoadFromStream(Broken);
+        FailNotRaised('stream read error');
+      except
+        on E: ELandrixXmlError do
+          CheckEquals(Ord(xecGeneral), Ord(E.Code), 'stream read error');
+      end;
+      CheckEquals(0, Input.Size, 'read error leaves the input empty');
+    finally
+      Broken.Free;
+    end;
   finally
     Input.Free;
   end;

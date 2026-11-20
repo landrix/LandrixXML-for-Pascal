@@ -110,6 +110,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   refused instead of writing a default namespace declaration;
   `Base64FromStream` raises on a read error of the stream instead of
   treating it as the end.
+- Input: `LoadFromStream` raises on a read error of the stream instead of
+  treating it as the end of the document, refuses a stream whose size
+  is known to exceed the buffer limit before buffering it, and accepts
+  inputs just below the limit; a failed `LoadFromBuffer` leaves the input
+  empty like every other failed load.
+- `LandrixXmlBase64Encode` and `LandrixXmlBase64Decode` work when the
+  input lies in the destination buffer itself (the buffer could move or
+  the output overwrite unread input); decoding beyond the buffer limit
+  raises `xecLimit`. On 64-bit FPC, strings longer than the buffer limit
+  raise `xecLimit` in the UTF-8 checks and conversions instead of being
+  cut to a wrapped length.
 - XML Schema validator: after a reference to an external or undeclared
   parameter entity in the internal subset, later entity declarations no
   longer count for `xs:ENTITY` values unless the document is

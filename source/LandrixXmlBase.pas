@@ -305,6 +305,24 @@ begin
   raise ELandrixXmlError.CreateCode(xecInvalidArgument, Msg);
 end;
 
+procedure RaiseLimit(const Msg: string); forward;
+
+{ The length of S as an Integer: on 64-bit FPC a string can be longer
+  than the library's buffers, and narrowing the length would wrap. }
+function Utf8Len(const S: TLandrixXmlUtf8): Integer;
+begin
+  if Int64(Length(S)) > MaxInt - 1 then
+    RaiseLimit(SMaxBufferSize);
+  Result := Integer(Length(S));
+end;
+
+function WideLen(const S: TLandrixXmlWide): Integer;
+begin
+  if Int64(Length(S)) > MaxInt - 1 then
+    RaiseLimit(SMaxBufferSize);
+  Result := Integer(Length(S));
+end;
+
 procedure RaiseLimit(const Msg: string);
 begin
   raise ELandrixXmlError.CreateCode(xecLimit, Msg);
@@ -574,6 +592,7 @@ var
   Dst: PAnsiChar;
   I, Full, Rest: Integer;
   V: Cardinal;
+  Copied: TLandrixXmlUtf8;
 begin
   if Size < 0 then
     RaiseInvalidArgument('Negative base64 input size');
@@ -582,6 +601,15 @@ begin
   if Size > (MaxInt div 4) * 3 - 3 then
     RaiseLimit('Base64 input too large');
   Src := PAnsiChar(@Data);
+  { Data in Dest's own memory: Extend can move it and the output can
+    overwrite its end (the terminating #0), so it is copied first }
+  Copied := '';
+  if (Dest.Data <> nil) and (Src >= Dest.Data) and (Src <= Dest.Data + Dest.Capacity) then
+  begin
+    SetLength(Copied, Size);
+    Move(Src^, PAnsiChar(Copied)^, Size);
+    Src := PAnsiChar(Copied);
+  end;
   Full := Size div 3;
   Rest := Size - Full * 3;
   if Rest > 0 then
@@ -755,9 +783,21 @@ end;
 procedure LandrixXmlBase64Decode(P: PAnsiChar; Len: Integer; Dest: TLandrixXmlBuffer);
 var
   Size, Bad: Integer;
+  Copied: TLandrixXmlUtf8;
 begin
+  Copied := '';
   if not LandrixXmlValidateBase64Buf(P, Len, Size, Bad) then
     RaiseInvalidBase64(Bad);
+  if Int64(Dest.Size) + Size > MaxInt - 1 then
+    RaiseLimit(SMaxBufferSize);
+  { input in Dest's own memory: copied first, Reserve can move it }
+  if (Len > 0) and (Dest.Data <> nil) and (P >= Dest.Data) and
+    (P <= Dest.Data + Dest.Capacity) then
+  begin
+    SetLength(Copied, Len);
+    Move(P^, PAnsiChar(Copied)^, Len);
+    P := PAnsiChar(Copied);
+  end;
   Dest.Reserve(Dest.Size + Size);
   Base64DecodeValid(P, Len, Dest, nil);
 end;
@@ -811,7 +851,7 @@ end;
 function LandrixXmlValidateUtf8(const S: TLandrixXmlUtf8;
   out BadOffset: Integer): Boolean;
 begin
-  Result := LandrixXmlValidateUtf8Buf(PAnsiChar(S), Length(S), BadOffset);
+  Result := LandrixXmlValidateUtf8Buf(PAnsiChar(S), Utf8Len(S), BadOffset);
 end;
 
 { --- UTF-8 <-> UTF-16 cores ---------------------------------------------- }
@@ -991,12 +1031,12 @@ end;
 
 function LandrixXmlUtf8ToWide(const S: TLandrixXmlUtf8): TLandrixXmlWide;
 begin
-  Result := Utf8BufToWide(PAnsiChar(S), Length(S));
+  Result := Utf8BufToWide(PAnsiChar(S), Utf8Len(S));
 end;
 
 function LandrixXmlWideToUtf8(const S: TLandrixXmlWide): TLandrixXmlUtf8;
 begin
-  Result := WideBufToUtf8(PWideChar(S), Length(S));
+  Result := WideBufToUtf8(PWideChar(S), WideLen(S));
 end;
 
 {$IFDEF FPC}
@@ -1012,7 +1052,7 @@ end;
 function LandrixXmlUtf8ToString(const S: TLandrixXmlUtf8): string;
 {$IFDEF LANDRIXXML_UNICODE}
 begin
-  Result := Utf8BufToWide(PAnsiChar(S), Length(S));
+  Result := Utf8BufToWide(PAnsiChar(S), Utf8Len(S));
 end;
 {$ELSE}
 {$IFDEF FPC}
@@ -1024,18 +1064,18 @@ begin
     Exit;
   if DefaultSystemCodePage = CP_UTF8 then
   begin
-    if not LandrixXmlValidateUtf8Buf(PAnsiChar(S), Length(S), BadOffset) then
+    if not LandrixXmlValidateUtf8Buf(PAnsiChar(S), Utf8Len(S), BadOffset) then
       RaiseInvalidUtf8(BadOffset);
     SetLength(Result, Length(S));
     Move(PAnsiChar(S)^, PAnsiChar(Result)^, Length(S));
   end
   else
-    Result := string(Utf8BufToWide(PAnsiChar(S), Length(S)));
+    Result := string(Utf8BufToWide(PAnsiChar(S), Utf8Len(S)));
 end;
 {$ELSE}
 begin
   { Delphi 6-2007: the RTL converts to the system code page (lossy). }
-  Result := string(Utf8BufToWide(PAnsiChar(S), Length(S)));
+  Result := string(Utf8BufToWide(PAnsiChar(S), Utf8Len(S)));
 end;
 {$ENDIF}
 {$ENDIF}
@@ -1043,7 +1083,7 @@ end;
 function LandrixXmlUtf8ToKey(const S: TLandrixXmlUtf8): string;
 {$IFDEF LANDRIXXML_UNICODE}
 begin
-  Result := Utf8BufToWide(PAnsiChar(S), Length(S));
+  Result := Utf8BufToWide(PAnsiChar(S), Utf8Len(S));
 end;
 {$ELSE}
 var
@@ -1054,7 +1094,7 @@ begin
   Result := '';
   if Length(S) = 0 then
     Exit;
-  if not LandrixXmlValidateUtf8Buf(PAnsiChar(S), Length(S), BadOffset) then
+  if not LandrixXmlValidateUtf8Buf(PAnsiChar(S), Utf8Len(S), BadOffset) then
     RaiseInvalidUtf8(BadOffset);
   SetLength(Result, Length(S));
   Move(PAnsiChar(S)^, PAnsiChar(Result)^, Length(S));
@@ -1074,12 +1114,15 @@ begin
   Result := '';
   if Length(S) = 0 then
     Exit;
+  { the length checked as Utf8Len does, without converting S }
+  if Int64(Length(S)) > MaxInt - 1 then
+    RaiseLimit(SMaxBufferSize);
   if EffectiveCodePage(S) = CP_UTF8 then
-    Result := LandrixXmlBufToUtf8(PAnsiChar(S), Length(S))
+    Result := LandrixXmlBufToUtf8(PAnsiChar(S), Integer(Length(S)))
   else
   begin
     W := TLandrixXmlWide(S);
-    Result := WideBufToUtf8(PWideChar(W), Length(W));
+    Result := WideBufToUtf8(PWideChar(W), WideLen(W));
   end;
 end;
 {$ELSE}
@@ -1237,7 +1280,7 @@ end;
 procedure TLandrixXmlBuffer.AppendUtf8(const S: TLandrixXmlUtf8);
 begin
   if Length(S) > 0 then
-    Append(PAnsiChar(S)^, Length(S));
+    Append(PAnsiChar(S)^, Utf8Len(S));
 end;
 
 procedure TLandrixXmlBuffer.AppendAscii(const S: AnsiString);

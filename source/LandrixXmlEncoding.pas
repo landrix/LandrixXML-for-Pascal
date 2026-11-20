@@ -600,27 +600,56 @@ const
   ChunkSize = 65536;
 var
   P: PAnsiChar;
-  Got: Integer;
-  Remaining: Int64;
+  Got, Want: Integer;
+  Remaining, Count, Total, Here: Int64;
+  Probe: Byte;
 begin
   Clear;
   try
     try
-      Remaining := Stream.Size - Stream.Position;
+      Total := Stream.Size;
+      Here := Stream.Position;
+      { a stream that cannot tell (negative values) gives no size hint }
+      if (Total >= 0) and (Here >= 0) and (Here <= Total) then
+        Remaining := Total - Here
+      else
+        Remaining := 0;
     except
       { non-seekable stream: read without a size hint }
       Remaining := 0;
     end;
+    { a stream known to be too large is refused before it is buffered }
+    if Remaining > MaxInt - 1 then
+      RaiseAt(xecLimit, 'Input too large', 0, 0, -1);
     if (Remaining > 0) and (Remaining < MaxInt - ChunkSize - 1) then
       FRaw.Reserve(Integer(Remaining) + ChunkSize);
+    Probe := 0;
     repeat
-      P := FRaw.Extend(ChunkSize);
-      { TStream.Read returns Longint, 64 bits on 64-bit POSIX Delphi }
-      Got := Integer(Stream.Read(P^, ChunkSize));
-      if Got < 0 then
-        Got := 0;
-      FRaw.Truncate(FRaw.Size - ChunkSize + Got);
-    until Got = 0;
+      { near the buffer limit a smaller chunk; at the limit one byte more
+        tells whether the stream has ended }
+      Want := ChunkSize;
+      if Want > MaxInt - 1 - FRaw.Size then
+        Want := MaxInt - 1 - FRaw.Size;
+      if Want = 0 then
+      begin
+        Count := Stream.Read(Probe, 1);
+        if Count < 0 then
+          RaiseAt(xecGeneral, 'The stream reported a read error', 0, 0, -1);
+        if Count > 0 then
+          RaiseAt(xecLimit, 'Input too large', 0, 0, -1);
+        Break;
+      end;
+      P := FRaw.Extend(Want);
+      { TStream.Read returns Longint, 64 bits on 64-bit POSIX Delphi: the
+        sign is checked before the value is narrowed }
+      Count := Stream.Read(P^, Want);
+      if Count < 0 then
+        RaiseAt(xecGeneral, 'The stream reported a read error', 0, 0, -1);
+      Got := Integer(Count);
+      FRaw.Truncate(FRaw.Size - Want + Got);
+      if Got = 0 then
+        Break;
+    until False;
     Decode(False);
   except
     Clear;
@@ -648,14 +677,20 @@ var
 begin
   Src := PAnsiChar(@Data);
   if Size < 0 then
+  begin
+    Clear;
     raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Negative size');
+  end;
   { Data may point into our own memory (e.g. Self.Data), so copy it into a
     fresh buffer before the old ones are cleared }
-  NewRaw := TLandrixXmlBuffer.Create;
+  NewRaw := nil;
   try
+    NewRaw := TLandrixXmlBuffer.Create;
     NewRaw.Append(Src^, Size);
   except
     NewRaw.Free;
+    { empty on failure, as every other load }
+    Clear;
     raise;
   end;
   FRaw.Free;

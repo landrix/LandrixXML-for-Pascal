@@ -179,6 +179,48 @@ begin
   end;
 end;
 
+{ Encoding and decoding a part of the destination buffer itself: the
+  buffer grows and may move while the input is still read. }
+procedure TestBase64InPlace;
+var
+  Buf: TLandrixXmlBuffer;
+  S: AnsiString;
+  Encoded: TLandrixXmlUtf8;
+  N, I: Integer;
+begin
+  Buf := TLandrixXmlBuffer.Create;
+  try
+    for N := 1 to 300 do
+    begin
+      S := '';
+      for I := 1 to N do
+        S := S + AnsiChar(Ord('a') + I mod 26);
+      Buf.Free;
+      Buf := TLandrixXmlBuffer.Create;
+      Buf.Append(PAnsiChar(S)^, N);
+      LandrixXmlBase64Encode(Buf.Data^, N, Buf);
+      CheckEqualsUtf8(U(S) + Base64Of(S), Buf.AsUtf8, 'encode in place, size ' + IntToStr(N));
+      { the encoded part decoded again into the same buffer, fresh, so it
+        has to grow }
+      Buf.Free;
+      Buf := TLandrixXmlBuffer.Create;
+      Encoded := Base64Of(S);
+      Buf.Append(PAnsiChar(Encoded)^, Length(Encoded));
+      LandrixXmlBase64Decode(Buf.Data, Buf.Size, Buf);
+      CheckEqualsUtf8(Encoded + U(S), Buf.AsUtf8, 'decode in place, size ' + IntToStr(N));
+    end;
+    { the terminating #0 of the buffer as the last input byte: the output
+      must not overwrite it before it is read }
+    Buf.Free;
+    Buf := TLandrixXmlBuffer.Create;
+    Buf.Append(PAnsiChar('abc')^, 3);
+    LandrixXmlBase64Encode(Buf.Data^, 4, Buf);
+    CheckEqualsUtf8('abcYWJjAA==', Buf.AsUtf8, 'input up to the terminator');
+  finally
+    Buf.Free;
+  end;
+end;
+
 procedure TestBase64Encode;
 begin
   { RFC 4648 test vectors }
@@ -1242,6 +1284,7 @@ end;
 procedure Register;
 begin
   RegisterTest('Base.Base64Encode', TestBase64Encode);
+  RegisterTest('Base.Base64InPlace', TestBase64InPlace);
   RegisterTest('Base.NameChecks', TestNameChecks);
   RegisterTest('Writer.BasicDocument', TestBasicDocument);
   RegisterTest('Writer.DeclarationOptions', TestDeclarationOptions);
