@@ -615,6 +615,53 @@ begin
     'consecutive days far back');
 end;
 
+{ Review edge cases: a port beyond 65535 on a bracketed host, seconds
+  with more fraction digits than the decimal limit, a whiteSpace facet
+  value with spaces around it, years at the ends of the Integer range. }
+procedure TestReviewEdges;
+var
+  Error: TLandrixXmlXsdError;
+  V: TLandrixXmlXsdValue;
+  S: string;
+  T: TLandrixXmlXsdSimpleType;
+begin
+  Check(LandrixXmlXsdBuiltinType(U('anyURI')).Validate(U('http://[::1]:65535/r'), V, Error), 'port 65535');
+  Check(not LandrixXmlXsdBuiltinType(U('anyURI')).Validate(U('http://[::1]:65536/r'), V, Error),
+    'port 65536 on a bracketed host');
+  Check(LandrixXmlXsdBuiltinType(U('anyURI')).Validate(U('http://h:65536/r'), V, Error),
+    'a registry-based authority keeps any port (as Xerces)');
+  Check(LandrixXmlXsdBuiltinType(U('anyURI')).Validate(U('http://[::1]:+065535/r'), V, Error),
+    'a port with a sign and leading zeros (Integer.parseInt)');
+  Check(LandrixXmlXsdBuiltinType(U('anyURI')).Validate(U('http://[::1]:-0/r'), V, Error), 'port -0');
+  Check(not LandrixXmlXsdBuiltinType(U('anyURI')).Validate(U('http://[::1]:-1/r'), V, Error), 'port -1');
+  Check(not LandrixXmlXsdBuiltinType(U('anyURI')).Validate(U('http://[::1]:+/r'), V, Error), 'a sign alone');
+  S := '00:00:00.' + StringOfChar('1', 1000001);
+  Check(not LandrixXmlXsdBuiltinType(U('time')).Validate(U(S), V, Error),
+    'seconds beyond the decimal limit: not valid, no exception');
+  T := TLandrixXmlXsdSimpleType.CreateRestriction(LandrixXmlXsdBuiltinType(U('string')), '', U('t'));
+  try
+    T.AddFacet(xsfWhiteSpace, U(' collapse '));
+    Check(T.Validate(U(' a  b '), V, Error), 'whiteSpace with spaces around its value');
+    CheckEqualsUtf8(U('a b'), V.Text, 'collapsed');
+  finally
+    T.Free;
+  end;
+  { the message of a failed enumeration writes the value as Xerces does:
+    its year wraps as Java's int (nothing raises in a checked build) }
+  T := TLandrixXmlXsdSimpleType.CreateRestriction(LandrixXmlXsdBuiltinType(U('dateTime')), '', U('t'));
+  try
+    T.AddFacet(xsfEnumeration, U('2147483647-12-31T23:00:00-05:00'));
+    T.AddFacet(xsfEnumeration, U('2147483647-12-31T24:00:00'));
+    Check(not T.Validate(U('2000-01-01T00:00:00Z'), V, Error), 'not in the enumeration');
+    Check(Pos('-2147483648-01-01T04:00:00Z', Error.Message) > 0,
+      'the time zone wraps the year to -2147483648 (' + Error.Message + ')');
+    Check(Pos('-2147483648-01-01T00:00:00', Error.Message) > 0,
+      '24:00:00 wraps the year to -2147483648 (' + Error.Message + ')');
+  finally
+    T.Free;
+  end;
+end;
+
 procedure TestValueFields;
 var
   U1: TLandrixXmlXsdSimpleType;
@@ -799,6 +846,7 @@ begin
   RegisterTest('XsdTypes.QName', TestQName);
   RegisterTest('XsdTypes.SimpleDerivation', TestSimpleDerivation);
   RegisterTest('XsdTypes.CompareValues', TestCompareValues);
+  RegisterTest('XsdTypes.ReviewEdges', TestReviewEdges);
   RegisterTest('XsdTypes.ValueFields', TestValueFields);
   RegisterTest('XsdTypes.Lists', TestLists);
   RegisterTest('XsdTypes.HasValue', TestHasValue);

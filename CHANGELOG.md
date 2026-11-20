@@ -146,6 +146,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   last collected error still raises; `ValidateDocument` of a document
   without a root element raises `xecInvalidArgument` instead of an
   access violation.
+- XML Schema: `xs:anyURI` refuses a port above 65535 on a bracketed IPv6
+  host, as Xerces does; seconds with more than 1,000,000 fraction digits
+  make a date or time invalid instead of raising an exception; a
+  `whiteSpace` facet value with white space around it (` collapse `) is
+  accepted; dates near the ends of the year range no longer raise an
+  overflow in builds with overflow checks.
 - XML Schema: comparing dates and times across the start of year 1 counted
   a year 0, which XML Schema 1.0 does not have
   (`-0001-12-31T23:00:00-01:00` and `0001-01-01T00:00:00Z` are the same

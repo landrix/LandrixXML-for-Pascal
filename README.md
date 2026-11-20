@@ -557,7 +557,9 @@ parameters, attributes, comments, processing instructions,
   scales; error FOAR0002): values from a document must not make an
   expression run for minutes. Long values times short ones, rounding and
   casts are not limited. Exponents are limited to
-  ±1,000,000 (`LandrixXmlDecimalMaxExponent`).
+  ±1,000,000 (`LandrixXmlDecimalMaxExponent`); the XML Schema validator
+  takes an `xs:time` or `xs:dateTime` whose seconds have more fraction
+  digits as invalid (a limit of this library; Xerces accepts them).
 - **Saving keeps the content, not the bytes:** a document saved from the
   DOM reads back with the same nodes, but quotes, character references and
   line ends may be written differently.
@@ -654,6 +656,13 @@ both the mark and an entry here):
   `finalDefault` that names `extension`; XML Schema 1.0 limits the
   `{final}` of simple types to restriction, list and union (no test of
   the suite covers this; in the source code the mark reads
+  `Xerces deviation, not in the test suite`).
+- An `xs:anyURI` with a bracketed IPv6 host and a port outside
+  0..65535 (`http://[::1]:65536/`) is invalid, as Xerces reads the port
+  as an Integer and refuses it for a server-based authority (a sign is
+  allowed, `+80`); the URI syntax allows any number of digits and no
+  sign (no test of the suite
+  covers this; in the source code the mark reads
   `Xerces deviation, not in the test suite`).
 - A component that two documents redefine (two `xs:redefine` of the
   same document) is an error (`sch-props-correct.2`), as Xerces sees

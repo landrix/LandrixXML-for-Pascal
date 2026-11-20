@@ -638,7 +638,10 @@ begin
       Inc(P);
   end;
   Text := Copy(S, Start, P - Start);
-  Value.Second := LandrixXmlParseDecimal(Text);
+  { more fraction digits than LandrixXmlDecimalMaxExponent: not valid
+    (a limit of this library) instead of an exception }
+  if not LandrixXmlTryParseDecimal(Text, Value.Second) then
+    Exit;
   if (Value.Minute > 59) or (Sec > 59) then
     Exit;
   if Value.Hour = 24 then
@@ -940,7 +943,8 @@ end;
   optional ":port" of digits. }
 function IsValidAuthority(const S: TLandrixXmlUtf8; First, Last: Integer): Boolean;
 var
-  Open, Close, I: Integer;
+  Open, Close, I, Port: Integer;
+  Negative: Boolean;
 begin
   Result := True;
   if not HasBracket(S, First, Last) then
@@ -966,14 +970,36 @@ begin
     Exit;
   if not IsIPv6(Copy(S, Open + 1, Close - Open - 1)) then
     Exit;
-  { after ']': nothing, or ':' and digits }
+  { after ']': nothing, or ':' and a port. Xerces deviation, not in the
+    test suite: a bracketed host is server-based for Xerces, which reads
+    the port with Integer.parseInt (so a sign is allowed, "+80", "-0")
+    and refuses one outside 0..65535; RFC 2396 allows any number of
+    digits and no sign. }
   if Close < Last then
   begin
     if S[Close + 1] <> ':' then
       Exit;
-    for I := Close + 2 to Last do
+    I := Close + 2;
+    Negative := False;
+    if (I <= Last) and ((S[I] = '+') or (S[I] = '-')) then
+    begin
+      Negative := S[I] = '-';
+      Inc(I);
+      if I > Last then
+        Exit;
+    end;
+    Port := 0;
+    while I <= Last do
+    begin
       if not IsDigit(AnsiChar(S[I])) then
         Exit;
+      Port := Port * 10 + Ord(S[I]) - Ord('0');
+      if Port > 65535 then
+        Exit;
+      Inc(I);
+    end;
+    if Negative and (Port <> 0) then
+      Exit;
   end;
   Result := True;
 end;
@@ -2605,6 +2631,7 @@ var
   V: TLandrixXmlXsdValue;
   Mode: TLandrixXmlXsdWhiteSpace;
   T: TLandrixXmlXsdSimpleType;
+  Keyword: TLandrixXmlUtf8;
 begin
   if FBuiltin then
     raise ELandrixXmlError.CreateCode(xecInvalidOperation, 'Built-in types cannot get facets');
@@ -2643,11 +2670,13 @@ begin
       end;
     xsfWhiteSpace:
       begin
-        if Value = 'preserve' then
+        { the value is an NMTOKEN: surrounding white space does not count }
+        Keyword := LandrixXmlXsdNormalizeWhiteSpace(Value, xwsCollapse);
+        if Keyword = 'preserve' then
           Mode := xwsPreserve
-        else if Value = 'replace' then
+        else if Keyword = 'replace' then
           Mode := xwsReplace
-        else if Value = 'collapse' then
+        else if Keyword = 'collapse' then
           Mode := xwsCollapse
         else
           raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Invalid whiteSpace value ' + Quote(Value));
@@ -2782,7 +2811,8 @@ begin
       if Result.Month > 12 then
       begin
         Result.Month := 1;
-        Inc(Result.Year);
+        { the year wraps as Java's int does (Q+ safe) }
+        Result.Year := Wrap32(Int64(Result.Year) + 1);
         if Result.Year = 0 then
           Result.Year := 1;
       end;
@@ -2814,7 +2844,7 @@ begin
       Break;
     Temp := Result.Month + Carry;
     Result.Month := Temp - 1 - FloorDiv(Temp - 1, 12) * 12 + 1;
-    Result.Year := Result.Year + FloorDiv(Temp - 1, 12);
+    Result.Year := Wrap32(Int64(Result.Year) + FloorDiv(Temp - 1, 12));
     if Result.Year = 0 then
     begin
       if Result.TimeZone < 0 then
@@ -2837,6 +2867,12 @@ var
   Sign: TLandrixXmlUtf8;
 begin
   Sign := '';
+  { -2147483648 has no positive Integer counterpart }
+  if Year = Low(Integer) then
+  begin
+    Result := '-2147483648';
+    Exit;
+  end;
   if Year < 0 then
   begin
     Sign := '-';
