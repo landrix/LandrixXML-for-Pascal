@@ -545,6 +545,15 @@ parameters, attributes, comments, processing instructions,
   error.
 - **XML 1.1** documents are read with XML 1.0 rules.
 - **Nesting depth** is limited to 256 by default (`MaxDepth`).
+- **xs:decimal arithmetic** (XPath, XSLT, Schematron) refuses a
+  multiplication, division, `idiv` or `mod` whose operands have more than
+  about 400,000,000 as the product of their digit counts
+  (`LandrixXmlDecimalMaxDigitProduct`, e.g. 20,000 × 20,000 digits;
+  counted in groups of four digits, for a division after aligning the
+  scales; error FOAR0002): values from a document must not make an
+  expression run for minutes. Long values times short ones, rounding and
+  casts are not limited. Exponents are limited to
+  ±1,000,000 (`LandrixXmlDecimalMaxExponent`).
 - **Saving keeps the content, not the bytes:** a document saved from the
   DOM reads back with the same nodes, but quotes, character references and
   line ends may be written differently.

@@ -399,6 +399,56 @@ begin
     Int('987654321098765432109876543210'))), 'long product');
 end;
 
+function Digits(Count: Integer): TLandrixXmlDecimal;
+var
+  S: TLandrixXmlUtf8;
+  I: Integer;
+begin
+  S := '';
+  SetLength(S, Count);
+  for I := 1 to Count do
+    S[I] := AnsiChar(Ord('1') + I mod 9);
+  Result := LandrixXmlParseDecimal(S);
+end;
+
+procedure CheckTooLong(const A, B: TLandrixXmlDecimal; Modulo: Boolean; const Name: string);
+begin
+  try
+    if Modulo then
+      LandrixXmlDecimalModulo(A, B)
+    else
+      LandrixXmlDecimalMultiply(A, B);
+    FailNotRaised('ELandrixXmlError for ' + Name);
+  except
+    on E: ELandrixXmlError do
+      CheckEquals(Ord(xecArithmetic), Ord(E.Code), Name);
+  end;
+end;
+
+{ LandrixXmlDecimalMaxDigitProduct: the schoolbook work is bounded, huge
+  operands from a document raise instead of running for minutes; long
+  values times short ones still work. }
+procedure TestDigitProductLimit;
+var
+  Big, Medium: TLandrixXmlDecimal;
+  Rounded: string;
+begin
+  Big := Digits(40000);
+  Medium := Digits(20000);
+  { 20,000 x 20,000 digits: at the limit, 39,999 or 40,000 digits }
+  Check(Length(F(LandrixXmlDecimalMultiply(Medium, Medium))) >= 39999, '20,000 x 20,000 digits');
+  CheckTooLong(Big, Big, False, '40,000 x 40,000 digits');
+  CheckTooLong(Big, Digits(15000), True, '40,000 mod 15,000 digits');
+  CheckEquals(1000000 + 1, Length(F(LandrixXmlDecimalMultiply(Digits(1000000), Int('10')))),
+    'a million digits times a short value');
+  { rounding divides by a power of ten without long division: 10^401 has
+    101 limbs, beyond the limit for a long division of a million digits }
+  Rounded := F(LandrixXmlDecimalRound(Digits(1000000), -401, xdrFloor));
+  CheckEquals(1000000, Length(Rounded), 'a million digits rounded to 10^401: length');
+  CheckEqualsStr(Copy(N(LandrixXmlFormatDecimal(Digits(999599))), 1, 999599) + StringOfChar('0', 401), Rounded,
+    'a million digits rounded to 10^401: value');
+end;
+
 procedure Register;
 begin
   RegisterTest('Decimal.GeneratedData', TestGeneratedData);
@@ -410,6 +460,7 @@ begin
   RegisterTest('Decimal.RoundingModes', TestRoundingModes);
   RegisterTest('Decimal.Digits', TestDigits);
   RegisterTest('Decimal.LargeIntegers', TestLargeIntegers);
+  RegisterTest('Decimal.DigitProductLimit', TestDigitProductLimit);
 end;
 
 end.

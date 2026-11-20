@@ -1436,7 +1436,7 @@ var
   Temp, Carry, MaxDay: Integer;
   Quotient: TLandrixXmlDecimal;
   Carry64: Int64;
-  Sixty: TLandrixXmlDecimal;
+  Sixty, Seconds: TLandrixXmlDecimal;
 begin
   R.HasTimeZone := True;
   R.TimeZone := 0;
@@ -1446,9 +1446,12 @@ begin
   R.Year := Wrap32(Int64(Wrap32(Int64(Year) + D.Year)) + Carry);
   { seconds: (int) Math.floor(s / 60), saturated to the int range }
   Sixty := LandrixXmlDecimalFromInt64(60);
-  Quotient := LandrixXmlDecimalIntegerQuotient(D.Second, Sixty);
-  if (LandrixXmlDecimalSign(D.Second) < 0) and
-    (LandrixXmlDecimalCompare(LandrixXmlDecimalMultiply(Quotient, Sixty), D.Second) <> 0) then
+  { floor(s / 60) = floor(floor(s) / 60): whole seconds first, so a long
+    fraction never makes a long division }
+  Seconds := LandrixXmlDecimalRound(D.Second, 0, xdrFloor);
+  Quotient := LandrixXmlDecimalIntegerQuotient(Seconds, Sixty);
+  if (LandrixXmlDecimalSign(Seconds) < 0) and
+    (LandrixXmlDecimalCompare(LandrixXmlDecimalMultiply(Quotient, Sixty), Seconds) <> 0) then
     Quotient := LandrixXmlDecimalSubtract(Quotient, LandrixXmlDecimalFromInt64(1));
   if not LandrixXmlDecimalTryToInt64(Quotient, Carry64) then
   begin

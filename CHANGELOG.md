@@ -67,6 +67,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   another element (e.g. `xmlns=""` taking the root out of its default
   namespace) or was shadowed by a declaration inside. Such a declaration
   now goes to the element that needs it.
+- `xs:decimal`: multiplication and long division of huge values from a
+  document are limited by the new `LandrixXmlDecimalMaxDigitProduct`
+  (FOAR0002 beyond 20,000 × 20,000 digits; two values of 200,000 digits
+  took 31 s), and rounding, casts to integer and the minute carry of
+  `xs:duration` divide by powers of ten in linear time.
 
 ## [0.5.0] - 2026-11-17
 

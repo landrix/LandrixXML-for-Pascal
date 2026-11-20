@@ -21,8 +21,9 @@
   into it would change them as well.
 
   Errors raise ELandrixXmlError: xecConversion for invalid lexical forms,
-  xecArithmetic for division by zero and for exponents beyond
-  +-LandrixXmlDecimalMaxExponent. }
+  xecArithmetic for division by zero, for exponents beyond
+  +-LandrixXmlDecimalMaxExponent and for operands beyond
+  LandrixXmlDecimalMaxDigitProduct. }
 
 unit LandrixXmlDecimal;
 
@@ -39,6 +40,13 @@ const
     runaway values (e.g. repeated multiplication in a loop); far beyond
     anything a business document needs. }
   LandrixXmlDecimalMaxExponent = 1000000;
+
+  { Largest product of the digit counts of the two operands of a
+    multiplication or division: the work of the schoolbook arithmetic
+    grows with this product, so a document with huge values could make an
+    expression run for minutes. 20,000 x 20,000 digits still pass; beyond,
+    the operation raises xecArithmetic. }
+  LandrixXmlDecimalMaxDigitProduct = 400000000;
 
   { Minimum number of fraction digits of a decimal division (Saxon's
     DIVIDE_PRECISION). }
@@ -292,6 +300,15 @@ begin
   NatTrim(Result);
 end;
 
+{ Raises xecArithmetic if the schoolbook work for operands of LenA and LenB
+  limbs (4 digits each) exceeds LandrixXmlDecimalMaxDigitProduct. }
+procedure CheckWork(LenA, LenB: Integer);
+begin
+  if Int64(LenA) * LenB > LandrixXmlDecimalMaxDigitProduct div 16 then
+    raise ELandrixXmlError.CreateCode(xecArithmetic, 'Decimal operands too long for multiplication or ' +
+      'division (product of their digit counts above ' + IntToStr(LandrixXmlDecimalMaxDigitProduct) + ')');
+end;
+
 function NatMul(const A, B: TLandrixXmlDecimalLimbs): TLandrixXmlDecimalLimbs;
 var
   I, J, Carry, T: Integer;
@@ -301,6 +318,7 @@ begin
     Result := nil;
     Exit;
   end;
+  CheckWork(Length(A), Length(B));
   SetLength(Result, Length(A) + Length(B));
   for I := 0 to Integer(Length(Result)) - 1 do
     Result[I] := 0;
@@ -396,6 +414,7 @@ begin
     Remainder := NatFromInteger(R);
     Exit;
   end;
+  CheckWork(Length(A), Length(B));
   SetLength(Quotient, Length(A));
   for I := Integer(Length(A)) - 1 downto 0 do
   begin
@@ -485,6 +504,41 @@ begin
     Result := NatDivSmall(Shifted, Pow10Small[K mod LimbDigits], R)
   else
     Result := Shifted;
+end;
+
+{ A div 10^K and A mod 10^K with 0 <= K <= the digit count of A, in
+  linear time (rounding needs no long division). }
+procedure NatDivModPow10(const A: TLandrixXmlDecimalLimbs; K: Integer;
+  out Quotient, Remainder: TLandrixXmlDecimalLimbs);
+var
+  I, N, R: Integer;
+  Upper: TLandrixXmlDecimalLimbs;
+begin
+  N := K div LimbDigits;
+  Upper := nil;
+  { the N low limbs belong to the remainder, the others are shifted down }
+  Remainder := nil;
+  SetLength(Remainder, N + 1);
+  for I := 0 to N - 1 do
+    Remainder[I] := A[I];
+  Remainder[N] := 0;
+  if Length(A) > N then
+  begin
+    SetLength(Upper, Length(A) - N);
+    for I := 0 to Integer(Length(Upper)) - 1 do
+      Upper[I] := A[I + N];
+  end;
+  if K mod LimbDigits <> 0 then
+  begin
+    Quotient := NatDivSmall(Upper, Pow10Small[K mod LimbDigits], R);
+    Remainder[N] := R;
+  end
+  else
+  begin
+    Quotient := Upper;
+    NatTrim(Quotient);
+  end;
+  NatTrim(Remainder);
 end;
 
 function NatIsOdd(const A: TLandrixXmlDecimalLimbs): Boolean;
@@ -1086,7 +1140,7 @@ begin
   begin
     { K <= NatDigitCount fits an Integer }
     Den := NatPow10(Integer(K));
-    NatDivMod(A.Limbs, Den, Q, R);
+    NatDivModPow10(A.Limbs, Integer(K), Q, R);
     if RoundsAway(Q, R, Den, A.Negative, Mode) then
       Q := NatAdd(Q, NatFromInteger(1));
   end;
