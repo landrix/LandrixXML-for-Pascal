@@ -231,6 +231,12 @@ function LandrixXmlValidateUtf8Buf(P: PAnsiChar; Len: Integer;
 function LandrixXmlUtf8ToWide(const S: TLandrixXmlUtf8): TLandrixXmlWide;
 function LandrixXmlWideToUtf8(const S: TLandrixXmlWide): TLandrixXmlUtf8;
 function LandrixXmlUtf8ToString(const S: TLandrixXmlUtf8): string;
+{ A string for keys of string lists and other lookups, never for display:
+  different UTF-8 values give different keys on every compiler (UTF-16 on
+  Unicode compilers, the UTF-8 bytes unchanged otherwise), where
+  LandrixXmlUtf8ToString may map characters outside the system code page
+  to '?'. }
+function LandrixXmlUtf8ToKey(const S: TLandrixXmlUtf8): string;
 function LandrixXmlStringToUtf8(const S: string): TLandrixXmlUtf8;
 
 { Copies Len bytes to a new TLandrixXmlUtf8 after strict validation. }
@@ -1032,6 +1038,27 @@ begin
   Result := string(Utf8BufToWide(PAnsiChar(S), Length(S)));
 end;
 {$ENDIF}
+{$ENDIF}
+
+function LandrixXmlUtf8ToKey(const S: TLandrixXmlUtf8): string;
+{$IFDEF LANDRIXXML_UNICODE}
+begin
+  Result := Utf8BufToWide(PAnsiChar(S), Length(S));
+end;
+{$ELSE}
+var
+  BadOffset: Integer;
+begin
+  { the bytes unchanged: no code page conversion that could merge keys;
+    invalid UTF-8 raises as on the Unicode compilers }
+  Result := '';
+  if Length(S) = 0 then
+    Exit;
+  if not LandrixXmlValidateUtf8Buf(PAnsiChar(S), Length(S), BadOffset) then
+    RaiseInvalidUtf8(BadOffset);
+  SetLength(Result, Length(S));
+  Move(PAnsiChar(S)^, PAnsiChar(Result)^, Length(S));
+end;
 {$ENDIF}
 
 function LandrixXmlStringToUtf8(const S: string): TLandrixXmlUtf8;

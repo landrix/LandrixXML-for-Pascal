@@ -334,12 +334,18 @@ begin
   if LowerCase(Copy(LandrixXmlUtf8ToString(Uri), 1, 5)) <> 'file:' then
     Exit;
   Path := Copy(Uri, 6, Length(Uri) - 5);
-  { file:///D:/x, file://localhost/x and file:/D:/x }
+  { file:///D:/x, file://localhost/x and file:/D:/x. Another host
+    (file://server/share/x, RFC 8089: a file on that machine) is no file:
+    dropping the host would open another local file, and a UNC path would
+    let a URI taken from a document make Windows connect to that host. A
+    resolver of the application can still map such URIs. }
   if Copy(Path, 1, 2) = '//' then
   begin
     Delete(Path, 1, 2);
     I := Pos8('/', Path);
     if I = 0 then
+      Exit;
+    if (I > 1) and (LowerCase(LandrixXmlUtf8ToString(Copy(Path, 1, I - 1))) <> 'localhost') then
       Exit;
     Delete(Path, 1, I - 1);
   end;

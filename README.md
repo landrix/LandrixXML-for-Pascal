@@ -519,7 +519,10 @@ stack. Set
 Without a resolver of its own (`TLandrixXmlXsltResolver`), a stylesheet
 reads any `file:` URI it names, with `xsl:include`, `xsl:import`,
 `doc()` and `document()`, as XSLT processors do. For a stylesheet you do
-not trust, pass a resolver that only returns what it may read.
+not trust, pass a resolver that only returns what it may read. A `file:`
+URI with a host other than `localhost` (`file://server/share/x.xsl`) is
+not read: it would be a network path. For stylesheets on a network share,
+let your resolver map such URIs.
 
 `xsl:result-document` never writes anything itself. With an `href`, its
 result is collected by the transformer: after a run without error,

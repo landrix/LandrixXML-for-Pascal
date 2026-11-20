@@ -1561,12 +1561,12 @@ begin
   Content := nil;
   { a document read before is not resolved again }
   Key := LandrixXmlXPathResolveUri(Href, Base);
-  I := FDocUris.IndexOf(LandrixXmlUtf8ToString(Key));
+  I := FDocUris.IndexOf(LandrixXmlUtf8ToKey(Key));
   if I >= 0 then
     Result := FDocNodes[I]
   else if FResolver.Resolve(xrkDocument, Base, Href, Uri, Content) then
   begin
-    I := FDocUris.IndexOf(LandrixXmlUtf8ToString(Uri));
+    I := FDocUris.IndexOf(LandrixXmlUtf8ToKey(Uri));
     if I >= 0 then
     begin
       Content.Free;
@@ -1600,13 +1600,13 @@ begin
         Tree.Free;
         Content.Free;
       end;
-      FDocUris.Add(LandrixXmlUtf8ToString(Uri));
+      FDocUris.Add(LandrixXmlUtf8ToKey(Uri));
       SetLength(FDocNodes, FDocUris.Count);
       FDocNodes[Integer(FDocUris.Count) - 1] := Result;
     end;
     if Key <> Uri then
     begin
-      FDocUris.Add(LandrixXmlUtf8ToString(Key));
+      FDocUris.Add(LandrixXmlUtf8ToKey(Key));
       SetLength(FDocNodes, FDocUris.Count);
       FDocNodes[Integer(FDocUris.Count) - 1] := Result;
     end;
@@ -3236,9 +3236,9 @@ begin
     end;
     if Principal and ((FImplicit.Count > 1) or FImplicitReceiver.FPending) then
       Fail(Instr, 'XTDE1490', 'the principal result has been written already');
-    if FResultUris.IndexOf(LandrixXmlUtf8ToString(Uri)) >= 0 then
+    if FResultUris.IndexOf(LandrixXmlUtf8ToKey(Uri)) >= 0 then
       Fail(Instr, 'XTDE1490', 'a second result document with the URI ' + LandrixXmlUtf8ToString(Uri));
-    FResultUris.Add(LandrixXmlUtf8ToString(Uri));
+    FResultUris.Add(LandrixXmlUtf8ToKey(Uri));
     { in the order the instructions start (a nested one comes after) }
     Index := Integer(FResults.Count);
     T := TLandrixXmlXPathTree.Create;
@@ -4826,9 +4826,9 @@ begin
           { a declaration of the key in backwards compatible mode: all
             values as strings }
           if Strings then
-            Value := 's' + LandrixXmlUtf8ToString(FEvaluator.ItemString(V.Items[J]))
+            Value := 's' + LandrixXmlUtf8ToKey(FEvaluator.ItemString(V.Items[J]))
           else
-            Value := LandrixXmlUtf8ToString(AtomKey(V.Items[J]));
+            Value := LandrixXmlUtf8ToKey(AtomKey(V.Items[J]));
           { NaN is equal to no value }
           if Value = 'nNaN' then
             Continue;
@@ -4924,9 +4924,9 @@ begin
   for I := 0 to Integer(Args[1].Count) - 1 do
   begin
     if Strings then
-      J := Index.Map.IndexOf('s' + LandrixXmlUtf8ToString(FEvaluator.ItemString(Args[1].Items[I])))
+      J := Index.Map.IndexOf('s' + LandrixXmlUtf8ToKey(FEvaluator.ItemString(Args[1].Items[I])))
     else
-      J := Index.Map.IndexOf(LandrixXmlUtf8ToString(AtomKey(Args[1].Items[I])));
+      J := Index.Map.IndexOf(LandrixXmlUtf8ToKey(AtomKey(Args[1].Items[I])));
     if J < 0 then
       Continue;
     Nodes := TKeyNodes(Index.Map.Objects[J]);
@@ -5031,17 +5031,17 @@ begin
             begin
               Key := AtomKey(Keys.Items[J]);
               { an item in a group once, even with two equal keys }
-              if Pos(#1 + LandrixXmlUtf8ToString(Key) + #1, Seen) > 0 then
+              if Pos(#1 + LandrixXmlUtf8ToKey(Key) + #1, Seen) > 0 then
                 Continue;
-              Seen := Seen + LandrixXmlUtf8ToString(Key) + #1;
-              if Map.Find(LandrixXmlUtf8ToString(Key), G) then
+              Seen := Seen + LandrixXmlUtf8ToKey(Key) + #1;
+              if Map.Find(LandrixXmlUtf8ToKey(Key), G) then
                 LandrixXmlXPathAppend(Groups[TKeyNodes(Map.Objects[G]).Nodes[0]], Population.Items[I])
               else
               begin
                 { the group's number (in a TKeyNodes, freed with the map) }
                 Box := TKeyNodes.Create;
                 Box.Add(Count);
-                Map.AddObject(LandrixXmlUtf8ToString(Key), Box);
+                Map.AddObject(LandrixXmlUtf8ToKey(Key), Box);
                 NewGroup(Population.Items[I], LandrixXmlXPathEmpty);
                 LandrixXmlXPathAppend(GroupKeys[Count - 1], Atomic(Keys.Items[J]));
               end;

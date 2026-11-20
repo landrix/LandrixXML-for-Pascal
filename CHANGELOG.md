@@ -72,6 +72,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (FOAR0002 beyond 20,000 × 20,000 digits; two values of 200,000 digits
   took 31 s), and rounding, casts to integer and the minute carry of
   `xs:duration` divide by powers of ten in linear time.
+- XSLT: the default resolver kept only the path of a `file:` URI with a
+  host (`file://server/share/x.xsl`, the base URI of a stylesheet on a
+  network share) and could open `\share\x.xsl` on the current drive. Such
+  a URI is now not read by the default resolver (no local file, and no
+  network connection a URI from a document could trigger); an
+  application resolver can map it.
+- XSLT: the document cache of `doc()`/`document()` and the check for two
+  `xsl:result-document` with the same URI no longer merge URIs that
+  differ only in characters outside the system code page (Delphi 6-2007,
+  FPC on Windows).
+- XSLT on Delphi 6-2007 and on FPC under Windows: `xsl:key` and
+  `xsl:for-each-group` merged key values with characters outside the
+  system code page (e.g. Cyrillic keys all became `??`). New
+  `LandrixXmlUtf8ToKey` gives lossless keys for lookups.
 
 ## [0.5.0] - 2026-11-17
 

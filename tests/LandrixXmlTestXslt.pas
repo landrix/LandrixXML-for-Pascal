@@ -489,6 +489,46 @@ begin
   end;
 end;
 
+function Utf8Bytes(const Codes: array of Byte): TLandrixXmlUtf8;
+var
+  I: Integer;
+begin
+  Result := '';
+  SetLength(Result, Length(Codes));
+  for I := 0 to High(Codes) do
+    Result[I + 1] := AnsiChar(Codes[I]);
+end;
+
+{ xsl:key and for-each-group keep keys apart that the system code page
+  cannot represent (Delphi 6-2007 and FPC on Windows converted them to
+  '?' before): Cyrillic ab and vg. }
+procedure TestKeysOutsideCodePage;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U(
+      '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+      '<xsl:output omit-xml-declaration="yes"/><xsl:key name="k" match="i" use="@k"/>' +
+      '<xsl:template match="/"><r><xsl:value-of select="key(''k'', string(r/i[1]/@k))"/>' +
+      '<xsl:for-each-group select="r/i" group-by="@k"><g><xsl:value-of select="current-group()"/></g>' +
+      '</xsl:for-each-group></r></xsl:template></xsl:stylesheet>'), U(''));
+    Source.LoadFromUtf8(U('<r><i k="') + Utf8Bytes([$D0, $B0, $D0, $B1]) + U('">A</i><i k="') +
+      Utf8Bytes([$D0, $B2, $D0, $B3]) + U('">B</i></r>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    CheckEqualsUtf8(U('<r>A<g>A</g><g>B</g></r>'), T.TransformToUtf8(Source), 'two keys, two groups');
+  finally
+    T.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 { byte-order-mark: written for UTF-8 only, also by TransformToUtf8 (not
   when another encoding is asked for) }
 procedure TestByteOrderMark;
@@ -784,8 +824,28 @@ begin
   end;
 end;
 
+{ file: URIs of the default resolver: an empty host and localhost are the
+  local machine; another host is no file (neither the local path without
+  the host nor a UNC path). }
+procedure TestFileUris;
+begin
+  CheckEqualsStr('', LandrixXmlXsltUriToFileName('http://x/a.xsl'), 'not a file URI');
+  {$IFDEF MSWINDOWS}
+  CheckEqualsStr('D:\x\a b.xsl', LandrixXmlXsltUriToFileName('file:///D:/x/a%20b.xsl'), 'empty host');
+  CheckEqualsStr('D:\x\a.xsl', LandrixXmlXsltUriToFileName('file://localhost/D:/x/a.xsl'), 'localhost');
+  CheckEqualsStr('D:\x\a.xsl', LandrixXmlXsltUriToFileName('file:/D:/x/a.xsl'), 'no authority');
+  CheckEqualsStr('', LandrixXmlXsltUriToFileName('file://server/share/rules.xsl'), 'other host');
+  {$ELSE}
+  CheckEqualsStr('/x/a.xsl', LandrixXmlXsltUriToFileName('file:///x/a.xsl'), 'empty host');
+  CheckEqualsStr('/x/a.xsl', LandrixXmlXsltUriToFileName('file://LocalHost/x/a.xsl'), 'localhost');
+  CheckEqualsStr('', LandrixXmlXsltUriToFileName('file://server/share/rules.xsl'), 'other host');
+  {$ENDIF}
+end;
+
 procedure Register;
 begin
+  RegisterTest('Xslt.FileUris', TestFileUris);
+  RegisterTest('Xslt.KeysOutsideCodePage', TestKeysOutsideCodePage);
   RegisterTest('Xslt.Cases', TestCases);
   RegisterTest('Xslt.Api', TestApi);
   RegisterTest('Xslt.NoSource', TestNoSource);
