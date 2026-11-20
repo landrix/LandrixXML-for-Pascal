@@ -652,6 +652,25 @@ begin
     Reader.LoadFromUtf8('<!DOCTYPE r [<!ENTITY % a "<!ENTITY e SYSTEM ''e.gif'' NDATA gif>">' +
       '<!ENTITY % b "%a;%a;"> %b;]><r><a>1</a><e>e</e></r>');
     Check(V.ValidateReader(Reader), 'nested parameter entities');
+    { after a parameter entity that is not read, later entity declarations
+      do not count (XML 1.0, 5.1), unless the document is standalone }
+    Xml := '<!DOCTYPE r [<!ENTITY % x SYSTEM "x.ent"> %x; <!ENTITY e SYSTEM "e.gif" NDATA gif>' +
+      '<!NOTATION gif SYSTEM "v">]><r><a>1</a><e>e</e></r>';
+    Reader.LoadFromUtf8(Xml);
+    Check(not V.ValidateReader(Reader), 'declaration after an unread parameter entity');
+    CheckEqualsStr('UndeclaredEntity', V.Errors[0].Code, 'e is not known');
+    Reader.LoadFromUtf8('<!DOCTYPE r [%y; <!ENTITY e SYSTEM "e.gif" NDATA gif>]><r><a>1</a><e>e</e></r>');
+    Check(not V.ValidateReader(Reader), 'declaration after an undeclared parameter entity');
+    Xml := '<?xml version="1.0" standalone="yes"?>' + Xml;
+    Reader.LoadFromUtf8(Xml);
+    Check(V.ValidateReader(Reader), 'standalone: the declaration counts');
+    Doc := TLandrixXmlDocument.Create;
+    try
+      Doc.LoadFromUtf8(Xml);
+      Check(V.ValidateDocument(Doc), 'standalone document');
+    finally
+      Doc.Free;
+    end;
   finally
     Reader.Free;
     V.Free;

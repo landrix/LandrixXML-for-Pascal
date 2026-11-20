@@ -394,8 +394,15 @@ def main():
                         kind = "FAIL unexpected exception"
                         detail = " ".join(r[1:2])
                     elif r[0] == "RTFAIL":
-                        kind = "FAIL round trip"
                         detail = " ".join(r[1:])
+                        if (not ok and detail.startswith("writing failed: ELandrixXmlError")
+                                and "in document type content" in detail):
+                            # a DOCTYPE that is not well-formed (expat), let
+                            # through by the reader: the writer's DOCTYPE
+                            # check is right to refuse it
+                            kind = "deviation writer refuses accepted not-wf"
+                        else:
+                            kind = "FAIL round trip"
                     elif r[0] not in ("OK", "ERR"):
                         kind = "FAIL no result"
                     elif ours == ok:

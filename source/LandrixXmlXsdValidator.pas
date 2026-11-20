@@ -171,6 +171,7 @@ type
       first ENTITY value is checked }
     FEntities: TLandrixXmlXsdNameMap;
     FDocType: TLandrixXmlUtf8;
+    FDocStandalone: Boolean;
     FEntitiesRead: Boolean;
     FQNameType: TLandrixXmlXsdSimpleType;
     FBooleanType: TLandrixXmlXsdSimpleType;
@@ -438,9 +439,13 @@ const
   to itself raises xecSyntax (not well-formed, as Xerces finds), nesting
   deeper than DtdMaxDepth or beyond Budget (bytes of replacement text
   still to scan) raises xecLimit; comments, processing instructions and
-  literals are skipped. }
+  literals are skipped. After a reference to a parameter entity that is
+  not read (external or undeclared) the entity declarations that follow
+  are not processed (Stop), unless the document is standalone (XML 1.0,
+  5.1): the unread text could declare the same name first. }
 procedure ScanDtdDeclarations(const S: TLandrixXmlUtf8; I: Integer; Declared, Unparsed, Parameters: TLandrixXmlXsdNameMap;
-  Owned: TObjectList; Depth: Integer; var Budget: Integer);
+  Owned: TObjectList; Depth: Integer; var Budget: Integer; Standalone: Boolean;
+  var Stop: Boolean);
 var
   N: Integer;
   Name, Keyword: TLandrixXmlUtf8;
@@ -471,6 +476,9 @@ begin
       if (I <= N) and (S[I] = ';') then
         Inc(I);
       P := TDtdParameter(Parameters.Find('', Name));
+      if ((P = nil) or P.External) and not Standalone then
+        Stop := True;
+      { followed also after Stop: a reference to itself stays an error }
       if (P <> nil) and not P.External then
       begin
         if P.Active then
@@ -483,7 +491,8 @@ begin
         Dec(Budget, Integer(Length(P.Value)));
         P.Active := True;
         try
-          ScanDtdDeclarations(P.Value, 1, Declared, Unparsed, Parameters, Owned, Depth + 1, Budget);
+          ScanDtdDeclarations(P.Value, 1, Declared, Unparsed, Parameters, Owned, Depth + 1, Budget,
+            Standalone, Stop);
         finally
           P.Active := False;
         end;
@@ -491,7 +500,7 @@ begin
     end
     else if S[I] = '<' then
     begin
-      if DtdAt(S, I, '<!ENTITY') and (I + 8 <= N) and IsDtdSpace(AnsiChar(S[I + 8])) then
+      if not Stop and DtdAt(S, I, '<!ENTITY') and (I + 8 <= N) and IsDtdSpace(AnsiChar(S[I + 8])) then
       begin
         Inc(I, 8);
         SkipDtdSpace(S, I);
@@ -553,12 +562,15 @@ end;
 
 { The unparsed entities declared in the internal subset of a DOCTYPE
   (Content: everything after the document type name, as the reader gives
-  it; well-formed), also through internal parameter entities. }
-procedure CollectUnparsedEntities(const Content: TLandrixXmlUtf8; Unparsed: TLandrixXmlXsdNameMap);
+  it; well-formed), also through internal parameter entities. Standalone:
+  the document says standalone="yes". }
+procedure CollectUnparsedEntities(const Content: TLandrixXmlUtf8; Standalone: Boolean;
+  Unparsed: TLandrixXmlXsdNameMap);
 var
   Declared, Parameters: TLandrixXmlXsdNameMap;
   Owned: TObjectList;
   I, N, Budget: Integer;
+  Stop: Boolean;
 begin
   N := Integer(Length(Content));
   I := 1;
@@ -575,7 +587,9 @@ begin
   Owned := TObjectList.Create(True);
   try
     Budget := DtdScanBudget;
-    ScanDtdDeclarations(Content, I + 1, Declared, Unparsed, Parameters, Owned, 0, Budget);
+    Stop := False;
+    ScanDtdDeclarations(Content, I + 1, Declared, Unparsed, Parameters, Owned, 0, Budget,
+      Standalone, Stop);
   finally
     Owned.Free;
     Parameters.Free;
@@ -1398,6 +1412,7 @@ begin
   FEntities.Free;
   FEntities := TLandrixXmlXsdNameMap.Create;
   FDocType := '';
+  FDocStandalone := False;
   FEntitiesRead := False;
   FIdRefs := nil;
   FIdRefCount := 0;
@@ -1667,7 +1682,7 @@ begin
     if not FEntitiesRead then
     begin
       FEntitiesRead := True;
-      CollectUnparsedEntities(FDocType, FEntities);
+      CollectUnparsedEntities(FDocType, FDocStandalone, FEntities);
     end;
     if FEntities.Find('', Text) = nil then
     begin
@@ -2594,7 +2609,10 @@ begin
       xttCData:
         Text(Reader.ValueUtf8, IsSpaceText(Reader.ValueUtf8));
       xttDocumentType:
-        FDocType := Reader.ValueUtf8;
+        begin
+          FDocType := Reader.ValueUtf8;
+          FDocStandalone := Reader.Standalone = 'yes';
+        end;
     else
       { comments and processing instructions }
     end;
@@ -2618,7 +2636,10 @@ begin
   while Node <> nil do
   begin
     if Node.NodeType = xntDocumentType then
+    begin
       FDocType := Node.ValueUtf8;
+      FDocStandalone := Document.Standalone = 'yes';
+    end;
     Node := Node.NextSibling;
   end;
   Root := Document.Root;

@@ -740,8 +740,11 @@ Differences from Xerces, also on purpose:
   internal subset of the document's DOCTYPE (also through an internal
   parameter entity); the external subset is never
   read (no DTD processing), so an entity declared only there is reported
-  as undeclared, and attribute defaults of the DTD are not added. The
-  internal subset is read when the first ENTITY value is checked: a
+  as undeclared, and attribute defaults of the DTD are not added. After
+  a reference to an external or undeclared parameter entity the entity
+  declarations that follow are not processed unless the document is
+  `standalone="yes"` (XML 1.0, 5.1; Xerces reads the external entity
+  instead). The internal subset is read when the first ENTITY value is checked: a
   parameter entity that refers to itself raises `xecSyntax`, one that
   nests deeper than 64 levels or expands to more than 1 MiB `xecLimit`.
 - The loader checks each schema document against the schema for schemas

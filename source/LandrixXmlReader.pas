@@ -185,6 +185,12 @@ type
     FPosLine: Integer;
     FPosColumn: Integer;
     FPosAfterCR: Boolean;
+    { the checkpoint before the last step forward: the end token of <x/>
+      asks for its start again after TokenEndLine moved past the tag }
+    FPrevOfs: Integer;
+    FPrevLine: Integer;
+    FPrevColumn: Integer;
+    FPrevAfterCR: Boolean;
     procedure SetMaxDepth(Value: Integer);
     procedure Restart;
     procedure Fail(Code: TLandrixXmlErrorCode; const Msg: string; At: PAnsiChar);
@@ -326,6 +332,9 @@ type
     function TokenEndLine: Integer;
     function TokenEndColumn: Integer;
 
+    { The decoder: set its options (FallbackEncoding, Latin1AsWindows1252)
+      before loading and read the detected encoding afterwards. Load
+      documents through the reader's Load* methods, not through Input. }
     property Input: TLandrixXmlInput read FInput;
     property MaxDepth: Integer read FMaxDepth write SetMaxDepth;
   end;
@@ -519,6 +528,10 @@ begin
   FPosLine := 1;
   FPosColumn := 1;
   FPosAfterCR := False;
+  FPrevOfs := 0;
+  FPrevLine := 1;
+  FPrevColumn := 1;
+  FPrevAfterCR := False;
   FScratch.Clear;
 end;
 
@@ -575,10 +588,27 @@ var
 begin
   if Ofs < FPosOfs then
   begin
-    FPosOfs := 0;
-    FPosLine := 1;
-    FPosColumn := 1;
-    FPosAfterCR := False;
+    if Ofs >= FPrevOfs then
+    begin
+      FPosOfs := FPrevOfs;
+      FPosLine := FPrevLine;
+      FPosColumn := FPrevColumn;
+      FPosAfterCR := FPrevAfterCR;
+    end
+    else
+    begin
+      FPosOfs := 0;
+      FPosLine := 1;
+      FPosColumn := 1;
+      FPosAfterCR := False;
+    end;
+  end;
+  if Ofs > FPosOfs then
+  begin
+    FPrevOfs := FPosOfs;
+    FPrevLine := FPosLine;
+    FPrevColumn := FPosColumn;
+    FPrevAfterCR := FPosAfterCR;
   end;
   for I := FPosOfs to Ofs - 1 do
   begin
@@ -1826,7 +1856,8 @@ end;
 
 function TLandrixXmlReader.ReadElementTextUtf8: TLandrixXmlUtf8;
 var
-  D: Integer;
+  D, Len, Cap: Integer;
+  S: TLandrixXmlSpan;
 begin
   CheckLiveState;
   if FToken <> xttStartElement then
@@ -1834,13 +1865,39 @@ begin
       'ReadElementText needs a start element');
   Result := '';
   D := FDepth;
+  { the pieces (split by comments, PIs and CDATA sections) go into a
+    buffer that doubles, so many pieces stay linear }
+  Len := 0;
   while Read do
     case FToken of
       xttText, xttCData:
-        if Result = '' then
-          Result := ValueUtf8
-        else
-          Result := Result + ValueUtf8;
+        begin
+          S := GetValueSpan;
+          if S.Len > 0 then
+          begin
+            if Int64(Len) + S.Len > MaxInt - 1 then
+              raise ELandrixXmlError.CreateCode(xecLimit, 'Element text exceeds the buffer size limit');
+            Cap := Length(Result);
+            if Len + S.Len > Cap then
+            begin
+              if Cap < 64 then
+                Cap := 64;
+              while Cap < Len + S.Len do
+              begin
+                { beyond 1 GiB a quarter more, still geometric }
+                if Cap <= MaxInt div 2 then
+                  Cap := Cap * 2
+                else if Cap <= MaxInt - 1 - Cap div 4 then
+                  Inc(Cap, Cap div 4)
+                else
+                  Cap := MaxInt - 1;
+              end;
+              SetLength(Result, Cap);
+            end;
+            Move(S.P^, PAnsiChar(Result)[Len], S.Len);
+            Inc(Len, S.Len);
+          end;
+        end;
       xttStartElement:
         raise ELandrixXmlError.CreateAt(xecUnexpectedElement, 'Element "' +
           LandrixXmlEscapeForMessage(NameUtf8, 60) + '" inside the text of "' +
@@ -1848,10 +1905,14 @@ begin
           FElems[D].NameP, FElems[D].NameLen)), 60) + '"', Line, Column, Offset);
       xttEndElement:
         if FDepth = D then
+        begin
+          SetLength(Result, Len);
           Exit;
+        end;
     else
       ; { comments and processing instructions }
     end;
+  SetLength(Result, Len);
 end;
 
 function TLandrixXmlReader.ReadElementTextW: TLandrixXmlWide;

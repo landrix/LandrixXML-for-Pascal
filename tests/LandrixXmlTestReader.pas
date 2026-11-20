@@ -471,6 +471,8 @@ end;
 procedure TestReadElementText;
 var
   Reader: TLandrixXmlReader;
+  Xml, S: TLandrixXmlUtf8;
+  I: Integer;
 begin
   Reader := TLandrixXmlReader.Create;
   try
@@ -491,6 +493,29 @@ begin
     Check(Reader.Read, 'e');
     CheckEqualsStr('x', Reader.ReadElementText, 'native variant');
     Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end of r');
+  finally
+    Reader.Free;
+  end;
+  { many pieces, joined in a buffer that grows }
+  Xml := A('<r>');
+  for I := 1 to 3000 do
+    Xml := Xml + A('ab<!---->');
+  Xml := Xml + A('<![CDATA[c]]></r>');
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromUtf8(Xml);
+    Check(Reader.Read, 'r');
+    S := Reader.ReadElementTextUtf8;
+    CheckEquals(6001, Length(S), 'all pieces');
+    CheckEqualsUtf8(A('abab'), Copy(S, 1, 4), 'first pieces');
+    CheckEqualsUtf8(A('abc'), Copy(S, 5999, 3), 'last pieces');
+  finally
+    Reader.Free;
+  end;
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromUtf8(A('<r/>'));
+    Check(Reader.Read and Reader.Read and (Reader.TokenType = xttEndElement), 'end of r');
     try
       Reader.ReadElementTextUtf8;
       FailNotRaised('not on a start element');
@@ -717,6 +742,10 @@ begin
     CheckEquals(7, Reader.TokenEndColumn, 'after <b/>');
     Check(Reader.Read, 'end of b');
     CheckEquals(7, Reader.TokenEndColumn, 'end token of <b/> ends there too');
+    { the start again after the end: the reader steps back to its previous
+      checkpoint instead of counting from the start of the document }
+    CheckEquals(2, Reader.Line, 'end token of <b/> line');
+    CheckEquals(3, Reader.Column, 'end token of <b/> column');
     Check(Reader.Read and Reader.Read, 'LF, c');
     CheckEquals(3, Reader.Line, 'c line');
     CheckEquals(4, Reader.TokenEndLine, 'after the multi-line start tag');

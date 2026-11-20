@@ -120,6 +120,7 @@ type
     RootDone: Boolean;
     HasDocType: Boolean;
     Top: TLandrixXmlWriterElement;
+    Serial: Integer;
   end;
 
   TLandrixXmlWriter = class
@@ -132,6 +133,12 @@ type
     FElemCount: Integer;
     FAttrs: array of TLandrixXmlWriterAttr;
     FAttrCount: Integer;
+    { the attributes of the start tag the current call closed: the new
+      element's attributes reuse the slots, and a failed call must give
+      the open tag back as it was (FSavedSerial = the call's snapshot) }
+    FSavedAttrs: array of TLandrixXmlWriterAttr;
+    FSnapSerial: Integer;
+    FSavedSerial: Integer;
     FBindings: array of TLandrixXmlWriterBinding;
     { the newest binding per bucket of prefix hashes (-1 = none), for
       bindings 0..FBindingCount-1; change FBindingCount only through
@@ -298,7 +305,8 @@ type
       const Data: TLandrixXmlWide);
     { <!DOCTYPE Name Content>, before the root element only. Content is
       everything after the name, as reported by the reader (starting with
-      white space, e.g. ' SYSTEM "a.dtd"'); it is checked for balanced
+      white space, e.g. ' SYSTEM "a.dtd"', or with the '[' of the internal
+      subset); it is checked for balanced
       quotes, brackets, comments and PIs, not for DTD validity. }
     procedure DocumentType(const Name, Content: TLandrixXmlUtf8);
 
@@ -602,9 +610,20 @@ begin
   S.HasDocType := FHasDocType;
   if FElemCount > 0 then
     S.Top := FElems[FElemCount - 1];
+  if FSnapSerial = MaxInt then
+  begin
+    { a new cycle: no saved tag may match one of its serials }
+    FSnapSerial := 1;
+    FSavedSerial := 0;
+  end
+  else
+    Inc(FSnapSerial);
+  S.Serial := FSnapSerial;
 end;
 
 procedure TLandrixXmlWriter.Rollback(const S: TLandrixXmlWriterSnapshot);
+var
+  I: Integer;
 begin
   if FFlushed <> S.Flushed then
   begin
@@ -623,6 +642,10 @@ begin
   FHasDocType := S.HasDocType;
   if FElemCount > 0 then
     FElems[FElemCount - 1] := S.Top;
+  if S.InStartTag and (FSavedSerial = S.Serial) and
+    (Integer(Length(FSavedAttrs)) >= S.AttrCount) then
+    for I := 0 to S.AttrCount - 1 do
+      FAttrs[I] := FSavedAttrs[I];
   FHashCount := -1;
 end;
 
@@ -885,7 +908,10 @@ begin
   if Prefix <> '' then
     CheckNcName(Prefix, 'prefix');
   CheckValue(PAnsiChar(NamespaceUri), Length(NamespaceUri), 'namespace name');
-  if SameAscii(Prefix, 'xmlns') or (NamespaceUri = LandrixXmlNamespaceXmlns) then
+  { an attribute named xmlns is always a declaration: an ordinary one
+    cannot be written }
+  if SameAscii(Prefix, 'xmlns') or (NamespaceUri = LandrixXmlNamespaceXmlns) or
+    (IsAttribute and (Prefix = '') and SameAscii(LocalName, 'xmlns')) then
     Fail(xecNamespace, 'Use DeclareNamespace for namespace declarations');
   if SameAscii(Prefix, 'xml') <> (NamespaceUri = LandrixXmlNamespaceXml) then
     Fail(xecNamespace, 'The prefix "xml" and the XML namespace belong together');
@@ -1190,6 +1216,14 @@ begin
     AppendLit('/>')
   else
     AppendLit('>');
+  if (FAttrCount > 0) and (FSavedSerial <> FSnapSerial) then
+  begin
+    if Length(FSavedAttrs) < FAttrCount then
+      SetLength(FSavedAttrs, Length(FAttrs));
+    for I := 0 to FAttrCount - 1 do
+      FSavedAttrs[I] := FAttrs[I];
+    FSavedSerial := FSnapSerial;
+  end;
   FInStartTag := False;
   FAttrCount := 0;
   FHashCount := -1;
@@ -1719,8 +1753,10 @@ begin
       Fail(xecWrite, 'Invalid document type name "' + LandrixXmlEscapeForMessage(Name, 60) + '"');
     P := PAnsiChar(Content);
     Len := Length(Content);
-    if (Len > 0) and not IsSpace(P[0]) then
-      FailAt(xecWrite, 'Document type content must start with white space', 0);
+    { the white space before the internal subset is optional
+      (<!DOCTYPE a[...]>, as the reader hands it out) }
+    if (Len > 0) and not IsSpace(P[0]) and (P[0] <> '[') then
+      FailAt(xecWrite, 'Document type content must start with white space or "["', 0);
     InSubset := False;
     I := 0;
     while I < Len do
@@ -1752,6 +1788,10 @@ begin
             Pos := FindSeq(P + I + 4, Len - I - 4, '-->');
             if Pos < 0 then
               FailAt(xecWrite, 'Unterminated comment in document type content', I);
+            { the same rules as Comment: no "--" inside, no "-" at the end
+              (both put a "--" before the end) }
+            if FindSeq(P + I + 4, Len - I - 4, '--') < Pos then
+              FailAt(xecWrite, '"--" in a comment in document type content', I);
             Inc(I, 4 + Pos + 2);
           end
           else if InSubset and (I + 1 < Len) and (P[I + 1] = '?') then
@@ -1759,6 +1799,11 @@ begin
             Pos := FindSeq(P + I + 2, Len - I - 2, '?>');
             if Pos < 0 then
               FailAt(xecWrite, 'Unterminated processing instruction in document type content', I);
+            if (Pos >= 3) and ((P[I + 2] = 'x') or (P[I + 2] = 'X')) and
+              ((P[I + 3] = 'm') or (P[I + 3] = 'M')) and
+              ((P[I + 4] = 'l') or (P[I + 4] = 'L')) and
+              ((Pos = 3) or IsSpace(P[I + 5])) then
+              FailAt(xecWrite, 'Processing instruction target "xml" in document type content', I);
             Inc(I, 2 + Pos + 1);
           end
           else if not InSubset then
@@ -1814,7 +1859,7 @@ procedure TLandrixXmlWriter.Base64FromStream(Stream: TStream; Count: Int64);
 var
   S: TLandrixXmlWriterSnapshot;
   Filled, Want, N: Integer;
-  Remaining: Int64;
+  Remaining, Got: Int64;
   Eof: Boolean;
 begin
   CheckUsable;
@@ -1844,9 +1889,13 @@ begin
           Eof := True;
           Break;
         end;
-        { TStream.Read returns Longint, 64 bits on 64-bit POSIX Delphi }
-        N := Integer(Stream.Read(FChunk[Filled], Want));
-        if N <= 0 then
+        { TStream.Read returns Longint, 64 bits on 64-bit POSIX Delphi:
+          the sign is checked before the value is narrowed }
+        Got := Stream.Read(FChunk[Filled], Want);
+        if Got < 0 then
+          Fail(xecInvalidArgument, 'The stream reported a read error');
+        N := Integer(Got);
+        if N = 0 then
         begin
           if Remaining > 0 then
             Fail(xecInvalidArgument, 'Stream ended before Count bytes were read');

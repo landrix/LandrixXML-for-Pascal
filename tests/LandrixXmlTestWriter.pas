@@ -498,6 +498,10 @@ begin
     Err2(W, 'doctype', 'r', ' <x', xecWrite, '< outside the subset');
     Err2(W, 'doctype', 'r', ' [<!-- a', xecWrite, 'unterminated comment');
     Err2(W, 'doctype', 'r', ' [<?p a', xecWrite, 'unterminated PI');
+    Err2(W, 'doctype', 'r', ' [<!-- a -- b -->]', xecWrite, '-- inside a subset comment');
+    Err2(W, 'doctype', 'r', ' [<!-- a --->]', xecWrite, 'subset comment ending in -');
+    Err2(W, 'doctype', 'r', ' [<?xml a?>]', xecWrite, 'PI target xml in the subset');
+    Err2(W, 'doctype', 'r', ' [<?XmL?>]', xecWrite, 'PI target XmL in the subset');
     Err2(W, 'doctype', 'r', U(' SYSTEM "a'#13'"'), xecWrite, 'CR in content');
     W.DocumentType('r', ' SYSTEM "r.dtd" [<!ENTITY e "a>b"><!-- ] > --><?p ]>?>]');
     Err2(W, 'doctype', 'r', '', xecInvalidOperation, 'second DOCTYPE');
@@ -509,6 +513,12 @@ begin
     W.Clear;
     W.ElementUtf8('r', '');
     Err2(W, 'doctype', 'r', '', xecInvalidOperation, 'DOCTYPE after the root');
+    { no space before the subset, as the reader reports <!DOCTYPE a[]> }
+    W.Clear;
+    W.DocumentType('r', '[<!----><?xml-model a?>]');
+    W.ElementUtf8('r', '');
+    W.EndDocument;
+    CheckEqualsUtf8('<!DOCTYPE r[<!----><?xml-model a?>]><r/>', W.AsUtf8, 'subset right after the name');
   finally
     W.Free;
   end;
@@ -631,6 +641,7 @@ begin
     W.AttributeUtf8('a', '1');
     Err2(W, 'attr', 'a', '2', xecWrite, 'duplicate attribute');
     ExpectError(W, 'attrns', '', 'p', 'b', '1', xecInvalidArgument, 'attribute prefix without URI');
+    ExpectError(W, 'attrns', '', '', 'xmlns', 'urn:x', xecNamespace, 'attribute xmlns without prefix');
     ExpectError(W, 'attrns', 'urn:x', '', 'b', '1', xecInvalidArgument,
       'namespaced attribute without prefix');
     W.EndElement;
@@ -747,6 +758,18 @@ begin
     W.EndElement;
     W.EndDocument;
     CheckEqualsUtf8('<r xmlns:p="urn:p"><p:x>v</p:x></r>', W.AsUtf8, 'failed Element calls left no trace');
+    { a failed child call that declared a namespace gives the parent's
+      open start tag back with its attributes }
+    W.Clear;
+    W.WriteDeclaration := False;
+    W.StartElement('a');
+    W.AttributeUtf8('x', '1');
+    ExpectError(W, 'elemns', 'urn:u', 'p', 'b', U('v'#0), xecInvalidChar, 'ElementNs with invalid value');
+    Err2(W, 'attr', 'x', '2', xecWrite, 'duplicate of the restored attribute');
+    W.AttributeUtf8('y', '3');
+    W.EndElement;
+    W.EndDocument;
+    CheckEqualsUtf8('<a x="1" y="3"/>', W.AsUtf8, 'parent tag intact');
   finally
     W.Free;
   end;
@@ -1115,10 +1138,32 @@ begin
   end;
 end;
 
+type
+  { a stream that hands out some bytes, then reports a read error }
+  TFailingStream = class(TMemoryStream)
+  private
+    FCalls: Integer;
+  public
+    function Read(var Buffer; Count: Longint): Longint; override;
+  end;
+
+function TFailingStream.Read(var Buffer; Count: Longint): Longint;
+begin
+  Inc(FCalls);
+  if (FCalls = 1) and (Count > 0) then
+  begin
+    PAnsiChar(@Buffer)^ := 'a';
+    Result := 1;
+  end
+  else
+    Result := -1;
+end;
+
 procedure TestBase64Edges;
 var
   W: TLandrixXmlWriter;
   M: TMemoryStream;
+  F: TFailingStream;
 begin
   W := TLandrixXmlWriter.Create;
   M := TMemoryStream.Create;
@@ -1142,6 +1187,18 @@ begin
     except
       on E: ELandrixXmlError do
         CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'Count below -1');
+    end;
+    F := TFailingStream.Create;
+    try
+      try
+        W.Base64FromStream(F, -1);
+        FailNotRaised('ELandrixXmlError for a read error');
+      except
+        on E: ELandrixXmlError do
+          CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'read error is not the end');
+      end;
+    finally
+      F.Free;
     end;
     W.EndElement;
     W.EndDocument;

@@ -197,7 +197,14 @@ def main():
     for t in tests:
         r = results.get(t["FILE"], ["MISSING"])
         if r[0] == "RTFAIL":
-            add("FAIL writer round trip", t, " ".join(r[1:]))
+            rt = " ".join(r[1:])
+            if (t["TYPE"] == "not-wf" and rt.startswith("writing failed: ELandrixXmlError")
+                    and "in document type content" in rt):
+                # a not-wf DOCTYPE the reader let through (DTD not
+                # checked): the writer's DOCTYPE check is right to refuse it
+                add("info: writer refuses accepted not-wf", t, " ".join(r[1:]))
+            else:
+                add("FAIL writer round trip", t, " ".join(r[1:]))
             r = ["OK"]
         ours = r[0] == "OK"
         exp_ok, exp_msg, exp_after = run_expat(t["FILE"])

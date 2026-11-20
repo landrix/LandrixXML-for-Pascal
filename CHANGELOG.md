@@ -94,6 +94,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reader: after a start tag failed (for example on a duplicate
   attribute), `AttributeNamespaceUriUtf8` could report the namespace of an
   attribute of an earlier element.
+- Reader: `ReadElementText` joins many text pieces (split by comments,
+  PIs or CDATA sections) in linear time, and asking for `Line` of the end
+  token of `<x/>` after `TokenEndLine` continues from the previous
+  position checkpoint instead of counting lines from the start of the
+  document for every such element.
+- Writer: `DocumentType` accepts content that starts with the internal
+  subset (`<!DOCTYPE a[...]>`, as the reader reports it), so such a
+  document can be saved after loading; comments in the subset with `--`
+  and processing instructions with the target `xml` are refused.
+- Writer: a failed call that had closed the open start tag of the parent
+  (for example `ElementNs` with an invalid value) left that tag's
+  attributes overwritten, so a duplicate attribute could be written
+  after it; `AttributeNs` with no prefix and the local name `xmlns` is
+  refused instead of writing a default namespace declaration;
+  `Base64FromStream` raises on a read error of the stream instead of
+  treating it as the end.
+- XML Schema validator: after a reference to an external or undeclared
+  parameter entity in the internal subset, later entity declarations no
+  longer count for `xs:ENTITY` values unless the document is
+  `standalone="yes"` (XML 1.0, 5.1).
 
 ## [0.5.0] - 2026-11-17
 
