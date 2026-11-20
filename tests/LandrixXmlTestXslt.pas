@@ -909,6 +909,169 @@ begin
   end;
 end;
 
+const
+  ReviewHead = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
+    ' xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xs">' +
+    '<xsl:output omit-xml-declaration="yes"/>' +
+    '<xsl:key name="g" match="s" use="count(current-group())"/>' +
+    '<xsl:key name="d" match="s" use="(xs:dayTimeDuration(''P1D''), xs:dayTimeDuration(''P2D''))"/>' +
+    '<xsl:key name="i" match="s" use="xs:integer(''9007199254740993'')"/>';
+
+{ The output of the template body Body on <s/> (a stylesheet at
+  file:///s/t.xsl, documents a.xml and b.xml beside it, gone.xml an alias
+  of a file that is not there), or the error code. }
+function RunReviewSheet(const Body: string): string;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  Resolver: TLandrixXmlXsltResolver;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  Resolver := TLandrixXmlXsltResolver.Create;
+  T := nil;
+  try
+    try
+      Sheet.LoadFromUtf8(U(ReviewHead + '<xsl:template match="/"><r>' + Body +
+        '</r></xsl:template></xsl:stylesheet>'), U('file:///s/t.xsl'));
+      Resolver.AddUtf8(U('file:///s/a.xml'), U('<a/>'));
+      Resolver.AddUtf8(U('file:///s/b.xml'), U('<b/>'));
+      Resolver.AddFile(U('file:///s/gone.xml'), DataFolder + 'no-such-file.xml');
+      Source.LoadFromUtf8(U('<s/>'));
+      T := TLandrixXmlXsltTransformer.Create(Sheet);
+      T.Resolver := Resolver;
+      Result := LandrixXmlUtf8ToString(T.TransformToUtf8(Source));
+    except
+      on E: ELandrixXmlXPathError do
+        Result := E.XPathCode;
+    end;
+  finally
+    T.Free;
+    Resolver.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
+{ Edge cases from the review of the XSLT runtime (expected values as
+  Saxon HE 12). }
+procedure TestRuntimeReviewEdges;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source, Param, Target: TLandrixXmlXPathTree;
+  Code: string;
+begin
+  { a resource that cannot be opened is not available }
+  CheckEqualsStr('<r>false</r>', RunReviewSheet('<xsl:value-of select="doc-available(''gone.xml'')"/>'),
+    'doc-available() of a file that cannot be opened');
+  CheckEqualsStr('FODC0002', RunReviewSheet('<xsl:value-of select="doc(''gone.xml'')"/>'),
+    'doc() of a file that cannot be opened');
+  CheckEqualsStr('<r>false</r>', RunReviewSheet(
+    '<xsl:value-of select="unparsed-text-available(''gone.xml'')"/>'),
+    'unparsed-text-available() of a file that cannot be opened');
+  CheckEqualsStr('<r>a</r>', RunReviewSheet('<xsl:variable name="t"><xsl:text>a.xml</xsl:text>' +
+    '</xsl:variable><xsl:value-of select="name(document($t/text())/*)"/>'),
+    'document() of a text node in a temporary tree');
+  { document(): document order (the order the documents were read in) }
+  CheckEqualsStr('<r>b ba true</r>', RunReviewSheet('<xsl:value-of select="name(doc(''b.xml'')/*), ' +
+    'string-join(for $d in document((''a.xml'', ''b.xml'', ''a.xml'')) return name($d/*), ''''), ' +
+    'document((''a.xml'', ''b.xml''))[1] is document((''b.xml'', ''a.xml''))[1]"/>'),
+    'document() in document order');
+  { white space around computed names and yes/no values }
+  CheckEqualsStr('<r><e a="1"/></r>', RunReviewSheet('<xsl:element name=" {''e''} "><xsl:attribute name="a ">1' +
+    '</xsl:attribute></xsl:element>'), 'white space around a computed name');
+  CheckEqualsStr('XTMM9000', RunReviewSheet('<xsl:message terminate="{'' yes ''}">m</xsl:message>'),
+    'terminate with white space');
+  CheckEqualsStr('XTDE0030', RunReviewSheet('<xsl:message terminate="{''maybe''}"><xsl:message' +
+    ' terminate="yes">inner</xsl:message></xsl:message>'), 'terminate neither yes nor no, before the content');
+  CheckEqualsStr('XTSE0020', RunReviewSheet('<xsl:if test="false()"><xsl:message terminate="maybe">m' +
+    '</xsl:message></xsl:if>'), 'a fixed terminate neither yes nor no');
+  CheckEqualsStr('<r>12,345</r>', RunReviewSheet('<xsl:number value="12345" grouping-separator=","' +
+    ' grouping-size="+3"/>'), 'a grouping size with a plus sign');
+  CheckEqualsStr('XTDE0030', RunReviewSheet('<xsl:number value="12345" grouping-separator=","' +
+    ' grouping-size="+2147483648"/>'), 'a grouping size beyond 32 bits');
+  CheckEqualsStr('<r>3000 1</r>', RunReviewSheet('<xsl:variable name="g">' +
+    '<xsl:for-each-group select="for $i in 1 to 3000 return xs:integer(''1000000000000000000000000'') + $i"' +
+    ' group-by=".">g</xsl:for-each-group></xsl:variable><xsl:value-of select="string-length($g), ' +
+    'count(distinct-values(for $i in 1 to 3 return xs:integer(''1000000000000000000000000'') + $i))' +
+    ' - 2"/>'), 'many integers with one double');
+  { grouping: integers and decimals exactly unless they are the same as
+    their double (key(): as doubles); durations equal across their types }
+  CheckEqualsStr('<r>gg|gg|g|g|gg|gg|ggg</r>', RunReviewSheet(
+    '<xsl:for-each-group select="(xs:integer(''9007199254740993''), xs:integer(''9007199254740992''))"' +
+    ' group-by=".">g</xsl:for-each-group>|' +
+    '<xsl:for-each-group select="(xs:decimal(''0.1000000000000000000001''), xs:decimal(''0.1''))"' +
+    ' group-by=".">g</xsl:for-each-group>|' +
+    '<xsl:for-each-group select="(1, 1e0)" group-by=".">g</xsl:for-each-group>|' +
+    '<xsl:for-each-group select="(0.1, 0.1e0)" group-by=".">g</xsl:for-each-group>|' +
+    '<xsl:for-each-group select="(0.1000000000000000000001, 0.1e0, 0.1)" group-by=".">g</xsl:for-each-group>|' +
+    '<xsl:for-each-group select="(1, 1, 1e0, 2)" group-adjacent=".">g</xsl:for-each-group>|' +
+    '<xsl:for-each-group select="(xs:duration(''P1D''), xs:dayTimeDuration(''PT24H''),' +
+    ' xs:yearMonthDuration(''P12M''), xs:duration(''P1Y''), xs:yearMonthDuration(''P0M''),' +
+    ' xs:dayTimeDuration(''PT0S''))" group-by=".">g</xsl:for-each-group>'), 'grouping keys');
+  CheckEqualsStr('<r>1 1 1</r>', RunReviewSheet('<xsl:value-of select="count(key(''d'', xs:duration(''P1D''))), ' +
+    'count(key(''i'', xs:integer(''9007199254740992''))), count(key(''i'', xs:integer(''9007199254740993'')))"/>'),
+    'key values');
+  CheckEqualsStr('XTDE1061', RunReviewSheet('<xsl:for-each-group select="/*" group-by="1">' +
+    '<xsl:value-of select="count(key(''g'', 1))"/></xsl:for-each-group>'), 'current-group() in a key');
+  { generate-id(): a parentless attribute; ids kept across trees }
+  CheckEqualsStr('<r>true 2</r>', RunReviewSheet('<xsl:variable name="a" as="attribute()">' +
+    '<xsl:attribute name="x">1</xsl:attribute></xsl:variable>' +
+    '<xsl:value-of select="string-length(generate-id($a)) gt 0, count(distinct-values(' +
+    'for $i in 1 to 3 return (generate-id(/s), generate-id(doc(''a.xml'')/a))))"/>'), 'generate-id()');
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  Param := TLandrixXmlXPathTree.Create;
+  Target := TLandrixXmlXPathTree.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U(ReviewHead + '<xsl:param name="p"/><xsl:param name="q"/>' +
+      '<xsl:template match="/"><r><xsl:value-of select="$p is $q, count($p | $q)"/></r></xsl:template>' +
+      '<xsl:template name="main"><xsl:result-document><ok/></xsl:result-document>' +
+      '<xsl:sequence select="''''"/></xsl:template>' +
+      '<xsl:template name="text"><xsl:value-of select="''''"/><xsl:result-document><ok/></xsl:result-document>' +
+      '</xsl:template></xsl:stylesheet>'), U('file:///s/t.xsl'));
+    Source.LoadFromUtf8(U('<s/>'));
+    Param.LoadFromUtf8(U('<p/>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    { one tree given for two parameters: the same nodes }
+    T.SetParameterTree(U('p'), Param);
+    T.SetParameterTree(U('q'), Param);
+    CheckEqualsUtf8(U('<r>true 1</r>'), T.TransformToUtf8(Source), 'one tree for two parameters');
+    { the implicit principal result has the base output URI }
+    T.BaseOutputUri := U('file:///out/main.xml');
+    T.TransformToTree(Source, Target);
+    CheckEqualsUtf8(U('file:///out/main.xml'), Target.BaseUri, 'the base URI of the implicit result');
+    { an empty string besides xsl:result-document is a principal result too }
+    T.InitialTemplate := U('main');
+    Code := 'none';
+    try
+      T.TransformToUtf8(nil);
+    except
+      on E: ELandrixXmlXsltError do
+        Code := E.XPathCode;
+    end;
+    CheckEqualsStr('XTDE1490', Code, 'an empty string besides xsl:result-document');
+    T.InitialTemplate := U('text');
+    Code := 'none';
+    try
+      T.TransformToUtf8(nil);
+    except
+      on E: ELandrixXmlXsltError do
+        Code := E.XPathCode;
+    end;
+    CheckEqualsStr('XTDE1490', Code, 'an empty text node before xsl:result-document');
+  finally
+    T.Free;
+    Target.Free;
+    Param.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('Xslt.FileUris', TestFileUris);
@@ -927,6 +1090,7 @@ begin
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
   RegisterTest('Xslt.StackBudget', TestStackBudget);
   RegisterTest('Xslt.ManyAttributesCopy', TestManyAttributesCopy);
+  RegisterTest('Xslt.RuntimeReviewEdges', TestRuntimeReviewEdges);
 end;
 
 end.

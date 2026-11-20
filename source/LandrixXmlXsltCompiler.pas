@@ -3515,7 +3515,13 @@ begin
     begin
       Result := NewInstr(xskMessage, M, E);
       if Attr(M, E, 'terminate', V) then
+      begin
+        { a fixed value is checked here (after the template syntax), a
+          computed one when it is used }
         Result.NameAvt := CompileAvt(M, E, V, Scope);
+        if Pos8('{', V) = 0 then
+          YesNoAttr(M, E, 'terminate');
+      end;
       Result.Select := CompileAttr(M, E, 'select', Scope);
       CompileBody(M, E, Scope, Result.Body, -1);
     end

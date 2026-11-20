@@ -45,6 +45,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT runtime, edge cases from the review (results as Saxon HE 12):
+  doc(), document() and unparsed-text() treat a resource the resolver finds
+  but cannot open (a locked file) as not available (`doc-available()` is
+  false, `doc()` FODC0002) instead of letting a stream error through;
+  `document()` returns its documents
+  in document order; `key()` sorts its matches in O(n log n) (it was an
+  insertion sort, quadratic for many values in random order); the name of
+  `xsl:element` and `xsl:attribute` may have white space around it;
+  `xsl:message terminate` is trimmed, takes true/false/1/0 and is XTDE0030
+  before the content runs (XTSE0020 when fixed) for other values;
+  `grouping-size` takes a plus sign; `xsl:for-each-group` compares two
+  integers or decimals exactly (an xs:double with them as before), so
+  distinct integers beyond 2^53 no longer share a group, and durations of
+  different types are equal keys (also in `key()`); `generate-id()` of a parentless attribute no longer
+  reads outside the tree (a range error in checked builds) and keeps its
+  numbering per tree; a key's use expression has no current group
+  (XTDE1061); one tree passed for two parameters has one identity; the
+  implicit principal result of `TransformToTree` gets the base output URI;
+  an empty string or text node besides `xsl:result-document` is XTDE1490.
 - XML Schema validator: the fields of a composite identity constraint
   (key, unique, keyref with several fields) are compared one by one. Before,
   a TAB in a string field could make two different tuples equal, so a

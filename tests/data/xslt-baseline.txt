@@ -1267,6 +1267,7 @@ error/error-0020f wrong-code
 error/error-0020i pass
 error/error-0020j pass
 error/error-0020k pass
+error/error-0030a pass
 error/error-0040a pass
 error/error-0050a pass
 error/error-0090e pass
@@ -5133,6 +5134,7 @@ whitespace/whitespace-024 pass
 whitespace/whitespace-025 pass
 whitespace/whitespace-026 pass
 whitespace/whitespace-027 pass
+whitespace/whitespace-028 pass
 xpath-compat/xpath-compat-0101 pass
 xpath-compat/xpath-compat-0102 pass
 xpath-compat/xpath-compat-0103 pass

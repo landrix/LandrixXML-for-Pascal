@@ -144,6 +144,9 @@ type
     FMarks: array of Integer;
     FDepth: Integer;
     FLastAtomic: Boolean;
+    { something was written (a node or an atomic value, also an empty
+      string): a principal result besides xsl:result-document is XTDE1490 }
+    FWritten: Boolean;
     FDocument: Boolean;
     { an attribute at the top is its value as text (xsl:message) }
     FAttributesAsText: Boolean;
@@ -290,9 +293,9 @@ type
     { the lazy depth of the evaluator in the match: a global variable
       evaluated lazily inside it sees no captured substrings }
     FRegexLazyDepth: Integer;
-    { generate-id(): the tree last asked and the numbers of its nodes }
-    FIdTree: TLandrixXmlXPathTree;
-    FIdNumbers: array of Integer;
+    { generate-id(): per tree number the tree and the numbers of its nodes }
+    FIdTrees: array of TLandrixXmlXPathTree;
+    FIdNumbers: array of TSortOrder;
     { the canonical form of a QName, xs:dateTime or xs:time key }
     FKeyNormExpr: TLandrixXmlXPathExpression;
     { the indexes of xsl:key built so far (TKeyIndex) }
@@ -338,6 +341,7 @@ type
     FStringType, FOptionalStringType, FIntegerType: TLandrixXmlXPathSequenceType;
     function FormatDate(Kind: TXPathDateKind; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function AtomKey(const It: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+    function ExactNumber(const It: TLandrixXmlXPathItem): TLandrixXmlUtf8;
     { a declaration of K in backwards compatible mode: all values of K
       are compared as strings (XSLT 2.0 section 16.3.1) }
     function KeyStrings(K: TXsltKey): Boolean;
@@ -364,6 +368,8 @@ type
       R: TReceiver);
     function RegexGroup(const Arg: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function PatternMatches(Expr: TLandrixXmlXPathExpression; Node: Integer; Relative: Boolean): Boolean;
+    function OpenResource(Kind: TLandrixXmlXsltResourceKind; const Base, Href: TLandrixXmlUtf8;
+      out Uri: TLandrixXmlUtf8; out Content: TStream): Boolean;
     function LoadDocument(const Href, Base: TLandrixXmlUtf8; Available: Boolean): Integer;
     function DocFunction(Kind, Module: Integer; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
@@ -977,6 +983,7 @@ procedure TTreeReceiver.Content;
 begin
   Flush;
   FLastAtomic := False;
+  FWritten := True;
 end;
 
 procedure TTreeReceiver.StartElement(const Uri, Prefix, Local: TLandrixXmlUtf8);
@@ -1141,10 +1148,11 @@ end;
 
 procedure TTreeReceiver.Characters(const S: TLandrixXmlUtf8);
 begin
-  { an empty text node still separates atomic values }
+  { an empty text node still separates atomic values (and is written) }
   if S = '' then
   begin
     FLastAtomic := False;
+    FWritten := True;
     Exit;
   end;
   Content;
@@ -1200,6 +1208,7 @@ begin
   if It.Kind <> xikNode then
   begin
     S := FRun.Evaluator.ItemString(It);
+    FWritten := True;
     if FLastAtomic then
       S := ' ' + S;
     if S <> '' then
@@ -1641,6 +1650,29 @@ begin
   inherited Destroy;
 end;
 
+{ The resolver's answer; a resource it finds but cannot open (a locked
+  file, no read permission) is not available either }
+function TRun.OpenResource(Kind: TLandrixXmlXsltResourceKind; const Base, Href: TLandrixXmlUtf8;
+  out Uri: TLandrixXmlUtf8; out Content: TStream): Boolean;
+begin
+  Uri := '';
+  Content := nil;
+  try
+    Result := FResolver.Resolve(Kind, Base, Href, Uri, Content);
+  except
+    on EStreamError do
+    begin
+      Content := nil;
+      Result := False;
+    end;
+    on EInOutError do
+    begin
+      Content := nil;
+      Result := False;
+    end;
+  end;
+end;
+
 { The node number of the document Href (relative to Base), read once per
   run; -1 if it is not available (Available) or else FODC0002. }
 function TRun.LoadDocument(const Href, Base: TLandrixXmlUtf8; Available: Boolean): Integer;
@@ -1658,7 +1690,7 @@ begin
   I := FDocUris.IndexOf(LandrixXmlUtf8ToKey(Key));
   if I >= 0 then
     Result := FDocNodes[I]
-  else if FResolver.Resolve(xrkDocument, Base, Href, Uri, Content) then
+  else if OpenResource(xrkDocument, Base, Href, Uri, Content) then
   begin
     I := FDocUris.IndexOf(LandrixXmlUtf8ToKey(Uri));
     if I >= 0 then
@@ -1710,14 +1742,96 @@ begin
       ' is not available');
 end;
 
+{ Sorts the first Count numbers of A in ascending order (a bottom-up merge
+  sort: key() and document() get many numbers in any order) and drops
+  the repeated ones; the new count }
+function SortUniqueIntegers(var A: array of Integer; Count: Integer): Integer;
+var
+  Tmp: array of Integer;
+  Width, Lo, Mid, Hi, I, J, K: Integer;
+  Sorted: Boolean;
+begin
+  Tmp := nil;
+  Sorted := True;
+  for I := 1 to Count - 1 do
+    if A[I] < A[I - 1] then
+    begin
+      Sorted := False;
+      Break;
+    end;
+  if not Sorted then
+  begin
+    SetLength(Tmp, Count);
+    Width := 1;
+    while Width < Count do
+    begin
+      Lo := 0;
+      while Lo < Count do
+      begin
+        if Width >= Count - Lo then
+          Mid := Count
+        else
+          Mid := Lo + Width;
+        if Width >= Count - Mid then
+          Hi := Count
+        else
+          Hi := Mid + Width;
+        I := Lo;
+        J := Mid;
+        K := Lo;
+        while (I < Mid) and (J < Hi) do
+        begin
+          if A[J] < A[I] then
+          begin
+            Tmp[K] := A[J];
+            Inc(J);
+          end
+          else
+          begin
+            Tmp[K] := A[I];
+            Inc(I);
+          end;
+          Inc(K);
+        end;
+        while I < Mid do
+        begin
+          Tmp[K] := A[I];
+          Inc(I);
+          Inc(K);
+        end;
+        while J < Hi do
+        begin
+          Tmp[K] := A[J];
+          Inc(J);
+          Inc(K);
+        end;
+        Lo := Hi;
+      end;
+      for I := 0 to Count - 1 do
+        A[I] := Tmp[I];
+      if Width >= Count - Width then
+        Break;
+      Width := 2 * Width;
+    end;
+  end;
+  J := 0;
+  for I := 0 to Count - 1 do
+    if (J = 0) or (A[I] <> A[J - 1]) then
+    begin
+      A[J] := A[I];
+      Inc(J);
+    end;
+  Result := J;
+end;
+
 { doc(), doc-available(), document() of a module: relative URIs against
   the module's base URI (document(): a node's own base URI) }
 function TRun.DocFunction(Kind, Module: Integer; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
 var
   Base, Href, NodeBase: TLandrixXmlUtf8;
-  I, N, B, K: Integer;
+  I, N, B, Count: Integer;
   T: TLandrixXmlXPathTree;
-  Found: Boolean;
+  Found: array of Integer;
 begin
   Result := LandrixXmlXPathEmpty;
   if Kind = XfnStaticBaseUri then
@@ -1758,6 +1872,8 @@ begin
       if not LandrixXmlXPathNodeBaseUri(T, Args[1].Items[0].Node - B, Base) then
         Base := '';
     end;
+    Found := nil;
+    Count := 0;
     for I := 0 to Args[0].Count - 1 do
     begin
       if (Args[0].Items[I].Kind = xikNode) and (Kind = XfnDocument) then
@@ -1780,13 +1896,16 @@ begin
             LandrixXmlUtf8ToString(Href) + '" against');
         N := LoadDocument(Href, Base, False);
       end;
-      Found := False;
-      for K := 0 to Result.Count - 1 do
-        if Result.Items[K].Node = N then
-          Found := True;
-      if not Found then
-        LandrixXmlXPathAppend(Result, LandrixXmlXPathNodeItem(N).Items[0]);
+      if Count = Length(Found) then
+        SetLength(Found, 2 * Count + 8);
+      Found[Count] := N;
+      Inc(Count);
     end;
+    { a union: document order (the order the documents were read in),
+      each document once }
+    Count := SortUniqueIntegers(Found, Count);
+    for I := 0 to Count - 1 do
+      LandrixXmlXPathAppend(Result, LandrixXmlXPathNodeItem(Found[I]).Items[0]);
     Exit;
   end;
   if Args[0].Count = 0 then
@@ -2428,7 +2547,8 @@ var
   I: Integer;
   Found: Boolean;
 begin
-  Name := EvalAvt(Instr, Instr.NameAvt, Focus);
+  { a lexical QName: white space around it is allowed (XSLT 2.0 erratum E2) }
+  Name := Trim8(EvalAvt(Instr, Instr.NameAvt, Focus));
   I := Pos8(':', Name);
   if I > 0 then
   begin
@@ -3329,7 +3449,7 @@ begin
       Uri := LandrixXmlXPathResolveUri(Href, FSettings.BaseOutputUri);
       Principal := Uri = FSettings.BaseOutputUri;
     end;
-    if Principal and ((FImplicit.Count > 1) or FImplicitReceiver.FPending) then
+    if Principal and ((FImplicit.Count > 1) or FImplicitReceiver.FPending or FImplicitReceiver.FWritten) then
       Fail(Instr, 'XTDE1490', 'the principal result has been written already');
     if FResultUris.IndexOf(LandrixXmlUtf8ToKey(Uri)) >= 0 then
       Fail(Instr, 'XTDE1490', 'a second result document with the URI ' + LandrixXmlUtf8ToString(Uri));
@@ -4014,10 +4134,20 @@ procedure TRun.DoMessage(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; 
 var
   Text, Terminate: TLandrixXmlUtf8;
 begin
-  Text := FEvaluator.ItemString(ContentDocument(Instr, Focus, Mode).Items[0]);
   Terminate := 'no';
+  { checked before the content runs (Saxon) }
   if Instr.NameAvt <> nil then
-    Terminate := EvalAvt(Instr, Instr.NameAvt, Focus);
+  begin
+    { yes or no, white space trimmed (true, false, 1 and 0 as Saxon) }
+    Terminate := Trim8(EvalAvt(Instr, Instr.NameAvt, Focus));
+    if (Terminate = 'true') or (Terminate = '1') then
+      Terminate := 'yes'
+    else if (Terminate = 'false') or (Terminate = '0') then
+      Terminate := 'no';
+    if (Terminate <> 'yes') and (Terminate <> 'no') then
+      Fail(Instr, 'XTDE0030', 'xsl:message: terminate must be yes or no');
+  end;
+  Text := FEvaluator.ItemString(ContentDocument(Instr, Focus, Mode).Items[0]);
   FSettings.Messages.Add(TLandrixXmlXsltMessage.Create(Text, Terminate = 'yes', Instr.Module, Instr.Line,
     Instr.Column));
   if Terminate = 'yes' then
@@ -4326,6 +4456,7 @@ var
   Node, B, I, A, C, K: Integer;
   GroupSep, V: TLandrixXmlUtf8;
   GroupSize: Integer;
+  Big: Int64;
   Chain: array of Integer;
   Ordinal, Alphabetic: Boolean;
 
@@ -4464,21 +4595,25 @@ begin
   if (Instr.GroupingSeparator <> nil) and (Instr.GroupingSize <> nil) then
   begin
     GroupSep := EvalAvt(Instr, Instr.GroupingSeparator, Focus);
-    { an integer; 0 or less: no grouping (as Saxon) }
+    { an integer, a sign allowed; 0 or less: no grouping (as Saxon) }
     V := EvalAvt(Instr, Instr.GroupingSize, Focus);
     A := 1;
-    if (V <> '') and (V[1] = '-') then
+    if (V <> '') and ((V[1] = '-') or (V[1] = '+')) then
       A := 2;
     if A > Length(V) then
       Fail(Instr, 'XTDE0030', 'xsl:number: grouping-size must be an integer');
-    GroupSize := 0;
+    { in the range of a 32-bit integer (Saxon: XTDE0030 beyond it) }
+    Big := 0;
     for I := A to Length(V) do
       if not (V[I] in ['0'..'9']) then
         Fail(Instr, 'XTDE0030', 'xsl:number: grouping-size must be an integer')
-      else if GroupSize < 100000 then
-        GroupSize := GroupSize * 10 + Ord(V[I]) - Ord('0');
-    if A = 2 then
-      GroupSize := 0;
+      else if Big <= 2147483648 then
+        Big := Big * 10 + Ord(V[I]) - Ord('0');
+    if (Big > 2147483648) or ((Big = 2147483648) and (V[1] <> '-')) then
+      Fail(Instr, 'XTDE0030', 'xsl:number: grouping-size must be an integer');
+    GroupSize := 0;
+    if (A = 1) or (V[1] = '+') then
+      GroupSize := Integer(Big);
   end;
   R.Characters(FormatNumbers(Numbers, EvalAvt(Instr, Instr.FormatAvt, Focus), GroupSep, GroupSize, Ordinal,
     Alphabetic));
@@ -4612,7 +4747,7 @@ begin
   Content := nil;
   { a fragment, a query or a character not allowed in a URI: no resource
     (Saxon) }
-  if not UriTextOk(Href) or not FResolver.Resolve(xrkText, Base, Href, Uri, Content) then
+  if not UriTextOk(Href) or not OpenResource(xrkText, Base, Href, Uri, Content) then
     Error := 'FOUT1170'
   else
     Raw := ReadAndFree(Content);
@@ -4773,7 +4908,9 @@ end;
 
 { The value an atomic item (or a node: its string value) is compared by
   in grouping and key(): strings and untyped values as strings, numbers
-  as xs:double (NaN equal to NaN), other types by their type and value. }
+  as xs:double (NaN equal to NaN; grouping tells integers and decimals
+  apart by ExactNumber), durations of all three types alike, other types
+  by their type and value. }
 function TRun.AtomKey(const It: TLandrixXmlXPathItem): TLandrixXmlUtf8;
 begin
   case It.Kind of
@@ -4788,6 +4925,14 @@ begin
         if Result = 'n-0' then
           Result := 'n0';
       end;
+    xikDuration, xikYearMonthDuration, xikDayTimeDuration:
+      begin
+        { equal across the types (P12M and P1Y, PT24H and P1D, the zero
+          durations) }
+        Result := 'u' + FEvaluator.ItemString(It);
+        if Result = 'uP0M' then
+          Result := 'uPT0S';
+      end;
     xikBoolean:
       Result := 'b' + FEvaluator.ItemString(It);
     xikQName, xikDateTime, xikTime:
@@ -4798,6 +4943,23 @@ begin
   end;
 end;
 
+{ Grouping as Saxon: items with the same AtomKey are compared with eq
+  against the key that made the group, so two integers or decimals are
+  equal only when they are (an xs:double or xs:float, '' here, is equal
+  to each of the same double); the canonical value of an integer or
+  decimal, else '' }
+function TRun.ExactNumber(const It: TLandrixXmlXPathItem): TLandrixXmlUtf8;
+begin
+  case It.Kind of
+    xikInteger, xikDecimal, xikNonPositiveInteger, xikNegativeInteger, xikLong, xikInt, xikShort, xikByte,
+    xikNonNegativeInteger, xikUnsignedLong, xikUnsignedInt, xikUnsignedShort, xikUnsignedByte,
+    xikPositiveInteger:
+      Result := FEvaluator.ItemString(It);
+  else
+    Result := '';
+  end;
+end;
+
 { An id as Saxon makes them: "d", the number of the tree, then a letter
   for the kind (e element, t text, c comment, p processing instruction)
   and the number of the node among the nodes that are no attributes; an
@@ -4805,32 +4967,39 @@ end;
 function TRun.GenerateId(Node: Integer): TLandrixXmlUtf8;
 var
   T: TLandrixXmlXPathTree;
-  B, I, J, K, Owner: Integer;
+  B, I, J, K, N, Owner: Integer;
 begin
   T := FEvaluator.TreeOfNode(Node, B);
-  Result := 'd' + LandrixXmlStringToUtf8(IntToStr(FEvaluator.TreeNumber(Node) + 1));
+  N := FEvaluator.TreeNumber(Node);
+  Result := 'd' + LandrixXmlStringToUtf8(IntToStr(N + 1));
   I := Node - B;
   Owner := I;
   if T.Kind[I] = xnkAttribute then
     Owner := T.Parent[I];
-  if T.Kind[Owner] = xnkDocument then
+  { a parentless attribute is the only node of its tree, as a document }
+  if (Owner < 0) or (T.Kind[Owner] = xnkDocument) then
     Exit;
   { the numbers of the nodes that are no attributes, counted once per tree }
-  if (FIdTree <> T) or (Length(FIdNumbers) <> T.Count) then
+  if N >= Length(FIdTrees) then
   begin
-    FIdTree := T;
-    SetLength(FIdNumbers, T.Count);
+    SetLength(FIdTrees, 2 * N + 8);
+    SetLength(FIdNumbers, 2 * N + 8);
+  end;
+  if (FIdTrees[N] <> T) or (Length(FIdNumbers[N]) <> T.Count) then
+  begin
+    FIdTrees[N] := T;
+    SetLength(FIdNumbers[N], T.Count);
     K := 0;
     if T.Kind[0] <> xnkDocument then
       K := 1;
     for J := 0 to T.Count - 1 do
     begin
-      FIdNumbers[J] := K;
+      FIdNumbers[N][J] := K;
       if T.Kind[J] <> xnkAttribute then
         Inc(K);
     end;
   end;
-  K := FIdNumbers[Owner];
+  K := FIdNumbers[N][Owner];
   case T.Kind[Owner] of
     xnkElement: Result := Result + 'e';
     xnkText: Result := Result + 't';
@@ -4857,7 +5026,7 @@ var
   Nodes: TKeyNodes;
   SavedNode: Integer;
   SavedCurrent: TLandrixXmlXPathSequence;
-  Matched, SavedRegex, Strings: Boolean;
+  Matched, SavedRegex, SavedGroupActive, Strings: Boolean;
   SavedRule: TXsltRule;
 begin
   Strings := KeyStrings(K);
@@ -4887,6 +5056,10 @@ begin
   FRegexActive := False;
   SavedRule := FRule;
   FRule := nil;
+  { and no current group (XTDE1061): the index does not depend on its
+    first caller }
+  SavedGroupActive := FGroupActive;
+  FGroupActive := False;
   try
     for I := 0 to T.Count - 1 do
       for D := 0 to Integer(K.Decls.Count) - 1 do
@@ -4946,12 +5119,14 @@ begin
     FCurrent := SavedCurrent;
     FRegexActive := SavedRegex;
     FRule := SavedRule;
+    FGroupActive := SavedGroupActive;
     raise;
   end;
   FEvaluator.CurrentNode := SavedNode;
   FCurrent := SavedCurrent;
   FRegexActive := SavedRegex;
   FRule := SavedRule;
+  FGroupActive := SavedGroupActive;
 end;
 
 function TRun.KeyStrings(K: TXsltKey): Boolean;
@@ -5044,20 +5219,9 @@ begin
     end;
   end;
   { document order, each node once }
-  for I := 1 to Count - 1 do
-  begin
-    N := Found[I];
-    J := I - 1;
-    while (J >= 0) and (Found[J] > N) do
-    begin
-      Found[J + 1] := Found[J];
-      Dec(J);
-    end;
-    Found[J + 1] := N;
-  end;
+  Count := SortUniqueIntegers(Found, Count);
   for I := 0 to Count - 1 do
-    if (I = 0) or (Found[I] <> Found[I - 1]) then
-      LandrixXmlXPathAppend(Result, LandrixXmlXPathNodeItem(Found[I]).Items[0]);
+    LandrixXmlXPathAppend(Result, LandrixXmlXPathNodeItem(Found[I]).Items[0]);
 end;
 
 { xsl:for-each-group: the groups in the order of their first item, the
@@ -5067,16 +5231,15 @@ procedure TRun.DoForEachGroup(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFo
 var
   Population, Keys, Firsts: TLandrixXmlXPathSequence;
   Groups, GroupKeys: TSequenceArray;
-  Order: TSortOrder;
+  Order, LastItem: TSortOrder;
+  GroupExact: TLandrixXmlUtf8Array;
   Map: TXsltStringList;
   I, J, G, P, Count: Integer;
-  Key, Previous: TLandrixXmlUtf8;
-  Seen: string;
+  Key, Previous, Exact: TLandrixXmlUtf8;
   Starts, Matched: Boolean;
   SavedGroup, SavedKey: TLandrixXmlXPathSequence;
   SavedActive, SavedHasKey: Boolean;
   SavedLazy: Integer;
-  Box: TKeyNodes;
 
   { an atomic key: a node as its string value }
   function Atomic(const It: TLandrixXmlXPathItem): TLandrixXmlXPathItem;
@@ -5092,10 +5255,43 @@ var
     end;
   end;
 
+  { the group remembered under K (the first), -1 if none }
+  function GroupOf(const K: TLandrixXmlUtf8): Integer;
+  var
+    X: Integer;
+  begin
+    Result := -1;
+    if Map.Find(LandrixXmlUtf8ToKey(K), X) then
+      Result := TKeyNodes(Map.Objects[X]).Nodes[0];
+  end;
+
+  { group G under K unless one is there (in a TKeyNodes, freed with the
+    map) }
+  procedure Remember(const K: TLandrixXmlUtf8; G: Integer);
+  var
+    Box: TKeyNodes;
+  begin
+    if GroupOf(K) >= 0 then
+      Exit;
+    Box := TKeyNodes.Create;
+    Box.Add(G);
+    Map.AddObject(LandrixXmlUtf8ToKey(K), Box);
+  end;
+
+  { whether a key with the exact number E is equal to group G's }
+  function SameNumber(G: Integer; const E: TLandrixXmlUtf8): Boolean;
+  begin
+    Result := (E = '') or (GroupExact[G] = '') or (GroupExact[G] = E);
+  end;
+
   procedure NewGroup(const It: TLandrixXmlXPathItem; const K: TLandrixXmlXPathSequence);
   begin
     SetLength(Groups, Count + 1);
     SetLength(GroupKeys, Count + 1);
+    SetLength(GroupExact, Count + 1);
+    SetLength(LastItem, Count + 1);
+    GroupExact[Count] := '';
+    LastItem[Count] := -1;
     Groups[Count] := LandrixXmlXPathEmpty;
     LandrixXmlXPathAppend(Groups[Count], It);
     GroupKeys[Count] := K;
@@ -5105,6 +5301,8 @@ var
 begin
   Groups := nil;
   GroupKeys := nil;
+  GroupExact := nil;
+  LastItem := nil;
   Count := 0;
   { a computed unknown collation: FOCH0002 as Saxon (XTDE1110 in the
     specification; Saxon raises that for a literal one) }
@@ -5121,25 +5319,42 @@ begin
         0:
           begin
             Keys := Eval(Instr, Instr.Test, ItemFocus(Population.Items[I], I + 1, Population.Count));
-            Seen := #1;
             for J := 0 to Integer(Keys.Count) - 1 do
             begin
               Key := AtomKey(Keys.Items[J]);
-              { an item in a group once, even with two equal keys }
-              if Pos(#1 + LandrixXmlUtf8ToKey(Key) + #1, Seen) > 0 then
-                Continue;
-              Seen := Seen + LandrixXmlUtf8ToKey(Key) + #1;
-              if Map.Find(LandrixXmlUtf8ToKey(Key), G) then
-                LandrixXmlXPathAppend(Groups[TKeyNodes(Map.Objects[G]).Nodes[0]], Population.Items[I])
+              Exact := ExactNumber(Keys.Items[J]);
+              { the first group whose key is equal: any of the same key
+                for a double (or a value that is no number), else one
+                of the same exact number or one a double made }
+              if Exact = '' then
+                G := GroupOf('1' + Key)
               else
               begin
-                { the group's number (in a TKeyNodes, freed with the map) }
-                Box := TKeyNodes.Create;
-                Box.Add(Count);
-                Map.AddObject(LandrixXmlUtf8ToKey(Key), Box);
-                NewGroup(Population.Items[I], LandrixXmlXPathEmpty);
-                LandrixXmlXPathAppend(GroupKeys[Count - 1], Atomic(Keys.Items[J]));
+                G := GroupOf('3' + Exact);
+                P := GroupOf('2' + Key);
+                if (P >= 0) and ((G < 0) or (P < G)) then
+                  G := P;
               end;
+              if G >= 0 then
+              begin
+                { an item in a group once, even with two equal keys }
+                if LastItem[G] <> I then
+                  LandrixXmlXPathAppend(Groups[G], Population.Items[I]);
+              end
+              else
+              begin
+                NewGroup(Population.Items[I], LandrixXmlXPathEmpty);
+                G := Count - 1;
+                GroupExact[G] := Exact;
+                LandrixXmlXPathAppend(GroupKeys[G], Atomic(Keys.Items[J]));
+                Remember('1' + Key, G);
+                { the doubles of a number key, for the exact ones }
+                if Exact <> '' then
+                  Remember('3' + Exact, G)
+                else if Key[1] = 'n' then
+                  Remember('2' + Key, G);
+              end;
+              LastItem[G] := I;
             end;
           end;
         1:
@@ -5148,11 +5363,13 @@ begin
             if Keys.Count <> 1 then
               Fail(Instr, 'XTTE1100', 'xsl:for-each-group: group-adjacent must give one value');
             Key := AtomKey(Keys.Items[0]);
-            if (Count > 0) and (Key = Previous) then
+            Exact := ExactNumber(Keys.Items[0]);
+            if (Count > 0) and (Key = Previous) and SameNumber(Count - 1, Exact) then
               LandrixXmlXPathAppend(Groups[Count - 1], Population.Items[I])
             else
             begin
               NewGroup(Population.Items[I], LandrixXmlXPathEmpty);
+              GroupExact[Count - 1] := Exact;
               LandrixXmlXPathAppend(GroupKeys[Count - 1], Atomic(Keys.Items[0]));
             end;
             Previous := Key;
@@ -5318,8 +5535,13 @@ var
   It: TLandrixXmlXPathItem;
   X: TLandrixXmlXPathExpression;
   Ctx: TLandrixXmlXPathStaticContext;
-  Root: Integer;
+  Root, K, AddedCount: Integer;
+  Added: array of TLandrixXmlXPathTree;
+  AddedNodes: array of Integer;
 begin
+  Added := nil;
+  AddedNodes := nil;
+  AddedCount := 0;
   FEvaluator.SetGlobalCount(FC.GlobalCount);
   { the context item of the globals: the source's document node, none
     without a source (a use of the context is XPDY0002) }
@@ -5350,7 +5572,24 @@ begin
               if (FSettings.ParamTrees[J] = FSource) or (FSettings.ParamTrees[J] = FGivenSource) then
                 V := LandrixXmlXPathNodeItem(0)
               else
-                V := LandrixXmlXPathNodeItem(FEvaluator.AddTree(FSettings.ParamTrees[J]));
+              begin
+                { one tree given for two parameters: the same nodes }
+                K := 0;
+                while (K < AddedCount) and (Added[K] <> FSettings.ParamTrees[J]) do
+                  Inc(K);
+                if K = AddedCount then
+                begin
+                  if AddedCount = Length(Added) then
+                  begin
+                    SetLength(Added, 2 * AddedCount + 4);
+                    SetLength(AddedNodes, 2 * AddedCount + 4);
+                  end;
+                  Added[K] := FSettings.ParamTrees[J];
+                  AddedNodes[K] := FEvaluator.AddTree(FSettings.ParamTrees[J]);
+                  Inc(AddedCount);
+                end;
+                V := LandrixXmlXPathNodeItem(AddedNodes[K]);
+              end;
           else
             begin
               Ctx := TLandrixXmlXPathStaticContext.Create;
@@ -5404,6 +5643,7 @@ var
   T: TXsltTemplate;
   I: Integer;
   Params: TSuppliedArray;
+  Written: Boolean;
 begin
   FStackBase := @R;
   BindGlobals;
@@ -5442,15 +5682,16 @@ begin
       ApplyTemplates(nil, LandrixXmlXPathNodeItem(0), Mode, Params, R);
     end;
     R.Finish;
+    Written := R.FWritten;
   finally
     FImplicitReceiver := nil;
     R.Free;
   end;
   { an xsl:result-document made the principal result: it is the result
-    (an implicit one besides it is XTDE1490) }
+    (an implicit one besides it is XTDE1490, also an empty string) }
   if FPrincipal <> nil then
   begin
-    if Target.Count > 1 then
+    if (Target.Count > 1) or Written then
       Fail(nil, 'XTDE1490', 'the principal result is written by xsl:result-document and by the templates');
     T2 := FPrincipal;
     FPrincipal := nil;
@@ -5466,7 +5707,10 @@ begin
     Target.BaseUri := T2.BaseUri;
     FSettings.PrincipalProperties := FPrincipalProps;
     FPrincipalProps := nil;
-  end;
+  end
+  else
+    { the implicit result is one with an empty href: the base output URI }
+    Target.BaseUri := FSettings.BaseOutputUri;
   { the run succeeded: the secondary results go to the transformer }
   FResults.OwnsObjects := False;
   for I := 0 to Integer(FResults.Count) - 1 do
