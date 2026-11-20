@@ -1019,7 +1019,11 @@ begin
     Result := LandrixXmlDecimalZero;
     Exit;
   end;
-  if (Scale > LandrixXmlDecimalMaxExponent) or (Scale < -LandrixXmlDecimalMaxExponent) then
+  { the result is checked in MakeDecimal; this only keeps K in range (a
+    division asks for its precision beyond the scales of both operands,
+    each up to the largest exponent) }
+  if (Scale > 2 * LandrixXmlDecimalMaxExponent + LandrixXmlDecimalDividePrecision) or
+    (Scale < -2 * LandrixXmlDecimalMaxExponent - LandrixXmlDecimalDividePrecision) then
     RaiseArithmetic('Decimal exponent out of range');
   { A / B * 10^Scale = CA / CB * 10^K }
   K := A.Exponent - B.Exponent + Scale;
@@ -1095,12 +1099,26 @@ begin
   Result := DivideRounded(A, B, 0, xdrDown);
 end;
 
+{ The remainder directly (the quotient may be out of range when the
+  remainder is not): both coefficients at the smaller exponent, the sign
+  of A }
 function LandrixXmlDecimalModulo(const A, B: TLandrixXmlDecimal): TLandrixXmlDecimal;
+var
+  E: Integer;
+  CA, CB, Q, R: TLandrixXmlDecimalLimbs;
 begin
+  CA := nil;
+  CB := nil;
   if Length(B.Limbs) = 0 then
     RaiseArithmetic('Modulo by zero');
-  Result := LandrixXmlDecimalSubtract(A,
-    LandrixXmlDecimalMultiply(B, LandrixXmlDecimalIntegerQuotient(A, B)));
+  if Length(A.Limbs) = 0 then
+  begin
+    Result := LandrixXmlDecimalZero;
+    Exit;
+  end;
+  Align(A, B, CA, CB, E);
+  NatDivMod(CA, CB, Q, R);
+  Result := MakeDecimal(A.Negative, E, R);
 end;
 
 function LandrixXmlDecimalRound(const A: TLandrixXmlDecimal; Precision: Integer;

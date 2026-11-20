@@ -34,8 +34,10 @@
     decimally, so 2.675 becomes 2.68. Values with more than 15 significant
     digits may differ in the last digit between compilers.
   - Double parsing is exact (correctly rounded) for up to 15 significant
-    digits; longer mantissas use the RTL and may differ by one unit in the
-    last place between compilers.
+    digits with a power of ten up to 22 beyond them (one FPU operation on
+    the magnitude; on x87 rounded to nearest, elsewhere in the caller's
+    rounding mode, which is to nearest by default); other values use the
+    RTL and may differ in the last places between compilers.
   - Dates are returned as written; time zones are reported, never applied.
     Years 0001-9999, full calendar check, time zones up to +-14:00,
     24:00:00 means 00:00:00 of the next day, fraction digits beyond
@@ -592,7 +594,8 @@ end;
 
 { M * 10^Exp10 with a single IEEE rounding. On x87 (32-bit x86) the FPU
   computes with 64-bit mantissas and the store rounds again (double
-  rounding), so the precision control is set to 53 bits for the operation. }
+  rounding), so the precision control is set to 53 bits and the rounding
+  to nearest for the operation. }
 function ScaleExact(M: Int64; Exp10: Integer): Double;
 {$IFDEF CPU386}
 var
@@ -601,7 +604,7 @@ var
 begin
 {$IFDEF CPU386}
   Saved := Get8087CW;
-  Set8087CW(Word((Saved and not $0300) or $0200));
+  Set8087CW(Word((Saved and not $0F00) or $0200));
   try
 {$ENDIF}
     Result := M;
@@ -655,7 +658,7 @@ function DoubleCore(P: PAnsiChar; Len: Integer; out Value: Double;
   out Reason: Integer): Integer;
 var
   Neg: Boolean;
-  IntS, IntE, FracS, FracE, I, Exp10, N, Digit: Integer;
+  IntS, IntE, FracS, FracE, I, Exp10, E, N, Digit: Integer;
   Sticky: Boolean;
   Digits: AnsiString;
   M: Int64;
@@ -704,16 +707,18 @@ begin
       Digit := Ord(Digits[I]) - Ord('0');
       M := Times10(M) + Digit;
     end;
-    { move surplus powers of ten into the mantissa while it stays exact }
-    while (Exp10 > 22) and (M <= 900719925474099) do
+    { move surplus powers of ten into the mantissa while it stays exact
+      (on a copy: the RTL fallback below needs the exponent of Digits) }
+    E := Exp10;
+    while (E > 22) and (M <= 900719925474099) do
     begin
       M := Times10(M);
-      Dec(Exp10);
+      Dec(E);
     end;
-    if (M <= 9007199254740992) and (Exp10 <= 22) then
+    if (M <= 9007199254740992) and (E <= 22) then
     begin
       { both operands exact: one correctly rounded operation }
-      D := ScaleExact(M, Exp10);
+      D := ScaleExact(M, E);
       if Neg then
         D := -D;
       Value := D;

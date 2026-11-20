@@ -50,6 +50,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Values, edge cases from the review: `LandrixXmlParseDouble` kept the
+  powers of ten it had moved into the mantissa when it fell back to the
+  RTL, so an integer of 39 to about 54 digits came out too small (1
+  followed by 38 zeros gave 1e23); on x87 its exact path now rounds to
+  nearest whatever the caller set. Decimal division checks the exponent of
+  the result instead of the intermediate scale, and `mod` computes the
+  remainder directly, so an intermediate value beyond the exponent limit
+  no longer raises FOAR0002 when the result is representable.
 - XSLT runtime, edge cases from the review (results as Saxon HE 12):
   doc(), document() and unparsed-text() treat a resource the resolver finds
   but cannot open (a locked file) as not available (`doc-available()` is

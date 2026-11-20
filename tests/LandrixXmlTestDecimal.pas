@@ -439,6 +439,15 @@ begin
   Check(Length(F(LandrixXmlDecimalMultiply(Medium, Medium))) >= 39999, '20,000 x 20,000 digits');
   CheckTooLong(Big, Big, False, '40,000 x 40,000 digits');
   CheckTooLong(Big, Digits(15000), True, '40,000 mod 15,000 digits');
+  { limits apply to the result, not to an intermediate value }
+  CheckEqualsStr('0', F(LandrixXmlDecimalModulo(D('1' + StringOfChar('0', 1000000)), D('0.1'))),
+    '10^1000000 mod 0.1 (the quotient is beyond the exponent limit)');
+  CheckEqualsStr('0.' + StringOfChar('0', 999999) + '1', F(LandrixXmlDecimalDivide(
+    D('0.' + StringOfChar('0', 999999) + '1'), D('1'))), '10^-1000000 div 1');
+  CheckEqualsStr('-1.5', F(LandrixXmlDecimalModulo(D('-7.5'), D('2'))), 'the sign follows the dividend');
+  CheckEqualsStr('1.5', F(LandrixXmlDecimalModulo(D('7.5'), D('-2'))), 'not the divisor');
+  CheckEqualsStr('0', F(LandrixXmlDecimalDivide(D('0.' + StringOfChar('0', 999999) + '1'),
+    D('100000000000000000010'))), 'a quotient that rounds to zero at a scale beyond the limit');
   CheckEquals(1000000 + 1, Length(F(LandrixXmlDecimalMultiply(Digits(1000000), Int('10')))),
     'a million digits times a short value');
   { rounding divides by a power of ten without long division: 10^401 has

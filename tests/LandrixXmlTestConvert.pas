@@ -298,6 +298,10 @@ begin
   { more than 15 digits go through the RTL (may be off by one ulp) }
   Bad(1, '17976931348623157' + StringOfChar('0', 292), -1,
     'within 15 ulps of the largest double: conservatively out of range');
+  D := LandrixXmlParseDouble(U('1' + StringOfChar('0', 38)));
+  CheckEqualsStr('47D2CED32A16A1B1', IntToHex(PInt64(@D)^, 16), '1e38 (powers of ten kept for the RTL)');
+  D := LandrixXmlParseDouble(U('123' + StringOfChar('0', 36)));
+  CheckEqualsStr('47D7223C0D5E659A', IntToHex(PInt64(@D)^, 16), '1.23e38');
   D := LandrixXmlParseDouble(U('17976931348623' + StringOfChar('0', 295)));
   CheckEqualsStr('7FE', IntToHex((PInt64(@D)^ shr 52) and $FFF, 3), 'near the largest double');
   D := LandrixXmlParseDouble(U('0.' + StringOfChar('7', 600)));

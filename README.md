@@ -357,8 +357,9 @@ and the parsers also take a pointer and a length (`...Buf`).
   rounding is requested (`AllowRounding = True`). Rounding is half away
   from zero; `LandrixXmlFormatCurrency(1.005, 2)` gives `1.01`.
 - `Double` values are parsed correctly rounded for up to 15 significant
-  digits and formatted as written (`2.675` with two decimals gives
-  `2.68`).
+  digits within 22 powers of ten in the default rounding mode (beyond
+  that through the RTL, which may differ in the last places) and
+  formatted as written (`2.675` with two decimals gives `2.68`).
 - Dates and times keep their time zone in `TLandrixXmlDateTime`; the
   `TDateTime` variants return the value as written, without converting to
   UTC.
