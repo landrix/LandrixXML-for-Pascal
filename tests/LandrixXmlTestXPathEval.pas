@@ -331,10 +331,10 @@ var
   Tree: TLandrixXmlXPathTree;
   Context, FnContext: TLandrixXmlXPathStaticContext;
   Evaluator: TLandrixXmlXPathEvaluator;
-  Body: TLandrixXmlXPathExpression;
+  Body, Lazy: TLandrixXmlXPathExpression;
   Def: TLandrixXmlXPathFunctionDef;
   Functions: TList;
-  P: Integer;
+  P, G: Integer;
 
   function Run(const Text: string): string;
   var
@@ -361,8 +361,11 @@ begin
   Functions := TList.Create;
   Def := TLandrixXmlXPathFunctionDef.Create;
   Body := nil;
+  Lazy := nil;
   try
     Tree.LoadFromUtf8(U('<r/>'));
+    { slot 0 stays free for the global $g below }
+    FnContext.DeclareVariable(U('unused'));
     P := FnContext.DeclareVariable(U('n'));
     FnContext.AddNamespace(U('f'), U('urn:f'));
     FnContext.DeclareFunction(U('urn:f'), U('down'), 1);
@@ -399,7 +402,17 @@ begin
     CheckEqualsStr('3', Run('f:down(3)'), 'no budget');
     Evaluator.MaxDepth := 10;
     CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecXPath)), Run('f:down(20)'), 'MaxDepth still counts');
+    { a lazy variable that hits MaxDepth keeps no error: read again with
+      a higher limit, it has its value }
+    G := Context.DeclareVariable(U('g'));
+    Evaluator.SetGlobalCount(Context.VariableCount);
+    Lazy := TLandrixXmlXPathExpression.Create(U('f:down(20)'), Context);
+    Evaluator.BindLazy(G, Lazy, 0);
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecXPath)), Run('$g'), 'the lazy variable at MaxDepth 10');
+    Evaluator.MaxDepth := 100;
+    CheckEqualsStr('20', Run('$g'), 'the lazy variable evaluated again');
   finally
+    Lazy.Free;
     Body.Free;
     Def.Free;
     Functions.Free;
@@ -1744,8 +1757,83 @@ begin
         CheckEqualsUtf8(F[2], ModeResult(F[0], xppSaxon, True, Evaluator), Where + ' (XPath 1.0 compatible)');
       end;
     Check(Count >= 50, 'rows present');
+    { compatibility mode: an error in the left operand of and/or is raised
+      (XPath 2.0, 3.6); without it the other operand may decide }
+    CheckEqualsUtf8(U('error FOER0000'), ModeResult(U('error() or true()'), xppXPath20, True, Evaluator),
+      'compatible: error() or true()');
+    CheckEqualsUtf8(U('error FOER0000'), ModeResult(U('error() and false()'), xppXPath20, True, Evaluator),
+      'compatible: error() and false()');
+    CheckEqualsUtf8(U('xs:boolean true'), ModeResult(U('error() or true()'), xppXPath20, False, Evaluator),
+      'not compatible: error() or true()');
+    CheckEqualsUtf8(U('xs:boolean true'), ModeResult(U('error() or true()'), xppSaxon, True, Evaluator),
+      'Saxon, compatible: error() or true() (Saxon HE 12.9)');
+    { "/" with an atomic context item is a type error }
+    CheckEqualsUtf8(U('error XPTY0020'), ModeResult(U('(1)[/]'), xppSaxon, False, Evaluator), '(1)[/]');
+    CheckEqualsUtf8(U('error XPTY0020'), ModeResult(U('(1)[//x]'), xppSaxon, False, Evaluator), '(1)[//x]');
   finally
     Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
+{ Lazily bound variables after ClearCache, a slot of an unknown variable,
+  the regular expression cache beyond its size. }
+procedure TestEvaluatorReviewEdges;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  CountA, Expr: TLandrixXmlXPathExpression;
+  N, I: Integer;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  CountA := nil;
+  Expr := nil;
+  try
+    Tree.LoadFromUtf8(U('<r><a/></r>'));
+    N := Context.DeclareVariable(U('n'));
+    Evaluator.SetGlobalCount(1);
+    CountA := TLandrixXmlXPathExpression.Create(U('count(//a)'), nil);
+    Evaluator.BindLazy(N, CountA, 0);
+    Expr := TLandrixXmlXPathExpression.Create(U('$n'), Context);
+    CheckEqualsUtf8(U('1'), Evaluator.EvaluateString(Expr, 0), 'lazy $n');
+    Tree.LoadFromUtf8(U('<r><a/><a/></r>'));
+    Evaluator.ClearCache;
+    Evaluator.BindLazy(N, CountA, 0);
+    CheckEqualsUtf8(U('2'), Evaluator.EvaluateString(Expr, 0), 'lazy $n bound again after ClearCache');
+    { a regex in the replacement of replace: the regex of replace itself
+      stays valid even if the cache starts over meanwhile }
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('replace(''ab'', ''a'', ' +
+      'string(count(for $i in 1 to 1100 return matches(''x'', concat(''x|'', $i)))))'), nil);
+    CheckEqualsUtf8(U('1100b'), Evaluator.EvaluateString(Expr, 0), 'regex calls inside the replacement');
+    try
+      Evaluator.BindString(Context.FindVariable(U(''), U('unknown')), U('x'));
+      FailNotRaised('ELandrixXmlError for slot -1');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'slot -1');
+    end;
+    Expr.Free;
+    Expr := nil;
+    for I := 0 to 1100 do
+    begin
+      Expr := TLandrixXmlXPathExpression.Create(U('matches(''a' + IntToStr(I) + ''', ''^a' + IntToStr(I) + '$'')'),
+        nil);
+      Check(Evaluator.EvaluateBoolean(Expr, 0), 'pattern ' + IntToStr(I));
+      Expr.Free;
+      Expr := nil;
+    end;
+    Expr := TLandrixXmlXPathExpression.Create(U('matches(''a5'', ''^a5$'') and not(matches(''a5'', ''^a6$''))'), nil);
+    Check(Evaluator.EvaluateBoolean(Expr, 0), 'patterns compiled again after the cache started over');
+  finally
+    Expr.Free;
+    CountA.Free;
+    Evaluator.Free;
+    Context.Free;
     Tree.Free;
   end;
 end;
@@ -2693,6 +2781,7 @@ begin
   RegisterTest('XPathEval.MixedProfiles', TestMixedProfiles);
   RegisterTest('XPathEval.Profiles', TestProfiles);
   RegisterTest('XPathEval.XPath10Compatible', TestXPath10Compatible);
+  RegisterTest('XPathEval.ReviewEdges', TestEvaluatorReviewEdges);
   RegisterTest('XPathEval.UserFunction10', TestUserFunction10);
   RegisterTest('XPathEval.Variables', TestVariables);
   RegisterTest('XPathEval.SequenceTypeMatching', TestSequenceTypeMatching);

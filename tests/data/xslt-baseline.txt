@@ -1543,8 +1543,8 @@ error/error-XPTY0004e pass
 error/error-XPTY0004f pass
 error/error-XPTY0004g pass
 error/error-XPTY0019a pass
-error/error-XPTY0020a wrong-code
-error/error-XPTY0020b wrong-code
+error/error-XPTY0020a pass
+error/error-XPTY0020b pass
 expression/expression-0101 pass
 expression/expression-0301 pass
 expression/expression-0302 pass

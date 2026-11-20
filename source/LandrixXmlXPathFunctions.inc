@@ -1804,8 +1804,10 @@ begin
     xfnReplace:
       begin
         S := StrArg(0);
-        Re := Compile(1, 3);
+        { the replacement first: an expression in it may use the regex
+          cache, and the compiled regex is valid until the next call }
         T := ReqStrArg(2);
+        Re := Compile(1, 3);
         if Re.MatchesEmptyString then
           Fail('FORX0003', Name + ': the pattern matches the empty string');
         try

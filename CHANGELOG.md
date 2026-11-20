@@ -135,6 +135,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of declarations in the output. New
   `TLandrixXmlXPathTree.InScopeNamespacesUtf8` returns the in-scope
   prefixes with their URIs in one pass.
+- XPath: `/` with an atomic context item raises XPTY0020 (was XPDY0002);
+  in XPath 1.0 compatibility mode of the XPath 2.0 profile an error in
+  the left operand of `and` and `or` is raised (XPath 2.0, 3.6) instead
+  of being decided away by the right operand (the Saxon profile keeps
+  Saxon's behaviour); the comment of `ClearCache` says that variables
+  keep their values and are bound again; an error from MaxDepth or
+  MaxStackBytes is no longer kept as the value of a lazy variable (it
+  depends on where the variable is first read); binding slot -1 (an
+  unknown variable) raises `xecInvalidArgument` instead of writing
+  outside the globals; the compiled regular expressions are found by
+  hash and kept up to 1024 per evaluator (patterns can come from a
+  document).
 - XPath: `fn:replace` reported the step limit of a back-reference search
   as FORX0004 (an error in the replacement string), which an XSLT match
   pattern then treated as no match; it is now the limit error.

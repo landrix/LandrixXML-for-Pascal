@@ -273,6 +273,10 @@ type
     { compiled patterns: the dialect ("2" or "3"), flags, #0, the pattern (UTF-8) and the regex }
     FRegexKeys: TLandrixXmlUtf8Array;
     FRegexes: TObjectList;
+    { the compiled regular expressions by key hash (open addressing, -1 =
+      free); at RegexCacheSize entries the cache starts over, as patterns
+      can come from a document }
+    FRegexSlots: array of Integer;
     { the expression being evaluated and the base of its local slots }
     FExpr: TLandrixXmlXPathExpression;
     FNodes: TLandrixXmlXPathAstNodes;
@@ -496,7 +500,8 @@ type
     { the compiled regular expression of fn:matches (owned by the
       evaluator; FORX0001, FORX0002 and FOER0000 as there), in the dialect
       of XPath 2.0 (AsXPath20) or of the Saxon profile; for the XSLT
-      units, not part of the documented API yet }
+      units, not part of the documented API yet); valid until the next
+      call (the cache starts over when it is full) }
     function CompiledRegex(const Pattern, Flags: TLandrixXmlUtf8; AsXPath20: Boolean): TLandrixXmlRegex;
     function ConvertSequence(const S: TLandrixXmlXPathSequence; const T: TLandrixXmlXPathSequenceType;
       const Name: string): TLandrixXmlXPathSequence;
@@ -533,7 +538,9 @@ type
     procedure PushFrame(Size: Integer);
     procedure PopFrame;
     { forgets the kept values of context-free subexpressions (see the unit
-      comment); needed when the tree changes while the evaluator lives }
+      comment); needed when the tree changes while the evaluator lives.
+      Variables keep their values (their context nodes belong to the old
+      tree): bind them again. }
     procedure ClearCache;
     { the tree document(Uri) returns (the URI as written in the expression),
       which has a document node; not owned, it must live as long as the
@@ -2013,8 +2020,23 @@ begin
     ClearSlot(FFrame[I]);
 end;
 
+const
+  { the start of the message of MaxDepth and MaxStackBytes errors }
+  LimitStopText = 'user functions nested';
+
+{ An error from MaxDepth or MaxStackBytes (also as and/or raise it again
+  with its code and message); not one raised by fn:error. }
+function IsLimitStop(E: ELandrixXmlXPathError): Boolean;
+begin
+  Result := not (E is ELandrixXmlXPathRaised) and (E.XPathCode = 'FOER0000') and
+    (Pos(LimitStopText, E.Message) > 0);
+end;
+
 function TLandrixXmlXPathEvaluator.SlotRef(Slot: Integer): Pointer;
 begin
+  { FindVariable gives -1 for an unknown name }
+  if Slot < 0 then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Invalid variable slot ' + IntToStr(Slot));
   if Slot < FGlobalCount then
     Result := @FGlobals[Slot]
   else
@@ -2170,6 +2192,13 @@ begin
           begin
             { the slot may have moved if the frame grew: look it up again }
             P := SlotRef(Slot);
+            if IsLimitStop(E) then
+            begin
+              { a limit of the call depth depends on where the variable is
+                read first: evaluated again next time }
+              P^.State := xssLazy;
+              raise;
+            end;
             P^.State := xssError;
             P^.ErrorCode := E.XPathCode;
             P^.ErrorMessage := E.Message;
@@ -2464,11 +2493,16 @@ begin
   Result := CompiledRegex(Pattern, Flags, Xp20);
 end;
 
+const
+  { compiled regular expressions kept per evaluator (a power of two) }
+  RegexCacheSize = 1024;
+
 function TLandrixXmlXPathEvaluator.CompiledRegex(const Pattern, Flags: TLandrixXmlUtf8;
   AsXPath20: Boolean): TLandrixXmlRegex;
 var
   Key: TLandrixXmlUtf8;
-  I: Integer;
+  I, Mask, Slot: Integer;
+  Hash: Cardinal;
   Mode: TLandrixXmlRegexMode;
 begin
   { the dialect of the profile: XML Schema 1.0 character classes in XPath 2.0 }
@@ -2482,12 +2516,24 @@ begin
     Mode := xrmXPath;
     Key := '3' + Flags + #0 + Pattern;
   end;
-  for I := Integer(FRegexes.Count) - 1 downto 0 do
-    if FRegexKeys[I] = Key then
+  Hash := LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(Key), Length(Key), LandrixXmlHashSalt));
+  if Length(FRegexSlots) = 0 then
+  begin
+    SetLength(FRegexSlots, 2 * RegexCacheSize);
+    for I := 0 to Integer(Length(FRegexSlots)) - 1 do
+      FRegexSlots[I] := -1;
+  end;
+  Mask := Integer(Length(FRegexSlots)) - 1;
+  Slot := Integer(Hash and Cardinal(Mask));
+  while FRegexSlots[Slot] >= 0 do
+  begin
+    if FRegexKeys[FRegexSlots[Slot]] = Key then
     begin
-      Result := TLandrixXmlRegex(FRegexes[I]);
+      Result := TLandrixXmlRegex(FRegexes[FRegexSlots[Slot]]);
       Exit;
     end;
+    Slot := (Slot + 1) and Mask;
+  end;
   if not LandrixXmlRegexFlagsValid(Flags, Mode) then
     Fail('FORX0001', 'invalid regular expression flags ''' + LandrixXmlEscapeForMessage(Flags, 20) + '''');
   try
@@ -2505,10 +2551,26 @@ begin
       Exit;
     end;
   end;
+  { full: start over (no caller keeps a regex across another call) }
+  if FRegexes.Count >= RegexCacheSize then
+  begin
+    FRegexes.Clear;
+    FRegexKeys := nil;
+    for I := 0 to Integer(Length(FRegexSlots)) - 1 do
+      FRegexSlots[I] := -1;
+    Slot := Integer(Hash and Cardinal(Mask));
+  end;
   if FRegexes.Count = Length(FRegexKeys) then
     SetLength(FRegexKeys, 2 * Integer(FRegexes.Count) + 8);
   FRegexKeys[FRegexes.Count] := Key;
-  FRegexes.Add(Result);
+  try
+    FRegexes.Add(Result);
+  except
+    Result.Free;
+    raise;
+  end;
+  { entered only once the list owns it }
+  FRegexSlots[Slot] := Integer(FRegexes.Count) - 1;
 end;
 
 { --- evaluation ---------------------------------------------------------------- }
@@ -3814,8 +3876,11 @@ begin
     FFinal := False;
   if N^.RootStart then
   begin
+    { an atomic context item is a type error, none at all a dynamic one }
+    if (Context < 0) and (ContextItem.Count > 0) then
+      Fail('XPTY0020', 'the context item for "/" is not a node');
     if Context < 0 then
-      Fail('XPDY0002', 'the context item for "/" is absent or not a node');
+      Fail('XPDY0002', 'the context item for "/" is absent');
     Current := LandrixXmlXPathNodeItem(DocumentRootOf(Context));
     First := 0;
   end
@@ -3977,8 +4042,10 @@ begin
       end;
     xakRoot:
       begin
+        if (Context < 0) and (ContextItem.Count > 0) then
+          Fail('XPTY0020', 'the context item for "/" is not a node');
         if Context < 0 then
-          Fail('XPDY0002', 'the context item for "/" is absent or not a node');
+          Fail('XPDY0002', 'the context item for "/" is absent');
         NodeItemInto(DocumentRootOf(Context), Output);
       end;
     xakStep:
@@ -4101,14 +4168,14 @@ var
   Used: Integer;
 begin
   if FDepth >= FMaxDepth then
-    Fail('FOER0000', 'user functions nested deeper than ' + IntToStr(FMaxDepth));
+    Fail('FOER0000', LimitStopText + ' deeper than ' + IntToStr(FMaxDepth));
   if FDepth = 0 then
     FStackBase := Local
   else if FMaxStackBytes > 0 then
   begin
     Used := Integer(PAnsiChar(FStackBase) - PAnsiChar(Local));
     if (Used > FMaxStackBytes) and (Used < 1073741824) then
-      raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'user functions nested ' +
+      raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', LimitStopText + ' ' +
         IntToStr(FDepth) + ' deep use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
   end;
 end;
@@ -4427,6 +4494,11 @@ begin
   except
     on E: ELandrixXmlXPathError do
     begin
+      { XPath 1.0 compatibility mode evaluates the left operand first and
+        stops at its error (XPath 2.0, 3.6); Saxon (its profile) lets the
+        right operand decide there too }
+      if Xp10 and Xp20 then
+        raise;
       LeftError := E;
       LeftRaised := E is ELandrixXmlXPathRaised;
       ErrCode := E.XPathCode;
