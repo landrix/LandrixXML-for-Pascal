@@ -103,6 +103,10 @@ type
       many names in one long URI do not each keep and hash a copy }
     FUris: TLandrixXmlUtf8Array;
     FUriSlots: TLandrixXmlXPathIntArray;
+    { the same URIs by the address of their string (id + 1, 0 = free): a
+      reader hands out one string per URI, so a long URI is not hashed
+      again for every element }
+    FUriPtrSlots: TLandrixXmlXPathIntArray;
     FUriCount: Integer;
     FExpandedSlots: TLandrixXmlXPathIntArray;
     { building }
@@ -124,6 +128,7 @@ type
     function NameId(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8): Integer;
     function LookupExpanded(const Key: TLandrixXmlUtf8; Add: Boolean): Integer;
     function UriId(const NamespaceUri: TLandrixXmlUtf8; Add: Boolean): Integer;
+    procedure AddUriPointer(Id: Integer);
     function NewNode(Kind: TLandrixXmlXPathNodeKind; Line, Column: Integer): Integer;
     procedure AddChild(Kind: TLandrixXmlXPathNodeKind; Line, Column: Integer; out Index: Integer);
     procedure AddText(const Value: TLandrixXmlUtf8; Line, Column: Integer; DomNode: TLandrixXmlNode);
@@ -350,6 +355,9 @@ begin
   FExpandedKeys := nil;
   FUris := nil;
   FUriCount := 0;
+  SetLength(FUriPtrSlots, 64);
+  for I := 0 to 63 do
+    FUriPtrSlots[I] := 0;
   SetLength(FUriSlots, 64);
   for I := 0 to 63 do
     FUriSlots[I] := 0;
@@ -398,10 +406,45 @@ begin
     Rehash(FExpandedKeys, FExpandedSlots, FExpandedCount);
 end;
 
+{ A slot for the address P (the low 32 bits are enough). }
+function PointerSlot(P: Pointer; Mask: Integer): Integer;
+var
+  Low: Cardinal;
+begin
+  Low := 0;
+  Move(P, Low, 4);
+  Result := Integer(LandrixXmlHashFinish(Low) and Cardinal(Mask));
+end;
+
+procedure TLandrixXmlXPathTree.AddUriPointer(Id: Integer);
+var
+  S, Mask: Integer;
+begin
+  Mask := Integer(Length(FUriPtrSlots)) - 1;
+  S := PointerSlot(Pointer(FUris[Id]), Mask);
+  while FUriPtrSlots[S] <> 0 do
+    S := (S + 1) and Mask;
+  FUriPtrSlots[S] := Id + 1;
+end;
+
 function TLandrixXmlXPathTree.UriId(const NamespaceUri: TLandrixXmlUtf8; Add: Boolean): Integer;
 var
-  S: Integer;
+  S, Mask, I: Integer;
 begin
+  if NamespaceUri <> '' then
+  begin
+    Mask := Integer(Length(FUriPtrSlots)) - 1;
+    S := PointerSlot(Pointer(NamespaceUri), Mask);
+    while FUriPtrSlots[S] <> 0 do
+    begin
+      if Pointer(FUris[FUriPtrSlots[S] - 1]) = Pointer(NamespaceUri) then
+      begin
+        Result := FUriPtrSlots[S] - 1;
+        Exit;
+      end;
+      S := (S + 1) and Mask;
+    end;
+  end;
   S := FindSlot(FUris, FUriSlots, NamespaceUri);
   if FUriSlots[S] <> 0 then
   begin
@@ -418,7 +461,17 @@ begin
   Inc(FUriCount);
   FUriSlots[S] := FUriCount;
   if 2 * FUriCount > Length(FUriSlots) then
+  begin
     Rehash(FUris, FUriSlots, FUriCount);
+    SetLength(FUriPtrSlots, Length(FUriSlots));
+    for I := 0 to Integer(Length(FUriPtrSlots)) - 1 do
+      FUriPtrSlots[I] := 0;
+    for I := 0 to FUriCount - 1 do
+      if FUris[I] <> '' then
+        AddUriPointer(I);
+  end
+  else if NamespaceUri <> '' then
+    AddUriPointer(Result);
 end;
 
 function TLandrixXmlXPathTree.NameId(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8): Integer;

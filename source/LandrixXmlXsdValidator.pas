@@ -2546,36 +2546,14 @@ begin
   end;
 end;
 
-{ The text of Span; Last if it has the same bytes (namespace names repeat,
-  so they are not copied for every element), which then becomes Last. }
-function SameOrNew(const Span: TLandrixXmlSpan; var Last: TLandrixXmlUtf8): TLandrixXmlUtf8;
-var
-  I: Integer;
-  Same: Boolean;
-begin
-  { compared byte by byte: CompareMem is inline in FPC and leads to notes }
-  Same := Span.Len = Length(Last);
-  I := 0;
-  while Same and (I < Span.Len) do
-  begin
-    Same := Span.P[I] = Last[I + 1];
-    Inc(I);
-  end;
-  if not Same then
-    Last := LandrixXmlSpanToUtf8(Span);
-  Result := Last;
-end;
-
 function TLandrixXmlXsdValidator.ValidateReader(Reader: TLandrixXmlReader): Boolean;
 var
   I, EndLine, EndColumn: Integer;
-  LastUri, LastAttrUri, LocalName, AttrLocalName: TLandrixXmlUtf8;
+  LocalName, AttrLocalName: TLandrixXmlUtf8;
 begin
   Reset;
   EndLine := 0;
   EndColumn := 0;
-  LastUri := '';
-  LastAttrUri := '';
   TValueContext(FValueContext).Reader := Reader;
   while Reader.Read do
   begin
@@ -2589,18 +2567,18 @@ begin
             begin
               AttrLocalName := Reader.AttributeLocalNameUtf8(I);
               if Reader.AttributePrefixSpan(I).Len = 0 then
-                AddAttribute(SameOrNew(Reader.AttributeNamespaceUriSpan(I), LastAttrUri), AttrLocalName, AttrLocalName,
+                AddAttribute(Reader.AttributeNamespaceUriUtf8(I), AttrLocalName, AttrLocalName,
                   Reader.AttributeValueUtf8(I))
               else
-                AddAttribute(SameOrNew(Reader.AttributeNamespaceUriSpan(I), LastAttrUri), AttrLocalName,
+                AddAttribute(Reader.AttributeNamespaceUriUtf8(I), AttrLocalName,
                   Reader.AttributeNameUtf8(I), Reader.AttributeValueUtf8(I));
             end;
           LocalName := Reader.LocalNameUtf8;
           if Reader.PrefixSpan.Len = 0 then
-            StartElement(SameOrNew(Reader.NamespaceUriSpan, LastUri), LocalName, LocalName, Reader.TokenEndLine,
+            StartElement(Reader.NamespaceUriUtf8, LocalName, LocalName, Reader.TokenEndLine,
               Reader.TokenEndColumn, nil)
           else
-            StartElement(SameOrNew(Reader.NamespaceUriSpan, LastUri), LocalName, Reader.NameUtf8,
+            StartElement(Reader.NamespaceUriUtf8, LocalName, Reader.NameUtf8,
               Reader.TokenEndLine, Reader.TokenEndColumn, nil);
         end;
       xttEndElement:

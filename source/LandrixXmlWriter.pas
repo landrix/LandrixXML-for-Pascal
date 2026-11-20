@@ -94,6 +94,7 @@ type
     HasRequiredUri: Boolean;
     IsNsDecl: Boolean;
     Uri: TLandrixXmlUtf8;       { resolved when the start tag closes }
+    UriHash: Cardinal;          { the salted hash of Uri, from its binding }
   end;
 
   TLandrixXmlWriterBinding = record
@@ -103,6 +104,8 @@ type
       bucket of the prefix table (-1 = none) }
     Hash: Cardinal;
     Next: Integer;
+    { the salted hash of Uri, once per declaration }
+    UriHash: Cardinal;
   end;
 
   TLandrixXmlWriterSnapshot = record
@@ -959,6 +962,7 @@ begin
   FBindings[FBindingCount].Prefix := Prefix;
   FBindings[FBindingCount].Uri := Uri;
   FBindings[FBindingCount].Hash := PrefixHash(Prefix);
+  FBindings[FBindingCount].UriHash := LandrixXmlHashBytes(PAnsiChar(Uri), Length(Uri), LandrixXmlHashSalt);
   SetBindingCount(FBindingCount + 1);
 end;
 
@@ -1070,7 +1074,12 @@ begin
   if B >= 0 then
   begin
     if FBindings[B].Uri = Uri then
+    begin
+      { keep the caller's string: it usually comes again (a DOM keeps one
+        per URI), and the same address compares at once }
+      FBindings[B].Uri := Uri;
       Exit;
+    end;
     if B >= FElems[FElemCount - 1].BindingTop then
       Fail(xecNamespace, 'The prefix "' + LandrixXmlEscapeForMessage(Prefix, 60) +
         '" is already bound to another namespace on this element');
@@ -1095,11 +1104,13 @@ var
 
   function Same(A, B: Integer): Boolean;
   begin
-    Result := (FAttrs[A].Uri = FAttrs[B].Uri) and SameBytes(
+    { local names first: two prefixes of the same long URI differ there }
+    Result := (FAttrs[A].UriHash = FAttrs[B].UriHash) and SameBytes(
       PAnsiChar(FAttrs[A].QName) + FAttrs[A].ColonPos + 1,
       Length(FAttrs[A].QName) - FAttrs[A].ColonPos - 1,
       PAnsiChar(FAttrs[B].QName) + FAttrs[B].ColonPos + 1,
-      Length(FAttrs[B].QName) - FAttrs[B].ColonPos - 1);
+      Length(FAttrs[B].QName) - FAttrs[B].ColonPos - 1) and
+      (FAttrs[A].Uri = FAttrs[B].Uri);
   end;
 
   procedure Duplicate(A: Integer);
@@ -1139,9 +1150,7 @@ begin
     if not Relevant(I) then
       Continue;
     H := LandrixXmlHashBytes(PAnsiChar(FAttrs[I].QName) + FAttrs[I].ColonPos + 1,
-      Length(FAttrs[I].QName) - FAttrs[I].ColonPos - 1,
-      LandrixXmlHashBytes(PAnsiChar(FAttrs[I].Uri), Length(FAttrs[I].Uri),
-      LandrixXmlHashSalt));
+      Length(FAttrs[I].QName) - FAttrs[I].ColonPos - 1, FAttrs[I].UriHash);
     Slot := Integer(LandrixXmlHashFinish(H) and Cardinal(Size - 1));
     while FHash[Slot] >= 0 do
     begin
@@ -1174,6 +1183,7 @@ begin
       Fail(xecNamespace, 'Undeclared namespace prefix "' + LandrixXmlEscapeForMessage(
         SubUtf8(FAttrs[I].QName, 0, FAttrs[I].ColonPos), 60) + '"');
     FAttrs[I].Uri := FBindings[B].Uri;
+    FAttrs[I].UriHash := FBindings[B].UriHash;
   end;
   CheckExpandedDuplicates;
   if Empty then

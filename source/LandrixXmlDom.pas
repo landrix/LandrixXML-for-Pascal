@@ -122,15 +122,25 @@ type
     FUriHashes: array of Cardinal;
     FUriCount: Integer;
     FUriSlots: TLandrixXmlNameSlots;
+    { URIs added from a string (InternShared) by the string's address:
+      a reader hands out one string per URI, so a long URI is not hashed
+      again for every name }
+    FUriPtrSlots: TLandrixXmlNameSlots;
     procedure Grow;
     procedure GrowExpanded;
-    function UriId(UriP: PAnsiChar; UriLen: Integer; Add: Boolean; out Hash: Cardinal): Integer;
+    function UriId(UriP: PAnsiChar; UriLen: Integer; Add: Boolean; out Hash: Cardinal;
+      const Source: TLandrixXmlUtf8): Integer;
+    function InternWithUri(PrefixP: PAnsiChar; PrefixLen: Integer; LocalP: PAnsiChar;
+      LocalLen: Integer; Uri: Integer; UH: Cardinal): TLandrixXmlName;
     function FindExpandedIn(Uri: Integer; ExpHash: Cardinal; LocalP: PAnsiChar; LocalLen: Integer): Integer;
   public
     constructor Create;
     destructor Destroy; override;
     function Intern(PrefixP: PAnsiChar; PrefixLen: Integer; LocalP: PAnsiChar;
       LocalLen: Integer; UriP: PAnsiChar; UriLen: Integer): TLandrixXmlName;
+    { the same with the URI as a string that may be kept (from a reader) }
+    function InternShared(PrefixP: PAnsiChar; PrefixLen: Integer; LocalP: PAnsiChar;
+      LocalLen: Integer; const Uri: TLandrixXmlUtf8): TLandrixXmlName;
     { -1 if no node of the document has ever used this expanded name }
     function FindExpanded(UriP: PAnsiChar; UriLen: Integer; LocalP: PAnsiChar;
       LocalLen: Integer): Integer;
@@ -637,6 +647,7 @@ begin
   ClearSlots(FSlots, 256);
   ClearSlots(FExpSlots, 256);
   ClearSlots(FUriSlots, 64);
+  ClearSlots(FUriPtrSlots, 64);
 end;
 
 destructor TLandrixXmlNameTable.Destroy;
@@ -669,10 +680,23 @@ begin
     PutSlot(FExpSlots, TLandrixXmlName(FExpanded[I]).FExpHash, I);
 end;
 
+{ The slot hash of a string's address (the low 32 bits are enough). }
+function PointerHash(P: Pointer): Cardinal;
+var
+  Low: Cardinal;
+begin
+  Low := 0;
+  Move(P, Low, 4);
+  Result := LandrixXmlHashFinish(Low);
+end;
+
 { The id of the URI in the URI table (-1 if absent and not Add). A URI is
-  kept once: all names in it share the string. }
+  kept once: all names in it share the string. Source: the string to keep
+  for a new URI ('' = copy the bytes); a kept string is also found by its
+  address later (only the kept string, so the address table never holds
+  more entries than URIs). }
 function TLandrixXmlNameTable.UriId(UriP: PAnsiChar; UriLen: Integer; Add: Boolean;
-  out Hash: Cardinal): Integer;
+  out Hash: Cardinal; const Source: TLandrixXmlUtf8): Integer;
 var
   Slot, Mask, I: Integer;
 begin
@@ -695,7 +719,10 @@ begin
     SetLength(FUriHashes, 2 * FUriCount + 8);
   end;
   Result := FUriCount;
-  FUris[Result] := SpanStr(UriP, UriLen);
+  if Source <> '' then
+    FUris[Result] := Source
+  else
+    FUris[Result] := SpanStr(UriP, UriLen);
   FUriHashes[Result] := Hash;
   FUriSlots[Slot] := Result;
   Inc(FUriCount);
@@ -705,6 +732,16 @@ begin
     for I := 0 to FUriCount - 1 do
       PutSlot(FUriSlots, LandrixXmlHashFinish(FUriHashes[I]), I);
   end;
+  { the address table holds at most FUriCount entries in as many slots }
+  if Length(FUriPtrSlots) < Length(FUriSlots) then
+  begin
+    ClearSlots(FUriPtrSlots, Integer(Length(FUriSlots)));
+    for I := 0 to FUriCount - 1 do
+      if (Pointer(FUris[I]) <> nil) and (I <> Result) then
+        PutSlot(FUriPtrSlots, PointerHash(Pointer(FUris[I])), I);
+  end;
+  if Source <> '' then
+    PutSlot(FUriPtrSlots, PointerHash(Pointer(FUris[Result])), Result);
 end;
 
 function TLandrixXmlNameTable.FindExpandedIn(Uri: Integer; ExpHash: Cardinal; LocalP: PAnsiChar;
@@ -734,7 +771,7 @@ var
   Uri: Integer;
   UH: Cardinal;
 begin
-  Uri := UriId(UriP, UriLen, False, UH);
+  Uri := UriId(UriP, UriLen, False, UH, '');
   if Uri < 0 then
     Result := -1
   else
@@ -744,11 +781,45 @@ end;
 function TLandrixXmlNameTable.Intern(PrefixP: PAnsiChar; PrefixLen: Integer;
   LocalP: PAnsiChar; LocalLen: Integer; UriP: PAnsiChar; UriLen: Integer): TLandrixXmlName;
 var
-  H, UH, EH: Cardinal;
-  Size, Slot, Id, Uri: Integer;
+  UH: Cardinal;
+  Uri: Integer;
+begin
+  Uri := UriId(UriP, UriLen, True, UH, '');
+  Result := InternWithUri(PrefixP, PrefixLen, LocalP, LocalLen, Uri, UH);
+end;
+
+function TLandrixXmlNameTable.InternShared(PrefixP: PAnsiChar; PrefixLen: Integer;
+  LocalP: PAnsiChar; LocalLen: Integer; const Uri: TLandrixXmlUtf8): TLandrixXmlName;
+var
+  Mask, Slot, Id: Integer;
+  UH: Cardinal;
+begin
+  if Uri <> '' then
+  begin
+    Mask := Integer(Length(FUriPtrSlots)) - 1;
+    Slot := Integer(PointerHash(Pointer(Uri)) and Cardinal(Mask));
+    while FUriPtrSlots[Slot] >= 0 do
+    begin
+      Id := FUriPtrSlots[Slot];
+      if Pointer(FUris[Id]) = Pointer(Uri) then
+      begin
+        Result := InternWithUri(PrefixP, PrefixLen, LocalP, LocalLen, Id, FUriHashes[Id]);
+        Exit;
+      end;
+      Slot := (Slot + 1) and Mask;
+    end;
+  end;
+  Id := UriId(PAnsiChar(Uri), Length(Uri), True, UH, Uri);
+  Result := InternWithUri(PrefixP, PrefixLen, LocalP, LocalLen, Id, UH);
+end;
+
+function TLandrixXmlNameTable.InternWithUri(PrefixP: PAnsiChar; PrefixLen: Integer;
+  LocalP: PAnsiChar; LocalLen: Integer; Uri: Integer; UH: Cardinal): TLandrixXmlName;
+var
+  H, EH: Cardinal;
+  Size, Slot, Id: Integer;
   N: TLandrixXmlName;
 begin
-  Uri := UriId(UriP, UriLen, True, UH);
   H := NameHash(PrefixP, PrefixLen, LocalP, LocalLen, UH);
   Size := Integer(Length(FSlots));
   Slot := Integer(H and Cardinal(Size - 1));
@@ -2418,14 +2489,13 @@ var
   var
     E: TLandrixXmlContainerNode;
     A: Integer;
-    S1, S2, S3: TLandrixXmlSpan;
+    S1, S2: TLandrixXmlSpan;
     Preserve: Boolean;
   begin
     E := TLandrixXmlContainerNode(NewNode(xntElement));
     S1 := Reader.PrefixSpan;
     S2 := Reader.LocalNameSpan;
-    S3 := Reader.NamespaceUriSpan;
-    E.FName := FNames.Intern(S1.P, S1.Len, S2.P, S2.Len, S3.P, S3.Len);
+    E.FName := FNames.InternShared(S1.P, S1.Len, S2.P, S2.Len, Reader.NamespaceUriUtf8);
     E.FIsEmpty := Reader.IsEmptyElement;
     if Reader.AttributeCount > 0 then
     begin
@@ -2434,8 +2504,8 @@ var
       begin
         S1 := Reader.AttributePrefixSpan(A);
         S2 := Reader.AttributeLocalNameSpan(A);
-        S3 := Reader.AttributeNamespaceUriSpan(A);
-        E.FAttrs[A].Name := FNames.Intern(S1.P, S1.Len, S2.P, S2.Len, S3.P, S3.Len);
+        E.FAttrs[A].Name := FNames.InternShared(S1.P, S1.Len, S2.P, S2.Len,
+          Reader.AttributeNamespaceUriUtf8(A));
         E.FAttrs[A].Value := Reader.AttributeValueUtf8(A);
       end;
       E.FAttrCount := Reader.AttributeCount;

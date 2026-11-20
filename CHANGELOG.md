@@ -86,6 +86,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `xsl:for-each-group` merged key values with characters outside the
   system code page (e.g. Cyrillic keys all became `??`). New
   `LandrixXmlUtf8ToKey` gives lossless keys for lookups.
+- Reader, DOM, XPath tree, writer and XML Schema validator: a long
+  namespace URI inherited by many elements is no longer hashed and copied
+  again for every element. The reader keeps one string per URI and
+  document, and the name tables find it by its address (one 200 KB URI,
+  40,000 elements: XPath tree 30 s, now 0.09 s).
+- Reader: after a start tag failed (for example on a duplicate
+  attribute), `AttributeNamespaceUriUtf8` could report the namespace of an
+  attribute of an earlier element.
 
 ## [0.5.0] - 2026-11-17
 

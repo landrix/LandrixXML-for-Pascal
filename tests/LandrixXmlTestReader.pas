@@ -247,6 +247,22 @@ begin
   finally
     Reader.Free;
   end;
+  { one string per URI: two declarations of the same URI hand out the
+    same string (consumers recognize it by its address) }
+  Xml := '<r xmlns:a="urn:same" xmlns:b="urn:same"><a:x/><b:y/></r>';
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromBuffer(PAnsiChar(Xml)^, Length(Xml));
+    Reader.Read;
+    Reader.Read;
+    LongUri := Reader.NamespaceUriUtf8;
+    Reader.Read;
+    Reader.Read;
+    CheckEqualsUtf8('urn:same', Reader.NamespaceUriUtf8, 'second prefix, same URI');
+    Check(Pointer(LongUri) = Pointer(Reader.NamespaceUriUtf8), 'one string for both declarations');
+  finally
+    Reader.Free;
+  end;
   LongUri := 'urn:';
   for I := 1 to 2000 do
     LongUri := LongUri + 'x';
@@ -264,6 +280,27 @@ begin
       on E: ELandrixXmlError do
         CheckEquals(Ord(xecNamespace), Ord(E.Code), 'expanded duplicate code');
     end;
+  finally
+    Reader.Free;
+  end;
+  { a start tag that fails before its names are resolved: an attribute slot
+    reused from an earlier element must not report that element's namespace }
+  Xml := '<r xmlns:p="urn:p"><x p:a="1"/><x a="1" a="2"/></r>';
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromBuffer(PAnsiChar(Xml)^, Length(Xml));
+    Reader.Read;
+    Check(Reader.Read and (Reader.AttributeNamespaceUriUtf8(0) = 'urn:p'), 'p:a');
+    Reader.Read;
+    try
+      Reader.Read;
+      FailNotRaised('duplicate attribute');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecSyntax), Ord(E.Code), 'duplicate attribute code');
+    end;
+    for I := 0 to Reader.AttributeCount - 1 do
+      CheckEqualsUtf8('', Reader.AttributeNamespaceUriUtf8(I), 'no namespace after the error');
   finally
     Reader.Free;
   end;

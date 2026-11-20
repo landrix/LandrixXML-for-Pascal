@@ -108,6 +108,8 @@ type
     NsHash: Cardinal;
     { the hash of the name in the duplicate check }
     Hash: Cardinal;
+    { the binding NsP belongs to (-1: none, or the fixed xmlns namespace) }
+    NsBinding: Integer;
     IsNsDecl: Boolean;
   end;
 
@@ -117,6 +119,7 @@ type
     ColonPos: Integer;
     NsP: PAnsiChar;
     NsLen: Integer;
+    NsBinding: Integer;
     BindingTop: Integer;
   end;
 
@@ -150,6 +153,7 @@ type
     FColonPos: Integer;
     FNsP: PAnsiChar;
     FNsLen: Integer;
+    FNsBinding: Integer;
     FValueP: PAnsiChar;
     FValueLen: Integer;
     FValueOfs: Integer;
@@ -163,6 +167,13 @@ type
       chains its bindings from the newest, so the first match is the
       innermost binding and popping restores the outer one }
     FPrefixHeads: array of Integer;
+    { every namespace URI of the document once (salted hash, open
+      addressing, -1 = free): bindings with the same URI share one
+      string, so consumers can tell a URI by its pointer }
+    FUris: array of TLandrixXmlUtf8;
+    FUriHashes: array of Cardinal;
+    FUriCount: Integer;
+    FUriSlots: array of Integer;
     FHashTable: array of Integer;
     FPendingEnd: Boolean;
     FPendingPop: Boolean;
@@ -200,6 +211,7 @@ type
     function FindBinding(PrefixP: PAnsiChar; PrefixLen: Integer): Integer;
     procedure PushBinding(PrefixP: PAnsiChar; PrefixLen: Integer; const Uri: TLandrixXmlUtf8);
     procedure RebuildPrefixHeads(Size: Integer);
+    function SharedUri(const Uri: TLandrixXmlUtf8; out Hash: Cardinal): TLandrixXmlUtf8;
     function GetValueSpan: TLandrixXmlSpan;
     function GetNameSpan: TLandrixXmlSpan;
     function GetPrefixSpan: TLandrixXmlSpan;
@@ -480,6 +492,7 @@ begin
   FColonPos := -1;
   FNsP := nil;
   FNsLen := 0;
+  FNsBinding := -1;
   FValueP := nil;
   FValueLen := 0;
   FValueOfs := -1;
@@ -490,6 +503,12 @@ begin
   if Length(FBindings) = 0 then
     SetLength(FBindings, 16);
   RebuildPrefixHeads(64);
+  FUris := nil;
+  FUriHashes := nil;
+  FUriCount := 0;
+  SetLength(FUriSlots, 16);
+  for I := 0 to 15 do
+    FUriSlots[I] := -1;
   PushBinding('xml', 3, LandrixXmlNamespaceXml);
   FPendingEnd := False;
   FPendingPop := False;
@@ -1228,17 +1247,63 @@ begin
   end;
 end;
 
+{ The document's one string for this URI (each declaration hashes and
+  compares its URI once). }
+function TLandrixXmlReader.SharedUri(const Uri: TLandrixXmlUtf8; out Hash: Cardinal): TLandrixXmlUtf8;
+var
+  Slot, Mask, I: Integer;
+begin
+  Hash := LandrixXmlHashBytes(PAnsiChar(Uri), Length(Uri), LandrixXmlHashSalt);
+  Mask := Integer(Length(FUriSlots)) - 1;
+  Slot := Integer(LandrixXmlHashFinish(Hash) and Cardinal(Mask));
+  while FUriSlots[Slot] >= 0 do
+  begin
+    I := FUriSlots[Slot];
+    if (FUriHashes[I] = Hash) and (FUris[I] = Uri) then
+    begin
+      Result := FUris[I];
+      Exit;
+    end;
+    Slot := (Slot + 1) and Mask;
+  end;
+  if FUriCount = Length(FUris) then
+  begin
+    SetLength(FUris, 2 * FUriCount + 8);
+    SetLength(FUriHashes, 2 * FUriCount + 8);
+  end;
+  FUris[FUriCount] := Uri;
+  FUriHashes[FUriCount] := Hash;
+  FUriSlots[Slot] := FUriCount;
+  Inc(FUriCount);
+  if 2 * FUriCount > Length(FUriSlots) then
+  begin
+    SetLength(FUriSlots, 2 * Length(FUriSlots));
+    Mask := Integer(Length(FUriSlots)) - 1;
+    for I := 0 to Mask do
+      FUriSlots[I] := -1;
+    for I := 0 to FUriCount - 1 do
+    begin
+      Slot := Integer(LandrixXmlHashFinish(FUriHashes[I]) and Cardinal(Mask));
+      while FUriSlots[Slot] >= 0 do
+        Slot := (Slot + 1) and Mask;
+      FUriSlots[Slot] := I;
+    end;
+  end;
+  Result := Uri;
+end;
+
 procedure TLandrixXmlReader.PushBinding(PrefixP: PAnsiChar; PrefixLen: Integer; const Uri: TLandrixXmlUtf8);
 var
   B: Integer;
+  H: Cardinal;
 begin
   if FBindingCount = Length(FBindings) then
     SetLength(FBindings, 2 * FBindingCount);
   FBindings[FBindingCount].PrefixP := PrefixP;
   FBindings[FBindingCount].PrefixLen := PrefixLen;
-  FBindings[FBindingCount].Uri := Uri;
+  FBindings[FBindingCount].Uri := SharedUri(Uri, H);
   FBindings[FBindingCount].Hash := PrefixHash(PrefixP, PrefixLen);
-  FBindings[FBindingCount].UriHash := LandrixXmlHashBytes(PAnsiChar(Uri), Length(Uri), LandrixXmlHashSalt);
+  FBindings[FBindingCount].UriHash := H;
   B := Integer(FBindings[FBindingCount].Hash and Cardinal(Length(FPrefixHeads) - 1));
   FBindings[FBindingCount].Next := FPrefixHeads[B];
   FPrefixHeads[B] := FBindingCount;
@@ -1387,11 +1452,13 @@ begin
   begin
     E^.NsP := PAnsiChar(FBindings[B].Uri);
     E^.NsLen := Length(FBindings[B].Uri);
+    E^.NsBinding := B;
   end
   else
   begin
     E^.NsP := nil;
     E^.NsLen := 0;
+    E^.NsBinding := -1;
   end;
   { 3. attribute names }
   for I := 0 to FAttrCount - 1 do
@@ -1400,6 +1467,7 @@ begin
     begin
       FAttrs[I].NsP := LandrixXmlNamespaceXmlns;
       FAttrs[I].NsLen := Length(LandrixXmlNamespaceXmlns);
+      FAttrs[I].NsBinding := -1;
     end
     else if FAttrs[I].ColonPos >= 0 then
     begin
@@ -1411,11 +1479,13 @@ begin
       FAttrs[I].NsP := PAnsiChar(FBindings[B].Uri);
       FAttrs[I].NsLen := Length(FBindings[B].Uri);
       FAttrs[I].NsHash := FBindings[B].UriHash;
+      FAttrs[I].NsBinding := B;
     end
     else
     begin
       FAttrs[I].NsP := nil;
       FAttrs[I].NsLen := 0;
+      FAttrs[I].NsBinding := -1;
     end;
   end;
   CheckDuplicates(True);
@@ -1526,6 +1596,12 @@ begin
       FAttrs[FAttrCount].ValueLen := Integer(P - ValueStart);
     end;
     Inc(P); { closing quote }
+    { resolved once the start tag is complete; until then (an error in
+      between) the attribute has no namespace, not the one of a slot reused
+      from an earlier element }
+    FAttrs[FAttrCount].NsP := nil;
+    FAttrs[FAttrCount].NsLen := 0;
+    FAttrs[FAttrCount].NsBinding := -1;
     Inc(FAttrCount);
   end;
   FCur := P;
@@ -1544,6 +1620,7 @@ begin
   FColonPos := E^.ColonPos;
   FNsP := E^.NsP;
   FNsLen := E^.NsLen;
+  FNsBinding := E^.NsBinding;
   if FIsEmpty then
     FPendingEnd := True;
 end;
@@ -1560,6 +1637,7 @@ begin
   FColonPos := E^.ColonPos;
   FNsP := E^.NsP;
   FNsLen := E^.NsLen;
+  FNsBinding := E^.NsBinding;
   FPendingPop := True;
 end;
 
@@ -1702,6 +1780,7 @@ begin
   FColonPos := -1;
   FNsP := nil;
   FNsLen := 0;
+  FNsBinding := -1;
   FValueP := nil;
   FValueLen := 0;
   FValueOfs := -1;
@@ -1885,9 +1964,14 @@ begin
   Result := LandrixXmlSpanToUtf8(GetLocalNameSpan);
 end;
 
+{ The binding's string itself where there is one: no copy, and callers
+  that keep it can tell the same URI by its pointer. }
 function TLandrixXmlReader.NamespaceUriUtf8: TLandrixXmlUtf8;
 begin
-  Result := LandrixXmlSpanToUtf8(GetNamespaceUriSpan);
+  if FNsBinding >= 0 then
+    Result := FBindings[FNsBinding].Uri
+  else
+    Result := LandrixXmlSpanToUtf8(GetNamespaceUriSpan);
 end;
 
 function TLandrixXmlReader.ValueUtf8: TLandrixXmlUtf8;
@@ -1983,7 +2067,11 @@ end;
 
 function TLandrixXmlReader.AttributeNamespaceUriUtf8(Index: Integer): TLandrixXmlUtf8;
 begin
-  Result := LandrixXmlSpanToUtf8(AttributeNamespaceUriSpan(Index));
+  CheckAttrIndex(Index);
+  if FAttrs[Index].NsBinding >= 0 then
+    Result := FBindings[FAttrs[Index].NsBinding].Uri
+  else
+    Result := LandrixXmlSpanToUtf8(AttributeNamespaceUriSpan(Index));
 end;
 
 function TLandrixXmlReader.AttributeValueUtf8(Index: Integer): TLandrixXmlUtf8;
