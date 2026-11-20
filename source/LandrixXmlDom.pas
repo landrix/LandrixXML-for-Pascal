@@ -395,10 +395,13 @@ type
     procedure LoadWith(Reader: TLandrixXmlReader);
     procedure PrepareReader(Reader: TLandrixXmlReader);
     procedure ConfigureWriter(Writer: TLandrixXmlWriter);
+    procedure ClearContent;
   public
     constructor Create;
     destructor Destroy; override;
-    { Frees all nodes and resets the document metadata (options stay). }
+    { Frees all nodes and resets the document metadata (options stay) and
+      the name table: the table object, names and expanded ids taken from
+      Names before are invalid afterwards. Every LoadFrom... clears first. }
     procedure Clear; override;
 
     { A failed load leaves the document empty. }
@@ -416,6 +419,9 @@ type
     procedure SaveToWriter(Writer: TLandrixXmlWriter);
 
     property Root: TLandrixXmlNode read GetRoot;
+    { The interned names of the current content. The table object, a
+      TLandrixXmlName or an ExpandedId taken from it is valid until Clear
+      or the next LoadFrom... }
     property Names: TLandrixXmlNameTable read FNames;
 
     { load options }
@@ -2499,7 +2505,7 @@ end;
 
 destructor TLandrixXmlDocument.Destroy;
 begin
-  Clear;
+  ClearContent;
   FDetachedNodes.Free;
   FDetachedNodes := nil;
   inherited Destroy;
@@ -2507,6 +2513,20 @@ begin
 end;
 
 procedure TLandrixXmlDocument.Clear;
+var
+  Old: TLandrixXmlNameTable;
+begin
+  ClearContent;
+  { no node is left: the names of the old content go too, so a document
+    object reused for many inputs does not keep them all (the new table
+    first, so a failed allocation leaves the old one in place) }
+  Old := FNames;
+  FNames := TLandrixXmlNameTable.Create;
+  Old.Free;
+end;
+
+{ Frees all nodes and resets the metadata (the name table stays). }
+procedure TLandrixXmlDocument.ClearContent;
 var
   N: TLandrixXmlNode;
 begin
@@ -2755,7 +2775,9 @@ begin
   try
     Build(Reader, Self, False);
   except
-    Clear;
+    { the nodes only: allocating a new name table here could hide the
+      error; the next load or Clear drops the names }
+    ClearContent;
     raise;
   end;
   FVersion := Reader.Version;
@@ -2815,12 +2837,15 @@ end;
 procedure TLandrixXmlDocument.LoadFromUtf8(const S: TLandrixXmlUtf8);
 var
   Reader: TLandrixXmlReader;
+  Input: TLandrixXmlUtf8;
 begin
+  { kept: S may be a string only the old name table holds }
+  Input := S;
   Clear;
   Reader := TLandrixXmlReader.Create;
   try
     PrepareReader(Reader);
-    Reader.LoadFromUtf8(S);
+    Reader.LoadFromUtf8(Input);
     LoadWith(Reader);
   finally
     Reader.Free;

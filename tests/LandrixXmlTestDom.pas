@@ -838,6 +838,12 @@ begin
   Doc2 := TLandrixXmlDocument.Create;
   try
     Doc.WriteDeclaration := False;
+    { Clear (and every load) starts a new name table }
+    Doc.LoadFromUtf8('<first/>');
+    Check(Doc.Names.FindExpanded(nil, 0, 'first', 5) >= 0, 'the name of the first document');
+    Doc.LoadFromUtf8('<second/>');
+    CheckEquals(-1, Doc.Names.FindExpanded(nil, 0, 'first', 5), 'not kept after the next load');
+    Check(Doc.Names.FindExpanded(nil, 0, 'second', 6) >= 0, 'the name of the second document');
     { a prefix a descendant takes from outside }
     Doc.LoadFromUtf8('<a xmlns:p="urn:b"><e><p:c/></e><f xmlns:p="urn:x"><p:d/></f></a>');
     try

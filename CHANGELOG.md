@@ -30,6 +30,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- DOM: `TLandrixXmlDocument.Clear`, and with it every `LoadFrom...`,
+  starts a new name table. A document object reused for many inputs no
+  longer keeps the names of all of them. The `Names` object, a
+  `TLandrixXmlName` or an `ExpandedId` taken from it is valid until the
+  next `Clear` or load.
 - The picture formatting unit is now `LandrixXmlXPathFormat` (was
   `LandrixXmlXsltFormat`, internal) and is shared by the XPath evaluator
   and the XSLT processor; its "not supported" messages no longer start
