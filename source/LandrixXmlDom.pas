@@ -97,6 +97,9 @@ type
     FQualifiedName: TLandrixXmlUtf8;
     FExpandedId: Integer;
     FHash: Cardinal;
+    { the URI's id in the name table and the hash of the expanded name }
+    FUriId: Integer;
+    FExpHash: Cardinal;
   public
     property Prefix: TLandrixXmlUtf8 read FPrefix;
     property LocalName: TLandrixXmlUtf8 read FLocalName;
@@ -106,14 +109,23 @@ type
     property ExpandedId: Integer read FExpandedId;
   end;
 
+  TLandrixXmlNameSlots = array of Integer;
+
   TLandrixXmlNameTable = class
   private
     FNames: TList;          { owns TLandrixXmlName }
-    FSlots: array of Integer;
+    FSlots: TLandrixXmlNameSlots;
     FExpanded: TList;       { first name of each expanded id }
-    FExpSlots: array of Integer;
+    FExpSlots: TLandrixXmlNameSlots;
+    { each namespace URI once (names share the string), with its hash }
+    FUris: array of TLandrixXmlUtf8;
+    FUriHashes: array of Cardinal;
+    FUriCount: Integer;
+    FUriSlots: TLandrixXmlNameSlots;
     procedure Grow;
     procedure GrowExpanded;
+    function UriId(UriP: PAnsiChar; UriLen: Integer; Add: Boolean; out Hash: Cardinal): Integer;
+    function FindExpandedIn(Uri: Integer; ExpHash: Cardinal; LocalP: PAnsiChar; LocalLen: Integer): Integer;
   public
     constructor Create;
     destructor Destroy; override;
@@ -568,43 +580,63 @@ end;
 
 { --- name table ------------------------------------------------------------ }
 
-function HashTriple(PrefixP: PAnsiChar; PrefixLen: Integer; LocalP: PAnsiChar;
-  LocalLen: Integer; UriP: PAnsiChar; UriLen: Integer): Cardinal;
+{ The URI part of the name hashes: salted, so colliding names cannot be
+  prepared in advance (hash flooding). }
+function UriHashOf(UriP: PAnsiChar; UriLen: Integer): Cardinal;
 var
   Sep: AnsiChar;
 begin
+  { the separator ends the URI: no other split of the same bytes into URI
+    and name gives the same hash }
   Sep := #0;
-  Result := LandrixXmlHashBytes(PrefixP, PrefixLen, LandrixXmlHashSeed);
-  Result := LandrixXmlHashBytes(@Sep, 1, Result);
-  Result := LandrixXmlHashBytes(LocalP, LocalLen, Result);
-  Result := LandrixXmlHashBytes(@Sep, 1, Result);
-  Result := LandrixXmlHashBytes(UriP, UriLen, Result);
+  Result := LandrixXmlHashBytes(@Sep, 1, LandrixXmlHashBytes(UriP, UriLen, LandrixXmlHashSalt));
 end;
 
-function HashExpanded(UriP: PAnsiChar; UriLen: Integer; LocalP: PAnsiChar;
-  LocalLen: Integer): Cardinal;
+function NameHash(PrefixP: PAnsiChar; PrefixLen: Integer; LocalP: PAnsiChar;
+  LocalLen: Integer; UriHash: Cardinal): Cardinal;
 var
   Sep: AnsiChar;
 begin
   Sep := #0;
-  Result := LandrixXmlHashBytes(UriP, UriLen, LandrixXmlHashSeed);
+  Result := LandrixXmlHashBytes(PrefixP, PrefixLen, UriHash);
   Result := LandrixXmlHashBytes(@Sep, 1, Result);
-  Result := LandrixXmlHashBytes(LocalP, LocalLen, Result);
+  Result := LandrixXmlHashFinish(LandrixXmlHashBytes(LocalP, LocalLen, Result));
+end;
+
+function ExpandedHash(LocalP: PAnsiChar; LocalLen: Integer; UriHash: Cardinal): Cardinal;
+begin
+  Result := LandrixXmlHashFinish(LandrixXmlHashBytes(LocalP, LocalLen, UriHash));
+end;
+
+{ Inserts Id into an open addressing table (-1 = free; at most half full). }
+procedure PutSlot(var Slots: TLandrixXmlNameSlots; Hash: Cardinal; Id: Integer);
+var
+  Slot, Mask: Integer;
+begin
+  Mask := Integer(Length(Slots)) - 1;
+  Slot := Integer(Hash and Cardinal(Mask));
+  while Slots[Slot] >= 0 do
+    Slot := (Slot + 1) and Mask;
+  Slots[Slot] := Id;
+end;
+
+procedure ClearSlots(var Slots: TLandrixXmlNameSlots; Size: Integer);
+var
+  I: Integer;
+begin
+  SetLength(Slots, Size);
+  for I := 0 to Size - 1 do
+    Slots[I] := -1;
 end;
 
 constructor TLandrixXmlNameTable.Create;
-var
-  I: Integer;
 begin
   inherited Create;
   FNames := TList.Create;
   FExpanded := TList.Create;
-  SetLength(FSlots, 256);
-  for I := 0 to Integer(High(FSlots)) do
-    FSlots[I] := -1;
-  SetLength(FExpSlots, 256);
-  for I := 0 to Integer(High(FExpSlots)) do
-    FExpSlots[I] := -1;
+  ClearSlots(FSlots, 256);
+  ClearSlots(FExpSlots, 256);
+  ClearSlots(FUriSlots, 64);
 end;
 
 destructor TLandrixXmlNameTable.Destroy;
@@ -621,77 +653,110 @@ end;
 
 procedure TLandrixXmlNameTable.Grow;
 var
-  I, Size, Slot: Integer;
+  I: Integer;
 begin
-  Size := Integer(Length(FSlots)) * 2;
-  SetLength(FSlots, Size);
-  for I := 0 to Size - 1 do
-    FSlots[I] := -1;
+  ClearSlots(FSlots, Integer(Length(FSlots)) * 2);
   for I := 0 to Integer(FNames.Count) - 1 do
-  begin
-    Slot := Integer(TLandrixXmlName(FNames[I]).FHash and Cardinal(Size - 1));
-    while FSlots[Slot] >= 0 do
-      Slot := (Slot + 1) and (Size - 1);
-    FSlots[Slot] := I;
-  end;
+    PutSlot(FSlots, TLandrixXmlName(FNames[I]).FHash, I);
 end;
 
 procedure TLandrixXmlNameTable.GrowExpanded;
 var
-  I, Size, Slot: Integer;
+  I: Integer;
+begin
+  ClearSlots(FExpSlots, Integer(Length(FExpSlots)) * 2);
+  for I := 0 to Integer(FExpanded.Count) - 1 do
+    PutSlot(FExpSlots, TLandrixXmlName(FExpanded[I]).FExpHash, I);
+end;
+
+{ The id of the URI in the URI table (-1 if absent and not Add). A URI is
+  kept once: all names in it share the string. }
+function TLandrixXmlNameTable.UriId(UriP: PAnsiChar; UriLen: Integer; Add: Boolean;
+  out Hash: Cardinal): Integer;
+var
+  Slot, Mask, I: Integer;
+begin
+  Hash := UriHashOf(UriP, UriLen);
+  Mask := Integer(Length(FUriSlots)) - 1;
+  Slot := Integer(LandrixXmlHashFinish(Hash) and Cardinal(Mask));
+  while FUriSlots[Slot] >= 0 do
+  begin
+    Result := FUriSlots[Slot];
+    if (FUriHashes[Result] = Hash) and SameBuf(UriP, UriLen, FUris[Result]) then
+      Exit;
+    Slot := (Slot + 1) and Mask;
+  end;
+  Result := -1;
+  if not Add then
+    Exit;
+  if FUriCount = Length(FUris) then
+  begin
+    SetLength(FUris, 2 * FUriCount + 8);
+    SetLength(FUriHashes, 2 * FUriCount + 8);
+  end;
+  Result := FUriCount;
+  FUris[Result] := SpanStr(UriP, UriLen);
+  FUriHashes[Result] := Hash;
+  FUriSlots[Slot] := Result;
+  Inc(FUriCount);
+  if 2 * FUriCount > Integer(Length(FUriSlots)) then
+  begin
+    ClearSlots(FUriSlots, Integer(Length(FUriSlots)) * 2);
+    for I := 0 to FUriCount - 1 do
+      PutSlot(FUriSlots, LandrixXmlHashFinish(FUriHashes[I]), I);
+  end;
+end;
+
+function TLandrixXmlNameTable.FindExpandedIn(Uri: Integer; ExpHash: Cardinal; LocalP: PAnsiChar;
+  LocalLen: Integer): Integer;
+var
+  Mask, Slot: Integer;
   N: TLandrixXmlName;
 begin
-  Size := Integer(Length(FExpSlots)) * 2;
-  SetLength(FExpSlots, Size);
-  for I := 0 to Size - 1 do
-    FExpSlots[I] := -1;
-  for I := 0 to Integer(FExpanded.Count) - 1 do
+  Mask := Integer(Length(FExpSlots)) - 1;
+  Slot := Integer(ExpHash and Cardinal(Mask));
+  while FExpSlots[Slot] >= 0 do
   begin
-    N := TLandrixXmlName(FExpanded[I]);
-    Slot := Integer(HashExpanded(PAnsiChar(N.FNamespaceUri), Length(N.FNamespaceUri),
-      PAnsiChar(N.FLocalName), Length(N.FLocalName)) and Cardinal(Size - 1));
-    while FExpSlots[Slot] >= 0 do
-      Slot := (Slot + 1) and (Size - 1);
-    FExpSlots[Slot] := I;
+    N := TLandrixXmlName(FExpanded[FExpSlots[Slot]]);
+    if (N.FExpHash = ExpHash) and (N.FUriId = Uri) and SameBuf(LocalP, LocalLen, N.FLocalName) then
+    begin
+      Result := FExpSlots[Slot];
+      Exit;
+    end;
+    Slot := (Slot + 1) and Mask;
   end;
+  Result := -1;
 end;
 
 function TLandrixXmlNameTable.FindExpanded(UriP: PAnsiChar; UriLen: Integer;
   LocalP: PAnsiChar; LocalLen: Integer): Integer;
 var
-  Size, Slot: Integer;
-  N: TLandrixXmlName;
+  Uri: Integer;
+  UH: Cardinal;
 begin
-  Size := Integer(Length(FExpSlots));
-  Slot := Integer(HashExpanded(UriP, UriLen, LocalP, LocalLen) and Cardinal(Size - 1));
-  while FExpSlots[Slot] >= 0 do
-  begin
-    N := TLandrixXmlName(FExpanded[FExpSlots[Slot]]);
-    if SameBuf(UriP, UriLen, N.FNamespaceUri) and SameBuf(LocalP, LocalLen, N.FLocalName) then
-    begin
-      Result := FExpSlots[Slot];
-      Exit;
-    end;
-    Slot := (Slot + 1) and (Size - 1);
-  end;
-  Result := -1;
+  Uri := UriId(UriP, UriLen, False, UH);
+  if Uri < 0 then
+    Result := -1
+  else
+    Result := FindExpandedIn(Uri, ExpandedHash(LocalP, LocalLen, UH), LocalP, LocalLen);
 end;
 
 function TLandrixXmlNameTable.Intern(PrefixP: PAnsiChar; PrefixLen: Integer;
   LocalP: PAnsiChar; LocalLen: Integer; UriP: PAnsiChar; UriLen: Integer): TLandrixXmlName;
 var
-  H: Cardinal;
-  Size, Slot, ESlot, Id: Integer;
+  H, UH, EH: Cardinal;
+  Size, Slot, Id, Uri: Integer;
   N: TLandrixXmlName;
 begin
-  H := HashTriple(PrefixP, PrefixLen, LocalP, LocalLen, UriP, UriLen);
+  Uri := UriId(UriP, UriLen, True, UH);
+  H := NameHash(PrefixP, PrefixLen, LocalP, LocalLen, UH);
   Size := Integer(Length(FSlots));
   Slot := Integer(H and Cardinal(Size - 1));
   while FSlots[Slot] >= 0 do
   begin
     N := TLandrixXmlName(FNames[FSlots[Slot]]);
-    if (N.FHash = H) and SameBuf(LocalP, LocalLen, N.FLocalName) and
-      SameBuf(PrefixP, PrefixLen, N.FPrefix) and SameBuf(UriP, UriLen, N.FNamespaceUri) then
+    if (N.FHash = H) and (N.FUriId = Uri) and SameBuf(LocalP, LocalLen, N.FLocalName) and
+      SameBuf(PrefixP, PrefixLen, N.FPrefix) then
     begin
       Result := N;
       Exit;
@@ -701,26 +766,23 @@ begin
   N := TLandrixXmlName.Create;
   N.FPrefix := SpanStr(PrefixP, PrefixLen);
   N.FLocalName := SpanStr(LocalP, LocalLen);
-  N.FNamespaceUri := SpanStr(UriP, UriLen);
+  N.FNamespaceUri := FUris[Uri];
+  N.FUriId := Uri;
   if PrefixLen > 0 then
     N.FQualifiedName := N.FPrefix + ':' + N.FLocalName
   else
     N.FQualifiedName := N.FLocalName;
   N.FHash := H;
-  Id := FindExpanded(UriP, UriLen, LocalP, LocalLen);
+  EH := ExpandedHash(LocalP, LocalLen, UH);
+  N.FExpHash := EH;
+  Id := FindExpandedIn(Uri, EH, LocalP, LocalLen);
   if Id < 0 then
   begin
     Id := Integer(FExpanded.Add(N));
     if 2 * FExpanded.Count > Integer(Length(FExpSlots)) then
       GrowExpanded
     else
-    begin
-      ESlot := Integer(HashExpanded(UriP, UriLen, LocalP, LocalLen) and
-        Cardinal(Integer(Length(FExpSlots)) - 1));
-      while FExpSlots[ESlot] >= 0 do
-        ESlot := (ESlot + 1) and (Integer(Length(FExpSlots)) - 1);
-      FExpSlots[ESlot] := Id;
-    end;
+      PutSlot(FExpSlots, EH, Id);
   end;
   N.FExpandedId := Id;
   FSlots[Slot] := Integer(FNames.Add(N));
@@ -1458,6 +1520,8 @@ begin
       RaiseNs('The prefix is already declared with another namespace on this element');
     Exit;
   end;
+  { not for the default namespace: declaring it late on an element built
+    without one is allowed (GAEB pattern) }
   if Prefix <> '' then
   begin
     if (C.FName.FPrefix = Prefix) and (C.FName.FNamespaceUri <> NamespaceUri) then
@@ -1918,47 +1982,167 @@ begin
 end;
 
 { Adds declarations for prefixes used in this subtree that are not bound
-  correctly at their place (after moving a subtree from a reader). }
+  correctly at their place (after moving a subtree from a reader). A
+  prefix that all names taking it from outside the subtree use with one
+  namespace is declared on the subtree's root; one they use with several
+  (e.g. an unqualified element added below an element in a default
+  namespace while detached), or one bound wrongly inside the subtree, is
+  declared on the element that needs it, so no other name changes. }
 procedure TLandrixXmlNode.EnsureDeclarations;
 var
   Stack: TList;
   N: TLandrixXmlContainerNode;
   I: Integer;
   Uri: TLandrixXmlUtf8;
+  { prefix -> first URI seen and whether another one occurs (open
+    addressing, salted; -1 = free) }
+  Prefixes, Uris: array of TLandrixXmlUtf8;
+  Mixed: array of Boolean;
+  Slots: array of Integer;
+  Count: Integer;
+  Pass: Integer;
+
+  function Relevant(Name: TLandrixXmlName; IsElementName: Boolean): Boolean;
+  begin
+    Result := (Name.FNamespaceUri <> LandrixXmlNamespaceXmlns) and
+      (Name.FNamespaceUri <> LandrixXmlNamespaceXml) and
+      ((Name.FPrefix <> '') or IsElementName);
+  end;
+
+  function Find(const Prefix: TLandrixXmlUtf8; Add: Boolean): Integer;
+  var
+    Slot, Mask, J: Integer;
+  begin
+    Mask := Integer(Length(Slots)) - 1;
+    Slot := Integer(LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(Prefix), Length(Prefix),
+      LandrixXmlHashSalt)) and Cardinal(Mask));
+    while (Slots[Slot] >= 0) and (Prefixes[Slots[Slot]] <> Prefix) do
+      Slot := (Slot + 1) and Mask;
+    Result := Slots[Slot];
+    if (Result >= 0) or not Add then
+      Exit;
+    if Count = Length(Prefixes) then
+    begin
+      SetLength(Prefixes, 2 * Count + 8);
+      SetLength(Uris, 2 * Count + 8);
+      SetLength(Mixed, 2 * Count + 8);
+    end;
+    Result := Count;
+    Prefixes[Count] := Prefix;
+    Slots[Slot] := Count;
+    Inc(Count);
+    if 2 * Count > Length(Slots) then
+    begin
+      SetLength(Slots, 2 * Length(Slots));
+      for J := 0 to Integer(Length(Slots)) - 1 do
+        Slots[J] := -1;
+      for J := 0 to Count - 1 do
+      begin
+        Mask := Integer(Length(Slots)) - 1;
+        Slot := Integer(LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(Prefixes[J]),
+          Length(Prefixes[J]), LandrixXmlHashSalt)) and Cardinal(Mask));
+        while Slots[Slot] >= 0 do
+          Slot := (Slot + 1) and Mask;
+        Slots[Slot] := J;
+      end;
+    end;
+  end;
+
+  { True if the prefix is declared on N or on an ancestor up to this
+    node: then a declaration on this node would be shadowed for N. }
+  function DeclaredInside(const Prefix: TLandrixXmlUtf8): Boolean;
+  var
+    E: TLandrixXmlContainerNode;
+  begin
+    Result := True;
+    E := N;
+    while E <> nil do
+    begin
+      if E.DeclaredPrefixIndex(Prefix) >= 0 then
+        Exit;
+      if E = Self then
+        Break;
+      E := E.FParent;
+    end;
+    Result := False;
+  end;
+
+  { only names that take the prefix from outside the subtree count: a
+    declaration on this node reaches exactly those }
+  procedure Note(Name: TLandrixXmlName; IsElementName: Boolean);
+  var
+    P: Integer;
+  begin
+    if not Relevant(Name, IsElementName) or DeclaredInside(Name.FPrefix) then
+      Exit;
+    P := Find(Name.FPrefix, False);
+    if P < 0 then
+    begin
+      P := Find(Name.FPrefix, True);
+      Uris[P] := Name.FNamespaceUri;
+      Mixed[P] := False;
+    end
+    else if Uris[P] <> Name.FNamespaceUri then
+      Mixed[P] := True;
+  end;
 
   procedure Need(Name: TLandrixXmlName; IsElementName: Boolean);
   var
     Found: Boolean;
+    P: Integer;
   begin
-    if (Name.FNamespaceUri = LandrixXmlNamespaceXmlns) or
-      (Name.FNamespaceUri = LandrixXmlNamespaceXml) then
-      Exit;
-    if (Name.FPrefix = '') and not IsElementName then
+    if not Relevant(Name, IsElementName) then
       Exit;
     Found := N.LookupNamespace(Name.FPrefix, Uri);
     if Found and (Uri = Name.FNamespaceUri) then
       Exit;
     if not Found and (Name.FNamespaceUri = '') then
       Exit;
-    DeclareNamespace(Name.FPrefix, Name.FNamespaceUri);
+    { ancestors come first, so descendants see the new binding; a binding
+      from inside the subtree or a prefix used with several namespaces is
+      fixed on N itself }
+    P := -1;
+    if not DeclaredInside(Name.FPrefix) then
+      P := Find(Name.FPrefix, False);
+    if (P < 0) or Mixed[P] then
+      N.DeclareNamespace(Name.FPrefix, Name.FNamespaceUri)
+    else
+      DeclareNamespace(Name.FPrefix, Name.FNamespaceUri);
   end;
 
 begin
+  Count := 0;
+  SetLength(Slots, 16);
+  for I := 0 to 15 do
+    Slots[I] := -1;
   Stack := TList.Create;
   try
-    Stack.Add(Self);
-    while Stack.Count > 0 do
+    { pass 0 notes the namespaces per prefix, pass 1 declares }
+    for Pass := 0 to 1 do
     begin
-      { only elements are tested below; others are never dereferenced }
-      N := TLandrixXmlContainerNode(Stack[Stack.Count - 1]);
-      Stack.Delete(Stack.Count - 1);
-      if N.FNodeType <> xntElement then
-        Continue;
-      Need(N.FName, True);
-      for I := 0 to N.FAttrCount - 1 do
-        Need(N.FAttrs[I].Name, False);
-      for I := 0 to N.FChildCount - 1 do
-        Stack.Add(N.FChildren[I]);
+      Stack.Add(Self);
+      while Stack.Count > 0 do
+      begin
+        { only elements are tested below; others are never dereferenced }
+        N := TLandrixXmlContainerNode(Stack[Stack.Count - 1]);
+        Stack.Delete(Stack.Count - 1);
+        if N.FNodeType <> xntElement then
+          Continue;
+        if Pass = 0 then
+        begin
+          Note(N.FName, True);
+          for I := 0 to N.FAttrCount - 1 do
+            Note(N.FAttrs[I].Name, False);
+        end
+        else
+        begin
+          Need(N.FName, True);
+          for I := 0 to N.FAttrCount - 1 do
+            Need(N.FAttrs[I].Name, False);
+        end;
+        for I := 0 to N.FChildCount - 1 do
+          Stack.Add(N.FChildren[I]);
+      end;
     end;
   finally
     Stack.Free;

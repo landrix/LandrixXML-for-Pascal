@@ -99,6 +99,11 @@ type
     FNameKeys: TLandrixXmlUtf8Array;
     FNameSlots: TLandrixXmlXPathIntArray;
     FExpandedKeys: TLandrixXmlUtf8Array;
+    { each namespace URI once: the name tables key on its id (UriKey), so
+      many names in one long URI do not each keep and hash a copy }
+    FUris: TLandrixXmlUtf8Array;
+    FUriSlots: TLandrixXmlXPathIntArray;
+    FUriCount: Integer;
     FExpandedSlots: TLandrixXmlXPathIntArray;
     { building }
     FStack: TLandrixXmlXPathIntArray;
@@ -118,6 +123,7 @@ type
     procedure CheckBuild(Top: Boolean);
     function NameId(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8): Integer;
     function LookupExpanded(const Key: TLandrixXmlUtf8; Add: Boolean): Integer;
+    function UriId(const NamespaceUri: TLandrixXmlUtf8; Add: Boolean): Integer;
     function NewNode(Kind: TLandrixXmlXPathNodeKind; Line, Column: Integer): Integer;
     procedure AddChild(Kind: TLandrixXmlXPathNodeKind; Line, Column: Integer; out Index: Integer);
     procedure AddText(const Value: TLandrixXmlUtf8; Line, Column: Integer; DomNode: TLandrixXmlNode);
@@ -263,12 +269,18 @@ implementation
 
 { --- name tables: open addressing over string keys ---------------------- }
 
+{ Salted: the keys come from documents (hash flooding). }
 function KeyHash(const Key: TLandrixXmlUtf8): Cardinal;
 begin
-  if Key = '' then
-    Result := LandrixXmlHashSeed
-  else
-    Result := LandrixXmlHashBytes(PAnsiChar(Key), Length(Key), LandrixXmlHashSeed);
+  Result := LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(Key), Length(Key), LandrixXmlHashSalt));
+end;
+
+{ The id of a URI as the four bytes that start a name key. }
+function UriKey(Id: Integer): TLandrixXmlUtf8;
+begin
+  Result := '';
+  SetLength(Result, 4);
+  Move(Id, PAnsiChar(Result)^, 4);
 end;
 
 { Finds Key in Keys/Slots (slot value = id + 1, 0 = free); returns the
@@ -336,6 +348,11 @@ begin
   FExpandedCount := 0;
   FNameKeys := nil;
   FExpandedKeys := nil;
+  FUris := nil;
+  FUriCount := 0;
+  SetLength(FUriSlots, 64);
+  for I := 0 to 63 do
+    FUriSlots[I] := 0;
   SetLength(FNameSlots, 64);
   SetLength(FExpandedSlots, 64);
   for I := 0 to 63 do
@@ -381,12 +398,37 @@ begin
     Rehash(FExpandedKeys, FExpandedSlots, FExpandedCount);
 end;
 
-function TLandrixXmlXPathTree.NameId(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8): Integer;
+function TLandrixXmlXPathTree.UriId(const NamespaceUri: TLandrixXmlUtf8; Add: Boolean): Integer;
 var
-  Key: TLandrixXmlUtf8;
   S: Integer;
 begin
-  Key := NamespaceUri + #0 + Prefix + #0 + LocalName;
+  S := FindSlot(FUris, FUriSlots, NamespaceUri);
+  if FUriSlots[S] <> 0 then
+  begin
+    Result := FUriSlots[S] - 1;
+    Exit;
+  end;
+  Result := -1;
+  if not Add then
+    Exit;
+  if FUriCount = Length(FUris) then
+    SetLength(FUris, 2 * FUriCount + 8);
+  FUris[FUriCount] := NamespaceUri;
+  Result := FUriCount;
+  Inc(FUriCount);
+  FUriSlots[S] := FUriCount;
+  if 2 * FUriCount > Length(FUriSlots) then
+    Rehash(FUris, FUriSlots, FUriCount);
+end;
+
+function TLandrixXmlXPathTree.NameId(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8): Integer;
+var
+  Key, Uri: TLandrixXmlUtf8;
+  S, U: Integer;
+begin
+  U := UriId(NamespaceUri, True);
+  Uri := UriKey(U);
+  Key := Uri + Prefix + #0 + LocalName;
   S := FindSlot(FNameKeys, FNameSlots, Key);
   if FNameSlots[S] <> 0 then
   begin
@@ -404,9 +446,9 @@ begin
   Result := FNameCount;
   FNameKeys[Result] := Key;
   FNameLocals[Result] := LocalName;
-  FNameUris[Result] := NamespaceUri;
+  FNameUris[Result] := FUris[U];
   FNamePrefixes[Result] := Prefix;
-  FNameExpanded[Result] := LookupExpanded(NamespaceUri + #0 + LocalName, True);
+  FNameExpanded[Result] := LookupExpanded(Uri + LocalName, True);
   Inc(FNameCount);
   FNameSlots[S] := FNameCount;
   if 2 * FNameCount > Length(FNameSlots) then
@@ -1145,8 +1187,14 @@ begin
 end;
 
 function TLandrixXmlXPathTree.FindExpandedName(const NamespaceUri, LocalName: TLandrixXmlUtf8): Integer;
+var
+  U: Integer;
 begin
-  Result := LookupExpanded(NamespaceUri + #0 + LocalName, False);
+  U := UriId(NamespaceUri, False);
+  if U < 0 then
+    Result := -1
+  else
+    Result := LookupExpanded(UriKey(U) + LocalName, False);
 end;
 
 function TLandrixXmlXPathTree.LocalNameUtf8(Index: Integer): TLandrixXmlUtf8;

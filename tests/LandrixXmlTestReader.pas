@@ -213,6 +213,62 @@ begin
     'prefix starting with xml is allowed');
 end;
 
+{ Many declarations in scope (the prefix table instead of the linear
+  search, with growth): the innermost binding wins, leaving an element
+  brings back the outer one; many prefixed attributes under one long URI
+  (the duplicate check with the URI hash of the binding). }
+procedure TestManyNamespaces;
+var
+  Reader: TLandrixXmlReader;
+  Xml, LongUri: AnsiString;
+  I: Integer;
+begin
+  Xml := '<r';
+  for I := 0 to 299 do
+    Xml := Xml + ' xmlns:p' + AnsiString(IntToStr(I)) + '="u' + AnsiString(IntToStr(I)) + '"';
+  Xml := Xml + '><p5:a xmlns:p5="v5" xmlns:q="w"><p5:b/><q:c/><p299:d/></p5:a><p5:e/><p0:f/><p150:g/></r>';
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromBuffer(PAnsiChar(Xml)^, Length(Xml));
+    Check(Reader.Read and (Reader.NamespaceUriUtf8 = ''), 'r');
+    Check(Reader.Read and (Reader.NamespaceUriUtf8 = 'v5'), 'a: redeclared');
+    Check(Reader.Read and (Reader.NamespaceUriUtf8 = 'v5'), 'b: inner binding');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end b');
+    Check(Reader.Read and (Reader.NamespaceUriUtf8 = 'w'), 'c: new prefix');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end c');
+    Check(Reader.Read and (Reader.NamespaceUriUtf8 = 'u299'), 'd: outer prefix');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end d');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end a');
+    Check(Reader.Read and (Reader.NamespaceUriUtf8 = 'u5'), 'e: outer binding again');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end e');
+    Check(Reader.Read and (Reader.NamespaceUriUtf8 = 'u0'), 'f');
+    Check(Reader.Read and (Reader.TokenType = xttEndElement), 'end f');
+    Check(Reader.Read and (Reader.NamespaceUriUtf8 = 'u150'), 'g');
+  finally
+    Reader.Free;
+  end;
+  LongUri := 'urn:';
+  for I := 1 to 2000 do
+    LongUri := LongUri + 'x';
+  Xml := '<r xmlns:p="' + LongUri + '" xmlns:s="' + LongUri + '"';
+  for I := 0 to 199 do
+    Xml := Xml + ' p:a' + AnsiString(IntToStr(I)) + '="1"';
+  Xml := Xml + ' s:a7="2"/>';
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromBuffer(PAnsiChar(Xml)^, Length(Xml));
+    try
+      Reader.Read;
+      FailNotRaised('duplicate expanded name through a second prefix');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecNamespace), Ord(E.Code), 'expanded duplicate code');
+    end;
+  finally
+    Reader.Free;
+  end;
+end;
+
 procedure TestMixedContent;
 begin
   CheckTokens('<p>Text <b>fett</b> und <i>kursiv</i>.</p>',
@@ -895,6 +951,7 @@ begin
   RegisterTest('Reader.CDataCommentPi', TestCDataCommentPi);
   RegisterTest('Reader.DocType', TestDocType);
   RegisterTest('Reader.Namespaces', TestNamespaces);
+  RegisterTest('Reader.ManyNamespaces', TestManyNamespaces);
   RegisterTest('Reader.MixedContent', TestMixedContent);
   RegisterTest('Reader.UnicodeNames', TestUnicodeNames);
   RegisterTest('Reader.DeclarationValues', TestDeclarationValues);

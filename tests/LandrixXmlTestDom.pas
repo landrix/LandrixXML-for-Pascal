@@ -736,6 +736,34 @@ begin
     end;
     CheckEquals(1, Doc.Root[1].AttributeCount, 'nothing added');
 
+    { a subtree edited while detached: the declaration goes to the element
+      that needs it, not to the root of the subtree }
+    Doc.LoadFromUtf8('<r xmlns="urn:a"><group/></r>');
+    A := Doc.Root[0];
+    A.Detach;
+    A.AddElement('', '', 'fresh');
+    Doc.Root.AppendChild(A);
+    CheckEqualsUtf8('<r xmlns="urn:a"><group><fresh xmlns=""/></group></r>', Doc.SaveToUtf8,
+      'xmlns="" on the new element');
+    Doc2.LoadFromUtf8(Doc.SaveToUtf8);
+    CheckEqualsUtf8('urn:a', Doc2.Root[0].NamespaceUriUtf8, 'group keeps its namespace');
+    CheckEqualsUtf8('', Doc2.Root[0][0].NamespaceUriUtf8, 'fresh has none');
+    { a prefix bound differently inside the subtree: the fix goes to the
+      element, a declaration on the subtree's root would be shadowed }
+    Doc.LoadFromUtf8('<r xmlns:p="urn:a"><g><holder><p:x/></holder></g></r>');
+    A := Doc.Root[0];
+    A.Detach;
+    A[0].DeclareNamespace('p', 'urn:b');
+    Doc.Root.AppendChild(A);
+    Doc2.LoadFromUtf8(Doc.SaveToUtf8);
+    CheckEqualsUtf8('urn:a', Doc2.Root[0][0][0].NamespaceUriUtf8, 'x keeps urn:a under a rebinding holder');
+    { a prefix rebound by a sibling's own declaration still goes to the
+      root once: only names taking it from outside count }
+    Doc.LoadFromUtf8('<r><s xmlns:p="urn:a"><g><p:x/><p:y xmlns:p="urn:b"/></g></s><t/></r>');
+    Doc.Root[1].AppendChild(Doc.Root[0][0]);
+    CheckEqualsUtf8('<r><s xmlns:p="urn:a"/><t><g xmlns:p="urn:a"><p:x/><p:y xmlns:p="urn:b"/></g></t></r>',
+      Doc.SaveToUtf8, 'declaration on the subtree root');
+
     { late default namespace (GAEB pattern) stays allowed }
     Doc.Clear;
     Root := Doc.AddElement('GAEB');

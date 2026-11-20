@@ -99,6 +99,10 @@ type
   TLandrixXmlWriterBinding = record
     Prefix: TLandrixXmlUtf8;
     Uri: TLandrixXmlUtf8;
+    { the salted hash of the prefix; the next older binding in the same
+      bucket of the prefix table (-1 = none) }
+    Hash: Cardinal;
+    Next: Integer;
   end;
 
   TLandrixXmlWriterSnapshot = record
@@ -126,6 +130,10 @@ type
     FAttrs: array of TLandrixXmlWriterAttr;
     FAttrCount: Integer;
     FBindings: array of TLandrixXmlWriterBinding;
+    { the newest binding per bucket of prefix hashes (-1 = none), for
+      bindings 0..FBindingCount-1; change FBindingCount only through
+      SetBindingCount }
+    FPrefixHeads: array of Integer;
     FBindingCount: Integer;
     FHash: array of Integer;
     FHashCount: Integer;        { attributes entered in FHash; -1 = stale }
@@ -176,6 +184,8 @@ type
     procedure CheckNsArgs(const NamespaceUri, Prefix, LocalName: TLandrixXmlUtf8;
       IsAttribute: Boolean);
     function FindBinding(const Prefix: TLandrixXmlUtf8): Integer;
+    procedure SetBindingCount(Count: Integer);
+    procedure PushBinding(const Prefix, Uri: TLandrixXmlUtf8);
     function FindAttr(const QName: TLandrixXmlUtf8): Integer;
     procedure RebuildHash;
     procedure HashAdded;
@@ -463,15 +473,19 @@ begin
 end;
 
 procedure TLandrixXmlWriter.Clear;
+var
+  I: Integer;
 begin
   FBuf.Clear;
   FElemCount := 0;
   FAttrCount := 0;
   if Length(FBindings) = 0 then
     SetLength(FBindings, 16);
-  FBindings[0].Prefix := 'xml';
-  FBindings[0].Uri := LandrixXmlNamespaceXml;
-  FBindingCount := 1;
+  FBindingCount := 0;
+  SetLength(FPrefixHeads, 64);
+  for I := 0 to 63 do
+    FPrefixHeads[I] := -1;
+  PushBinding('xml', LandrixXmlNamespaceXml);
   FHashCount := -1;
   FInStartTag := False;
   FStarted := False;
@@ -598,7 +612,7 @@ begin
   FBuf.Truncate(S.BufSize);
   FElemCount := S.ElemCount;
   FAttrCount := S.AttrCount;
-  FBindingCount := S.BindingCount;
+  SetBindingCount(S.BindingCount);
   FTopCount := S.TopCount;
   FInStartTag := S.InStartTag;
   FStarted := S.Started;
@@ -878,11 +892,81 @@ begin
     Fail(xecInvalidArgument, 'A namespaced attribute needs a prefix');
 end;
 
-function TLandrixXmlWriter.FindBinding(const Prefix: TLandrixXmlUtf8): Integer;
+function PrefixHash(const Prefix: TLandrixXmlUtf8): Cardinal;
 begin
-  Result := FBindingCount - 1;
-  while (Result >= 0) and (FBindings[Result].Prefix <> Prefix) do
-    Dec(Result);
+  Result := LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(Prefix), Length(Prefix), LandrixXmlHashSalt));
+end;
+
+{ The innermost binding of the prefix, or -1: a linear search for a few
+  bindings, the prefix table for many. }
+function TLandrixXmlWriter.FindBinding(const Prefix: TLandrixXmlUtf8): Integer;
+var
+  H: Cardinal;
+begin
+  if FBindingCount <= 8 then
+  begin
+    Result := FBindingCount - 1;
+    while (Result >= 0) and (FBindings[Result].Prefix <> Prefix) do
+      Dec(Result);
+    Exit;
+  end;
+  H := PrefixHash(Prefix);
+  Result := FPrefixHeads[Integer(H and Cardinal(Length(FPrefixHeads) - 1))];
+  while (Result >= 0) and ((FBindings[Result].Hash <> H) or (FBindings[Result].Prefix <> Prefix)) do
+    Result := FBindings[Result].Next;
+end;
+
+{ Moves the top of the binding stack to Count, unlinking the bindings
+  above it (newest first, each is the head of its bucket) or linking the
+  ones kept in the array below it again (a rollback), and grows the
+  prefix table. }
+procedure TLandrixXmlWriter.SetBindingCount(Count: Integer);
+var
+  B, I, Size: Integer;
+begin
+  while FBindingCount > Count do
+  begin
+    Dec(FBindingCount);
+    B := Integer(FBindings[FBindingCount].Hash and Cardinal(Length(FPrefixHeads) - 1));
+    FPrefixHeads[B] := FBindings[FBindingCount].Next;
+  end;
+  while FBindingCount < Count do
+  begin
+    B := Integer(FBindings[FBindingCount].Hash and Cardinal(Length(FPrefixHeads) - 1));
+    FBindings[FBindingCount].Next := FPrefixHeads[B];
+    FPrefixHeads[B] := FBindingCount;
+    Inc(FBindingCount);
+  end;
+  if FBindingCount > 2 * Length(FPrefixHeads) then
+  begin
+    Size := 4 * Length(FPrefixHeads);
+    SetLength(FPrefixHeads, Size);
+    for I := 0 to Size - 1 do
+      FPrefixHeads[I] := -1;
+    for I := 0 to FBindingCount - 1 do
+    begin
+      B := Integer(FBindings[I].Hash and Cardinal(Size - 1));
+      FBindings[I].Next := FPrefixHeads[B];
+      FPrefixHeads[B] := I;
+    end;
+  end;
+end;
+
+procedure TLandrixXmlWriter.PushBinding(const Prefix, Uri: TLandrixXmlUtf8);
+begin
+  if FBindingCount = Length(FBindings) then
+    SetLength(FBindings, 2 * FBindingCount);
+  FBindings[FBindingCount].Prefix := Prefix;
+  FBindings[FBindingCount].Uri := Uri;
+  FBindings[FBindingCount].Hash := PrefixHash(Prefix);
+  SetBindingCount(FBindingCount + 1);
+end;
+
+{ The table slot of a qualified name (salted against hash flooding). }
+function AttrSlot(const QName: TLandrixXmlUtf8; Size: Integer): Integer;
+begin
+  Result := Integer(LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(QName), Length(QName),
+    LandrixXmlHashSalt)) and Cardinal(Size - 1));
 end;
 
 procedure TLandrixXmlWriter.RebuildHash;
@@ -900,8 +984,7 @@ begin
     FHash[I] := -1;
   for I := 0 to FAttrCount - 1 do
   begin
-    Slot := Integer(LandrixXmlHashBytes(PAnsiChar(FAttrs[I].QName), Length(FAttrs[I].QName),
-      LandrixXmlHashSeed) and Cardinal(Size - 1));
+    Slot := AttrSlot(FAttrs[I].QName, Size);
     while FHash[Slot] >= 0 do
       Slot := (Slot + 1) and (Size - 1);
     FHash[Slot] := I;
@@ -924,8 +1007,7 @@ begin
   if (FHashCount <> FAttrCount) or (Length(FHash) < 2 * (FAttrCount + 1)) then
     RebuildHash;
   Size := Integer(Length(FHash));
-  Slot := Integer(LandrixXmlHashBytes(PAnsiChar(QName), Length(QName), LandrixXmlHashSeed) and
-    Cardinal(Size - 1));
+  Slot := AttrSlot(QName, Size);
   while FHash[Slot] >= 0 do
   begin
     if FAttrs[FHash[Slot]].QName = QName then
@@ -971,8 +1053,7 @@ begin
     Exit;
   end;
   Size := Integer(Length(FHash));
-  Slot := Integer(LandrixXmlHashBytes(PAnsiChar(FAttrs[FAttrCount - 1].QName),
-    Length(FAttrs[FAttrCount - 1].QName), LandrixXmlHashSeed) and Cardinal(Size - 1));
+  Slot := AttrSlot(FAttrs[FAttrCount - 1].QName, Size);
   while FHash[Slot] >= 0 do
     Slot := (Slot + 1) and (Size - 1);
   FHash[Slot] := FAttrCount - 1;
@@ -1060,8 +1141,8 @@ begin
     H := LandrixXmlHashBytes(PAnsiChar(FAttrs[I].QName) + FAttrs[I].ColonPos + 1,
       Length(FAttrs[I].QName) - FAttrs[I].ColonPos - 1,
       LandrixXmlHashBytes(PAnsiChar(FAttrs[I].Uri), Length(FAttrs[I].Uri),
-      LandrixXmlHashSeed));
-    Slot := Integer(H and Cardinal(Size - 1));
+      LandrixXmlHashSalt));
+    Slot := Integer(LandrixXmlHashFinish(H) and Cardinal(Size - 1));
     while FHash[Slot] >= 0 do
     begin
       if Same(I, FHash[Slot]) then
@@ -1177,7 +1258,7 @@ begin
     AppendStr(FElems[I].QName);
     AppendLit('>');
   end;
-  FBindingCount := FElems[I].BindingTop;
+  SetBindingCount(FElems[I].BindingTop);
   FElemCount := I;
   if I = 0 then
     FRootDone := True;
@@ -1246,11 +1327,7 @@ begin
   AppendLit('="');
   Emit(PAnsiChar(Uri), Length(Uri), emAttribute, 'namespace name');
   AppendLit('"');
-  if FBindingCount = Length(FBindings) then
-    SetLength(FBindings, 2 * FBindingCount);
-  FBindings[FBindingCount].Prefix := Prefix;
-  FBindings[FBindingCount].Uri := Uri;
-  Inc(FBindingCount);
+  PushBinding(Prefix, Uri);
 end;
 
 procedure TLandrixXmlWriter.AttributeCore(const QName: TLandrixXmlUtf8; ColonPos: Integer;

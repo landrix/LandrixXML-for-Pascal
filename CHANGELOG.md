@@ -53,6 +53,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   location paths of Schematron results no longer cost the number of
   distinct names per parent (40,000 parents with their own names: 25 s,
   now 0.7 s). New `TLandrixXmlXPathTree.ValueLength`.
+- Reader and writer: thousands of namespace declarations in scope no
+  longer make every element slow (prefixes are looked up in a table), a
+  long namespace URI is not hashed again for every prefixed attribute,
+  and the attribute duplicate checks use the salted hash, so prepared
+  colliding names no longer make them quadratic (16,384 colliding
+  attributes through reader, writer and DOM: 64 s, now 0.6 s).
+- DOM and XPath tree: each namespace URI is kept once per document instead
+  of once per distinct name, and the name tables use the salted hash
+  (32,768 colliding names: 4.5 minutes, now 1.2 s).
+- DOM: moving a subtree that was edited while detached could put a missing
+  declaration on the subtree's root, where it changed the namespace of
+  another element (e.g. `xmlns=""` taking the root out of its default
+  namespace) or was shadowed by a declaration inside. Such a declaration
+  now goes to the element that needs it.
 
 ## [0.5.0] - 2026-11-17
 

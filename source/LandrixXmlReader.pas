@@ -104,6 +104,10 @@ type
     ValueOfs: Integer; { offset in the scratch buffer, -1 = in the input }
     NsP: PAnsiChar;
     NsLen: Integer;
+    { the salted hash of the namespace URI (prefixed attributes) }
+    NsHash: Cardinal;
+    { the hash of the name in the duplicate check }
+    Hash: Cardinal;
     IsNsDecl: Boolean;
   end;
 
@@ -120,6 +124,11 @@ type
     PrefixP: PAnsiChar;
     PrefixLen: Integer;
     Uri: TLandrixXmlUtf8;
+    { salted hashes of the prefix and the URI; the next older binding in
+      the same bucket of the prefix table (-1 = none) }
+    Hash: Cardinal;
+    UriHash: Cardinal;
+    Next: Integer;
   end;
 
   TLandrixXmlReader = class
@@ -150,6 +159,10 @@ type
     FElemCount: Integer;
     FBindings: array of TLandrixXmlReaderBinding;
     FBindingCount: Integer;
+    { the newest binding per bucket of prefix hashes (-1 = none); a bucket
+      chains its bindings from the newest, so the first match is the
+      innermost binding and popping restores the outer one }
+    FPrefixHeads: array of Integer;
     FHashTable: array of Integer;
     FPendingEnd: Boolean;
     FPendingPop: Boolean;
@@ -185,6 +198,8 @@ type
     procedure ProcessNamespaces;
     procedure CheckDuplicates(Expanded: Boolean);
     function FindBinding(PrefixP: PAnsiChar; PrefixLen: Integer): Integer;
+    procedure PushBinding(PrefixP: PAnsiChar; PrefixLen: Integer; const Uri: TLandrixXmlUtf8);
+    procedure RebuildPrefixHeads(Size: Integer);
     function GetValueSpan: TLandrixXmlSpan;
     function GetNameSpan: TLandrixXmlSpan;
     function GetPrefixSpan: TLandrixXmlSpan;
@@ -471,12 +486,11 @@ begin
   FAttrCount := 0;
   FElemCount := 0;
   { binding 0: the fixed xml prefix }
-  FBindingCount := 1;
+  FBindingCount := 0;
   if Length(FBindings) = 0 then
     SetLength(FBindings, 16);
-  FBindings[0].PrefixP := 'xml';
-  FBindings[0].PrefixLen := 3;
-  FBindings[0].Uri := LandrixXmlNamespaceXml;
+  RebuildPrefixHeads(64);
+  PushBinding('xml', 3, LandrixXmlNamespaceXml);
   FPendingEnd := False;
   FPendingPop := False;
   FHasDocType := False;
@@ -1163,18 +1177,74 @@ begin
   FCur := P + 1;
 end;
 
-{ Linear search from the innermost binding. Cost grows with the number of
-  bindings in scope, which is tiny in real documents; only an element with
-  thousands of declarations and prefixed attributes becomes slow. }
-function TLandrixXmlReader.FindBinding(PrefixP: PAnsiChar; PrefixLen: Integer): Integer;
+function PrefixHash(P: PAnsiChar; Len: Integer): Cardinal;
 begin
-  Result := FBindingCount - 1;
+  Result := LandrixXmlHashFinish(LandrixXmlHashBytes(P, Len, LandrixXmlHashSalt));
+end;
+
+{ The innermost binding of the prefix, or -1. A few bindings are searched
+  linearly; many go through the prefix table, so thousands of declarations
+  in scope do not make every element slow. }
+function TLandrixXmlReader.FindBinding(PrefixP: PAnsiChar; PrefixLen: Integer): Integer;
+var
+  H: Cardinal;
+begin
+  if FBindingCount <= 8 then
+  begin
+    Result := FBindingCount - 1;
+    while Result >= 0 do
+    begin
+      if SameBytes(FBindings[Result].PrefixP, FBindings[Result].PrefixLen, PrefixP, PrefixLen) then
+        Exit;
+      Dec(Result);
+    end;
+    Exit;
+  end;
+  H := PrefixHash(PrefixP, PrefixLen);
+  Result := FPrefixHeads[Integer(H and Cardinal(Length(FPrefixHeads) - 1))];
   while Result >= 0 do
   begin
-    if SameBytes(FBindings[Result].PrefixP, FBindings[Result].PrefixLen, PrefixP, PrefixLen) then
+    if (FBindings[Result].Hash = H) and
+      SameBytes(FBindings[Result].PrefixP, FBindings[Result].PrefixLen, PrefixP, PrefixLen) then
       Exit;
-    Dec(Result);
+    Result := FBindings[Result].Next;
   end;
+end;
+
+{ Chains the bindings 0..FBindingCount-1 into Size buckets (a power of
+  two), oldest first, so each bucket starts with its newest binding. }
+procedure TLandrixXmlReader.RebuildPrefixHeads(Size: Integer);
+var
+  I, B: Integer;
+begin
+  SetLength(FPrefixHeads, Size);
+  for I := 0 to Size - 1 do
+    FPrefixHeads[I] := -1;
+  for I := 0 to FBindingCount - 1 do
+  begin
+    B := Integer(FBindings[I].Hash and Cardinal(Size - 1));
+    FBindings[I].Next := FPrefixHeads[B];
+    FPrefixHeads[B] := I;
+  end;
+end;
+
+procedure TLandrixXmlReader.PushBinding(PrefixP: PAnsiChar; PrefixLen: Integer; const Uri: TLandrixXmlUtf8);
+var
+  B: Integer;
+begin
+  if FBindingCount = Length(FBindings) then
+    SetLength(FBindings, 2 * FBindingCount);
+  FBindings[FBindingCount].PrefixP := PrefixP;
+  FBindings[FBindingCount].PrefixLen := PrefixLen;
+  FBindings[FBindingCount].Uri := Uri;
+  FBindings[FBindingCount].Hash := PrefixHash(PrefixP, PrefixLen);
+  FBindings[FBindingCount].UriHash := LandrixXmlHashBytes(PAnsiChar(Uri), Length(Uri), LandrixXmlHashSalt);
+  B := Integer(FBindings[FBindingCount].Hash and Cardinal(Length(FPrefixHeads) - 1));
+  FBindings[FBindingCount].Next := FPrefixHeads[B];
+  FPrefixHeads[B] := FBindingCount;
+  Inc(FBindingCount);
+  if FBindingCount > 2 * Length(FPrefixHeads) then
+    RebuildPrefixHeads(4 * Length(FPrefixHeads));
 end;
 
 procedure TLandrixXmlReader.CheckDuplicates(Expanded: Boolean);
@@ -1184,10 +1254,13 @@ var
 
   function Same(A, B: Integer): Boolean;
   begin
+    { the local names first; URIs of the same binding share their bytes }
     if Expanded then
-      Result := SameBytes(FAttrs[A].NsP, FAttrs[A].NsLen, FAttrs[B].NsP, FAttrs[B].NsLen) and
-        SameBytes(FAttrs[A].NameP + FAttrs[A].ColonPos + 1, FAttrs[A].NameLen - FAttrs[A].ColonPos - 1,
-          FAttrs[B].NameP + FAttrs[B].ColonPos + 1, FAttrs[B].NameLen - FAttrs[B].ColonPos - 1)
+      Result := SameBytes(FAttrs[A].NameP + FAttrs[A].ColonPos + 1, FAttrs[A].NameLen - FAttrs[A].ColonPos - 1,
+          FAttrs[B].NameP + FAttrs[B].ColonPos + 1, FAttrs[B].NameLen - FAttrs[B].ColonPos - 1) and
+        ((FAttrs[A].NsP = FAttrs[B].NsP) and (FAttrs[A].NsLen = FAttrs[B].NsLen) or
+        (FAttrs[A].NsHash = FAttrs[B].NsHash) and
+        SameBytes(FAttrs[A].NsP, FAttrs[A].NsLen, FAttrs[B].NsP, FAttrs[B].NsLen))
     else
       Result := SameBytes(FAttrs[A].NameP, FAttrs[A].NameLen, FAttrs[B].NameP, FAttrs[B].NameLen);
   end;
@@ -1230,16 +1303,19 @@ begin
   begin
     if not Relevant(I) then
       Continue;
+    { salted (hash flooding); the URI hash is kept per binding, so a long
+      URI is not hashed again for every attribute }
     if Expanded then
       H := LandrixXmlHashBytes(FAttrs[I].NameP + FAttrs[I].ColonPos + 1,
-        FAttrs[I].NameLen - FAttrs[I].ColonPos - 1,
-        LandrixXmlHashBytes(FAttrs[I].NsP, FAttrs[I].NsLen, LandrixXmlHashSeed))
+        FAttrs[I].NameLen - FAttrs[I].ColonPos - 1, FAttrs[I].NsHash)
     else
-      H := LandrixXmlHashBytes(FAttrs[I].NameP, FAttrs[I].NameLen, LandrixXmlHashSeed);
+      H := LandrixXmlHashBytes(FAttrs[I].NameP, FAttrs[I].NameLen, LandrixXmlHashSalt);
+    H := LandrixXmlHashFinish(H);
+    FAttrs[I].Hash := H;
     Slot := Integer(H and Cardinal(Size - 1));
     while FHashTable[Slot] >= 0 do
     begin
-      if Same(I, FHashTable[Slot]) then
+      if (FAttrs[FHashTable[Slot]].Hash = H) and Same(I, FHashTable[Slot]) then
         Duplicate(I);
       Slot := (Slot + 1) and (Size - 1);
     end;
@@ -1293,12 +1369,7 @@ begin
       if (PrefixLen > 0) and (Uri = '') then
         Fail(xecNamespace, 'A prefix must not be bound to an empty namespace name', FAttrs[I].NameP);
     end;
-    if FBindingCount = Length(FBindings) then
-      SetLength(FBindings, 2 * FBindingCount);
-    FBindings[FBindingCount].PrefixP := PrefixP;
-    FBindings[FBindingCount].PrefixLen := PrefixLen;
-    FBindings[FBindingCount].Uri := Uri;
-    Inc(FBindingCount);
+    PushBinding(PrefixP, PrefixLen, Uri);
   end;
   { 2. element name }
   if E^.ColonPos >= 0 then
@@ -1339,6 +1410,7 @@ begin
           FAttrs[I].NameP);
       FAttrs[I].NsP := PAnsiChar(FBindings[B].Uri);
       FAttrs[I].NsLen := Length(FBindings[B].Uri);
+      FAttrs[I].NsHash := FBindings[B].UriHash;
     end
     else
     begin
@@ -1519,8 +1591,12 @@ var
   I: Integer;
 begin
   Dec(FElemCount);
-  for I := FElems[FElemCount].BindingTop to FBindingCount - 1 do
+  { newest first: each binding is the head of its bucket when it goes }
+  for I := FBindingCount - 1 downto FElems[FElemCount].BindingTop do
+  begin
+    FPrefixHeads[Integer(FBindings[I].Hash and Cardinal(Length(FPrefixHeads) - 1))] := FBindings[I].Next;
     FBindings[I].Uri := '';
+  end;
   FBindingCount := FElems[FElemCount].BindingTop;
   if FElemCount = 0 then
     FState := rsEpilog;
