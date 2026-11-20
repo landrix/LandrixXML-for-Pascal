@@ -195,6 +195,8 @@ begin
   V := TLandrixXmlSchematronValidator.Create(RulesOf(RulesFile));
   try
     V.RecordFiredRules := True;
+    { the complete report, as the KoSIT validator gives it }
+    V.MaxResults := 0;
     V.ValidateFile(Document);
     for I := 0 to V.FiredRules.Count - 1 do
     begin

@@ -283,6 +283,48 @@ begin
   end;
 end;
 
+{ MaxResults: at most this many results, then the validation stops,
+  Truncated is set and the document counts as invalid; 0 = no limit. }
+procedure TestMaxResults;
+var
+  Rules: TLandrixXmlSchematronRules;
+  V: TLandrixXmlSchematronValidator;
+  Tree: TLandrixXmlXPathTree;
+  Xml: string;
+  Svrl: TStringStream;
+  I: Integer;
+begin
+  Rules := SmallRules('<pattern id="A"><rule context="p:a" id="" line="1">' +
+    '<assert id="A1" flag="warning" role="" test="false()" line="2"><text>w</text></assert></rule></pattern>');
+  V := TLandrixXmlSchematronValidator.Create(Rules);
+  Tree := TLandrixXmlXPathTree.Create;
+  Svrl := TStringStream.Create('');
+  try
+    Xml := '<p:r xmlns:p="urn:p">';
+    for I := 1 to 1500 do
+      Xml := Xml + '<p:a/>';
+    Tree.LoadFromUtf8(U(Xml + '</p:r>'));
+    CheckEquals(1000, V.MaxResults, 'default');
+    Check(not V.ValidateTree(Tree), 'truncated: not valid, even with warnings only');
+    CheckEquals(1000, V.ResultCount, 'at most MaxResults');
+    Check(V.Truncated, 'Truncated');
+    V.SaveSvrlToStream(Svrl);
+    Check(Pos('truncated', Svrl.DataString) > 0, 'SVRL says so');
+    V.MaxResults := 0;
+    Check(V.ValidateTree(Tree), 'no limit: warnings only, valid');
+    CheckEquals(1500, V.ResultCount, 'every result');
+    Check(not V.Truncated, 'Truncated reset');
+    V.MaxResults := 1500;
+    Check(V.ValidateTree(Tree), 'exactly at the limit: complete');
+    Check(not V.Truncated, 'exactly at the limit: not truncated');
+  finally
+    Svrl.Free;
+    Tree.Free;
+    V.Free;
+    Rules.Free;
+  end;
+end;
+
 { First rule per pattern, unions with "|" in predicates, rooted contexts,
   flags, lets, functions, reports, abort on a dynamic error. }
 procedure TestSmallRules;
@@ -1215,6 +1257,7 @@ begin
   RegisterTest('Schematron.CompilerOverride', TestCompilerOverride);
   RegisterTest('Schematron.Collapse', TestCollapse);
   RegisterTest('Schematron.Threads', TestThreads);
+  RegisterTest('Schematron.MaxResults', TestMaxResults);
 end;
 
 end.

@@ -249,13 +249,14 @@ end;
 ISO Schematron with the `xslt2` query binding is compiled when it is
 loaded (`LoadFromSchematronFile`); `tools/sch-compile.py` or
 `TLandrixXmlSchematronCompiler` can also compile it once into a rule file
-for `LoadFromFile`. A validation ends in one of four ways:
+for `LoadFromFile`. A validation ends in one of five ways:
 
 | Outcome | How it shows |
 |---|---|
 | valid | `ValidateFile` returns `True`. `Results` may still hold failed asserts and reports flagged `warning` or `information`. |
 | invalid | `False`, `Incomplete = False`: at least one failed assert or successful report with another flag (`fatal`, `error`, none). |
 | incomplete | `False`, `Incomplete = True`: an expression raised a dynamic error (an invalid cast, a type error), shown as a result of kind `xsrDynamicError` with `ErrorCode`. The other rules were still checked. Saxon, and so the KoSIT validator, stops with no result here; `AbortOnDynamicError := True` stops at the first error too. |
+| truncated | `False`, `Truncated = True` (it takes precedence over the rows above): there were more than `MaxResults` results (default 1000, as `MaxErrors` of the XML Schema validator); the first `MaxResults` are kept and the validation stopped, so not every rule was checked. Saxon and the KoSIT validator have no such limit: `MaxResults := 0` gives the complete report. |
 | not checked | the document is not well-formed: `ValidateFile` raises `ELandrixXmlError` as the DOM does, and there are no results. |
 
 A Schematron file that does not compile raises `ELandrixXmlError`:

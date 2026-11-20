@@ -7,6 +7,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Schematron: `TLandrixXmlSchematronValidator.MaxResults` (default 1000,
+  0 = no limit) and `Truncated`, as `MaxErrors` of the XML Schema
+  validator: a document that fails a rule on every node can no longer
+  make the results grow without bound (each result keeps its message and
+  location). A truncated validation returns `False`, and the SVRL says
+  so in a comment. Set `MaxResults := 0` for the complete report Saxon
+  and the KoSIT validator give.
+
 - XPath profile `xppSaxon`: the `let` expression of XPath 3.0
   (`let $a := E, $b := E return E`). As in Saxon, a binding is evaluated
   when its variable is first read, so one the result does not use raises

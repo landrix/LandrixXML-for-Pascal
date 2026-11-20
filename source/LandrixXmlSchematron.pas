@@ -213,6 +213,8 @@ type
     FRules: TLandrixXmlSchematronRules;
     FResults: TObjectList;
     FIncomplete: Boolean;
+    FMaxResults: Integer;
+    FTruncated: Boolean;
     FAbortOnDynamicError: Boolean;
     FFiredRules: TStringList;
     FRecordFiredRules: Boolean;
@@ -256,6 +258,13 @@ type
     property Results[Index: Integer]: TLandrixXmlSchematronResult read GetResult;
     { a dynamic error occurred: not every rule was checked }
     property Incomplete: Boolean read FIncomplete;
+    { at most this many results (failed asserts, successful reports,
+      dynamic errors) are collected (0 = no limit, the default is 1000);
+      then validation stops, Truncated is True and the validation counts
+      as failed, since not every rule was checked. Saxon and the KoSIT
+      validator have no such limit: set 0 for a complete report. }
+    property MaxResults: Integer read FMaxResults write FMaxResults;
+    property Truncated: Boolean read FTruncated;
     property AbortOnDynamicError: Boolean read FAbortOnDynamicError write FAbortOnDynamicError;
     { keep "pattern TAB context TAB location" of every fired rule (for
       comparisons with SchXslt's svrl:fired-rule) }
@@ -1095,6 +1104,7 @@ begin
   FRules := Rules;
   FResults := TObjectList.Create(True);
   FFiredRules := TStringList.Create;
+  FMaxResults := 1000;
 end;
 
 destructor TLandrixXmlSchematronValidator.Destroy;
@@ -1146,6 +1156,13 @@ procedure TLandrixXmlSchematronValidator.AddResult(Tree: TLandrixXmlXPathTree; K
 var
   R: TLandrixXmlSchematronResult;
 begin
+  if FTruncated then
+    Exit;
+  if (FMaxResults > 0) and (FResults.Count >= FMaxResults) then
+  begin
+    FTruncated := True;
+    Exit;
+  end;
   R := TLandrixXmlSchematronResult.Create;
   FResults.Add(R);
   R.FKind := Kind;
@@ -1203,7 +1220,7 @@ var
   begin
     FIncomplete := True;
     AddResult(Tree, xsrDynamicError, C, Pattern, Rule, AtNode, U(X.Message), X.XPathCode);
-    if FAbortOnDynamicError then
+    if FAbortOnDynamicError or FTruncated then
       Aborted := True;
   end;
 
@@ -1220,9 +1237,10 @@ var
   end;
 
 begin
+  { the results of an earlier validation go first, also on an error }
+  ClearResults;
   if Tree.Kind[0] <> xnkDocument then
     raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Schematron: the tree has no document node');
-  ClearResults;
   FCurrentPattern := -1;
   FCurrentEvent := -1;
   Aborted := False;
@@ -1316,6 +1334,8 @@ begin
                 AddResult(Tree, xsrSuccessfulReport, Check, Pattern, Rule, Node, Message, '')
               else
                 AddResult(Tree, xsrFailedAssert, Check, Pattern, Rule, Node, Message, '');
+              if FTruncated then
+                Aborted := True;
             end;
           except
             on X: ELandrixXmlXPathError do
@@ -1340,7 +1360,7 @@ begin
     FCurrentPattern := -1;
     FCurrentEvent := -1;
   end;
-  Result := not FIncomplete;
+  Result := not FIncomplete and not FTruncated;
   for I := 0 to Integer(FResults.Count) - 1 do
     if (Results[I].Kind <> xsrDynamicError) and (Results[I].Flag <> 'warning') and (Results[I].Flag <> 'information') then
       Result := False;
@@ -1352,6 +1372,7 @@ begin
   FFiredRules.Clear;
   FEventCount := 0;
   FIncomplete := False;
+  FTruncated := False;
 end;
 
 procedure TLandrixXmlSchematronValidator.AddEvent(Fired: Boolean; Pattern, Rule, Node: Integer);
@@ -1493,6 +1514,9 @@ begin
       Inc(Ev);
     end;
   end;
+  if FTruncated then
+    W.CommentUtf8(' truncated: validation stopped after ' + LandrixXmlStringToUtf8(IntToStr(FResults.Count)) +
+      ' results (MaxResults) ');
   W.EndElement;
 end;
 
