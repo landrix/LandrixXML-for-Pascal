@@ -4458,7 +4458,7 @@ var
   GroupSize: Integer;
   Big: Int64;
   Chain: array of Integer;
-  Ordinal, Alphabetic: Boolean;
+  Ordinal, Alphabetic, FromFound: Boolean;
 
   procedure Add(N: Integer);
   begin
@@ -4567,6 +4567,22 @@ begin
             if (Length(Instr.FromPatterns) > 0) and NumberMatches(Instr, False, A + B, Node) then
               Break;
             A := T.Parent[A];
+          end;
+          { level="single" with count and from (Saxon): the counted node
+            needs an ancestor-or-self that matches from, the root is no
+            fallback (without count it is, as in the specification) }
+          if (Instr.NumberLevel = 0) and (Length(Instr.FromPatterns) > 0) and
+            (Length(Instr.CountPatterns) > 0) and (Length(Chain) > 0) then
+          begin
+            FromFound := False;
+            A := Chain[0] - B;
+            while (A >= 0) and not FromFound do
+            begin
+              FromFound := NumberMatches(Instr, False, A + B, Node);
+              A := T.Parent[A];
+            end;
+            if not FromFound then
+              Chain := nil;
           end;
           for I := Integer(High(Chain)) downto 0 do
             Add(SiblingNumber(Chain[I]));

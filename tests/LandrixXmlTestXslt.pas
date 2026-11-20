@@ -992,6 +992,12 @@ begin
     ' grouping-size="+3"/>'), 'a grouping size with a plus sign');
   CheckEqualsStr('XTDE0030', RunReviewSheet('<xsl:number value="12345" grouping-separator=","' +
     ' grouping-size="+2147483648"/>'), 'a grouping size beyond 32 bits');
+  { level="single" with from: an ancestor-or-self of the counted node must
+    match from (Saxon; no root fallback) }
+  CheckEqualsStr('<r>[][1][1]</r>', RunReviewSheet('<xsl:for-each select="/s"><xsl:text>[</xsl:text>' +
+    '<xsl:number count="s" from="p"/><xsl:text>][</xsl:text><xsl:number count="s" from="s"/>' +
+    '<xsl:text>][</xsl:text><xsl:number from="p"/><xsl:text>]</xsl:text></xsl:for-each>'),
+    'xsl:number level="single" with from');
   CheckEqualsStr('<r>3000 1</r>', RunReviewSheet('<xsl:variable name="g">' +
     '<xsl:for-each-group select="for $i in 1 to 3000 return xs:integer(''1000000000000000000000000'') + $i"' +
     ' group-by=".">g</xsl:for-each-group></xsl:variable><xsl:value-of select="string-length($g), ' +

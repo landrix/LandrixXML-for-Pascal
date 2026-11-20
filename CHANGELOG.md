@@ -64,6 +64,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (XTDE1061); one tree passed for two parameters has one identity; the
   implicit principal result of `TransformToTree` gets the base output URI;
   an empty string or text node besides `xsl:result-document` is XTDE1490.
+- XSLT: `xsl:number level="single"` with `count` and `from` gives a
+  number only when the counted node or one of its ancestors matches
+  `from`, as Saxon (the specification lets the root stand in for it,
+  which numbered such nodes before; without `count` Saxon does that too).
 - XML Schema validator: the fields of a composite identity constraint
   (key, unique, keyref with several fields) are compared one by one. Before,
   a TAB in a string field could make two different tuples equal, so a
