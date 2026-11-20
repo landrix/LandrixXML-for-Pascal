@@ -474,6 +474,89 @@ begin
   end;
 end;
 
+{ Composite key tuples are compared field by field: a TAB (or any other
+  separator) inside a field value must not make two tuples equal. }
+procedure TestCompositeKeySeparator;
+var
+  FileName: string;
+  S: TLandrixXmlXsdSchemaSet;
+  V: TLandrixXmlXsdValidator;
+  Reader: TLandrixXmlReader;
+begin
+  FileName := TempSchema('<xs:element name="r"><xs:complexType><xs:sequence>' +
+    '<xs:element name="a" minOccurs="0" maxOccurs="unbounded"><xs:complexType>' +
+    '<xs:attribute name="x" type="xs:string"/><xs:attribute name="y" type="xs:string"/>' +
+    '</xs:complexType></xs:element>' +
+    '<xs:element name="b" minOccurs="0" maxOccurs="unbounded"><xs:complexType>' +
+    '<xs:attribute name="x" type="xs:string"/><xs:attribute name="y" type="xs:string"/>' +
+    '</xs:complexType></xs:element></xs:sequence></xs:complexType>' +
+    '<xs:key name="k"><xs:selector xpath="a"/><xs:field xpath="@x"/><xs:field xpath="@y"/></xs:key>' +
+    '<xs:keyref name="ref" refer="k"><xs:selector xpath="b"/><xs:field xpath="@x"/><xs:field xpath="@y"/>' +
+    '</xs:keyref></xs:element>');
+  S := LandrixXmlXsdLoadSchema(FileName);
+  V := TLandrixXmlXsdValidator.Create(S);
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromUtf8(U('<r><a x="a&#9;1:b" y="c"/><b x="a" y="b&#9;1:c"/></r>'));
+    Check(not V.ValidateReader(Reader), 'keyref to a tuple that only matches when joined');
+    CheckEqualsStr('cvc-identity-constraint.4.3', V.Errors[0].Code, 'keyref code');
+    Reader.LoadFromUtf8(U('<r><a x="a&#9;1:b" y="c"/><a x="a" y="b&#9;1:c"/></r>'));
+    Check(V.ValidateReader(Reader), 'two different tuples are no duplicate');
+    Reader.LoadFromUtf8(U('<r><a x="a&#9;1:b" y="c"/><a x="a&#9;1:b" y="c"/></r>'));
+    Check(not V.ValidateReader(Reader), 'real duplicate');
+    CheckEqualsStr('cvc-identity-constraint.4.2.2', V.Errors[0].Code, 'duplicate code');
+  finally
+    Reader.Free;
+    V.Free;
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
+{ Sibling positions in error paths stay right once an element has more
+  distinct child names than the linear search handles (hash table), also
+  for the next element that reuses the frame. }
+procedure TestManyChildNames;
+var
+  FileName: string;
+  S: TLandrixXmlXsdSchemaSet;
+  V: TLandrixXmlXsdValidator;
+  Reader: TLandrixXmlReader;
+  Xml: TLandrixXmlUtf8;
+  I, Round: Integer;
+begin
+  FileName := TempSchema('<xs:element name="r"><xs:complexType><xs:sequence>' +
+    '<xs:element name="g" maxOccurs="unbounded"><xs:complexType><xs:sequence>' +
+    '<xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded"/></xs:sequence></xs:complexType>' +
+    '</xs:element></xs:sequence></xs:complexType></xs:element><xs:element name="bad" type="xs:int"/>');
+  S := LandrixXmlXsdLoadSchema(FileName);
+  V := TLandrixXmlXsdValidator.Create(S);
+  Reader := TLandrixXmlReader.Create;
+  try
+    Xml := '<r>';
+    for Round := 1 to 2 do
+    begin
+      Xml := Xml + '<g>';
+      for I := 0 to 99 do
+        Xml := Xml + '<e' + LandrixXmlStringToUtf8(IntToStr(I)) + '/><bad>1</bad>';
+      Xml := Xml + '<bad>x</bad><e7/><bad>y</bad></g>';
+    end;
+    Xml := Xml + '</r>';
+    Reader.LoadFromUtf8(Xml);
+    Check(not V.ValidateReader(Reader), 'invalid');
+    CheckEquals(8, V.ErrorCount, 'two errors per bad value');
+    CheckEqualsUtf8(U('/r/g[1]/bad[101]'), V.Errors[0].Path, 'first bad value');
+    CheckEqualsUtf8(U('/r/g[1]/bad[102]'), V.Errors[2].Path, 'second bad value');
+    CheckEqualsUtf8(U('/r/g[2]/bad[101]'), V.Errors[4].Path, 'next element');
+    CheckEqualsUtf8(U('/r/g[2]/bad[102]'), V.Errors[6].Path, 'next element, second value');
+  finally
+    Reader.Free;
+    V.Free;
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
 procedure TestApi;
 var
   FileName: string;
@@ -844,6 +927,8 @@ begin
   RegisterTest('XsdValidator.Values', TestValues);
   RegisterTest('XsdValidator.EdgeCases', TestEdgeCases);
   RegisterTest('XsdValidator.KeyRefOutOfScope', TestKeyRefOutOfScope);
+  RegisterTest('XsdValidator.CompositeKeySeparator', TestCompositeKeySeparator);
+  RegisterTest('XsdValidator.ManyChildNames', TestManyChildNames);
   RegisterTest('XsdValidator.TypeDerivation', TestTypeDerivation);
   RegisterTest('XsdValidator.LoadErrors', TestLoadErrors);
   RegisterTest('XsdValidator.LargeOccurs', TestLargeOccurs);

@@ -35,6 +35,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   25 cases of XPath 2.0 only drop out). The XPath 2.0 profile is
   unchanged.
 
+### Fixed
+
+- XML Schema validator: the fields of a composite identity constraint
+  (key, unique, keyref with several fields) are compared one by one. Before,
+  a TAB in a string field could make two different tuples equal, so a
+  keyref without a key passed and two different keys counted as duplicates.
+- XML Schema validator: an element with very many differently named
+  children no longer makes validation quadratic (80,000 names: 59 s, now
+  0.3 s). The sibling positions for error paths are counted in a hash
+  table.
+- `LandrixXmlBase`: `LandrixXmlHashSalt` and `LandrixXmlHashFinish` for hash
+  tables keyed by names from untrusted documents; the salt is chosen per
+  process, so colliding names cannot be prepared in advance.
+
 ## [0.5.0] - 2026-11-17
 
 An XSLT 2.0 processor (`LandrixXmlXslt`, optional) that runs the KoSIT

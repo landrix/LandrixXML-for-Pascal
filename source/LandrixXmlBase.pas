@@ -184,6 +184,15 @@ const
 
 function LandrixXmlHashBytes(P: PAnsiChar; Len: Integer; Seed: Cardinal): Cardinal;
 
+{ Hash tables keyed by names or values of an untrusted document start
+  LandrixXmlHashBytes with LandrixXmlHashSalt instead of LandrixXmlHashSeed
+  and take the slot from LandrixXmlHashFinish of the result: the salt is
+  chosen per process, so colliding keys cannot be prepared in advance
+  (hash flooding), and the finish step makes every bit of the hash reach
+  the slot index. Such a table must not decide any output order. }
+function LandrixXmlHashSalt: Cardinal;
+function LandrixXmlHashFinish(H: Cardinal): Cardinal;
+
 { --- Base64 ------------------------------------------------------------- }
 
 { Appends the base64 encoding (RFC 4648, with padding, no line breaks) of
@@ -495,6 +504,56 @@ begin
     { computed in Int64 and masked: the wrap-around is intended and must not
       trip overflow or range checking in projects compiled with Q+/R+ }
     Result := Cardinal((Int64(Result xor Ord(P[I])) * 16777619) and $FFFFFFFF);
+end;
+
+{ A * B mod 2^32 without overflow (Q+ and R+ safe): two 16-bit halves of B,
+  each product below 2^48. }
+function MulMod32(A, B: Cardinal): Cardinal;
+begin
+  Result := Cardinal((Int64(A) * (B and $FFFF) + ((Int64(A) * (B shr 16)) and $FFFF) shl 16) and $FFFFFFFF);
+end;
+
+{ The finalizer of MurmurHash3 (fmix32). }
+function LandrixXmlHashFinish(H: Cardinal): Cardinal;
+begin
+  H := H xor (H shr 16);
+  H := MulMod32(H, $85EBCA6B);
+  H := H xor (H shr 13);
+  H := MulMod32(H, $C2B2AE35);
+  Result := H xor (H shr 16);
+end;
+
+var
+  HashSalt: Cardinal;
+
+function LandrixXmlHashSalt: Cardinal;
+begin
+  Result := HashSalt;
+end;
+
+{ Mixes what varies between runs without a random unit and without
+  touching the RTL random generator of the application: the time, and the
+  addresses of a heap block and of the stack (address space layout
+  randomization). }
+procedure InitHashSalt;
+var
+  P, Q: Pointer;
+  T: Double;
+  Parts: array[0..5] of Cardinal;
+  I: Integer;
+begin
+  for I := 0 to 5 do
+    Parts[I] := 0;
+  T := Now;
+  Move(T, Parts[0], 8);
+  GetMem(P, 16);
+  Move(P, Parts[2], SizeOf(Pointer));
+  FreeMem(P);
+  Q := @T;
+  Move(Q, Parts[4], SizeOf(Pointer));
+  HashSalt := LandrixXmlHashSeed;
+  for I := 0 to 5 do
+    HashSalt := LandrixXmlHashFinish(HashSalt xor Parts[I]);
 end;
 
 { --- Base64 ------------------------------------------------------------- }
@@ -1193,4 +1252,6 @@ begin
     Stream.WriteBuffer(FData^, FSize);
 end;
 
+initialization
+  InitHashSalt;
 end.

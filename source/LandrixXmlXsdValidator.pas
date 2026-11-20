@@ -106,8 +106,10 @@ type
     NamespaceUri: TLandrixXmlUtf8;
     LocalName: TLandrixXmlUtf8;
     Count: Integer;
+    Hash: Cardinal;
   end;
   TLandrixXmlXsdChildCounts = array of TLandrixXmlXsdChildCount;
+  TLandrixXmlXsdChildSlots = array of Integer;
   TLandrixXmlXsdFrame = record
     Mode: TLandrixXmlXsdFrameMode;
     Decl: TLandrixXmlXsdElementDecl;
@@ -132,6 +134,11 @@ type
     Node: TLandrixXmlNode;
     Children: TLandrixXmlXsdChildCounts;
     ChildKinds: Integer;
+    { open addressing over Children once there are many names (-1 = free) }
+    ChildSlots: TLandrixXmlXsdChildSlots;
+    { ChildHash: the URI string hashed last and its partial hash }
+    HashedUri: TLandrixXmlUtf8;
+    HashedUriHash: Cardinal;
   end;
   TLandrixXmlXsdFrames = array of TLandrixXmlXsdFrame;
   TLandrixXmlXsdEventAttribute = record
@@ -1137,11 +1144,11 @@ begin
   for I := 0 to S.FieldCount - 1 do
   begin
     if I > 0 then
-    begin
-      TupleKey := TupleKey + #9;
       TupleText := TupleText + ',';
-    end;
-    TupleKey := TupleKey + S.LocalKeys[I];
+    { Length prefix per field: a value may contain any separator, so plain
+      joining could make two different tuples equal. }
+    TupleKey := TupleKey + LandrixXmlStringToUtf8(IntToStr(Length(S.LocalKeys[I]))) + ':' +
+      S.LocalKeys[I];
     TupleText := TupleText + S.LocalTexts[I];
     if S.LocalKeys[I] = '' then
       HasNull := True;
@@ -1456,36 +1463,111 @@ begin
     Result := Result + '/' + PathStep(FFrames[I].Name, FFrames[I].PathIndex);
 end;
 
+const
+  { below this many distinct child names a linear search is cheaper }
+  ChildHashThreshold = 8;
+
+{ The hash of a child name. Siblings usually share one URI string, so the
+  hash of the URI part is kept for the last string seen (a long URI is not
+  hashed again for every child). }
+function ChildHash(var Frame: TLandrixXmlXsdFrame; const NamespaceUri, LocalName: TLandrixXmlUtf8): Cardinal;
+const
+  Sep: AnsiChar = #0;
+begin
+  if (Pointer(NamespaceUri) <> Pointer(Frame.HashedUri)) or (Frame.HashedUri = '') then
+  begin
+    Frame.HashedUri := NamespaceUri;
+    Frame.HashedUriHash := LandrixXmlHashBytes(@Sep, 1,
+      LandrixXmlHashBytes(PAnsiChar(NamespaceUri), Length(NamespaceUri), LandrixXmlHashSalt));
+  end;
+  Result := LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(LocalName), Length(LocalName),
+    Frame.HashedUriHash));
+end;
+
+{ Rebuilds the slot table of a frame with Size (a power of two) slots. }
+procedure RebuildChildSlots(var Frame: TLandrixXmlXsdFrame; Size: Integer);
+var
+  I, Slot, Mask: Integer;
+begin
+  if Length(Frame.ChildSlots) <> Size then
+    SetLength(Frame.ChildSlots, Size);
+  for I := 0 to Size - 1 do
+    Frame.ChildSlots[I] := -1;
+  Mask := Size - 1;
+  for I := 0 to Frame.ChildKinds - 1 do
+  begin
+    Slot := Integer(Frame.Children[I].Hash and Cardinal(Mask));
+    while Frame.ChildSlots[Slot] >= 0 do
+      Slot := (Slot + 1) and Mask;
+    Frame.ChildSlots[Slot] := I;
+  end;
+end;
+
 { Counts the child in the current element and gives its position among
-  the siblings of the same name (0 for the root). }
+  the siblings of the same name (0 for the root). Many distinct names go
+  through a hash table, so a wide element stays linear. }
 function TLandrixXmlXsdValidator.ChildIndex(const NamespaceUri, LocalName: TLandrixXmlUtf8): Integer;
 var
-  I, N, P: Integer;
+  I, P, Slot, Mask: Integer;
+  H: Cardinal;
+  UseTable: Boolean;
 begin
   Result := 0;
   if FDepth = 0 then
     Exit;
-  N := 0;
   P := FDepth - 1;
-  for I := 0 to FFrames[P].ChildKinds - 1 do
-    if (FFrames[P].Children[I].LocalName = LocalName) and (FFrames[P].Children[I].NamespaceUri = NamespaceUri) then
-    begin
-      Inc(FFrames[P].Children[I].Count);
-      N := FFrames[P].Children[I].Count;
-      Break;
-    end;
-  if N = 0 then
+  H := 0;
+  Slot := 0;
+  Mask := 0;
+  UseTable := FFrames[P].ChildKinds >= ChildHashThreshold;
+  if UseTable then
   begin
-    if FFrames[P].ChildKinds = Length(FFrames[P].Children) then
-      SetLength(FFrames[P].Children, 2 * FFrames[P].ChildKinds + 4);
-    I := FFrames[P].ChildKinds;
-    FFrames[P].Children[I].NamespaceUri := NamespaceUri;
-    FFrames[P].Children[I].LocalName := LocalName;
-    FFrames[P].Children[I].Count := 1;
-    Inc(FFrames[P].ChildKinds);
-    N := 1;
+    H := ChildHash(FFrames[P], NamespaceUri, LocalName);
+    Mask := Length(FFrames[P].ChildSlots) - 1;
+    Slot := Integer(H and Cardinal(Mask));
+    while FFrames[P].ChildSlots[Slot] >= 0 do
+    begin
+      I := FFrames[P].ChildSlots[Slot];
+      if (FFrames[P].Children[I].Hash = H) and (FFrames[P].Children[I].LocalName = LocalName) and
+        (FFrames[P].Children[I].NamespaceUri = NamespaceUri) then
+      begin
+        Inc(FFrames[P].Children[I].Count);
+        Result := FFrames[P].Children[I].Count;
+        Exit;
+      end;
+      Slot := (Slot + 1) and Mask;
+    end;
+  end
+  else
+    for I := 0 to FFrames[P].ChildKinds - 1 do
+      if (FFrames[P].Children[I].LocalName = LocalName) and (FFrames[P].Children[I].NamespaceUri = NamespaceUri) then
+      begin
+        Inc(FFrames[P].Children[I].Count);
+        Result := FFrames[P].Children[I].Count;
+        Exit;
+      end;
+  if FFrames[P].ChildKinds = Length(FFrames[P].Children) then
+    SetLength(FFrames[P].Children, 2 * FFrames[P].ChildKinds + 4);
+  I := FFrames[P].ChildKinds;
+  FFrames[P].Children[I].NamespaceUri := NamespaceUri;
+  FFrames[P].Children[I].LocalName := LocalName;
+  FFrames[P].Children[I].Count := 1;
+  FFrames[P].Children[I].Hash := H;
+  Inc(FFrames[P].ChildKinds);
+  if UseTable then
+  begin
+    FFrames[P].ChildSlots[Slot] := I;
+    if 2 * FFrames[P].ChildKinds > Mask + 1 then
+      RebuildChildSlots(FFrames[P], 2 * (Mask + 1));
+  end
+  else if FFrames[P].ChildKinds = ChildHashThreshold then
+  begin
+    for I := 0 to FFrames[P].ChildKinds - 1 do
+      FFrames[P].Children[I].Hash := ChildHash(FFrames[P], FFrames[P].Children[I].NamespaceUri,
+        FFrames[P].Children[I].LocalName);
+    RebuildChildSlots(FFrames[P], 4 * ChildHashThreshold);
   end;
-  Result := N;
+  Result := 1;
 end;
 
 { The value of the element at the top of the stack for identity constraint
