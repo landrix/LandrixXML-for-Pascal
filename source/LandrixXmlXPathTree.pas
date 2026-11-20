@@ -238,6 +238,10 @@ type
       part of the contract. Empty for nodes that are no element or
       attribute. }
     function InScopePrefixesUtf8(Index: Integer): TLandrixXmlUtf8Array;
+    { The same prefixes with the URIs LookupNamespace returns for them
+      (Uris[I] for Prefixes[I]), in one pass: linear in the declarations
+      in scope. }
+    procedure InScopeNamespacesUtf8(Index: Integer; out Prefixes, Uris: TLandrixXmlUtf8Array);
     { Building a tree from constructed nodes (for the XSLT units; not part
       of the documented API yet). BeginBuild empties the tree; with
       DocumentNode node 0 is a document node and the nodes added at the
@@ -1111,22 +1115,13 @@ begin
   begin
     if NamedPrefixUri(N, Prefix, NamespaceUri) then
     begin
-      Result := True;
+      { a prefixed attribute without a URI (a constructed tree) ends the
+        search, but binds nothing (as InScopeNamespacesUtf8) }
+      Result := NamespaceUri <> '';
       Exit;
     end;
     N := FParents[N];
   end;
-end;
-
-function HasPrefix(const List: TLandrixXmlUtf8Array; Count: Integer; const S: TLandrixXmlUtf8): Boolean;
-var
-  I: Integer;
-begin
-  Result := True;
-  for I := 0 to Count - 1 do
-    if List[I] = S then
-      Exit;
-  Result := False;
 end;
 
 procedure AddPrefix(var List: TLandrixXmlUtf8Array; var Count: Integer; const S: TLandrixXmlUtf8);
@@ -1139,17 +1134,71 @@ end;
 
 function TLandrixXmlXPathTree.InScopePrefixesUtf8(Index: Integer): TLandrixXmlUtf8Array;
 var
-  Seen: TLandrixXmlUtf8Array;
-  E, N, D, I, Count, SeenCount: Integer;
-  P: TLandrixXmlUtf8;
+  Uris: TLandrixXmlUtf8Array;
 begin
-  Result := nil;
+  InScopeNamespacesUtf8(Index, Result, Uris);
+end;
+
+procedure TLandrixXmlXPathTree.InScopeNamespacesUtf8(Index: Integer;
+  out Prefixes, Uris: TLandrixXmlUtf8Array);
+var
+  Seen: TLandrixXmlUtf8Array;
+  { the prefixes seen, by hash (open addressing, -1 = free): thousands of
+    declarations in scope stay linear }
+  Slots: array of Integer;
+  E, N, D, I, Count, UriCount, SeenCount: Integer;
+  P: TLandrixXmlUtf8;
+
+  { True if S was not seen before; it is seen from now on }
+  function Fresh(const S: TLandrixXmlUtf8): Boolean;
+  var
+    Mask, Slot, K: Integer;
+  begin
+    Mask := Integer(Length(Slots)) - 1;
+    Slot := Integer(LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(S), Length(S),
+      LandrixXmlHashSalt)) and Cardinal(Mask));
+    while Slots[Slot] >= 0 do
+    begin
+      if Seen[Slots[Slot]] = S then
+      begin
+        Result := False;
+        Exit;
+      end;
+      Slot := (Slot + 1) and Mask;
+    end;
+    Slots[Slot] := SeenCount;
+    AddPrefix(Seen, SeenCount, S);
+    Result := True;
+    if 2 * SeenCount > Length(Slots) then
+    begin
+      SetLength(Slots, 2 * Length(Slots));
+      Mask := Integer(Length(Slots)) - 1;
+      for K := 0 to Mask do
+        Slots[K] := -1;
+      for K := 0 to SeenCount - 1 do
+      begin
+        Slot := Integer(LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(Seen[K]),
+          Length(Seen[K]), LandrixXmlHashSalt)) and Cardinal(Mask));
+        while Slots[Slot] >= 0 do
+          Slot := (Slot + 1) and Mask;
+        Slots[Slot] := K;
+      end;
+    end;
+  end;
+
+begin
+  Prefixes := nil;
+  Uris := nil;
   E := ElementOf(Index);
   if E < 0 then
     Exit;
   Seen := nil;
   Count := 0;
+  UriCount := 0;
   SeenCount := 0;
+  SetLength(Slots, 16);
+  for I := 0 to 15 do
+    Slots[I] := -1;
   { the nearest declaration of a prefix counts, xmlns="" included }
   N := E;
   while N >= 0 do
@@ -1158,11 +1207,12 @@ begin
     if D >= 0 then
       while (D < FDeclCount) and (FDeclOwners[D] = N) do
       begin
-        if not HasPrefix(Seen, SeenCount, FDeclPrefixes[D]) then
+        { xmlns is never bound (LookupNamespace), not even when a
+          constructed tree declares it }
+        if Fresh(FDeclPrefixes[D]) and (FDeclUris[D] <> '') and (FDeclPrefixes[D] <> 'xmlns') then
         begin
-          AddPrefix(Seen, SeenCount, FDeclPrefixes[D]);
-          if FDeclUris[D] <> '' then
-            AddPrefix(Result, Count, FDeclPrefixes[D]);
+          AddPrefix(Prefixes, Count, FDeclPrefixes[D]);
+          AddPrefix(Uris, UriCount, FDeclUris[D]);
         end;
         Inc(D);
       end;
@@ -1175,17 +1225,28 @@ begin
     for I := N to N + FAttrCounts[N] do
     begin
       P := PrefixUtf8(I);
-      if ((I = N) or (P <> '')) and (P <> 'xml') and (NamespaceUriUtf8(I) <> '') and
-        not HasPrefix(Seen, SeenCount, P) then
+      if ((I = N) or (P <> '')) and (P <> 'xml') and (P <> 'xmlns') then
       begin
-        AddPrefix(Seen, SeenCount, P);
-        AddPrefix(Result, Count, P);
+        if NamespaceUriUtf8(I) <> '' then
+        begin
+          if Fresh(P) then
+          begin
+            AddPrefix(Prefixes, Count, P);
+            AddPrefix(Uris, UriCount, NamespaceUriUtf8(I));
+          end;
+        end
+        else if I > N then
+          { a prefixed attribute without a URI (a constructed tree) ends the
+            search for its prefix as in LookupNamespace, but binds nothing }
+          Fresh(P);
       end;
     end;
     N := FParents[N];
   end;
-  AddPrefix(Result, Count, 'xml');
-  SetLength(Result, Count);
+  AddPrefix(Prefixes, Count, 'xml');
+  AddPrefix(Uris, UriCount, LandrixXmlNamespaceXml);
+  SetLength(Prefixes, Count);
+  SetLength(Uris, UriCount);
 end;
 
 function TLandrixXmlXPathTree.GetKind(Index: Integer): TLandrixXmlXPathNodeKind;

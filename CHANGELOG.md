@@ -121,6 +121,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   raises `xecLimit`. On 64-bit FPC, strings longer than the buffer limit
   raise `xecLimit` in the UTF-8 checks and conversions instead of being
   cut to a wrapped length.
+- XSLT: copying elements with very many attributes or namespace
+  declarations no longer costs time quadratic in their number for the
+  duplicate check of attributes, the in-scope namespaces and the sorting
+  of declarations in the output. New
+  `TLandrixXmlXPathTree.InScopeNamespacesUtf8` returns the in-scope
+  prefixes with their URIs in one pass.
 - XML Schema validator: after a reference to an external or undeclared
   parameter entity in the internal subset, later entity declarations no
   longer count for `xs:ENTITY` values unless the document is

@@ -129,6 +129,15 @@ type
     FNsPrefixes, FNsUris: TLandrixXmlUtf8Array;
     FAttrUris, FAttrPrefixes, FAttrLocals, FAttrValues: TLandrixXmlUtf8Array;
     FAttrCount: Integer;
+    { an element with many attributes: a hash table of the expanded names
+      for the duplicate check (open addressing, -1 = free); FAttrHashed =
+      the attributes entered, 0 = no table yet }
+    FAttrSlots: array of Integer;
+    FAttrHashed: Integer;
+    { the salted hash of the last attribute URI, by its string: the
+      attributes of a copied element share one string per URI }
+    FHashedUri: TLandrixXmlUtf8;
+    FHashedUriHash: Cardinal;
     { the namespaces in scope: bindings and the count per open element }
     FScopePrefixes, FScopeUris: TLandrixXmlUtf8Array;
     FScopeCount: Integer;
@@ -157,6 +166,9 @@ type
     function InScope(const Prefix: TLandrixXmlUtf8; out Uri: TLandrixXmlUtf8): Boolean;
     procedure Declare(const Prefix, Uri: TLandrixXmlUtf8);
     procedure Content;
+    function AttrHash(const Uri, Local: TLandrixXmlUtf8): Cardinal;
+    function FindAttr(const Uri, Local: TLandrixXmlUtf8): Integer;
+    procedure IndexAttrs;
   public
     constructor Create(ARun: TRun; Tree: TLandrixXmlXPathTree; Document: Boolean);
     procedure StartElement(const Uri, Prefix, Local: TLandrixXmlUtf8); override;
@@ -958,6 +970,7 @@ begin
   FNsUris := nil;
   FForced := nil;
   FAttrCount := 0;
+  FAttrHashed := 0;
 end;
 
 procedure TTreeReceiver.Content;
@@ -976,6 +989,7 @@ begin
   FNsPrefixes := nil;
   FNsUris := nil;
   FAttrCount := 0;
+  FAttrHashed := 0;
   Inc(FDepth);
 end;
 
@@ -1007,6 +1021,85 @@ begin
   Declare(Prefix, Uri);
 end;
 
+const
+  { below this many attributes a linear duplicate check is cheaper }
+  AttrHashFrom = 16;
+
+function TTreeReceiver.AttrHash(const Uri, Local: TLandrixXmlUtf8): Cardinal;
+begin
+  { no namespace: nothing to cache, the cached URI stays }
+  if Uri = '' then
+  begin
+    Result := LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(Local), Length(Local),
+      LandrixXmlHashSalt));
+    Exit;
+  end;
+  if Pointer(Uri) <> Pointer(FHashedUri) then
+  begin
+    FHashedUri := Uri;
+    FHashedUriHash := LandrixXmlHashBytes(PAnsiChar(Uri), Length(Uri), LandrixXmlHashSalt);
+  end;
+  Result := LandrixXmlHashFinish(LandrixXmlHashBytes(PAnsiChar(Local), Length(Local),
+    FHashedUriHash));
+end;
+
+function TTreeReceiver.FindAttr(const Uri, Local: TLandrixXmlUtf8): Integer;
+var
+  Mask, Slot, I: Integer;
+begin
+  if FAttrHashed = 0 then
+  begin
+    for I := 0 to FAttrCount - 1 do
+      if (FAttrUris[I] = Uri) and (FAttrLocals[I] = Local) then
+      begin
+        Result := I;
+        Exit;
+      end;
+    Result := -1;
+    Exit;
+  end;
+  Mask := Integer(Length(FAttrSlots)) - 1;
+  Slot := Integer(AttrHash(Uri, Local) and Cardinal(Mask));
+  while FAttrSlots[Slot] >= 0 do
+  begin
+    Result := FAttrSlots[Slot];
+    if (FAttrLocals[Result] = Local) and (FAttrUris[Result] = Uri) then
+      Exit;
+    Slot := (Slot + 1) and Mask;
+  end;
+  Result := -1;
+end;
+
+{ enters the attributes not yet in the table, rebuilding it when it is
+  half full }
+procedure TTreeReceiver.IndexAttrs;
+var
+  Size, Mask, Slot, I, First: Integer;
+begin
+  if FAttrCount < AttrHashFrom then
+    Exit;
+  First := FAttrHashed;
+  if (FAttrHashed = 0) or (2 * FAttrCount > Length(FAttrSlots)) then
+  begin
+    Size := 64;
+    while Size < 4 * FAttrCount do
+      Size := Size * 2;
+    SetLength(FAttrSlots, Size);
+    for I := 0 to Size - 1 do
+      FAttrSlots[I] := -1;
+    First := 0;
+  end;
+  Mask := Integer(Length(FAttrSlots)) - 1;
+  for I := First to FAttrCount - 1 do
+  begin
+    Slot := Integer(AttrHash(FAttrUris[I], FAttrLocals[I]) and Cardinal(Mask));
+    while FAttrSlots[Slot] >= 0 do
+      Slot := (Slot + 1) and Mask;
+    FAttrSlots[Slot] := I;
+  end;
+  FAttrHashed := FAttrCount;
+end;
+
 procedure TTreeReceiver.Attribute(const Uri, Prefix, Local, Value: TLandrixXmlUtf8);
 var
   I: Integer;
@@ -1024,13 +1117,13 @@ begin
       raise ELandrixXmlXPathError.CreateXPath('XTDE0410', 'an attribute after the content of an element');
   end;
   FLastAtomic := False;
-  for I := 0 to FAttrCount - 1 do
-    if (FAttrUris[I] = Uri) and (FAttrLocals[I] = Local) then
-    begin
-      FAttrPrefixes[I] := Prefix;
-      FAttrValues[I] := Value;
-      Exit;
-    end;
+  I := FindAttr(Uri, Local);
+  if I >= 0 then
+  begin
+    FAttrPrefixes[I] := Prefix;
+    FAttrValues[I] := Value;
+    Exit;
+  end;
   if FAttrCount = Length(FAttrUris) then
   begin
     SetLength(FAttrUris, 2 * FAttrCount + 8);
@@ -1043,6 +1136,7 @@ begin
   FAttrLocals[FAttrCount] := Local;
   FAttrValues[FAttrCount] := Value;
   Inc(FAttrCount);
+  IndexAttrs;
 end;
 
 procedure TTreeReceiver.Characters(const S: TLandrixXmlUtf8);
@@ -2633,10 +2727,10 @@ var
   procedure Walk(I: Integer);
   var
     C, A, K: Integer;
-    Prefixes: TLandrixXmlUtf8Array;
-    Uri: TLandrixXmlUtf8;
+    Prefixes, Uris: TLandrixXmlUtf8Array;
   begin
     Prefixes := nil;
+    Uris := nil;
     case T.Kind[I] of
       xnkDocument:
         begin
@@ -2652,10 +2746,10 @@ var
           R.StartElement(T.NamespaceUriUtf8(I), T.PrefixUtf8(I), T.LocalNameUtf8(I));
           if not FNoNamespaces then
           begin
-            Prefixes := T.InScopePrefixesUtf8(I);
+            T.InScopeNamespacesUtf8(I, Prefixes, Uris);
             for K := 0 to Integer(Length(Prefixes)) - 1 do
-              if (Prefixes[K] <> 'xml') and T.LookupNamespace(I, Prefixes[K], Uri) then
-                R.NamespaceNode(Prefixes[K], Uri);
+              if Prefixes[K] <> 'xml' then
+                R.NamespaceNode(Prefixes[K], Uris[K]);
           end
           else if I <> Root then
             NoNamespaces(I);
@@ -2697,10 +2791,11 @@ procedure TRun.CopyInstr(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; 
 var
   T: TLandrixXmlXPathTree;
   Base, I, K: Integer;
-  Prefixes: TLandrixXmlUtf8Array;
+  Prefixes, Uris: TLandrixXmlUtf8Array;
   Uri: TLandrixXmlUtf8;
 begin
   Prefixes := nil;
+  Uris := nil;
   if Focus.Node < 0 then
   begin
     if Focus.Item.Count = 0 then
@@ -2733,10 +2828,10 @@ begin
         { copy-namespaces="no": only the namespaces the names need }
         if not Instr.NoNamespaces then
         begin
-          Prefixes := T.InScopePrefixesUtf8(I);
+          T.InScopeNamespacesUtf8(I, Prefixes, Uris);
           for K := 0 to Integer(Length(Prefixes)) - 1 do
-            if (Prefixes[K] <> 'xml') and T.LookupNamespace(I, Prefixes[K], Uri) then
-              R.NamespaceNode(Prefixes[K], Uri);
+            if Prefixes[K] <> 'xml' then
+              R.NamespaceNode(Prefixes[K], Uris[K]);
         end;
         { use-attribute-sets applies to an element only }
         if Instr.UseSets <> nil then

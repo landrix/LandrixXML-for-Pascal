@@ -1046,26 +1046,83 @@ begin
 end;
 
 { the declarations in the order of their prefixes (as Saxon writes them;
-  the default namespace first) }
+  the default namespace first): CompareStr of the native strings, stable,
+  a merge sort of positions over keys converted once, so an
+  element with very many declarations stays O(n log n). }
 procedure SortDeclarations(var Prefixes, Uris: TLandrixXmlUtf8Array);
 var
-  I, J: Integer;
-  P, U: TLandrixXmlUtf8;
+  Keys: array of string;
+  Order, Tmp: array of Integer;
+  NewPrefixes, NewUris: TLandrixXmlUtf8Array;
+  N, Width, Lo, Mid, Hi, A, B, K: Integer;
 begin
-  for I := 1 to Integer(Length(Prefixes)) - 1 do
+  N := Integer(Length(Prefixes));
+  if N < 2 then
+    Exit;
+  Keys := nil;
+  Order := nil;
+  Tmp := nil;
+  NewPrefixes := nil;
+  NewUris := nil;
+  SetLength(Keys, N);
+  SetLength(Order, N);
+  SetLength(Tmp, N);
+  for K := 0 to N - 1 do
   begin
-    P := Prefixes[I];
-    U := Uris[I];
-    J := I - 1;
-    while (J >= 0) and (CompareStr(LandrixXmlUtf8ToString(Prefixes[J]), LandrixXmlUtf8ToString(P)) > 0) do
-    begin
-      Prefixes[J + 1] := Prefixes[J];
-      Uris[J + 1] := Uris[J];
-      Dec(J);
-    end;
-    Prefixes[J + 1] := P;
-    Uris[J + 1] := U;
+    Keys[K] := LandrixXmlUtf8ToString(Prefixes[K]);
+    Order[K] := K;
   end;
+  Width := 1;
+  while Width < N do
+  begin
+    Lo := 0;
+    while Lo < N do
+    begin
+      { clamped before the sum could pass MaxInt }
+      if Width >= N - Lo then
+        Mid := N
+      else
+        Mid := Lo + Width;
+      if Width >= N - Mid then
+        Hi := N
+      else
+        Hi := Mid + Width;
+      A := Lo;
+      B := Mid;
+      K := Lo;
+      while K < Hi do
+      begin
+        { the left element first on equal keys: stable }
+        if (B >= Hi) or ((A < Mid) and (CompareStr(Keys[Order[A]], Keys[Order[B]]) <= 0)) then
+        begin
+          Tmp[K] := Order[A];
+          Inc(A);
+        end
+        else
+        begin
+          Tmp[K] := Order[B];
+          Inc(B);
+        end;
+        Inc(K);
+      end;
+      Lo := Hi;
+    end;
+    for K := 0 to N - 1 do
+      Order[K] := Tmp[K];
+    if Width > N div 2 then
+      Width := N
+    else
+      Width := Width * 2;
+  end;
+  SetLength(NewPrefixes, N);
+  SetLength(NewUris, N);
+  for K := 0 to N - 1 do
+  begin
+    NewPrefixes[K] := Prefixes[Order[K]];
+    NewUris[K] := Uris[Order[K]];
+  end;
+  Prefixes := NewPrefixes;
+  Uris := NewUris;
 end;
 
 { the length of S as Java counts it (UTF-16 code units) }

@@ -413,6 +413,25 @@ begin
   end;
 end;
 
+{ InScopeNamespacesUtf8 gives the prefixes of InScopePrefixesUtf8 with
+  the URIs LookupNamespace returns. }
+procedure CheckNamespacePairs(T: TLandrixXmlXPathTree; Index: Integer; const Name: string);
+var
+  P, Uris, Plain: TLandrixXmlUtf8Array;
+  I: Integer;
+begin
+  T.InScopeNamespacesUtf8(Index, P, Uris);
+  Plain := T.InScopePrefixesUtf8(Index);
+  CheckEquals(Integer(Length(Plain)), Integer(Length(P)), Name + ': as many prefixes');
+  CheckEquals(Integer(Length(P)), Integer(Length(Uris)), Name + ': a URI per prefix');
+  for I := 0 to Integer(Length(P)) - 1 do
+  begin
+    CheckEqualsUtf8(Plain[I], P[I], Name + ': same prefix');
+    CheckEqualsUtf8(Lookup(T, Index, string(LandrixXmlUtf8ToString(P[I]))), Uris[I], Name + ': URI of ' +
+      LandrixXmlUtf8ToString(P[I]));
+  end;
+end;
+
 { LookupNamespace and InScopePrefixesUtf8: nearest declaration, xmlns=""
   undeclares, xml always and once, xmlns never, attributes use their
   element, other nodes have none. }
@@ -459,6 +478,11 @@ begin
       CheckEqualsUtf8(U('z,m,xml'), Prefixes(T, D), Mode + ': prefixes of d');
       CheckEqualsUtf8(U('z,,xml'), Prefixes(T, R + 1), Mode + ': prefixes of an attribute');
       CheckEquals(0, Integer(Length(T.InScopePrefixesUtf8(0))), Mode + ': no prefixes for the document');
+      CheckNamespacePairs(T, R, Mode + ': root');
+      CheckNamespacePairs(T, C, Mode + ': c');
+      CheckNamespacePairs(T, D, Mode + ': d');
+      CheckNamespacePairs(T, R + 1, Mode + ': attribute');
+      CheckNamespacePairs(T, 0, Mode + ': document');
     end;
     { a DOM that lost its declarations: the names still bind their
       prefixes, a declaration wins }

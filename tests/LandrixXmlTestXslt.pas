@@ -842,6 +842,73 @@ begin
   {$ENDIF}
 end;
 
+{ Copying an element with many attributes (the duplicate check by hash)
+  and many namespace declarations (sorted for the output). }
+procedure TestManyAttributesCopy;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  Xml, Expected, Output, Rest: TLandrixXmlUtf8;
+  I: Integer;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  T := nil;
+  Source := TLandrixXmlXPathTree.Create;
+  try
+    Sheet.LoadFromUtf8(U(
+      '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+      '<xsl:output omit-xml-declaration="yes"/>' +
+      '<xsl:template match="/"><out><xsl:copy-of select="r/@*"/>' +
+      '<xsl:attribute name="a5">x</xsl:attribute><xsl:attribute name="a39">y</xsl:attribute>' +
+      '</out><xsl:copy-of select="r"/>' +
+      '<dup><xsl:copy-of select="r/@*"/><xsl:attribute name="q:a5" namespace="urn:q">z</xsl:attribute></dup>' +
+      '</xsl:template>' +
+      '</xsl:stylesheet>'), U('urn:test'));
+    Xml := U('<r');
+    Expected := U('<out');
+    for I := 0 to 39 do
+    begin
+      Xml := Xml + U(' a' + IntToStr(I) + '="' + IntToStr(I) + '"');
+      if I = 5 then
+        Expected := Expected + U(' a5="x"')
+      else if I = 39 then
+        Expected := Expected + U(' a39="y"')
+      else
+        Expected := Expected + U(' a' + IntToStr(I) + '="' + IntToStr(I) + '"');
+    end;
+    for I := 0 to 39 do
+      Xml := Xml + U(' xmlns:p' + IntToStr(I) + '="u' + IntToStr(I) + '"');
+    Xml := Xml + U('/>');
+    Source.LoadFromUtf8(Xml);
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    Output := T.TransformToUtf8(Source);
+    CheckEqualsUtf8(Expected + U('/>'), Copy(Output, 1, Length(Expected) + 2),
+      'replaced attributes keep their place');
+    { the copy of r: every declaration (sorted) and every attribute }
+    Rest := Copy(Output, Length(Expected) + 3, MaxInt);
+    Rest := Copy(Rest, 1, Pos(U('<dup'), Rest) - 1);
+    for I := 0 to 39 do
+    begin
+      Check(Pos(U(' xmlns:p' + IntToStr(I) + '="u' + IntToStr(I) + '"'), Rest) > 0,
+        'declaration p' + IntToStr(I) + ' on the copy of r');
+      Check(Pos(U(' a' + IntToStr(I) + '="' + IntToStr(I) + '"'), Rest) > 0,
+        'attribute a' + IntToStr(I) + ' on the copy of r');
+    end;
+    Check(Pos(U('xmlns:p1="u1"'), Rest) < Pos(U('xmlns:p10="u10"'), Rest), 'p1 before p10');
+    Check(Pos(U('xmlns:p10="u10"'), Rest) < Pos(U('xmlns:p2="u2"'), Rest), 'p10 before p2');
+    Check(Pos(U('xmlns:p39="u39"'), Rest) < Pos(U('xmlns:p4="u4"'), Rest), 'p39 before p4');
+    { the same local name in another namespace is another attribute }
+    Rest := Copy(Output, Pos(U('<dup'), Output), MaxInt);
+    Check(Pos(U(' a5="5"'), Rest) > 0, 'a5 kept next to q:a5');
+    Check(Pos(U(' q:a5="z"'), Rest) > 0, 'q:a5 added');
+  finally
+    T.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('Xslt.FileUris', TestFileUris);
@@ -859,6 +926,7 @@ begin
   RegisterTest('Xslt.ByteOrderMark', TestByteOrderMark);
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
   RegisterTest('Xslt.StackBudget', TestStackBudget);
+  RegisterTest('Xslt.ManyAttributesCopy', TestManyAttributesCopy);
 end;
 
 end.
