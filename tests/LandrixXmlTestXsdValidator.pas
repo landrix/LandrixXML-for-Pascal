@@ -936,6 +936,58 @@ begin
   Check(Count >= 60, 'rules.txt read');
 end;
 
+{ A white space reference in element-only content, a syntax error after
+  MaxErrors, a document without a root element. }
+procedure TestReaderEdges;
+var
+  FileName: string;
+  S: TLandrixXmlXsdSchemaSet;
+  V: TLandrixXmlXsdValidator;
+  Reader: TLandrixXmlReader;
+  Doc: TLandrixXmlDocument;
+  Raised: Boolean;
+begin
+  FileName := TempSchema('<xs:element name="e"><xs:complexType><xs:sequence>' +
+    '<xs:element name="c" maxOccurs="2"/></xs:sequence></xs:complexType></xs:element>' +
+    '<xs:element name="i" type="xs:int"/>');
+  S := LandrixXmlXsdLoadSchema(FileName);
+  V := TLandrixXmlXsdValidator.Create(S);
+  Reader := TLandrixXmlReader.Create;
+  Doc := TLandrixXmlDocument.Create;
+  try
+    Reader.LoadFromUtf8(U('<e>&#32;<c/>&#x9;&#10;<c/></e>'));
+    Check(V.ValidateReader(Reader), 'character references to white space in element-only content');
+    Reader.LoadFromUtf8(U('<e>&#65;<c/></e>'));
+    Check(not V.ValidateReader(Reader), 'a reference to a letter is character content');
+    { the limit stops collecting errors, not reading }
+    V.MaxErrors := 1;
+    Reader.LoadFromUtf8(U('<i>x</i><'));
+    Raised := False;
+    try
+      V.ValidateReader(Reader);
+    except
+      on E: ELandrixXmlError do
+        Raised := E.Code = xecSyntax;
+    end;
+    Check(Raised, 'a syntax error after the last collected error');
+    V.MaxErrors := 1000;
+    Raised := False;
+    try
+      V.ValidateDocument(Doc);
+    except
+      on E: ELandrixXmlError do
+        Raised := E.Code = xecInvalidArgument;
+    end;
+    Check(Raised, 'a document without a root element');
+  finally
+    Doc.Free;
+    Reader.Free;
+    V.Free;
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('XsdValidator.Basics', TestBasics);
@@ -957,6 +1009,7 @@ begin
   RegisterTest('XsdValidator.FileCase', TestFileCase);
   {$ENDIF}
   RegisterTest('XsdValidator.Api', TestApi);
+  RegisterTest('XsdValidator.ReaderEdges', TestReaderEdges);
 end;
 
 end.

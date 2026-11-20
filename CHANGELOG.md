@@ -139,6 +139,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   as FORX0004 (an error in the replacement string), which an XSLT match
   pattern then treated as no match; it is now the limit error.
   `xsl:analyze-string` checks the size of its match table.
+- XML Schema validator: `ValidateReader` treats white space written as
+  character references (`&#32;`) in element-only content as white space,
+  as `ValidateDocument` and Xerces do; after `MaxErrors` the rest of the
+  document is still read, so a syntax error the reader finds after the
+  last collected error still raises; `ValidateDocument` of a document
+  without a root element raises `xecInvalidArgument` instead of an
+  access violation.
+- XML Schema: comparing dates and times across the start of year 1 counted
+  a year 0, which XML Schema 1.0 does not have
+  (`-0001-12-31T23:00:00-01:00` and `0001-01-01T00:00:00Z` are the same
+  instant).
 - XML Schema validator: after a reference to an external or undeclared
   parameter entity in the internal subset, later entity declarations no
   longer count for `xs:ENTITY` values unless the document is

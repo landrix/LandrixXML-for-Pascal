@@ -565,6 +565,10 @@ parameters, attributes, comments, processing instructions,
   lossy by design: in `<p><span>A</span> <span>B</span></p>` the space
   between the spans is dropped. The default keeps everything. In indented
   files it removes about half of the nodes and a quarter of the memory.
+  It also drops white space that XML Schema validation sees (`<a> </a>`
+  under `xsi:nil="true"` or an empty content type, or instead of a
+  default value): validate such a DOM with `ValidateDocument` only if it
+  was loaded with the default, or validate the file.
 
 ### XML Schema: Xerces, not the letter of the specification
 

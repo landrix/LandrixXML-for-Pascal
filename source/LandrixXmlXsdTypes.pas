@@ -1755,21 +1755,33 @@ end;
 
 { Minutes since an arbitrary origin, ignoring the time zone; days counted
   on the proleptic Gregorian calendar. }
+{ A div B rounded down (B > 0), also for a negative A. }
+function FloorDiv64(A, B: Int64): Int64;
+begin
+  Result := A div B;
+  if (A mod B) < 0 then
+    Dec(Result);
+end;
+
 function DayNumber(Year, Month, Day: Integer): Int64;
 var
   Y, M: Int64;
 begin
-  { days from civil, shifted so that March is the first month; the offset
-    of 400000 years (a whole number of 400-year cycles) keeps Y positive,
-    so div rounds down, and only differences of day numbers are used }
-  Y := Int64(Year) + 400000;
+  { days from civil, shifted so that March is the first month; divisions
+    round down for every year, only differences of day numbers are used }
+  Y := Year;
   M := Month;
   if M <= 2 then
   begin
     Dec(Y);
     Inc(M, 12);
   end;
-  Result := 365 * Y + (Y div 4) - (Y div 100) + (Y div 400) + (153 * (M - 3) + 2) div 5 + Day;
+  Result := 365 * Y + FloorDiv64(Y, 4) - FloorDiv64(Y, 100) + FloorDiv64(Y, 400) + (153 * (M - 3) + 2) div 5 + Day;
+  { XML Schema 1.0 has no year 0: 0001 follows -0001 directly, so the
+    366 days of the proleptic year 0 (a leap year by the signed rule) do
+    not count }
+  if Year > 0 then
+    Dec(Result, 366);
 end;
 
 { Minutes, then seconds. }

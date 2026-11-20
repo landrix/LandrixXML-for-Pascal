@@ -610,6 +610,17 @@ begin
   Result := True;
 end;
 
+function IsSpaceSpan(const S: TLandrixXmlSpan): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to S.Len - 1 do
+    if not (S.P[I] in [' ', #9, #10, #13]) then
+      Exit;
+  Result := True;
+end;
+
 function PointerText(P: Pointer): TLandrixXmlUtf8;
 begin
   Result := LandrixXmlStringToUtf8(Format('%p', [P]));
@@ -2603,8 +2614,11 @@ begin
           EndElement(EndLine, EndColumn);
         end;
       xttText:
-        { the text as a string only where it is buffered }
-        if (Reader.ValueSpan.Len > 0) and TextSeen(Reader.IsWhitespace) then
+        { the text as a string only where it is buffered; IsWhitespace is
+          False for text with a reference, so such text is checked on its
+          characters (&#32; in element-only content is white space) }
+        if (Reader.ValueSpan.Len > 0) and TextSeen(Reader.IsWhitespace or
+          IsSpaceSpan(Reader.ValueSpan)) then
           FBuffer := FBuffer + Reader.ValueUtf8;
       xttCData:
         Text(Reader.ValueUtf8, IsSpaceText(Reader.ValueUtf8));
@@ -2617,7 +2631,13 @@ begin
       { comments and processing instructions }
     end;
     if Stopped then
+    begin
+      { the rest is still read: a document that is not well-formed raises
+        as without the limit (Xerces reports it after the errors) }
+      while Reader.Read do
+        ;
       Break;
+    end;
   end;
   EndDocument(EndLine, EndColumn);
   TValueContext(FValueContext).Reader := nil;
@@ -2643,6 +2663,8 @@ begin
     Node := Node.NextSibling;
   end;
   Root := Document.Root;
+  if Root = nil then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'The document has no root element');
   Node := Root;
   while (Node <> nil) and not Stopped do
   begin

@@ -601,6 +601,18 @@ begin
     'year -1 before year 1');
   CheckEquals(-1, LandrixXmlXsdCompareValues(Val('date', '-0001-02-28'), Val('date', '-0001-03-01')),
     'negative year, consecutive days');
+  { no year 0: 0001-01-01T00:00Z is one hour after -0001-12-31T23:00Z }
+  CheckEquals(0, LandrixXmlXsdCompareValues(Val('dateTime', '-0001-12-31T23:00:00-01:00'),
+    Val('dateTime', '0001-01-01T00:00:00Z')), 'the same instant across the year boundary');
+  CheckEquals(-1, LandrixXmlXsdCompareValues(Val('dateTime', '-0001-12-31T23:59:59Z'),
+    Val('dateTime', '0001-01-01T00:00:00Z')), 'one second before year 1');
+  CheckEquals(1, LandrixXmlXsdCompareValues(Val('dateTime', '-0001-12-31T23:00:00-01:01'),
+    Val('dateTime', '0001-01-01T00:00:00Z')), 'one minute after');
+  { far before year 1: the days still count down correctly }
+  CheckEquals(-1, LandrixXmlXsdCompareValues(Val('date', '-400000-02-29'), Val('date', '-400000-03-01')),
+    'a leap day far back');
+  CheckEquals(-1, LandrixXmlXsdCompareValues(Val('date', '-999999-12-31'), Val('date', '-999998-01-01')),
+    'consecutive days far back');
 end;
 
 procedure TestValueFields;
