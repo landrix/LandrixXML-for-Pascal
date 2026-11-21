@@ -50,6 +50,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- README: the XSLT cases that follow the specification instead of
+  Saxon are listed in one place ("XSLT: the specification, not
+  Saxon"), each with a mark in the source code that
+  `tools/check-forbidden.py` checks against the list, as for the Xerces
+  deviations.
 - XSLT: names (templates, variables, parameters, keys, modes and the
   other declarations) are checked with the XML name characters: a name
   with a character that is no name character (a no-break space, a

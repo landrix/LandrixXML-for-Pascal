@@ -364,6 +364,96 @@ def check_deviations(root, violations):
             violations.append(Violation(path, line, "tagged deviation %s is not listed in README.md" % name))
 
 
+SAXON_SECTION = "### XSLT: the specification, not Saxon"
+# the whole name: a following name character (e.g. "one_typo") fails it
+SAXON_TAG = re.compile(r"Saxon difference:\s*([a-z][a-z0-9-]*(?:\s*,\s*[a-z][a-z0-9-]*)*)(?![A-Za-z0-9_-])")
+SAXON_MARK = re.compile(r"\(mark\s+`([^`]*)`\)")
+SAXON_NAME = re.compile(r"^[a-z][a-z0-9-]*$")
+HEADING = re.compile(r"^ {0,3}#{1,6}\s", re.M)
+
+
+def check_saxon_differences(root, violations):
+    """Each entry ("- ...") of the README list of XSLT cases that follow
+    the specification instead of Saxon ends with exactly one
+    "(mark `name`)", the names are unique, every name has a
+    "Saxon difference: name" comment in source/, and every such comment
+    is listed."""
+    readme = os.path.join(root, "README.md")
+    with open(readme, encoding="utf-8") as f:
+        text = f.read()
+    start = text.find(SAXON_SECTION)
+    if start < 0:
+        violations.append(Violation(readme, 0, "section %r missing" % SAXON_SECTION))
+        return
+    body_start = start + len(SAXON_SECTION)
+    # the section ends at the next heading of any level, outside code blocks
+    end = len(text)
+    fence = False
+    pos = body_start
+    for line in text[body_start:].splitlines(True):
+        if line.lstrip().startswith("```"):
+            fence = not fence
+        elif not fence and HEADING.match(line):
+            end = pos
+            break
+        pos += len(line)
+    section = text[body_start:end]
+    # list entries: a line starting with "- " up to the next one; code
+    # blocks do not count
+    entries = []
+    fence = False
+    line_no = text.count("\n", 0, body_start) + 1
+    for line in section.splitlines():
+        line_no += 1
+        if line.lstrip().startswith("```"):
+            fence = not fence
+            continue
+        if fence:
+            continue
+        if line.startswith("- "):
+            entries.append([line_no - 1, line])
+        elif entries and line.startswith("  "):
+            entries[-1][1] += " " + line.strip()
+    listed = {}
+    for line, entry in entries:
+        marks = SAXON_MARK.findall(entry)
+        if len(marks) != 1 or not entry.rstrip().rstrip(".").endswith(")"):
+            violations.append(Violation(readme, line, "XSLT case entry needs exactly one (mark `name`) at its end"))
+            continue
+        name = marks[0]
+        if not SAXON_NAME.match(name):
+            violations.append(Violation(readme, line, "invalid XSLT case name %r" % name))
+        elif name in listed:
+            violations.append(Violation(readme, line, "XSLT case %s is listed twice" % name))
+        else:
+            listed[name] = line
+    tagged = {}
+    for dirpath, dirnames, filenames in os.walk(os.path.join(root, "source")):
+        for fn in sorted(filenames):
+            if not fn.lower().endswith(EXTENSIONS):
+                continue
+            path = os.path.join(dirpath, fn)
+            with open(path, encoding="latin-1") as f:
+                src = f.read()
+            for bstart, body in comment_blocks(src):
+                flat = re.sub(r"\s+", " ", body)
+                for m in re.finditer(r"Saxon difference:", flat):
+                    t = SAXON_TAG.match(flat, m.start())
+                    if not t:
+                        violations.append(Violation(path, bstart, "malformed \"Saxon difference:\" mark"))
+                        continue
+                    for name in re.split(r"\s*,\s*", t.group(1).strip()):
+                        tagged.setdefault(name, (path, bstart))
+    for name in sorted(listed):
+        if name not in tagged:
+            violations.append(Violation(readme, listed[name],
+                                        "XSLT case %s has no \"Saxon difference:\" mark in source/" % name))
+    for name in sorted(tagged):
+        if name not in listed:
+            path, line = tagged[name]
+            violations.append(Violation(path, line, "Saxon difference %s is not listed in README.md" % name))
+
+
 def check_normalize_version(root, violations):
     """LandrixXmlNormalizeUnicodeVersion must name the version of the
     generated normalization data."""
@@ -402,6 +492,7 @@ def main(argv):
         check_file(f, violations)
     if not argv[1:]:
         check_deviations(root, violations)
+        check_saxon_differences(root, violations)
         check_normalize_version(root, violations)
     for v in violations:
         print(v)

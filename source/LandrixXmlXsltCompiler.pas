@@ -3165,6 +3165,7 @@ begin
           else
             raise;
       end;
+      { Saxon difference: analyze-string-empty-match }
       if R.MatchesEmptyString then
         Fail(M, E, 'XTDE1150', 'the regular expression matches a zero-length string');
     finally
@@ -5342,7 +5343,9 @@ end;
 { xsl:namespace-alias: #default for the default namespace (none: no
   namespace); of several for one stylesheet namespace the one of the
   highest import precedence (two of the same with different result
-  namespaces are XTSE0810 when Finish finds no higher one) }
+  namespaces are XTSE0810 when Finish finds no higher one; Saxon reports
+  it also when a higher one replaces both. Saxon difference:
+  alias-precedence) }
 procedure TCompiler.CompileNamespaceAlias(D: TDecl);
 var
   M: TModule;
@@ -5515,7 +5518,8 @@ end;
 { the document element of a module: xsl:stylesheet or xsl:transform, or
   a literal result element with xsl:version (a simplified stylesheet
   module; XTSE0150 without it, and for another XSLT element or an
-  extension instruction, where Saxon reports XPST0010) }
+  extension instruction, where Saxon reports XPST0010. Saxon difference:
+  simplified-root) }
 procedure TCompiler.CheckRoot(M: TModule);
 var
   E, A: Integer;
@@ -5543,8 +5547,9 @@ begin
     XPST0010) }
   if IsExtension(M, E) then
     Fail(M, E, 'XTSE0150', 'the document element of a simplified stylesheet module is an extension instruction');
-  { the document element is not subject to use-when (Saxon rejects it,
-    XPST0010) }
+  { the document element is not subject to use-when: XTSE0150 whatever
+    its value (Saxon accepts true() and reports XPST0010 for false().
+    Saxon difference: simplified-root) }
   for A := E + 1 to E + M.Tree.AttributeCount[E] do
     if (M.Tree.NamespaceUriUtf8(A) = XsltNamespace) and (M.Tree.LocalNameUtf8(A) = 'use-when') then
       Fail(M, E, 'XTSE0150', 'xsl:use-when on the document element of a simplified stylesheet module');

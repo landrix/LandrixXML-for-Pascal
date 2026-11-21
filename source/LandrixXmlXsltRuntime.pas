@@ -1901,7 +1901,9 @@ begin
       begin
         Href := FEvaluator.ItemString(Args[0].Items[I]);
         { document#2: a relative URI needs the base URI of the node
-          (XTDE1162); document#1 leaves an empty base to the resolver }
+          (XTDE1162); document#1 leaves an empty base to the resolver. An
+          absolute URI needs none (Saxon: XTDE1162 also then. Saxon
+          difference: document-base) }
         if (Kind = XfnDocument2) and (Base = '') and not HasScheme(Href) then
           raise ELandrixXmlXPathError.CreateXPath('XTDE1162', 'document(): no base URI to resolve "' +
             LandrixXmlUtf8ToString(Href) + '" against');
@@ -2562,7 +2564,8 @@ var
   I: Integer;
   Found: Boolean;
 begin
-  { a lexical QName: white space around it is allowed (XSLT 2.0 erratum E2) }
+  { a lexical QName: white space around it is allowed (XSLT 2.0 erratum E2;
+    Saxon reports XTDE0820/XTDE0850. Saxon difference: computed-name-trim) }
   Name := Trim8(EvalAvt(Instr, Instr.NameAvt, Focus));
   I := Pos8(':', Name);
   if I > 0 then
@@ -3379,7 +3382,8 @@ begin
       F := ItemFocus(Nodes.Items[I], I + 1, Nodes.Count);
       if Nodes.Items[I].Kind <> xikNode then
       begin
-        { XSLT 3.0 lets atomic values through the built-in rule; 2.0 errs }
+        { XSLT 3.0 lets atomic values through the built-in rule; 2.0 errs.
+          Saxon difference: apply-templates-atomic }
         Fail(Instr, 'XTTE0520', 'xsl:apply-templates selects an atomic value');
       end;
       try
@@ -3432,6 +3436,8 @@ var
   I, P, Index: Integer;
   Principal: Boolean;
 begin
+  { also inside xsl:attribute (Saxon: XTDE1490). Saxon difference:
+    result-document-in-attribute }
   if FTemporary then
     Fail(Instr, 'XTDE1480', 'xsl:result-document in a temporary output state');
   Href := '';
@@ -3459,6 +3465,10 @@ begin
     if Instr.CDataAvt <> nil then
     begin
       V := EvalAvt(Instr, Instr.CDataAvt, Focus);
+      { XTDE0030 when the instruction runs, also for an expression whose
+        value is constant, such as the string '1bad' in braces (Saxon:
+        XTSE0020 when compiling; a literal value is XTSE0020 here too).
+        Saxon difference: constant-avt }
       if not XsltCDataNames(V, Instr.ScopePrefixes, Instr.ScopeUris, Names, Bad) then
         Fail(Instr, 'XTDE0030', 'not a QName (or its prefix is not declared) in cdata-section-elements: "' +
           LandrixXmlUtf8ToString(Bad) + '"');
@@ -3473,6 +3483,7 @@ begin
             LandrixXmlUtf8ToString(Instr.OutputNames[I]) + '="' + LandrixXmlUtf8ToString(V) + '" is not supported',
             Instr.Module, Instr.Line, Instr.Column);
         xosInvalid, xosUnknown:
+          { Saxon difference: constant-avt }
           Fail(Instr, 'XTDE0030', 'xsl:result-document ' + LandrixXmlUtf8ToString(Instr.OutputNames[I]) + '="' +
             LandrixXmlUtf8ToString(V) + '" is not a valid value');
       else
@@ -4001,7 +4012,8 @@ begin
     on E: ELandrixXmlXPathError do
       Located(Instr, E);
   end;
-  { XSLT 2.0: an error (Saxon accepts it with the rules of XSLT 3.0) }
+  { XSLT 2.0: an error (Saxon accepts it with the rules of XSLT 3.0).
+    Saxon difference: analyze-string-empty-match }
   if Regex.MatchesEmptyString then
     Fail(Instr, 'XTDE1150', 'the regular expression matches a zero-length string');
   Found := Regex.Analyze(S, Text);
@@ -5133,6 +5145,8 @@ begin
   { the use expressions see no captured substrings of xsl:analyze-string }
   SavedRegex := FRegexActive;
   FRegexActive := False;
+  { nor a current template rule: xsl:next-match in the body of xsl:key is
+    XTDE0560 (Saxon runs it. Saxon difference: key-rule) }
   SavedRule := FRule;
   FRule := nil;
   { and no current group (XTDE1061): the index does not depend on its
@@ -5574,6 +5588,8 @@ begin
       DoNumber(Instr, Focus, R);
     xskForEachGroup, xskAnalyzeString:
       begin
+        { no current template rule inside either (XSLT 2.0; Saxon keeps it
+          in xsl:analyze-string. Saxon difference: analyze-string-rule) }
         SavedRule := FRule;
         FRule := nil;
         try

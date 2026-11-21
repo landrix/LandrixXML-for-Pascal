@@ -463,13 +463,8 @@ NFKC, NFKD; applied after the character map, as in Saxon) and
 `byte-order-mark` (written for UTF-8 only, as in Saxon). Where XSLT 2.0 and
 Saxon (which runs XSLT 2.0 stylesheets as XSLT 3.0) differ, Saxon is
 followed (`xsl:analyze-string` of an empty sequence, regular expressions
-with `(?:...)` and the flag `q`), except that a regular expression
-matching the empty string in `xsl:analyze-string` is an error
-(`XTDE1150`) as in XSLT 2.0, where Saxon runs it, and that
-`xsl:analyze-string` clears the current template rule as in XSLT 2.0
-(`xsl:next-match` in it is `XTDE0560`; Saxon applies the built-in rule
-to the string), and that `xsl:result-document` in the content of
-`xsl:attribute` is `XTDE1480` as in XSLT 2.0 (Saxon reports `XTDE1490`). The report stylesheet of the KoSIT validator and the XRechnung
+with `(?:...)` and the flag `q`); the exceptions are listed under
+[XSLT: the specification, not Saxon](#xslt-the-specification-not-saxon). The report stylesheet of the KoSIT validator and the XRechnung
 visualization (invoice to XR XML to HTML) run with it: for the 86
 invoices of the KoSIT test suite the report, the XR XML and the HTML
 are the ones Saxon writes, byte for byte, and so are the reports of the
@@ -561,6 +556,50 @@ output properties (`SetOutputProperty` applies to the principal result
 only). As in XSLT 2.0, `xsl:result-document` inside variables,
 parameters, attributes, comments, processing instructions,
 `xsl:value-of`, messages, sort keys and functions is `XTDE1480`.
+
+### XSLT: the specification, not Saxon
+
+Where Saxon departs from XSLT 2.0, the XSLT units follow Saxon, except
+in the cases below, which follow the specification. The code of each
+case carries the comment `Saxon difference: name` with the name given
+at the end of the entry; `tools/check-forbidden.py` fails on an entry
+without such a comment and on a comment without an entry.
+
+- A regular expression that matches the empty string in
+  `xsl:analyze-string` is `XTDE1150`; Saxon runs it with the rules of
+  XSLT 3.0 (mark `analyze-string-empty-match`).
+- `xsl:analyze-string` has no current template rule, so `xsl:next-match`
+  and `xsl:apply-imports` in it are `XTDE0560`; Saxon keeps the rule of
+  the template around it (mark `analyze-string-rule`).
+- `xsl:next-match` in the body of `xsl:key` is `XTDE0560`; Saxon runs it
+  (mark `key-rule`).
+- `xsl:apply-templates` that selects an atomic value is `XTTE0520`;
+  Saxon passes it to the built-in rule as XSLT 3.0 does (mark
+  `apply-templates-atomic`).
+- `xsl:result-document` in the content of `xsl:attribute` (a temporary
+  output state) is `XTDE1480`; Saxon writes the document, or reports
+  `XTDE1490` when it has no `href` of its own and the principal result
+  is written too (mark `result-document-in-attribute`).
+- The computed name of `xsl:element` and `xsl:attribute` may have white
+  space around it (`name="{' e '}"`, XSLT 2.0 erratum E2); Saxon reports
+  `XTDE0820` or `XTDE0850` (mark `computed-name-trim`).
+- `document()` with a second argument whose node has no base URI reads
+  an absolute URI (and gives the empty sequence for the empty
+  sequence); Saxon reports `XTDE1162` for both (mark `document-base`).
+- An invalid value of a `cdata-section-elements` or other serialization
+  attribute of `xsl:result-document` that is computed by an expression
+  with a constant value (`"{'1bad'}"`) is `XTDE0030` when the
+  instruction runs; Saxon reports `XTSE0020` when compiling (a literal
+  value is `XTSE0020` here too) (mark `constant-avt`).
+- Two `xsl:namespace-alias` of one import precedence for one namespace
+  with different results are no error when an alias of a higher
+  precedence replaces them; Saxon reports `XTSE0810` unless the higher
+  alias has the result of the first of them (mark `alias-precedence`).
+- The document element of a simplified stylesheet module that is
+  another XSLT element or an extension instruction is `XTSE0150`, where
+  Saxon reports `XPST0010`; `xsl:use-when` on it is `XTSE0150` whatever
+  its value, where Saxon accepts `true()` and reports `XPST0010` for
+  `false()` (mark `simplified-root`).
 
 ## Limitations
 
