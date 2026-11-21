@@ -505,6 +505,7 @@ implementation
 
 uses
   LandrixXmlReader,
+  LandrixXmlConvert,
   LandrixXmlRegex;
 
 {$IFDEF FPC}
@@ -4666,17 +4667,16 @@ var
   B, V, W: TLandrixXmlUtf8;
   Prio: Double;
   HasPrio, All: Boolean;
-  Code, Count: Integer;
+  Count: Integer;
   Mode: TXsltMode;
 begin
   HasPrio := not D.Simplified and Attr(D.Module, D.Element, 'priority', V);
   Prio := 0;
   if HasPrio then
   begin
-    Val(LandrixXmlUtf8ToString(Trim8(V)), Prio, Code);
-    if not IsDecimal(Trim8(V)) then
-      Code := 1;
-    if Code <> 0 then
+    { the library's parser, not Val (255 characters on FPC, EOverflow on
+      x87): the same value on every compiler }
+    if not IsDecimal(Trim8(V)) or not LandrixXmlTryParseDouble(Trim8(V), Prio) then
       Fail(D.Module, D.Element, 'XTSE0530', 'the priority "' + LandrixXmlUtf8ToString(V) + '" is not a number');
   end;
   ModeNames := TList.Create;

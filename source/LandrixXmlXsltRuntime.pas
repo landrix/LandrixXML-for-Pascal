@@ -4650,16 +4650,36 @@ begin
 end;
 
 { the rest of Content as bytes; frees Content }
+{ The rest of Content, then Content freed. Read in blocks until Read
+  gives 0, without Size or Seek (a resolver stream may read forward
+  only); a negative Read is an error; more than MaxInt bytes raise
+  xecLimit instead of being cut. }
 function ReadAndFree(Content: TStream): TLandrixXmlUtf8;
 var
-  Len: Integer;
+  Len, N, Size: Integer;
 begin
   Result := '';
   try
-    Len := Integer(Content.Size - Content.Position);
+    Size := 65536;
+    SetLength(Result, Size);
+    Len := 0;
+    repeat
+      if Len = Size then
+      begin
+        if Size = MaxInt then
+          raise ELandrixXmlError.CreateCode(xecLimit, 'unparsed-text(): the resource is too large');
+        if Size > MaxInt div 2 then
+          Size := MaxInt
+        else
+          Size := 2 * Size;
+        SetLength(Result, Size);
+      end;
+      N := Integer(Content.Read(PAnsiChar(Result)[Len], Size - Len));
+      if N < 0 then
+        raise EReadError.Create('unparsed-text(): the resource cannot be read');
+      Inc(Len, N);
+    until N = 0;
     SetLength(Result, Len);
-    if Len > 0 then
-      Content.ReadBuffer(PAnsiChar(Result)^, Len);
   finally
     Content.Free;
   end;

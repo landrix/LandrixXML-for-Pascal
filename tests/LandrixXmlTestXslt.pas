@@ -1038,6 +1038,9 @@ begin
   CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="a" mode="#unnamed"/>' + Tail, ''),
     'mode #unnamed (Saxon)');
   CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match=""/>' + Tail, ''), 'an empty match');
+  { a priority of more than 255 characters (FPC's Val refused it) }
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="a" priority="0.' + StringOfChar('0', 300) +
+    '1"/>' + Tail, ''), 'a long priority');
   CheckEqualsStr('XTSE0010', CompileCode(Head + '<xsl:include href="imp.xsl"/>' + Tail,
     '<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>'), 'an included module without version');
   CheckEqualsStr('ok', CompileCode(Head + '<m:data xmlns:m="urn:m"><xsl:element name="x" type="any"/></m:data>' +

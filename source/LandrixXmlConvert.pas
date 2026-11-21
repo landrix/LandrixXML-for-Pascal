@@ -790,7 +790,7 @@ end;
 
 function FormatDoubleRaw(Value: Double; Decimals: Integer): AnsiString;
 var
-  A, Power: Double;
+  A, Power, Next: Double;
   E, K, I, Scale, Extra: Integer;
   SS: ShortString;
   Digits: AnsiString;
@@ -809,12 +809,19 @@ begin
   E := 0;
   Power := 1;
   if A >= 1 then
-    { stops at 1e23 (the formatting limit), so Power never overflows }
-    while (A >= Power * 10) and (E < 23) do
+  begin
+    { stops at 1e23 (the formatting limit), so Power never overflows;
+      the product is stored as a Double first, so x87 (64-bit mantissa)
+      decides as SSE does: 1e22 * 10 rounds to the double just below
+      1e23 everywhere, which is then the limit }
+    Next := Power * 10;
+    while (A >= Next) and (E < 23) do
     begin
-      Power := Power * 10;
+      Power := Next;
       Inc(E);
-    end
+      Next := Power * 10;
+    end;
+  end
   else
     while (A < Power) and (E > -400) do
     begin

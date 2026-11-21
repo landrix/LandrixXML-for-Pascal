@@ -1006,7 +1006,8 @@ begin
     if Node.Document = FDocuments[I] then
       Base := ExtractFilePath(FDocumentFiles[I]);
   H := StringReplace(H, '/', PathDelim, [rfReplaceAll]);
-  if (H[1] = PathDelim) or ((Length(H) >= 2) and (H[2] = ':')) then
+  { a drive letter only on Windows }
+  if (H[1] = PathDelim) {$IFDEF MSWINDOWS}or ((Length(H) >= 2) and (H[2] = ':')){$ENDIF} then
     Path := ExpandFileName(H)
   else
     Path := ExpandFileName(Base + H);
@@ -1033,7 +1034,8 @@ begin
   else
     FDocShas[N] := U(LandrixXmlSha256Hex(Bytes[1], Length(Bytes)));
   { UTF-8 only; the line ends as an XML parser reads them }
-  if Copy(Bytes, 1, 3) = #$EF#$BB#$BF then
+  { compared byte by byte (a literal would be converted on Delphi 2009+) }
+  if (Length(Bytes) >= 3) and (Bytes[1] = #$EF) and (Bytes[2] = #$BB) and (Bytes[3] = #$BF) then
     Delete(Bytes, 1, 3);
   Decl := DeclaredEncoding(Bytes);
   if (Decl <> '') and (Decl <> 'utf-8') then
@@ -1070,7 +1072,8 @@ begin
       Base := ExtractFilePath(FDocumentFiles[I]);
   Href := StringReplace(Href, '/', PathDelim, [rfReplaceAll]);
   { a rooted href (/x, \x, C:x) as it is, a relative one from the including file }
-  if (Href[1] = PathDelim) or ((Length(Href) >= 2) and (Href[2] = ':')) then
+  { a drive letter only on Windows }
+  if (Href[1] = PathDelim) {$IFDEF MSWINDOWS}or ((Length(Href) >= 2) and (Href[2] = ':')){$ENDIF} then
     Path := ExpandFileName(Href)
   else
     Path := ExpandFileName(Base + Href);

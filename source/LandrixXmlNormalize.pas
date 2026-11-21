@@ -34,8 +34,9 @@ type
 { CodePoints in normalization form Form (a new array). Code points that
   are not assigned pass through unchanged, and so do values that are not
   Unicode scalar values (negative, surrogates, above $10FFFF): this
-  function does not check them. More than MaxInt code points (input or
-  result) raise ELandrixXmlError xecLimit. }
+  function does not check them. More than MaxInt code points (input,
+  result or the fully decomposed form on the way) raise ELandrixXmlError
+  xecLimit. }
 function LandrixXmlNormalizeCodePoints(const CodePoints: TLandrixXmlCodePoints;
   Form: TLandrixXmlNormalizationForm): TLandrixXmlCodePoints;
 { S (strictly valid UTF-8, else ELandrixXmlError xecInvalidUnicode) in
@@ -430,6 +431,13 @@ begin
     raise ELandrixXmlError.CreateCode(xecLimit, 'Too many code points');
 end;
 
+{ the index loops over S stay below MaxInt }
+procedure CheckLength8(const S: TLandrixXmlUtf8);
+begin
+  if Int64(Length(S)) >= MaxInt then
+    raise ELandrixXmlError.CreateCode(xecLimit, 'Too many bytes');
+end;
+
 function LandrixXmlNormalizeCodePoints(const CodePoints: TLandrixXmlCodePoints;
   Form: TLandrixXmlNormalizationForm): TLandrixXmlCodePoints;
 begin
@@ -484,6 +492,7 @@ function LandrixXmlIsNormalizedUtf8(const S: TLandrixXmlUtf8;
 var
   I: Integer;
 begin
+  CheckLength8(S);
   Result := True;
   I := 1;
   while (I <= Length(S)) and (Ord(S[I]) < $80) do
@@ -500,6 +509,7 @@ var
   I: Integer;
   CodePoints, Normalized: TLandrixXmlCodePoints;
 begin
+  CheckLength8(S);
   Result := S;
   CodePoints := nil;
   Normalized := nil;

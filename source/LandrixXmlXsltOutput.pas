@@ -932,7 +932,7 @@ begin
   N := Length(S);
   if N = 0 then
     Exit;
-  if FLength + N > Length(FBuffer) then
+  if N > Length(FBuffer) - FLength then
   begin
     Flush;
     if N > Length(FBuffer) then

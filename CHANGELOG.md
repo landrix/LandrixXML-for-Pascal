@@ -50,6 +50,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Compiler and platform differences from the review: the Schematron
+  compiler strips the byte order mark of a `document()` file also on
+  Delphi 2009+ and takes a drive letter as absolute only on Windows;
+  `LandrixXmlFormatDouble` rejects 1e23 on every compiler (x87 accepted
+  it); a template priority of more than 255
+  characters is read by the library's parser (FPC refused it, x87 could
+  overflow); `unparsed-text()` reads a resolver stream in blocks without
+  Size or Seek (a stream that cannot seek failed, more than 2 GB were
+  cut, a failed read ended the text); the string
+  value of an XPath tree node and the serializer buffer check their
+  lengths without Integer overflow; `LandrixXmlNormalizeUtf8` and
+  `LandrixXmlIsNormalizedUtf8` refuse a string of MaxInt bytes or more
+  (xecLimit).
 - XPath tree and formatting, edges from the review: `format-date` gives
   the right weekday, day of the year and ISO week for years in the
   millions (the day count overflowed) and an error with code for a year

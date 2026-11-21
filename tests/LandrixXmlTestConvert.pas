@@ -122,6 +122,9 @@ begin
       3: LandrixXmlFormatDouble(NaN, 2);
       4: LandrixXmlFormatDateTimeTz(0, 900);
       5: LandrixXmlFormatCiiDate(0, 616);
+      { 1e23 (read as the double just below it) is at the limit on every
+        compiler }
+      6: LandrixXmlFormatDouble(LandrixXmlParseDouble(U('1' + StringOfChar('0', 23))), 2);
     end;
     FailNotRaised('ELandrixXmlError for ' + Name);
   except
@@ -323,6 +326,7 @@ begin
   CheckEqualsStr('0.1', N(LandrixXmlFormatDoubleTrim(0.1, 0, 6)), 'trim');
   CheckEqualsStr('3', N(LandrixXmlFormatDoubleTrim(3, 0, 6)), 'trim to integer');
   ExpectArgError(3, 'NaN');
+  ExpectArgError(6, '1e23');
 end;
 
 { --- integers and booleans ------------------------------------------------- }

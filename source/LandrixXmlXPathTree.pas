@@ -1387,6 +1387,9 @@ begin
         N := I
       else
         N := -2;
+      { the string value must fit a string (no wrap of the sum) }
+      if Length(FValues[I]) > MaxInt - Len then
+        raise ELandrixXmlError.CreateCode(xecLimit, 'XPath tree: the string value is too long');
       Inc(Len, Length(FValues[I]));
     end;
   if N >= 0 then
