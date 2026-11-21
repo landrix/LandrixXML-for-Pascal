@@ -198,6 +198,11 @@ begin
     'beyond the exponent limit');
   CheckEqualsStr('1', Copy(F(D('1' + StringOfChar('0', LandrixXmlDecimalMaxExponent))), 1, 1),
     'at the exponent limit');
+  { trailing zeros of a fraction beyond the limit carry no value }
+  CheckEqualsStr('1.5', F(D('1.5' + StringOfChar('0', LandrixXmlDecimalMaxExponent + 1))),
+    'long fraction of zeros');
+  CheckEqualsStr('0', F(D('0.' + StringOfChar('0', LandrixXmlDecimalMaxExponent + 1))),
+    'zero with a long fraction');
 end;
 
 procedure TestNormalization;

@@ -695,6 +695,19 @@ begin
   { at least one digit: "+", "." and "-." are invalid }
   if Last - First + 1 - Ord(SeenPoint) = 0 then
     Exit;
+  { trailing zeros of a long fraction carry no value: 1.5 followed by a
+    million zeros is still 1.5 (only done beyond the limit, so the digits
+    of ordinary values stay as written) }
+  if FracDigits > LandrixXmlDecimalMaxExponent then
+  begin
+    while (FracDigits > 0) and (DigitCount > 0) and (Digits[DigitCount] = '0') do
+    begin
+      Dec(DigitCount);
+      Dec(FracDigits);
+    end;
+    if DigitCount = 0 then
+      FracDigits := 0;
+  end;
   if FracDigits > LandrixXmlDecimalMaxExponent then
     Exit;
   { groups of four digits from the right }

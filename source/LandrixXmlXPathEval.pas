@@ -2229,6 +2229,13 @@ begin
               P^.ErrorRaised := E is ELandrixXmlXPathRaised;
               raise;
             end;
+            on Exception do
+            begin
+              { not an XPath error: evaluate again next time }
+              P := SlotRef(Slot);
+              P^.State := xssLazy;
+              raise;
+            end;
           end;
           P := SlotRef(Slot);
         end;

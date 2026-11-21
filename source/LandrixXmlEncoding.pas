@@ -64,6 +64,8 @@ type
       an error (xecEncoding).
     - Malformed UTF-8 or UTF-16 raises xecInvalidUnicode, a NUL character
       raises xecInvalidChar, a byte >= $80 in US-ASCII raises xecEncoding.
+      UTF-16 input with an odd number of bytes raises xecEncoding (the
+      input is not UTF-16 at all, rather than a malformed character).
     - ISO-8859-1 is strict (bytes $80-$9F are U+0080-U+009F). Windows-1252
       maps its undefined bytes $81, $8D, $8F, $90, $9D to U+0081 etc.
 

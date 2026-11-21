@@ -265,7 +265,8 @@ type
     { A type derived from Base by restriction; Name is '' for an anonymous
       type. Facets are added afterwards. }
     constructor CreateRestriction(Base: TLandrixXmlXsdSimpleType; const NamespaceUri, Name: TLandrixXmlUtf8);
-    { A union of Members (tried in this order). }
+    { A union of Members (tried in this order). Raises ELandrixXmlError
+      (xecInvalidArgument) if Members is empty or contains nil. }
     constructor CreateUnion(const Members: array of TLandrixXmlXsdSimpleType;
       const NamespaceUri, Name: TLandrixXmlUtf8);
     { A list of ItemType values (the parameter order differs from
@@ -283,7 +284,9 @@ type
       parentheses, e.g. "(minLength-less-than-equal-to-maxLength)");
       xecInvalidOperation on a built-in type and on a type made by
       CreateList or CreateUnion (facets of a list or union go on a
-      restriction of it). A union allows pattern and enumeration. }
+      restriction of it). A union allows pattern and enumeration. After
+      an xecInvalidArgument for an inconsistent facet the facet may
+      already be stored: do not use the type any further. }
     procedure AddFacet(Facet: TLandrixXmlXsdFacet; const Value: TLandrixXmlUtf8; Fixed: Boolean = False);
       overload;
     { As above; Context resolves the prefixes of QName values in the facet
@@ -497,7 +500,8 @@ end;
 
 { Length in UTF-16 code units, as Xerces counts the length facets
   (String.length in Java): a character above U+FFFF counts twice, unlike
-  the code point count of the XML Schema specification. }
+  the code point count of the XML Schema specification.
+  Xerces deviation, not in the test suite. }
 function Utf16Length(const S: TLandrixXmlUtf8): Integer;
 var
   I: Integer;
@@ -2111,6 +2115,10 @@ begin
   FVariety := xsvUnion;
   FPrimitive := xspAnySimpleType;
   FWhiteSpace := xwsPreserve;
+  { the member type definitions are a non-empty sequence (the loader reports
+    src-union-memberTypes-or-simpleTypes for an empty xs:union) }
+  if Length(Members) = 0 then
+    raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Union without member types');
   SetLength(FMembers, Length(Members));
   for I := 0 to Integer(High(Members)) do
   begin

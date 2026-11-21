@@ -2556,8 +2556,13 @@ begin
     Keys[I] := (Hashes[I] and (Int64(Capacity) - 1)) * Count + I;
   SortKeys(Keys);
   for I := 0 to Count - 1 do
+  begin
+    { past MaxErrors the messages are dropped: do not format them }
+    if FTruncated then
+      Break;
     AddError('cvc-id.1', 'There is no ID/IDREF binding for IDREF ' + Q(Missing[Integer(Keys[I] mod Count)]) + '.', Line,
       Column, '', '', 0, nil);
+  end;
 end;
 
 { --- adapters ---------------------------------------------------------- }

@@ -92,7 +92,9 @@ uses
 
 type
   TLandrixXmlRegexMode = (
-    xrmXsd,    { XML Schema pattern facet: the whole string must match }
+    xrmXsd,    { XML Schema pattern facet: the whole string must match
+                 (Matches only; Replace, Tokenize and Analyze are meant
+                 for the XPath modes and anchor only the end here) }
     xrmXPath,  { fn:matches and friends as Saxon (XPath 3.1): a match
                  anywhere, ^ and $ anchors, (?:...) groups, the
                  character classes of XML Schema 1.1 }

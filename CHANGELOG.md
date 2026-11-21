@@ -50,6 +50,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Smaller fixes from the review: an xs:decimal whose fraction has more
+  than a million digits is accepted when the digits beyond the limit are
+  trailing zeros (`1.5` followed by a million zeros is 1.5);
+  `TLandrixXmlXsdSimpleType.CreateUnion` raises `xecInvalidArgument`
+  for an empty member list, as the loader rejects `<xs:union/>`; a typed
+  XSLT variable whose conversion fails with a non-XPath exception is
+  evaluated again instead of being reported as circular; unresolved
+  IDREFs after the one that truncates the result at `MaxErrors` are no
+  longer formatted. The README lists the
+  UTF-16 counting of the length facets as a Xerces deviation.
 - Test tools, from the review: a missing baseline fails the QT3, XSLT
   and XSTS runners; `--update-baseline` refuses with `--filter`, on
   harness errors and on regressions (unless `--force-baseline`); a

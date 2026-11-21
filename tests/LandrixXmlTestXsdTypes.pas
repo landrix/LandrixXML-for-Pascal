@@ -500,6 +500,7 @@ procedure TestSimpleDerivation;
 var
   Dec, Int, Bool, Str, AnySimple: TLandrixXmlXsdSimpleType;
   D, U2, L, X: TLandrixXmlXsdSimpleType;
+  None: array of TLandrixXmlXsdSimpleType;
 begin
   Dec := LandrixXmlXsdBuiltinType('decimal');
   Int := LandrixXmlXsdBuiltinType('int');
@@ -518,6 +519,14 @@ begin
   except
     on E: ELandrixXmlError do
       CheckEquals(Ord(xecInvalidOperation), Ord(E.Code), 'final of a built-in type');
+  end;
+  None := nil;
+  try
+    TLandrixXmlXsdSimpleType.CreateUnion(None, '', U('e')).Free;
+    FailNotRaised('ELandrixXmlError for a union without members');
+  except
+    on E: ELandrixXmlError do
+      CheckEquals(Ord(xecInvalidArgument), Ord(E.Code), 'union without members');
   end;
   D := TLandrixXmlXsdSimpleType.CreateRestriction(Int, '', U('d'));
   U2 := TLandrixXmlXsdSimpleType.CreateUnion([Bool, Dec], '', U('u'));

@@ -680,6 +680,11 @@ both the mark and an entry here):
   `x x c x c` are valid and `x x c x x x c` is not, while XML Schema 1.0 counts per repetition of the group (no
   test of the suite covers this; in the source code the mark reads
   `Xerces deviation, not in the test suite`).
+- The length facets (length, minLength, maxLength) of string types
+  and xs:anyURI count UTF-16 code units as Java's `String.length`: a character
+  above U+FFFF counts as two, while XML Schema 1.0 counts characters
+  (no test of the suite covers this; in the source code the mark reads
+  `Xerces deviation, not in the test suite`).
 - The `final` of a simple type also forbids the extension by a complex
   type with simple content when it is `#all` or comes from a
   `finalDefault` that names `extension`; XML Schema 1.0 limits the
