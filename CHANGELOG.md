@@ -40,6 +40,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and the XSLT processor; its "not supported" messages no longer start
   with "XSLT:".
 
+- `tools/check-suite-updates.py` reports whether the pinned test suites
+  and reference packages (QT3, the W3C XSLT and XML Schema suites, the
+  XML conformance archive, the KoSIT suite and configurations, the
+  XRechnung visualization and Schematron, EN16931, Peppol BIS, the
+  ZUGFeRD configuration) have newer versions upstream; it changes
+  nothing.
+
 - `tools/run-qt3.py --profile saxon` runs the QT3 cases of an XPath 3.1
   processor (spec XP20+, XP30+, XP31 or XP31+) instead of the XPath 2.0
   ones, the first step towards XPath 3.1 in that profile: 19,090
