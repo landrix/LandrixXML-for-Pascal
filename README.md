@@ -89,6 +89,9 @@ try
   Writer.TextUtf8(LandrixXmlFormatCurrency(119, 2));
   Writer.EndElement;
   Writer.EndElement;
+  Writer.StartElement('cac:InvoiceLine');
+  Writer.ElementUtf8('cbc:ID', '1');      { the line has an ID of its own }
+  Writer.EndElement;
   Writer.EndElement;
   Writer.EndDocument;
   Result := Writer.AsUtf8;
@@ -113,8 +116,8 @@ try
       xttStartElement:
         if Reader.NamespaceUriUtf8 = NsCbc then
         begin
-          if Reader.LocalNameUtf8 = 'ID' then
-            Number := Reader.ReadElementText   { the text inside }
+          if (Reader.LocalNameUtf8 = 'ID') and (Reader.Depth = 1) then
+            Number := Reader.ReadElementText   { the invoice's own ID, not a line's }
           else if Reader.LocalNameUtf8 = 'IssueDate' then
             Issued := LandrixXmlParseDate(Reader.ReadElementTextUtf8)
           else if InTotal and (Reader.LocalNameUtf8 = 'PayableAmount') then
@@ -307,6 +310,33 @@ the other forms. An expression is compiled once and can be evaluated
 any number of times; errors raise `ELandrixXmlXPathError` with the XPath
 error code.
 
+### Transforming with XSLT
+
+```pascal
+Sheet := TLandrixXmlXsltStylesheet.Create;   { compiled once, shareable }
+Source := nil;
+Output := nil;
+try
+  Source := TLandrixXmlXPathTree.Create;
+  Output := TMemoryStream.Create;
+  Sheet.LoadFromUtf8(LandrixXmlStringToUtf8(ReportXsl), '');   { or LoadFromFile('report.xsl') }
+  Source.LoadFromUtf8(LandrixXmlStringToUtf8(GoodOrder));       { or LoadFromFile('order.xml') }
+  T := TLandrixXmlXsltTransformer.Create(Sheet);   { one run at a time }
+  try
+    T.SetParameter('lang', 'de');                 { xs:untypedAtomic }
+    T.Transform(Source, Output);                  { the result, as xsl:output says }
+  finally
+    T.Free;
+  end;
+finally
+  Output.Free;
+  Source.Free;
+  Sheet.Free;
+end;
+```
+
+What the XSLT units support is described under [XSLT](#xslt).
+
 ### Errors
 
 ```pascal
@@ -365,26 +395,7 @@ and the parsers also take a pointer and a length (`...Buf`).
   `TDateTime` variants return the value as written, without converting to
   UTC.
 
-### Transforming with XSLT
-
-```pascal
-Sheet := TLandrixXmlXsltStylesheet.Create;   { compiled once, shareable }
-Source := TLandrixXmlXPathTree.Create;
-try
-  Sheet.LoadFromFile('report.xsl');
-  Source.LoadFromFile('input.xml');
-  T := TLandrixXmlXsltTransformer.Create(Sheet);   { one run at a time }
-  try
-    T.SetParameter('lang', 'de');                 { xs:untypedAtomic }
-    T.Transform(Source, OutputStream);            { as xsl:output says }
-  finally
-    T.Free;
-  end;
-finally
-  Source.Free;
-  Sheet.Free;
-end;
-```
+## XSLT
 
 The XSLT units run a subset of XSLT 2.0 as Saxon HE does (XPath in the
 Saxon profile): templates with match patterns, modes and priorities,

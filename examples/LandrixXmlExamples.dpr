@@ -29,7 +29,8 @@ uses
   LandrixXmlXsdValidator,
   LandrixXmlXPathTree,
   LandrixXmlXPath,
-  LandrixXmlXPathEval;
+  LandrixXmlXPathEval,
+  LandrixXmlXslt;
 
 const
   NsInvoice = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';
@@ -69,6 +70,9 @@ begin
     Writer.TextUtf8(LandrixXmlFormatCurrency(119, 2));
     Writer.EndElement;
     Writer.EndElement;
+    Writer.StartElement('cac:InvoiceLine');
+    Writer.ElementUtf8('cbc:ID', '1');      { the line has an ID of its own }
+    Writer.EndElement;
     Writer.EndElement;
     Writer.EndDocument;
     Result := Writer.AsUtf8;
@@ -99,8 +103,8 @@ begin
         xttStartElement:
           if Reader.NamespaceUriUtf8 = NsCbc then
           begin
-            if Reader.LocalNameUtf8 = 'ID' then
-              Number := Reader.ReadElementText   { the text inside }
+            if (Reader.LocalNameUtf8 = 'ID') and (Reader.Depth = 1) then
+              Number := Reader.ReadElementText   { the invoice's own ID, not a line's }
             else if Reader.LocalNameUtf8 = 'IssueDate' then
               Issued := LandrixXmlParseDate(Reader.ReadElementTextUtf8)
             else if InTotal and (Reader.LocalNameUtf8 = 'PayableAmount') then
@@ -362,6 +366,57 @@ begin
   end;
 end;
 
+{ --- transforming with XSLT ---------------------------------------------- }
+
+const
+  ReportXsl =
+    '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
+    ' xmlns:o="' + NsOrder + '">' +
+    '<xsl:output method="text"/>' +
+    '<xsl:param name="lang" select="''en''"/>' +
+    '<xsl:template match="/">' +
+    '<xsl:value-of select="$lang, count(o:Order/o:Item)"/>' +
+    '</xsl:template>' +
+    '</xsl:stylesheet>';
+
+procedure TransformOrder;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  Source: TLandrixXmlXPathTree;
+  T: TLandrixXmlXsltTransformer;
+  Output: TMemoryStream;
+  Report: TLandrixXmlUtf8;
+begin
+  Report := '';
+  Sheet := TLandrixXmlXsltStylesheet.Create;   { compiled once, shareable }
+  Source := nil;
+  Output := nil;
+  try
+    Source := TLandrixXmlXPathTree.Create;
+    Output := TMemoryStream.Create;
+    Sheet.LoadFromUtf8(LandrixXmlStringToUtf8(ReportXsl), '');   { or LoadFromFile('report.xsl') }
+    Source.LoadFromUtf8(LandrixXmlStringToUtf8(GoodOrder));       { or LoadFromFile('order.xml') }
+    T := TLandrixXmlXsltTransformer.Create(Sheet);   { one run at a time }
+    try
+      T.SetParameter('lang', 'de');                 { xs:untypedAtomic }
+      T.Transform(Source, Output);                  { the result, as xsl:output says }
+    finally
+      T.Free;
+    end;
+    { a small result read back from the stream }
+    if Output.Size = 4 then
+    begin
+      SetLength(Report, 4);
+      Move(Output.Memory^, Report[1], 4);
+    end;
+    Expect(Report = 'de 2', 'XSLT report');
+  finally
+    Output.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 { --- errors ------------------------------------------------------------- }
 
 procedure HandleErrors;
@@ -400,6 +455,7 @@ begin
   ValidateInvoice(WriteInvoice);
   ValidateOrder;
   QueryOrder;
+  TransformOrder;
   HandleErrors;
   if Failures = 0 then
     WriteLn('all examples ok');
