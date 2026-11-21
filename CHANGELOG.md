@@ -50,6 +50,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema loader, edge cases from the review: an attribute group
+  referenced twice (directly or through other groups) no longer counts
+  as a duplicate attribute (ct-props-correct.4); a repeated namespace in
+  a wildcard list no longer drops a namespace of the base in an
+  extension; an attribute group with two ID attributes is rejected
+  (ag-props-correct.3), also when no type uses it; the occurrence ranges
+  of a restriction no longer overflow Int64 with deeply nested large
+  bounds; an included document with `targetNamespace=""` is a chameleon,
+  as in Xerces.
 - XML Schema content models, edge cases from the review: a count of
   High(Integer) (also any larger bound, which the loader limits to it)
   no longer counts as fixed in Unique Particle Attribution, so

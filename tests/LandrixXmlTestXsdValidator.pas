@@ -708,6 +708,20 @@ begin
   end;
 end;
 
+procedure WriteTestFile(const FileName, Content: string);
+var
+  F: TFileStream;
+  S: TLandrixXmlUtf8;
+begin
+  S := U(Content);
+  F := TFileStream.Create(FileName, fmCreate);
+  try
+    F.WriteBuffer(S[1], Length(S));
+  finally
+    F.Free;
+  end;
+end;
+
 { Limits of the content models from the review: a variable range beyond
   High(Integer) stays a range for Unique Particle Attribution; a repeated
   group with a large minOccurs around a repeated element stops at the
@@ -729,6 +743,25 @@ var
       '</xs:sequence></xs:complexType></xs:element>';
   end;
 
+  function IsValid(const SchemaFile: string; const Xml: string): Boolean;
+  var
+    Schemas: TLandrixXmlXsdSchemaSet;
+    Validator: TLandrixXmlXsdValidator;
+    R: TLandrixXmlReader;
+  begin
+    Schemas := LandrixXmlXsdLoadSchema(SchemaFile);
+    Validator := TLandrixXmlXsdValidator.Create(Schemas);
+    R := TLandrixXmlReader.Create;
+    try
+      R.LoadFromUtf8(U(Xml));
+      Result := Validator.ValidateReader(R);
+    finally
+      R.Free;
+      Validator.Free;
+      Schemas.Free;
+    end;
+  end;
+
   function Children(Count: Integer): TLandrixXmlUtf8;
   var
     J: Integer;
@@ -740,6 +773,14 @@ var
   end;
 
 begin
+  { the range of the derived content, 2^64, is no longer 0 after an Int64
+    overflow (Xerces stops earlier at its size limit) }
+  CheckLoadError('<xs:complexType name="b"><xs:sequence><xs:any minOccurs="0" maxOccurs="1"/></xs:sequence>' +
+    '</xs:complexType><xs:complexType name="d"><xs:complexContent><xs:restriction base="b">' +
+    '<xs:sequence minOccurs="0" maxOccurs="2097152"><xs:sequence minOccurs="0" maxOccurs="2097152">' +
+    '<xs:element name="e" minOccurs="0" maxOccurs="4194304"/></xs:sequence></xs:sequence>' +
+    '</xs:restriction></xs:complexContent></xs:complexType><xs:element name="r"/>', xecSchema,
+    'a range beyond Int64 below a wildcard');
   CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence>' +
     '<xs:element name="a" minOccurs="2147483647" maxOccurs="2147483648"/><xs:element name="a"/>' +
     '</xs:sequence></xs:complexType></xs:element>', xecSchema, 'ambiguous range at High(Integer)');
@@ -782,6 +823,50 @@ begin
     V.Free;
     S.Free;
     DeleteFile(FileName);
+  end;
+  { an included document with targetNamespace="" is a chameleon, as for
+    Xerces (README, Xerces deviations) }
+  Body := ExtractFilePath(ParamStr(0)) + 'xsdtest-empty-tns.xsd';
+  WriteTestFile(Body, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="">' +
+    '<xs:element name="e"/></xs:schema>');
+  FileName := TempSchema('<xs:include schemaLocation="xsdtest-empty-tns.xsd"/>', ' targetNamespace="urn:x"');
+  S := nil;
+  try
+    S := LandrixXmlXsdLoadSchema(FileName);
+    Check(S.FindElement('urn:x', 'e') <> nil, 'chameleon with targetNamespace=""');
+  finally
+    S.Free;
+    DeleteFile(FileName);
+    DeleteFile(Body);
+  end;
+  { a repeated namespace in an extension wildcard keeps urn:b of the base }
+  FileName := TempSchema('<xs:complexType name="b"><xs:anyAttribute namespace="urn:a urn:b" ' +
+    'processContents="skip"/></xs:complexType><xs:complexType name="d"><xs:complexContent>' +
+    '<xs:extension base="b"><xs:anyAttribute namespace="urn:a urn:a" processContents="skip"/>' +
+    '</xs:extension></xs:complexContent></xs:complexType><xs:element name="r" type="d"/>');
+  try
+    Check(IsValid(FileName, '<r xmlns:b="urn:b" b:x="1"/>'), 'wildcard union keeps urn:b');
+  finally
+    DeleteFile(FileName);
+  end;
+  { one chameleon attribute group in two namespaces: two attribute uses }
+  Body := ExtractFilePath(ParamStr(0));
+  WriteTestFile(Body + 'xsdtest-cham.xsd', '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">' +
+    '<xs:attributeGroup name="g"><xs:attribute name="x" form="qualified" use="required"/>' +
+    '</xs:attributeGroup></xs:schema>');
+  WriteTestFile(Body + 'xsdtest-cham-b.xsd', '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" ' +
+    'targetNamespace="urn:b"><xs:include schemaLocation="xsdtest-cham.xsd"/></xs:schema>');
+  FileName := TempSchema('<xs:include schemaLocation="xsdtest-cham.xsd"/><xs:import namespace="urn:b" ' +
+    'schemaLocation="xsdtest-cham-b.xsd"/><xs:element name="r"><xs:complexType><xs:attributeGroup ref="a:g"/>' +
+    '<xs:attributeGroup ref="b:g"/><xs:attributeGroup ref="a:g"/></xs:complexType></xs:element>',
+    ' targetNamespace="urn:a" xmlns:a="urn:a" xmlns:b="urn:b"');
+  try
+    Check(IsValid(FileName, '<a:r xmlns:a="urn:a" xmlns:b="urn:b" a:x="1" b:x="2"/>'), 'both chameleon uses');
+    Check(not IsValid(FileName, '<a:r xmlns:a="urn:a" xmlns:b="urn:b" a:x="1"/>'), 'b:x is required');
+  finally
+    DeleteFile(FileName);
+    DeleteFile(Body + 'xsdtest-cham.xsd');
+    DeleteFile(Body + 'xsdtest-cham-b.xsd');
   end;
   { 3000 optional elements and the ambiguous a?, a: too costly for the
     check, so taken as unambiguous (with 10 the ambiguity is reported) }
@@ -826,20 +911,6 @@ begin
   finally
     S.Free;
     DeleteFile(FileName);
-  end;
-end;
-
-procedure WriteTestFile(const FileName, Content: string);
-var
-  F: TFileStream;
-  S: TLandrixXmlUtf8;
-begin
-  S := U(Content);
-  F := TFileStream.Create(FileName, fmCreate);
-  try
-    F.WriteBuffer(S[1], Length(S));
-  finally
-    F.Free;
   end;
 end;
 

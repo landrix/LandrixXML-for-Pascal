@@ -626,6 +626,15 @@ both the mark and an entry here):
   (`schG3`, `schG12`).
 - An `xs:import` with `namespace=""` is accepted (`schZ014_a`,
   `schZ014_b`).
+- A schema document with `targetNamespace=""` counts as one without a
+  target namespace, so an `xs:include` takes it as a chameleon (no test
+  of the suite covers this; in the source code the mark reads
+  `Xerces deviation, not in the test suite`).
+- In a restriction the identity constraints of an element are not
+  checked to be a subset of those of the base element
+  (rcase-NameAndTypeOK.5; no test of the suite covers this; in the
+  source code the mark reads `Xerces deviation, not in the test
+  suite`).
 - An `IDREF`/`IDREFS` attribute value supplied by a default or fixed
   value of the schema is not checked as a reference, and a key field that
   selects an attribute matched by a lax or skip wildcard is accepted

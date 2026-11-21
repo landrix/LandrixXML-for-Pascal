@@ -13,7 +13,10 @@
 
   Schema locations are resolved by a TLandrixXmlXsdResolver: an explicit
   catalog first, then the location relative to the including document.
-  There is no network access and no search by file name. An include,
+  No URI scheme is fetched (no network access through http: and the
+  like) and there is no search by file name; an absolute or UNC file
+  path named by a schema is read as a file (a resolver of its own can
+  limit that for schemas from elsewhere). An include,
   import or redefine whose document cannot be found is skipped (XML
   Schema 1.0 4.2.1; Xerces warns) and listed in the schema set's
   Warnings; a reference into it fails with a message naming it. A
@@ -341,6 +344,12 @@ type
   { An attribute use being collected, or a prohibition. }
   TAttributeItem = class
     Decl: TLandrixXmlXsdAttributeDecl;
+    { the xs:attribute element of the use: an attribute group referenced
+      twice gives the same use again }
+    Source: TLandrixXmlNode;
+    { the schema document of Source: a chameleon document included into
+      two namespaces gives two uses of one node }
+    SourceDoc: TSchemaDoc;
     Required: Boolean;
     Prohibited: Boolean;
     ValueConstraint: TLandrixXmlXsdValueConstraint;
@@ -478,6 +487,7 @@ type
     procedure CheckRedefinition(Doc: TSchemaDoc; Node: TLandrixXmlNode; Kind: TPendingKind;
       const Name: TLandrixXmlUtf8);
     procedure CheckAttributeGroupRestriction(P: TPending; Items: TObjectList; Wildcard: TLandrixXmlXsdWildcard);
+    procedure CheckGroupIds(P: TPending; Items: TObjectList);
     function GroupAsType(const Name: TLandrixXmlUtf8; Items: TObjectList;
       Wildcard: TLandrixXmlXsdWildcard): TLandrixXmlXsdComplexType;
     procedure CheckAllowedNamespace(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value,
@@ -992,7 +1002,12 @@ begin
   if not IsXs(Root, 'schema') then
     Fail(Including, Node, FileName + ' is not an XML Schema document');
   CheckSchemaDocument(FileName, Root);
-  HasTns := Attr(Root, 'targetNamespace', Tns);
+  HasTns := AttrTrimmed(Root, 'targetNamespace', Tns);
+  { Xerces deviation, not in the test suite. targetNamespace="" (also
+    only white space) counts as absent, so an included document with it
+    is a chameleon }
+  if HasTns and (Tns = '') then
+    HasTns := False;
   if not HasTns then
     Tns := '';
   if Including = nil then
@@ -1265,6 +1280,29 @@ begin
           ' refers to itself more than once');
   else
     { elements, attributes and notations cannot be redefined }
+  end;
+end;
+
+{ ag-props-correct.3: at most one attribute use of an attribute group
+  has a type derived from ID (checked for every group, also an unused
+  one, as Xerces does) }
+procedure TLoader.CheckGroupIds(P: TPending; Items: TObjectList);
+var
+  I: Integer;
+  Item: TAttributeItem;
+  IdName: TLandrixXmlUtf8;
+begin
+  IdName := '';
+  for I := 0 to Integer(Items.Count) - 1 do
+  begin
+    Item := TAttributeItem(Items[I]);
+    if not Item.Prohibited and (Item.Decl.SimpleType <> nil) and Item.Decl.SimpleType.IsIdType then
+    begin
+      if IdName <> '' then
+        FailCheck(P.Doc.FileName, P.Node, 'ag-props-correct.3', 'the attributes ' + Esc(IdName) + ' and ' +
+          Esc(Item.Decl.Name) + ' of the attribute group ' + Esc(P.Name) + ' both have an ID type');
+      IdName := Item.Decl.Name;
+    end;
   end;
 end;
 
@@ -2445,8 +2483,12 @@ begin
             Item := Doc.TargetNamespace
           else if Item = '##local' then
             Item := '';
-          SetLength(Namespaces, Length(Namespaces) + 1);
-          Namespaces[High(Namespaces)] := Item;
+          { a set: a repeated namespace is kept once }
+          if not InSet(Item, Namespaces) then
+          begin
+            SetLength(Namespaces, Length(Namespaces) + 1);
+            Namespaces[High(Namespaces)] := Item;
+          end;
         end;
       end;
     end;
@@ -3221,6 +3263,22 @@ begin
   end;
 end;
 
+{ True if Items holds the same attribute use as Item (one attribute group
+  referenced twice, directly or through other groups: the union of the
+  uses has it once, XML Schema 1.0 3.4.2; Xerces compares the uses). }
+function SameUse(Items: TObjectList; Item: TAttributeItem): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to Integer(Items.Count) - 1 do
+    if (TAttributeItem(Items[I]).Source = Item.Source) and (TAttributeItem(Items[I]).SourceDoc = Item.SourceDoc) then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
 { Attribute uses, prohibitions and the wildcard below Parent, attribute
   groups expanded: a referenced group is collected (and checked) on its
   own first, as Xerces builds it as a component of its own. }
@@ -3241,6 +3299,8 @@ begin
     if IsXs(Child, 'attribute') then
     begin
       Item := TAttributeItem.Create;
+      Item.Source := Child;
+      Item.SourceDoc := Doc;
       Items.Add(Item);
       if QNameAttr(Doc, Child, 'ref', Ns, LocalName) then
       begin
@@ -3347,7 +3407,7 @@ begin
         begin
           Item := TAttributeItem(GroupItems[I]);
           GroupItems[I] := nil;
-          if Item.Prohibited then
+          if Item.Prohibited or SameUse(Items, Item) then
             Item.Free
           else
           begin
@@ -4649,6 +4709,19 @@ begin
   Result := True;
 end;
 
+const
+  { ranges are limited to it: above any bound a schema can give, and the
+    product of two such values stays within Int64 }
+  RangeCap = Int64(High(Integer)) + 1;
+
+function CapRange(Value: Int64): Int64;
+begin
+  if Value > RangeCap then
+    Result := RangeCap
+  else
+    Result := Value;
+end;
+
 { Xerces' minEffectiveTotalRange }
 function MinRange(P: TLandrixXmlXsdParticle): Int64;
 var
@@ -4670,9 +4743,9 @@ begin
         Result := One;
     end
     else
-      Result := Result + One;
+      Result := CapRange(Result + One);
   end;
-  Result := Result * P.MinOccurs;
+  Result := CapRange(Result * P.MinOccurs);
 end;
 
 { Xerces' maxEffectiveTotalRange (LandrixXmlXsdUnbounded for no upper
@@ -4700,10 +4773,10 @@ begin
         Group := One;
     end
     else
-      Group := Group + One;
+      Group := CapRange(Group + One);
   end;
   if P.MaxOccurs <> LandrixXmlXsdUnbounded then
-    Result := Group * P.MaxOccurs
+    Result := CapRange(Group * P.MaxOccurs)
   else if Group = 0 then
     Result := 0;
 end;
@@ -4873,8 +4946,10 @@ begin
     [xdExtension, xdList, xdUnion]);
 end;
 
-{ Xerces' checkNameAndTypeOK for two element particles; the identity
-  constraints are not compared (Xerces neither) }
+{ Xerces' checkNameAndTypeOK for two element particles.
+  Xerces deviation, not in the test suite: the identity constraints of
+  the derived element are not checked to be a subset of the base
+  element's (rcase-NameAndTypeOK.5), as in Xerces }
 function TLoader.NameAndTypeOk(D, B: TLandrixXmlXsdParticle; out Code: string): Boolean;
 var
   DE, BE: TLandrixXmlXsdElementDecl;
@@ -5528,6 +5603,7 @@ begin
           try
             Wildcard := nil;
             CollectOwnAttributes(P.Doc, P.Node, Items, Wildcard, True);
+            CheckGroupIds(P, Items);
             if (P.Original <> nil) and
               (CountSelfReferences(P.Doc, P.Node, 'attributeGroup', P.Name) = 0) then
               CheckAttributeGroupRestriction(P, Items, Wildcard);
