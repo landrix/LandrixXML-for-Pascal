@@ -50,6 +50,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XPath general comparison: an xs:untypedAtomic beside an xs:anyURI is
+  cast to xs:anyURI first, so its white space is collapsed
+  (`xs:untypedAtomic(' urn:a ') = xs:anyURI('urn:a')` is true, as in
+  Saxon); it was compared as written. This also holds for an attribute
+  compared directly (`@u = xs:anyURI('urn:a')`), which Saxon compares
+  as written.
 - XPath functions, edge cases from the review: `fn:sum` checks its zero
   argument also for a non-empty input, and a literal `()` as precision
   of `fn:round` or `fn:round-half-to-even` is XPTY0004 also for an empty

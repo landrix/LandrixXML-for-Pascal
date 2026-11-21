@@ -922,6 +922,8 @@ begin
   begin
     if IsNumeric(Y.Kind) then
       X := DoubleItem(ParseDouble(X.Text, Xp20))
+    else if Y.Kind = xikAnyUri then
+      X := CastTo(X, xikAnyUri, Xp20)
     else if not IsStringLike(Y.Kind) then
       case Y.Kind of
         xikBoolean: X := CastTo(X, xikBoolean, Xp20);
@@ -943,6 +945,8 @@ begin
   begin
     if IsNumeric(X.Kind) then
       Y := DoubleItem(ParseDouble(Y.Text, Xp20))
+    else if X.Kind = xikAnyUri then
+      Y := CastTo(Y, xikAnyUri, Xp20)
     else if not IsStringLike(X.Kind) then
       case X.Kind of
         xikBoolean: Y := CastTo(Y, xikBoolean, Xp20);
@@ -965,12 +969,15 @@ end;
 { One pair of a general comparison: an untypedAtomic beside a string (or
   another untypedAtomic) is compared as it is, without the copies and
   conversions of ComparePairConverted (the common case of attribute and
-  element values compared with strings). }
+  element values compared with strings). Beside an xs:anyURI it is cast
+  to xs:anyURI, which collapses its white space, as the specification
+  says and Saxon does for a value or variable (Saxon compares an
+  attribute or element in the comparison itself as written). }
 function ComparePair(const A, B: TLandrixXmlXPathItem; Op: TLandrixXmlXPathCompare; Xp20: Boolean;
   Tz: Integer; Expr: TLandrixXmlXPathExpression): Boolean;
 begin
-  if ((A.Kind = xikUntypedAtomic) and not IsStringLike(B.Kind)) or
-    ((B.Kind = xikUntypedAtomic) and not IsStringLike(A.Kind)) then
+  if ((A.Kind = xikUntypedAtomic) and (not IsStringLike(B.Kind) or (B.Kind = xikAnyUri))) or
+    ((B.Kind = xikUntypedAtomic) and (not IsStringLike(A.Kind) or (A.Kind = xikAnyUri))) then
     Result := ComparePairConverted(A, B, Op, Xp20, Tz, Expr)
   else
     Result := CompareAtomic(A, B, Op, Xp20, Tz);

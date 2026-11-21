@@ -1843,10 +1843,11 @@ end;
   as precision of the rounding functions is an error, sum promotes all
   values before adding in the
   XPath 2.0 profile, a literal () in XPath 1.0 compatibility mode and dot
-  segments of resolve-uri (RFC 3986 5.4). }
+  segments of resolve-uri (RFC 3986 5.4) and an untypedAtomic compared
+  with an xs:anyURI (cast to it, which collapses white space). }
 procedure TestFunctionReviewEdges;
 const
-  Cases: array[0..18, 0..3] of string = (
+  Cases: array[0..24, 0..3] of string = (
     ('s', '0', 'sum(1, (2, 3))', 'XPTY0004'),
     ('s', '0', 'sum((), (2, 3))', 'XPTY0004'),
     ('s', '0', 'sum((), 5)', '5'),
@@ -1865,11 +1866,18 @@ const
     ('s', '0', 'resolve-uri(''g;x=1/../y'', ''http://a/b/c/d;p?q'')', 'http://a/b/c/y'),
     ('s', '0', 'resolve-uri(''/./g/..'', ''http://a/b/c/d;p?q'')', 'http://a/'),
     ('2', '0', 'sum((16777217, -16777216, xs:float(0)))', '0'),
-    ('s', '0', 'count(round-half-to-even(//none, //none))', '0'));
+    ('s', '0', 'count(round-half-to-even(//none, //none))', '0'),
+    ('s', '0', 'xs:untypedAtomic('' urn:test '') = xs:anyURI(''urn:test'')', 'true'),
+    ('2', '0', 'xs:anyURI(''a b'') != xs:untypedAtomic(''a  b'')', 'false'),
+    ('s', '0', 'xs:untypedAtomic('' urn:test '') = '' urn:test ''', 'true'),
+    ('2', '0', 'xs:untypedAtomic(''%zz'') = xs:anyURI(''urn:a'')', 'FORG0001'),
+    ('s', '0', 'count(/r/e[@u = xs:anyURI(''urn:a'')])', '16'),
+    ('s', '0', 'count(/r/e[@u = xs:anyURI(''urn:a'') and true()])', '16'));
 var
   Tree: TLandrixXmlXPathTree;
   Evaluator: TLandrixXmlXPathEvaluator;
   I: Integer;
+  Xml: string;
 
   function Run(const Profile, Compatible, Text: string): string;
   var
@@ -1901,7 +1909,11 @@ begin
   Tree := TLandrixXmlXPathTree.Create;
   Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
   try
-    Tree.LoadFromUtf8(U('<r/>'));
+    { 16 elements: enough for the attribute index of a keyed step }
+    Xml := '<r>';
+    for I := 1 to 16 do
+      Xml := Xml + '<e u=" urn:a "/>';
+    Tree.LoadFromUtf8(U(Xml + '</r>'));
     for I := Low(Cases) to High(Cases) do
       CheckEqualsStr(Cases[I, 3], Run(Cases[I, 0], Cases[I, 1], Cases[I, 2]), Cases[I, 2]);
   finally

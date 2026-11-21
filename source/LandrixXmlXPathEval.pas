@@ -3587,8 +3587,10 @@ begin
   if not TKeyIndex(FindKeyIndex(Node, ChildName, AttributeName)).Indexed then
     Exit;
   Keys := Atomize(Eval(C.KeyValue[Index], Node, 1, 1, LandrixXmlXPathEmpty));
+  { an xs:anyURI key casts the attribute value (white space collapsed),
+    which the index of the raw values cannot answer }
   for I := 0 to Keys.Count - 1 do
-    if not IsStringLike(Keys.Items[I].Kind) then
+    if not IsStringLike(Keys.Items[I].Kind) or (Keys.Items[I].Kind = xikAnyUri) then
       Exit;
   { the evaluation of the value may have started the indexes again }
   X := TKeyIndex(FindKeyIndex(Node, ChildName, AttributeName));
