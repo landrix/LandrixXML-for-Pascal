@@ -3053,9 +3053,9 @@ begin
   Named := nil;
   Key := '';
   if T.Kind[I] = xnkElement then
-    Key := 'e' + LandrixXmlUtf8ToString(XsltClarkOf(T.NamespaceUriUtf8(I), T.LocalNameUtf8(I)))
+    Key := 'e' + LandrixXmlUtf8ToKey(XsltClarkOf(T.NamespaceUriUtf8(I), T.LocalNameUtf8(I)))
   else if T.Kind[I] = xnkAttribute then
-    Key := 'a' + LandrixXmlUtf8ToString(XsltClarkOf(T.NamespaceUriUtf8(I), T.LocalNameUtf8(I)));
+    Key := 'a' + LandrixXmlUtf8ToKey(XsltClarkOf(T.NamespaceUriUtf8(I), T.LocalNameUtf8(I)));
   if (Key <> '') and Mode.Named.Find(Key, A) then
     Named := TList(Mode.Named.Objects[A]);
   { both lists in the order they are tried: merged }
@@ -3441,7 +3441,7 @@ begin
       { a QName with the namespaces of the instruction (no default) or an
         EQName }
       Name := Trim8(EvalAvt(Instr, Instr.FormatAvt, Focus));
-      if not FC.NamedOutputs.Find(LandrixXmlUtf8ToString(XsltFormatClark(Name, Instr.ScopePrefixes,
+      if not FC.NamedOutputs.Find(LandrixXmlUtf8ToKey(XsltFormatClark(Name, Instr.ScopePrefixes,
         Instr.ScopeUris)), P) then
         Fail(Instr, 'XTDE1460', 'no xsl:output named ' + LandrixXmlUtf8ToString(Name));
       Props := TXsltOutputProperties(FC.NamedOutputs.Objects[P]).Clone;
@@ -4933,9 +4933,9 @@ begin
   Picture := FEvaluator.ItemString(FEvaluator.ConvertSequence(Args[1], FStringType, 'format-number()').Items[0]);
   Name := '';
   if High(Args) >= 2 then
-    Name := LandrixXmlStringToUtf8(Trim(LandrixXmlUtf8ToString(FEvaluator.ItemString(
-      FEvaluator.ConvertSequence(Args[2], FStringType, 'format-number()').Items[0]))));
-  K := FC.DecimalFormats.IndexOf(LandrixXmlUtf8ToString(Name));
+    Name := Trim8(FEvaluator.ItemString(FEvaluator.ConvertSequence(Args[2], FStringType,
+      'format-number()').Items[0]));
+  K := FC.DecimalFormats.IndexOf(LandrixXmlUtf8ToKey(Name));
   if K < 0 then
     raise ELandrixXmlXPathError.CreateXPath('FODF1280', 'format-number(): there is no decimal format ' +
       LandrixXmlUtf8ToString(Name));
@@ -5238,7 +5238,7 @@ begin
   { a lexical QName, its prefix bound by the calling expression }
   XsltNameArgument(FEvaluator, Args[0], 'XTDE1260', 'key()', '', Uri, Local);
   Name := XsltClarkOf(Uri, Local);
-  I := FC.Keys.IndexOf(LandrixXmlUtf8ToString(Name));
+  I := FC.Keys.IndexOf(LandrixXmlUtf8ToKey(Name));
   if I < 0 then
     raise ELandrixXmlXPathError.CreateXPath('XTDE1260', 'key(): there is no key ' + LandrixXmlUtf8ToString(Name));
   K := TXsltKey(FC.Keys.Objects[I]);
@@ -5731,7 +5731,7 @@ begin
   try
     if FSettings.InitialTemplate <> '' then
     begin
-      if not FC.NamedTemplates.Find(LandrixXmlUtf8ToString(FSettings.InitialTemplate), I) then
+      if not FC.NamedTemplates.Find(LandrixXmlUtf8ToKey(FSettings.InitialTemplate), I) then
         Fail(nil, 'XTDE0040', 'no template named ' + LandrixXmlUtf8ToString(FSettings.InitialTemplate));
       T := TXsltTemplate(FC.NamedTemplates.Objects[I]);
       { XSLT 2.0: the initial template has no required parameter }

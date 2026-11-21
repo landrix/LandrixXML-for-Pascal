@@ -795,7 +795,7 @@ var
   I: Integer;
 begin
   Result := nil;
-  if Modes.Find(LandrixXmlUtf8ToString(Name), I) then
+  if Modes.Find(LandrixXmlUtf8ToKey(Name), I) then
     Result := TXsltMode(Modes.Objects[I]);
 end;
 
@@ -1349,7 +1349,7 @@ begin
     { a cycle: the module is being included or imported already (the same
       module imported twice elsewhere is no cycle) }
     for I := 0 to Integer(FChain.Count) - 1 do
-      if FChain[I] = LandrixXmlUtf8ToString(Uri) then
+      if FChain[I] = LandrixXmlUtf8ToKey(Uri) then
         Fail(M, E, 'XTSE0180', 'the module ' + LandrixXmlUtf8ToString(Uri) + ' includes or imports itself');
     Result := TModule.Create;
     Result.Tree := TLandrixXmlXPathTree.Create;
@@ -1386,7 +1386,7 @@ var
   E, C, N: Integer;
   Inc: TModule;
 begin
-  FChain.Add(LandrixXmlUtf8ToString(M.Uri));
+  FChain.Add(LandrixXmlUtf8ToKey(M.Uri));
   try
     E := M.Tree.DocumentElement;
     C := -1;
@@ -1418,7 +1418,7 @@ procedure TCompiler.ProcessImports(M: TModule);
 var
   E, C: Integer;
 begin
-  FChain.Add(LandrixXmlUtf8ToString(M.Uri));
+  FChain.Add(LandrixXmlUtf8ToKey(M.Uri));
   try
     E := M.Tree.DocumentElement;
     C := -1;
@@ -1815,7 +1815,7 @@ begin
   B := StaticBase(M, E);
   if B = M.Uri then
     Exit;
-  Result := FBaseUris.IndexOf(LandrixXmlUtf8ToString(B));
+  Result := FBaseUris.IndexOf(LandrixXmlUtf8ToKey(B));
   if Result < 0 then
     Result := M.Index
   else
@@ -2231,9 +2231,9 @@ begin
   I := Pos8('}', Clark);
   Uri := Copy(Clark, 2, I - 2);
   Local := Copy(Clark, I + 1, Length(Clark) - I);
-  I := FVarUris.IndexOf(LandrixXmlUtf8ToString(Uri));
+  I := FVarUris.IndexOf(LandrixXmlUtf8ToKey(Uri));
   if I < 0 then
-    I := FVarUris.Add(LandrixXmlUtf8ToString(Uri));
+    I := FVarUris.Add(LandrixXmlUtf8ToKey(Uri));
   Result := '#v' + LandrixXmlStringToUtf8(IntToStr(I)) + ':' + Local;
 end;
 
@@ -2293,7 +2293,7 @@ begin
       end;
     for I := 0 to Integer(FVarUris.Count) - 1 do
       Result.AddNamespace('#v' + LandrixXmlStringToUtf8(IntToStr(I)),
-        LandrixXmlStringToUtf8(FVarUris[I]));
+        LandrixXmlKeyToUtf8(FVarUris[I]));
     for I := 0 to N - 1 do
       Result.DeclareVariable(Names[I]);
     { the functions; those of a module (doc(), document()) under their
@@ -3579,7 +3579,7 @@ begin
     Exit;
   Result := TXsltMode.Create;
   Result.Name := Name;
-  FC.Modes.AddObject(LandrixXmlUtf8ToString(Name), Result);
+  FC.Modes.AddObject(LandrixXmlUtf8ToKey(Name), Result);
 end;
 
 procedure TCompiler.CompileGlobals;
@@ -3609,7 +3609,7 @@ begin
       Name := QNameToClark(D.Module, D.Element, ReqAttr(D.Module, D.Element, 'name'), False);
       Found := False;
       for J := 0 to Integer(Names.Count) - 1 do
-        if Names[J] = LandrixXmlUtf8ToString(Name) then
+        if Names[J] = LandrixXmlUtf8ToKey(Name) then
         begin
           Found := True;
           Best := TDecl(Decls[J]);
@@ -3626,20 +3626,20 @@ begin
         end;
       if not Found then
       begin
-        Names.Add(LandrixXmlUtf8ToString(Name));
+        Names.Add(LandrixXmlUtf8ToKey(Name));
         Decls.Add(D);
       end;
     end;
     for I := 0 to Integer(Length(DupIndex)) - 1 do
       if TDecl(Decls[DupIndex[I]]).Precedence = TDecl(DupDecls[I]).Precedence then
         Fail(TDecl(DupDecls[I]).Module, TDecl(DupDecls[I]).Element, 'XTSE0630', 'the global variable ' +
-          Names[DupIndex[I]] + ' is declared twice');
+          LandrixXmlUtf8ToString(LandrixXmlKeyToUtf8(Names[DupIndex[I]])) + ' is declared twice');
     for I := 0 to Integer(Decls.Count) - 1 do
     begin
       D := TDecl(Decls[I]);
       G := TXsltGlobal.Create;
       FC.Globals.Add(G);
-      G.Name := LandrixXmlStringToUtf8(Names[I]);
+      G.Name := LandrixXmlKeyToUtf8(Names[I]);
       Lexical := Trim8(ReqAttr(D.Module, D.Element, 'name'));
       G.Lexical := Lexical;
       G.Module := D.Module.Uri;
@@ -3942,9 +3942,9 @@ begin
     if (N.Kind = xakStep) and (N.NodeTest = xntName) then
     begin
       if N.Axis = xaxChild then
-        Key := 'e' + LandrixXmlUtf8ToString(XsltClarkOf(N.NamespaceUri, N.LocalName))
+        Key := 'e' + LandrixXmlUtf8ToKey(XsltClarkOf(N.NamespaceUri, N.LocalName))
       else if N.Axis = xaxAttribute then
-        Key := 'a' + LandrixXmlUtf8ToString(XsltClarkOf(N.NamespaceUri, N.LocalName));
+        Key := 'a' + LandrixXmlUtf8ToKey(XsltClarkOf(N.NamespaceUri, N.LocalName));
     end;
   end;
   if Key = '' then
@@ -4485,7 +4485,7 @@ begin
     Fail(M, E, 'XTSE1205', 'xsl:key has use and content');
   if not HasUse and not HasBody then
     Fail(M, E, 'XTSE1205', 'xsl:key needs use or content');
-  I := FC.Keys.IndexOf(LandrixXmlUtf8ToString(Name));
+  I := FC.Keys.IndexOf(LandrixXmlUtf8ToKey(Name));
   if I >= 0 then
     K := TXsltKey(FC.Keys.Objects[I])
   else
@@ -4493,7 +4493,7 @@ begin
     K := TXsltKey.Create;
     K.Name := Name;
     K.Index := Integer(FC.Keys.Count);
-    FC.Keys.AddObject(LandrixXmlUtf8ToString(Name), K);
+    FC.Keys.AddObject(LandrixXmlUtf8ToKey(Name), K);
   end;
   Decl := TXsltKeyDecl.Create;
   K.Decls.Add(Decl);
@@ -4567,13 +4567,13 @@ begin
       Fail(M, E, 'XTSE0020', 'not a decimal format name: "' + LandrixXmlUtf8ToString(V) + '"');
     Name := V;
   end;
-  K := FC.DecimalFormats.IndexOf(LandrixXmlUtf8ToString(Name));
+  K := FC.DecimalFormats.IndexOf(LandrixXmlUtf8ToKey(Name));
   if K >= 0 then
     F := TXPathDecimalFormat(FC.DecimalFormats.Objects[K])
   else
   begin
     F := TXPathDecimalFormat.Create;
-    FC.DecimalFormats.AddObject(LandrixXmlUtf8ToString(Name), F);
+    FC.DecimalFormats.AddObject(LandrixXmlUtf8ToKey(Name), F);
   end;
   for I := E + 1 to E + M.Tree.AttributeCount[E] do
   begin
@@ -4789,7 +4789,7 @@ begin
         C := M.Tree.NextSibling[C];
       end;
       Key := Name + '#' + LandrixXmlStringToUtf8(IntToStr(Arity));
-      K := Keys.IndexOf(LandrixXmlUtf8ToString(Key));
+      K := Keys.IndexOf(LandrixXmlUtf8ToKey(Key));
       if K >= 0 then
       begin
         T := TXsltTemplate(Keys.Objects[K]);
@@ -4824,7 +4824,7 @@ begin
         T.Params.Add(nil);
       FC.UserFunctions.Add(T);
       FFunctionDecls.Add(D);
-      Keys.AddObject(LandrixXmlUtf8ToString(Key), T);
+      Keys.AddObject(LandrixXmlUtf8ToKey(Key), T);
     end;
     for I := 0 to Integer(DupTemplates.Count) - 1 do
       if TXsltTemplate(DupTemplates[I]).Precedence = TDecl(DupDecls[I]).Precedence then
@@ -4962,7 +4962,7 @@ begin
     AddRules(D, T, Match, Modes, HasModes);
   if T.Name <> '' then
   begin
-    if FC.NamedTemplates.Find(LandrixXmlUtf8ToString(T.Name), I) then
+    if FC.NamedTemplates.Find(LandrixXmlUtf8ToKey(T.Name), I) then
     begin
       if TXsltTemplate(FC.NamedTemplates.Objects[I]).Precedence = T.Precedence then
       begin
@@ -4973,7 +4973,7 @@ begin
         FC.NamedTemplates.Objects[I] := T;
     end
     else
-      FC.NamedTemplates.AddObject(LandrixXmlUtf8ToString(T.Name), T);
+      FC.NamedTemplates.AddObject(LandrixXmlUtf8ToKey(T.Name), T);
   end;
 end;
 
@@ -5093,8 +5093,8 @@ begin
   finally
     Scope.Free;
   end;
-  if not FC.AttributeSets.Find(LandrixXmlUtf8ToString(T.Name), P) then
-    P := FC.AttributeSets.AddObject(LandrixXmlUtf8ToString(T.Name), TList.Create);
+  if not FC.AttributeSets.Find(LandrixXmlUtf8ToKey(T.Name), P) then
+    P := FC.AttributeSets.AddObject(LandrixXmlUtf8ToKey(T.Name), TList.Create);
   L := TList(FC.AttributeSets.Objects[P]);
   K := Integer(L.Count);
   while (K > 0) and (TXsltTemplate(L[K - 1]).Precedence > T.Precedence) do
@@ -5225,7 +5225,7 @@ begin
     Map.Free;
     raise;
   end;
-  if FCharMaps.Find(LandrixXmlUtf8ToString(Name), P) then
+  if FCharMaps.Find(LandrixXmlUtf8ToKey(Name), P) then
   begin
     Old := TCharMap(FCharMaps.Objects[P]);
     if Old.Precedence = Map.Precedence then
@@ -5247,7 +5247,7 @@ begin
     end;
   end
   else
-    FCharMaps.AddObject(LandrixXmlUtf8ToString(Name), Map);
+    FCharMaps.AddObject(LandrixXmlUtf8ToKey(Name), Map);
 end;
 
 { the names a map that is not used (another one of its name replaces it)
@@ -5271,7 +5271,7 @@ var
   I, P: Integer;
 begin
   for I := 0 to Integer(Length(Map.UseNames)) - 1 do
-    if FCharMaps.Find(LandrixXmlUtf8ToString(Map.UseNames[I]), P) then
+    if FCharMaps.Find(LandrixXmlUtf8ToKey(Map.UseNames[I]), P) then
       ComposeMap(TCharMap(FCharMaps.Objects[P]), Props);
   for I := 0 to Integer(Length(Map.Chars)) - 1 do
     Props.AddMapping(Map.Chars[I], Map.Strings[I]);
@@ -5291,21 +5291,21 @@ var
   var
     K, Q: Integer;
   begin
-    if Done.IndexOf(LandrixXmlUtf8ToString(Name)) >= 0 then
+    if Done.IndexOf(LandrixXmlUtf8ToKey(Name)) >= 0 then
       Exit;
-    if Path.IndexOf(LandrixXmlUtf8ToString(Name)) >= 0 then
+    if Path.IndexOf(LandrixXmlUtf8ToKey(Name)) >= 0 then
       Fail(Map.Module, Map.Element, 'XTSE1600', 'the character map ' + LandrixXmlUtf8ToString(Name) +
         ' uses itself');
-    Path.Add(LandrixXmlUtf8ToString(Name));
+    Path.Add(LandrixXmlUtf8ToKey(Name));
     for K := 0 to Integer(Length(Map.UseNames)) - 1 do
     begin
-      if not FCharMaps.Find(LandrixXmlUtf8ToString(Map.UseNames[K]), Q) then
+      if not FCharMaps.Find(LandrixXmlUtf8ToKey(Map.UseNames[K]), Q) then
         Fail(Map.Module, Map.Element, 'XTSE1590', 'no character map named ' +
           LandrixXmlUtf8ToString(Map.UseNames[K]));
       Check(TCharMap(FCharMaps.Objects[Q]), Map.UseNames[K]);
     end;
     Path.Delete(Path.Count - 1);
-    Done.Add(LandrixXmlUtf8ToString(Name));
+    Done.Add(LandrixXmlUtf8ToKey(Name));
   end;
 
 begin
@@ -5314,7 +5314,7 @@ begin
     Map := TCharMap(FCharMaps.Objects[I]);
     if Map.Duplicate then
       Fail(Map.Module, Map.Element, 'XTSE1580', 'two character maps named ' +
-        LandrixXmlUtf8ToString(LandrixXmlStringToUtf8(FCharMaps[I])) + ' with the same import precedence');
+        LandrixXmlUtf8ToString(LandrixXmlKeyToUtf8(FCharMaps[I])) + ' with the same import precedence');
   end;
   Path := TXsltStringList.Create;
   Done := TXsltStringList.Create;
@@ -5323,7 +5323,7 @@ begin
     Done.CaseSensitive := True;
     Done.Sorted := True;
     for I := 0 to Integer(FCharMaps.Count) - 1 do
-      Check(TCharMap(FCharMaps.Objects[I]), LandrixXmlStringToUtf8(FCharMaps[I]));
+      Check(TCharMap(FCharMaps.Objects[I]), LandrixXmlKeyToUtf8(FCharMaps[I]));
   finally
     Done.Free;
     Path.Free;
@@ -5333,7 +5333,7 @@ begin
     R := TMapRef(FMapRefs[I]);
     for J := 0 to Integer(Length(R.Names)) - 1 do
     begin
-      if not FCharMaps.Find(LandrixXmlUtf8ToString(R.Names[J]), P) then
+      if not FCharMaps.Find(LandrixXmlUtf8ToKey(R.Names[J]), P) then
         Fail(R.Module, R.Element, 'XTSE1590', 'no character map named ' + LandrixXmlUtf8ToString(R.Names[J]));
       Map := TCharMap(FCharMaps.Objects[P]);
       if R.Props <> nil then
@@ -5388,7 +5388,7 @@ begin
     if not M.Tree.LookupNamespace(E, V, RUri) then
       Fail(M, E, 'XTSE0812', 'the result-prefix ' + LandrixXmlUtf8ToString(V) + ' is not declared');
   end;
-  if FAliases.Find(LandrixXmlUtf8ToString(SUri), P) then
+  if FAliases.Find(LandrixXmlUtf8ToKey(SUri), P) then
   begin
     Alias := TNamespaceAlias(FAliases.Objects[P]);
     if Alias.Precedence > D.Precedence then
@@ -5404,7 +5404,7 @@ begin
   else
   begin
     Alias := TNamespaceAlias.Create;
-    FAliases.AddObject(LandrixXmlUtf8ToString(SUri), Alias);
+    FAliases.AddObject(LandrixXmlUtf8ToKey(SUri), Alias);
   end;
   Alias.Prefix := RPrefix;
   Alias.Uri := RUri;
@@ -5437,7 +5437,7 @@ var
   Prefixes, Uris: TLandrixXmlUtf8Array;
   Mapped: array of Boolean;
 begin
-  if FAliases.Find(LandrixXmlUtf8ToString(Instr.NamespaceUri), P) then
+  if FAliases.Find(LandrixXmlUtf8ToKey(Instr.NamespaceUri), P) then
   begin
     Alias := TNamespaceAlias(FAliases.Objects[P]);
     Instr.NamespaceUri := Alias.Uri;
@@ -5446,7 +5446,7 @@ begin
   for I := 0 to Integer(Instr.Attributes.Count) - 1 do
   begin
     T := TXsltAttributeTemplate(Instr.Attributes[I]);
-    if (T.NamespaceUri <> '') and FAliases.Find(LandrixXmlUtf8ToString(T.NamespaceUri), P) then
+    if (T.NamespaceUri <> '') and FAliases.Find(LandrixXmlUtf8ToKey(T.NamespaceUri), P) then
     begin
       Alias := TNamespaceAlias(FAliases.Objects[P]);
       T.NamespaceUri := Alias.Uri;
@@ -5463,7 +5463,7 @@ begin
   { an excluded namespace that is aliased, or the result of an alias,
     is copied all the same (XSLT 2.0 11.1.4, Saxon) }
   for I := 0 to Integer(Length(Instr.ExPrefixes)) - 1 do
-    if FAliases.Find(LandrixXmlUtf8ToString(Instr.ExUris[I]), P) or IsAliasResult(Instr.ExUris[I]) then
+    if FAliases.Find(LandrixXmlUtf8ToKey(Instr.ExUris[I]), P) or IsAliasResult(Instr.ExUris[I]) then
     begin
       J := Integer(Length(Prefixes));
       SetLength(Prefixes, J + 1);
@@ -5474,7 +5474,7 @@ begin
   SetLength(Mapped, Length(Prefixes));
   for I := 0 to Integer(Length(Prefixes)) - 1 do
   begin
-    Mapped[I] := FAliases.Find(LandrixXmlUtf8ToString(Uris[I]), P);
+    Mapped[I] := FAliases.Find(LandrixXmlUtf8ToKey(Uris[I]), P);
     if Mapped[I] then
     begin
       Alias := TNamespaceAlias(FAliases.Objects[P]);
@@ -5607,12 +5607,12 @@ begin
     end
     else
       Name := QNameToClark(M, D.Element, Trim8(Name), False);
-    if FC.NamedOutputs.Find(LandrixXmlUtf8ToString(Name), P) then
+    if FC.NamedOutputs.Find(LandrixXmlUtf8ToKey(Name), P) then
       Target := TXsltOutputProperties(FC.NamedOutputs.Objects[P])
     else
     begin
       Target := TXsltOutputProperties.Create;
-      FC.NamedOutputs.AddObject(LandrixXmlUtf8ToString(Name), Target);
+      FC.NamedOutputs.AddObject(LandrixXmlUtf8ToKey(Name), Target);
     end;
   end;
   for I := D.Element + 1 to D.Element + M.Tree.AttributeCount[D.Element] do
@@ -5723,7 +5723,7 @@ var
     Instr.Sets := TList.Create;
     for N := 0 to Integer(Length(Instr.SetNames)) - 1 do
     begin
-      if not FC.AttributeSets.Find(LandrixXmlUtf8ToString(Instr.SetNames[N]), P) then
+      if not FC.AttributeSets.Find(LandrixXmlUtf8ToKey(Instr.SetNames[N]), P) then
         raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTSE0710', 'no attribute set named ' +
           LandrixXmlUtf8ToString(Instr.SetNames[N]), Instr.Module, Instr.Line, Instr.Column);
       L := TList(FC.AttributeSets.Objects[P]);
@@ -5741,18 +5741,18 @@ var
     T: TXsltTemplate;
     U: TXsltInstr;
   begin
-    if Done.IndexOf(LandrixXmlUtf8ToString(Name)) >= 0 then
+    if Done.IndexOf(LandrixXmlUtf8ToKey(Name)) >= 0 then
       Exit;
-    if not FC.AttributeSets.Find(LandrixXmlUtf8ToString(Name), P) then
+    if not FC.AttributeSets.Find(LandrixXmlUtf8ToKey(Name), P) then
       Exit;
     L := TList(FC.AttributeSets.Objects[P]);
-    if Path.IndexOf(LandrixXmlUtf8ToString(Name)) >= 0 then
+    if Path.IndexOf(LandrixXmlUtf8ToKey(Name)) >= 0 then
     begin
       T := TXsltTemplate(L[0]);
       raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTSE0720', 'the attribute set ' +
         LandrixXmlUtf8ToString(Name) + ' uses itself', T.Module, T.Line, T.Column);
     end;
-    Path.Add(LandrixXmlUtf8ToString(Name));
+    Path.Add(LandrixXmlUtf8ToKey(Name));
     for A := 0 to Integer(L.Count) - 1 do
     begin
       T := TXsltTemplate(L[A]);
@@ -5763,7 +5763,7 @@ var
         CheckCycle(U.SetNames[B], Path, Done);
     end;
     Path.Delete(Path.Count - 1);
-    Done.Add(LandrixXmlUtf8ToString(Name));
+    Done.Add(LandrixXmlUtf8ToKey(Name));
   end;
 
   procedure CheckCycles;
@@ -5778,7 +5778,7 @@ var
       Done.CaseSensitive := True;
       Done.Sorted := True;
       for N := 0 to Integer(FC.AttributeSets.Count) - 1 do
-        CheckCycle(LandrixXmlStringToUtf8(FC.AttributeSets[N]), Path, Done);
+        CheckCycle(LandrixXmlKeyToUtf8(FC.AttributeSets[N]), Path, Done);
     finally
       Done.Free;
       Path.Free;
@@ -5801,7 +5801,7 @@ var
         ResolveSets(Instr.UseSets);
       if Instr.Kind = xskCallTemplate then
       begin
-        if not FC.NamedTemplates.Find(LandrixXmlUtf8ToString(Instr.VarName), P) then
+        if not FC.NamedTemplates.Find(LandrixXmlUtf8ToKey(Instr.VarName), P) then
           raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTSE0650', 'no template named ' +
             LandrixXmlUtf8ToString(Instr.VarName), Instr.Module, Instr.Line, Instr.Column);
         Instr.Template := FC.NamedTemplates.Objects[P];
@@ -5826,14 +5826,14 @@ begin
     if TNamespaceAlias(FAliases.Objects[I]).Conflict then
       Fail(TNamespaceAlias(FAliases.Objects[I]).Module, TNamespaceAlias(FAliases.Objects[I]).Element,
         'XTSE0810', 'two xsl:namespace-alias for the namespace ' + LandrixXmlUtf8ToString(
-        LandrixXmlStringToUtf8(FAliases[I])));
+        LandrixXmlKeyToUtf8(FAliases[I])));
   { XTDE1460 for a literal format that is not defined (or has an
     undeclared prefix), as in Saxon }
   for I := 0 to Integer(FFormatChecks.Count) - 1 do
   begin
     Instr := TXsltInstr(FFormatChecks[I]);
     V := Trim8(LiteralOf(Instr.FormatAvt));
-    if not FC.NamedOutputs.Find(LandrixXmlUtf8ToString(XsltFormatClark(V, Instr.ScopePrefixes,
+    if not FC.NamedOutputs.Find(LandrixXmlUtf8ToKey(XsltFormatClark(V, Instr.ScopePrefixes,
       Instr.ScopeUris)), J) then
       raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTDE1460', 'no xsl:output named ' +
         LandrixXmlUtf8ToString(V), Instr.Module, Instr.Line, Instr.Column);
@@ -5891,8 +5891,8 @@ begin
       if (M.Tree.Kind[E] = xnkElement) and HasXmlBase(M, E) then
       begin
         B := StaticBase(M, E);
-        if (B <> M.Uri) and (FBaseUris.IndexOf(LandrixXmlUtf8ToString(B)) < 0) then
-          FBaseUris.Add(LandrixXmlUtf8ToString(B));
+        if (B <> M.Uri) and (FBaseUris.IndexOf(LandrixXmlUtf8ToKey(B)) < 0) then
+          FBaseUris.Add(LandrixXmlUtf8ToKey(B));
       end;
   end;
   N := XfnFixedCount + XfnPerModule * (Integer(FModules.Count) + Integer(FBaseUris.Count)) +
@@ -5931,7 +5931,7 @@ begin
     FC.ModuleUris[K] := TModule(FModules[I]).Uri;
   end;
   for I := 0 to Integer(FBaseUris.Count) - 1 do
-    FC.ModuleUris[Integer(FModules.Count) + I] := LandrixXmlStringToUtf8(FBaseUris[I]);
+    FC.ModuleUris[Integer(FModules.Count) + I] := LandrixXmlKeyToUtf8(FBaseUris[I]);
   for K := 0 to Integer(Length(FC.ModuleUris)) - 1 do
   begin
     Add(LandrixXmlXPathFunctionNamespace, 'doc', 1, [], K);
@@ -6015,7 +6015,7 @@ begin
         Fail(D.Module, D.Element, 'XTSE0010', 'unknown declaration xsl:' + LandrixXmlUtf8ToString(L));
     end;
     for I := 0 to Integer(FDupTemplates.Count) - 1 do
-      if FC.NamedTemplates.Find(LandrixXmlUtf8ToString(TXsltTemplate(FDupTemplates[I]).Name), J) and
+      if FC.NamedTemplates.Find(LandrixXmlUtf8ToKey(TXsltTemplate(FDupTemplates[I]).Name), J) and
         (TXsltTemplate(FC.NamedTemplates.Objects[J]).Precedence = TXsltTemplate(FDupTemplates[I]).Precedence) then
         Fail(TDecl(FDupTemplateDecls[I]).Module, TDecl(FDupTemplateDecls[I]).Element, 'XTSE0660',
           'two templates named ' + LandrixXmlUtf8ToString(TXsltTemplate(FDupTemplates[I]).Name));

@@ -530,6 +530,47 @@ begin
   end;
 end;
 
+{ names of templates, modes, global variables and decimal formats that the system code
+  page cannot represent stay apart (Delphi 6-2007 made both '?' and
+  reported XTSE0630 for the variables): Cyrillic ab and vg }
+procedure TestNamesOutsideCodePage;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  A, B: TLandrixXmlUtf8;
+begin
+  A := Utf8Bytes([$D0, $B0, $D0, $B1]);
+  B := Utf8Bytes([$D0, $B2, $D0, $B3]);
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U('<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+      '<xsl:output omit-xml-declaration="yes"/><xsl:variable name="v') + A + U('" select="1"/>' +
+      '<xsl:variable name="v') + B + U('" select="2"/><xsl:decimal-format name="f') + A +
+      U('" decimal-separator="," grouping-separator="."/><xsl:decimal-format name="f') + B +
+      U('" decimal-separator=";" pattern-separator="|"/>' +
+      '<xsl:template match="/"><r>' +
+      '<xsl:call-template name="t') + A + U('"/><xsl:call-template name="t') + B + U('"/>' +
+      '<xsl:value-of select="$v') + A + U(', $v') + B + U('"/>' +
+      '<xsl:value-of select="format-number(1.5, ''0,0'', ''f') + A + U(''')"/>' +
+      '<xsl:value-of select="format-number(1.5, ''0;0'', ''f') + B + U(''')"/>' +
+      '<xsl:apply-templates select="." mode="m') + A + U('"/><xsl:apply-templates select="." mode="m') + B +
+      U('"/></r></xsl:template><xsl:template name="t') + A + U('">a</xsl:template>' +
+      '<xsl:template name="t') + B + U('">b</xsl:template><xsl:template match="/" mode="m') + A +
+      U('">c</xsl:template><xsl:template match="/" mode="m') + B + U('">d</xsl:template>' +
+      '</xsl:stylesheet>'), U(''));
+    Source.LoadFromUtf8(U('<doc/>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    CheckEqualsUtf8(U('<r>ab1 21,51;5cd</r>'), T.TransformToUtf8(Source), 'two names each');
+  finally
+    T.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
 { byte-order-mark: written for UTF-8 only, also by TransformToUtf8 (not
   when another encoding is asked for) }
 procedure TestByteOrderMark;
@@ -1335,6 +1376,7 @@ begin
   RegisterTest('Xslt.RawUnsupported', TestRawUnsupported);
   RegisterTest('Xslt.NumberFormatUnsupported', TestNumberFormatUnsupported);
   RegisterTest('Xslt.ByteOrderMark', TestByteOrderMark);
+  RegisterTest('Xslt.NamesOutsideCodePage', TestNamesOutsideCodePage);
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
   RegisterTest('Xslt.StackBudget', TestStackBudget);
   RegisterTest('Xslt.DeepApiTree', TestDeepApiTree);

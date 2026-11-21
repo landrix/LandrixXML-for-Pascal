@@ -237,6 +237,9 @@ function LandrixXmlUtf8ToString(const S: TLandrixXmlUtf8): string;
   LandrixXmlUtf8ToString may map characters outside the system code page
   to '?'. }
 function LandrixXmlUtf8ToKey(const S: TLandrixXmlUtf8): string;
+{ The UTF-8 value of a key made by LandrixXmlUtf8ToKey (its exact
+  inverse). }
+function LandrixXmlKeyToUtf8(const Key: string): TLandrixXmlUtf8;
 function LandrixXmlStringToUtf8(const S: string): TLandrixXmlUtf8;
 
 { Copies Len bytes to a new TLandrixXmlUtf8 after strict validation. }
@@ -1100,6 +1103,20 @@ begin
   Move(PAnsiChar(S)^, PAnsiChar(Result)^, Length(S));
 end;
 {$ENDIF}
+
+function LandrixXmlKeyToUtf8(const Key: string): TLandrixXmlUtf8;
+begin
+{$IFDEF LANDRIXXML_UNICODE}
+  Result := WideBufToUtf8(PWideChar(Key), Length(Key));
+{$ELSE}
+  { the bytes of the key are the UTF-8 value }
+  Result := '';
+  if Length(Key) = 0 then
+    Exit;
+  SetLength(Result, Length(Key));
+  Move(PAnsiChar(Key)^, PAnsiChar(Result)^, Length(Key));
+{$ENDIF}
+end;
 
 function LandrixXmlStringToUtf8(const S: string): TLandrixXmlUtf8;
 {$IFDEF LANDRIXXML_UNICODE}

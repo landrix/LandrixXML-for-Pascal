@@ -50,6 +50,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT on Delphi 6-2007: names of templates, modes, global variables,
+  keys, decimal formats, attribute sets, character maps, named outputs
+  and namespace aliases that the system code page cannot represent no
+  longer merge (they were converted with '?' for such characters, so
+  two Cyrillic template names were reported as declared twice). New in
+  `LandrixXmlBase`: `LandrixXmlKeyToUtf8`, the inverse of
+  `LandrixXmlUtf8ToKey`.
 - XSLT: stripping white space from the source, copying a tree and
   serializing a result check the stack, so a tree built through the API
   without a depth limit raises FOER0000 (`xecLimit`) instead of
