@@ -37,12 +37,14 @@ foreach ($t in $Toolchains) {
     $psi.RedirectStandardOutput = $true
     $psi.UseShellExecute = $false
     $p = [System.Diagnostics.Process]::Start($psi)
+    # read stdout while the program runs: a full pipe would block it
+    $reading = $p.StandardOutput.ReadToEndAsync()
     $peak = 0
     while (-not $p.HasExited) {
       try { $p.Refresh(); if ($p.PeakWorkingSet64 -gt $peak) { $peak = $p.PeakWorkingSet64 } } catch { }
       Start-Sleep -Milliseconds 50
     }
-    $out = $p.StandardOutput.ReadToEnd()
+    $out = $reading.GetAwaiter().GetResult()
     try { if ($p.PeakWorkingSet64 -gt $peak) { $peak = $p.PeakWorkingSet64 } } catch { }
     $out.Trim().Split("`n") | ForEach-Object { Write-Host "  $($_.Trim())" }
     if ($p.ExitCode -ne 0) { throw "$t $phase exited with $($p.ExitCode)" }

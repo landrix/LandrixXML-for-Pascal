@@ -6,7 +6,9 @@ every variant with the LandrixXmlConformance helper (reader, writer round
 trip, DOM round trip) and with Python's expat (namespace processing on).
 Reported as failures:
   - anything else than a clean ELandrixXmlError (EXC), a crash or a hang
-    of the helper (the culprit is isolated by bisection),
+    of the helper (the culprit is isolated by bisection; a crash that only
+    happens with several files in one process is reported with the whole
+    sequence, saved in order with a list file for the helper),
   - writer or DOM round-trip failures (RTFAIL),
   - a variant accepted by one parser and rejected by the other, unless the
     difference is one of the documented deviations (DOCTYPE present,
@@ -50,9 +52,13 @@ FINDINGS = os.path.join(ROOT, "build", "fuzz-findings")
 CODES = {0: "None", 1: "General", 2: "InvalidArgument", 3: "InvalidOperation",
          4: "InvalidUnicode", 5: "Encoding", 6: "Syntax", 7: "Namespace",
          8: "InvalidChar", 9: "Limit", 10: "Write", 11: "Conversion", 12: "UnexpectedElement"}
-SUPPORTED_ENCODINGS = {"utf-8", "utf8", "utf-16", "utf16", "iso-8859-1", "latin1",
-                       "iso_8859-1", "windows-1252", "cp1252", "iso-8859-15",
-                       "us-ascii", "ascii"}
+# the encoding names the reader supports, lower case (LandrixXmlEncoding.pas,
+# the label lookup; same set as in run-xmlconf.py)
+SUPPORTED_ENCODINGS = {"utf-8", "utf8", "utf-16", "utf-16le", "utf-16be",
+                       "iso-8859-1", "iso_8859-1", "iso8859-1", "latin1", "l1", "cp819",
+                       "ibm819", "iso-ir-100", "csisolatin1", "windows-1252", "cp1252",
+                       "us-ascii", "ascii", "iso-8859-15", "iso_8859-15", "iso8859-15",
+                       "latin9", "latin-9", "l9"}
 MAX_SEED_SIZE = 256 * 1024
 
 # Fragments that tend to reach rarely used paths of a tokenizer
@@ -128,6 +134,9 @@ def new_name_char_at(data, index):
     for n in range(len(chunk), 0, -1):
         try:
             text = chunk[:n].decode(enc)
+        except LookupError:
+            # a name the reader knows but Python does not (latin-9)
+            return False
         except UnicodeDecodeError:
             continue
         if not text or ord(text[0]) <= 0x7F:
@@ -148,15 +157,17 @@ def collect_seeds(use_local):
         if not os.path.isdir(base):
             continue
         for dirpath, dirnames, names in os.walk(base):
-            if base == DATA:
-                dirnames[:] = [d for d in dirnames if d not in ("local", "xmlconf-suite")]
+            # sorted, so that --seed reproduces a run on every file system
+            dirnames[:] = sorted(d for d in dirnames
+                                 if base != DATA or d not in ("local", "xmlconf-suite"))
             for n in sorted(names):
                 path = os.path.join(dirpath, n)
                 if not n.lower().endswith((".xml", ".x81", ".x83", ".x84", ".x86", ".x89")):
                     continue
                 seeds.append(path)
     if use_local and os.path.isdir(LOCAL):
-        for dirpath, _, names in os.walk(LOCAL):
+        for dirpath, dirnames, names in os.walk(LOCAL):
+            dirnames.sort()
             for n in sorted(names):
                 seeds.append(os.path.join(dirpath, n))
     result = []
@@ -261,6 +272,15 @@ def as_text(data):
 
 XML_DECL_RE = re.compile(r"<\?xml(?=[\s?])([^>]*)\?>")
 VERSION_RE = re.compile(r"""^\s+version\s*=\s*(?:"1\.[0-9]+"|'1\.[0-9]+')""")
+# XMLDecl with any version literal (productions [23]-[27], [32], [80], [81])
+S_RE = r"[ \t\r\n]"
+EQ_RE = S_RE + "*=" + S_RE + "*"
+DECL_STRUCTURE_RE = re.compile(
+    "^" + S_RE + "+version" + EQ_RE + r"""(?:"[A-Za-z0-9_.:-]+"|'[A-Za-z0-9_.:-]+')"""
+    + "(?:" + S_RE + "+encoding" + EQ_RE
+    + r"""(?:"[A-Za-z][A-Za-z0-9._-]*"|'[A-Za-z][A-Za-z0-9._-]*'))?"""
+    + "(?:" + S_RE + "+standalone" + EQ_RE + r"""(?:"(?:yes|no)"|'(?:yes|no)'))?"""
+    + S_RE + "*$")
 ENCODING_RE = re.compile(r"""encoding\s*=\s*["']([^"']*)["']""")
 
 
@@ -282,8 +302,13 @@ def deviation(data, code):
     m = XML_DECL_RE.match(text)
     if m:
         if not VERSION_RE.match(m.group(1)):
-            # expat does not check the version number
-            return "XML declaration version"
+            # expat accepts other version numbers (2.0), we reject them;
+            # only that direction is excused, and only for a declaration
+            # that is otherwise well-formed (no missing version, wrong order,
+            # missing quotes or characters outside VersionNum)
+            if code and DECL_STRUCTURE_RE.match(m.group(1)):
+                return "XML declaration version"
+            return None
         e = ENCODING_RE.search(m.group(1))
         if e:
             enc = e.group(1).lower()
@@ -318,26 +343,38 @@ def run_helper(exe, files, timeout):
     return results, ""
 
 
-def run_isolating(exe, files, timeout, crashes):
+def run_isolating(exe, files, timeout, crashes, sequences, slow, offset=0):
     """Like run_helper, but bisects a failing batch down to the files that
-    crash or hang the helper; those are appended to crashes."""
+    crash or hang the helper; their indices (plus offset) are appended to
+    crashes. A failing batch whose halves both pass in fresh processes (a
+    crash that needs several files in one process, or one that does not
+    always happen) is appended to sequences as (first, end, why). A batch
+    that only ran out of time (its halves pass, and it passes again with a
+    limit fitted to their run time) is appended to slow as (first, end)."""
     results, why = run_helper(exe, files, timeout)
     if results is not None:
-        return results
+        return dict((k + offset, v) for k, v in results.items())
     if len(files) == 1:
-        crashes.append((0, why))
+        crashes.append((offset, why))
         return {}
     half = len(files) // 2
-    out = {}
-    sub = []
-    r = run_isolating(exe, files[:half], timeout, sub)
-    out.update(r)
-    crashes.extend(sub)
-    sub = []
-    r = run_isolating(exe, files[half:], timeout, sub)
-    for k, v in r.items():
-        out[k + half] = v
-    crashes.extend((i + half, w) for i, w in sub)
+    before = len(crashes) + len(sequences)
+    slow_before = len(slow)
+    started = time.monotonic()
+    out = run_isolating(exe, files[:half], timeout, crashes, sequences, slow, offset)
+    out.update(run_isolating(exe, files[half:], timeout, crashes, sequences, slow, offset + half))
+    elapsed = time.monotonic() - started
+    if len(crashes) + len(sequences) == before:
+        if why == "hang":
+            if len(slow) > slow_before:
+                # a half was already too slow: the whole batch is as well
+                slow.append((offset, offset + len(files)))
+                return out
+            again, why = run_helper(exe, files, 2 * elapsed + timeout)
+            if again is not None:
+                slow.append((offset, offset + len(files)))
+                return out
+        sequences.append((offset, offset + len(files), why))
     return out
 
 
@@ -364,6 +401,7 @@ def main():
     work = tempfile.mkdtemp(prefix="landrixxml-fuzz-")
     stats = {}
     findings = []
+    sequences = []
     try:
         done = 0
         while done < args.count:
@@ -379,8 +417,18 @@ def main():
                 cases.append((name, mutated, steps))
                 files.append(path)
             crashes = []
-            results = run_isolating(exe, files, args.timeout, crashes)
+            batch_sequences = []
+            slow = []
+            results = run_isolating(exe, files, args.timeout, crashes, batch_sequences, slow)
             crashed = dict(crashes)
+            for first, end, why in batch_sequences:
+                kind = "FAIL helper %s only in a sequence" % ("hang" if why == "hang" else "crash")
+                stats[kind] = stats.get(kind, 0) + 1
+                sequences.append((kind + " (%s)" % why, cases[first:end]))
+            if slow:
+                # not a failure: the batch needed more than --timeout in all
+                kind = "info: batch slower than --timeout (passed with more time)"
+                stats[kind] = stats.get(kind, 0) + 1
             for i, (name, mutated, steps) in enumerate(cases):
                 if i in crashed:
                     kind = "FAIL helper crash (%s)" % crashed[i]
@@ -430,7 +478,8 @@ def main():
                 if kind.startswith("FAIL"):
                     findings.append((kind, name, steps, mutated, detail))
             done += n
-            print("  %d/%d done, %d failures" % (done, args.count, len(findings)), flush=True)
+            print("  %d/%d done, %d failures" % (done, args.count, len(findings) + len(sequences)),
+                  flush=True)
     finally:
         shutil.rmtree(work, ignore_errors=True)
     print()
@@ -447,7 +496,23 @@ def main():
                 f.write("%s\n%s\n%s\n%s\n" % (kind, name, " ".join(steps), detail))
             print("%s: %s from %s [%s] %s" % (kind, os.path.relpath(out, ROOT), name,
                                               " ".join(steps), detail))
-    return 1 if findings else 0
+    for n, (kind, seq) in enumerate(sequences):
+        # the variants in their original order plus a list file for the
+        # helper: "LandrixXmlConformance files.txt" repeats the run
+        folder = os.path.join(FINDINGS, "%d-sequence-%d" % (seed, n))
+        os.makedirs(folder, exist_ok=True)
+        paths = []
+        with open(os.path.join(folder, "variants.txt"), "w", encoding="utf-8") as f:
+            for i, (name, mutated, steps) in enumerate(seq):
+                path = os.path.join(folder, "%05d.xml" % i)
+                with open(path, "wb") as v:
+                    v.write(mutated)
+                paths.append(path)
+                f.write("%05d.xml\t%s\t%s\n" % (i, name, " ".join(steps)))
+        with open(os.path.join(folder, "files.txt"), "w", encoding="utf-8") as f:
+            f.write("\n".join(paths))
+        print("%s: %d variants in %s" % (kind, len(seq), os.path.relpath(folder, ROOT)))
+    return 1 if findings or sequences else 0
 
 
 if __name__ == "__main__":

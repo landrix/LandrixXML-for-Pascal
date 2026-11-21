@@ -50,6 +50,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Test tools, from the review: a missing baseline fails the QT3, XSLT
+  and XSTS runners; `--update-baseline` refuses with `--filter`, on
+  harness errors and on regressions (unless `--force-baseline`); a
+  baseline case missing from the suite and a `--filter` without matches
+  fail; helper exit codes and timeouts count; the W3C XML conformance
+  run checks the catalog hash and the test count, and its deviation
+  categories no longer excuse errors in the document body or every
+  encoding error; the fuzzer reports a crash that needs a sequence of
+  files and sorts its seeds; check-forbidden.py finds constructs split
+  over lines.
 - Schematron compilers (library and tools/sch-compile.py) agree on more
   input: `sch:active` without `pattern` activates no pattern, `sch:ns`
   without prefix or uri and `sch:let` without name (in the schema, a

@@ -51,6 +51,10 @@ DATA = os.path.join(ROOT, "tests", "data", "kosit-suite")
 EXPECTED = os.path.join(ROOT, "tests", "data", "schematron", "expected-kosit-suite.txt")
 RULES = os.path.join(ROOT, "tests", "data", "schematron", "rules")
 WORK = os.path.join(ROOT, "build", "kosit")
+# seconds for one run of the KoSIT validator over all instances and for one
+# run of the helper; generous, they only turn a hang into an error
+VALIDATOR_TIMEOUT = 1800
+HELPER_TIMEOUT = 1800
 
 PACKAGES = {
     "testsuite": ("https://github.com/itplr-kosit/xrechnung-testsuite/releases/download/v2026-08-31/"
@@ -172,7 +176,10 @@ def kosit_reports(java, jar, docs):
         cmd += [os.path.join(INSTANCES, d) for d in docs]
         # the validator reads stdin when it is not a file
         with open(empty) as stdin:
-            subprocess.run(cmd, stdin=stdin, capture_output=True)
+            try:
+                subprocess.run(cmd, stdin=stdin, capture_output=True, timeout=VALIDATOR_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                sys.exit("the KoSIT validator did not finish within %d seconds" % VALIDATOR_TIMEOUT)
         for d in docs:
             report = os.path.join(out, os.path.splitext(os.path.basename(d))[0] + "-report.xml")
             if not os.path.exists(report):
@@ -303,9 +310,17 @@ def compare(exe, verbose):
             for xsl in xsls:
                 f.write("rules %s %s\n" % (rule_name(xsl), os.path.join(RULES, rule_name(xsl) + ".xml")))
             f.write("run\n")
-    r = subprocess.run([exe, job, results])
+    # never read the results of an earlier run
+    if os.path.exists(results):
+        os.remove(results)
+    try:
+        r = subprocess.run([exe, job, results], timeout=HELPER_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        sys.exit("the helper did not finish within %d seconds" % HELPER_TIMEOUT)
     if r.returncode != 0:
         sys.exit("the helper failed with exit code %d" % r.returncode)
+    if not os.path.exists(results):
+        sys.exit("the helper wrote no results file: " + results)
     got = read_blocks(results)
     differ = []
     for d in docs:

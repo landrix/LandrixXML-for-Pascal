@@ -58,6 +58,17 @@ FORBIDDEN_PATTERNS = [
     (r"\b[A-Za-z_]\w*\s*<\s*[A-Za-z_][\w.]*(\s*,\s*[A-Za-z_][\w.]*)*\s*>", "generics"),
 ]
 
+# messages of the patterns that are also matched across line breaks (for
+# example "Exit" at the end of a line and "(1)" on the next one); the others
+# would give false hits there (comparisons, parameter lists, line starts)
+MULTILINE_MESSAGES = {
+    "for ... in", "Exit(Value)", "strict private/protected",
+    "anonymous method type (reference to)", "class/record helper",
+    "operator overloading", "class var", "class property/const",
+    "class sealed/abstract", "static/final method directive", "Default()",
+    "inline variable declaration",
+}
+
 
 class Violation(object):
     def __init__(self, path, line, message):
@@ -242,6 +253,15 @@ def check_file(path, violations):
                 violations.append(Violation(path, no, "forbidden identifier: %s" % m.group(1)))
         for rx, msg in pattern_res:
             if rx.search(cl):
+                violations.append(Violation(path, no, msg))
+    # the same patterns on the whole code: only matches that span a line
+    # break are new, they are reported at the line where they start
+    for rx, msg in pattern_res:
+        if msg not in MULTILINE_MESSAGES or rx.pattern.startswith("^"):
+            continue
+        for m in rx.finditer(code):
+            if "\n" in m.group(0):
+                no = code.count("\n", 0, m.start()) + 1
                 violations.append(Violation(path, no, msg))
 
 

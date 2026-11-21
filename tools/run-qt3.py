@@ -42,10 +42,14 @@ harness-error (crash, timeout, setup).
 Usage:
   python tools/run-qt3.py [--exe PATH] [--filter PREFIX] [--jobs N]
                           [--profile xpath20|saxon] [--update-baseline]
-                          [--verbose] [--self-test]
+                          [--force-baseline] [--verbose] [--self-test]
 Build the helper first, e.g.
   ./tools/build.ps1 fpc322-win64 -Program tests/LandrixXmlQt3.dpr -NoRun
-Exit code: 0 if no baseline case got worse and no harness error occurred.
+Exit code: 0 if no baseline case got worse and no harness error occurred
+(a helper that crashes or hangs after its last case counts as one); a
+missing or empty baseline file fails the run. --update-baseline needs the
+whole suite and refuses on harness errors and, without --force-baseline,
+when baseline cases got worse.
 Results per case: build/qt3/results-PROFILE.txt. --self-test checks the assertion
 checks on made-up results.
 """
@@ -392,6 +396,10 @@ def parse_output(text):
     return out
 
 
+# key in the results of run_set for a crash or hang after the last case
+EXIT_KEY = "\x00exit"
+
+
 def run_set(exe, cases, timeout_per_case, profile):
     """Run the cases of one test set; resume after a crash or timeout."""
     os.makedirs(os.path.join(WORK, "jobs"), exist_ok=True)
@@ -410,8 +418,11 @@ def run_set(exe, cases, timeout_per_case, profile):
             os.remove(out)
         problem = None
         try:
-            subprocess.run([exe, job, out, str(first)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                           timeout=10 + timeout_per_case * (len(cases) - first))
+            proc = subprocess.run([exe, job, out, str(first)], stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL,
+                                  timeout=10 + timeout_per_case * (len(cases) - first))
+            if proc.returncode != 0:
+                problem = "exit code %d" % proc.returncode
         except subprocess.TimeoutExpired:
             problem = "timeout"
         text = ""
@@ -431,6 +442,10 @@ def run_set(exe, cases, timeout_per_case, profile):
             # the case after the last complete one crashed or hung
             results[cases[first].name] = {"harness": problem or "crash"}
             first += 1
+        elif problem:
+            # every case is complete, but the helper crashed or hung while
+            # shutting down; main() counts this as a harness error
+            results[EXIT_KEY] = "%s: %s after the last case" % (name, problem)
     return results
 
 
@@ -1054,14 +1069,16 @@ def fail_class(case):
 # --- baseline ----------------------------------------------------------------
 
 def read_baseline():
+    """The baseline cases, or None when the file is missing."""
+    if not os.path.exists(BASELINE):
+        return None
     base = {}
-    if os.path.exists(BASELINE):
-        with open(BASELINE, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    k, _, o = line.partition(" ")
-                    base[k] = o
+    with open(BASELINE, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#"):
+                k, _, o = line.partition(" ")
+                base[k] = o
     return base
 
 
@@ -1274,11 +1291,17 @@ def main():
     ap.add_argument("--profile", choices=sorted(BASELINES), default="xpath20",
                     help="the language profile; the Saxon profile has its own baseline")
     ap.add_argument("--update-baseline", action="store_true")
+    ap.add_argument("--force-baseline", action="store_true",
+                    help="with --update-baseline: write it even if baseline cases got worse")
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--self-test", action="store_true", help="only check the assertion checks")
     args = ap.parse_args()
     if args.self_test:
         return self_test()
+    if args.update_baseline and args.filter:
+        sys.exit("--update-baseline needs the whole suite (no --filter)")
+    if args.force_baseline and not args.update_baseline:
+        sys.exit("--force-baseline only goes with --update-baseline")
     global BASELINE, PROFILE, SPECS
     PROFILE = args.profile
     SPECS = SPECS_BY_PROFILE[PROFILE]
@@ -1291,6 +1314,9 @@ def main():
         sys.exit("helper not found: " + exe)
 
     cases = load_cases(args.filter)
+    if args.filter and not cases:
+        sys.exit("--filter %r matches no case" % args.filter)
+    exit_problems = []
     by_set = collections.OrderedDict()
     for c in cases:
         if c.excluded:
@@ -1302,6 +1328,8 @@ def main():
         for fut in concurrent.futures.as_completed(futures):
             cs = futures[fut]
             results = fut.result()
+            if EXIT_KEY in results:
+                exit_problems.append(results[EXIT_KEY])
             for c in cs:
                 try:
                     c.outcome, c.detail = judge(c, results.get(c.name, {"harness": "missing"}))
@@ -1349,11 +1377,16 @@ def main():
     if harness:
         print("%d harness errors (see build/qt3/results-%s.txt)" % (len(harness), PROFILE))
         status = 1
-    if args.update_baseline:
-        write_baseline(cases)
-        print("baseline written:", os.path.relpath(BASELINE, ROOT))
-        return status
+    for p in sorted(exit_problems):
+        print("HARNESS helper " + p)
+        status = 1
     base = read_baseline()
+    if base is None or not base:
+        print("baseline %s is %s" % (os.path.relpath(BASELINE, ROOT),
+                                    "missing" if base is None else "empty"))
+        if not args.update_baseline:
+            return 1
+        base = {}
     if args.filter:
         base = {k: o for k, o in base.items() if k.startswith(args.filter)}
     for k, why in sorted(PLATFORM_DEPENDENT.items()):
@@ -1372,6 +1405,16 @@ def main():
     print("baseline: %d cases, %d worse, %d better" % (len(base), len(worse), len(better)))
     for w in worse[:50]:
         print("  WORSE " + w)
+    if args.update_baseline:
+        if status:
+            print("baseline not written: harness errors")
+            return 1
+        if worse and not args.force_baseline:
+            print("baseline not written: cases got worse (--force-baseline to accept them)")
+            return 1
+        write_baseline(cases)
+        print("baseline written:", os.path.relpath(BASELINE, ROOT))
+        return 0
     if worse:
         status = 1
     return status

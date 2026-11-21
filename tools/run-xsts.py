@@ -30,7 +30,11 @@ stays the oracle for them, see tests/data/xsdvalidator).
 
 Results per test: build/xsts/results.txt. The passing tests are the
 baseline tests/data/xsts-baseline.txt; exit code 0 = none of them got
-worse. After an improvement: --update-baseline and commit the baseline.
+worse and no harness error occurred (a helper that crashes or hangs after
+its last group counts as one); a missing baseline file fails the run.
+After an improvement: --update-baseline and commit the baseline (whole
+suite only; refused on harness errors and, without --force-baseline, when
+baseline tests got worse).
 """
 
 import argparse
@@ -309,6 +313,10 @@ def parse_output(text):
     return results
 
 
+# key in the results of run_chunk for a crash or hang after the last group
+EXIT_KEY = "\x00exit"
+
+
 def run_chunk(exe, chunk, index, timeout_per_group):
     """Run the groups of one chunk; resume after a crash or timeout."""
     os.makedirs(os.path.join(WORK, "jobs"), exist_ok=True)
@@ -337,6 +345,8 @@ def run_chunk(exe, chunk, index, timeout_per_group):
                 proc.kill()
                 proc.wait()
                 problem = "timeout"
+        if problem is None and proc.returncode != 0:
+            problem = "exit code %d" % proc.returncode
         text = ""
         if os.path.exists(out):
             with open(out, encoding="utf-8", errors="replace", newline="") as f:
@@ -354,6 +364,10 @@ def run_chunk(exe, chunk, index, timeout_per_group):
             # the group after the last complete one crashed or hung
             results[chunk[first].ident] = {"harness": problem or "crash"}
             first += 1
+        elif problem:
+            # every group is complete, but the helper crashed or hung while
+            # shutting down; main() counts this as a harness error
+            results[EXIT_KEY] = "job %04d: %s after the last group" % (index, problem)
     return results
 
 
@@ -461,10 +475,16 @@ def main():
     ap.add_argument("--filter", help="test set prefix, e.g. msMeta/Element")
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--update-baseline", action="store_true")
+    ap.add_argument("--force-baseline", action="store_true",
+                    help="with --update-baseline: write it even if baseline tests got worse")
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
     ap.add_argument("--timeout", type=float, default=300.0,
                     help="seconds without output after which a group counts as hung")
     args = ap.parse_args()
+    if args.update_baseline and args.filter:
+        sys.exit("--update-baseline needs the whole suite (no --filter)")
+    if args.force_baseline and not args.update_baseline:
+        sys.exit("--force-baseline only goes with --update-baseline")
 
     if not os.path.isdir(SUITE):
         download()
@@ -474,14 +494,19 @@ def main():
         sys.exit("helper not found: " + exe)
 
     groups = load_tests(args.filter)
+    if args.filter and not groups:
+        sys.exit("--filter %r matches no test set" % args.filter)
     all_tests = [t for g in groups for t in g.tests()]
     runnable = [g for g in groups if g.schema_test is not None and g.applicable()]
     chunks = [runnable[i:i + GROUPS_PER_JOB] for i in range(0, len(runnable), GROUPS_PER_JOB)]
     outcomes = {}
+    exit_problems = []
     with concurrent.futures.ThreadPoolExecutor(args.jobs) as pool:
         futures = [pool.submit(run_chunk, exe, c, i, args.timeout) for i, c in enumerate(chunks)]
         for chunk, fut in zip(chunks, futures):
             res = fut.result()
+            if EXIT_KEY in res:
+                exit_problems.append(res[EXIT_KEY])
             for g in chunk:
                 outcomes.update(judge_group(g, res.get(g.ident, {"harness": "missing"})))
 
@@ -514,29 +539,40 @@ def main():
     for set_id, c in per_set.items():
         print("  %-45s %6d / %6d / %6d" % (set_id, c["pass"], c["unsupported"], c["applicable"]))
 
-    if args.update_baseline:
-        if args.filter:
-            sys.exit("--update-baseline needs the whole suite (no --filter)")
-        if total["harness-error"]:
-            sys.exit("--update-baseline refused: %d harness errors" % total["harness-error"])
-        write_baseline(groups, outcomes)
-        print("baseline written:", os.path.relpath(BASELINE, ROOT))
-        return 0
+    harness = total["harness-error"] + len(exit_problems)
+    for p in exit_problems:
+        print("HARNESS helper " + p)
     base = read_baseline()
-    if base is None:
-        print("no baseline yet")
-        return 0
+    if not base:
+        print("baseline %s is %s" % (os.path.relpath(BASELINE, ROOT),
+                                    "missing" if base is None else "empty"))
+        if not args.update_baseline:
+            return 1
+        base = set()
     worse = sorted(i for i in base if i in outcomes and outcomes[i][0] != "pass")
     gone = [i for i in base if i not in outcomes]
     if args.filter:
-        gone = []
+        # only the baseline tests of the selected test sets (a set id may
+        # itself contain "/", so match the selected ids, not a split)
+        selected = tuple(set(g.set_id + "/" for g in groups))
+        gone = [i for i in gone if i.startswith(selected)]
     better = sum(1 for i, (o, _) in outcomes.items() if o == "pass" and i not in base)
     for i in worse:
         print("WORSE %s: %s %s" % ((i,) + outcomes[i]))
     for i in gone:
         print("MISSING " + i)
     print("baseline: %d tests, %d worse, %d better" % (len(base), len(worse) + len(gone), better))
-    return 1 if worse or gone else 0
+    if args.update_baseline:
+        if harness:
+            sys.exit("--update-baseline refused: %d harness errors" % harness)
+        if (worse or gone) and not args.force_baseline:
+            sys.exit("--update-baseline refused: baseline tests got worse (--force-baseline to accept them)")
+        write_baseline(groups, outcomes)
+        print("baseline written:", os.path.relpath(BASELINE, ROOT))
+        return 0
+    if harness:
+        print("%d harness errors (see build/xsts/results.txt)" % harness)
+    return 1 if worse or gone or harness else 0
 
 
 if __name__ == "__main__":

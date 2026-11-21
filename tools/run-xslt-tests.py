@@ -36,10 +36,13 @@ harness-error (crash, timeout, setup).
 
 Usage:
   python tools/run-xslt-tests.py [--exe PATH] [--filter PREFIX] [--jobs N]
-                                 [--update-baseline] [--verbose]
+                                 [--update-baseline [--force-baseline]] [--verbose]
 Build the helper first, e.g.
   ./tools/build.ps1 fpc322-win64 -Program tests/LandrixXmlXsltSuite.dpr -NoRun
-Exit code: 0 if no baseline case got worse and no harness error occurred.
+Exit code: 0 if no baseline case got worse or disappeared from the case
+list and no harness error occurred; a missing or empty baseline file fails
+the run. --update-baseline needs the whole suite and refuses on harness
+errors and, without --force-baseline, when cases got worse.
 Results per case: build/xslt-tests/results.txt.
 """
 
@@ -526,7 +529,9 @@ def run_case(exe, case):
                 else:
                     m, _, v = value.partition(" ")
                     sub["checks"][int(m)] = v
-    if run.returncode != 0 and "error" not in r:
+    if run.returncode != 0:
+        # the helper exits with 0 after every result, an error included: any
+        # other exit code is a crash, even after an "error" line
         r["harness"] = "exit code %d" % run.returncode
     return r
 
@@ -708,14 +713,16 @@ def judge(case, r):
 # --- baseline ----------------------------------------------------------------
 
 def read_baseline():
+    """The baseline cases, or None when the file is missing."""
+    if not os.path.exists(BASELINE):
+        return None
     base = {}
-    if os.path.exists(BASELINE):
-        with open(BASELINE, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    k, _, o = line.partition(" ")
-                    base[k] = o
+    with open(BASELINE, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#"):
+                k, _, o = line.partition(" ")
+                base[k] = o
     return base
 
 
@@ -746,10 +753,14 @@ def main():
     ap.add_argument("--filter", default="")
     ap.add_argument("--jobs", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ap.add_argument("--update-baseline", action="store_true")
+    ap.add_argument("--force-baseline", action="store_true",
+                    help="with --update-baseline: write it even if baseline cases got worse")
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
     if args.update_baseline and args.filter:
         sys.exit("--update-baseline needs the whole suite (no --filter)")
+    if args.force_baseline and not args.update_baseline:
+        sys.exit("--force-baseline only goes with --update-baseline")
     args.exe = os.path.abspath(args.exe)
     if not os.path.exists(args.exe):
         sys.exit("helper not found: %s (build tests/LandrixXmlXsltSuite.dpr)" % args.exe)
@@ -757,6 +768,8 @@ def main():
         download()
     check_catalog()
     cases = load_cases(args.filter)
+    if args.filter and not cases:
+        sys.exit("--filter %r matches no test set" % args.filter)
     todo = [c for c in cases if c.outcome is None]
     if os.path.exists(os.path.join(WORK, "cases")):
         shutil.rmtree(os.path.join(WORK, "cases"))
@@ -779,23 +792,40 @@ def main():
         for k, n in reasons.most_common(30):
             print("  %-40s %6d" % (k, n))
     base = read_baseline()
+    if not base:
+        print("baseline %s is %s" % (os.path.relpath(BASELINE, ROOT),
+                                    "missing" if base is None else "empty"))
+        if not args.update_baseline:
+            return 1
+        base = {}
     # a baseline case now excluded (or no longer applicable) counts as worse
     worse = [c for c in cases if base.get(c.key) == "pass" and c.outcome != "pass"
              or base.get(c.key) == "wrong-code" and c.outcome not in ("pass", "wrong-code")]
+    # a baseline case that is no longer loaded at all (harness change)
+    keys = set(c.key for c in cases)
+    gone = sorted(k for k in base if k.startswith(args.filter) and k not in keys)
     better = [c for c in applicable if c.outcome in ("pass", "wrong-code") and base.get(c.key) != c.outcome
               and not (base.get(c.key) == "pass")]
     for c in worse:
         print("WORSE %s: %s (baseline %s) %s" % (c.key, c.outcome, base[c.key], c.detail or c.reason))
+    for k in gone:
+        print("MISSING %s (baseline %s): no longer in the case list" % (k, base[k]))
     harness = [c for c in applicable if c.outcome == "harness-error"]
     for c in harness[:20]:
         print("HARNESS %s: %s" % (c.key, c.detail))
-    print("baseline: %d cases, %d worse, %d better" % (len(base), len(worse), len(better)))
-    if args.update_baseline and worse:
-        print("baseline not written: cases got worse")
-    elif args.update_baseline:
+    print("baseline: %d cases, %d worse, %d missing, %d better"
+          % (len(base), len(worse), len(gone), len(better)))
+    if args.update_baseline:
+        if harness:
+            print("baseline not written: harness errors")
+            return 1
+        if (worse or gone) and not args.force_baseline:
+            print("baseline not written: cases got worse (--force-baseline to accept them)")
+            return 1
         write_baseline(cases)
         print("baseline written:", BASELINE)
-    return 1 if worse or harness else 0
+        return 0
+    return 1 if worse or gone or harness else 0
 
 
 if __name__ == "__main__":
