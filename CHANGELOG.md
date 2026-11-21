@@ -50,6 +50,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Schematron, edges from the review: `sch:value-of` merges adjacent
+  text nodes as `xsl:value-of` does (`*/text()` over `<a>foo</a><b>bar</b>`
+  gives `foobar`, not `foo bar`); `svrl:suppressed-rule` carries the id,
+  role and flag of its rule, as in SchXslt; a rule context with the
+  keyword `union` is rejected as unsupported (its right branch was not
+  matched at any depth); a tree without nodes is an argument error.
 - XML Schema loader, edge cases from the review: an attribute group
   referenced twice (directly or through other groups) no longer counts
   as a duplicate attribute (ct-props-correct.4); a repeated namespace in

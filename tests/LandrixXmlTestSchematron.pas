@@ -457,8 +457,8 @@ const
     '<svrl:fired-rule context="p:a[@k]"/>',
     '<svrl:failed-assert location="/Q{urn:p}r[1]/Q{urn:p}a[1]" flag="fatal" id="A1" role="r" test="@k = ''1''">',
     '<svrl:text>k is x</svrl:text>',
-    '<!--WARNING: Rule for context "p:a" shadowed by preceding rule-->',
-    '<svrl:suppressed-rule context="p:a"/>',
+    '<!--WARNING: Rule R2 for context "p:a" shadowed by preceding rule-->',
+    '<svrl:suppressed-rule context="p:a" id="R2" role="audit" flag="warning"/>',
     '<svrl:successful-report location="/Q{urn:p}r[1]/Q{urn:p}a[2]" id="A2" test="true()">',
     '<svrl:active-pattern name="B" id="B" documents="urn:test"/>',
     '<!-- dynamic error FORG0001 /Q{urn:p}r[1]/Q{urn:p}a[1]: FORG0001: cannot convert ''x'' to xs:integer -->',
@@ -471,7 +471,7 @@ begin
     '<rule context="p:a[@k]" id="" line="1">' +
     '<assert id="A1" flag="fatal" role="r" test="@k = ''1''" line="2"><text>k is </text><value-of select="@k"/></assert>' +
     '</rule>' +
-    '<rule context="p:a" id="" line="3">' +
+    '<rule context="p:a" id="R2" role="audit" flag="warning" line="3">' +
     '<report id="A2" flag="" role="" test="true()" line="4"><text>any a</text></report></rule>' +
     '</pattern>' +
     '<pattern id="B"><rule context="p:a" id="" line="5">' +
@@ -723,6 +723,40 @@ begin
   finally
     Rules.Free;
   end;
+end;
+
+{ Edges from the review: value-of merges adjacent text nodes (Saxon:
+  "foobar"), the keyword union in a rule context is rejected. }
+procedure TestReviewEdges;
+var
+  Rules: TLandrixXmlSchematronRules;
+  V: TLandrixXmlSchematronValidator;
+  Tree: TLandrixXmlXPathTree;
+begin
+  Rules := SmallRules(
+    '<pattern id="M"><rule context="p:r" id="" line="1">' +
+    '<report id="M1" flag="" role="" test="true()" line="2"><value-of select="*/text()"/>' +
+    '<text>|</text><value-of select="*/@k"/></report></rule></pattern>');
+  V := TLandrixXmlSchematronValidator.Create(Rules);
+  Tree := TLandrixXmlXPathTree.Create;
+  try
+    Tree.LoadFromUtf8(U('<p:r xmlns:p="urn:p"><p:a k="1">foo</p:a><p:b k="2">bar</p:b></p:r>'));
+    V.ValidateTree(Tree);
+    CheckEquals(1, V.ResultCount, 'one report');
+    if V.ResultCount = 1 then
+      CheckEqualsUtf8(U('foobar|1 2'), V.Results[0].RawMessage, 'adjacent text nodes merged');
+  finally
+    Tree.Free;
+    V.Free;
+    Rules.Free;
+  end;
+  CheckLoadError('<pattern id="A"><rule context="p:a union p:b" id="" line="1"/></pattern>', xecUnsupported,
+    'union in a rule context');
+  CheckLoadError('<pattern id="A"><rule context="p:a[1]union p:b" id="" line="1"/></pattern>', xecUnsupported,
+    'union after a predicate');
+  { union as the name of a step }
+  Rules := SmallRules('<pattern id="A"><rule context="p:r / union / p:b" id="" line="1"/></pattern>');
+  Rules.Free;
 end;
 
 procedure TestLoadErrors;
@@ -1245,6 +1279,7 @@ begin
   RegisterTest('Schematron.Document', TestDocument);
   RegisterTest('Schematron.SmallRules', TestSmallRules);
   RegisterTest('Schematron.DateContext', TestDateContext);
+  RegisterTest('Schematron.ReviewEdges', TestReviewEdges);
   RegisterTest('Schematron.ContextErrors', TestContextErrors);
   RegisterTest('Schematron.CompilerDocuments', TestCompilerDocuments);
   RegisterTest('Schematron.Svrl', TestSvrl);

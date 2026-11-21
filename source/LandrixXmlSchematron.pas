@@ -380,6 +380,32 @@ var
     Result := Copy(X, A, B - A + 1);
   end;
 
+  function IsNameChar(C: AnsiChar): Boolean;
+  begin
+    Result := (C in ['A'..'Z', 'a'..'z', '0'..'9', '.', '-', '_', ':']) or (Ord(C) >= 128);
+  end;
+
+  { "union" at I is the operator: not part of a longer name, and after
+    the end of an operand (a name, ")", "]", "*" or a string), not after
+    "/" or "::" where it is the name of a step }
+  function UnionKeyword: Boolean;
+  var
+    J: Integer;
+  begin
+    Result := False;
+    if Copy(S, I, 5) <> 'union' then
+      Exit;
+    if (I > 1) and (IsNameChar(AnsiChar(S[I - 1])) or (AnsiChar(S[I - 1]) in ['$', '@'])) then
+      Exit;
+    if (I + 5 <= Length(S)) and IsNameChar(AnsiChar(S[I + 5])) then
+      Exit;
+    J := I - 1;
+    while (J >= 1) and IsSpace(AnsiChar(S[J])) do
+      Dec(J);
+    Result := (J >= 1) and (IsNameChar(AnsiChar(S[J])) or (AnsiChar(S[J]) in [')', ']', '*', '''', '"'])) and
+      not ((AnsiChar(S[J]) = ':') and (J > 1) and (S[J - 1] = ':'));
+  end;
+
   { the rest after a leading document-node(), or False }
   function DocumentNodeTest(const X: TLandrixXmlUtf8; out Rest: TLandrixXmlUtf8): Boolean;
   const
@@ -460,6 +486,12 @@ begin
             Add;
             Start := I + 1;
           end;
+        { the keyword union between two branches (XSLT 3.0 patterns):
+          its right branch would not get "//" }
+        'u':
+          if (Depth = 0) and UnionKeyword then
+            raise ELandrixXmlError.CreateCode(xecUnsupported, 'Schematron rules: ' + Where +
+              ': the keyword union in a rule context is not supported (use |)');
       end;
     Inc(I);
   end;
@@ -1224,6 +1256,37 @@ var
       Aborted := True;
   end;
 
+  { xsl:value-of (XSLT 2.0 5.7.2): zero-length text nodes dropped,
+    adjacent text nodes merged, the rest joined with a space }
+  function SimpleContent(const S: TLandrixXmlXPathSequence): TLandrixXmlUtf8;
+  var
+    J, B: Integer;
+    T: TLandrixXmlXPathTree;
+    Text: TLandrixXmlUtf8;
+    First, PrevText, IsText: Boolean;
+  begin
+    Result := '';
+    First := True;
+    PrevText := False;
+    for J := 0 to Integer(S.Count) - 1 do
+    begin
+      IsText := False;
+      if S.Items[J].Kind = xikNode then
+      begin
+        T := E.TreeOfNode(S.Items[J].Node, B);
+        IsText := T.Kind[S.Items[J].Node - B] = xnkText;
+      end;
+      Text := E.ItemString(S.Items[J]);
+      if IsText and (Text = '') then
+        Continue;
+      if not First and not (IsText and PrevText) then
+        Result := Result + ' ';
+      Result := Result + Text;
+      First := False;
+      PrevText := IsText;
+    end;
+  end;
+
   function MessageOf(C: TLandrixXmlSchematronCheck; AtNode: Integer): TLandrixXmlUtf8;
   var
     Q: Integer;
@@ -1233,13 +1296,13 @@ var
       if C.Parts[Q].Kind = xspText then
         Result := Result + C.Parts[Q].Text
       else
-        Result := Result + E.EvaluateString(C.Parts[Q].Expression, AtNode);
+        Result := Result + SimpleContent(E.EvaluateSequence(C.Parts[Q].Expression, AtNode));
   end;
 
 begin
   { the results of an earlier validation go first, also on an error }
   ClearResults;
-  if Tree.Kind[0] <> xnkDocument then
+  if (Tree.Count = 0) or (Tree.Kind[0] <> xnkDocument) then
     raise ELandrixXmlError.CreateCode(xecInvalidArgument, 'Schematron: the tree has no document node');
   FCurrentPattern := -1;
   FCurrentEvent := -1;
@@ -1505,10 +1568,22 @@ begin
       end
       else
       begin
-        W.CommentUtf8('WARNING: Rule for context "' + CommentText(Rule.ContextText) +
-          '" shadowed by preceding rule');
+        { SchXslt names the rule by its id }
+        if Rule.Id <> '' then
+          W.CommentUtf8('WARNING: Rule ' + CommentText(Rule.Id) + ' for context "' +
+            CommentText(Rule.ContextText) + '" shadowed by preceding rule')
+        else
+          W.CommentUtf8('WARNING: Rule for context "' + CommentText(Rule.ContextText) +
+            '" shadowed by preceding rule');
+        { the attributes of fired-rule (SchXslt writes them on both) }
         W.StartElementNs(Svrl, 'svrl', 'suppressed-rule');
         W.AttributeUtf8('context', Rule.ContextText);
+        if Rule.Id <> '' then
+          W.AttributeUtf8('id', Rule.Id);
+        if Rule.Role <> '' then
+          W.AttributeUtf8('role', Rule.Role);
+        if Rule.Flag <> '' then
+          W.AttributeUtf8('flag', Rule.Flag);
         W.EndElement;
       end;
       Inc(Ev);
