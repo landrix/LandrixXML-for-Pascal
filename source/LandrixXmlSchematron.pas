@@ -347,8 +347,8 @@ begin
     Result := LandrixXmlXPathParseSequenceType(S, Context);
   except
     on E: ELandrixXmlXPathError do
-      raise ELandrixXmlXPathError.CreateXPath(E.XPathCode, Where + ': ' + Copy(E.Message, Length(E.XPathCode) + 3,
-        MaxInt));
+      raise ELandrixXmlXPathError.CreateXPathAt(E.Code, E.XPathCode, Where + ': ' +
+        Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), 0, 0);
   end;
 end;
 
@@ -592,8 +592,8 @@ begin
     Result := TLandrixXmlXPathExpression.Create(Text, Context);
   except
     on E: ELandrixXmlXPathError do
-      raise ELandrixXmlXPathError.CreateXPath(E.XPathCode, Where + ': ' + Copy(E.Message, Length(E.XPathCode) + 3,
-        MaxInt));
+      raise ELandrixXmlXPathError.CreateXPathAt(E.Code, E.XPathCode, Where + ': ' +
+        Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), 0, 0);
   end;
   FExpressions.Add(Result);
   for I := 0 to Result.NodeCount - 1 do

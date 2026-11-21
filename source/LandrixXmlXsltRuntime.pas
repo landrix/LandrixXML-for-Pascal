@@ -1527,6 +1527,16 @@ begin
   end;
 end;
 
+{ the code of an XSLT error made from the XPath error E: a limit stays a
+  limit (xecLimit), the rest is xecXslt }
+function XsltCodeOf(E: ELandrixXmlError): TLandrixXmlErrorCode;
+begin
+  if E.Code = xecLimit then
+    Result := xecLimit
+  else
+    Result := xecXslt;
+end;
+
 constructor TRun.Create(Compiled: TXsltCompiled; Settings: TXsltRunSettings; Source: TLandrixXmlXPathTree);
 var
   I: Integer;
@@ -1616,9 +1626,11 @@ begin
   end;
   FEvaluator.Functions := FFunctions;
   FEvaluator.MaxDepth := Settings.MaxDepth;
-  { the stack is measured here, from the start of the run (CheckStack in
-    Host and at template and function calls) }
-  FEvaluator.MaxStackBytes := 0;
+  { one budget for the run: the evaluator counts from where the run
+    started (FStackBase, set again in Start), as CheckStack does in Host
+    and at template and function calls }
+  FEvaluator.MaxStackBytes := Settings.MaxStackBytes;
+  FEvaluator.StackBase := PAnsiChar(FStackBase);
   FEvaluator.ImplicitTimeZone := Settings.ImplicitTimeZone;
   if Settings.HasClock then
     FEvaluator.CurrentDateTime := Settings.Clock;
@@ -2469,7 +2481,7 @@ begin
     except
       on E: ELandrixXmlXPathError do
         if Instr <> nil then
-          raise ELandrixXmlXsltError.CreateXslt(xecXslt, E.XPathCode,
+          raise ELandrixXmlXsltError.CreateXslt(XsltCodeOf(E), E.XPathCode,
             System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), Instr.Module, Instr.Line, Instr.Column)
         else
           raise;
@@ -3175,7 +3187,7 @@ begin
       V := FEvaluator.ConvertSequence(S.Items, T.AsType, 'template ' + LandrixXmlUtf8ToString(T.Name));
     except
       on E: ELandrixXmlXPathError do
-        raise ELandrixXmlXsltError.CreateXslt(xecXslt, E.XPathCode,
+        raise ELandrixXmlXsltError.CreateXslt(XsltCodeOf(E), E.XPathCode,
           System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), T.Module, T.Line, T.Column);
     end;
   finally
@@ -3593,9 +3605,10 @@ procedure TRun.Located(Instr: TXsltInstr; E: ELandrixXmlXPathError);
 var
   Code: TLandrixXmlErrorCode;
 begin
-  { an unsupported feature met at run time stays unsupported }
-  if E.Code = xecUnsupported then
-    Code := xecUnsupported
+  { an unsupported feature met at run time stays unsupported, a limit a
+    limit }
+  if (E.Code = xecUnsupported) or (E.Code = xecLimit) then
+    Code := E.Code
   else
     Code := xecXslt;
   if Instr = nil then
@@ -5752,6 +5765,7 @@ var
   Written: Boolean;
 begin
   FStackBase := @R;
+  FEvaluator.StackBase := PAnsiChar(FStackBase);
   BindGlobals;
   Params := nil;
   Target.BeginBuild(True);

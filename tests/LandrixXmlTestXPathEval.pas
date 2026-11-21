@@ -2747,6 +2747,82 @@ begin
   end;
 end;
 
+{ The stack budget in MatchesPattern (one level per step) and StackBase
+  (the budget counted from a frame further out). }
+procedure TestPatternStackBudget;
+const
+  Depth = 2000;
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  R: TLandrixXmlXPathResult;
+  Text: string;
+  I, Leaf: Integer;
+  Raised: string;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  Expr := nil;
+  R := nil;
+  try
+    { a tree built through the API has no depth limit }
+    Tree.BeginBuild(True);
+    for I := 1 to Depth do
+      Tree.BuildStartElement(U(''), U(''), U('a'));
+    for I := 1 to Depth do
+      Tree.BuildEndElement;
+    Tree.EndBuild;
+    Leaf := Depth;
+    Text := '/';
+    for I := 1 to Depth do
+    begin
+      if I > 1 then
+        Text := Text + '/';
+      Text := Text + 'a';
+    end;
+    Expr := TLandrixXmlXPathExpression.Create(U(Text), nil);
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    Check(Evaluator.MatchesPattern(Expr, Leaf, False), 'the deepest a, within the default budget');
+    Evaluator.MaxStackBytes := 4096;
+    Raised := '';
+    try
+      Evaluator.MatchesPattern(Expr, Leaf, False);
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode + ' ' + IntToStr(Ord(E.Code));
+    end;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Raised, 'a step per level beyond 4 KB of stack');
+    { StackBase: 64 KB are enough for "1" counted from the start of the
+      evaluation, not from a base 512 KB further out (an address that is
+      only compared, never read) }
+    Evaluator.MaxStackBytes := 65536;
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('1'), nil);
+    R := Evaluator.Evaluate(Expr, 0);
+    CheckEquals(1, R.Count, '"1" within 64 KB');
+    R.Free;
+    R := nil;
+    Evaluator.StackBase := PAnsiChar(@Raised) + 524288;
+    Raised := '';
+    try
+      R := Evaluator.Evaluate(Expr, 0);
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode + ' ' + IntToStr(Ord(E.Code));
+    end;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Raised, 'the budget from StackBase');
+    Evaluator.StackBase := nil;
+    Evaluator.MaxStackBytes := 0;
+  finally
+    R.Free;
+    Expr.Free;
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 { MatchesPattern decides for every node what EvaluatePattern returns,
   for paths it walks from the node upwards and for those it hands to
   EvaluatePattern (a function at the start, a dynamic error in a
@@ -3014,6 +3090,7 @@ begin
   RegisterTest('XPathEval.TemporaryTrees', TestTemporaryTrees);
   RegisterTest('XPathEval.HostFunctions', TestHostFunctions);
   RegisterTest('XPathEval.MatchesPattern', TestMatchesPattern);
+  RegisterTest('XPathEval.PatternStackBudget', TestPatternStackBudget);
   RegisterTest('XPathEval.Frames', TestFrames);
   RegisterTest('XPathEval.StackBudget', TestStackBudget);
   RegisterTest('XPathEval.NestingLimits', TestNestingLimits);

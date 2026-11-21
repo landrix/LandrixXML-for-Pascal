@@ -272,6 +272,9 @@ type
       not checked) }
     FEvalNest: Integer;
     FEvalStackBase: PAnsiChar;
+    { StackBase: the stack address the budget counts from (nil: where the
+      outermost evaluation starts) }
+    FFixedStackBase: PAnsiChar;
     { the implicit time zone and the current dateTime (FHasClock: read
       or set) }
     FImplicitTimeZone: Integer;
@@ -411,6 +414,7 @@ type
     function CallFunction(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure EnterUser(Local: Pointer);
+    function MatchPattern(Expr: TLandrixXmlXPathExpression; Node: Integer; Relative: Boolean): Boolean;
     function CallDefined(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function CallUser(Def: TLandrixXmlXPathFunctionDef; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
@@ -588,6 +592,11 @@ type
       more than 3000 variables evaluated within each other raise FOER0000
       (xecLimit) too. }
     property MaxStackBytes: Integer read FMaxStackBytes write FMaxStackBytes;
+    { Where MaxStackBytes counts from (for the XSLT units, not part of the
+      documented API yet): nil (default), the start of the outermost
+      evaluation or user function call; else an address of a frame
+      further out, so that the budget covers the caller's stack too. }
+    property StackBase: PAnsiChar read FFixedStackBase write FFixedStackBase;
     { The implicit time zone in minutes east of UTC (-840 to 840; default
       0, UTC): values without a time zone are compared with and
       subtracted from others in it, and current-dateTime() has it. }
@@ -2762,6 +2771,30 @@ function PatternMismatch(E: ELandrixXmlError): Boolean; forward;
 function TLandrixXmlXPathEvaluator.MatchesPattern(Expr: TLandrixXmlXPathExpression; Node: Integer;
   Relative: Boolean): Boolean;
 var
+  Base: Integer;
+begin
+  { the stack budget of the steps and predicates, as for an evaluation
+    (MatchPattern recurses once per step) }
+  if FEvalNest = 0 then
+    if FMaxStackBytes <= 0 then
+      FEvalStackBase := nil
+    else if FFixedStackBase <> nil then
+      FEvalStackBase := FFixedStackBase
+    else
+      FEvalStackBase := PAnsiChar(@Base);
+  Inc(FEvalNest);
+  try
+    Result := MatchPattern(Expr, Node, Relative);
+  finally
+    Dec(FEvalNest);
+    if FEvalNest = 0 then
+      FEvalStackBase := nil;
+  end;
+end;
+
+function TLandrixXmlXPathEvaluator.MatchPattern(Expr: TLandrixXmlXPathExpression; Node: Integer;
+  Relative: Boolean): Boolean;
+var
   SavedExpr: TLandrixXmlXPathExpression;
   SavedBase, PathIndex, I: Integer;
   Slow: Boolean;
@@ -2873,6 +2906,11 @@ var
     Ok: Boolean;
   begin
     Result := False;
+    { one level per step (a/a/a/... with 100,000 steps) }
+    if (FEvalStackBase <> nil) and (Integer(FEvalStackBase - PAnsiChar(@Step)) > FMaxStackBytes) and
+      (Integer(FEvalStackBase - PAnsiChar(@Step)) < 1073741824) then
+      raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expressions or ' +
+        LimitStopText + ' use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
     if K < 0 then
     begin
       { before the first step: "/" }
@@ -3073,10 +3111,12 @@ begin
     per level: the stack budget counts from the outermost evaluation }
   if FEvalNest = 0 then
   begin
-    if FMaxStackBytes > 0 then
-      FEvalStackBase := PAnsiChar(@SavedBase)
+    if FMaxStackBytes <= 0 then
+      FEvalStackBase := nil
+    else if FFixedStackBase <> nil then
+      FEvalStackBase := FFixedStackBase
     else
-      FEvalStackBase := nil;
+      FEvalStackBase := PAnsiChar(@SavedBase);
   end;
   Inc(FEvalNest);
   try
@@ -4230,8 +4270,13 @@ begin
   if FDepth >= FMaxDepth then
     Fail('FOER0000', LimitStopText + ' deeper than ' + IntToStr(FMaxDepth));
   if FDepth = 0 then
-    FStackBase := Local
-  else if FMaxStackBytes > 0 then
+  begin
+    if FFixedStackBase <> nil then
+      FStackBase := FFixedStackBase
+    else
+      FStackBase := Local;
+  end;
+  if FMaxStackBytes > 0 then
   begin
     Used := Integer(PAnsiChar(FStackBase) - PAnsiChar(Local));
     if (Used > FMaxStackBytes) and (Used < 1073741824) then

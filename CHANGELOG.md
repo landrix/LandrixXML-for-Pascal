@@ -65,6 +65,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Stack budget (`MaxStackBytes`) where it was missing: matching a
+  pattern (`MatchesPattern`, one level per step, with its predicates)
+  counts from the start of the match as an evaluation does, and the XSLT
+  processor hands its budget to the XPath evaluator, so a deep
+  expression in a stylesheet is measured against the whole run (before,
+  the evaluator inside XSLT had no budget). A limit stays `xecLimit`
+  when XSLT and Schematron report the XPath error, and an XPath error
+  outside an instruction (a parameter value) reaches the caller as
+  `ELandrixXmlXsltError`. New for the XSLT units:
+  `TLandrixXmlXPathEvaluator.StackBase` (not part of the documented API
+  yet).
 - XSLT patterns are checked step by step as Saxon checks them (the rules
   of XSLT 3.0): a number, a string, a function call after the start, a
   variable after the start or a step on another axis than child,

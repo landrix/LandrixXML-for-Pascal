@@ -793,6 +793,23 @@ begin
   Result := TLandrixXmlXsltMessage(FMessages[Index]);
 end;
 
+{ XsltRun; an XPath error outside an instruction (the value of a
+  parameter, a limit there) is an XSLT error with the same codes (a
+  parameter that does not compile stays xecXPath, as before) }
+procedure RunAsXslt(Compiled: TObject; Settings: TXsltRunSettings; Source, Target: TLandrixXmlXPathTree);
+begin
+  try
+    XsltRun(Compiled, Settings, Source, Target);
+  except
+    on E: ELandrixXmlXPathError do
+      if E is ELandrixXmlXsltError then
+        raise
+      else
+        raise ELandrixXmlXsltError.CreateXslt(E.Code, E.XPathCode,
+          Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), '', 0, 0);
+  end;
+end;
+
 { One run into Target; Output: the output properties in effect (a
   TXsltOutputProperties the caller frees). }
 procedure TLandrixXmlXsltTransformer.Run(Source, Target: TLandrixXmlXPathTree; out Output: TObject);
@@ -821,7 +838,7 @@ begin
     Settings.BaseOutputUri := FBaseOutputUri;
     Settings.ResultDocuments := FResultDocuments;
     Settings.PrincipalRaw := TXsltOutputProperties.Create;
-    XsltRun(FStylesheet.Compiled, Settings, Source, Target);
+    RunAsXslt(FStylesheet.Compiled, Settings, Source, Target);
     { the properties of an xsl:result-document that made the principal
       result (with its raw parts), else those of xsl:output }
     Props := TXsltOutputProperties(Settings.PrincipalProperties);

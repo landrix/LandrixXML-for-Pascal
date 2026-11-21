@@ -1252,8 +1252,15 @@ end;
 
 { an XPath error of an expression at E, as an XSLT error with E's position }
 procedure TCompiler.XPathFailed(M: TModule; E: Integer; X: ELandrixXmlXPathError);
+var
+  Code: TLandrixXmlErrorCode;
 begin
-  raise ELandrixXmlXsltError.CreateXslt(xecXPath, X.XPathCode, Copy(X.Message, Length(X.XPathCode) + 3, MaxInt),
+  { a limit of the parser stays a limit }
+  if X.Code = xecLimit then
+    Code := xecLimit
+  else
+    Code := xecXPath;
+  raise ELandrixXmlXsltError.CreateXslt(Code, X.XPathCode, Copy(X.Message, Length(X.XPathCode) + 3, MaxInt),
     M.Uri, M.LineOf(E), M.ColumnOf(E));
 end;
 
