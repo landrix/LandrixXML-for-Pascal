@@ -2952,9 +2952,10 @@ begin
   try
     S := EvaluatePattern(Expr, RootOf(Node));
   except
-    { a tree without document node: "/" has no root to start from }
+    { a tree without document node: "/" and key() have no root to start
+      from (XTDE1270), no match as in Saxon }
     on E: ELandrixXmlXPathError do
-      if E.XPathCode = 'XPDY0050' then
+      if (E.XPathCode = 'XPDY0050') or (E.XPathCode = 'XTDE1270') then
         Exit
       else
         raise;

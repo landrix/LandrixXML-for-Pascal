@@ -995,6 +995,74 @@ begin
   end;
 end;
 
+{ The error code of compiling Main (file:///s/main.xsl) with the module
+  Imp at file:///s/imp.xsl, 'ok' if it compiles. }
+function CompileCode(const Main, Imp: string): string;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  Resolver: TLandrixXmlXsltResolver;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Resolver := TLandrixXmlXsltResolver.Create;
+  try
+    try
+      Resolver.AddUtf8(U('file:///s/imp.xsl'), U(Imp));
+      Sheet.LoadFromUtf8(U(Main), U('file:///s/main.xsl'), Resolver);
+      Result := 'ok';
+    except
+      on E: ELandrixXmlXPathError do
+        Result := E.XPathCode;
+    end;
+  finally
+    Resolver.Free;
+    Sheet.Free;
+  end;
+end;
+
+{ Static checks from the review of the compiler (Saxon HE 12.9). }
+procedure TestCompilerReviewEdges;
+const
+  Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">';
+  Tail = '</xsl:stylesheet>';
+begin
+  CheckEqualsStr('XTSE0550', CompileCode(Head + '<xsl:template match="a" mode="#all #default"/>' + Tail, ''),
+    'mode #all with another');
+  CheckEqualsStr('XTSE0550', CompileCode(Head + '<xsl:template match="a" mode="m m"/>' + Tail, ''),
+    'a mode twice');
+  CheckEqualsStr('XTSE0550', CompileCode(Head + '<xsl:template match="a" mode="#current"/>' + Tail, ''),
+    'mode #current');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="a" mode="m #default"/>' + Tail, ''),
+    'two modes');
+  CheckEqualsStr('XTSE0550', CompileCode(Head + '<xsl:template match="a" mode="name!1223"/>' + Tail, ''),
+    'a mode that is no QName');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="a" mode="#unnamed"/>' + Tail, ''),
+    'mode #unnamed (Saxon)');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match=""/>' + Tail, ''), 'an empty match');
+  CheckEqualsStr('XTSE0010', CompileCode(Head + '<xsl:include href="imp.xsl"/>' + Tail,
+    '<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>'), 'an included module without version');
+  CheckEqualsStr('ok', CompileCode(Head + '<m:data xmlns:m="urn:m"><xsl:element name="x" type="any"/></m:data>' +
+    '<xsl:template match="/"/>' + Tail, ''), 'a user-defined data element');
+  { two of the same precedence, overridden by the importing module }
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:import href="imp.xsl"/><xsl:variable name="x" select="3"/>' +
+    '<xsl:template name="t"/>' + Tail, Head + '<xsl:variable name="x" select="1"/>' +
+    '<xsl:variable name="x" select="2"/><xsl:template name="t"/><xsl:template name="t"/>' + Tail),
+    'duplicates overridden');
+  CheckEqualsStr('XTSE0630', CompileCode(Head + '<xsl:import href="imp.xsl"/>' + Tail, Head +
+    '<xsl:variable name="x" select="1"/><xsl:variable name="x" select="2"/>' + Tail), 'duplicate variables');
+  CheckEqualsStr('XTSE0660', CompileCode(Head + '<xsl:import href="imp.xsl"/>' + Tail, Head +
+    '<xsl:template name="t"/><xsl:template name="t"/>' + Tail), 'duplicate templates');
+  { a comment does not change the default priority of a name test (0):
+    the rule with priority 0.25 wins }
+  CheckEqualsStr('<r>b</r>', RunOutputSheet('<xsl:output method="xml" omit-xml-declaration="yes"/>' +
+    '<xsl:template match="s (: a comment :)"><r>a</r></xsl:template>' +
+    '<xsl:template match="s" priority="0.25"><r>b</r></xsl:template>', '<xsl:apply-templates/>', ''),
+    'a comment in a pattern');
+  CheckEqualsStr('<r>b</r>', RunOutputSheet('<xsl:output method="xml" omit-xml-declaration="yes"/>' +
+    '<xsl:template match="x (: don''t :) | s"><r>a</r></xsl:template>' +
+    '<xsl:template match="s" priority="0.25"><r>b</r></xsl:template>', '<xsl:apply-templates/>', ''),
+    'a quote in a comment of a pattern');
+end;
+
 { Serialization edges from the review (Saxon HE 12.9). }
 procedure TestOutputReviewEdges;
 var
@@ -1170,6 +1238,7 @@ begin
   RegisterTest('Xslt.ManyAttributesCopy', TestManyAttributesCopy);
   RegisterTest('Xslt.RuntimeReviewEdges', TestRuntimeReviewEdges);
   RegisterTest('Xslt.OutputReviewEdges', TestOutputReviewEdges);
+  RegisterTest('Xslt.CompilerReviewEdges', TestCompilerReviewEdges);
 end;
 
 end.

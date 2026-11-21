@@ -50,6 +50,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT compiler, static checks from the review (as Saxon): the mode list
+  of a template is checked (XTSE0550 for `#all` with another mode, a mode
+  twice, `#current` or a name that is no QName; W3C XSLT suite: six more
+  cases pass); an empty `match` is XTSE0340; an included or
+  imported module without `version` is XTSE0010; a user-defined data
+  element at the top level is ignored with its content; two global
+  variables or named templates of the same precedence are an error only
+  if no declaration of higher precedence overrides them; a comment in a
+  match pattern no longer changes its default priority; `key()` in a
+  pattern on a tree without document node means no match (XTDE1270 was
+  raised).
 - XSLT serialization, edges from the review: characters the encoding
   lacks, escaped URIs and mapped characters are written in linear time
   (a long text in US-ASCII took minutes); in HTML `script` and `style` a

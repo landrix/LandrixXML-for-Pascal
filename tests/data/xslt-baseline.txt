@@ -1339,6 +1339,12 @@ error/error-0520b pass
 error/error-0520c pass
 error/error-0520d pass
 error/error-0530a pass
+error/error-0550a pass
+error/error-0550b pass
+error/error-0550c pass
+error/error-0550d pass
+error/error-0550e pass
+error/error-0550f pass
 error/error-0560a pass
 error/error-0560b pass
 error/error-0560c pass

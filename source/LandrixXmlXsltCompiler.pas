@@ -962,6 +962,9 @@ type
       the empty sequence }
     FTextTemplate: Boolean;
     FAllModeTemplates: TList;
+    { named templates with a name of the same precedence: XTSE0660 only
+      if no template of higher precedence overrides them }
+    FDupTemplates, FDupTemplateDecls: TList;
     { the evaluation of use-when: an empty tree, the definitions of the
       functions it answers, true() and false() (made on first use) }
     FUseWhenTree: TLandrixXmlXPathTree;
@@ -1050,7 +1053,8 @@ type
     procedure CompileDecimalFormat(D: TDecl);
     procedure CollectFunctions;
     procedure CompileFunction(T: TXsltTemplate; D: TDecl);
-    procedure AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8);
+    procedure AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8;
+      HasModes: Boolean);
     function ModeOf(const Name: TLandrixXmlUtf8): TXsltMode;
     procedure CompileOutput(D: TDecl);
     procedure CheckRoot(M: TModule);
@@ -1135,6 +1139,8 @@ begin
   FDecls := TObjectList.Create;
   FFunctionDecls := TList.Create;
   FAllModeTemplates := TList.Create;
+  FDupTemplates := TList.Create;
+  FDupTemplateDecls := TList.Create;
   FChain := TXsltStringList.Create;
   FChain.CaseSensitive := True;
   FVarUris := TXsltStringList.Create;
@@ -1173,6 +1179,8 @@ begin
   FVarUris.Free;
   FChain.Free;
   FAllModeTemplates.Free;
+  FDupTemplates.Free;
+  FDupTemplateDecls.Free;
   FFunctionDecls.Free;
   FDecls.Free;
   FModules.Free;
@@ -2167,14 +2175,31 @@ end;
   never looks at as instructions, such as xsl:when or xsl:param) }
 procedure TCompiler.CheckModule(M: TModule);
 var
-  I: Integer;
+  I, DataEnd: Integer;
 begin
   PruneUseWhen(M);
+  DataEnd := -1;
   I := 0;
   while I < M.Tree.Count do
   begin
     if M.Tree.Kind[I] = xnkElement then
     begin
+      { a user-defined data element (a top-level element in another
+        namespace): XSLT elements in it are no instructions (XSLT 2.0
+        3.6.2); its own elements are checked (xsl:version, as Saxon) }
+      if not M.Simplified and (M.Tree.Parent[I] = M.Tree.DocumentElement) and
+        (M.Tree.NamespaceUriUtf8(I) <> XsltNamespace) and (M.Tree.NamespaceUriUtf8(I) <> '') then
+      begin
+        if M.Tree.NextSibling[I] >= 0 then
+          DataEnd := M.Tree.NextSibling[I]
+        else
+          DataEnd := M.Tree.Count;
+      end;
+      if (I < DataEnd) and (M.Tree.NamespaceUriUtf8(I) = XsltNamespace) then
+      begin
+        Inc(I);
+        Continue;
+      end;
       if IgnoredDeclaration(M, I) then
       begin
         if M.Tree.NextSibling[I] >= 0 then
@@ -3566,11 +3591,14 @@ var
   Found: Boolean;
   V: TLandrixXmlUtf8;
   Names: TStringList;
-  Decls: TList;
+  Decls, DupDecls: TList;
+  DupIndex: array of Integer;
 begin
   { the declaration of each name with the highest precedence }
+  DupIndex := nil;
   Names := TXsltStringList.Create;
   Decls := TList.Create;
+  DupDecls := TList.Create;
   try
     for I := 0 to Integer(FDecls.Count) - 1 do
     begin
@@ -3584,9 +3612,14 @@ begin
         begin
           Found := True;
           Best := TDecl(Decls[J]);
+          { XTSE0630 only if no declaration of higher precedence
+            overrides the two (checked below) }
           if Best.Precedence = D.Precedence then
-            Fail(D.Module, D.Element, 'XTSE0630', 'the global variable ' + LandrixXmlUtf8ToString(Name) +
-              ' is declared twice');
+          begin
+            SetLength(DupIndex, Length(DupIndex) + 1);
+            DupIndex[High(DupIndex)] := J;
+            DupDecls.Add(D);
+          end;
           if D.Precedence > Best.Precedence then
             Decls[J] := D;
         end;
@@ -3596,6 +3629,10 @@ begin
         Decls.Add(D);
       end;
     end;
+    for I := 0 to Integer(Length(DupIndex)) - 1 do
+      if TDecl(Decls[DupIndex[I]]).Precedence = TDecl(DupDecls[I]).Precedence then
+        Fail(TDecl(DupDecls[I]).Module, TDecl(DupDecls[I]).Element, 'XTSE0630', 'the global variable ' +
+          Names[DupIndex[I]] + ' is declared twice');
     for I := 0 to Integer(Decls.Count) - 1 do
     begin
       D := TDecl(Decls[I]);
@@ -3646,6 +3683,7 @@ begin
       end;
     end;
   finally
+    DupDecls.Free;
     Decls.Free;
     Names.Free;
   end;
@@ -3680,12 +3718,13 @@ end;
   insignificant: "element (r)" is "element(r)") }
 function StripSpace(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
 var
-  I: Integer;
+  I, Depth, Start: Integer;
   Quote: AnsiChar;
 begin
   Result := '';
   Quote := #0;
-  for I := 1 to Length(S) do
+  I := 1;
+  while I <= Length(S) do
   begin
     if Quote <> #0 then
     begin
@@ -3695,8 +3734,40 @@ begin
     else if S[I] in ['''', '"'] then
       Quote := S[I]
     else if S[I] in [#9, #10, #13, ' '] then
+    begin
+      Inc(I);
       Continue;
+    end
+    { an XPath comment (nested ones too) is white space }
+    else if (S[I] = '(') and (I < Length(S)) and (S[I + 1] = ':') then
+    begin
+      Start := I;
+      Depth := 1;
+      Inc(I, 2);
+      while (I <= Length(S)) and (Depth > 0) do
+      begin
+        if (S[I] = '(') and (I < Length(S)) and (S[I + 1] = ':') then
+        begin
+          Inc(Depth);
+          Inc(I);
+        end
+        else if (S[I] = ':') and (I < Length(S)) and (S[I + 1] = ')') then
+        begin
+          Dec(Depth);
+          Inc(I);
+        end;
+        Inc(I);
+      end;
+      { an unclosed comment stays, for the parser to reject }
+      if Depth > 0 then
+      begin
+        Result := Result + Copy(S, Start, MaxInt);
+        Exit;
+      end;
+      Continue;
+    end;
     Result := Result + Copy(S, I, 1);
+    Inc(I);
   end;
 end;
 
@@ -3790,11 +3861,12 @@ end;
 { The branches of a union pattern (top-level "|"). }
 function SplitPattern(const S: TLandrixXmlUtf8): TLandrixXmlUtf8Array;
 var
-  I, Start, Depth: Integer;
+  I, Start, Depth, Comment: Integer;
   Quote: AnsiChar;
 begin
   Result := nil;
   Depth := 0;
+  Comment := 0;
   Quote := #0;
   Start := 1;
   for I := 1 to Length(S) do
@@ -3803,6 +3875,19 @@ begin
     begin
       if S[I] = Quote then
         Quote := #0;
+      Continue;
+    end;
+    { XPath comments (nested too): no strings, brackets or separators in
+      them }
+    if (S[I] = '(') and (I < Length(S)) and (S[I + 1] = ':') then
+    begin
+      Inc(Comment);
+      Continue;
+    end;
+    if Comment > 0 then
+    begin
+      if (S[I] = ')') and (S[I - 1] = ':') then
+        Dec(Comment);
       Continue;
     end;
     case S[I] of
@@ -4571,7 +4656,8 @@ begin
     Fail(M, E, 'XTSE1300', 'the characters of a decimal format must be distinct');
 end;
 
-procedure TCompiler.AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8);
+procedure TCompiler.AddRules(D: TDecl; T: TXsltTemplate; const Match: TLandrixXmlUtf8; const Modes: TLandrixXmlUtf8;
+  HasModes: Boolean);
 var
   Branches: TLandrixXmlUtf8Array;
   ModeNames: TList;
@@ -4580,7 +4666,8 @@ var
   B, V, W: TLandrixXmlUtf8;
   Prio: Double;
   HasPrio, All: Boolean;
-  Code: Integer;
+  Code, Count: Integer;
+  Mode: TXsltMode;
 begin
   HasPrio := not D.Simplified and Attr(D.Module, D.Element, 'priority', V);
   Prio := 0;
@@ -4595,6 +4682,8 @@ begin
   ModeNames := TList.Create;
   try
     All := False;
+    Mode := nil;
+    Count := 0;
     W := Modes + ' ';
     Start := 1;
     for I := 1 to Length(W) do
@@ -4604,14 +4693,29 @@ begin
         Start := I + 1;
         if B = '' then
           Continue;
+        Inc(Count);
+        { XTSE0550: #all alone, no mode twice, no other #token }
         if B = '#all' then
           All := True
-        else if B = '#default' then
-          ModeNames.Add(ModeOf(''))
+        { #unnamed (XSLT 3.0) is the default mode in Saxon, also in 2.0 }
+        else if (B = '#default') or (B = '#unnamed') then
+          Mode := ModeOf('')
+        else if (B[1] = '#') or not IsQName8(B) then
+          Fail(D.Module, D.Element, 'XTSE0550', 'the mode ' + LandrixXmlUtf8ToString(B) + ' is not allowed here')
         else
-          ModeNames.Add(ModeOf(QNameToClark(D.Module, D.Element, B, False)));
+          Mode := ModeOf(QNameToClark(D.Module, D.Element, B, False));
+        if B <> '#all' then
+        begin
+          if ModeNames.IndexOf(Mode) >= 0 then
+            Fail(D.Module, D.Element, 'XTSE0550', 'the mode ' + LandrixXmlUtf8ToString(B) + ' is listed twice');
+          ModeNames.Add(Mode);
+        end;
       end;
-    if Trim8(Modes) = '' then
+    if All and (Count > 1) then
+      Fail(D.Module, D.Element, 'XTSE0550', 'mode="#all" cannot be combined with other modes');
+    if HasModes and (Count = 0) then
+      Fail(D.Module, D.Element, 'XTSE0550', 'an empty mode attribute');
+    if Count = 0 then
       ModeNames.Add(ModeOf(''));
     Branches := SplitPattern(Match);
     for I := 0 to Integer(Length(Branches)) - 1 do
@@ -4801,6 +4905,7 @@ var
   V, Match, Modes: TLandrixXmlUtf8;
   Scope: TScope;
   P: TXsltInstr;
+  HasMatch, HasModes: Boolean;
 begin
   M := D.Module;
   E := D.Element;
@@ -4813,10 +4918,14 @@ begin
   if Attr(M, E, 'name', V) then
     T.Name := QNameToClark(M, E, V, False);
   Match := '';
-  if not Attr(M, E, 'match', Match) and (T.Name = '') then
+  HasMatch := Attr(M, E, 'match', Match);
+  if not HasMatch and (T.Name = '') then
     Fail(M, E, 'XTSE0500', 'xsl:template needs a match or name attribute');
+  if HasMatch and (Trim8(Match) = '') then
+    Fail(M, E, 'XTSE0340', 'an empty pattern');
   Modes := '';
-  if Attr(M, E, 'mode', Modes) and (Match = '') then
+  HasModes := Attr(M, E, 'mode', Modes);
+  if HasModes and not HasMatch then
     Fail(M, E, 'XTSE0500', 'xsl:template with a mode needs a match attribute');
   Scope := TScope.Create;
   try
@@ -4849,14 +4958,17 @@ begin
   finally
     Scope.Free;
   end;
-  if Match <> '' then
-    AddRules(D, T, Match, Modes);
+  if HasMatch then
+    AddRules(D, T, Match, Modes, HasModes);
   if T.Name <> '' then
   begin
     if FC.NamedTemplates.Find(LandrixXmlUtf8ToString(T.Name), I) then
     begin
       if TXsltTemplate(FC.NamedTemplates.Objects[I]).Precedence = T.Precedence then
-        Fail(M, E, 'XTSE0660', 'two templates named ' + LandrixXmlUtf8ToString(T.Name));
+      begin
+        FDupTemplates.Add(T);
+        FDupTemplateDecls.Add(D);
+      end;
       if TXsltTemplate(FC.NamedTemplates.Objects[I]).Precedence < T.Precedence then
         FC.NamedTemplates.Objects[I] := T;
     end
@@ -5411,12 +5523,18 @@ procedure TCompiler.CheckRoot(M: TModule);
 var
   E, A: Integer;
   Found: Boolean;
+  V: TLandrixXmlUtf8;
 begin
   E := M.Tree.DocumentElement;
   if E < 0 then
     Fail(M, -1, 'XTSE0150', 'the stylesheet has no element');
   if IsXsl(M, E, 'stylesheet') or IsXsl(M, E, 'transform') then
+  begin
+    { also in an included or imported module }
+    if not Attr(M, E, 'version', V) then
+      Fail(M, E, 'XTSE0010', 'xsl:stylesheet needs a version attribute');
     Exit;
+  end;
   Found := False;
   for A := E + 1 to E + M.Tree.AttributeCount[E] do
     if (M.Tree.NamespaceUriUtf8(A) = XsltNamespace) and (M.Tree.LocalNameUtf8(A) = 'version') then
@@ -5462,7 +5580,7 @@ begin
   finally
     Scope.Free;
   end;
-  AddRules(D, T, '/', '');
+  AddRules(D, T, '/', '', False);
 end;
 
 procedure TCompiler.CompileOutput(D: TDecl);
@@ -5840,9 +5958,9 @@ end;
 function TCompiler.Run(Tree: TLandrixXmlXPathTree; const BaseUri: TLandrixXmlUtf8): TXsltCompiled;
 var
   Main: TModule;
-  E, I: Integer;
+  I, J: Integer;
   D: TDecl;
-  L, V: TLandrixXmlUtf8;
+  L: TLandrixXmlUtf8;
 begin
   FC := TXsltCompiled.Create;
   try
@@ -5852,13 +5970,7 @@ begin
     Main.Uri := BaseUri;
     Main.Index := 0;
     FModules.Add(Main);
-    E := Tree.DocumentElement;
     CheckRoot(Main);
-    if not Main.Simplified then
-    begin
-      if not Attr(Main, E, 'version', V) then
-        Fail(Main, E, 'XTSE0010', 'xsl:stylesheet needs a version attribute');
-    end;
     CheckModule(Main);
     Collect(Main);
     CollectFunctions;
@@ -5902,6 +6014,11 @@ begin
       else
         Fail(D.Module, D.Element, 'XTSE0010', 'unknown declaration xsl:' + LandrixXmlUtf8ToString(L));
     end;
+    for I := 0 to Integer(FDupTemplates.Count) - 1 do
+      if FC.NamedTemplates.Find(LandrixXmlUtf8ToString(TXsltTemplate(FDupTemplates[I]).Name), J) and
+        (TXsltTemplate(FC.NamedTemplates.Objects[J]).Precedence = TXsltTemplate(FDupTemplates[I]).Precedence) then
+        Fail(TDecl(FDupTemplateDecls[I]).Module, TDecl(FDupTemplateDecls[I]).Element, 'XTSE0660',
+          'two templates named ' + LandrixXmlUtf8ToString(TXsltTemplate(FDupTemplates[I]).Name));
     for I := 0 to Integer(FC.UserFunctions.Count) - 1 do
       CompileFunction(TXsltTemplate(FC.UserFunctions[I]), TDecl(FFunctionDecls[I]));
     Finish;
