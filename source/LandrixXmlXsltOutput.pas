@@ -87,6 +87,7 @@ implementation
 
 uses
   LandrixXmlXPath,
+  LandrixXmlXPathEval,
   LandrixXmlNormalize;
 
 { the value of a yes/no output property (and standalone) as Saxon reads
@@ -360,6 +361,10 @@ type
     FAfterEnd: Boolean;
     FSameLine: Boolean;
     FLevel: Integer;
+    { the stack address when the serializer was made and the stack the
+      recursion over the elements may use from there (CheckStack) }
+    FStackBase: PAnsiChar;
+    FStackBudget: Integer;
     { the level of the element with xml:space="preserve" that stops the
       indentation, -1 for none }
     FSuppressedAt: Integer;
@@ -439,13 +444,22 @@ type
     procedure TextNode(I: Integer; const V: TLandrixXmlUtf8); virtual;
     procedure Node(I: Integer);
     procedure Element(I: Integer);
+    procedure CheckStack(Local: Pointer);
   public
     constructor Create(Tree: TLandrixXmlXPathTree; Stream: TStream; Indent: Boolean);
   end;
 
 constructor TSerializer.Create(Tree: TLandrixXmlXPathTree; Stream: TStream; Indent: Boolean);
+var
+  Base: Integer;
 begin
   inherited Create;
+  Base := 0;
+  FStackBase := PAnsiChar(@Base);
+  { on Windows 3/4 of the program's stack; elsewhere (8 MB) 4 MB }
+  FStackBudget := LandrixXmlDefaultMaxStackBytes;
+  if FStackBudget <= 0 then
+    FStackBudget := 4 * 1024 * 1024;
   FTree := Tree;
   FStream := Stream;
   FIndent := Indent;
@@ -1215,6 +1229,19 @@ end;
   xml:space="preserve". The declarations and attributes of a start tag
   whose names and values are longer than 80 characters (counted as Saxon
   does) go on lines of their own, under the first one. }
+{ Before an element: a tree built through the API has no depth limit (a
+  parsed document has the reader's MaxDepth). }
+procedure TSerializer.CheckStack(Local: Pointer);
+var
+  Used: Integer;
+begin
+  Used := Integer(FStackBase - PAnsiChar(Local));
+  { below zero or beyond 1 GB: another stack (a fiber), not checked }
+  if (Used > FStackBudget) and (Used < 1073741824) then
+    raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'result tree too deep to serialize (more than ' +
+      IntToStr(FStackBudget) + ' bytes of stack)', 0, 0);
+end;
+
 procedure TSerializer.Element(I: Integer);
 var
   Prefixes, Uris: TLandrixXmlUtf8Array;
@@ -1232,6 +1259,7 @@ var
   end;
 
 begin
+  CheckStack(@K);
   if FIndent then
   begin
     if FAfterStart or FAfterEnd then
@@ -2050,6 +2078,7 @@ var
   Name, Local, Exact, V: TLandrixXmlUtf8;
   IsHtml, IsInline, Formatted, Skip, Meta: Boolean;
 begin
+  CheckStack(@C);
   case FTree.Kind[I] of
     xnkDocument:
       begin

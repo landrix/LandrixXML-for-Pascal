@@ -50,6 +50,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT: stripping white space from the source, copying a tree and
+  serializing a result check the stack, so a tree built through the API
+  without a depth limit raises FOER0000 (`xecLimit`) instead of
+  overflowing it (copies within `MaxStackBytes` or, without a budget,
+  10,000 levels; serializing within `LandrixXmlDefaultMaxStackBytes`, 4 MB
+  where that is 0).
 - XPath: deeply nested expressions raise FOER0000 (`xecLimit`) instead
   of overflowing the stack. The parser stops at 3000 levels or 256 KB of
   stack (about 125 levels of parentheses with Delphi 6, where 500 levels

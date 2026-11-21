@@ -26,6 +26,7 @@ uses
   LandrixXmlXPath,
   LandrixXmlXPathEval,
   LandrixXmlXslt,
+  LandrixXmlXsltOutput,
   LandrixXmlTestFramework;
 
 function U(const S: string): TLandrixXmlUtf8;
@@ -746,6 +747,104 @@ begin
   end;
 end;
 
+{ a tree built through the API has no depth limit: stripping and copying
+  it (MaxStackBytes, or 10000 levels without a budget) and serializing a
+  result (the default stack budget) raise FOER0000 (xecLimit) instead of
+  overflowing the stack }
+procedure TestDeepApiTree;
+const
+  Strip = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+    '<xsl:strip-space elements="*"/><xsl:template match="/"><r/></xsl:template></xsl:stylesheet>';
+  CopyOf = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+    '<xsl:template match="/"><xsl:copy-of select="."/></xsl:template></xsl:stylesheet>';
+var
+  Source: TLandrixXmlXPathTree;
+  I: Integer;
+
+  function Outcome(E: ELandrixXmlError): string;
+  begin
+    if (E.Code = xecLimit) and (E is ELandrixXmlXPathError) and
+      (ELandrixXmlXPathError(E).XPathCode = 'FOER0000') then
+      Result := 'limit'
+    else
+      Result := E.Message;
+  end;
+
+  { the run into a tree (no serializer) }
+  function Run(const Text: string; Budget: Integer): string;
+  var
+    Sheet: TLandrixXmlXsltStylesheet;
+    T: TLandrixXmlXsltTransformer;
+    Target: TLandrixXmlXPathTree;
+  begin
+    Sheet := TLandrixXmlXsltStylesheet.Create;
+    T := nil;
+    Target := TLandrixXmlXPathTree.Create;
+    try
+      Sheet.LoadFromUtf8(U(Text), U('urn:test'));
+      T := TLandrixXmlXsltTransformer.Create(Sheet);
+      T.MaxStackBytes := Budget;
+      try
+        T.TransformToTree(Source, Target);
+        Result := 'ok';
+      except
+        on E: ELandrixXmlError do
+          Result := Outcome(E);
+      end;
+    finally
+      Target.Free;
+      T.Free;
+      Sheet.Free;
+    end;
+  end;
+
+  function Serialize(const Method: string): string;
+  var
+    Props: TXsltOutputProperties;
+    M: TMemoryStream;
+  begin
+    Props := TXsltOutputProperties.Create;
+    M := TMemoryStream.Create;
+    try
+      Props.SetValue('method', U(Method));
+      { no indentation: its spaces grow with the square of the depth }
+      Props.SetValue('indent', 'no');
+      try
+        XsltSerialize(Source, Props, M, False);
+        Result := 'ok';
+      except
+        on E: ELandrixXmlError do
+          Result := Outcome(E);
+      end;
+    finally
+      M.Free;
+      Props.Free;
+    end;
+  end;
+
+begin
+  Source := TLandrixXmlXPathTree.Create;
+  try
+    Source.BeginBuild(True);
+    for I := 1 to 100000 do
+      Source.BuildStartElement('', '', 'e');
+    for I := 1 to 100000 do
+      Source.BuildEndElement;
+    Source.EndBuild;
+    CheckEqualsStr('limit', Run(Strip, 262144), 'stripping white space');
+    CheckEqualsStr('limit', Run(CopyOf, 262144), 'copy-of');
+{$IFNDEF MSWINDOWS}
+    { without a budget only the 8 MB stack of the other platforms holds
+      the 10000 levels }
+    CheckEqualsStr('limit', Run(CopyOf, 0), 'copy-of without a budget');
+{$ENDIF}
+    CheckEqualsStr('limit', Serialize('xml'), 'serializing as XML');
+    CheckEqualsStr('limit', Serialize('html'), 'serializing as HTML');
+  finally
+    Source.Free;
+  end;
+end;
+
 { MaxStackBytes of the transformer: recursive templates and functions
   against the stack budget (FOER0000, xecLimit); 0 turns it off. }
 procedure TestStackBudget;
@@ -1238,6 +1337,7 @@ begin
   RegisterTest('Xslt.ByteOrderMark', TestByteOrderMark);
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
   RegisterTest('Xslt.StackBudget', TestStackBudget);
+  RegisterTest('Xslt.DeepApiTree', TestDeepApiTree);
   RegisterTest('Xslt.ManyAttributesCopy', TestManyAttributesCopy);
   RegisterTest('Xslt.RuntimeReviewEdges', TestRuntimeReviewEdges);
   RegisterTest('Xslt.OutputReviewEdges', TestOutputReviewEdges);

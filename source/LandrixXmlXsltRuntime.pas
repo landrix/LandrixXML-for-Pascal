@@ -446,6 +446,7 @@ type
     procedure ApplyTemplates(Instr: TXsltInstr; const Nodes: TLandrixXmlXPathSequence; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
     procedure CheckStack(Local: Pointer; const Module: TLandrixXmlUtf8; Line, Column: Integer);
+    procedure CheckCopy(Local: Pointer; Depth: Integer);
     procedure Invoke(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
     procedure BindParams(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
@@ -1533,6 +1534,8 @@ var
   Def: TLandrixXmlXPathFunctionDef;
 begin
   inherited Create;
+  { CheckStack while stripping the source (Start sets it again) }
+  FStackBase := @I;
   FC := Compiled;
   FSettings := Settings;
   FTrees := TObjectList.Create;
@@ -1682,6 +1685,7 @@ var
   Tree, Stripped: TLandrixXmlXPathTree;
   Reader: TLandrixXmlReader;
   I: Integer;
+  Parsed: Boolean;
 begin
   Result := -1;
   Content := nil;
@@ -1700,6 +1704,7 @@ begin
     end
     else
     begin
+      Parsed := False;
       Tree := TLandrixXmlXPathTree.Create;
       Reader := TLandrixXmlReader.Create;
       try
@@ -1707,6 +1712,7 @@ begin
           Reader.LoadFromStream(Content);
           Tree.LoadFromReader(Reader);
           Tree.BaseUri := Uri;
+          Parsed := True;
           if FC.HasStrip then
           begin
             Stripped := StrippedCopy(Tree);
@@ -1717,9 +1723,14 @@ begin
           Tree := nil;
         except
           on E: ELandrixXmlError do
+          begin
+            { an error while stripping (the stack) is no reading error }
+            if Parsed then
+              raise;
             if not Available then
               raise ELandrixXmlXPathError.CreateXPath('FODC0002', 'the document ' + LandrixXmlUtf8ToString(Uri) +
                 ' is not well-formed: ' + E.Message);
+          end;
         end;
       finally
         Reader.Free;
@@ -2625,12 +2636,14 @@ var
   end;
 
   { Preserve: an xml:space="preserve" is in force at the parent }
-  procedure Walk(I: Integer; Preserve: Boolean);
+  procedure Walk(I: Integer; Preserve: Boolean; Depth: Integer);
   var
     C, A, K: Integer;
     Prefixes, Uris: TLandrixXmlUtf8Array;
     Strip: Boolean;
   begin
+    { a tree built through the API has no depth limit }
+    CheckCopy(@C, Depth);
     Prefixes := nil;
     Uris := nil;
     case Tree.Kind[I] of
@@ -2639,7 +2652,7 @@ var
           C := Tree.FirstChild(I);
           while C >= 0 do
           begin
-            Walk(C, False);
+            Walk(C, False, Depth + 1);
             C := Tree.NextSibling[C];
           end;
         end;
@@ -2663,7 +2676,7 @@ var
           while C >= 0 do
           begin
             if not (Strip and (Tree.Kind[C] = xnkText) and IsWhite(Tree.ValueUtf8(C))) then
-              Walk(C, Preserve);
+              Walk(C, Preserve, Depth + 1);
             C := Tree.NextSibling[C];
           end;
           T.BuildEndElement;
@@ -2688,13 +2701,13 @@ begin
   try
     T.BeginBuild((Tree.Count > 0) and (Tree.Kind[0] = xnkDocument));
     if (Tree.Count > 0) and (Tree.Kind[0] = xnkDocument) then
-      Walk(0, False)
+      Walk(0, False, 0)
     else
     begin
       I := 0;
       while (I >= 0) and (I < Tree.Count) do
       begin
-        Walk(I, False);
+        Walk(I, False, 0);
         I := Tree.NextSibling[I];
       end;
     end;
@@ -2844,11 +2857,13 @@ var
         R.ForceNamespace(T.PrefixUtf8(A), T.NamespaceUriUtf8(A));
   end;
 
-  procedure Walk(I: Integer);
+  procedure Walk(I, Depth: Integer);
   var
     C, A, K: Integer;
     Prefixes, Uris: TLandrixXmlUtf8Array;
   begin
+    { a tree built through the API has no depth limit }
+    CheckCopy(@C, Depth);
     Prefixes := nil;
     Uris := nil;
     case T.Kind[I] of
@@ -2857,7 +2872,7 @@ var
           C := T.FirstChild(I);
           while C >= 0 do
           begin
-            Walk(C);
+            Walk(C, Depth + 1);
             C := T.NextSibling[C];
           end;
         end;
@@ -2878,7 +2893,7 @@ var
           C := T.FirstChild(I);
           while C >= 0 do
           begin
-            Walk(C);
+            Walk(C, Depth + 1);
             C := T.NextSibling[C];
           end;
           R.EndElement;
@@ -2903,7 +2918,7 @@ begin
   if FNoNamespaces and ((T.Kind[Root] = xnkElement) or (T.Kind[Root] = xnkDocument) and
     (T.FirstChild(Root) >= 0)) then
     R.InheritedNamespaces(InsPrefixes, InsUris);
-  Walk(Root);
+  Walk(Root, 0);
 end;
 
 { xsl:copy: a shallow copy of the context item }
@@ -3247,6 +3262,30 @@ begin
     raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested ' +
       IntToStr(FTemplateDepth) + ' deep use more than ' + IntToStr(FSettings.MaxStackBytes) + ' bytes of stack',
       Module, Line, Column);
+end;
+
+const
+  { The depth of a tree that stripping and copying go down without a
+    stack budget (MaxStackBytes 0, the default outside Windows, whose
+    8 MB stack holds it): a tree built through the API has no limit. }
+  MaxCopyDepth = 10000;
+
+{ Before going down one level of a tree in StrippedCopy and CopyNode
+  (Local: a variable of the caller's frame, Depth: its level). }
+procedure TRun.CheckCopy(Local: Pointer; Depth: Integer);
+var
+  Used: Integer;
+begin
+  if FSettings.MaxStackBytes > 0 then
+  begin
+    Used := Integer(PAnsiChar(FStackBase) - PAnsiChar(Local));
+    if (Used > FSettings.MaxStackBytes) and (Used < 1073741824) then
+      raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'a tree ' + IntToStr(Depth) +
+        ' levels deep is copied with more than ' + IntToStr(FSettings.MaxStackBytes) + ' bytes of stack', '', 0, 0);
+  end
+  else if Depth > MaxCopyDepth then
+    raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'a tree deeper than ' + IntToStr(MaxCopyDepth) +
+      ' levels is copied', '', 0, 0);
 end;
 
 procedure TRun.Invoke(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;

@@ -530,7 +530,11 @@ where the 8 MB main stack holds the depth limits. A level takes about
 3 KB with Delphi Win64, so 1 MB allows some 800 nested templates or 250
 nested functions there; for deeper recursion give the program a larger
 stack. Set
-`MaxStackBytes` for a thread with a stack of its own size.
+`MaxStackBytes` for a thread with a stack of its own size. Stripping
+white space from a source and copying a tree go down the tree within
+`MaxStackBytes` too (without a budget at most 10,000 levels), and the
+serializer within `LandrixXmlDefaultMaxStackBytes` (4 MB where that is
+0): a tree built through the API has no depth limit of its own.
 
 Without a resolver of its own (`TLandrixXmlXsltResolver`), a stylesheet
 reads any `file:` URI it names, with `xsl:include`, `xsl:import`,
