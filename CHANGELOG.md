@@ -50,6 +50,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XPath functions, edge cases from the review: `fn:sum` checks its zero
+  argument also for a non-empty input, and a literal `()` as precision
+  of `fn:round` or `fn:round-half-to-even` is XPTY0004 also for an empty
+  number (as Saxon). In the XPath 2.0 profile `fn:sum` and `fn:avg`
+  promote all values to their common type before adding (two large
+  floats next to a double no longer overflow to INF). In XPath 1.0
+  compatibility mode a literal `()` stays empty for an optional string
+  argument and is a type error for a required one, as in Saxon.
+  Resolving a URI removes dot segments in linear time (a long relative
+  `xml:base` took seconds).
 - Values, edge cases from the review: `LandrixXmlParseDouble` kept the
   powers of ten it had moved into the mantissa when it fell back to the
   RTL, so an integer of 39 to about 54 digits came out too small (1

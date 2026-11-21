@@ -805,7 +805,9 @@ Differences from Xerces, also on purpose:
   errors such as an unknown variable are reported as always); the
   functions `format-number` (the default decimal format only),
   `format-dateTime`, `format-date` and `format-time`, formatted as Saxon
-  HE formats them (in English). The static context's
+  HE formats them (in English; the place argument is ignored, so a time
+  zone name such as `America/New_York` does not adjust the value, which
+  Saxon does). The static context's
   `DefaultElementNamespace` (default '') is the default element/type
   namespace of XPath 2.0: unprefixed element names in name tests (not on
   the attribute axis), `element()` and atomic type names are in it (a

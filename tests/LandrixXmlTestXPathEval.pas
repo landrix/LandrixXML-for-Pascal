@@ -1838,6 +1838,78 @@ begin
   end;
 end;
 
+{ Function edge cases from the review (Saxon HE 12.9 where the profiles
+  agree with it): the zero of sum is checked for any input, a literal ()
+  as precision of the rounding functions is an error, sum promotes all
+  values before adding in the
+  XPath 2.0 profile, a literal () in XPath 1.0 compatibility mode and dot
+  segments of resolve-uri (RFC 3986 5.4). }
+procedure TestFunctionReviewEdges;
+const
+  Cases: array[0..18, 0..3] of string = (
+    ('s', '0', 'sum(1, (2, 3))', 'XPTY0004'),
+    ('s', '0', 'sum((), (2, 3))', 'XPTY0004'),
+    ('s', '0', 'sum((), 5)', '5'),
+    ('s', '0', 'count(avg(()))', '0'),
+    ('s', '0', 'round-half-to-even((), ())', 'XPTY0004'),
+    ('s', '0', 'round((), ())', 'XPTY0004'),
+    ('2', '0', 'round-half-to-even((), ())', 'XPTY0004'),
+    ('2', '0', 'sum((xs:float(''3e38''), xs:float(''3e38''), 0e0)) lt 1e39', 'true'),
+    ('2', '0', 'avg((xs:float(''3e38''), xs:float(''3e38''), 0e0)) lt 1e39', 'true'),
+    ('s', '0', 'string(sum((xs:float(''3e38''), xs:float(''3e38''), 0e0)))', 'INF'),
+    ('2', '1', 'count(compare((), ''a''))', '0'),
+    ('2', '1', 'compare(//none, ''a'')', '-1'),
+    ('2', '1', 'replace(''abc'', ''b'', ())', 'XPTY0004'),
+    ('s', '0', 'resolve-uri(''../../../g'', ''http://a/b/c/d;p?q'')', 'http://a/g'),
+    ('s', '0', 'resolve-uri(''./g/.'', ''http://a/b/c/d;p?q'')', 'http://a/b/c/g/'),
+    ('s', '0', 'resolve-uri(''g;x=1/../y'', ''http://a/b/c/d;p?q'')', 'http://a/b/c/y'),
+    ('s', '0', 'resolve-uri(''/./g/..'', ''http://a/b/c/d;p?q'')', 'http://a/'),
+    ('2', '0', 'sum((16777217, -16777216, xs:float(0)))', '0'),
+    ('s', '0', 'count(round-half-to-even(//none, //none))', '0'));
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  I: Integer;
+
+  function Run(const Profile, Compatible, Text: string): string;
+  var
+    Context: TLandrixXmlXPathStaticContext;
+    Expr: TLandrixXmlXPathExpression;
+  begin
+    Context := TLandrixXmlXPathStaticContext.Create;
+    Expr := nil;
+    try
+      if Profile = '2' then
+        Context.Profile := xppXPath20
+      else
+        Context.Profile := xppSaxon;
+      Context.XPath10Compatible := Compatible = '1';
+      try
+        Expr := TLandrixXmlXPathExpression.Create(U(Text), Context);
+        Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0));
+      except
+        on X: ELandrixXmlXPathError do
+          Result := X.XPathCode;
+      end;
+    finally
+      Expr.Free;
+      Context.Free;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  try
+    Tree.LoadFromUtf8(U('<r/>'));
+    for I := Low(Cases) to High(Cases) do
+      CheckEqualsStr(Cases[I, 3], Run(Cases[I, 0], Cases[I, 1], Cases[I, 2]), Cases[I, 2]);
+  finally
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 { Arguments of a user function f:id($x) (an identity) in XPath 1.0
   compatibility mode, as Saxon converts them: the caller's mode decides,
   not that of the function body; results checked with Saxon HE 12.9. }
@@ -2782,6 +2854,7 @@ begin
   RegisterTest('XPathEval.Profiles', TestProfiles);
   RegisterTest('XPathEval.XPath10Compatible', TestXPath10Compatible);
   RegisterTest('XPathEval.ReviewEdges', TestEvaluatorReviewEdges);
+  RegisterTest('XPathEval.FunctionReviewEdges', TestFunctionReviewEdges);
   RegisterTest('XPathEval.UserFunction10', TestUserFunction10);
   RegisterTest('XPathEval.Variables', TestVariables);
   RegisterTest('XPathEval.SequenceTypeMatching', TestSequenceTypeMatching);

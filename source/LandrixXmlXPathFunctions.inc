@@ -338,58 +338,86 @@ begin
   end;
 end;
 
-{ Removes the last segment and its "/" from Output (RFC 3986 5.2.4). }
-procedure DropLastSegment(var Output: TLandrixXmlUtf8);
-var
-  I: Integer;
+{ Removes the last segment and its "/" from the first W bytes of Output
+  (RFC 3986 5.2.4). }
+procedure DropLastSegment(const Output: TLandrixXmlUtf8; var W: Integer);
 begin
-  I := Length(Output);
-  while (I > 0) and (Output[I] <> '/') do
-    Dec(I);
-  if I > 0 then
-    SetLength(Output, I - 1)
-  else
-    Output := '';
+  while (W > 0) and (Output[W] <> '/') do
+    Dec(W);
+  if W > 0 then
+    Dec(W);
 end;
 
-{ RFC 3986 5.2.4: "." and ".." segments removed. }
+{ RFC 3986 5.2.4: "." and ".." segments removed. Works with a read
+  position in Path and a write position in Result, so a long path takes
+  linear time. }
 function RemoveDotSegments(const Path: TLandrixXmlUtf8): TLandrixXmlUtf8;
 var
-  Input: TLandrixXmlUtf8;
-  I: Integer;
+  N, P, W, I: Integer;
+
+  { the input from P starts with S }
+  function At(const S: TLandrixXmlUtf8): Boolean;
+  begin
+    Result := (N - P + 1 >= Length(S)) and (Copy(Path, P, Length(S)) = S);
+  end;
+
+  { the input from P is exactly S }
+  function Rest(const S: TLandrixXmlUtf8): Boolean;
+  begin
+    Result := (N - P + 1 = Length(S)) and At(S);
+  end;
+
+  procedure Append(From, Count: Integer);
+  begin
+    if Count > 0 then
+      Move(Path[From], Result[W + 1], Count);
+    Inc(W, Count);
+  end;
+
 begin
-  Input := Path;
+  N := Length(Path);
   Result := '';
-  while Input <> '' do
-    if Copy(Input, 1, 3) = '../' then
-      Delete(Input, 1, 3)
-    else if Copy(Input, 1, 2) = './' then
-      Delete(Input, 1, 2)
-    else if Copy(Input, 1, 3) = '/./' then
-      Delete(Input, 1, 2)
-    else if Input = '/.' then
-      Input := '/'
-    else if Copy(Input, 1, 4) = '/../' then
+  if N = 0 then
+    Exit;
+  SetLength(Result, N);
+  P := 1;
+  W := 0;
+  while P <= N do
+    if At('../') then
+      Inc(P, 3)
+    else if At('./') then
+      Inc(P, 2)
+    else if At('/./') then
+      Inc(P, 2)
+    else if Rest('/.') then
     begin
-      Delete(Input, 1, 3);
-      DropLastSegment(Result);
+      { the input becomes "/", which is appended next }
+      Append(P, 1);
+      P := N + 1;
     end
-    else if Input = '/..' then
+    else if At('/../') then
     begin
-      Input := '/';
-      DropLastSegment(Result);
+      Inc(P, 3);
+      DropLastSegment(Result, W);
     end
-    else if (Input = '.') or (Input = '..') then
-      Input := ''
+    else if Rest('/..') then
+    begin
+      DropLastSegment(Result, W);
+      Append(P, 1);
+      P := N + 1;
+    end
+    else if Rest('.') or Rest('..') then
+      P := N + 1
     else
     begin
       { the first segment with its leading "/" }
-      I := 2;
-      while (I <= Length(Input)) and (Input[I] <> '/') do
+      I := P + 1;
+      while (I <= N) and (Path[I] <> '/') do
         Inc(I);
-      Result := Result + Copy(Input, 1, I - 1);
-      Delete(Input, 1, I - 1);
+      Append(P, I - P);
+      P := I;
     end;
+  SetLength(Result, W);
 end;
 
 { An IPv4 address of RFC 3986 3.2.2: four decimal octets 0 to 255
@@ -1100,6 +1128,12 @@ var
     Result := Eval(FNodes[Index].Children[K], Context, Position, Size, ContextItem);
   end;
 
+  { argument K is the literal () }
+  function LiteralEmpty(K: Integer): Boolean;
+  begin
+    Result := FNodes[FNodes[Index].Children[K]].Kind = xakEmpty;
+  end;
+
   function ContextSeq: TLandrixXmlXPathSequence;
   begin
     if ContextItem.Count > 0 then
@@ -1131,11 +1165,11 @@ var
 
   { an optional single atomic argument of type xs:string?: in XPath 1.0
     compatibility mode fn:string of the first item, '' for the empty
-    sequence (as Saxon for an empty node selection; Saxon keeps a literal
-    () empty, which is decided when compiling) }
+    sequence (as Saxon for an empty node selection); a literal () stays
+    empty (Saxon decides that when compiling) }
   function OptStr(K: Integer; out Value: TLandrixXmlXPathItem): Boolean;
   begin
-    if not Xp10 then
+    if not Xp10 or LiteralEmpty(K) then
     begin
       Result := OptAtom(K, Value);
       Exit;
@@ -1176,12 +1210,14 @@ var
     Result := V.Text;
   end;
 
-  { an xs:string argument that must not be empty }
+  { an xs:string argument that must not be empty; in XPath 1.0
+    compatibility mode fn:string of the first item, but a literal () is a
+    type error (as Saxon, which checks it when compiling) }
   function ReqStrArg(K: Integer): TLandrixXmlUtf8;
   var
     V: TLandrixXmlXPathItem;
   begin
-    if Xp10 then
+    if Xp10 and not LiteralEmpty(K) then
     begin
       Result := String10(Arg(K));
       Exit;
@@ -1538,20 +1574,20 @@ begin
     xfnSum, xfnAvg:
       begin
         A := Atomize(Arg(0));
+        { the zero value is checked also when the input is not empty }
+        if ArgCount > 1 then
+        begin
+          if Xp10 then
+            Result := Atomize(FirstOnly(Arg(1)))
+          else
+            Result := Atomize(Arg(1));
+          if Result.Count > 1 then
+            Fail('XPTY0004', Name + ': the zero value must be a single item');
+        end;
         if A.Count = 0 then
         begin
-          if Id = xfnAvg then
-            Exit;
-          if ArgCount > 1 then
-          begin
-            if Xp10 then
-              Result := Atomize(FirstOnly(Arg(1)))
-            else
-              Result := Atomize(Arg(1));
-            if Result.Count > 1 then
-              Fail('XPTY0004', Name + ': the zero value must be a single item');
-          end
-          else
+          { avg has one argument: its result stays empty }
+          if (Id = xfnSum) and (ArgCount = 1) then
             Result := SingleSeq(IntegerItemOf(0));
           Exit;
         end;
@@ -1576,6 +1612,30 @@ begin
         begin
           if not IsNumeric(A.Items[0].Kind) and (A.Items[0].Kind <> xikUntypedAtomic) then
             Fail('FORG0006', Name + ': ' + KindName(A.Items[0].Kind) + ' is not a number');
+          { XPath 2.0: all values are promoted to the common type before
+            the first addition (Saxon adds from left to right) }
+          if Xp20 then
+          begin
+            HasDouble := False;
+            HasFloat := False;
+            for I := 0 to A.Count - 1 do
+              if A.Items[I].Kind in [xikDouble, xikUntypedAtomic] then
+                HasDouble := True
+              else if A.Items[I].Kind = xikFloat then
+                HasFloat := True;
+            if HasDouble or HasFloat then
+            begin
+              { a copy: A may be the storage of a variable }
+              A.Items := Copy(A.Items, 0, A.Count);
+              for I := 0 to A.Count - 1 do
+                if A.Items[I].Kind = xikUntypedAtomic then
+                  A.Items[I] := DoubleItem(ParseDouble(A.Items[I].Text, Xp20))
+                else if HasDouble and IsNumeric(A.Items[I].Kind) and (A.Items[I].Kind <> xikDouble) then
+                  A.Items[I] := DoubleItem(ToDouble(A.Items[I]))
+                else if not HasDouble and IsNumeric(A.Items[I].Kind) and (A.Items[I].Kind <> xikFloat) then
+                  A.Items[I] := FloatItem(ToFloat(A.Items[I], Xp20));
+            end;
+          end;
           Acc := NumericOperand(A.Items[0], Xp20);
           for I := 1 to A.Count - 1 do
           begin
@@ -1892,6 +1952,11 @@ begin
       begin
         { XPath 1.0 compatibility mode: fn:number of the argument (NaN
           for the empty sequence), as Saxon also for a decimal }
+        { a literal () as precision is a type error also for an empty
+          number (Saxon reports it when compiling; a precision that is
+          empty only at run time is not looked at then, as in Saxon) }
+        if (Id in [xfnRound, xfnRoundHalfToEven]) and (ArgCount > 1) and LiteralEmpty(1) then
+          Fail('XPTY0004', Name + ': the precision must not be empty');
         if Xp10 then
           Item := Number10(Arg(0))
         else if not OptAtom(0, Item) then
