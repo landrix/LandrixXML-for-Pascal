@@ -260,11 +260,18 @@ type
     FFunctions: TList;
     FCurrentNode: Integer;
     FLazyDepth: Integer;
+    { let bindings being evaluated (with FLazyDepth: MaxLazyDepth) }
+    FLetDepth: Integer;
     FDepth: Integer;
     FMaxDepth: Integer;
     FMaxStackBytes: Integer;
     { the stack address at the outermost user function call }
     FStackBase: Pointer;
+    { evaluations running within each other (host functions may start
+      one), and the stack address where the outermost one started (nil:
+      not checked) }
+    FEvalNest: Integer;
+    FEvalStackBase: PAnsiChar;
     { the implicit time zone and the current dateTime (FHasClock: read
       or set) }
     FImplicitTimeZone: Integer;
@@ -568,11 +575,18 @@ type
     { the maximum nesting of user function calls (default 500) }
     property MaxDepth: Integer read FMaxDepth write FMaxDepth;
     { the stack the nested user function calls of one evaluation may use,
-      counted from the outermost call (default
+      counted from the outermost call, and the stack a deeply nested
+      expression (predicates, calls, a long chain such as 1+1+...) may
+      use, counted from the start of the evaluation (default
       LandrixXmlDefaultMaxStackBytes; 0 or less: no budget). Deeper
       raises FOER0000 (xecLimit) instead of overflowing the stack: MaxDepth
       alone does not keep 500 levels within a 1 MB stack. Set it for
-      threads with a smaller stack. }
+      threads with a smaller stack. The parser has a budget of its own:
+      an expression nested more than 3000 levels, or deeper than 256 KB
+      of stack allow (about 125 levels with Delphi 6), an expression tree
+      deeper than 1000 levels (a chain such as 1+1+...), and a chain of
+      more than 3000 variables evaluated within each other raise FOER0000
+      (xecLimit) too. }
     property MaxStackBytes: Integer read FMaxStackBytes write FMaxStackBytes;
     { The implicit time zone in minutes east of UTC (-840 to 840; default
       0, UTC): values without a time zone are compared with and
@@ -2023,13 +2037,21 @@ end;
 const
   { the start of the message of MaxDepth and MaxStackBytes errors }
   LimitStopText = 'user functions nested';
+  { the start of the message of the MaxLazyDepth error }
+  LazyStopText = 'variables evaluated within each other';
+  { variables whose value is being evaluated when another one is read
+    (let $b := $a, $c := $b, ...: one recursion per link; about 30,000
+    overflow a 1 MB stack) }
+  MaxLazyDepth = 3000;
 
-{ An error from MaxDepth or MaxStackBytes (also as and/or raise it again
-  with its code and message); not one raised by fn:error. }
+{ An error from MaxDepth, MaxStackBytes or MaxLazyDepth (also as and/or
+  raise it again with its code and message); not one raised by fn:error.
+  It depends on where the evaluation started, so it is not kept as the
+  value of a variable. }
 function IsLimitStop(E: ELandrixXmlXPathError): Boolean;
 begin
   Result := not (E is ELandrixXmlXPathRaised) and (E.XPathCode = 'FOER0000') and
-    (Pos(LimitStopText, E.Message) > 0);
+    ((Pos(LimitStopText, E.Message) > 0) or (Pos(LazyStopText, E.Message) > 0));
 end;
 
 function TLandrixXmlXPathEvaluator.SlotRef(Slot: Integer): Pointer;
@@ -2161,6 +2183,9 @@ begin
       Result := P^.Value;
     xssLazy:
       begin
+        if FLazyDepth + FLetDepth >= MaxLazyDepth then
+          raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', LazyStopText + ' deeper than ' +
+            IntToStr(MaxLazyDepth), 0, 0);
         P^.State := xssEvaluating;
         Node := P^.ContextNode;
         Empty := LandrixXmlXPathEmpty;
@@ -3044,7 +3069,24 @@ var
   SavedExpr: TLandrixXmlXPathExpression;
   SavedBase: Integer;
 begin
-  EnterExpression(Expr, SavedExpr, SavedBase);
+  { a deep expression tree (nested predicates and calls) recurses once
+    per level: the stack budget counts from the outermost evaluation }
+  if FEvalNest = 0 then
+  begin
+    if FMaxStackBytes > 0 then
+      FEvalStackBase := PAnsiChar(@SavedBase)
+    else
+      FEvalStackBase := nil;
+  end;
+  Inc(FEvalNest);
+  try
+    EnterExpression(Expr, SavedExpr, SavedBase);
+  except
+    Dec(FEvalNest);
+    if FEvalNest = 0 then
+      FEvalStackBase := nil;
+    raise;
+  end;
   try
     try
       Result := Eval(Expr.Root, Context, Position, Size, ContextItem);
@@ -3062,6 +3104,9 @@ begin
         end;
     end;
   finally
+    Dec(FEvalNest);
+    if FEvalNest = 0 then
+      FEvalStackBase := nil;
     LeaveExpression(SavedExpr, SavedBase);
   end;
 end;
@@ -4024,6 +4069,11 @@ begin
     Exit;
   end;
   FBypass := -1;
+  { below zero or beyond 1 GB: another stack (a fiber), not checked }
+  if (FEvalStackBase <> nil) and (Integer(FEvalStackBase - PAnsiChar(@N)) > FMaxStackBytes) and
+    (Integer(FEvalStackBase - PAnsiChar(@N)) < 1073741824) then
+    raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expressions or ' +
+      LimitStopText + ' use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
   N := @FNodes[Index];
   case N^.Kind of
     xakSequence:
@@ -4455,13 +4505,18 @@ begin
   Position := FLetBindings[K].Position;
   Size := FLetBindings[K].Size;
   ContextItem := FLetBindings[K].ContextItem;
+  if FLazyDepth + FLetDepth >= MaxLazyDepth then
+    raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', LazyStopText + ' deeper than ' +
+      IntToStr(MaxLazyDepth), 0, 0);
   { a variable read in a pattern still has its value as an expression }
   SavedPattern := FPattern;
   SavedFinal := FFinal;
   FPattern := False;
+  Inc(FLetDepth);
   try
     Result := Eval(Node, Context, Position, Size, ContextItem);
   finally
+    Dec(FLetDepth);
     FPattern := SavedPattern;
     FFinal := SavedFinal;
   end;

@@ -50,6 +50,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XPath: deeply nested expressions raise FOER0000 (`xecLimit`) instead
+  of overflowing the stack. The parser stops at 3000 levels or 256 KB of
+  stack (about 125 levels of parentheses with Delphi 6, where 500 levels
+  crashed the program) and at an expression tree deeper than 1000 levels
+  (a long chain such as `1+1+...`), the evaluator applies `MaxStackBytes`
+  from the start of the evaluation, and a chain of more than 3000 variables evaluated
+  within each other (`let $b := $a, $c := $b, ...`) is a limit too.
 - XML Schema: `TLandrixXmlXsdSchemaSet.Files` lists two documents whose
   names differ only in case as two files on case-sensitive systems
   (Linux); the list compared the names without case before.

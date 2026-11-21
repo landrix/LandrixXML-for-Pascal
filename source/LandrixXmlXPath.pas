@@ -836,7 +836,13 @@ type
     FLocalNames: TLandrixXmlUtf8Array;
     FLocalSlots: array of Integer;
     FLocalCount: Integer;
+    { nesting of ExprSingle and unary signs being parsed (MaxNesting), and
+      the stack address where Parse started (MaxParseStack) }
+    FNesting: Integer;
+    FStackBase: PAnsiChar;
     procedure Error(const Msg: string; Position: Integer);
+    procedure EnterNesting(Position: Integer);
+    procedure CheckTreeDepth(Root: Integer);
     procedure ErrorCode(const Code, Msg: string; Position: Integer);
     procedure SkipSpace;
     procedure Next;
@@ -853,6 +859,7 @@ type
       out NamespaceUri, LocalName: TLandrixXmlUtf8);
     function ParseExpr: Integer;
     function ParseExprSingle: Integer;
+    function ParseExprSingleCore: Integer;
     function ParseQuantified(Kind: TLandrixXmlXPathAstKind; const Keyword: TLandrixXmlUtf8): Integer;
     function ParseIf: Integer;
     function ParseOr: Integer;
@@ -969,6 +976,75 @@ end;
 procedure TParser.Error(const Msg: string; Position: Integer);
 begin
   ErrorCode('XPST0003', Msg, Position);
+end;
+
+const
+  { The nesting of expressions (parentheses, predicates, arguments, unary
+    signs) and the depth of the expression tree (a+b+c+...): the parser
+    and the evaluator recurse once per level, and about 30,000 levels
+    overflow a 1 MB stack. Real expressions stay far below. }
+  MaxNesting = 3000;
+  { The depth of the expression tree: the evaluator and its analysis of
+    the tree (before any stack check) recurse once per level. }
+  MaxTreeDepth = 1000;
+  { The stack the parser may use for nesting: a level takes about 2 KB
+    with Delphi 6 (some 125 levels), much less with the other compilers,
+    which then stop at MaxNesting. }
+  MaxParseStack = 256 * 1024;
+
+procedure TParser.EnterNesting(Position: Integer);
+var
+  Used: Integer;
+begin
+  Inc(FNesting);
+  Used := Integer(FStackBase - PAnsiChar(@Used));
+  { below zero or beyond 1 GB: another stack (a fiber), not checked }
+  if (FNesting > MaxNesting) or (Used > MaxParseStack) and (Used < 1073741824) then
+    raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expression nested too deeply (' +
+      IntToStr(FNesting) + ' levels) at offset ' + IntToStr(Position - 1), 0, 0);
+end;
+
+{ The depth of the expression tree, without recursion (a long chain such
+  as 1+1+1+... is parsed in a loop but evaluated recursively). }
+procedure TParser.CheckTreeDepth(Root: Integer);
+var
+  Nodes, Depths: array of Integer;
+  Top, N, D, I, K: Integer;
+begin
+  Nodes := nil;
+  Depths := nil;
+  SetLength(Nodes, 64);
+  SetLength(Depths, 64);
+  Nodes[0] := Root;
+  Depths[0] := 1;
+  Top := 1;
+  while Top > 0 do
+  begin
+    Dec(Top);
+    N := Nodes[Top];
+    D := Depths[Top];
+    if D > MaxTreeDepth then
+      raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expression tree deeper than ' +
+        IntToStr(MaxTreeDepth) + ' levels at offset ' + IntToStr(FNodes[N].Position - 1), 0, 0);
+    K := Integer(Length(FNodes[N].Children)) + Integer(Length(FNodes[N].Predicates));
+    if Top + K > Length(Nodes) then
+    begin
+      SetLength(Nodes, 2 * (Top + K));
+      SetLength(Depths, 2 * (Top + K));
+    end;
+    for I := 0 to Integer(Length(FNodes[N].Children)) - 1 do
+    begin
+      Nodes[Top] := FNodes[N].Children[I];
+      Depths[Top] := D + 1;
+      Inc(Top);
+    end;
+    for I := 0 to Integer(Length(FNodes[N].Predicates)) - 1 do
+    begin
+      Nodes[Top] := FNodes[N].Predicates[I];
+      Depths[Top] := D + 1;
+      Inc(Top);
+    end;
+  end;
 end;
 
 function TParser.PeekChar(Offset: Integer): AnsiChar;
@@ -1336,11 +1412,16 @@ begin
 end;
 
 function TParser.Parse: Integer;
+var
+  Base: Integer;
 begin
+  Base := 0;
+  FStackBase := PAnsiChar(@Base);
   Next;
   Result := ParseExpr;
   if FToken.Kind <> tkEnd then
     Error('unexpected "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
+  CheckTreeDepth(Result);
 end;
 
 function TParser.ParseExpr: Integer;
@@ -1364,6 +1445,13 @@ begin
 end;
 
 function TParser.ParseExprSingle: Integer;
+begin
+  EnterNesting(FToken.Position);
+  Result := ParseExprSingleCore;
+  Dec(FNesting);
+end;
+
+function TParser.ParseExprSingleCore: Integer;
 begin
   if (FToken.Kind = tkName) and NextIsSymbol('$') then
   begin
@@ -1423,6 +1511,10 @@ begin
     Next;
     { the binding expression does not see its own variable }
     AddChild(Result, ParseExprSingle);
+    { for/some/every evaluate their bindings recursively, one level each }
+    if (Kind <> xakLet) and (Length(FNodes[Result].Children) > MaxTreeDepth) then
+      raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'more than ' + IntToStr(MaxTreeDepth) +
+        ' bindings in one expression at offset ' + IntToStr(FNodes[Result].Position - 1), 0, 0);
     Slot := FSlotCount;
     Inc(FSlotCount);
     SetLength(FNodes[Result].Slots, Length(FNodes[Result].Slots) + 1);
@@ -2007,15 +2099,19 @@ begin
   if IsSymbol('-') then
   begin
     N := NewNode(xakNegate, FToken.Position);
+    EnterNesting(FToken.Position);
     Next;
     AddChild(N, ParseUnary);
+    Dec(FNesting);
     Result := N;
   end
   else if IsSymbol('+') then
   begin
     N := NewNode(xakUnaryPlus, FToken.Position);
+    EnterNesting(FToken.Position);
     Next;
     AddChild(N, ParseUnary);
+    Dec(FNesting);
     Result := N;
   end
   else

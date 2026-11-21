@@ -405,6 +405,10 @@ begin
     Evaluator.MaxDepth := 100000;
     Evaluator.MaxStackBytes := 16384;
     CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run('f:down(100000)'), 'beyond 16 KB of stack');
+    { the budget counts from the start of each evaluation (64 KB: the
+      whole evaluation, not only the function calls, with the larger
+      frames of checked builds) }
+    Evaluator.MaxStackBytes := 65536;
     CheckEqualsStr('3', Run('f:down(3)'), 'the next evaluation starts again');
     Evaluator.MaxStackBytes := 1;
     CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run('f:down(3)'), 'a budget of one byte');
@@ -1385,6 +1389,81 @@ function ProfileResult(const Text: TLandrixXmlUtf8; Profile: TLandrixXmlXPathPro
   Evaluator: TLandrixXmlXPathEvaluator): TLandrixXmlUtf8;
 begin
   Result := ModeResult(Text, Profile, False, Evaluator);
+end;
+
+{ 'ok', 'limit' (xecLimit) or the error code of Text in the Saxon profile }
+function NestingOutcome(const Text: string; Evaluator: TLandrixXmlXPathEvaluator): string;
+var
+  Context: TLandrixXmlXPathStaticContext;
+  Expr: TLandrixXmlXPathExpression;
+begin
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Expr := nil;
+  try
+    Context.Profile := xppSaxon;
+    try
+      Expr := TLandrixXmlXPathExpression.Create(LandrixXmlStringToUtf8(Text), Context);
+      Evaluator.EvaluateString(Expr, 0);
+      Result := 'ok';
+    except
+      on X: ELandrixXmlXPathError do
+        if (X.Code = xecLimit) and (X.XPathCode = 'FOER0000') then
+          Result := 'limit'
+        else
+          Result := X.XPathCode;
+    end;
+  finally
+    Expr.Free;
+    Context.Free;
+  end;
+end;
+
+{ nesting limits instead of a stack overflow: parentheses and unary signs
+  (parser), a long chain (depth of the expression tree), a chain of lazily
+  evaluated variables (evaluator) }
+procedure TestNestingLimits;
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  S: string;
+  I: Integer;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  try
+    Tree.LoadFromUtf8('<r/>');
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    { the parser stops by the stack it used: about 125 levels with
+      Delphi 6, 3000 levels with the other compilers }
+    CheckEqualsStr('ok', NestingOutcome(StringOfChar('(', 50) + '1' + StringOfChar(')', 50), Evaluator),
+      '50 parentheses');
+    CheckEqualsStr('limit', NestingOutcome(StringOfChar('(', 3100) + '1' + StringOfChar(')', 3100), Evaluator),
+      '3100 parentheses');
+    CheckEqualsStr('limit', NestingOutcome(StringOfChar('-', 3100) + '1', Evaluator), '3100 signs');
+    CheckEqualsStr('limit', NestingOutcome(StringOfChar('(', 100000) + '1' + StringOfChar(')', 100000), Evaluator),
+      '100000 parentheses');
+    { the parser limits the depth of the tree to 1000 (the evaluator's
+      MaxStackBytes may stop it earlier) }
+    S := '1';
+    for I := 1 to 500 do
+      S := S + '+1';
+    CheckEqualsStr('ok', NestingOutcome(S, Evaluator), '500 additions');
+    for I := 1 to 600 do
+      S := S + '+1';
+    CheckEqualsStr('limit', NestingOutcome(S, Evaluator), '1100 additions');
+    S := 'for $a in 1';
+    for I := 1 to 1100 do
+      S := S + ', $a' + IntToStr(I) + ' in 1';
+    CheckEqualsStr('limit', NestingOutcome(S + ' return 1', Evaluator), '1100 for bindings');
+    S := 'let $v0 := 1';
+    for I := 1 to 3100 do
+      S := S + ', $v' + IntToStr(I) + ' := $v' + IntToStr(I - 1);
+    CheckEqualsStr('limit', NestingOutcome(S + ' return $v3100', Evaluator), 'a chain of 3100 variables');
+    CheckEqualsStr('ok', NestingOutcome(S + ' return $v500', Evaluator), 'a chain of 500 variables');
+  finally
+    Evaluator.Free;
+    Tree.Free;
+  end;
 end;
 
 { fn:lang in both profiles: XPath 2.0 folds case as Unicode's caseless
@@ -2899,6 +2978,7 @@ begin
   RegisterTest('XPathEval.MatchesPattern', TestMatchesPattern);
   RegisterTest('XPathEval.Frames', TestFrames);
   RegisterTest('XPathEval.StackBudget', TestStackBudget);
+  RegisterTest('XPathEval.NestingLimits', TestNestingLimits);
   RegisterTest('XPathEval.DefaultElementNamespace', TestDefaultElementNamespace);
 end;
 

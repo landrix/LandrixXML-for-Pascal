@@ -567,6 +567,12 @@ parameters, attributes, comments, processing instructions,
   error.
 - **XML 1.1** documents are read with XML 1.0 rules.
 - **Nesting depth** is limited to 256 by default (`MaxDepth`).
+- **Nesting of XPath expressions** is limited to 3000 levels, or to
+  256 KB of stack while parsing (about 125 levels of parentheses with
+  Delphi 6), and the expression tree to 1000 levels (a chain such as
+  `1+1+...`); the evaluator stops a deep expression at `MaxStackBytes`
+  and a chain of more than 3000 variables evaluated within each other.
+  All raise FOER0000 (`xecLimit`).
 - **xs:decimal arithmetic** (XPath, XSLT, Schematron) refuses a
   multiplication, division, `idiv` or `mod` whose operands have more than
   about 400,000,000 as the product of their digit counts
