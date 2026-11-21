@@ -571,6 +571,63 @@ begin
   end;
 end;
 
+function CompileCode(const Main, Imp: string): string; forward;
+
+{ the code of compiling S, 'ok' if it compiles }
+function CompileUtf8(const S: TLandrixXmlUtf8): string;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  try
+    Result := 'ok';
+    try
+      Sheet.LoadFromUtf8(S, U(''));
+    except
+      on E: ELandrixXmlXPathError do
+        Result := E.XPathCode;
+    end;
+  finally
+    Sheet.Free;
+  end;
+end;
+
+{ a name with a character that is no name character (NBSP) is a static
+  error, as with Saxon (non-ASCII letters stay allowed) }
+procedure TestNonNameCharacter;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  Code: string;
+begin
+  CheckEqualsStr('XTSE0020', CompileUtf8(U('<xsl:stylesheet version="2.0" ' +
+    'xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:decimal-format name="a') + Utf8Bytes([$C2, $A0]) +
+    U('b"/></xsl:stylesheet>')), 'NBSP in a decimal format name');
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  try
+    Code := 'ok';
+    try
+      Sheet.LoadFromUtf8(U('<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+        '<xsl:template name="a') + Utf8Bytes([$C2, $A0]) + U('b"/></xsl:stylesheet>'), U(''));
+    except
+      on E: ELandrixXmlXPathError do
+        Code := E.XPathCode;
+    end;
+    CheckEqualsStr('XTSE0020', Code, 'NBSP in a template name');
+    CheckEqualsStr('XTSE0020', CompileCode('<xsl:stylesheet version="2.0" ' +
+      'xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template name="1p:t"/></xsl:stylesheet>', ''),
+      'a malformed prefix before its lookup');
+    CheckEqualsStr('XTSE0280', CompileCode('<xsl:stylesheet version="2.0" ' +
+      'xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template name="p:t"/></xsl:stylesheet>', ''),
+      'an undeclared prefix');
+    CheckEqualsStr('ok', CompileCode('<xsl:stylesheet version="2.0" ' +
+      'xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match="/">' +
+      '<xsl:apply-templates mode="#unnamed"/></xsl:template></xsl:stylesheet>', ''),
+      'mode #unnamed in apply-templates');
+  finally
+    Sheet.Free;
+  end;
+end;
+
 { byte-order-mark: written for UTF-8 only, also by TransformToUtf8 (not
   when another encoding is asked for) }
 procedure TestByteOrderMark;
@@ -1377,6 +1434,7 @@ begin
   RegisterTest('Xslt.NumberFormatUnsupported', TestNumberFormatUnsupported);
   RegisterTest('Xslt.ByteOrderMark', TestByteOrderMark);
   RegisterTest('Xslt.NamesOutsideCodePage', TestNamesOutsideCodePage);
+  RegisterTest('Xslt.NonNameCharacter', TestNonNameCharacter);
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
   RegisterTest('Xslt.StackBudget', TestStackBudget);
   RegisterTest('Xslt.DeepApiTree', TestDeepApiTree);

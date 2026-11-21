@@ -1306,6 +1306,8 @@ begin
     Fail(M, E, 'XTSE0020', 'disable-output-escaping is yes or no');
 end;
 
+function IsNCName8(const S: TLandrixXmlUtf8): Boolean; forward;
+
 function TCompiler.QNameToClark(M: TModule; E: Integer; const QName: TLandrixXmlUtf8;
   UseDefault: Boolean): TLandrixXmlUtf8;
 var
@@ -1314,22 +1316,31 @@ var
 begin
   Q := Trim8(QName);
   I := Pos8(':', Q);
+  { the lexical form first: a malformed name is XTSE0020 before its prefix
+    is looked up (XTSE0280), as with Saxon }
   if I > 0 then
   begin
     Prefix := Copy(Q, 1, I - 1);
     Local := Copy(Q, I + 1, Length(Q) - I);
+  end
+  else
+  begin
+    Prefix := '';
+    Local := Q;
+  end;
+  if not IsNCName8(Local) or (I > 0) and not IsNCName8(Prefix) then
+    Fail(M, E, 'XTSE0020', 'not a QName: "' + LandrixXmlUtf8ToString(QName) + '"');
+  if I > 0 then
+  begin
     if not M.Tree.LookupNamespace(E, Prefix, Uri) then
       Fail(M, E, 'XTSE0280', 'the prefix ' + LandrixXmlUtf8ToString(Prefix) + ' is not declared');
   end
   else
   begin
-    Local := Q;
     Uri := '';
     if UseDefault then
       M.Tree.LookupNamespace(E, '', Uri);
   end;
-  if Local = '' then
-    Fail(M, E, 'XTSE0020', 'not a QName: "' + LandrixXmlUtf8ToString(QName) + '"');
   Result := XsltClarkOf(Uri, Local);
 end;
 
@@ -3347,7 +3358,7 @@ begin
       V := Trim8(V);
       if V = '#current' then
         Result.CurrentMode := True
-      else if (V = '') or (V = '#default') then
+      else if (V = '') or (V = '#default') or (V = '#unnamed') then
         Result.Mode := ModeOf('')
       else
         Result.Mode := ModeOf(QNameToClark(M, E, V, False));
@@ -3779,15 +3790,8 @@ var
   I: Integer;
 
   function IsNCName(const N: TLandrixXmlUtf8): Boolean;
-  var
-    K: Integer;
   begin
-    Result := N <> '';
-    for K := 1 to Length(N) do
-      if not ((N[K] in ['A'..'Z', 'a'..'z', '0'..'9', '_', '-', '.']) or (Ord(N[K]) >= 128)) then
-        Result := False;
-    if Result and (N[1] in ['0'..'9', '-', '.']) then
-      Result := False;
+    Result := IsNCName8(N);
   end;
 
   function IsQName(const N: TLandrixXmlUtf8): Boolean;
@@ -4149,15 +4153,18 @@ begin
     CompileBody(M, E, Scope, Instr.Body, C);
 end;
 
-{ an NCName (by the ASCII rules, any non-ASCII character allowed) }
+{ an NCName (XML 1.0 fifth edition name characters, no colon) }
 function IsNCName8(const S: TLandrixXmlUtf8): Boolean;
 var
   I: Integer;
 begin
-  Result := (S <> '') and not (S[1] in ['0'..'9', '-', '.']);
+  Result := False;
+  if (S = '') or (LandrixXmlCheckName(PAnsiChar(S), Length(S)) >= 0) then
+    Exit;
   for I := 1 to Length(S) do
-    if not ((S[I] in ['A'..'Z', 'a'..'z', '0'..'9', '_', '-', '.']) or (Ord(S[I]) >= 128)) then
-      Result := False;
+    if S[I] = ':' then
+      Exit;
+  Result := True;
 end;
 
 function XsltFormatClark(const Name: TLandrixXmlUtf8; const Prefixes, Uris: TLandrixXmlUtf8Array): TLandrixXmlUtf8;
@@ -4526,16 +4533,6 @@ end;
 
 { xsl:decimal-format: a name without prefix (format-number() gets it as a
   string and resolves no prefixes), the characters one each (XTSE0020) }
-{ an NCName (non-ASCII characters taken as name characters) }
-function NameOk(const N: TLandrixXmlUtf8): Boolean;
-var
-  K: Integer;
-begin
-  Result := (N <> '') and not (N[1] in ['0'..'9', '-', '.']);
-  for K := 1 to Length(N) do
-    if not ((N[K] in ['A'..'Z', 'a'..'z', '0'..'9', '_', '-', '.']) or (Ord(N[K]) >= 128)) then
-      Result := False;
-end;
 
 procedure TCompiler.CompileDecimalFormat(D: TDecl);
 var
@@ -4563,7 +4560,7 @@ begin
     V := Trim8(V);
     if Pos8(':', V) > 0 then
       Unsupported(M, E, 'a decimal format name with a prefix');
-    if not NameOk(V) then
+    if not IsNCName8(V) then
       Fail(M, E, 'XTSE0020', 'not a decimal format name: "' + LandrixXmlUtf8ToString(V) + '"');
     Name := V;
   end;

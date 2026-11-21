@@ -1263,7 +1263,10 @@ error/error-0020a pass
 error/error-0020b pass
 error/error-0020c pass
 error/error-0020d pass
-error/error-0020f wrong-code
+error/error-0020e pass
+error/error-0020f pass
+error/error-0020g pass
+error/error-0020h pass
 error/error-0020i pass
 error/error-0020j pass
 error/error-0020k pass
@@ -1871,6 +1874,7 @@ function/function-1101 pass
 function/function-1201 pass
 function/function-1301 pass
 function/function-2101 pass
+function/function-2102 pass
 function/function-2103 pass
 function/function-2104 pass
 function/function-2105 pass

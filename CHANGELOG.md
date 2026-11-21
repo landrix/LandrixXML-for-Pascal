@@ -50,6 +50,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT: names (templates, variables, parameters, keys, modes and the
+  other declarations) are checked with the XML name characters: a name
+  with a character that is no name character (a no-break space, a
+  digit at the start) is XTSE0020 as with Saxon; before, any non-ASCII
+  byte passed and declaration names were not checked at all. W3C XSLT
+  suite: 5 more cases pass (error-0020e to -0020h, function-2102).
 - XSLT on Delphi 6-2007: names of templates, modes, global variables,
   keys, decimal formats, attribute sets, character maps, named outputs
   and namespace aliases that the system code page cannot represent no

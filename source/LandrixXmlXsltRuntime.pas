@@ -2507,14 +2507,18 @@ begin
   R.EndElement;
 end;
 
+{ an NCName (XML 1.0 fifth edition name characters, no colon) }
 function IsNCName8(const S: TLandrixXmlUtf8): Boolean;
 var
   I: Integer;
 begin
-  Result := (S <> '') and not (S[1] in ['0'..'9', '-', '.']);
+  Result := False;
+  if (S = '') or (LandrixXmlCheckName(PAnsiChar(S), Length(S)) >= 0) then
+    Exit;
   for I := 1 to Length(S) do
-    if not ((S[I] in ['A'..'Z', 'a'..'z', '0'..'9', '_', '-', '.']) or (Ord(S[I]) >= 128)) then
-      Result := False;
+    if S[I] = ':' then
+      Exit;
+  Result := True;
 end;
 
 { system-property(), function-available() and element-available() (see
