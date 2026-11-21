@@ -108,7 +108,8 @@ type
     FBodyNullable: Boolean;
     FFirst: TList;
     { the model the particle belongs to, and the leaf indices of FFirst as
-      a bit set (both set when the model is compiled) }
+      a bit set (both set when the model is compiled; the bit set only for
+      groups, nil for a leaf, whose first set is the leaf itself) }
     FModel: TLandrixXmlXsdContentModel;
     FFirstBits: array of Cardinal;
     function GetChildCount: Integer;
@@ -840,13 +841,17 @@ begin
     CollectLeaves(P.Children[I], Leaves);
 end;
 
-{ The leaf bit sets of FFirst, for P and the particles below it. }
+{ The leaf bit sets of FFirst, for P and the particles below it. A leaf
+  gets none: its first set is the leaf itself (a set per leaf would take
+  leaves * leaves bits). }
 procedure ComputeFirstBits(P: TLandrixXmlXsdParticle; Model: TLandrixXmlXsdContentModel);
 var
   I, Leaf: Integer;
 begin
   P.FModel := Model;
   P.FFirstBits := nil;
+  if P.IsLeaf then
+    Exit;
   SetLength(P.FFirstBits, Model.FWords);
   for I := 0 to Model.FWords - 1 do
     P.FFirstBits[I] := 0;
@@ -1815,6 +1820,13 @@ function TLandrixXmlXsdContentState.CanStart(P: TLandrixXmlXsdParticle): Boolean
 var
   I: Integer;
 begin
+  if P.IsLeaf then
+  begin
+    I := P.FLeafIndex shr 5;
+    Result := (I >= FMatchLow) and (I <= FMatchHigh) and
+      ((FMatch[I] and (Cardinal(1) shl (P.FLeafIndex and 31))) <> 0);
+    Exit;
+  end;
   for I := FMatchLow to FMatchHigh do
     if (P.FFirstBits[I] and FMatch[I]) <> 0 then
     begin

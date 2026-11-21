@@ -50,6 +50,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema: compiling a content model no longer gives every leaf a
+  bit set over all leaves (65,536 leaves in one model took 512 MB);
+  only groups keep one.
 - Double parsing on 32-bit x86: the exact path loads the x87 control
   word directly instead of through Set8087CW, which writes the global
   Default8087CW; on Delphi Win32 two threads parsing at once could swap
