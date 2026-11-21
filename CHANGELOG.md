@@ -50,6 +50,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT static errors as Saxon reports them: an attribute an XSLT element
+  does not define (`XTSE0090`; before only for some elements, now for the
+  elements of XSLT 2.0 and their XSLT 3.0 attributes; a shadow attribute
+  such as `_select` is unsupported) or an
+  unknown `xsl:` attribute of a literal result element (`XTSE0805`), an
+  undeclared prefix in `exclude-result-prefixes` (`XTSE0808`, `#default`
+  without a default namespace `XTSE0809`, `#all` with another prefix
+  `XTSE0020`) and `current-group()` or `current-grouping-key()` in a
+  pattern (`XTSE1060`, `XTSE1070`). Forwards compatible processing still
+  ignores unknown attributes. W3C XSLT suite: 31 cases pass that failed
+  before and one fails that passed; for-each-group-002a now reports
+  `XTSE0090` for its `bind-group` attribute first, as Saxon does,
+  instead of the `XPST0008` the suite expects.
 - README: the XSLT cases that follow the specification instead of
   Saxon are listed in one place ("XSLT: the specification, not
   Saxon"), each with a mark in the source code that

@@ -998,7 +998,8 @@ type
       (owned; the one of the highest import precedence) }
     FAliases: TStringList;
     function VarName(const Clark: TLandrixXmlUtf8): TLandrixXmlUtf8;
-    procedure CheckStandard(M: TModule; E: Integer);
+    procedure CheckStandard(M: TModule; E: Integer; Data: Boolean);
+    procedure CheckExcludedPrefixes(M: TModule; E: Integer; const V: TLandrixXmlUtf8);
     procedure CheckModule(M: TModule);
     procedure PruneUseWhen(M: TModule);
     function HasXmlBase(M: TModule; E: Integer): Boolean;
@@ -1701,16 +1702,167 @@ begin
   end;
 end;
 
+{ The attributes without namespace that XSLT element Local may have
+  besides the standard ones, between spaces (XSLT 3.0, as Saxon runs
+  XSLT 2.0 stylesheets); False for an element not checked here (unknown,
+  or checked where it is compiled: xsl:output, xsl:result-document). }
+function XsltElementAttributes(const Local: TLandrixXmlUtf8; out List: TLandrixXmlUtf8): Boolean;
+begin
+  Result := True;
+  if Local = 'analyze-string' then
+    List := ' select regex flags '
+  else if (Local = 'apply-imports') or (Local = 'choose') or (Local = 'fallback') or
+    (Local = 'matching-substring') or (Local = 'non-matching-substring') or (Local = 'next-match') or
+    (Local = 'otherwise') then
+    List := ' '
+  else if Local = 'apply-templates' then
+    List := ' select mode '
+  else if Local = 'attribute' then
+    List := ' name namespace select separator type validation '
+  else if Local = 'attribute-set' then
+    List := ' name use-attribute-sets visibility streamable '
+  else if Local = 'call-template' then
+    List := ' name '
+  else if Local = 'character-map' then
+    List := ' name use-character-maps '
+  else if Local = 'comment' then
+    List := ' select '
+  else if Local = 'copy' then
+    List := ' select copy-namespaces inherit-namespaces use-attribute-sets type validation '
+  else if Local = 'copy-of' then
+    List := ' select copy-accumulators copy-namespaces type validation '
+  else if Local = 'decimal-format' then
+    List := ' name decimal-separator grouping-separator infinity minus-sign exponent-separator NaN percent ' +
+      'per-mille zero-digit digit pattern-separator '
+  else if Local = 'document' then
+    List := ' validation type '
+  else if Local = 'element' then
+    List := ' name namespace inherit-namespaces use-attribute-sets type validation '
+  else if Local = 'for-each' then
+    List := ' select '
+  else if Local = 'for-each-group' then
+    List := ' select group-by group-adjacent group-starting-with group-ending-with composite collation '
+  else if Local = 'function' then
+    List := ' name as visibility streamability override-extension-function override new-each-time cache '
+  else if (Local = 'if') or (Local = 'when') then
+    List := ' test '
+  else if (Local = 'import') or (Local = 'include') then
+    List := ' href '
+  else if Local = 'import-schema' then
+    List := ' namespace schema-location '
+  else if Local = 'key' then
+    List := ' name match use composite collation '
+  else if Local = 'message' then
+    List := ' select terminate error-code '
+  else if Local = 'namespace' then
+    List := ' name select '
+  else if Local = 'namespace-alias' then
+    List := ' stylesheet-prefix result-prefix '
+  else if Local = 'number' then
+    List := ' value select level count from format lang letter-value ordinal start-at grouping-separator ' +
+      'grouping-size '
+  else if Local = 'output-character' then
+    List := ' character string '
+  else if Local = 'param' then
+    List := ' name select as required tunnel static '
+  else if Local = 'perform-sort' then
+    List := ' select '
+  else if (Local = 'preserve-space') or (Local = 'strip-space') then
+    List := ' elements '
+  else if Local = 'processing-instruction' then
+    List := ' name select '
+  else if Local = 'sequence' then
+    List := ' select '
+  else if Local = 'sort' then
+    List := ' select lang order collation stable case-order data-type '
+  else if (Local = 'stylesheet') or (Local = 'transform') then
+    List := ' id input-type-annotations package-version '
+  else if Local = 'template' then
+    List := ' match name priority mode as visibility '
+  else if Local = 'text' then
+    List := ' disable-output-escaping '
+  else if Local = 'value-of' then
+    List := ' select separator disable-output-escaping '
+  else if Local = 'variable' then
+    List := ' name select as static visibility '
+  else if Local = 'with-param' then
+    List := ' name select as tunnel '
+  else
+  begin
+    List := '';
+    Result := False;
+  end;
+end;
+
+{ the standard attributes: without namespace on an XSLT element, in the
+  XSLT namespace on a literal result element (with the four of literal
+  result elements) }
+function IsStandardAttribute(const L: TLandrixXmlUtf8; Literal: Boolean): Boolean;
+begin
+  Result := (L = 'version') or (L = 'exclude-result-prefixes') or (L = 'extension-element-prefixes') or
+    (L = 'xpath-default-namespace') or (L = 'default-collation') or (L = 'default-mode') or
+    (L = 'default-validation') or (L = 'expand-text') or (L = 'use-when') or
+    Literal and ((L = 'use-attribute-sets') or (L = 'type') or (L = 'validation') or
+    (L = 'inherit-namespaces'));
+end;
+
+{ exclude-result-prefixes: #all alone (XTSE0020), every prefix declared
+  (XTSE0808), #default only with a default namespace (XTSE0809) }
+procedure TCompiler.CheckExcludedPrefixes(M: TModule; E: Integer; const V: TLandrixXmlUtf8);
+var
+  K, Start, Count: Integer;
+  S, W, U: TLandrixXmlUtf8;
+  All: Boolean;
+begin
+  S := V + ' ';
+  Start := 1;
+  Count := 0;
+  All := False;
+  for K := 1 to Length(S) do
+    if S[K] in [#9, #10, #13, ' '] then
+    begin
+      if K > Start then
+        Inc(Count);
+      if Copy(S, Start, K - Start) = '#all' then
+        All := True;
+      Start := K + 1;
+    end;
+  if All and (Count > 1) then
+    Fail(M, E, 'XTSE0020', 'exclude-result-prefixes="#all" cannot be combined with other prefixes');
+  Start := 1;
+  for K := 1 to Length(S) do
+    if S[K] in [#9, #10, #13, ' '] then
+    begin
+      W := Copy(S, Start, K - Start);
+      Start := K + 1;
+      if (W = '') or (W = '#all') then
+        Continue;
+      if W = '#default' then
+      begin
+        if not M.Tree.LookupNamespace(E, '', U) or (U = '') then
+          Fail(M, E, 'XTSE0809', 'exclude-result-prefixes names #default without a default namespace');
+      end
+      else if not M.Tree.LookupNamespace(E, W, U) or (U = '') then
+        Fail(M, E, 'XTSE0808', 'the prefix ' + LandrixXmlUtf8ToString(W) + ' of exclude-result-prefixes ' +
+          'is not declared');
+    end;
+end;
+
 { The attributes every XSLT element may have (an XSLT element: E, a
   literal result element: those in the XSLT namespace), rejected if they
-  ask for what is not supported. }
-procedure TCompiler.CheckStandard(M: TModule; E: Integer);
+  ask for what is not supported. Data: E is in a user-defined data
+  element, whose xsl: attributes Saxon does not check against the
+  literal result element (neither are those of an extension
+  instruction). }
+procedure TCompiler.CheckStandard(M: TModule; E: Integer; Data: Boolean);
 var
   I: Integer;
-  L, V, Bad: TLandrixXmlUtf8;
-  Xsl: Boolean;
+  L, V, Bad, Allowed: TLandrixXmlUtf8;
+  Xsl, Known: Boolean;
 begin
   Xsl := M.Tree.NamespaceUriUtf8(E) = XsltNamespace;
+  Allowed := '';
+  Known := Xsl and XsltElementAttributes(M.Tree.LocalNameUtf8(E), Allowed);
   for I := E + 1 to E + M.Tree.AttributeCount[E] do
   begin
     if Xsl then
@@ -1720,9 +1872,23 @@ begin
           LandrixXmlUtf8ToString(M.Tree.PrefixUtf8(I)) + ':' + LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(I)) + ')');
       if M.Tree.NamespaceUriUtf8(I) <> '' then
         Continue;
+      L := M.Tree.LocalNameUtf8(I);
+      { a shadow attribute (_select: XSLT 3.0 static expressions) }
+      if (L <> '') and (L[1] = '_') and not Forwards(M, E) then
+        Unsupported(M, E, 'the shadow attribute ' + LandrixXmlUtf8ToString(L) + ' (XSLT 3.0)');
+      { an attribute the element does not define (Saxon checks every
+        element; forwards compatible processing ignores it) }
+      if Known and not IsStandardAttribute(L, False) and (Pos8(' ' + L + ' ', Allowed) = 0) and
+        not Forwards(M, E) then
+        Fail(M, E, 'XTSE0090', 'xsl:' + LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(E)) + ' has no attribute ' +
+          LandrixXmlUtf8ToString(L));
     end
     else if M.Tree.NamespaceUriUtf8(I) <> XsltNamespace then
-      Continue;
+      Continue
+    else if not Data and not IsStandardAttribute(M.Tree.LocalNameUtf8(I), True) and not Forwards(M, E) and
+      not IsExtension(M, E) then
+      Fail(M, E, 'XTSE0805', 'a literal result element has no attribute xsl:' +
+        LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(I)));
     L := M.Tree.LocalNameUtf8(I);
     V := Trim8(M.Tree.ValueUtf8(I));
     if L = 'default-collation' then
@@ -1744,6 +1910,9 @@ begin
         Fail(M, E, 'XTSE1430', 'the prefix ' + LandrixXmlUtf8ToString(Bad) + ' of extension-element-prefixes ' +
           'is not declared');
     end;
+    { also in forwards compatible processing (Saxon) }
+    if (L = 'exclude-result-prefixes') and not Data then
+      CheckExcludedPrefixes(M, E, V);
     if (L = 'version') and not (Xsl and IsXsl(M, E, 'output')) then
       case VersionClass(V) of
         -1:
@@ -2220,7 +2389,7 @@ begin
           I := M.Tree.Count;
         Continue;
       end;
-      CheckStandard(M, I);
+      CheckStandard(M, I, I < DataEnd);
     end;
     Inc(I);
   end;
@@ -3967,6 +4136,72 @@ begin
   L.Add(R);
 end;
 
+{ whether Text calls the function Name without a prefix or with the
+  prefix fn, outside string literals and XPath comments (the prefix is
+  not resolved: fn is taken as the function namespace) }
+function CallsFunction(const Text, Name: TLandrixXmlUtf8): Boolean;
+var
+  I, J, K, Depth: Integer;
+  Quote: AnsiChar;
+  Same: Boolean;
+begin
+  Result := False;
+  Quote := #0;
+  Depth := 0;
+  I := 1;
+  while I <= Length(Text) do
+  begin
+    if Quote <> #0 then
+    begin
+      if Text[I] = Quote then
+        Quote := #0;
+    end
+    else if (Text[I] = '(') and (I < Length(Text)) and (Text[I + 1] = ':') then
+    begin
+      Inc(Depth);
+      Inc(I);
+    end
+    else if (Depth > 0) and (Text[I] = ':') and (I < Length(Text)) and (Text[I + 1] = ')') then
+    begin
+      Dec(Depth);
+      Inc(I);
+    end
+    else if Depth > 0 then
+      { inside a comment }
+    else if (Text[I] = '''') or (Text[I] = '"') then
+      Quote := Text[I]
+    else if I + Length(Name) - 1 <= Length(Text) then
+    begin
+      Same := True;
+      for K := 1 to Length(Name) do
+        if Text[I + K - 1] <> Name[K] then
+        begin
+          Same := False;
+          Break;
+        end;
+      { not the end of a longer name, and no prefix but fn }
+      if Same and (I > 1) and (Text[I - 1] in ['A'..'Z', 'a'..'z', '0'..'9', '_', '-', '.', #128..#255]) then
+        Same := False;
+      if Same and (I > 1) and (Text[I - 1] = ':') and
+        not ((I >= 4) and (Copy(Text, I - 3, 2) = 'fn') and ((I = 4) or not (Text[I - 4] in ['A'..'Z',
+        'a'..'z', '0'..'9', '_', '-', '.', #128..#255]))) then
+        Same := False;
+      if Same then
+      begin
+        J := I + Length(Name);
+        while (J <= Length(Text)) and (Text[J] in [#9, #10, #13, ' ']) do
+          Inc(J);
+        if (J <= Length(Text)) and (Text[J] = '(') then
+        begin
+          Result := True;
+          Exit;
+        end;
+      end;
+    end;
+    Inc(I);
+  end;
+end;
+
 { A branch of a pattern as the expression MatchesPattern takes: "//"
   before a relative path (Relative), rooted ones as they are,
   document-node(...) as the root tested. }
@@ -3975,6 +4210,11 @@ function TCompiler.PatternBranch(M: TModule; E: Integer; const Branch: TLandrixX
 var
   B, Text: TLandrixXmlUtf8;
 begin
+  { no current group in a pattern (XSLT 2.0 14) }
+  if CallsFunction(Branch, 'current-group') then
+    Fail(M, E, 'XTSE1060', 'current-group() in a pattern');
+  if CallsFunction(Branch, 'current-grouping-key') then
+    Fail(M, E, 'XTSE1070', 'current-grouping-key() in a pattern');
   B := Branch;
   if StripSpace(B) = 'document-node()' then
     B := '/'

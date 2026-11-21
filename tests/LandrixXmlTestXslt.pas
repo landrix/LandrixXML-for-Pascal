@@ -1216,6 +1216,53 @@ begin
   end;
 end;
 
+{ Static errors Saxon reports: unknown attributes (XTSE0090, XTSE0805),
+  undeclared prefixes in exclude-result-prefixes (XTSE0808, XTSE0809)
+  and the current group in a pattern (XTSE1060, XTSE1070). }
+procedure TestStaticErrors;
+const
+  Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">';
+  Tail = '</xsl:stylesheet>';
+begin
+  CheckEqualsStr('XTSE0090', CompileCode(Head + '<xsl:template match="/"><xsl:value-of selct="1"/>' +
+    '</xsl:template>' + Tail, ''), 'an unknown attribute of xsl:value-of');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="/"><xsl:value-of select="1" ' +
+    'use-when="true()" xpath-default-namespace="urn:x"/></xsl:template>' + Tail, ''), 'standard attributes');
+  CheckEqualsStr('ok', CompileCode('<xsl:stylesheet version="4.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+    '<xsl:template match="/"><xsl:value-of select="1" new-attribute="x"/></xsl:template>' + Tail, ''),
+    'forwards compatible processing ignores it');
+  CheckEqualsStr('XTSE0805', CompileCode(Head + '<xsl:template match="/"><r xsl:foo="1"/></xsl:template>' + Tail,
+    ''), 'an unknown xsl:attribute of a literal result element');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="/"><r xsl:use-attribute-sets="" ' +
+    'xsl:exclude-result-prefixes="#all"/></xsl:template>' + Tail, ''), 'xsl:attributes of a literal result element');
+  CheckEqualsStr('XTSE0808', CompileCode('<xsl:stylesheet version="2.0" ' +
+    'xmlns:xsl="http://www.w3.org/1999/XSL/Transform" exclude-result-prefixes="p"/>', ''), 'an undeclared prefix');
+  CheckEqualsStr('XTSE0809', CompileCode('<xsl:stylesheet version="2.0" ' +
+    'xmlns:xsl="http://www.w3.org/1999/XSL/Transform" exclude-result-prefixes="#default"/>', ''),
+    '#default without a default namespace');
+  CheckEqualsStr('ok', CompileCode('<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" ' +
+    'xmlns:p="urn:p" exclude-result-prefixes="p"/>', ''), 'a declared prefix');
+  CheckEqualsStr('XTSE0020', CompileCode('<xsl:stylesheet version="2.0" ' +
+    'xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:p="urn:p" exclude-result-prefixes="p #all"/>', ''),
+    '#all with another prefix');
+  CheckEqualsStr('XTSE0808', CompileCode(Head + '<xsl:template name="t" version="4.0" ' +
+    'exclude-result-prefixes="missing"/>' + Tail, ''), 'an undeclared prefix in forwards compatible processing');
+  CheckEqualsStr('ok', CompileCode('<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" ' +
+    'xmlns:p="urn:p"><p:data xsl:unknown="1" xsl:exclude-result-prefixes="missing"/>' + Tail, ''),
+    'xsl: attributes of a data element');
+  CheckEqualsStr('XTSE1060', CompileCode(Head + '<xsl:template match="a[current-group()]"/>' + Tail, ''),
+    'current-group() in a pattern');
+  CheckEqualsStr('XTSE1070', CompileCode(Head + '<xsl:key name="k" match="a[fn:current-grouping-key()]" ' +
+    'use="." xmlns:fn="http://www.w3.org/2005/xpath-functions"/>' + Tail, ''), 'current-grouping-key() in a pattern');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="a[. = ''current-group()'']"/>' + Tail, ''),
+    'the name in a string literal');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="a[(: current-group() :) true()]"/>' + Tail, ''),
+    'the name in a comment');
+  CheckEqualsStr('ok', CompileCode('<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" ' +
+    'xmlns:my="urn:my"><xsl:function name="my:current-group"><xsl:sequence select="1"/></xsl:function>' +
+    '<xsl:template match="a[my:current-group()]"/>' + Tail, ''), 'a function of another namespace');
+end;
+
 { Static checks from the review of the compiler (Saxon HE 12.9). }
 procedure TestCompilerReviewEdges;
 const
@@ -1442,6 +1489,7 @@ begin
   RegisterTest('Xslt.RuntimeReviewEdges', TestRuntimeReviewEdges);
   RegisterTest('Xslt.OutputReviewEdges', TestOutputReviewEdges);
   RegisterTest('Xslt.CompilerReviewEdges', TestCompilerReviewEdges);
+  RegisterTest('Xslt.StaticErrors', TestStaticErrors);
 end;
 
 end.
