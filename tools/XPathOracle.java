@@ -12,6 +12,7 @@
  *   # EXPRESSION
  *   TYPE VALUE          one line per atomic item (xs:integer 3)
  *   node LOCATION       one line per node, location as SchXslt writes it
+ *   map, array, function  one line per map, array or other function item
  *   error CODE          a static or dynamic error (XPTY0004, FORG0001, ...)
  *
  * Control characters and the backslash in values appear as \xHH.
@@ -35,8 +36,11 @@ import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XPathCompiler;
 import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmArray;
 import net.sf.saxon.s9api.XdmAtomicValue;
+import net.sf.saxon.s9api.XdmFunctionItem;
 import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmMap;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmNodeKind;
 import net.sf.saxon.s9api.XdmValue;
@@ -54,6 +58,7 @@ public class XPathOracle {
         // stylesheets (the KoSIT validator); set explicitly, not left to the default
         xc.setLanguageVersion("3.1");
         List<String> lines = Files.readAllLines(new File(args[1]).toPath(), StandardCharsets.UTF_8);
+        boolean internal = false;
         for (String line : lines) {
             if (line.startsWith("ns ")) {
                 String[] p = line.substring(3).split(" ", 2);
@@ -70,6 +75,12 @@ public class XPathOracle {
                     for (XdmItem item : v) {
                         if (item instanceof XdmNode) {
                             out.println("node " + esc(location((XdmNode) item)));
+                        } else if (item instanceof XdmMap) {
+                            out.println("map");
+                        } else if (item instanceof XdmArray) {
+                            out.println("array");
+                        } else if (item instanceof XdmFunctionItem) {
+                            out.println("function");
                         } else {
                             XdmAtomicValue a = (XdmAtomicValue) item;
                             out.println(typeName(a) + " " + esc(a.getStringValue()));
@@ -78,8 +89,17 @@ public class XPathOracle {
                 } catch (SaxonApiException e) {
                     String code = e.getErrorCode() == null ? "unknown" : e.getErrorCode().getLocalName();
                     out.println("error " + code);
+                } catch (RuntimeException e) {
+                    // an unexpected item kind or a Saxon internal failure: keep
+                    // going, but end with exit code 1 so no reference is written
+                    out.println("error unknown");
+                    internal = true;
                 }
             }
+        }
+        if (internal) {
+            System.err.println("internal failure in at least one expression");
+            System.exit(1);
         }
     }
 

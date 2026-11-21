@@ -234,6 +234,7 @@ def check(tab, path):
     diff = sorted(n for n in set(theirs) | set(ours) if theirs.get(n) != ours.get(n))
     print("check: %d blocks in the file, %d here, %d differ%s" % (len(theirs), len(ours), len(diff),
                                                                 (": " + " ".join(diff[:10])) if diff else ""))
+    return diff
 
 
 def version_of(java, jar):
@@ -261,7 +262,8 @@ def main():
         print("Xerces:")
         xsd = table(Xerces(args.java, args.javac, tmp), names, bounds)
     if args.check:
-        check(xpath, args.check)
+        if check(xpath, args.check):
+            sys.exit("check failed: the XPath table differs from %s; %s not written" % (args.check, OUT))
     jver = subprocess.run([args.java, "-version"], capture_output=True, encoding="utf-8",
                           errors="replace").stderr.splitlines()[0]
     lines = ["{ LandrixXml - dependency-free XML library for Delphi and Free Pascal.", "",

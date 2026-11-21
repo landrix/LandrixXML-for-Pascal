@@ -55,7 +55,10 @@ def main():
                "--url", url]
         if overrides:
             cmd += ["--override"] + overrides
-        subprocess.run(cmd, check=True)
+        if subprocess.run(cmd).returncode != 0:
+            print("%s: compile failed, crosscheck skipped" % name, file=sys.stderr)
+            failed = True
+            continue
         r = subprocess.run([sys.executable, os.path.join(tools, "sch-crosscheck.py"), out,
                             os.path.join(args.kosit, xsl)])
         failed = failed or r.returncode != 0

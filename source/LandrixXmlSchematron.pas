@@ -26,7 +26,8 @@
   A dynamic error in an expression (an invalid cast, a type error) stops
   Saxon and with it the KoSIT validator: no result at all. Here it gives
   a result of kind xsrDynamicError and validation goes on (Incomplete is
-  then True, and Valid is False); with AbortOnDynamicError the validation
+  then True, and ValidateTree/ValidateFile/ValidateDocument return False);
+  with AbortOnDynamicError the validation
   stops at the first one, as Saxon does.
 
   SaveSvrlToStream and SaveSvrlToFile write the last validation as SVRL

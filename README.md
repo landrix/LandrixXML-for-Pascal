@@ -53,7 +53,7 @@ DOM and locale-independent conversion helpers for XML Schema values.
 | `LandrixXmlXsdSchemaLoader` | loads XML Schema documents (include, import, redefine), optional validation unit |
 | `LandrixXmlXsdValidator` | validates documents (reader or DOM) against a loaded schema, optional validation unit |
 | `LandrixXmlXPathTree` | read-only document tree for XPath (from reader or DOM), optional validation unit |
-| `LandrixXmlXPath` | XPath 2.0 parser and static context, optional validation unit |
+| `LandrixXmlXPath` | XPath 2.0 parser and static context (profile `xppSaxon`: also parts of XPath 3.0/3.1), optional validation unit |
 | `LandrixXmlXPathEval` | evaluates XPath 2.0 expressions on the tree, as XPath 2.0 specifies or as Saxon HE runs them (two profiles), optional validation unit |
 | `LandrixXmlSchematron` | Schematron validation (EN16931, XRechnung, Peppol BIS, Factur-X), SVRL output, optional validation unit |
 | `LandrixXmlSchematronCompiler` | compiles ISO Schematron (`.sch`) into rule files, optional validation unit |
@@ -69,12 +69,13 @@ Free Pascal: `-Fusource -Fisource`).
 
 The examples below are taken from
 [examples/LandrixXmlExamples.dpr](examples/LandrixXmlExamples.dpr), which is
-compiled and run with every supported compiler.
+compiled and run in CI (Free Pascal) and with the local compiler matrix
+before each release.
 
 ### Writing an invoice with the streaming writer
 
 ```pascal
-Writer := TLandrixXmlWriter.Create;   { or CreateFile('invoice.xml') }
+Writer := TLandrixXmlWriter.Create;   { or CreateFile('invoice.xml'), then without AsUtf8 }
 try
   Writer.Indent := True;
   Writer.StartElementNs(NsInvoice, '', 'Invoice');
@@ -441,8 +442,10 @@ ordinals, names, widths);
 output methods xml, html (HTML5), xhtml (XHTML 1.0 elements with the
 HTML indentation, as Saxon writes it; also the default for an `html`
 root element in the XHTML namespace, as in Saxon) and text in UTF-8, US-ASCII or
-ISO-8859-1 (a character the encoding does not have is a character
-reference, as in Saxon), indented as Saxon indents, with
+ISO-8859-1 (with xml, html and xhtml a character of text or an attribute
+value the encoding does not have is a character reference, as in Saxon;
+in a name, and with method text, it is the error SERE0008, raised as
+`ELandrixXmlXPathError`), indented as Saxon indents, with
 `cdata-section-elements` (xml and xhtml; CDATA sections as Saxon writes
 them), `doctype-system`, `doctype-public` and `normalization-form` (NFC, NFD,
 NFKC, NFKD; applied after the character map, as in Saxon) and
@@ -520,8 +523,11 @@ stack. Set
 
 Without a resolver of its own (`TLandrixXmlXsltResolver`), a stylesheet
 reads any `file:` URI it names, with `xsl:include`, `xsl:import`,
-`doc()` and `document()`, as XSLT processors do. For a stylesheet you do
-not trust, pass a resolver that only returns what it may read. A `file:`
+`doc()`, `document()` and `unparsed-text()`, as XSLT processors do. For
+a stylesheet you do not trust, pass a resolver that only returns what it
+may read, both to `LoadFromFile`/`LoadFromStream`/`LoadFromUtf8`
+(`xsl:include`, `xsl:import`) and to `TLandrixXmlXsltTransformer.Resolver`
+(`doc()`, `document()`, `unparsed-text()`). A `file:`
 URI with a host other than `localhost` (`file://server/share/x.xsl`) is
 not read: it would be a network path. For stylesheets on a network share,
 let your resolver map such URIs.
@@ -768,8 +774,6 @@ both the mark and an entry here):
 
 Differences from Xerces, also on purpose:
 
-- Every `xs:import` of a namespace is loaded; Xerces loads only the first
-  one.
 - The seconds of dates, times and durations are exact decimals; Xerces
   uses doubles, so values with more than about 15 significant digits may
   compare differently.

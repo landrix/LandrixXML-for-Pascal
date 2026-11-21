@@ -22,6 +22,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "source", "LandrixXmlCaseVariantsData.inc")
@@ -122,6 +123,8 @@ def main():
         diff = sorted(set(theirs) ^ set(ours)) + sorted(k for k in set(theirs) & set(ours) if theirs[k] != ours[k])
         print("check: %d keys in the file, %d here, %d differences%s" % (
             len(theirs), len(ours), len(diff), (": " + " ".join("U+%04X" % k for k in diff[:20])) if diff else ""))
+        if diff:
+            sys.exit("check failed: the table differs from %s; %s not written" % (args.check, OUT))
     keys = sorted(variants)
     pool, starts = [], []
     for k in keys:
@@ -148,7 +151,8 @@ def main():
         f.write("  CaseVariantPool: array[0..%d] of Integer = (\n" % (len(pool) - 1))
         f.write(wrap(["$%X" % p for p in pool]))
         f.write("  );\n")
-    print("%s: %d characters, %d variants (%s)" % (OUT, len(keys), len(pool), version))
+    print("%s: %d characters, %d variants (%s, Python Unicode %s)" % (OUT, len(keys), len(pool), version,
+                                                                    unicodedata.unidata_version))
 
 
 if __name__ == "__main__":

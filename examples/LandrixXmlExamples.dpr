@@ -55,7 +55,7 @@ function WriteInvoice: TLandrixXmlUtf8;
 var
   Writer: TLandrixXmlWriter;
 begin
-  Writer := TLandrixXmlWriter.Create;   { or CreateFile('invoice.xml') }
+  Writer := TLandrixXmlWriter.Create;   { or CreateFile('invoice.xml'), then without AsUtf8 }
   try
     Writer.Indent := True;
     Writer.StartElementNs(NsInvoice, '', 'Invoice');

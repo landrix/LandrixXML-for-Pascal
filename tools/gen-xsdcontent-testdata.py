@@ -154,7 +154,7 @@ def run_model(java, classes, tmp, p, instances, xml=None):
         files.append(name)
     out = subprocess.run([java, "-cp", classes, "XsdOracle", xsd] + files,
                          capture_output=True, encoding="utf-8")
-    if out.returncode == 2:
+    if out.returncode == 2 and "cos-nonambig" in out.stderr:
         return None  # schema rejected (UPA)
     if out.returncode != 0:
         sys.exit("oracle failed:\n" + out.stderr[-2000:])
@@ -197,6 +197,8 @@ def upa_verdict(java, classes, tmp, p, xml=None):
                          capture_output=True, encoding="utf-8")
     if out.returncode == 0:
         return "ok"
+    if out.returncode != 2:
+        sys.exit("oracle failed:\n" + out.stderr[-2000:])
     m = re.search(r"cos-nonambig: (.*?) and (.*?) \(or elements", out.stderr)
     if out.returncode == 2 and m:
         return "cos-nonambig:%s|%s" % (m.group(1), m.group(2))

@@ -19,7 +19,8 @@
   limit that for schemas from elsewhere). An include,
   import or redefine whose document cannot be found is skipped (XML
   Schema 1.0 4.2.1; Xerces warns) and listed in the schema set's
-  Warnings; a reference into it fails with a message naming it. A
+  Warnings (an import only if it has a schemaLocation: one without, that
+  the catalog does not resolve, is normal and skipped silently); a reference into it fails with a message naming it. A
   redefine with content other than annotations must resolve (4.2.2).
   Documents are identified by file name, compared case-insensitively on
   Windows and macOS.
@@ -29,9 +30,9 @@
   value types, allowed children and their order, no character data
   outside annotations.
 
-  The derivation of a restricted type is not checked against its base:
-  the content and attributes are taken as written (the target schemas
-  are valid for Xerces). Constructs the validator does not support raise
+  Derived types are checked against their base as Xerces does: final,
+  attribute uses and wildcards, simple and mixed content and the
+  restriction of particles (rcase-*). Constructs the validator does not support raise
   ELandrixXmlError with xecUnsupported and the file and line, also when
   they are declared but not used: a selector with an attribute step
   before its last step. Other schema errors raise xecSchema; a name of

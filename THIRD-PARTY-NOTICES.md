@@ -86,6 +86,10 @@ are the same mappings as Saxon's `casevariants.xml` and
 Third-party test material in `tests/data/` is described next to it, for the
 Schematron tests in [tests/data/schematron/NOTICE.md](tests/data/schematron/NOTICE.md).
 The test suites themselves, which the tools download (W3C XML conformance
-test suite, QT3, Unicode NormalizationTest.txt, KoSIT XRechnung test suite and
-validator configuration), are not committed; `tests/data/qt3-baseline*.txt`
-list QT3 test names only.
+test suite, QT3, W3C XML Schema Test Suite (w3c/xsdtests) with the W3C files
+xml.xsd and xlink.xsd, W3C XSLT test suite (w3c/xslt30-test), Unicode
+NormalizationTest.txt, KoSIT XRechnung test suite, validator configuration
+and XRechnung visualization, the Peppol BIS and ZUGFeRD validator
+configurations with the Peppol examples), are not committed;
+`tests/data/qt3-baseline*.txt`, `tests/data/xsts-baseline.txt` and
+`tests/data/xslt-baseline.txt` list test names and results only.

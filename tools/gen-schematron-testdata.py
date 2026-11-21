@@ -23,6 +23,7 @@ import argparse
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import xml.etree.ElementTree as ET
 
@@ -46,11 +47,17 @@ def norm(s):
 def run(java, saxon, xsl, doc):
     with tempfile.TemporaryDirectory() as t:
         out = os.path.join(t, "o.svrl")
-        r = subprocess.run([java, "-cp", saxon, "net.sf.saxon.Transform", "-s:" + doc, "-xsl:" + xsl, "-o:" + out],
+        r = subprocess.run([java, "-Duser.timezone=UTC", "-cp", saxon, "net.sf.saxon.Transform", "-s:" + doc,
+                            "-xsl:" + xsl, "-o:" + out],
                            capture_output=True)
         if r.returncode != 0:
-            m = re.search(r"\b([A-Z]{4}[0-9]{4})\b", r.stderr.decode("utf-8", "replace"))
-            return ["saxon-error " + (m.group(1) if m else "unknown")]
+            err = r.stderr.decode("utf-8", "replace")
+            # the first error code, not a warning such as SXWN9026
+            codes = [c for c in re.findall(r"\b([A-Z]{4}[0-9]{4})\b", err) if not c.startswith("SXWN")]
+            if not codes:
+                # no error code: Saxon did not start or failed outside the transformation
+                sys.exit("Saxon failed on %s with %s (no output file written):\n%s" % (doc, xsl, err[-2000:]))
+            return ["saxon-error " + codes[0]]
         root = ET.parse(out).getroot()
     lines = []
     for el in root:
@@ -71,6 +78,7 @@ def main():
     ap.add_argument("--saxon", required=True)
     ap.add_argument("--kosit", required=True)
     args = ap.parse_args()
+    results = []
     for name, syntax, xsl in SETS:
         folder = os.path.join(DATA, syntax)
         lines = []
@@ -78,9 +86,12 @@ def main():
         for d in docs:
             lines.append("## " + d)
             lines.extend(run(args.java, args.saxon, os.path.join(args.kosit, xsl), os.path.join(folder, d)))
+        results.append((name, lines, len(docs)))
+    # write only after every set ran, so a failure leaves all files untouched
+    for name, lines, count in results:
         with open(os.path.join(DATA, "expected-%s.txt" % name), "w", encoding="utf-8", newline="\n") as f:
             f.write("\n".join(lines) + "\n")
-        print("%s: %d documents" % (name, len(docs)))
+        print("%s: %d documents" % (name, count))
 
 
 if __name__ == "__main__":

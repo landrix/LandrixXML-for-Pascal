@@ -468,6 +468,8 @@ class Compiler:
             elif local in ("title", "p", "phase", "active"):
                 pass
             elif local == "ns":
+                if not el.get("prefix") or el.get("uri") is None:
+                    self.fail("sch:ns needs prefix and uri", el, doc)
                 for prefix, uri in self.ns:
                     if prefix == el.get("prefix") and uri != el.get("uri"):
                         self.fail("the prefix %s is bound to two namespaces" % prefix, el, doc)
@@ -495,6 +497,8 @@ class Compiler:
 
     def add_global(self, el, doc):
         name = el.get("name")
+        if not name:
+            self.fail("a let needs a name", el, doc)
         if name in self.global_names:
             self.fail("global variable $%s is defined twice" % name, el, doc)
         if el.get("value") is None:
@@ -546,6 +550,8 @@ class Compiler:
         for c in el:
             ns, local = tag(c)
             if (ns, local) == (SCH, "let"):
+                if not c.get("name"):
+                    self.fail("a let needs a name", c, doc)
                 if c.get("value") is None:
                     self.fail("a let without value is not supported", c, doc)
                 if c.get("as") is not None:
@@ -675,7 +681,8 @@ class Compiler:
         def choose(c):
             whens = [w for w in c if tag(w) == (XSL, "when")]
             others = [w for w in c if tag(w) == (XSL, "otherwise")]
-            if len(whens) + len(others) != len(c) or len(others) > 1 or not whens:
+            if len(whens) + len(others) != len(c) or len(others) > 1 or not whens or (
+                    others and c[-1] is not others[0]):
                 self.fail("unsupported xsl:choose", c, doc)
             check_no_text(c)
             for b in whens + others:
@@ -794,7 +801,8 @@ class Compiler:
 
 def part_xml(kind, value):
     if kind == "text":
-        return "<text>%s</text>" % escape(value)
+        # a CR as a reference: the loader would read a raw one as LF
+        return "<text>%s</text>" % escape(value, {chr(13): "&#13;"})
     if kind == "name":
         return "<name path=%s/>" % quoteattr(value)
     return "<value-of select=%s/>" % quoteattr(value)

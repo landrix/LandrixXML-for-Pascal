@@ -315,20 +315,20 @@ def main():
     for tid, _, _ in TYPES:
         for v in values_for(tid, rng):
             cases.append((tid, v))
-    work = tempfile.mkdtemp()
-    xsd = os.path.join(work, "types.xsd")
-    xml = os.path.join(work, "values.xml")
-    with open(xsd, "w", encoding="utf-8") as f:
-        f.write(schema_text())
-    with open(xml, "w", encoding="utf-8", newline="\n") as f:
-        f.write("<r>\n")  # line 1; case i is on line i + 2
-        for tid, v in cases:
-            f.write("<%s>%s</%s>\n" % (xsd_name(tid), xml_text(v), xsd_name(tid)))
-        f.write("</r>\n")
-    out = subprocess.run([args.java, "-cp", args.classes, "XsdOracle", xsd, xml],
-                         capture_output=True, encoding="utf-8")
-    if out.returncode != 0:
-        sys.exit("oracle failed:\n" + out.stderr)
+    with tempfile.TemporaryDirectory(prefix="xsdtypes-") as work:
+        xsd = os.path.join(work, "types.xsd")
+        xml = os.path.join(work, "values.xml")
+        with open(xsd, "w", encoding="utf-8") as f:
+            f.write(schema_text())
+        with open(xml, "w", encoding="utf-8", newline="\n") as f:
+            f.write("<r>\n")  # line 1; case i is on line i + 2
+            for tid, v in cases:
+                f.write("<%s>%s</%s>\n" % (xsd_name(tid), xml_text(v), xsd_name(tid)))
+            f.write("</r>\n")
+        out = subprocess.run([args.java, "-cp", args.classes, "XsdOracle", xsd, xml],
+                             capture_output=True, encoding="utf-8")
+        if out.returncode != 0:
+            sys.exit("oracle failed:\n" + out.stderr)
     codes = {}
     for line in out.stdout.splitlines():
         _, lineno, _, code, _ = line.split("\t", 4)

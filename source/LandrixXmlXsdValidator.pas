@@ -249,12 +249,15 @@ type
       until the end); malformed XML raises ELandrixXmlError. }
     function ValidateReader(Reader: TLandrixXmlReader): Boolean;
     { Validates a loaded document. The positions are the starts of the
-      nodes, and every error has the element it belongs to as Node. }
+      nodes, and every error has the element it belongs to as Node, except
+      the errors of the document as a whole (cvc-id.1, an IDREF without
+      its ID), which have Node nil.
+      All three Validate methods read the unparsed entities of the
+      DOCTYPE's internal subset when the first ENTITY value is checked: a
+      parameter entity that refers to itself raises ELandrixXmlError
+      xecSyntax, nesting deeper than 64 levels or expanding to more than
+      1 MiB xecLimit. }
     function ValidateDocument(Document: TLandrixXmlDocument): Boolean;
-    { All three read the unparsed entities of the DOCTYPE's internal subset
-      when the first ENTITY value is checked: a parameter entity that
-      refers to itself raises ELandrixXmlError xecSyntax, nesting deeper
-      than 64 levels or expanding to more than 1 MiB xecLimit. }
     property ErrorCount: Integer read GetErrorCount;
     property Errors[Index: Integer]: TLandrixXmlXsdValidationError read GetError;
     { at most this many errors are collected (0 = no limit, the default

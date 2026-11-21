@@ -1163,6 +1163,8 @@ var
   I: Integer;
 begin
   Name := Attr(Node, 'name');
+  if Name = '' then
+    Fail(Node, 'a let needs a name');
   for I := 0 to Integer(FGlobals.Count) - 1 do
     if TGlobal(FGlobals[I]).Name = Name then
       Fail(Node, 'global variable $' + S8(Name) + ' is defined twice');
@@ -1257,6 +1259,8 @@ begin
       begin
         if L = 'let' then
         begin
+          if Attr(C, 'name') = '' then
+            Fail(C, 'a let needs a name');
           if not HasAttr(C, 'value') then
             Unsupported(C, 'a let without value is not supported');
           if HasAttr(C, 'as') then
@@ -1636,7 +1640,8 @@ var
   var
     C: TLandrixXmlNode;
   begin
-    if IsSch(Node, 'active') then
+    { an active without pattern names none (as the reference compiler) }
+    if IsSch(Node, 'active') and HasAttr(Node, 'pattern') then
       Active.Add(S8(Attr(Node, 'pattern')));
     C := Node.FirstChildElement;
     while C <> nil do

@@ -298,7 +298,7 @@ def main():
     print("%d cases" % len(data))
     if args.saxon:
         cp = os.pathsep.join([args.classes, args.jar])
-        r = subprocess.run([args.java, "-cp", cp, "XPathOracle", os.path.join(OUT, "d.xml"),
+        r = subprocess.run([args.java, "-Duser.timezone=UTC", "-cp", cp, "XPathOracle", os.path.join(OUT, "d.xml"),
                             os.path.join(OUT, "c.txt")], capture_output=True)
         if r.returncode != 0:
             sys.exit(r.stderr.decode("utf-8", "replace")[-2000:])

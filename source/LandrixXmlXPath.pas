@@ -5,24 +5,24 @@
   or https://opensource.org/licenses/MIT for the full license text.
 
   XPath 2.0 expressions: lexer, parser and syntax tree, for the evaluator
-  in LandrixXmlXPathEval. The supported language is the part of XPath 2.0
-  the EN16931, XRechnung, Peppol and Factur-X rule sets use (see the
-  phase 0 inventory): path expressions on all axes except namespace and
-  following, predicates, the operators (general and value comparisons,
-  arithmetic, to, union), for, some, every, if, cast as and castable as
-  with an optional "?", literals, variables and function calls. Anything
-  else of XPath 2.0 (instance of, treat as, intersect, except, is, << and
-  >>, the namespace and following axes, element() and attribute() tests
-  with arguments, schema-element(), typeswitch is not XPath 2.0) is
-  rejected when the expression is compiled, with the XPath error code
-  XPST0003 and the position, never ignored. The only collation is the
-  code point collation; a collation argument naming another gives
+  in LandrixXmlXPathEval. XPath 2.0 is supported apart from the namespace
+  axis (XPST0010) and schema-element()/schema-attribute() without a schema
+  (XPST0008): all other axes, predicates, every operator (also intersect,
+  except, is, << and >>), for, some, every, if, instance of, treat as,
+  cast as and castable as, kind tests with arguments, literals, variables
+  and function calls. The profile xppSaxon adds parts of XPath 3.0/3.1
+  (let, the functions of 3.0/3.1 that Saxon runs; see the README). What
+  is not supported is rejected with the XPath error code and the
+  position, when the expression is compiled or, for some function
+  arguments (format pictures), when it is evaluated; never ignored. The only collation is
+  the code point collation; a collation argument naming another gives
   FOCH0002.
 
   Names in the expression are resolved when it is compiled, with the
-  namespaces of the static context: an unprefixed name test means no
-  namespace (no default element namespace, as in Schematron), an
-  unprefixed function name the XPath function namespace. Variables and
+  namespaces of the static context: an unprefixed element name test is
+  in the context's DefaultElementNamespace (default '', no namespace, as
+  in Schematron; attribute names stay in no namespace), an unprefixed
+  function name in the XPath function namespace. Variables and
   user functions must be declared in the static context; each variable
   becomes a slot number. Static errors raise ELandrixXmlXPathError with the
   W3C code (XPST0003 syntax, XPST0008 unknown variable, XPST0017 unknown

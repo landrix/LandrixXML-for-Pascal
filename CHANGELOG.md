@@ -50,6 +50,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Schematron compilers (library and tools/sch-compile.py) agree on more
+  input: `sch:active` without `pattern` activates no pattern, `sch:ns`
+  without prefix or uri and `sch:let` without name (in the schema, a
+  pattern or a rule) are errors in both,
+  tools/sch-compile.py rejects `xsl:otherwise` before `xsl:when` and
+  keeps a carriage return of a message as a reference. Generator tools
+  fail with a clear message instead of a traceback or silent data, clean
+  up their temporary folders and `--check` exits non-zero on
+  differences; `LandrixXmlCaseData.inc` has the license header.
+- Documentation from the review: the XSLT resolver note names both
+  resolvers and `unparsed-text()`, method text reports SERE0008, unit
+  headers of the XPath parser, the XML Schema loader and validator and
+  the Schematron unit describe what the code does; the list of
+  downloaded test suites is complete.
 - Compiler and platform differences from the review: the Schematron
   compiler strips the byte order mark of a `document()` file also on
   Delphi 2009+ and takes a drive letter as absolute only on Windows;
