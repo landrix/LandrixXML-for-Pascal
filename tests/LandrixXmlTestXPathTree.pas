@@ -509,6 +509,7 @@ end;
 procedure TestFailedLoad;
 var
   T: TLandrixXmlXPathTree;
+  Raised: Boolean;
 begin
   T := TLandrixXmlXPathTree.Create;
   try
@@ -525,6 +526,18 @@ begin
     end;
     CheckEquals(1, T.Count, 'empty after the failed load');
     CheckEquals(-1, T.DocumentElement, 'no root after the failed load');
+    { a file that is missing also empties the tree }
+    T.LoadFromUtf8(U('<a><b/></a>'));
+    Raised := False;
+    try
+      T.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'no-such-file.xml');
+    except
+      on E: Exception do
+        Raised := True;
+    end;
+    Check(Raised, 'a missing file raises');
+    CheckEquals(1, T.Count, 'empty after a missing file');
+    CheckEqualsUtf8(U(''), T.BaseUri, 'no base URI after a missing file');
   finally
     T.Free;
   end;

@@ -163,6 +163,9 @@ begin
       Inc(I);
     if I - Start < 4 then
       Fail('FORG0001', 'not a valid date: "' + LandrixXmlUtf8ToString(S) + '"');
+    { the year must fit an Integer }
+    if (I - Start > 10) or (I - Start = 10) and (Copy(S, Start, 10) > '2147483647') then
+      Fail('FODT0001', 'the year of "' + LandrixXmlUtf8ToString(S) + '" is too large to format');
     Result.Year := StrToInt(LandrixXmlUtf8ToString(Copy(S, Start, I - Start)));
     if Negative then
       Result.Year := -Result.Year;
@@ -225,17 +228,27 @@ begin
   Result := Era * 146097 + Doe - 719468;
 end;
 
+{ a year with the same calendar (the Gregorian calendar repeats every 400
+  years), small enough for DaysFromCivil; the year is astronomical, as
+  Saxon formats negative years (tests/data/xslt/format-ampm) }
+function Cycle400(Y: Integer): Integer;
+begin
+  Result := (Y mod 400 + 400) mod 400 + 2000;
+end;
+
 { 1 = Monday ... 7 = Sunday }
 function DayOfWeek(Y, M, D: Integer): Integer;
 var
   Z: Integer;
 begin
+  Y := Cycle400(Y);
   Z := DaysFromCivil(Y, M, D);
   Result := ((Z + 3) mod 7 + 7) mod 7 + 1;
 end;
 
 function DayOfYear(Y, M, D: Integer): Integer;
 begin
+  Y := Cycle400(Y);
   Result := DaysFromCivil(Y, M, D) - DaysFromCivil(Y, 1, 1) + 1;
 end;
 
@@ -255,6 +268,7 @@ function WeeksInYear(Y: Integer): Integer;
   end;
 
 begin
+  Y := Cycle400(Y);
   if (P(Y) = 4) or (P(Y - 1) = 3) then
     Result := 53
   else
@@ -649,18 +663,29 @@ begin
   C := Spec[1];
   Token := Copy(Spec, 2, MaxInt);
   Width := '';
-  K := Pos(',', LandrixXmlUtf8ToString(Token));
+  { the width after the last comma (the token may hold commas); bytes,
+    not characters }
+  K := Length(Token);
+  while (K > 0) and (Token[K] <> ',') do
+    Dec(K);
   if K > 0 then
   begin
     Width := Copy(Token, K + 1, MaxInt);
     Token := Copy(Token, 1, K - 1);
+    { "[D1,,2]": a token that ends with a comma }
+    if (Token <> '') and (Token[Length(Token)] = ',') then
+      Fail('FOFD1340', 'a bad width modifier in a picture');
   end;
   { MaxW: -1 without a width modifier, 0 for "*" }
   MinW := 0;
   MaxW := -1;
   if K > 0 then
   begin
-    K := Pos('-', LandrixXmlUtf8ToString(Width));
+    K := 1;
+    while (K <= Length(Width)) and (Width[K] <> '-') do
+      Inc(K);
+    if K > Length(Width) then
+      K := 0;
     if K > 0 then
     begin
       MinS := Copy(Width, 1, K - 1);

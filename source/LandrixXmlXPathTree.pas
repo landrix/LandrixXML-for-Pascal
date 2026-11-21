@@ -933,12 +933,17 @@ end;
 procedure TLandrixXmlXPathTree.LoadFromFile(const FileName: string);
 var
   Reader: TLandrixXmlReader;
+  Name: string;
 begin
+  { a reference of its own (FileName may come from this tree); a file
+    that cannot be read leaves an empty tree, not the old one }
+  Name := FileName;
+  Clear;
   Reader := TLandrixXmlReader.Create;
   try
-    Reader.LoadFromFile(FileName);
+    Reader.LoadFromFile(Name);
     LoadFromReader(Reader);
-    FBaseUri := FileUri(FileName);
+    FBaseUri := FileUri(Name);
   finally
     Reader.Free;
   end;
@@ -947,10 +952,14 @@ end;
 procedure TLandrixXmlXPathTree.LoadFromUtf8(const S: TLandrixXmlUtf8);
 var
   Reader: TLandrixXmlReader;
+  Input: TLandrixXmlUtf8;
 begin
+  { a reference of its own: S may be a value of this tree }
+  Input := S;
+  Clear;
   Reader := TLandrixXmlReader.Create;
   try
-    Reader.LoadFromUtf8(S);
+    Reader.LoadFromUtf8(Input);
     LoadFromReader(Reader);
   finally
     Reader.Free;

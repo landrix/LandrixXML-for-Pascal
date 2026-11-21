@@ -50,6 +50,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XPath tree and formatting, edges from the review: `format-date` gives
+  the right weekday, day of the year and ISO week for years in the
+  millions (the day count overflowed) and an error with code for a year
+  beyond Integer; the width modifier is read after the last comma, on
+  bytes; `LoadFromFile` and `LoadFromUtf8` of `TLandrixXmlXPathTree`
+  leave an empty tree when they fail (a missing file kept the old tree
+  and its base URI).
 - XPath parser, edges from the review: `.5div 2` is a syntax error like
   `1.5div 2`; a wildcard as cast target (`1 cast as xs:*`) or before "("
   (`a/*(1)`) is XPST0003; the namespace axis is XPST0010 (not

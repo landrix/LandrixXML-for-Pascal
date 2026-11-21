@@ -1847,7 +1847,7 @@ end;
   with an xs:anyURI (cast to it, which collapses white space). }
 procedure TestFunctionReviewEdges;
 const
-  Cases: array[0..24, 0..3] of string = (
+  Cases: array[0..28, 0..3] of string = (
     ('s', '0', 'sum(1, (2, 3))', 'XPTY0004'),
     ('s', '0', 'sum((), (2, 3))', 'XPTY0004'),
     ('s', '0', 'sum((), 5)', '5'),
@@ -1872,7 +1872,11 @@ const
     ('s', '0', 'xs:untypedAtomic('' urn:test '') = '' urn:test ''', 'true'),
     ('2', '0', 'xs:untypedAtomic(''%zz'') = xs:anyURI(''urn:a'')', 'FORG0001'),
     ('s', '0', 'count(/r/e[@u = xs:anyURI(''urn:a'')])', '16'),
-    ('s', '0', 'count(/r/e[@u = xs:anyURI(''urn:a'') and true()])', '16'));
+    ('s', '0', 'count(/r/e[@u = xs:anyURI(''urn:a'') and true()])', '16'),
+    ('s', '0', 'format-date(xs:date(''6000000-01-01''), ''[F]'')', 'Saturday'),
+    ('s', '0', 'format-date(xs:date(''2024-05-21''), ''[Y01,2-4]'')', '2024'),
+    ('s', '0', 'format-date(xs:date(''6000000-12-31''), ''[W]/[d]'')', '52/366'),
+    ('s', '0', 'format-date(xs:date(''-6000001-01-01''), ''[F]'')', 'Friday'));
 var
   Tree: TLandrixXmlXPathTree;
   Evaluator: TLandrixXmlXPathEvaluator;
