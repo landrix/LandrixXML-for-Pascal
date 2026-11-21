@@ -162,9 +162,15 @@ begin
             Got := Got + U('error ' + X.XPathCode) + #10;
         end;
         { the expected lines of this case }
+        { only empty lines before the first header (after a case the
+          inner loop below already stops at the next one) }
         while (E < Length(Expected)) and (Copy(Expected[E], 1, 2) <> '# ') do
+        begin
+          Check(Expected[E] = '', Name + ': no result line outside a case');
           Inc(E);
+        end;
         Want := '';
+        Check(E < Length(Expected), Name + ': an expected result for every case');
         if E < Length(Expected) then
         begin
           Check(Copy(Expected[E], 3, MaxInt) = Rest, Name + ': cases and expected results in the same order');
@@ -186,6 +192,10 @@ begin
       end;
     end;
     Check(Count > 0, Name + ': cases present');
+    { no expected results without a case }
+    while (E < Length(Expected)) and (Copy(Expected[E], 1, 2) <> '# ') do
+      Inc(E);
+    Check(E >= Length(Expected), Name + ': no surplus expected results');
     Check(Mismatches = 0, Name + ': ' + IntToStr(Mismatches) + ' of ' + IntToStr(Count) + ' cases differ from ' +
       Source + ':' + Report);
   finally

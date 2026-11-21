@@ -376,6 +376,22 @@ begin
     end;
     Check(Doc.Root = nil, 'failed load leaves the document empty');
     CheckEquals(0, Doc.ChildCount, 'no children after a failed load');
+    { MaxDepth 0 or below is refused and the value kept }
+    try
+      Doc.MaxDepth := 0;
+      FailNotRaised('ELandrixXmlError for MaxDepth 0');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidArgument, E, 'MaxDepth 0');
+    end;
+    try
+      Doc.MaxDepth := -1;
+      FailNotRaised('ELandrixXmlError for MaxDepth -1');
+    except
+      on E: Exception do
+        ExpectCode(xecInvalidArgument, E, 'MaxDepth -1');
+    end;
+    CheckEquals(2, Doc.MaxDepth, 'MaxDepth kept');
   finally
     Doc.Free;
   end;

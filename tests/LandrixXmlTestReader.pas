@@ -850,6 +850,49 @@ begin
   end;
 end;
 
+{ The default limit of a reader that was not configured: 256 levels are
+  read, 257 are xecLimit. }
+procedure TestDefaultMaxDepth;
+var
+  Reader: TLandrixXmlReader;
+  Xml: string;
+  I, Tokens: Integer;
+  Raised: Boolean;
+begin
+  { the documented default, not just whatever the constant says }
+  CheckEquals(256, LandrixXmlDefaultMaxDepth, 'documented default');
+  Reader := TLandrixXmlReader.Create;
+  try
+    Xml := '';
+    for I := 1 to 256 do
+      Xml := Xml + '<a>';
+    for I := 1 to 256 do
+      Xml := Xml + '</a>';
+    Reader.LoadFromUtf8(A(Xml));
+    Tokens := 0;
+    while Reader.Read do
+      Inc(Tokens);
+    CheckEquals(512, Tokens, '256 levels read completely');
+    FreeAndNil(Reader);
+    Reader := TLandrixXmlReader.Create;
+    Reader.LoadFromUtf8(A('<b>' + Xml + '</b>'));
+    Raised := False;
+    try
+      while Reader.Read do
+        ;
+    except
+      on E: ELandrixXmlError do
+      begin
+        Raised := True;
+        CheckErrorCode(xecLimit, E.Code, '257 levels');
+      end;
+    end;
+    Check(Raised, '257 levels raise');
+  finally
+    Reader.Free;
+  end;
+end;
+
 procedure TestMaxDepth;
 var
   Reader: TLandrixXmlReader;
@@ -1035,6 +1078,7 @@ begin
   RegisterTest('Reader.ScratchRelocation', TestScratchRelocation);
   RegisterTest('Reader.MoreEdgeCases', TestMoreEdgeCases);
   RegisterTest('Reader.MaxDepth', TestMaxDepth);
+  RegisterTest('Reader.DefaultMaxDepth', TestDefaultMaxDepth);
   RegisterTest('Reader.DeepDocument', TestDefaultDepthIsIterative);
   RegisterTest('Reader.ErrorStateAndReuse', TestErrorStateAndReuse);
   RegisterTest('Reader.ManyAttributes', TestManyAttributes);

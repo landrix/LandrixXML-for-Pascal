@@ -152,7 +152,7 @@ var
   L: TStringList;
   K, Documents, Mismatches: Integer;
   Text: TLandrixXmlUtf8;
-  Title, Expected, Got, Report: string;
+  Title, Expected, Got, GotPlain, Report: string;
   JdkException: Boolean;
 
   procedure Compare;
@@ -171,6 +171,7 @@ var
       Reader.Free;
     end;
     Got := ErrorLines(V, True);
+    GotPlain := ErrorLines(V, False);
     if JdkException then
       Ok := Pos('cvc-complex-type.2.4.d Invalid content was found starting with element', Got) > 0
     else
@@ -183,7 +184,11 @@ var
     finally
       Doc.Free;
     end;
-    if Ok and not JdkException then
+    { the DOM path too: the same errors as the reader (for the JDK
+      exception cases, whose expected text is only a prefix) }
+    if Ok and JdkException then
+      Ok := ErrorLines(V, False) = GotPlain
+    else if Ok then
       Ok := ErrorLines(V, False) = WithoutPositions(Expected);
     if not Ok then
     begin
@@ -557,6 +562,22 @@ begin
   end;
 end;
 
+{ a document whose ENTITY e is declared through a chain of Levels
+  parameter entities (the references inside the entity values are
+  character references: a literal "%" there is not well-formed in the
+  internal subset) }
+function EntityChain(Levels: Integer): TLandrixXmlUtf8;
+var
+  I: Integer;
+  S: string;
+begin
+  S := '<!DOCTYPE r [<!ENTITY % p1 "<!ENTITY e SYSTEM ''e.gif'' NDATA gif>">';
+  for I := 2 to Levels do
+    S := S + '<!ENTITY % p' + IntToStr(I) + ' "&#37;p' + IntToStr(I - 1) + ';">';
+  S := S + '%p' + IntToStr(Levels) + ';]><r><a>1</a><e>e</e></r>';
+  Result := U(S);
+end;
+
 procedure TestApi;
 var
   FileName: string;
@@ -652,6 +673,17 @@ begin
     Reader.LoadFromUtf8('<!DOCTYPE r [<!ENTITY % a "<!ENTITY e SYSTEM ''e.gif'' NDATA gif>">' +
       '<!ENTITY % b "%a;%a;"> %b;]><r><a>1</a><e>e</e></r>');
     Check(V.ValidateReader(Reader), 'nested parameter entities');
+    { a linear chain: 64 levels are read, 65 are xecLimit }
+    Reader.LoadFromUtf8(EntityChain(64));
+    Check(V.ValidateReader(Reader), 'parameter entities 64 levels deep');
+    Reader.LoadFromUtf8(EntityChain(65));
+    try
+      V.ValidateReader(Reader);
+      FailNotRaised('parameter entities 65 levels deep');
+    except
+      on E: ELandrixXmlError do
+        CheckEquals(Ord(xecLimit), Ord(E.Code), 'parameter entities 65 levels deep');
+    end;
     { after a parameter entity that is not read, later entity declarations
       do not count (XML 1.0, 5.1), unless the document is standalone }
     Xml := '<!DOCTYPE r [<!ENTITY % x SYSTEM "x.ent"> %x; <!ENTITY e SYSTEM "e.gif" NDATA gif>' +

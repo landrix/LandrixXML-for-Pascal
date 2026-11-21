@@ -374,6 +374,8 @@ begin
       Input.LoadFromFile(DataDir + 'does-not-exist.xml');
       FailNotRaised('exception for a missing file');
     except
+      on E: ETestFailure do
+        raise;
       on E: Exception do ;
     end;
     CheckEquals(0, Input.Size, 'missing file leaves the input empty');

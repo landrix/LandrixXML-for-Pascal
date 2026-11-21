@@ -323,6 +323,12 @@ begin
   end;
   WriteLn(Passed + Failed, ' test(s), ', CheckCount, ' check(s), ',
     Failed, ' failure(s)');
+  { a filter that selects nothing is a mistake, not a success }
+  if (Passed + Failed = 0) and (Filter <> '') then
+  begin
+    WriteLn('FAIL: no test matches the filter ', Filter);
+    Inc(Failed);
+  end;
   if Failed = 0 then
     Result := 0
   else
