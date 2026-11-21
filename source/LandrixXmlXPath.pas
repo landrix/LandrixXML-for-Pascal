@@ -748,8 +748,9 @@ begin
   begin
     SplitQName(FVariables[I], Prefix, Local);
     Uri := '';
-    if Prefix <> '' then
-      LookupNamespace(Prefix, Uri);
+    { a prefix that is not bound names no variable here }
+    if (Prefix <> '') and not LookupNamespace(Prefix, Uri) then
+      Continue;
     if (Local = LocalName) and (Uri = NamespaceUri) then
     begin
       Result := I;
@@ -1118,6 +1119,8 @@ begin
             Inc(FPos);
           FToken.Kind := tkDouble;
         end;
+        if (FPos <= Length(FSource)) and IsNameStart(AnsiChar(FSource[FPos])) then
+          Error('a number must not be followed by a name', Start);
         FToken.Text := Copy(FSource, Start, FPos - Start);
       end
       else if PeekChar(1) = '.' then
@@ -1759,8 +1762,8 @@ procedure TParser.ParseSingleType(Node: Integer);
 var
   Uri, Local: TLandrixXmlUtf8;
 begin
-  if FToken.Kind <> tkName then
-    Error('a type name was expected', FToken.Position);
+  if (FToken.Kind <> tkName) or ContainsByte(FToken.Text, '*') then
+    Error('an atomic type name was expected', FToken.Position);
   ResolveName(FToken.Text, FToken.Position, ndElement, Uri, Local);
   if Uri <> LandrixXmlXPathSchemaNamespace then
     ErrorCode('XPST0051', 'unknown atomic type "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
@@ -2145,7 +2148,8 @@ begin
     if not Found then
     begin
       if FToken.Text = 'namespace' then
-        Error('the axis "' + LandrixXmlUtf8ToString(FToken.Text) + '" is not supported', FToken.Position);
+        ErrorCode('XPST0010', 'the axis "' + LandrixXmlUtf8ToString(FToken.Text) + '" is not supported',
+          FToken.Position);
       Error('unknown axis "' + LandrixXmlUtf8ToString(FToken.Text) + '"', FToken.Position);
     end;
     Next;
@@ -2197,6 +2201,9 @@ begin
     Exit;
   Name := FToken.Text;
   Position := FToken.Position;
+  { a wildcard is no function name }
+  if ContainsByte(Name, '*') and NextIsSymbol('(') then
+    Error('a wildcard cannot be followed by "("', Position);
   if NextIsSymbol('(') then
   begin
     { element(), attribute() and document-node() as in a sequence type
@@ -2304,13 +2311,15 @@ begin
     tkInteger:
       begin
         Result := NewNode(xakInteger, FToken.Position);
-        FNodes[Result].Decimal := LandrixXmlParseDecimal(FToken.Text);
+        if not LandrixXmlTryParseDecimal(FToken.Text, FNodes[Result].Decimal) then
+          ErrorCode('FOAR0002', 'the numeric literal is out of range', FToken.Position);
         Next;
       end;
     tkDecimal:
       begin
         Result := NewNode(xakDecimal, FToken.Position);
-        FNodes[Result].Decimal := LandrixXmlParseDecimal(FToken.Text);
+        if not LandrixXmlTryParseDecimal(FToken.Text, FNodes[Result].Decimal) then
+          ErrorCode('FOAR0002', 'the numeric literal is out of range', FToken.Position);
         Next;
       end;
     tkDouble:

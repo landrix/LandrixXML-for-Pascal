@@ -50,6 +50,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XPath parser, edges from the review: `.5div 2` is a syntax error like
+  `1.5div 2`; a wildcard as cast target (`1 cast as xs:*`) or before "("
+  (`a/*(1)`) is XPST0003; the namespace axis is XPST0010 (not
+  supported); a numeric literal beyond the decimal limits is FOAR0002
+  instead of an error without code. A variable whose prefix is not bound
+  is not found under the empty namespace.
 - XSLT compiler, static checks from the review (as Saxon): the mode list
   of a template is checked (XTSE0550 for `#all` with another mode, a mode
   twice, `#current` or a name that is no QName; W3C XSLT suite: six more

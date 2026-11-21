@@ -335,13 +335,32 @@ begin
   CheckParse('current()', '(current)');
 end;
 
+{ Variables by their expanded name (review): an unbound prefix names no
+  variable. }
+procedure TestVariableNames;
+var
+  C: TLandrixXmlXPathStaticContext;
+begin
+  C := TLandrixXmlXPathStaticContext.Create;
+  try
+    C.DeclareVariable(U('z:n'));
+    CheckEquals(-1, C.FindVariable(U(''), U('n')), 'z unbound');
+  finally
+    C.Free;
+  end;
+end;
+
 procedure TestErrors;
 begin
   SetUpContext;
   CheckError('a +', 'XPST0003');
   CheckError('(a', 'XPST0003');
-  CheckError('namespace::a', 'XPST0003');
-  CheckError('namespace::a', 'XPST0003');
+  CheckError('namespace::a', 'XPST0010');
+  { edges from the review }
+  CheckError('.5div 2', 'XPST0003');
+  CheckError('1 cast as xs:*', 'XPST0003');
+  CheckError('1 castable as *:integer', 'XPST0003');
+  CheckError('a/*(1)', 'XPST0003');
   CheckError('element(p:a)', 'XPST0081');
   CheckError('schema-element(a)', 'XPST0008');
   CheckError('attribute(x, xs:untyped?)', 'XPST0003');
@@ -545,6 +564,7 @@ begin
     TestSequenceTypes;
     TestSlots;
     TestExpressionNamespaces;
+    TestVariableNames;
   finally
     TearDown;
   end;
