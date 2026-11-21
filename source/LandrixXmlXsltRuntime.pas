@@ -2484,6 +2484,16 @@ begin
     ExecInstr(TXsltInstr(Body[I]), Focus, Mode, R);
 end;
 
+{ The value of a constructed attribute: xml:id with its white space
+  collapsed (XSLT 2.0 11.3, as Saxon does; a copy keeps its value) }
+function ConstructedValue(const Uri, Local, Value: TLandrixXmlUtf8): TLandrixXmlUtf8;
+begin
+  if (Local = 'id') and (Uri = LandrixXmlNamespaceXml) then
+    Result := LandrixXmlXsdNormalizeWhiteSpace(Value, xwsCollapse)
+  else
+    Result := Value;
+end;
+
 procedure TRun.LiteralElement(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
   R: TReceiver);
 var
@@ -2503,7 +2513,8 @@ begin
   for I := 0 to Integer(Instr.Attributes.Count) - 1 do
   begin
     A := TXsltAttributeTemplate(Instr.Attributes[I]);
-    R.Attribute(A.NamespaceUri, A.Prefix, A.LocalName, EvalAvt(Instr, A.Value, Focus));
+    R.Attribute(A.NamespaceUri, A.Prefix, A.LocalName,
+      ConstructedValue(A.NamespaceUri, A.LocalName, EvalAvt(Instr, A.Value, Focus)));
   end;
   Exec(Instr.Body, Focus, Mode, R);
   R.EndElement;
@@ -4161,7 +4172,7 @@ begin
     Text := EvalString(Instr, Instr.Select, Focus, Sep)
   else
     Text := BodyString(Instr.Body, Focus, Mode, Sep);
-  R.Attribute(Uri, Prefix, Local, Text);
+  R.Attribute(Uri, Prefix, Local, ConstructedValue(Uri, Local, Text));
 end;
 
 { the text of xsl:comment and xsl:processing-instruction (the separator

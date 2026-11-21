@@ -57,6 +57,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `xml:id` as Saxon treats it: XPath trees trim the white space around
+  its value when a document is loaded, so `@xml:id = 'a'` holds for
+  `xml:id=" a "` (the spaces inside are kept; XDM would collapse them,
+  Saxon does not), and an `xml:id` attribute an XSLT stylesheet
+  constructs has its white space collapsed (XSLT 2.0 11.3); a copied one
+  keeps its value QT3 (Saxon profile): fn-doc-37 passes.
 - XSLT static errors as Saxon reports them: an attribute an XSLT element
   does not define (`XTSE0090`; before only for some elements, now for the
   elements of XSLT 2.0 and their XSLT 3.0 attributes; a shadow attribute

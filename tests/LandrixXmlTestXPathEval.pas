@@ -1091,6 +1091,43 @@ begin
   end;
 end;
 
+{ xml:id is trimmed when the tree is built, as Saxon does (spaces inside
+  stay; other attributes keep their value) }
+procedure TestXmlIdTrimmed;
+var
+  Tree: TLandrixXmlXPathTree;
+  Context: TLandrixXmlXPathStaticContext;
+  Evaluator: TLandrixXmlXPathEvaluator;
+
+  function Eval(const Text: string): string;
+  var
+    E: TLandrixXmlXPathExpression;
+  begin
+    E := TLandrixXmlXPathExpression.Create(U(Text), Context);
+    try
+      Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(E, 0));
+    finally
+      E.Free;
+    end;
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Context := TLandrixXmlXPathStaticContext.Create;
+  Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+  try
+    Tree.LoadFromUtf8(U('<r><e xml:id="  a  b  "/><e xml:id="&#9;c&#10;"/><e id=" d "/></r>'));
+    CheckEqualsStr('[a  b]', Eval('concat(''['', /r/e[1]/@xml:id, '']'')'), 'spaces around');
+    CheckEqualsStr('[c]', Eval('concat(''['', /r/e[2]/@xml:id, '']'')'), 'a tab and a line feed');
+    CheckEqualsStr('[ d ]', Eval('concat(''['', /r/e[3]/@id, '']'')'), 'another attribute');
+    CheckEqualsStr('true', Eval('string(/r/e[2]/@xml:id = ''c'')'), 'compared');
+  finally
+    Evaluator.Free;
+    Context.Free;
+    Tree.Free;
+  end;
+end;
+
 { deep-equal across two trees and on documents nested deeper than the
   stack would allow for one call per level. }
 procedure TestDeepEqual;
@@ -2969,6 +3006,7 @@ begin
   RegisterTest('XPathEval.Documents', TestDocuments);
   RegisterTest('XPathEval.KeyedSteps', TestKeyedSteps);
   RegisterTest('XPathEval.DeepEqual', TestDeepEqual);
+  RegisterTest('XPathEval.XmlIdTrimmed', TestXmlIdTrimmed);
   RegisterTest('XPathEval.ResolveUri', TestResolveUri);
   RegisterTest('XPathEval.BaseUri', TestBaseUri);
   RegisterTest('XPathEval.LangAndDocuments', TestLangAndDocuments);

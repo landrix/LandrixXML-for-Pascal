@@ -1350,6 +1350,15 @@ var
   Source, Param, Target: TLandrixXmlXPathTree;
   Code: string;
 begin
+  { a constructed xml:id has its white space collapsed (literal, AVT,
+    xsl:attribute, also without an element), the AVT of the stylesheet is
+    evaluated as written (Saxon) }
+  CheckEqualsStr('<r>[p q][g h][i j]<x xml:id="id4"/></r>', RunReviewSheet('<xsl:variable name="t">' +
+    '<x xml:id="  p  q  "/></xsl:variable>[<xsl:value-of select="$t/x/@xml:id"/>]' +
+    '<xsl:variable name="a" as="attribute()"><xsl:attribute name="xml:id">&#9;g&#9;&#9;h&#10;' +
+    '</xsl:attribute></xsl:variable>[<xsl:value-of select="$a"/>]' +
+    '<xsl:variable name="u"><y xml:id="{''i&#9;&#9;j''}"/></xsl:variable>[<xsl:value-of select="$u/y/@xml:id"/>]' +
+    '<x xml:id="id{string-length(''a  b'')}"/>'), 'xml:id');
   { a resource that cannot be opened is not available }
   CheckEqualsStr('<r>false</r>', RunReviewSheet('<xsl:value-of select="doc-available(''gone.xml'')"/>'),
     'doc-available() of a file that cannot be opened');

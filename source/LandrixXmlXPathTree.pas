@@ -19,7 +19,9 @@
   below it, so every axis is a loop over index ranges. Namespace
   declarations are not attributes (the tree keeps them for
   LookupNamespace and InScopePrefixesUtf8); adjacent text and CDATA form one text
-  node; white space is kept (as Saxon keeps it); comments and processing
+  node; white space is kept (as Saxon keeps it), except around the value
+  of xml:id, which Saxon trims (it does not collapse the spaces inside
+  as XDM does); comments and processing
   instructions are nodes; text outside the root element and the document
   type are not. Names are numbered: nodes with the same namespace URI and
   local name have the same ExpandedName, so a name test compares
@@ -27,7 +29,8 @@
 
   Built from a DOM, every node keeps its DOM node (an attribute the
   element and the attribute index, a merged text node the first part);
-  the tree then shows what the DOM holds (comments only if it kept them,
+  the tree then shows what the DOM holds (but xml:id trimmed; comments
+  only if it kept them,
   white space as its WhitespaceMode left it): a tree as Saxon builds it
   needs a DOM loaded with the defaults (comments and processing
   instructions kept, xwmPreserve).
@@ -637,6 +640,23 @@ begin
   Inc(FDepth);
 end;
 
+{ Value without the white space around it }
+function TrimXmlSpace(const Value: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  First, Last: Integer;
+begin
+  First := 1;
+  Last := Length(Value);
+  while (First <= Last) and (Value[First] in [#9, #10, #13, ' ']) do
+    Inc(First);
+  while (Last >= First) and (Value[Last] in [#9, #10, #13, ' ']) do
+    Dec(Last);
+  if (First = 1) and (Last = Length(Value)) then
+    Result := Value
+  else
+    Result := Copy(Value, First, Last - First + 1);
+end;
+
 { An attribute of the element just started (before its children). }
 procedure TLandrixXmlXPathTree.AddAttribute(const NamespaceUri, Prefix, LocalName, Value: TLandrixXmlUtf8;
   DomNode: TLandrixXmlNode; DomIndex: Integer);
@@ -647,7 +667,12 @@ begin
   I := NewNode(xnkAttribute, FLines[E], FColumns[E]);
   FParents[I] := E;
   FNameIds[I] := NameId(NamespaceUri, Prefix, LocalName);
-  FValues[I] := Value;
+  { xml:id trimmed as Saxon does when it builds a tree (the XSLT
+    runtime collapses a constructed one before) }
+  if (LocalName = 'id') and (NamespaceUri = LandrixXmlNamespaceXml) then
+    FValues[I] := TrimXmlSpace(Value)
+  else
+    FValues[I] := Value;
   FDomNodes[I] := DomNode;
   FDomAttrs[I] := DomIndex;
   Inc(FAttrCounts[E]);

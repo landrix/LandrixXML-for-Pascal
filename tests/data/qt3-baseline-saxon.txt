@@ -2183,6 +2183,7 @@ fn-doc/fn-doc-32 pass
 fn-doc/fn-doc-34 pass
 fn-doc/fn-doc-35 pass
 fn-doc/fn-doc-36 pass
+fn-doc/fn-doc-37 pass
 fn-doc/fn-doc-4 pass
 fn-doc/fn-doc-6 pass
 fn-document-uri/K-DocumentURIFunc-1 pass
