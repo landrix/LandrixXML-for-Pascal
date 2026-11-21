@@ -561,6 +561,13 @@ parameters, attributes, comments, processing instructions,
   ±1,000,000 (`LandrixXmlDecimalMaxExponent`); the XML Schema validator
   takes an `xs:time` or `xs:dateTime` whose seconds have more fraction
   digits as invalid (a limit of this library; Xerces accepts them).
+- **Unique Particle Attribution** is not checked for a content model
+  too large for the check (more than 4096 positions after the bounds
+  are expanded, 20,000 states or about a second of work for the
+  automaton); such a model is taken as unambiguous, where Xerces may
+  report `cos-nonambig`. A content model that keeps very many
+  configurations for one child (a repeated group with a minOccurs of
+  hundreds around a repeated element) stops validation with `xecLimit`.
 - **Saving keeps the content, not the bytes:** a document saved from the
   DOM reads back with the same nodes, but quotes, character references and
   line ends may be written differently.
@@ -652,6 +659,12 @@ both the mark and an entry here):
   element stands for any number of repetitions, so for example a sequence
   of `a` (exactly twice), `a` and a repeated choice is ambiguous, though
   XML Schema 1.0 allows it.
+- A wildcard with bounds other than 0, 1 and unbounded is counted over
+  the whole content of the element, also inside a repeated group: in
+  `(any{2,3}, c)*` with a wildcard for `##other` the foreign children
+  `x x c x c` are valid and `x x c x x x c` is not, while XML Schema 1.0 counts per repetition of the group (no
+  test of the suite covers this; in the source code the mark reads
+  `Xerces deviation, not in the test suite`).
 - The `final` of a simple type also forbids the extension by a complex
   type with simple content when it is `#all` or comes from a
   `finalDefault` that names `extension`; XML Schema 1.0 limits the

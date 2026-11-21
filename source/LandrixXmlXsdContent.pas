@@ -209,7 +209,9 @@ type
       if two different particles can take the same child in one state of
       the model as Xerces builds it for the check (see the
       implementation); First and Second are the two, in Xerces' order. A
-      model too large for the check counts as unambiguous. }
+      model too large or too costly for the check (more than 4096
+      positions, 20000 states or about a second of work) counts as
+      unambiguous. }
     function FindAmbiguity(out First, Second: TLandrixXmlXsdParticle): Boolean;
     { True if occurrence bounds are checked with the occurrence codes }
     property RepeatingMode: Boolean read FRepeatingMode;
@@ -730,7 +732,10 @@ begin
     begin
       if RepeatingMode then
         P.FBoundsCheck := xbcRepeating
-      { in Xerces a wildcard is subsumed even outside such sequences }
+      { Xerces deviation, not in the test suite. In Xerces a wildcard
+        is subsumed even outside such sequences: its bounds count over
+        the whole content, also inside a repeated group (XML Schema
+        1.0 counts per repetition of the group) }
       else if (Optimize and (P.FKind = xpkElement)) or (P.FKind = xpkWildcard) then
       begin
         P.FBoundsCheck := xbcCounted;
@@ -976,18 +981,31 @@ begin
   FNameLeaves[E][I] := Leaf;
 end;
 
+{ The first term that matches: the terms are the leaves in leaf order, so
+  the first leaf of the name from the table or an earlier wildcard. }
 function TLandrixXmlXsdContentModel.FindTerm(const NamespaceUri,
   LocalName: TLandrixXmlUtf8): TLandrixXmlXsdParticle;
 var
-  I: Integer;
+  I, K, Best: Integer;
 begin
-  for I := 0 to Integer(FTerms.Count) - 1 do
+  Best := -1;
+  K := FindName(NamespaceUri, LocalName);
+  if K >= 0 then
+    Best := FNameLeaves[K][0];
+  for I := 0 to Integer(Length(FWildLeaves)) - 1 do
   begin
-    Result := TLandrixXmlXsdParticle(FTerms[I]);
-    if Result.Matches(NamespaceUri, LocalName) then
-      Exit;
+    if (Best >= 0) and (FWildLeaves[I] > Best) then
+      Break;
+    if TLandrixXmlXsdParticle(FTerms[FWildLeaves[I]]).Matches(NamespaceUri, LocalName) then
+    begin
+      Best := FWildLeaves[I];
+      Break;
+    end;
   end;
-  Result := nil;
+  if Best >= 0 then
+    Result := TLandrixXmlXsdParticle(FTerms[Best])
+  else
+    Result := nil;
 end;
 
 function TLandrixXmlXsdContentModel.GetLeafCount: Integer;
@@ -1031,6 +1049,10 @@ const
   UpaMaxNodes = 20000;
   { the sets of positions take Positions * Positions / 8 bytes }
   UpaMaxPositions = 4096;
+  { words of position sets touched while the automaton is built (about a
+    second); beyond it the model counts as unambiguous, as beyond the
+    other limits }
+  UpaMaxWork = 50000000;
   UpaBuckets = 4096;
 
 type
@@ -1542,7 +1564,7 @@ function TLandrixXmlXsdContentModel.FindAmbiguity(out First, Second: TLandrixXml
 var
   B: TUpaBuilder;
   Tree, Root, Leaf: TUpaNode;
-  Size, ElemCount, PairCount, I, J, E, Index, Cur: Integer;
+  Size, ElemCount, PairCount, I, J, E, Index, Cur, Words, Work: Integer;
   Follow: array of TUpaSet;
   ElemOf, IdToElem, Counting, PairFirst, PairSecond: array of Integer;
   PairState: array of ShortInt;
@@ -1671,8 +1693,14 @@ begin
     Buckets[Index] := TList.Create;
     Buckets[Index].Add(State);
     Cur := 0;
+    Words := (Size + 31) div 32;
+    Work := 0;
     while Cur < Integer(States.Count) do
     begin
+      { too much work to check: taken as unambiguous }
+      Inc(Work, ElemCount + Words + Size);
+      if Work > UpaMaxWork then
+        Exit;
       State := TUpaState(States[Cur]);
       SetLength(State.Trans, ElemCount);
       { the next sets of all particles in one pass over the positions }
@@ -1685,6 +1713,7 @@ begin
           if NextSets[E] = nil then
             NextSets[E] := EmptySet(Size);
           UnionInto(NextSets[E], Follow[I]);
+          Inc(Work, Words);
         end;
       for E := 0 to ElemCount - 1 do
       begin
@@ -1736,18 +1765,25 @@ begin
             Break;
           end;
     end;
-    { the first state in which both particles of a pair can come decides }
+    { the first state in which both particles of a pair can come decides
+      (beyond the work limit the pairs decided so far count) }
     for I := 0 to Integer(States.Count) - 1 do
     begin
+      Inc(Work, PairCount);
+      if Work > UpaMaxWork then
+        Break;
       State := TUpaState(States[I]);
       for J := 0 to PairCount - 1 do
         if (PairState[J] = 0) and (State.Trans[PairFirst[J]] <> -1) and (State.Trans[PairSecond[J]] <> -1) then
         begin
           { a counting state with a fixed count: the count tells looping
-            and leaving apart }
+            and leaving apart (not for High(Integer), which the loader
+            also takes for any larger bound: such a range may be
+            variable) }
           Clash := not ((Counting[I] >= 0) and
             ((State.Trans[PairFirst[J]] = I) xor (State.Trans[PairSecond[J]] = I)) and
-            (ElemLeaf[Counting[I]].RepeatMin = ElemLeaf[Counting[I]].RepeatMax));
+            (ElemLeaf[Counting[I]].RepeatMin = ElemLeaf[Counting[I]].RepeatMax) and
+            (ElemLeaf[Counting[I]].RepeatMax < High(Integer)));
           if Clash then
             PairState[J] := 1
           else
@@ -1792,6 +1828,10 @@ const
   { Limit of the configurations explored for one child; realistic models
     need a handful. }
   MaxExplored = 100000;
+  { Limit of the comparisons between configurations for one child (a
+    repeated group with a large minOccurs keeps one configuration per
+    count below it) }
+  MaxCompared = 250000;
 
 { Stores a copy of Src[0 .. Len - 1] as a new configuration, with room for
   Extra more frames; the index of the new entry. }
@@ -1896,7 +1936,7 @@ end;
 function TLandrixXmlXsdContentState.TryStep(const NamespaceUri,
   LocalName: TLandrixXmlUtf8): TLandrixXmlXsdParticle;
 var
-  I, J, K, Len, Top, Explored: Integer;
+  I, J, K, Len, Top, Explored, Compared: Integer;
   P, Child: TLandrixXmlXsdParticle;
   Complete, Duplicate, Mixed: Boolean;
   Swap: TLandrixXmlXsdContentFrames;
@@ -1934,6 +1974,7 @@ begin
   for I := FConfigCount - 1 downto 0 do
     AppendConfig(FWork, FWorkLens, FWorkCount, FConfigs[I], FConfigLens[I], 0);
   Explored := 0;
+  Compared := 0;
   while FWorkCount > 0 do
   begin
     Inc(Explored);
@@ -1963,6 +2004,9 @@ begin
           group) would otherwise keep every split of the children between
           the counters. In the repeating mode only equal ones are merged:
           its messages report the counts of the first configuration. }
+        Inc(Compared, 2 * K);
+        if Compared > MaxCompared then
+          raise ELandrixXmlError.CreateCode(xecLimit, 'Content model too ambiguous to check');
         Duplicate := False;
         for I := 0 to K - 1 do
           if (FNextLens[I] = Len) and Covers(FNext[I], FNext[K], Len, not FModel.FRepeatingMode) then

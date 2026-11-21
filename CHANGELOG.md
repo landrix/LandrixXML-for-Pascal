@@ -50,6 +50,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema content models, edge cases from the review: a count of
+  High(Integer) (also any larger bound, which the loader limits to it)
+  no longer counts as fixed in Unique Particle Attribution, so
+  `minOccurs="2147483647" maxOccurs="2147483648"` before the same
+  element is reported as ambiguous. A repeated group with a
+  large minOccurs around a repeated element stops with `xecLimit`
+  instead of taking cubic time, and the Unique Particle Attribution
+  automaton stops after about a second of work (the model is then taken
+  as unambiguous, as for the existing size limits; see Limitations).
+  After the first content error the following children are looked up
+  by name instead of comparing every particle. A wildcard counted over
+  the whole content (as Xerces does) is now listed among the Xerces
+  deviations.
 - XPath general comparison: an xs:untypedAtomic beside an xs:anyURI is
   cast to xs:anyURI first, so its white space is collapsed
   (`xs:untypedAtomic(' urn:a ') = xs:anyURI('urn:a')` is true, as in

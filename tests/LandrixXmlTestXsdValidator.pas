@@ -708,6 +708,104 @@ begin
   end;
 end;
 
+{ Limits of the content models from the review: a variable range beyond
+  High(Integer) stays a range for Unique Particle Attribution; a repeated
+  group with a large minOccurs around a repeated element stops at the
+  limit instead of taking cubic time; a model too costly for the UPA
+  automaton is taken as unambiguous (README, Limitations). }
+procedure TestContentLimits;
+var
+  FileName, Body: string;
+  S: TLandrixXmlXsdSchemaSet;
+  V: TLandrixXmlXsdValidator;
+  Reader: TLandrixXmlReader;
+  I: Integer;
+  Raised: Boolean;
+
+  function Group(Count: Integer): string;
+  begin
+    Result := '<xs:element name="r"><xs:complexType><xs:sequence minOccurs="' + IntToStr(Count) +
+      '" maxOccurs="' + IntToStr(Count) + '"><xs:element name="a" maxOccurs="unbounded"/>' +
+      '</xs:sequence></xs:complexType></xs:element>';
+  end;
+
+  function Children(Count: Integer): TLandrixXmlUtf8;
+  var
+    J: Integer;
+  begin
+    Result := '<r>';
+    for J := 1 to Count do
+      Result := Result + '<a/>';
+    Result := Result + '</r>';
+  end;
+
+begin
+  CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence>' +
+    '<xs:element name="a" minOccurs="2147483647" maxOccurs="2147483648"/><xs:element name="a"/>' +
+    '</xs:sequence></xs:complexType></xs:element>', xecSchema, 'ambiguous range at High(Integer)');
+  CheckLoadError('<xs:element name="r"><xs:complexType><xs:sequence>' +
+    '<xs:element name="a" minOccurs="12678967543233" maxOccurs="12678967543234"/><xs:element name="a"/>' +
+    '</xs:sequence></xs:complexType></xs:element>', xecSchema, 'ambiguous range beyond Integer');
+  { a group taken 20 times is fine; 2000 times stops at the limit }
+  FileName := TempSchema(Group(20));
+  S := LandrixXmlXsdLoadSchema(FileName);
+  V := TLandrixXmlXsdValidator.Create(S);
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromUtf8(Children(20));
+    Check(V.ValidateReader(Reader), 'group of 20');
+  finally
+    Reader.Free;
+    V.Free;
+    S.Free;
+    DeleteFile(FileName);
+  end;
+  FileName := TempSchema(Group(2000));
+  S := LandrixXmlXsdLoadSchema(FileName);
+  V := TLandrixXmlXsdValidator.Create(S);
+  Reader := TLandrixXmlReader.Create;
+  try
+    Reader.LoadFromUtf8(Children(2000));
+    Raised := False;
+    try
+      V.ValidateReader(Reader);
+    except
+      on E: ELandrixXmlError do
+      begin
+        Raised := True;
+        CheckEquals(Ord(xecLimit), Ord(E.Code), 'group of 2000: ' + E.Message);
+      end;
+    end;
+    Check(Raised, 'group of 2000 stops at the limit');
+  finally
+    Reader.Free;
+    V.Free;
+    S.Free;
+    DeleteFile(FileName);
+  end;
+  { 3000 optional elements and the ambiguous a?, a: too costly for the
+    check, so taken as unambiguous (with 10 the ambiguity is reported) }
+  Body := '<xs:element name="r"><xs:complexType><xs:sequence>';
+  for I := 1 to 10 do
+    Body := Body + '<xs:element name="e' + IntToStr(I) + '" minOccurs="0"/>';
+  CheckLoadError(Body + '<xs:element name="a" minOccurs="0"/><xs:element name="a"/></xs:sequence>' +
+    '</xs:complexType></xs:element>', xecSchema, 'a?, a after 10 optional elements');
+  Body := '<xs:element name="r"><xs:complexType><xs:sequence>';
+  for I := 1 to 3000 do
+    Body := Body + '<xs:element name="e' + IntToStr(I) + '" minOccurs="0"/>';
+  Body := Body + '<xs:element name="a" minOccurs="0"/><xs:element name="a"/></xs:sequence>' +
+    '</xs:complexType></xs:element>';
+  FileName := TempSchema(Body);
+  S := nil;
+  try
+    S := LandrixXmlXsdLoadSchema(FileName);
+    Check(S <> nil, 'large model loaded');
+  finally
+    S.Free;
+    DeleteFile(FileName);
+  end;
+end;
+
 { an include, import or redefine whose document cannot be found is
   skipped with a warning (XML Schema 1.0 4.2.1, as Xerces) }
 procedure CheckSkipped(const Body, Expected: string; WarningCount: Integer);
@@ -1003,6 +1101,7 @@ begin
   RegisterTest('XsdValidator.TypeDerivation', TestTypeDerivation);
   RegisterTest('XsdValidator.LoadErrors', TestLoadErrors);
   RegisterTest('XsdValidator.LargeOccurs', TestLargeOccurs);
+  RegisterTest('XsdValidator.ContentLimits', TestContentLimits);
   RegisterTest('XsdValidator.Unresolved', TestUnresolved);
   RegisterTest('XsdValidator.SchemaRules', TestSchemaRules);
   {$IFDEF MSWINDOWS}
