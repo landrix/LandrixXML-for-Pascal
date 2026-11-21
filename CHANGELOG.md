@@ -50,6 +50,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema: `TLandrixXmlXsdSchemaSet.Files` lists two documents whose
+  names differ only in case as two files on case-sensitive systems
+  (Linux); the list compared the names without case before.
 - XML Schema: compiling a content model no longer gives every leaf a
   bit set over all leaves (65,536 leaves in one model took 512 MB);
   only groups keep one.

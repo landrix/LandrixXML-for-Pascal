@@ -1018,6 +1018,40 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF LINUX}
+{ two files whose names differ only in case are two documents on Linux,
+  also in the list of files (in a folder of /tmp per process: the build
+  folder may be a case-insensitive mount, such as a Windows drive under
+  WSL) }
+procedure TestFileCaseLinux;
+var
+  Dir, A, B, C: string;
+  S: TLandrixXmlXsdSchemaSet;
+begin
+  Dir := '/tmp/landrixxml-case-' + IntToStr(GetProcessID) + '/';
+  A := Dir + 'main.xsd';
+  B := Dir + 'x.xsd';
+  C := Dir + 'X.xsd';
+  S := nil;
+  try
+    ForceDirectories(Dir);
+    WriteTestFile(A, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">' +
+      '<xs:include schemaLocation="x.xsd"/><xs:include schemaLocation="X.xsd"/></xs:schema>');
+    WriteTestFile(B, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="b"/></xs:schema>');
+    WriteTestFile(C, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="c"/></xs:schema>');
+    S := LandrixXmlXsdLoadSchema(A);
+    Check(S.FindElement('', 'c') <> nil, 'element of the second file');
+    CheckEquals(3, Integer(S.Files.Count), 'three files');
+  finally
+    S.Free;
+    DeleteFile(A);
+    DeleteFile(B);
+    DeleteFile(C);
+    RemoveDir(Dir);
+  end;
+end;
+{$ENDIF}
+
 { the schema for schemas: the constraint code Xerces reports and the
   position of the offending element }
 procedure CheckSchemaRule(const Body, ConstraintCode: string; Line: Integer; const Name: string;
@@ -1209,6 +1243,9 @@ begin
   RegisterTest('XsdValidator.SchemaRules', TestSchemaRules);
   {$IFDEF MSWINDOWS}
   RegisterTest('XsdValidator.FileCase', TestFileCase);
+  {$ENDIF}
+  {$IFDEF LINUX}
+  RegisterTest('XsdValidator.FileCaseLinux', TestFileCaseLinux);
   {$ENDIF}
   RegisterTest('XsdValidator.Api', TestApi);
   RegisterTest('XsdValidator.ReaderEdges', TestReaderEdges);

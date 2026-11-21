@@ -991,10 +991,10 @@ var
   Dom: TLandrixXmlDocument;
   Root, Child: TLandrixXmlNode;
   Tns, Effective, Value, Location, Ns: TLandrixXmlUtf8;
-  HasTns, HasNs, HasLocation, Again: Boolean;
+  HasTns, HasNs, HasLocation, Again, Found: Boolean;
   Key: TLandrixXmlUtf8;
   Name: TLandrixXmlUtf8;
-  Target: string;
+  Target, Identity: string;
   Redefined: TSchemaDoc;
   I: Integer;
 begin
@@ -1033,7 +1033,18 @@ begin
   Result := TSchemaDoc.Create;
   FDocs.Add(Result);
   FDocMap.Add('', Key, Result);
-  if FSet.Files.IndexOf(FileName) < 0 then
+  { one entry per file (a chameleon included into two namespaces is one
+    file); compared by FileIdentity, as TStringList.IndexOf ignores case
+    also where the file system does not }
+  Found := False;
+  Identity := FileIdentity(FileName);
+  for I := 0 to FSet.Files.Count - 1 do
+    if FileIdentity(FSet.Files[I]) = Identity then
+    begin
+      Found := True;
+      Break;
+    end;
+  if not Found then
     FSet.Files.Add(FileName);
   Result.FileName := FileName;
   Result.Root := Root;
