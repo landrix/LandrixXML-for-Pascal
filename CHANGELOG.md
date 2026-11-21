@@ -50,6 +50,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT serialization, edges from the review: characters the encoding
+  lacks, escaped URIs and mapped characters are written in linear time
+  (a long text in US-ASCII took minutes); in HTML `script` and `style` a
+  character the encoding lacks is a character reference, as in Saxon,
+  not SERE0008 (also for the strings of a character map in HTML); a C0 control
+  character (from a parameter) is a character reference, as in Saxon;
+  `undeclare-prefixes="yes"` with XML 1.0 raises SEPM0010 and
+  `standalone` without an XML declaration SEPM0009; the declaration names
+  the encoding `utf8` UTF-8; the HTML indentation counts characters after
+  normalization; namespace declarations are sorted in UTF-16 order on
+  every compiler and the output method is chosen on the bytes of the root name, the
+  same on every compiler.
 - Schematron, edges from the review: `sch:value-of` merges adjacent
   text nodes as `xsl:value-of` does (`*/text()` over `<a>foo</a><b>bar</b>`
   gives `foobar`, not `foo bar`); `svrl:suppressed-rule` carries the id,

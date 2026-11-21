@@ -96,9 +96,20 @@ uses
   allowed; 0 for another }
 function EncodingMaxChar(const Name: TLandrixXmlUtf8): Cardinal;
 var
-  S: string;
+  S: TLandrixXmlUtf8;
+  A, B, I: Integer;
 begin
-  S := LowerCase(Trim(LandrixXmlUtf8ToString(Name)));
+  { trimmed and in lower case on the bytes (no code page) }
+  A := 1;
+  B := Length(Name);
+  while (A <= B) and (Name[A] in [#9, #10, #13, ' ']) do
+    Inc(A);
+  while (B >= A) and (Name[B] in [#9, #10, #13, ' ']) do
+    Dec(B);
+  S := Copy(Name, A, B - A + 1);
+  for I := 1 to Length(S) do
+    if S[I] in ['A'..'Z'] then
+      S[I] := AnsiChar(Ord(S[I]) + 32);
   if (S = 'utf-8') or (S = 'utf8') then
     Result := $10FFFF
   else if (S = 'us-ascii') or (S = 'ascii') then
@@ -370,6 +381,9 @@ type
     FAsciiMap: array[0..127] of Integer;
     FHasMap: Boolean;
     FInMap: Boolean;
+    { the strings of a character map write a character the encoding
+      lacks as a character reference (HTML), not SERE0008 }
+    FMapRefs: Boolean;
     FPlain: Boolean;
     { cdata-section-elements: the Clark names of the elements whose text
       is written as CDATA sections }
@@ -700,8 +714,10 @@ begin
       if K >= 0 then
       begin
         Escape(Norm(Copy(S, Start, I - Start)), Attribute);
+        { not escaped; a character the encoding lacks is SERE0008, in
+          HTML a character reference (Saxon) }
         Saved := FEscape;
-        FEscape := False;
+        FEscape := FMapRefs;
         try
           Put(FMapStrings[K]);
         finally
@@ -755,7 +771,26 @@ end;
 { S with the strings of its mapped characters (S without a map) }
 function TSerializer.MappedValue(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
 var
-  I, N, K, Start: Integer;
+  I, N, K, Start, Len: Integer;
+
+  { appended with a doubling capacity (linear time also on Delphi 6) }
+  procedure Append(const X: TLandrixXmlUtf8);
+  var
+    Size: Integer;
+  begin
+    if X = '' then
+      Exit;
+    if Len + Length(X) > Length(Result) then
+    begin
+      Size := 2 * Length(Result) + 64;
+      if Size < Len + Length(X) then
+        Size := Len + Length(X);
+      SetLength(Result, Size);
+    end;
+    Move(PAnsiChar(X)^, Result[Len + 1], Length(X));
+    Inc(Len, Length(X));
+  end;
+
 begin
   { the text between mapped characters normalized (normalization-form) }
   if not FHasMap or not HasMapped(S) then
@@ -764,6 +799,7 @@ begin
     Exit;
   end;
   Result := '';
+  Len := 0;
   Start := 1;
   I := 1;
   while I <= Length(S) do
@@ -771,12 +807,14 @@ begin
     K := MappedAt(S, I, N);
     if K >= 0 then
     begin
-      Result := Result + Norm(Copy(S, Start, I - Start)) + FMapStrings[K];
+      Append(Norm(Copy(S, Start, I - Start)));
+      Append(FMapStrings[K]);
       Start := I + N;
     end;
     Inc(I, N);
   end;
-  Result := Result + Norm(Copy(S, Start, Length(S) - Start + 1));
+  Append(Norm(Copy(S, Start, Length(S) - Start + 1)));
+  SetLength(Result, Len);
 end;
 
 { the number of mapped characters in S }
@@ -873,10 +911,10 @@ begin
     end
     else if FEscape then
     begin
-      SetLength(R, Count);
-      R := R + '&#x' + LandrixXmlStringToUtf8(LowerCase(IntToHex(Code, 1))) + ';';
-      Count := Length(R);
-      SetLength(R, Count + Length(S) - I + 1);
+      { the part so far and the reference written out (linear time) }
+      PutBytes(Copy(R, 1, Count));
+      Count := 0;
+      PutBytes('&#x' + LandrixXmlStringToUtf8(LowerCase(IntToHex(Code, 1))) + ';');
     end
     else
       raise ELandrixXmlXPathError.CreateXPath('SERE0008', 'output character not available in this encoding (x' +
@@ -995,6 +1033,10 @@ begin
       '&': R := '&amp;';
       #13: R := '&#xD;';
       #127: R := '&#x7f;';
+      { not allowed as characters in XML 1.0 (they may come from a
+        parameter): a character reference, as Saxon writes them }
+      #1..#8, #11, #12, #14..#31:
+        R := '&#x' + LandrixXmlStringToUtf8(LowerCase(IntToHex(Ord(S[I]), 1))) + ';';
       '"':
         if Attribute then
           R := '&#34;';
@@ -1045,13 +1087,39 @@ begin
   Result := True;
 end;
 
+{ <0, 0 or >0 as A sorts before, with or after B in the order of their
+  UTF-16 code units (Saxon), whatever the code page: the UTF-8 bytes,
+  with the lead bytes EE and EF (U+E000..U+FFFF) after F0..F4 (the
+  characters beyond U+FFFF, surrogates in UTF-16) }
+function CompareBytes8(const A, B: TLandrixXmlUtf8): Integer;
+var
+  I, N, X, Y: Integer;
+begin
+  N := Length(A);
+  if Length(B) < N then
+    N := Length(B);
+  for I := 1 to N do
+    if A[I] <> B[I] then
+    begin
+      X := Ord(A[I]);
+      Y := Ord(B[I]);
+      if (X = $EE) or (X = $EF) then
+        Inc(X, $10);
+      if (Y = $EE) or (Y = $EF) then
+        Inc(Y, $10);
+      Result := X - Y;
+      Exit;
+    end;
+  Result := Length(A) - Length(B);
+end;
+
 { the declarations in the order of their prefixes (as Saxon writes them;
-  the default namespace first): CompareStr of the native strings, stable,
+  the default namespace first): the UTF-8 bytes compared, stable,
   a merge sort of positions over keys converted once, so an
   element with very many declarations stays O(n log n). }
 procedure SortDeclarations(var Prefixes, Uris: TLandrixXmlUtf8Array);
 var
-  Keys: array of string;
+  Keys: TLandrixXmlUtf8Array;
   Order, Tmp: array of Integer;
   NewPrefixes, NewUris: TLandrixXmlUtf8Array;
   N, Width, Lo, Mid, Hi, A, B, K: Integer;
@@ -1069,7 +1137,7 @@ begin
   SetLength(Tmp, N);
   for K := 0 to N - 1 do
   begin
-    Keys[K] := LandrixXmlUtf8ToString(Prefixes[K]);
+    Keys[K] := Prefixes[K];
     Order[K] := K;
   end;
   Width := 1;
@@ -1093,7 +1161,7 @@ begin
       while K < Hi do
       begin
         { the left element first on equal keys: stable }
-        if (B >= Hi) or ((A < Mid) and (CompareStr(Keys[Order[A]], Keys[Order[B]]) <= 0)) then
+        if (B >= Hi) or ((A < Mid) and (CompareBytes8(Keys[Order[A]], Keys[Order[B]]) <= 0)) then
         begin
           Tmp[K] := Order[A];
           Inc(A);
@@ -1466,7 +1534,7 @@ type
     procedure HtmlIndent;
     procedure HtmlText(const AText: TLandrixXmlUtf8; Attribute: Boolean);
     procedure Escape(const S: TLandrixXmlUtf8; Attribute: Boolean); override;
-    procedure IndentedText(const S: TLandrixXmlUtf8);
+    procedure IndentedText(const AText: TLandrixXmlUtf8);
     procedure TextNode(I: Integer; const V: TLandrixXmlUtf8); override;
     procedure StartTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean; I: Integer);
     procedure EndTag(const Name, Local: TLandrixXmlUtf8; IsHtml: Boolean);
@@ -1495,19 +1563,31 @@ end;
 { escape-html-uri: the characters outside 32..126 as %HH of their UTF-8 bytes }
 function EscapeHtmlUri(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
 const
-  Hex: string = '0123456789ABCDEF';
+  Hex: array[0..15] of AnsiChar = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+    'E', 'F');
 var
-  I: Integer;
+  I, W: Integer;
   V: TLandrixXmlUtf8;
 begin
   Result := '';
   { in NFC first (Saxon) }
   V := LandrixXmlNormalizeUtf8(S, xnfNfc);
+  SetLength(Result, 3 * Length(V));
+  W := 0;
   for I := 1 to Length(V) do
     if (Ord(V[I]) < 32) or (Ord(V[I]) > 126) then
-      Result := Result + '%' + LandrixXmlStringToUtf8(Hex[Ord(V[I]) div 16 + 1] + Hex[Ord(V[I]) mod 16 + 1])
+    begin
+      Result[W + 1] := '%';
+      Result[W + 2] := Hex[Ord(V[I]) div 16];
+      Result[W + 3] := Hex[Ord(V[I]) mod 16];
+      Inc(W, 3);
+    end
     else
-      Result := Result + Copy(V, I, 1);
+    begin
+      Inc(W);
+      Result[W] := V[I];
+    end;
+  SetLength(Result, W);
 end;
 
 procedure THtmlSerializer.CloseTag;
@@ -1561,9 +1641,13 @@ begin
     FEscape := Saved;
     Exit;
   end;
+  { script and style: nothing escaped, but character references for
+    what the encoding lacks (Saxon) }
   if FInScript > 0 then
   begin
+    FEscape := True;
     Put(S);
+    FEscape := Saved;
     Exit;
   end;
   FEscape := True;
@@ -1653,10 +1737,14 @@ end;
 { text outside formatted elements: a line break, or a space after more than
   80 characters of the text, becomes a line break with the indentation of
   the level (the spaces after it dropped), as Saxon's HTML indenter does }
-procedure THtmlSerializer.IndentedText(const S: TLandrixXmlUtf8);
+procedure THtmlSerializer.IndentedText(const AText: TLandrixXmlUtf8);
 var
   I, Start, Count, StartCount: Integer;
+  S: TLandrixXmlUtf8;
 begin
+  { the characters counted after normalization (Saxon; text with mapped
+    characters does not come here) }
+  S := Norm(AText);
   Start := 1;
   Count := 0;
   StartCount := 0;
@@ -2138,9 +2226,10 @@ begin
   end;
 end;
 
+{ ASCII letters compared without case, on the bytes (no code page) }
 function SameText8(const A, B: TLandrixXmlUtf8): Boolean;
 begin
-  Result := LowerCase(LandrixXmlUtf8ToString(A)) = LowerCase(LandrixXmlUtf8ToString(B));
+  Result := Lower8(A) = Lower8(B);
 end;
 
 { The text of all text nodes (method text), a character the encoding does
@@ -2186,7 +2275,7 @@ end;
 procedure XsltSerialize(Tree: TLandrixXmlXPathTree; Props: TXsltOutputProperties; Stream: TStream;
   ForceUtf8: Boolean);
 var
-  Method, Encoding, NF: TLandrixXmlUtf8;
+  Method, Encoding, DeclEncoding, NF: TLandrixXmlUtf8;
   S: TSerializer;
   H: THtmlSerializer;
   E, C: Integer;
@@ -2235,6 +2324,21 @@ begin
   if ForceUtf8 then
     Encoding := 'UTF-8';
   MaxChar := EncodingMaxChar(Encoding);
+  { the XML declaration names utf8 UTF-8 (Saxon) }
+  DeclEncoding := Encoding;
+  if Lower8(Encoding) = 'utf8' then
+    DeclEncoding := 'UTF-8';
+  { SEPM0010 before SEPM0009 (Saxon), both for xml and xhtml }
+  if ((Method = 'xml') or (Method = 'xhtml')) and (Props.Value('undeclare-prefixes', 'no') = 'yes') and
+    (Props.Value('version', '1.0') = '1.0') then
+    raise ELandrixXmlXPathError.CreateXPath('SEPM0010', 'undeclare-prefixes needs XML 1.1');
+  { SEPM0009: no XML declaration, but standalone, or a version other than
+    1.0 with doctype-system }
+  if ((Method = 'xml') or (Method = 'xhtml')) and (Props.Value('omit-xml-declaration', 'no') = 'yes') and
+    (Props.Has('standalone') and (Props.Value('standalone', '') <> 'omit') or
+    (Props.Value('version', '1.0') <> '1.0') and Props.Has('doctype-system')) then
+    raise ELandrixXmlXPathError.CreateXPath('SEPM0009', 'omit-xml-declaration conflicts with standalone or ' +
+      'the version');
   if MaxChar = 0 then
     raise ELandrixXmlError.CreateCode(xecUnsupported, 'XSLT output: the encoding ' +
       LandrixXmlUtf8ToString(Encoding) + ' is not supported (UTF-8, US-ASCII and ISO-8859-1 only)');
@@ -2265,6 +2369,7 @@ begin
     H := THtmlSerializer.Create(Tree, Stream, Props.Value('indent', 'yes') = 'yes');
     try
       H.FXhtml := Method = 'xhtml';
+      H.FMapRefs := not H.FXhtml;
       H.FInScript := -1000000;
       H.FEscapeUris := Props.Value('escape-uri-attributes', 'yes') = 'yes';
       H.FContentType := Props.Value('include-content-type', 'yes') = 'yes';
@@ -2281,7 +2386,7 @@ begin
       H.SetRaw(Props);
       if H.FXhtml and (Props.Value('omit-xml-declaration', 'no') <> 'yes') then
       begin
-        H.Put('<?xml version="1.0" encoding="' + Encoding + '"');
+        H.Put('<?xml version="1.0" encoding="' + DeclEncoding + '"');
         if Props.Has('standalone') and (Props.Value('standalone', '') <> 'omit') then
           H.Put(' standalone="' + Props.Value('standalone', '') + '"');
         H.Put('?>');
@@ -2313,7 +2418,7 @@ begin
     S.SetRaw(Props);
     if Props.Value('omit-xml-declaration', 'no') <> 'yes' then
     begin
-      S.Put('<?xml version="1.0" encoding="' + Encoding + '"');
+      S.Put('<?xml version="1.0" encoding="' + DeclEncoding + '"');
       if Props.Has('standalone') and (Props.Value('standalone', '') <> 'omit') then
         S.Put(' standalone="' + Props.Value('standalone', '') + '"');
       S.Put('?>');

@@ -954,6 +954,78 @@ begin
   end;
 end;
 
+{ The serialized result of a stylesheet with Output (an xsl:output
+  element) and a template for / with Body; Param is bound to $p. The
+  error code on a dynamic or serialization error. }
+function RunOutputSheet(const Output, Body: string; const Param: TLandrixXmlUtf8): string;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  Stream: TMemoryStream;
+  S: TLandrixXmlUtf8;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  Stream := TMemoryStream.Create;
+  T := nil;
+  try
+    try
+      Sheet.LoadFromUtf8(U('<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">' +
+        Output + '<xsl:param name="p" select="''''"/><xsl:template match="/">' + Body +
+        '</xsl:template></xsl:stylesheet>'), U('file:///s/t.xsl'));
+      Source.LoadFromUtf8(U('<s/>'));
+      T := TLandrixXmlXsltTransformer.Create(Sheet);
+      T.SetParameter(U('p'), Param);
+      T.Transform(Source, Stream);
+      S := '';
+      SetLength(S, Integer(Stream.Size));
+      if Length(S) > 0 then
+        Move(Stream.Memory^, S[1], Length(S));
+      Result := LandrixXmlUtf8ToString(S);
+    except
+      on E: ELandrixXmlXPathError do
+        Result := E.XPathCode;
+    end;
+  finally
+    T.Free;
+    Stream.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
+{ Serialization edges from the review (Saxon HE 12.9). }
+procedure TestOutputReviewEdges;
+var
+  Long: string;
+  I: Integer;
+  R: string;
+begin
+  { script and style: a character the encoding lacks is a reference }
+  R := RunOutputSheet('<xsl:output method="html" encoding="US-ASCII"/>',
+    '<html><script>let x="&#233;"</script></html>', '');
+  Check(Pos('<script>let x="&#xe9;"</script>', R) > 0, 'script in US-ASCII: ' + R);
+  { a C0 control from a parameter: a character reference }
+  CheckEqualsStr('<r>&#x1;</r>', RunOutputSheet('<xsl:output method="xml" omit-xml-declaration="yes"/>',
+    '<r><xsl:value-of select="$p"/></r>', #1), 'U+0001 from a parameter');
+  CheckEqualsStr('SEPM0010', RunOutputSheet('<xsl:output method="xml" undeclare-prefixes="yes" ' +
+    'omit-xml-declaration="yes" standalone="yes"/>', '<r/>', ''), 'SEPM0010 first');
+  CheckEqualsStr('SEPM0010', RunOutputSheet('<xsl:output method="xml" undeclare-prefixes="yes"/>', '<r/>', ''),
+    'undeclare-prefixes with XML 1.0');
+  CheckEqualsStr('SEPM0009', RunOutputSheet('<xsl:output method="xml" omit-xml-declaration="yes" ' +
+    'standalone="no"/>', '<r/>', ''), 'standalone without declaration');
+  R := RunOutputSheet('<xsl:output method="xml" encoding="utf8"/>', '<r/>', '');
+  CheckEqualsStr('<?xml version="1.0" encoding="UTF-8"?>', Copy(R, 1, 38), 'utf8 named UTF-8');
+  { many character references in one text node (linear time) }
+  Long := '';
+  for I := 1 to 20000 do
+    Long := Long + '&#233;';
+  R := RunOutputSheet('<xsl:output method="xml" encoding="US-ASCII" omit-xml-declaration="yes"/>',
+    '<r>' + Long + '</r>', '');
+  CheckEquals(7 + 20000 * 6, Length(R), 'references in US-ASCII');
+end;
+
 { Edge cases from the review of the XSLT runtime (expected values as
   Saxon HE 12). }
 procedure TestRuntimeReviewEdges;
@@ -1097,6 +1169,7 @@ begin
   RegisterTest('Xslt.StackBudget', TestStackBudget);
   RegisterTest('Xslt.ManyAttributesCopy', TestManyAttributesCopy);
   RegisterTest('Xslt.RuntimeReviewEdges', TestRuntimeReviewEdges);
+  RegisterTest('Xslt.OutputReviewEdges', TestOutputReviewEdges);
 end;
 
 end.

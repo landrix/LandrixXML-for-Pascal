@@ -209,7 +209,10 @@ type
     { Runs the stylesheet on Source (its document node is the initial
       context; nil only with an InitialTemplate) and writes the principal
       result to Output at its position (UTF-8, US-ASCII or ISO-8859-1;
-      another encoding raises xecUnsupported). }
+      another encoding raises xecUnsupported). A serialization error
+      (for example a character the encoding lacks in a name) can come
+      after part of the result was written: Output then holds an
+      incomplete document, as with Saxon. }
     procedure Transform(Source: TLandrixXmlXPathTree; Output: TStream);
     { the result serialized as UTF-8, whatever xsl:output says }
     function TransformToUtf8(Source: TLandrixXmlXPathTree): TLandrixXmlUtf8;
