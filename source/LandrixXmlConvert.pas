@@ -592,6 +592,25 @@ begin
     Result := Result * 10;
 end;
 
+{$IFDEF CPU386}
+{$IFDEF FPC}
+  {$ASMMODE INTEL}
+{$ENDIF}
+{ Loads CW into the x87 control word. Unlike Set8087CW it does not go
+  through the global Default8087CW, which another thread may change
+  between the store and the load. }
+procedure LoadControlWord(CW: Word);
+var
+  W: Word;
+begin
+  W := CW;
+  asm
+    FNCLEX
+    FLDCW W
+  end;
+end;
+{$ENDIF}
+
 { M * 10^Exp10 with a single IEEE rounding. On x87 (32-bit x86) the FPU
   computes with 64-bit mantissas and the store rounds again (double
   rounding), so the precision control is set to 53 bits and the rounding
@@ -604,7 +623,7 @@ var
 begin
 {$IFDEF CPU386}
   Saved := Get8087CW;
-  Set8087CW(Word((Saved and not $0F00) or $0200));
+  LoadControlWord(Word((Saved and not $0F00) or $0200));
   try
 {$ENDIF}
     Result := M;
@@ -614,7 +633,7 @@ begin
       Result := Result / Pow10(-Exp10);
 {$IFDEF CPU386}
   finally
-    Set8087CW(Saved);
+    LoadControlWord(Saved);
   end;
 {$ENDIF}
 end;

@@ -50,6 +50,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Double parsing on 32-bit x86: the exact path loads the x87 control
+  word directly instead of through Set8087CW, which writes the global
+  Default8087CW; on Delphi Win32 two threads parsing at once could swap
+  their control words (Set8087CW loads the word back from the global).
 - Smaller fixes from the review: an xs:decimal whose fraction has more
   than a million digits is accepted when the digits beyond the limit are
   trailing zeros (`1.5` followed by a million zeros is 1.5);

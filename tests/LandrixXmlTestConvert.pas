@@ -280,10 +280,39 @@ end;
 
 { --- Double ----------------------------------------------------------------- }
 
+{ Default8087CW is a 32-bit x86 symbol (W1002 on Delphi 2009+), used on
+  that platform only }
+{$IFNDEF FPC}
+  {$WARN SYMBOL_PLATFORM OFF}
+{$ENDIF}
 procedure TestDouble;
 var
   D: Double;
+{$IFDEF CPU386}
+  Old, OldDefault, RoundDown, Marker: Word;
+{$ENDIF}
 begin
+{$IFDEF CPU386}
+  { the exact path sets the x87 control word for the operation (53 bits,
+    to nearest) and restores the caller's, here rounding downward, without
+    touching the global Default8087CW (Set8087CW writes it, a race between
+    threads) }
+  Old := Get8087CW;
+  OldDefault := Default8087CW;
+  RoundDown := Word((Old and not $0C00) or $0400);
+  Marker := Word(RoundDown xor $0C00);
+  Set8087CW(RoundDown);
+  Default8087CW := Marker;
+  try
+    D := LandrixXmlParseDouble('0.1');
+    CheckEquals(Integer(RoundDown), Integer(Get8087CW), 'x87 control word restored');
+    CheckEquals(Integer(Marker), Integer(Default8087CW), 'Default8087CW untouched');
+    CheckEqualsStr('3FB999999999999A', IntToHex(PInt64(@D)^, 16), '0.1 rounded to nearest');
+  finally
+    Set8087CW(Old);
+    Default8087CW := OldDefault;
+  end;
+{$ENDIF}
   D := LandrixXmlParseDouble('-0');
   CheckEqualsStr('0000000000000000', IntToHex(PInt64(@D)^, 16), '-0 parses as +0');
   D := LandrixXmlParseDouble(' 0.12345678901234567890123 ');
@@ -328,6 +357,10 @@ begin
   ExpectArgError(3, 'NaN');
   ExpectArgError(6, '1e23');
 end;
+
+{$IFNDEF FPC}
+  {$WARN SYMBOL_PLATFORM ON}
+{$ENDIF}
 
 { --- integers and booleans ------------------------------------------------- }
 
