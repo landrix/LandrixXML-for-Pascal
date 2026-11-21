@@ -273,6 +273,8 @@ type
   public
     { the xml and xs prefixes are predeclared; fn too }
     constructor Create;
+    { binds Prefix; an empty NamespaceUri undeclares it (a prefix cannot
+      stand for no namespace), also xs and fn }
     procedure AddNamespace(const Prefix, NamespaceUri: TLandrixXmlUtf8);
     function LookupNamespace(const Prefix: TLandrixXmlUtf8; out NamespaceUri: TLandrixXmlUtf8): Boolean;
     { A variable by its name as written after "$" (a prefix is resolved
@@ -701,7 +703,7 @@ begin
     if FPrefixes[I] = Prefix then
     begin
       NamespaceUri := FUris[I];
-      Result := True;
+      Result := (NamespaceUri <> '') or (Prefix = '');
       Exit;
     end;
   NamespaceUri := '';
@@ -2666,8 +2668,9 @@ begin
   for I := 0 to Integer(Length(FNsPrefixes)) - 1 do
     if FNsPrefixes[I] = Prefix then
     begin
+      { an empty URI: undeclared (AddNamespace) }
       NamespaceUri := FNsUris[I];
-      Result := True;
+      Result := (NamespaceUri <> '') or (Prefix = '');
       Exit;
     end;
   NamespaceUri := '';

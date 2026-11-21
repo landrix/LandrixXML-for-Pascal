@@ -981,6 +981,12 @@ type
       contexts bind them to }
     FVarUris: TStringList;
     FInternalCall: Boolean;
+    { IsPatternNode: the branch was compiled with "//" before it }
+    FRelativeBranch: Boolean;
+    { the pattern has one branch (SplitPattern), and this branch is
+      "." alone (IsPatternNode) }
+    FSingleBranch: Boolean;
+    FDotPattern: Boolean;
     { the xsl:result-document instructions with a literal format, checked
       when every xsl:output is known (Finish) }
     FFormatChecks: TList;
@@ -1047,6 +1053,7 @@ type
     function CompileVariable(M: TModule; E: Integer; Scope: TScope; Param: Boolean): TXsltInstr;
     procedure CompileGlobals;
     procedure CompileTemplate(D: TDecl);
+    function IsPatternNode(X: TLandrixXmlXPathExpression; Index: Integer; First: Boolean): Boolean;
     function PatternBranch(M: TModule; E: Integer; const Branch: TLandrixXmlUtf8; Scope: TScope;
       out Relative: Boolean): TLandrixXmlXPathExpression;
     procedure CompileNumber(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
@@ -2065,6 +2072,9 @@ begin
   Ctx := TLandrixXmlXPathStaticContext.Create;
   try
     Ctx.Profile := xppSaxon;
+    { XSLT predeclares neither xs nor fn (as NewContext) }
+    Ctx.AddNamespace('xs', '');
+    Ctx.AddNamespace('fn', '');
     Prefixes := M.Tree.InScopePrefixesUtf8(E);
     for I := 0 to Integer(Length(Prefixes)) - 1 do
       if (Prefixes[I] <> 'xml') and M.Tree.LookupNamespace(E, Prefixes[I], Uri) and (Uri <> '') then
@@ -2431,6 +2441,11 @@ begin
     Result.Profile := xppSaxon;
     Result.XPath10Compatible := Backwards(M, E);
     Result.DefaultElementNamespace := XPathDefaultNamespace(M, E);
+    { the stylesheet's expressions see only the namespaces declared in
+      it: XSLT predeclares neither xs nor fn (XSLT 2.0 5.4.1; Saxon
+      XPST0081, namespace-6202) }
+    Result.AddNamespace('xs', '');
+    Result.AddNamespace('fn', '');
     Prefixes := M.Tree.InScopePrefixesUtf8(E);
     for I := 0 to Integer(Length(Prefixes)) - 1 do
       if (Prefixes[I] <> 'xml') and M.Tree.LookupNamespace(E, Prefixes[I], Uri) and (Uri <> '') then
@@ -4202,6 +4217,106 @@ begin
   end;
 end;
 
+{ whether S starts with "." and then "/" (white space between) }
+function DotSlash(const S: TLandrixXmlUtf8): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if (S = '') or (S[1] <> '.') then
+    Exit;
+  I := 2;
+  while (I <= Length(S)) and (S[I] in [#9, #10, #13, ' ']) do
+    Inc(I);
+  Result := (I <= Length(S)) and (S[I] = '/');
+end;
+
+{ Whether the node Index of a compiled pattern branch is a pattern as
+  Saxon accepts it (the rules of XSLT 3.0, also for XSLT 2.0): steps on
+  the child, attribute, self, descendant and descendant-or-self axes,
+  ".", parenthesized patterns and their unions, and at the very start
+  (First) a variable or a call of id, key, doc or root; predicates
+  anywhere. A number, a string, another function or the parent axis
+  as a step is XTSE0340 (error-0340b, "name/1223"). }
+function TCompiler.IsPatternNode(X: TLandrixXmlXPathExpression; Index: Integer; First: Boolean): Boolean;
+var
+  N: TLandrixXmlXPathAstNode;
+  J, K: Integer;
+  Name: TLandrixXmlUtf8;
+begin
+  N := X.Nodes[Index];
+  case N.Kind of
+    xakRoot:
+      Result := First;
+    xakContextItem:
+      { "." at the start only as the whole pattern (".[1]" too; not
+        "./b" or "a | .") }
+      Result := not First or FDotPattern;
+    xakStep:
+      Result := N.Axis in [xaxChild, xaxAttribute, xaxSelf, xaxDescendant, xaxDescendantOrSelf];
+    xakPath:
+      begin
+        { the "//" PatternBranch puts before a relative branch (at its
+          first byte, also as the first operand of intersect or except):
+          the node after it stands at the start }
+        if FRelativeBranch and N.RootStart and (N.Position = 1) then
+          K := 1
+        else if N.RootStart then
+        begin
+          { "/" only at the start ("a/(/b)" is no pattern) }
+          K := -1;
+          if not First then
+          begin
+            Result := False;
+            Exit;
+          end;
+        end
+        else
+          K := 0;
+        Result := True;
+        for J := 0 to Integer(Length(N.Children)) - 1 do
+          if not IsPatternNode(X, N.Children[J], First and (J = K)) then
+            Result := False;
+      end;
+    xakFilter:
+      Result := IsPatternNode(X, N.Children[0], First);
+    xakUnion, xakIntersectExcept:
+      begin
+        Result := True;
+        for J := 0 to Integer(Length(N.Children)) - 1 do
+          if not IsPatternNode(X, N.Children[J], First) then
+            Result := False;
+      end;
+    xakVariable:
+      Result := First;
+    xakFunction:
+      begin
+        Result := False;
+        if not First then
+          Exit;
+        { the arguments: literals and variables ("id(@id)" is no pattern) }
+        for J := 0 to Integer(Length(N.Children)) - 1 do
+          if not (X.Nodes[N.Children[J]].Kind in [xakString, xakInteger, xakDecimal, xakDouble, xakVariable]) then
+            Exit;
+        if N.Op >= 0 then
+          Result := (N.Op = Ord(xfnId)) or (N.Op = Ord(xfnRoot)) or (N.Op = Ord(xfnDoc))
+        else
+        begin
+          { the functions of the stylesheet's context, in the order
+            NewContext declares them }
+          K := -1 - N.Op;
+          if (K < Integer(Length(FC.FunctionNames))) and (FC.FunctionUris[K] = LandrixXmlXPathFunctionNamespace) then
+          begin
+            Name := FC.FunctionNames[K];
+            Result := (Name = 'key') or (Name = 'doc') or (Name = 'id') or (Name = 'root');
+          end;
+        end;
+      end;
+  else
+    Result := False;
+  end;
+end;
+
 { A branch of a pattern as the expression MatchesPattern takes: "//"
   before a relative path (Relative), rooted ones as they are,
   document-node(...) as the root tested. }
@@ -4240,6 +4355,14 @@ begin
       else
         raise;
   end;
+  FRelativeBranch := Relative;
+  { "." at the start: the pattern has this branch alone, and it is not
+    "./" or ".//" (Saxon accepts "(.)/b"; the parentheses are gone from
+    the tree, so "(.)[1]" and "(. | a)" pass too) }
+  FDotPattern := FSingleBranch and not DotSlash(Branch);
+  { (the expression belongs to FC.Expressions) }
+  if not IsPatternNode(Result, Result.Root, True) then
+    Fail(M, E, 'XTSE0340', 'not a pattern: "' + LandrixXmlUtf8ToString(Branch) + '"');
 end;
 
 { xsl:number (XSLT 2.0 12): value or the place of the selected node
@@ -4293,6 +4416,7 @@ begin
   if Attr(M, E, 'count', V) then
   begin
     Branches := SplitPattern(V);
+    FSingleBranch := Length(Branches) = 1;
     SetLength(Instr.CountPatterns, Length(Branches));
     SetLength(Instr.CountRelative, Length(Branches));
     for I := 0 to Integer(Length(Branches)) - 1 do
@@ -4305,6 +4429,7 @@ begin
   if Attr(M, E, 'from', V) then
   begin
     Branches := SplitPattern(V);
+    FSingleBranch := Length(Branches) = 1;
     SetLength(Instr.FromPatterns, Length(Branches));
     SetLength(Instr.FromRelative, Length(Branches));
     for I := 0 to Integer(Length(Branches)) - 1 do
@@ -4380,6 +4505,7 @@ begin
     if Attr(M, E, 'collation', V) then
       Fail(M, E, 'XTSE1090', 'collation only with group-by or group-adjacent');
     Branches := SplitPattern(Pattern);
+    FSingleBranch := Length(Branches) = 1;
     SetLength(Instr.CountPatterns, Length(Branches));
     SetLength(Instr.CountRelative, Length(Branches));
     for I := 0 to Integer(Length(Branches)) - 1 do
@@ -4762,6 +4888,7 @@ begin
     end;
   end;
   Branches := SplitPattern(ReqAttr(M, E, 'match'));
+  FSingleBranch := Length(Branches) = 1;
   SetLength(Decl.Patterns, Length(Branches));
   SetLength(Decl.Relative, Length(Branches));
   for I := 0 to Integer(Length(Branches)) - 1 do
@@ -4956,6 +5083,7 @@ begin
     if Count = 0 then
       ModeNames.Add(ModeOf(''));
     Branches := SplitPattern(Match);
+    FSingleBranch := Length(Branches) = 1;
     for I := 0 to Integer(Length(Branches)) - 1 do
     begin
       B := Branches[I];

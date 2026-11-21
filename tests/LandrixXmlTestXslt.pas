@@ -1282,6 +1282,39 @@ begin
   CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="a" mode="#unnamed"/>' + Tail, ''),
     'mode #unnamed (Saxon)');
   CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match=""/>' + Tail, ''), 'an empty match');
+  { pattern steps as Saxon checks them (XSLT 3.0 rules) }
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match="name/1223"/>' + Tail, ''),
+    'a number as a step');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match="a/string()"/>' + Tail, ''),
+    'a function as a step');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match="a/.."/>' + Tail, ''), 'the parent axis');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:variable name="v" select="/"/>' +
+    '<xsl:template match="a/$v"/>' + Tail, ''), 'a variable after the start');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match="//id(''x'')"/>' + Tail, ''),
+    'id() after //');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:key name="k" match="a/(b, c)" use="."/>' +
+    '<xsl:template match="/"/>' + Tail, ''), 'a sequence in a key pattern');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:variable name="v" select="/"/>' +
+    '<xsl:template match="$v[1]//b | a/(b|c)/self::c | a/. | root()/a | id(''x'')//b | $v intersect b | ' +
+    'root() except b | key(''k'', $v) | id($v)"/><xsl:key name="k" match="b" use="."/>' + Tail, ''),
+    'patterns Saxon accepts');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match=".[1]"/>' + Tail, ''), '. as the pattern');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="(.)/b"/>' + Tail, ''), '(.) as the first step');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match="a | ."/>' + Tail, ''), '. as a branch');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match="./b"/>' + Tail, ''), '. as the first step');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match="a/(/b)"/>' + Tail, ''), '/ after a step');
+  CheckEqualsStr('XTSE0340', CompileCode(Head + '<xsl:template match="id(@id)"/>' + Tail, ''),
+    'a path as the argument of id()');
+  { XSLT predeclares neither xs nor fn (Saxon: namespace-6202) }
+  CheckEqualsStr('XPST0081', CompileCode(Head + '<xsl:template match="/"><xsl:value-of select="xs:integer(1)"/>' +
+    '</xsl:template>' + Tail, ''), 'xs without a declaration');
+  CheckEqualsStr('XPST0081', CompileCode(Head + '<xsl:variable name="v" as="xs:integer" select="1"/>' +
+    '<xsl:template match="/"/>' + Tail, ''), 'xs in a type without a declaration');
+  CheckEqualsStr('XPST0081', CompileCode(Head + '<xsl:template match="/" use-when="fn:true()"/>' + Tail, ''),
+    'fn in use-when without a declaration');
+  CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="/"><xsl:value-of xmlns:xs="' +
+    'http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" ' +
+    'select="fn:string(xs:integer(1))"/></xsl:template>' + Tail, ''), 'xs and fn declared');
   { a priority of more than 255 characters (FPC's Val refused it) }
   CheckEqualsStr('ok', CompileCode(Head + '<xsl:template match="a" priority="0.' + StringOfChar('0', 300) +
     '1"/>' + Tail, ''), 'a long priority');

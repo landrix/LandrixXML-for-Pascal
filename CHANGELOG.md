@@ -30,6 +30,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- XSLT: the prefixes `xs` and `fn` are bound in a stylesheet's
+  expressions, sequence types and `use-when` only where the stylesheet
+  declares them, as XSLT 2.0 and Saxon say (`XPST0081` otherwise; before
+  they were always bound). A stylesheet Saxon runs is not affected. W3C
+  XSLT suite, with the pattern checks under Fixed: six more cases pass.
+- XPath: `TLandrixXmlXPathStaticContext.AddNamespace` with an empty
+  namespace URI undeclares the prefix (also `xs` and `fn`); before the
+  prefix stood for no namespace.
 - DOM: `TLandrixXmlDocument.Clear`, and with it every `LoadFrom...`,
   starts a new name table. A document object reused for many inputs no
   longer keeps the names of all of them. The `Names` object, a
@@ -57,12 +65,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT patterns are checked step by step as Saxon checks them (the rules
+  of XSLT 3.0): a number, a string, a function call after the start, a
+  variable after the start or a step on another axis than child,
+  attribute, self, descendant or descendant-or-self (`a/..`,
+  `name/1223`, `a/string()`), as are `.` at the start other than as the
+  whole pattern (`./b`, `a | .`; `a/.` stays), `/` after a step (`a/(/b)`) and an argument of
+  `id()` or `key()` that is no literal or variable (`id(@id)`): all
+  `XTSE0340`. Before they compiled, and some matched (`a/..` the parent
+  of an `a`).
 - `xml:id` as Saxon treats it: XPath trees trim the white space around
   its value when a document is loaded, so `@xml:id = 'a'` holds for
   `xml:id=" a "` (the spaces inside are kept; XDM would collapse them,
   Saxon does not), and an `xml:id` attribute an XSLT stylesheet
   constructs has its white space collapsed (XSLT 2.0 11.3); a copied one
-  keeps its value QT3 (Saxon profile): fn-doc-37 passes.
+  keeps its value. QT3 (Saxon profile): fn-doc-37 passes.
 - XSLT static errors as Saxon reports them: an attribute an XSLT element
   does not define (`XTSE0090`; before only for some elements, now for the
   elements of XSLT 2.0 and their XSLT 3.0 attributes; a shadow attribute

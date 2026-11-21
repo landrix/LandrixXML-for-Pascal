@@ -546,6 +546,27 @@ begin
   finally
     E.Free;
   end;
+  { an empty URI undeclares a prefix, xs too }
+  C := TLandrixXmlXPathStaticContext.Create;
+  E := nil;
+  try
+    C.AddNamespace(U('xs'), U(''));
+    C.AddNamespace(U('p'), U('urn:p'));
+    C.AddNamespace(U('p'), U(''));
+    Check(not C.LookupNamespace(U('xs'), Uri) and not C.LookupNamespace(U('p'), Uri), 'undeclared in the context');
+    E := TLandrixXmlXPathExpression.Create(U('1'), C);
+    Check(not E.LookupNamespace(U('xs'), Uri) and (Uri = ''), 'undeclared in the expression');
+    try
+      TLandrixXmlXPathExpression.Create(U('xs:integer(1)'), C).Free;
+      Check(False, 'xs undeclared: no error');
+    except
+      on X: ELandrixXmlXPathError do
+        CheckEqualsStr('XPST0081', X.XPathCode, 'xs undeclared');
+    end;
+  finally
+    E.Free;
+    C.Free;
+  end;
 end;
 
 procedure TearDown;

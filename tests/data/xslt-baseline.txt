@@ -1334,8 +1334,9 @@ error/error-0280d pass
 error/error-0280e pass
 error/error-0280f pass
 error/error-0290a pass
+error/error-0340b pass
 error/error-0340c pass
-error/error-0340d wrong-code
+error/error-0340d pass
 error/error-0350a pass
 error/error-0350b pass
 error/error-0370a pass
@@ -2112,6 +2113,8 @@ match/match-049 pass
 match/match-058 pass
 match/match-077 pass
 match/match-078 pass
+match/match-079 pass
+match/match-080 pass
 match/match-087 pass
 match/match-088 pass
 match/match-089 pass
@@ -2540,6 +2543,7 @@ namespace/namespace-6002 pass
 namespace/namespace-6003 pass
 namespace/namespace-6101 pass
 namespace/namespace-6201 pass
+namespace/namespace-6202 pass
 next-match/next-match-001 pass
 next-match/next-match-002 pass
 next-match/next-match-003 pass
@@ -5139,6 +5143,7 @@ version/version-019 pass
 version/version-020 pass
 version/version-021 pass
 version/version-022 pass
+version/version-023a pass
 version/version-024 pass
 version/version-025 pass
 version/version-025a pass
