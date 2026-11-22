@@ -80,6 +80,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema: `xs:redefine` with a simple type that redefines a complex
+  type of the same name, or the other way round, is checked as Xerces
+  does: the original is the base of the redefinition (cos-st-restricts.1.1,
+  src-ct.1 or src-ct.2.1; a complex type extending a simple one is
+  valid). Before, the original was not found and the schema was rejected
+  without a constraint code.
 - XML Schema: a complex type where a simple type is needed is reported
   with Xerces' code: cos-st-restricts.1.1 as the base, list item type or
   union member of a simple type, src-resolve as the type of an attribute

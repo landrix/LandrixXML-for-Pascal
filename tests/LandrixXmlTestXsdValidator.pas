@@ -30,6 +30,7 @@ implementation
 uses
   SysUtils,
   Classes,
+  Contnrs,
   LandrixXmlBase,
   LandrixXmlReader,
   LandrixXmlDom,
@@ -1146,6 +1147,58 @@ begin
   end;
 end;
 
+{ the name map after removals (a redefinition takes a type out of the
+  map of its kind): every other key is still found, through collisions
+  and after growing }
+procedure TestNameMapRemove;
+var
+  Map: TLandrixXmlXsdNameMap;
+  Values: TObjectList;
+  I, Round: Integer;
+  Gone: Boolean;
+
+  function Key(I: Integer): TLandrixXmlUtf8;
+  begin
+    Result := LandrixXmlStringToUtf8('n' + IntToStr(I));
+  end;
+
+begin
+  Values := TObjectList.Create(True);
+  Map := TLandrixXmlXsdNameMap.Create;
+  try
+    Map.Remove('', 'missing');
+    for I := 0 to 299 do
+    begin
+      Values.Add(TObject.Create);
+      Map.Put('urn:x', Key(I), Values[I]);
+    end;
+    for Round := 2 to 3 do
+    begin
+      for I := 299 downto 0 do
+        if I mod Round = 0 then
+          Map.Remove('urn:x', Key(I));
+      Map.Remove('urn:x', 'missing');
+      for I := 0 to 299 do
+      begin
+        Gone := (I mod 2 = 0) or ((Round = 3) and (I mod 3 = 0));
+        if Gone then
+          Check(Map.Find('urn:x', Key(I)) = nil, 'removed ' + IntToStr(I))
+        else
+          Check(Map.Find('urn:x', Key(I)) = Values[I], 'kept ' + IntToStr(I));
+      end;
+    end;
+    CheckEquals(100, Map.Count, 'count after removal');
+    for I := 0 to 299 do
+      Map.Put('urn:x', Key(I), Values[I]);
+    CheckEquals(300, Map.Count, 'count after adding again');
+    for I := 0 to 299 do
+      Check(Map.Find('urn:x', Key(I)) = Values[I], 'again ' + IntToStr(I));
+  finally
+    Map.Free;
+    Values.Free;
+  end;
+end;
+
 { tests/data/xsdschema/rules.txt: schemas with the constraint code Xerces
   reports (a sixth field holds Xerces' code where it is known to differ),
   and valid forms that must load (tools/check-xsdrules.py checks the codes
@@ -1274,6 +1327,7 @@ procedure Register;
 begin
   RegisterTest('XsdValidator.Basics', TestBasics);
   RegisterTest('XsdValidator.Derivation', TestDerivation);
+  RegisterTest('XsdValidator.NameMapRemove', TestNameMapRemove);
   RegisterTest('XsdValidator.Wildcards', TestWildcards);
   RegisterTest('XsdValidator.Identity', TestIdentity);
   RegisterTest('XsdValidator.Occurrence', TestOccurrence);

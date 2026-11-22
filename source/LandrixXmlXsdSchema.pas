@@ -257,6 +257,7 @@ type
     function Add(const NamespaceUri, LocalName: TLandrixXmlUtf8; Value: TObject): Boolean;
     procedure Put(const NamespaceUri, LocalName: TLandrixXmlUtf8; Value: TObject);
     function Find(const NamespaceUri, LocalName: TLandrixXmlUtf8): TObject;
+    procedure Remove(const NamespaceUri, LocalName: TLandrixXmlUtf8);
     property Count: Integer read FCount;
   end;
 
@@ -520,6 +521,44 @@ begin
   if FCount = 0 then
     Exit;
   Result := FEntries[Slot(MapKey(NamespaceUri, LocalName))].Value;
+end;
+
+{ backward shift: the entries after the removed one that belong at or
+  before its slot move up, so the probe chains stay unbroken }
+procedure TLandrixXmlXsdNameMap.Remove(const NamespaceUri, LocalName: TLandrixXmlUtf8);
+var
+  Mask, Hole, J, Home: Integer;
+  Shift: Boolean;
+begin
+  if FCount = 0 then
+    Exit;
+  Mask := Integer(Length(FEntries)) - 1;
+  Hole := Slot(MapKey(NamespaceUri, LocalName));
+  if FEntries[Hole].Value = nil then
+    Exit;
+  FEntries[Hole].Key := '';
+  FEntries[Hole].Value := nil;
+  Dec(FCount);
+  J := Hole;
+  while True do
+  begin
+    J := (J + 1) and Mask;
+    if FEntries[J].Value = nil then
+      Break;
+    Home := Integer(HashOf(FEntries[J].Key) and Cardinal(Mask));
+    { the entry stays if its home slot lies cyclically in (Hole, J] }
+    if Hole <= J then
+      Shift := (Home <= Hole) or (Home > J)
+    else
+      Shift := (Home <= Hole) and (Home > J);
+    if Shift then
+    begin
+      FEntries[Hole] := FEntries[J];
+      FEntries[J].Key := '';
+      FEntries[J].Value := nil;
+      Hole := J;
+    end;
+  end;
 end;
 
 { ---------------------------------------------------------------------- }

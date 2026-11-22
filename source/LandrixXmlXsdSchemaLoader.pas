@@ -1420,7 +1420,7 @@ end;
 procedure TLoader.ApplyRedefine(Doc: TSchemaDoc; Redefine: TLandrixXmlNode; Redefined: TSchemaDoc);
 var
   Child: TLandrixXmlNode;
-  Kind: TPendingKind;
+  Kind, OtherKind: TPendingKind;
   Name: TLandrixXmlUtf8;
   Original, P: TPending;
 begin
@@ -1448,6 +1448,20 @@ begin
     if not AttrTrimmed(Child, 'name', Name) then
       Fail(Doc, Child, 'a redefinition without a name');
     Original := TPending(FMaps[Kind].Find(Doc.TargetNamespace, Name));
+    { a simple type may redefine a complex one and the other way round
+      (types share one symbol space); as Xerces renames the original,
+      it leaves the map of its kind, and the derivation fails or holds
+      as for any base of that kind }
+    if (Original = nil) and (Kind in [pkSimpleType, pkComplexType]) then
+    begin
+      if Kind = pkSimpleType then
+        OtherKind := pkComplexType
+      else
+        OtherKind := pkSimpleType;
+      Original := TPending(FMaps[OtherKind].Find(Doc.TargetNamespace, Name));
+      if Original <> nil then
+        FMaps[OtherKind].Remove(Doc.TargetNamespace, Name);
+    end;
     if Original = nil then
       Fail(Doc, Child, 'the redefined component ' + QualifiedText(Doc.TargetNamespace, Name) +
         ' does not exist');
