@@ -2936,21 +2936,106 @@ begin
   CheckFacetConsistency;
 end;
 
+{ A type whose own patterns apply (the built-in xs:language counts: Xerces
+  defines it by a pattern) }
+function HasOwnPatterns(Typ: TLandrixXmlXsdSimpleType): Boolean;
+begin
+  Result := (Typ.FPatterns <> nil) or (Typ.FBuiltin and (Typ.FLexicalRule = xslLanguage));
+end;
+
+{ The patterns that apply to Typ, in Xerces' order (the first failure is
+  the one reported). Xerces' pattern list of a restriction with patterns of
+  its own is its own followed by the base's list reversed (one without
+  takes the base's list) and is checked from the last entry. With the
+  types that have patterns numbered 0, 1, 2, ... from Typ towards the base,
+  that checks the odd ones from Typ towards the base, then the even ones
+  back towards Typ: for three levels the middle one first. The types are
+  walked each time (a pattern added to a base later still counts). }
+function CheckPatternsFromBase(Typ: TLandrixXmlXsdSimpleType; const Value: TLandrixXmlXsdValue;
+  Owner: TLandrixXmlXsdSimpleType; out Error: TLandrixXmlXsdError): Boolean;
+var
+  T: TLandrixXmlXsdSimpleType;
+  N, K, Target: Integer;
+begin
+  Result := False;
+  N := 0;
+  T := Typ;
+  while T <> nil do
+  begin
+    if HasOwnPatterns(T) then
+    begin
+      if Odd(N) and not T.CheckPatterns(Value, Owner, Error) then
+        Exit;
+      Inc(N);
+    end;
+    T := T.FBase;
+  end;
+  { the even ones, the last first (a chain is a few types long) }
+  Target := N - 1;
+  if Odd(Target) then
+    Dec(Target);
+  while Target >= 0 do
+  begin
+    K := 0;
+    T := Typ;
+    while T <> nil do
+    begin
+      if HasOwnPatterns(T) then
+      begin
+        if K = Target then
+          Break;
+        Inc(K);
+      end;
+      T := T.FBase;
+    end;
+    if not T.CheckPatterns(Value, Owner, Error) then
+      Exit;
+    Dec(Target, 2);
+  end;
+  Result := True;
+end;
+
 function TLandrixXmlXsdSimpleType.CheckPatterns(const Value: TLandrixXmlXsdValue; Owner: TLandrixXmlXsdSimpleType;
   out Error: TLandrixXmlXsdError): Boolean;
 var
-  I: Integer;
+  I, First: Integer;
+  Sources: TLandrixXmlUtf8;
 begin
   Result := True;
   if FPatterns = nil then
+  begin
+    { the built-in xs:language: its pattern as Xerces has it }
+    if (FLexicalRule = xslLanguage) and FBuiltin and not IsLanguage(Value.Text) then
+    begin
+      Result := False;
+      SetError(Error, 'cvc-pattern-valid', 'Value ' + Quote(Value.RawText) +
+        ' is not facet-valid with respect to pattern ''([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*'' for type ''' +
+        Owner.DisplayName + '''.');
+    end;
     Exit;
-  for I := 0 to Integer(FPatterns.Count) - 1 do
+  end;
+  { Xerces deviation, not in the test suite. Xerces joins the patterns of
+    one restriction into one expression with "|" that starts with the
+    first non-empty one: empty patterns before it are dropped (they do not
+    match the empty value), a later one is an empty alternative }
+  First := 0;
+  while (First < Integer(FPatterns.Count) - 1) and (TLandrixXmlRegex(FPatterns[First]).Source = '') do
+    Inc(First);
+  for I := First to Integer(FPatterns.Count) - 1 do
     if TLandrixXmlRegex(FPatterns[I]).Matches(Value.Text) then
       Exit;
   Result := False;
-  SetError(Error, 'cvc-pattern-valid', 'Value ' + Quote(Value.Text) +
-    ' is not facet-valid with respect to pattern ' +
-    Quote(TLandrixXmlRegex(FPatterns[0]).Source) + ' for type ''' + Owner.DisplayName + '''.');
+  { as Xerces: the patterns of one restriction joined with "|" (an empty
+    pattern first is dropped, one later leaves the "|") }
+  Sources := '';
+  for I := 0 to Integer(FPatterns.Count) - 1 do
+    if Sources = '' then
+      Sources := TLandrixXmlRegex(FPatterns[I]).Source
+    else
+      Sources := Sources + '|' + TLandrixXmlRegex(FPatterns[I]).Source;
+  SetError(Error, 'cvc-pattern-valid', 'Value ' + Quote(Value.RawText) +
+    ' is not facet-valid with respect to pattern ' + Quote(Sources) + ' for type ''' +
+    Owner.DisplayName + '''.');
 end;
 
 { --- canonical forms and keys as Xerces has them ---------------------- }
@@ -3560,7 +3645,6 @@ function TLandrixXmlXsdSimpleType.ValidateList(const Text: TLandrixXmlUtf8;
   out HasValue: Boolean): Boolean;
 var
   Normalized, Token: TLandrixXmlUtf8;
-  T: TLandrixXmlXsdSimpleType;
   Items: array[0..1] of TLandrixXmlXsdValue;
   I, Start, Count, K: Integer;
   ItemHasValue: Boolean;
@@ -3577,13 +3661,8 @@ begin
   Value.Items := nil;
   Value.NamespaceUri := '';
   Value.LocalName := '';
-  T := Self;
-  while T <> nil do
-  begin
-    if not T.CheckPatterns(Value, Self, Error) then
-      Exit;
-    T := T.FBase;
-  end;
+  if not CheckPatternsFromBase(Self, Value, Self, Error) then
+    Exit;
   Count := 0;
   K := 0;
   I := 1;
@@ -3647,7 +3726,6 @@ function TLandrixXmlXsdSimpleType.ValidateUnion(const Text: TLandrixXmlUtf8; Con
 var
   I: Integer;
   MemberError: TLandrixXmlXsdError;
-  T: TLandrixXmlXsdSimpleType;
   Last: TLandrixXmlXsdValue;
   MemberHasValue: Boolean;
 begin
@@ -3664,13 +3742,8 @@ begin
     Value.Length := 0;
     Value.NamespaceUri := '';
     Value.LocalName := '';
-    T := Self;
-    while T <> nil do
-    begin
-      if not T.CheckPatterns(Value, Self, Error) then
-        Exit;
-      T := T.FBase;
-    end;
+    if not CheckPatternsFromBase(Self, Value, Self, Error) then
+      Exit;
   end;
   for I := 0 to Integer(Length(FMembers)) - 1 do
   begin
@@ -3726,7 +3799,6 @@ function TLandrixXmlXsdSimpleType.ValidateLexical(const Text: TLandrixXmlUtf8;
 var
   Normalized, Prefix, Uri: TLandrixXmlUtf8;
   Colon: Integer;
-  T: TLandrixXmlXsdSimpleType;
   Found: Boolean;
 begin
   Result := False;
@@ -3748,13 +3820,8 @@ begin
   Value.MemberType := Self;
   Value.NamespaceUri := '';
   Value.LocalName := '';
-  T := Self;
-  while T <> nil do
-  begin
-    if not T.CheckPatterns(Value, Self, Error) then
-      Exit;
-    T := T.FBase;
-  end;
+  if not CheckPatternsFromBase(Self, Value, Self, Error) then
+    Exit;
   Found := ParsePrimitive(FPrimitive, FLexicalRule, Normalized, Value);
   Value.RawText := Text;
   Value.MemberType := Self;

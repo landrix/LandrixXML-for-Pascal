@@ -80,6 +80,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema: a value that fails the `pattern` facets of several types of
+  a derivation is reported with the pattern Xerces reports: Xerces checks
+  them from the end of its pattern list (a restriction with patterns puts
+  them before its base's list reversed, so with three levels the middle
+  one comes first), counts the pattern of the built-in `xs:language`, and
+  shows the patterns of one restriction joined with `|` and the value as
+  written. Before, the first pattern of the first failing type from the
+  most derived one towards the base was named. As in Xerces, empty
+  patterns before the first other one of a restriction are dropped, so
+  they no longer accept an empty value there.
 - XSLT: the runtime's own limits (`MaxTemplateDepth`, `MaxStackBytes`)
   met in the left operand of `and`/`or` are raised at once, and a
   variable does not keep them, as for the evaluator's limits since the

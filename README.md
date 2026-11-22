@@ -729,6 +729,12 @@ both the mark and an entry here):
   fixed="37"`) does not allow the attribute, unless an attribute wildcard
   does; the suite expects the attribute with that value to be valid under
   XML Schema 1.0 (`attP031`).
+- Empty `pattern` facets of one restriction before its first other
+  pattern are dropped, as Xerces joins the patterns into one expression
+  that starts with the first non-empty one: `pattern=""` followed by
+  `pattern="b"` does not accept the empty value (an empty pattern after
+  another one does). No test of the suite covers this; in the source code
+  the mark reads `Xerces deviation, not in the test suite`.
 - The regular expression forms `\p{IsHighSurrogates}`,
   `\p{IsLowSurrogates}` and `[a-z--[b-z]]` are errors (`reF56`, `reM77`,
   `reN75`, `HighSurrogates`).

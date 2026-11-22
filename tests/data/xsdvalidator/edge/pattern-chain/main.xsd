@@ -1,0 +1,20 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:simpleType name="b"><xs:restriction base="xs:string"><xs:pattern value="a+"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="d"><xs:restriction base="b"><xs:pattern value="b"/><xs:pattern value="c"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="t0"><xs:restriction base="xs:string"><xs:pattern value="a+"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="t1"><xs:restriction base="t0"><xs:pattern value="b+"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="t1n"><xs:restriction base="t1"><xs:maxLength value="9"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="t2"><xs:restriction base="t1n"><xs:pattern value="c+"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="t3"><xs:restriction base="t2"><xs:pattern value="d+"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="lang"><xs:restriction base="xs:language"><xs:pattern value="en"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="empty1"><xs:restriction base="xs:string"><xs:pattern value=""/><xs:pattern value="b"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="empty2"><xs:restriction base="xs:string"><xs:pattern value="b"/><xs:pattern value=""/></xs:restriction></xs:simpleType>
+<xs:element name="r"><xs:complexType><xs:sequence>
+<xs:element name="x" type="d" maxOccurs="unbounded"/>
+<xs:element name="y" type="t2" maxOccurs="unbounded"/>
+<xs:element name="z" type="t3" maxOccurs="unbounded"/>
+<xs:element name="l" type="lang" maxOccurs="unbounded"/>
+<xs:element name="e1" type="empty1"/>
+<xs:element name="e2" type="empty2"/>
+</xs:sequence></xs:complexType></xs:element>
+</xs:schema>

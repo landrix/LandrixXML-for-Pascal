@@ -1,0 +1,49 @@
+file a.xml
+error 1 12 cvc-pattern-valid Value 'z' is not facet-valid with respect to pattern 'a+' for type 'd'.
+error 1 12 cvc-type.3.1.3 The value 'z' of element 'x' is not valid.
+error 1 21 cvc-pattern-valid Value 'aa' is not facet-valid with respect to pattern 'b|c' for type 'd'.
+error 1 21 cvc-type.3.1.3 The value 'aa' of element 'x' is not valid.
+error 1 29 cvc-pattern-valid Value 'b' is not facet-valid with respect to pattern 'a+' for type 'd'.
+error 1 29 cvc-type.3.1.3 The value 'b' of element 'x' is not valid.
+error 1 37 cvc-pattern-valid Value 'c' is not facet-valid with respect to pattern 'a+' for type 'd'.
+error 1 37 cvc-type.3.1.3 The value 'c' of element 'x' is not valid.
+error 1 45 cvc-pattern-valid Value 'z' is not facet-valid with respect to pattern 'b+' for type 't2'.
+error 1 45 cvc-type.3.1.3 The value 'z' of element 'y' is not valid.
+error 1 53 cvc-pattern-valid Value 'a' is not facet-valid with respect to pattern 'b+' for type 't2'.
+error 1 53 cvc-type.3.1.3 The value 'a' of element 'y' is not valid.
+error 1 61 cvc-pattern-valid Value 'b' is not facet-valid with respect to pattern 'a+' for type 't2'.
+error 1 61 cvc-type.3.1.3 The value 'b' of element 'y' is not valid.
+error 1 69 cvc-pattern-valid Value 'c' is not facet-valid with respect to pattern 'b+' for type 't2'.
+error 1 69 cvc-type.3.1.3 The value 'c' of element 'y' is not valid.
+error 1 77 cvc-pattern-valid Value 'z' is not facet-valid with respect to pattern 'c+' for type 't3'.
+error 1 77 cvc-type.3.1.3 The value 'z' of element 'z' is not valid.
+error 1 85 cvc-pattern-valid Value 'a' is not facet-valid with respect to pattern 'c+' for type 't3'.
+error 1 85 cvc-type.3.1.3 The value 'a' of element 'z' is not valid.
+error 1 93 cvc-pattern-valid Value 'b' is not facet-valid with respect to pattern 'c+' for type 't3'.
+error 1 93 cvc-type.3.1.3 The value 'b' of element 'z' is not valid.
+error 1 101 cvc-pattern-valid Value 'c' is not facet-valid with respect to pattern 'a+' for type 't3'.
+error 1 101 cvc-type.3.1.3 The value 'c' of element 'z' is not valid.
+error 1 109 cvc-pattern-valid Value 'd' is not facet-valid with respect to pattern 'c+' for type 't3'.
+error 1 109 cvc-type.3.1.3 The value 'd' of element 'z' is not valid.
+error 1 119 cvc-pattern-valid Value '123' is not facet-valid with respect to pattern '([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*' for type 'lang'.
+error 1 119 cvc-type.3.1.3 The value '123' of element 'l' is not valid.
+error 1 128 cvc-pattern-valid Value 'de' is not facet-valid with respect to pattern 'en' for type 'lang'.
+error 1 128 cvc-type.3.1.3 The value 'de' of element 'l' is not valid.
+error 1 138 cvc-pattern-valid Value 'z' is not facet-valid with respect to pattern 'b' for type 'empty1'.
+error 1 138 cvc-type.3.1.3 The value 'z' of element 'e1' is not valid.
+error 1 148 cvc-pattern-valid Value 'z' is not facet-valid with respect to pattern 'b|' for type 'empty2'.
+error 1 148 cvc-type.3.1.3 The value 'z' of element 'e2' is not valid.
+
+file b.xml
+error 1 12 cvc-pattern-valid Value 'b' is not facet-valid with respect to pattern 'a+' for type 'd'.
+error 1 12 cvc-type.3.1.3 The value 'b' of element 'x' is not valid.
+error 1 20 cvc-pattern-valid Value 'a' is not facet-valid with respect to pattern 'b+' for type 't2'.
+error 1 20 cvc-type.3.1.3 The value 'a' of element 'y' is not valid.
+error 1 28 cvc-pattern-valid Value 'a' is not facet-valid with respect to pattern 'c+' for type 't3'.
+error 1 28 cvc-type.3.1.3 The value 'a' of element 'z' is not valid.
+error 1 46 cvc-pattern-valid Value '  en   US  ' is not facet-valid with respect to pattern '([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*' for type 'lang'.
+error 1 46 cvc-type.3.1.3 The value '  en   US  ' of element 'l' is not valid.
+error 1 59 cvc-pattern-valid Value '  de  ' is not facet-valid with respect to pattern 'en' for type 'lang'.
+error 1 59 cvc-type.3.1.3 The value '  de  ' of element 'l' is not valid.
+error 1 64 cvc-pattern-valid Value '' is not facet-valid with respect to pattern 'b' for type 'empty1'.
+error 1 64 cvc-type.3.1.3 The value '' of element 'e1' is not valid.
