@@ -2,21 +2,20 @@
 """Generate the regular expression test data in tests/data/regex/cases.txt.
 
 The expected results come from Saxon HE 12, the engine of the KoSIT
-validator (Python's re module speaks another dialect), so this script needs
-Java and the Saxon jar:
+validator (Python's re module speaks another dialect), and for the XSD
+patterns from the Java runtime's Xerces (tools/XercesRegexOracle.java), the
+engine of its pattern facets, so this script needs Java and the Saxon jar:
 
-  python tools/gen-regex-testdata.py --java PATH/java.exe --saxon PATH/saxon-he-12.9.jar
+  python tools/gen-regex-testdata.py --java PATH/java.exe --javac PATH/javac.exe --saxon PATH/saxon-he-12.9.jar
 
 The patterns are all patterns of the target schemas and rule sets (XSD
 pattern facets of GAEB, matches/replace/tokenize of EN16931, XRechnung,
 Peppol BIS, Factur-X) plus constructed edge cases; the inputs are random
 strings over an alphabet that fits each pattern, plus fixed ones.
 
-XSD patterns are checked as matches($s, '^(?:pattern)$') in XPath, which is
-equivalent for patterns without ^, $, \\$ and hyphens inside character
-classes (true for every XSD pattern here): XPath follows the hyphen rules
-of XML Schema 1.1, XSD mode those of 1.0 as Xerces, which the unit tests
-check separately.
+XSD patterns are asked from Xerces directly ("error" if it rejects the
+pattern): the XSD mode follows Xerces, also in the character classes
+where Saxon's differ (tests/data/regex/xsd-classes.txt).
 
 Line format (TAB separated); a field that is not printable ASCII is written
 as "hex:" followed by its UTF-8 bytes in hex:
@@ -138,9 +137,7 @@ def build(seed):
     for p in XSD_PATTERNS:
         inputs = FIXED_INPUTS + [random_input(rng, p) for _ in range(25)]
         for s in inputs:
-            expr = ("try { string(matches(%s, %s)) } catch * { 'error' }"
-                    % (xq_string(s), xq_string("^(?:" + p + ")$")))
-            cases.append(("xsd", p, s, None, expr))
+            cases.append(("xsd", p, s, None, None))
     for p in XPATH_PATTERNS:
         inputs = FIXED_INPUTS + [random_input(rng, p) for _ in range(25)]
         for s in inputs:
@@ -158,6 +155,18 @@ def build(seed):
                     " catch * { 'error' }" % (xq_string(s), xq_string(p)))
             cases.append(("tokenize", p, s, None, expr))
     return cases
+
+
+def run_xerces(cases, java, javac):
+    export = "java.xml/com.sun.org.apache.xerces.internal.impl.xpath.regex=ALL-UNNAMED"
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run([javac, "--add-exports", export, "-d", tmp,
+                        os.path.join(ROOT, "tools", "XercesRegexOracle.java")], check=True)
+        lines = "".join("string\t%s\t%s\n" % (c[1].encode("utf-8").hex(), c[2].encode("utf-8").hex())
+                        for c in cases)
+        out = subprocess.run([java, "--add-exports", export, "-cp", tmp, "XercesRegexOracle"],
+                             input=lines, check=True, capture_output=True, encoding="utf-8").stdout.split("\n")
+    return [{"1": "true", "0": "false", "E": "error"}[r] for r in out[:len(cases)]]
 
 
 def run_saxon(cases, java, saxon):
@@ -183,6 +192,7 @@ def run_saxon(cases, java, saxon):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--java", required=True)
+    ap.add_argument("--javac", required=True)
     ap.add_argument("--saxon", required=True)
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
@@ -194,9 +204,14 @@ def main():
             cases[i] = c[:4] + ("try { string-join(for $c in string-to-codepoints(replace(%s, %s, %s)) "
                                 "return string($c), ' ') } catch * { 'error' }"
                                 % (xq_string(c[2]), xq_string(c[1]), xq_string(c[3])),)
-    got = run_saxon(cases, args.java, args.saxon)
-    if len(got) != len(cases):
-        sys.exit("Saxon returned %d lines for %d cases" % (len(got), len(cases)))
+    xsd = [c for c in cases if c[0] == "xsd"]
+    others = [c for c in cases if c[0] != "xsd"]
+    from_saxon = run_saxon(others, args.java, args.saxon)
+    if len(from_saxon) != len(others):
+        sys.exit("Saxon returned %d lines for %d cases" % (len(from_saxon), len(others)))
+    from_xerces = iter(run_xerces(xsd, args.java, args.javac))
+    from_saxon = iter(from_saxon)
+    got = [next(from_xerces) if c[0] == "xsd" else next(from_saxon) for c in cases]
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, "cases.txt"), "w", encoding="ascii", newline="\n") as f:
         for (kind, p, s, extra, _), result in zip(cases, got):

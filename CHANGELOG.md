@@ -32,6 +32,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- XML Schema patterns: the character classes are those of Xerces in the
+  Java runtime (the validator of the KoSIT tools), no longer Saxon's:
+  `.` does not match U+2028 and U+2029, `\p{..}` and `\w` take the general
+  categories of Unicode 15.0 for the Basic Multilingual Plane only (a
+  character above U+FFFF is only in `Cn`), `\d` the digits of Unicode 3.1,
+  `\i` and `\c` the name characters of XML 1.0 Fourth Edition (with the
+  ranges Xerces adds to `\i`), and `\p{Cs}` is allowed. Checked against the
+  classes Xerces gives for every code point
+  (`tests/data/regex/xsd-classes.txt`, new generator
+  `tools/gen-regex-xsd-classes.py`); listed as Xerces
+  deviations in the README. The XPath functions keep Saxon's classes.
+  W3C XML Schema suite: ten cases that expect the name characters of the
+  Fifth Edition now fail as with Xerces.
 - XSLT: the prefixes `xs` and `fn` are bound in a stylesheet's
   expressions, sequence types and `use-when` only where the stylesheet
   declares them, as XSLT 2.0 and Saxon say (`XPST0081` otherwise; before

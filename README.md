@@ -724,6 +724,23 @@ both the mark and an entry here):
 - The regular expression forms `\p{IsHighSurrogates}`,
   `\p{IsLowSurrogates}` and `[a-z--[b-z]]` are errors (`reF56`, `reM77`,
   `reN75`, `HighSurrogates`).
+- The character classes of patterns are those of Xerces in the Java
+  runtime (Java 21; the classes Xerces gives for every code point are in
+  `tests/data/regex/xsd-classes.txt`, the tests check their range
+  bounds): `.` does not match U+2028 and
+  U+2029; `\p{..}` and `\w` take the general categories of Unicode 15.0 for
+  the Basic Multilingual Plane only, so a character above U+FFFF is in no
+  category but `Cn` (not even in `\p{C}`) and always in `\w`; `\d` are the
+  decimal digits of Unicode 3.1; `\c` is `NameChar` of XML 1.0 Fourth
+  Edition, Appendix B, and `\i` its `Letter`, `_` and `:` plus the ranges
+  Xerces adds (U+01C4 to U+01CC, U+02B0 to U+02BA, U+02C2 to U+02D1,
+  U+FF66 to U+FF9F, U+1D790 to U+1D7A8, U+1D7AA to U+1D7C9, U+2FA1B to
+  U+2FA1D); `\p{Cs}` is allowed. The XPath functions keep Saxon's classes
+  (Unicode 6.2). The suite expects the name characters of XML 1.0 Fifth
+  Edition for `\i` and `\c` (`reZ006i`, `xv005`, `xv006`, `xv007`, `xv008`,
+  `xv100c`, `xv100i`); in the other classes no test of the suite finds a
+  difference, in the source code their mark reads `Xerces deviation, not
+  in the test suite`.
 - A missing type (also the item type of a list) or substitution group
   head is an error when the schema is loaded, also if nothing uses it;
   the suite expects the error only when the component is needed
@@ -971,11 +988,11 @@ Differences from Xerces, also on purpose:
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)
   (`tools/run-xsts.py`, pinned revision) checks the XML Schema
   validation: of its 39,336 applicable XSD 1.0 tests (schemas that must
-  load or be rejected, documents that must be valid or invalid) 39,228
+  load or be rejected, documents that must be valid or invalid) 39,218
   pass and none uses a construct this library does not support (such a
   construct, a selector with an attribute step before its last step, is
-  reported as unsupported, never accepted silently). Of the 108 failures,
-  104 are the cases of the list above, where the result of Xerces is
+  reported as unsupported, never accepted silently). Of the 118 failures,
+  114 are the cases of the list above, where the result of Xerces is
   given on purpose; 3 are XML 1.1 documents, read with the rules of
   XML 1.0 (`xv003`, `xv006`, `xv008`); and one has a schema whose
   verdict the suite itself disputes (`ste110`, a circular union, which

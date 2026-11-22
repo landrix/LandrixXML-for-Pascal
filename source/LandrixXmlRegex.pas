@@ -34,7 +34,11 @@
   '.', character class expressions with ranges, negation and subtraction,
   the escapes \n \r \t, \\ and the other single-character escapes,
   \s \S \i \I \c \C \d \D \w \W, the category escapes \p and \P with a
-  category name such as L or Lu (Unicode 6.2.0, as Saxon); in XPath mode
+  category name such as L or Lu (Unicode 6.2.0, as Saxon; in xrmXsd the
+  classes of Xerces: categories of Unicode 15.0.0 in the Basic
+  Multilingual Plane, \d the digits of Unicode 3.1.0, \i and \c from XML
+  1.0 Fourth Edition, Appendix B, '.' not U+2028 and U+2029, see
+  SetFromXsdCategories); in XPath mode
   ^ and $
   (start and end of the string), the reluctant quantifiers ?? *? +? and
   the counted ones followed by ? (the shortest match first), and the flags s ('.' also matches
@@ -76,8 +80,8 @@
   Known differences from Saxon (and other backtracking engines): a group
   inside a repetition keeps the text of the last non-empty iteration ("(a*)+b" on "aaab" gives "aaa"
   for group 1, Saxon an empty string), and the category Cs is not
-  known (Saxon has no table for it either, and UTF-8 input never
-  contains surrogates). }
+  known in the XPath modes (Saxon has no table for it either, and UTF-8
+  input never contains surrogates; xrmXsd takes it, as Xerces). }
 
 unit LandrixXmlRegex;
 
@@ -193,6 +197,8 @@ implementation
 
 {$I LandrixXmlCaseVariantsData.inc}
 {$I LandrixXmlBlockData.inc}
+{$I LandrixXmlXsdClassData.inc}
+{$I LandrixXmlNameData4.inc}
 
 const
   MaxCodePoint = $10FFFF;
@@ -394,7 +400,7 @@ begin
   end;
 end;
 
-{ XML 1.0 fifth edition NameStartChar (\i) and NameChar (\c), as
+{ The XPath modes: XML 1.0 fifth edition NameStartChar (\i) and NameChar (\c), as
   LandrixXmlIsNameStartChar and LandrixXmlIsNameChar. }
 function SetNameStart: TLandrixXmlRegexSet;
 const
@@ -425,6 +431,68 @@ begin
     Extra[I] := R[I];
   SetNormalize(Extra);
   Result := SetUnion(SetNameStart, Extra);
+end;
+
+{ The sorted ranges Lo, Hi, Lo, Hi ... of a generated table as a set. }
+function SetFromRanges(const R: array of Integer): TLandrixXmlRegexSet;
+var
+  I: Integer;
+begin
+  Result := nil;
+  SetLength(Result, Length(R));
+  for I := 0 to Integer(High(R)) do
+    Result[I] := R[I];
+  SetNormalize(Result);
+end;
+
+{ The XML Schema mode follows the Java runtime's Xerces (checked against it
+  in tests/data/regex/xsd-classes.txt): the general categories of Unicode
+  15.0.0 in the Basic Multilingual Plane (LandrixXmlXsdClassData.inc). A
+  character above U+FFFF is in no category; it counts as unassigned for
+  the category Cn itself (AllCn), not for C or \w. Xerces deviation, not
+  in the test suite. }
+function SetFromXsdCategories(Categories: TLandrixXmlUnicodeCategories; AllCn: Boolean): TLandrixXmlRegexSet;
+var
+  I, N: Integer;
+  AssignedSet: TLandrixXmlRegexSet;
+begin
+  AssignedSet := nil;
+  Result := nil;
+  SetLength(Result, 2 * XsdCategoryCount);
+  N := 0;
+  for I := 0 to XsdCategoryCount - 1 do
+    if TLandrixXmlUnicodeCategory(XsdCategoryOf[I]) in Categories then
+    begin
+      Result[N] := XsdCategoryLo[I];
+      Result[N + 1] := XsdCategoryHi[I];
+      Inc(N, 2);
+    end;
+  SetLength(Result, N);
+  SetNormalize(Result);
+  if xucCn in Categories then
+  begin
+    { the unassigned code points of the plane are the gaps of the table }
+    AssignedSet := SetFromXsdCategories([Low(TLandrixXmlUnicodeCategory)..High(TLandrixXmlUnicodeCategory)] -
+      [xucCn], False);
+    Result := SetUnion(Result, SetComplement(SetUnion(AssignedSet, SetRange($10000, MaxCodePoint))));
+    if AllCn then
+      Result := SetUnion(Result, SetRange($10000, MaxCodePoint));
+  end;
+end;
+
+{ \i and \c of the XML Schema mode, as Xerces: the classes of XML 1.0
+  Fourth Edition, Appendix B (LandrixXmlNameData4.inc; Letter, '_' and ':'
+  for \i, NameChar for \c), where Xerces' \i also takes the
+  characters of these ranges (asked from Xerces; the Fourth Edition
+  has none of them in Letter). The suite expects the name characters of
+  XML 1.0 Fifth Edition (Xerces deviation: xv005, xv006, xv100i). }
+function SetXsdNameStart: TLandrixXmlRegexSet;
+const
+  Extra: array[0..15] of Integer = (Ord(':'), Ord(':'), Ord('_'), Ord('_'), $1C4, $1CC, $2B0, $2BA,
+    $2C2, $2D1, $FF66, $FF9F, $1D790, $1D7A8, $1D7AA, $1D7C9);
+begin
+  Result := SetUnion(SetUnion(SetFromRanges(XmlLetter4Ranges), SetFromRanges(Extra)),
+    SetRange($2FA1B, $2FA1D));
 end;
 
 { The characters of the block Name ('IsBasicLatin'): from the XPath table
@@ -1420,7 +1488,9 @@ begin
     Ord('.'):
       begin
         Inc(FPos);
-        { every character but LF and CR; with the flag s every character }
+        { every character but LF and CR; with the flag s every character;
+          in the XML Schema mode, as Xerces, also not U+2028 and U+2029
+          (Xerces deviation, not in the test suite) }
         S := nil;
         if not FDotAll then
         begin
@@ -1430,6 +1500,8 @@ begin
           S[2] := CharCr;
           S[3] := CharCr;
           SetNormalize(S);
+          if FMode = xrmXsd then
+            S := SetUnion(S, SetRange($2028, $2029));
         end;
         Result := Instr(xroSet, AddSet(SetComplement(S)), 0);
       end;
@@ -1526,24 +1598,47 @@ begin
           S := SetComplement(S);
         Result := S;
       end;
-    Ord('i'):
-      Result := SetNameStart;
-    Ord('I'):
-      Result := SetComplement(SetNameStart);
-    Ord('c'):
-      Result := SetNameChar;
-    Ord('C'):
-      Result := SetComplement(SetNameChar);
-    Ord('d'):
-      Result := SetFromCategories([xucNd]);
-    Ord('D'):
-      Result := SetComplement(SetFromCategories([xucNd]));
-    Ord('w'):
-      Result := SetComplement(SetFromCategories(LandrixXmlCategoriesP + LandrixXmlCategoriesZ +
-        LandrixXmlCategoriesC));
-    Ord('W'):
-      Result := SetFromCategories(LandrixXmlCategoriesP + LandrixXmlCategoriesZ +
-        LandrixXmlCategoriesC);
+    Ord('i'), Ord('I'):
+      begin
+        if FMode = xrmXsd then
+          Result := SetXsdNameStart
+        else
+          Result := SetNameStart;
+        if C = Ord('I') then
+          Result := SetComplement(Result);
+      end;
+    Ord('c'), Ord('C'):
+      begin
+        { the suite expects the name characters of XML 1.0 Fifth Edition
+          (Xerces deviation: reZ006i, xv007, xv008, xv100c) }
+        if FMode = xrmXsd then
+          Result := SetFromRanges(XmlNameChar4Ranges)
+        else
+          Result := SetNameChar;
+        if C = Ord('C') then
+          Result := SetComplement(Result);
+      end;
+    Ord('d'), Ord('D'):
+      begin
+        { XML Schema mode: the digits of Unicode 3.1.0, as Xerces }
+        if FMode = xrmXsd then
+          Result := SetFromRanges(XsdDigitRanges)
+        else
+          Result := SetFromCategories([xucNd]);
+        if C = Ord('D') then
+          Result := SetComplement(Result);
+      end;
+    Ord('w'), Ord('W'):
+      begin
+        if FMode = xrmXsd then
+          Result := SetFromXsdCategories(LandrixXmlCategoriesP + LandrixXmlCategoriesZ +
+            LandrixXmlCategoriesC, False)
+        else
+          Result := SetFromCategories(LandrixXmlCategoriesP + LandrixXmlCategoriesZ +
+            LandrixXmlCategoriesC);
+        if C = Ord('w') then
+          Result := SetComplement(Result);
+      end;
     Ord('p'):
       Result := ParseCategory(False);
     Ord('P'):
@@ -1642,7 +1737,9 @@ begin
   else if Name = 'Cc' then Cats := [xucCc]
   else if Name = 'Cf' then Cats := [xucCf]
   else if Name = 'Co' then Cats := [xucCo]
-  else if Name = 'Cn' then Cats := [xucCn];
+  else if Name = 'Cn' then Cats := [xucCn]
+  { Xerces knows Cs (surrogates, never in UTF-8 input); Saxon does not }
+  else if (Name = 'Cs') and (FMode = xrmXsd) then Cats := [xucCs];
   { Xerces also takes a plain block name such as "Basic Latin" }
   if (Cats = []) and (FMode = xrmXsd) and FindBlock(Name, True, Result) then
   begin
@@ -1652,7 +1749,10 @@ begin
   end;
   if Cats = [] then
     Error('unknown category ' + LandrixXmlEscapeForMessage(LandrixXmlStringToUtf8(Name), 60));
-  Result := SetFromCategories(Cats);
+  if FMode = xrmXsd then
+    Result := SetFromXsdCategories(Cats, Name = 'Cn')
+  else
+    Result := SetFromCategories(Cats);
   if Negated then
     Result := SetComplement(Result);
 end;

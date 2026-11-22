@@ -13513,7 +13513,7 @@ reZ004i: = reZ004i.i
 reZ005v: = reZ005v.v
 reZ005i: = reZ005i.i
 reZ006v: = reZ006v.v
-reZ006i: = reZ006i.i
+reZ006i: =
 set msMeta/Schema_w3c
 schA1: =
 schA2: =
@@ -14314,13 +14314,13 @@ vc902: vc902.xsd
 set saxonMeta/XmlVersions
 xv002: xv002.xsd
 xv003: xv003.xsd
-xv005: xv005.xsd xv005.v01.xml xv005.n01.xml xv005.n02.xml
-xv006: xv006.xsd xv006.n01.xml xv006.n02.xml xv006.n03.xml
-xv007: xv007.xsd xv007.v01.xml xv007.n01.xml xv007.n02.xml
-xv008: xv008.xsd xv008.n01.xml xv008.n02.xml
+xv005: xv005.xsd xv005.n01.xml xv005.n02.xml
+xv006: xv006.xsd xv006.n01.xml
+xv007: xv007.xsd xv007.n01.xml xv007.n02.xml
+xv008: xv008.xsd
 xv009: xv009.xsd xv009.v01.xml xv009.n01.xml xv009.n02.xml xv009.n03.xml
-xv100i: xv100i.xsd xv100i.i.xml xv100i.c.xml xv100i.noti.xml xv100i.notc.xml
-xv100c: xv100c.xsd xv100c.i.xml xv100c.c.xml xv100c.noti.xml xv100c.notc.xml
+xv100i: xv100i.xsd xv100i.c.xml xv100i.noti.xml xv100i.notc.xml
+xv100c: xv100c.xsd xv100c.noti.xml xv100c.notc.xml
 xv100noti: xv100noti.xsd xv100noti.i.xml xv100noti.c.xml xv100noti.noti.xml xv100noti.notc.xml
 xv100notc: xv100notc.xsd xv100notc.i.xml xv100notc.c.xml xv100notc.noti.xml xv100notc.notc.xml
 set ibmMeta/anyAttribute

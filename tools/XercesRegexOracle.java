@@ -12,6 +12,12 @@
  *
  *   valid TAB pattern                -> 1 or 0
  *   match TAB pattern TAB codepoint  -> 1, 0 or E (invalid pattern)
+ *   string TAB hex TAB hex           -> 1, 0 or E: does the string match
+ *                                       the pattern (both as UTF-8 bytes
+ *                                       in hex, so they may hold a TAB)
+ *   ranges TAB pattern               -> the code points 0 to 10FFFF whose
+ *                                       one-character string matches, as
+ *                                       hex ranges "lo-hi lo-hi ...", or E
  *
  * and writes one answer line per input line. The engine is an internal
  * class of the java.xml module, hence the --add-exports options:
@@ -36,24 +42,51 @@ public class XercesRegexOracle {
         String line;
         while ((line = in.readLine()) != null) {
             String[] f = line.split("\t", -1);
-            RegularExpression re = cache.get(f[1]);
-            if (re == null && !cache.containsKey(f[1])) {
+            String pattern = f[0].equals("string") ? fromHex(f[1]) : f[1];
+            RegularExpression re = cache.get(pattern);
+            if (re == null && !cache.containsKey(pattern)) {
                 try {
-                    re = new RegularExpression(f[1], "X");
+                    re = new RegularExpression(pattern, "X");
                 } catch (RuntimeException e) {
                     re = null;
                 }
-                cache.put(f[1], re);
+                cache.put(pattern, re);
             }
             if (f[0].equals("valid")) {
                 out.println(re != null ? "1" : "0");
             } else if (re == null) {
                 out.println("E");
+            } else if (f[0].equals("ranges")) {
+                StringBuilder b = new StringBuilder();
+                int start = -1;
+                for (int c = 0; c <= 0x110000; c++) {
+                    boolean m = c < 0x110000 && re.matches(new String(Character.toChars(c)));
+                    if (m && start < 0) {
+                        start = c;
+                    } else if (!m && start >= 0) {
+                        if (b.length() > 0) {
+                            b.append(' ');
+                        }
+                        b.append(Integer.toHexString(start)).append('-').append(Integer.toHexString(c - 1));
+                        start = -1;
+                    }
+                }
+                out.println(b.toString());
+            } else if (f[0].equals("string")) {
+                out.println(re.matches(fromHex(f[2])) ? "1" : "0");
             } else {
                 String s = new String(Character.toChars(Integer.parseInt(f[2])));
                 out.println(re.matches(s) ? "1" : "0");
             }
         }
         out.flush();
+    }
+
+    private static String fromHex(String hex) {
+        byte[] bytes = new byte[hex.length() / 2];
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte) Integer.parseInt(hex.substring(2 * i, 2 * i + 2), 16);
+        }
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 }

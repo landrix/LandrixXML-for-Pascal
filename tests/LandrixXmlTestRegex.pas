@@ -22,6 +22,7 @@ uses
   SysUtils,
   Classes,
   LandrixXmlBase,
+  LandrixXmlUnicode,
   LandrixXmlRegex,
   LandrixXmlTestFramework;
 
@@ -613,6 +614,92 @@ begin
   Check(not XsdMatches('\P{Nd}', '5'), '5 is Nd');
 end;
 
+{ The class escapes and categories of the XML Schema mode against Xerces
+  (tests/data/regex/xsd-classes.txt, from tools/gen-regex-xsd-classes.py):
+  the first and last code point of every range match, the neighbours do
+  not, and the other way round for the complement (\P, \D, \W, \S, \I,
+  \C). Surrogates are skipped (UTF-8 has none). }
+procedure TestXsdClasses;
+var
+  L: TStringList;
+  K, P, Q, Lo, Hi, Prev: Integer;
+  Fields: TFields;
+  Line, Negated: string;
+  R, Neg: TLandrixXmlRegex;
+
+  procedure Probe(CP: Integer; Inside: Boolean);
+  var
+    Cps: TLandrixXmlCodePoints;
+    S: TLandrixXmlUtf8;
+  begin
+    if (CP < 0) or (CP > $10FFFF) or ((CP >= $D800) and (CP <= $DFFF)) then
+      Exit;
+    Cps := nil;
+    SetLength(Cps, 1);
+    Cps[0] := CP;
+    S := LandrixXmlCodePointsToUtf8(Cps, 0, 1);
+    if R.Matches(S) <> Inside then
+      Check(False, Fields[0] + ' U+' + IntToHex(CP, 4) + ' as Xerces');
+    if (Neg <> nil) and (Neg.Matches(S) = Inside) then
+      Check(False, Negated + ' U+' + IntToHex(CP, 4) + ' as Xerces');
+  end;
+
+begin
+  Fields := nil;
+  R := nil;
+  Neg := nil;
+  L := TStringList.Create;
+  try
+    L.LoadFromFile(DataFile('xsd-classes.txt'));
+    CheckEquals(43, L.Count, 'the classes of the data file');
+    for K := 0 to L.Count - 1 do
+    begin
+      Fields := SplitTabs(L[K]);
+      Negated := '';
+      if Copy(Fields[0], 1, 2) = '\p' then
+        Negated := '\P' + Copy(Fields[0], 3, MaxInt)
+      else if Length(Fields[0]) = 2 then
+        Negated := '\' + UpperCase(Fields[0][2]);
+      R := TLandrixXmlRegex.Create(U(Fields[0]), xrmXsd);
+      if Negated <> '' then
+        Neg := TLandrixXmlRegex.Create(U(Negated), xrmXsd);
+      Line := Fields[1] + ' ';
+      Prev := -2;
+      P := 1;
+      while P < Length(Line) do
+      begin
+        Q := P;
+        while (Q < Length(Line)) and (Line[Q] <> '-') do
+          Inc(Q);
+        if Line[Q] <> '-' then
+        begin
+          Check(False, 'a range lo-hi in line ' + IntToStr(K + 1));
+          Break;
+        end;
+        Lo := StrToInt('$' + Copy(Line, P, Q - P));
+        P := Q + 1;
+        Q := P;
+        while (Q < Length(Line)) and (Line[Q] <> ' ') do
+          Inc(Q);
+        Hi := StrToInt('$' + Copy(Line, P, Q - P));
+        P := Q + 1;
+        Check(Lo > Prev + 1, 'ranges sorted and apart: ' + Fields[0]);
+        Probe(Lo, True);
+        Probe(Hi, True);
+        Probe(Lo - 1, False);
+        Probe(Hi + 1, False);
+        Prev := Hi;
+      end;
+      FreeAndNil(R);
+      FreeAndNil(Neg);
+    end;
+  finally
+    R.Free;
+    Neg.Free;
+    L.Free;
+  end;
+end;
+
 { Block escapes: Saxon's blocks in the XPath modes, Xerces' in XSD (more
   cases against Saxon in tests/data/xpath/regexblocks). }
 procedure TestBlocks;
@@ -664,6 +751,7 @@ begin
   RegisterTest('Regex.Limits', TestLimits);
   RegisterTest('Regex.InvalidUtf8', TestInvalidUtf8);
   RegisterTest('Regex.Categories', TestCategories);
+  RegisterTest('Regex.XsdClasses', TestXsdClasses);
 end;
 
 end.

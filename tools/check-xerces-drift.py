@@ -8,9 +8,10 @@ Mustang validators move to another Java version:
       [--saxon validator-1.6.3-standalone.jar --blocks DIR]
 In a temporary git worktree of HEAD (the working tree is not touched) it
 compiles tools/XsdOracle.java with that JDK, reruns the generators that
-ask the JDK (xsdtypes, xsdvalidator, xsdcontent with the UPA models),
-checks tests/data/xsdschema/rules.txt (tools/check-xsdrules.py) and, if
-given, regenerates the KoSIT reference and the regex block table; then it
+ask the JDK (xsdtypes, xsdvalidator, xsdcontent with the UPA models, the
+character classes of patterns), checks tests/data/xsdschema/rules.txt
+(tools/check-xsdrules.py) and, if given, regenerates the KoSIT reference,
+the regex block table and the regex cases (--saxon); then it
 reports every file that came out differently. --in-place runs in the
 working tree instead (the generators overwrite the files there; restore
 them with git checkout; files changed before the run only count if the
@@ -125,12 +126,16 @@ def main():
         ok &= run("Unique Particle Attribution", [py, "tools/gen-xsdcontent-testdata.py", "--upa", "1200"] + oracle,
                   tree)
         ok &= run("schema rules", [py, "tools/check-xsdrules.py"] + oracle, tree)
+        ok &= run("pattern classes", [py, "tools/gen-regex-xsd-classes.py", "--java", java, "--javac", javac], tree)
         if args.kosit_jar:
             ok &= run("KoSIT reference", [py, "tools/run-kosit-suite.py", "--generate", "--java", java,
                                           "--jar", args.kosit_jar], tree)
         if args.saxon and args.blocks:
             ok &= run("regex block table", [py, "tools/gen-regex-blocks.py", "--java", java, "--javac", javac,
                                             "--saxon", args.saxon, "--blocks", args.blocks], tree)
+        if args.saxon:
+            ok &= run("regex cases", [py, "tools/gen-regex-testdata.py", "--java", java, "--javac", javac,
+                                      "--saxon", args.saxon], tree)
         after_run = snapshot(tree)
         # a path missing from a snapshot equals HEAD
         changed = sorted(path for path in set(before_run) | set(after_run)
