@@ -134,7 +134,8 @@ type
     xskVariable, xskIf, xskChoose, xskWhen, xskForEach, xskSequence, xskCopyOf, xskCopy,
     xskElement, xskAttribute, xskComment, xskProcessingInstruction, xskMessage, xskDocument,
     xskNumber, xskNamespace, xskForEachGroup, xskPerformSort, xskAnalyzeString, xskNextMatch,
-    xskApplyImports, xskResultDocument, xskUseAttributeSets, xskExtension);
+    xskApplyImports, xskResultDocument, xskUseAttributeSets, xskExtension, xskIterate, xskBreak,
+    xskNextIteration);
 
   { a value with literal parts and expressions in curly brackets: Exprs[I] nil for a
     literal part }
@@ -184,6 +185,9 @@ type
     Body: TObjectList;
     HasAs: Boolean;
     AsType: TLandrixXmlXPathSequenceType;
+    { xsl:with-param of xsl:next-iteration: the parameter of the
+      xsl:iterate it sets (not owned) }
+    Target: TXsltInstr;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -307,6 +311,10 @@ type
       (a TXsltOutputProperties with the mappings only, owned; nil if
       none), added to that of the output definition }
     MapProps: TObject;
+    { xsl:iterate: its xsl:on-completion (an xskSequence with Select or
+      Body, owned; nil if none); the parameters are in Branches
+      (xskVariable with IsParam, owned) }
+    Completion: TXsltInstr;
     constructor Create(AKind: TXsltInstrKind);
     destructor Destroy; override;
   end;
@@ -587,13 +595,14 @@ function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 const
   { the XSLT elements CompileInstruction and the declaration loop
     translate (the others are rejected) }
-  Names: array[0..45] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+  Names: array[0..49] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
     'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
     'strip-space', 'preserve-space', 'next-match', 'apply-imports', 'result-document',
-    'attribute-set', 'character-map', 'output-character', 'namespace', 'namespace-alias');
+    'attribute-set', 'character-map', 'output-character', 'namespace', 'namespace-alias', 'iterate',
+    'next-iteration', 'break', 'on-completion');
 var
   I: Integer;
 begin
@@ -661,6 +670,7 @@ end;
 
 destructor TXsltInstr.Destroy;
 begin
+  Completion.Free;
   MapProps.Free;
   Sets.Free;
   UseSets.Free;
@@ -1003,6 +1013,9 @@ type
     { xsl:namespace-alias: stylesheet namespace URI -> TNamespaceAlias
       (owned; the one of the highest import precedence) }
     FAliases: TStringList;
+    { the xsl:iterate instructions being compiled, innermost last (the
+      parameters xsl:next-iteration sets) }
+    FIterates: TList;
     function VarName(const Clark: TLandrixXmlUtf8): TLandrixXmlUtf8;
     procedure CheckStandard(M: TModule; E: Integer; Data: Boolean);
     procedure CheckExcludedPrefixes(M: TModule; E: Integer; const V: TLandrixXmlUtf8);
@@ -1051,6 +1064,9 @@ type
     function CompileSorts(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr): Integer;
     function SortFollows(M: TModule; C: Integer): Boolean;
     function CompileVariable(M: TModule; E: Integer; Scope: TScope; Param: Boolean): TXsltInstr;
+    procedure CompileIterate(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+    procedure CheckTail(M: TModule; E: Integer);
+    procedure CompileNextIteration(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
     procedure CompileGlobals;
     procedure CompileTemplate(D: TDecl);
     function IsPatternNode(X: TLandrixXmlXPathExpression; Index: Integer; First: Boolean): Boolean;
@@ -1164,6 +1180,7 @@ begin
   FAliases := TXsltStringList.Create;
   FAliases.CaseSensitive := True;
   FAliases.Sorted := True;
+  FIterates := TList.Create;
 end;
 
 destructor TCompiler.Destroy;
@@ -1177,6 +1194,7 @@ begin
   for I := 0 to Integer(FAliases.Count) - 1 do
     FAliases.Objects[I].Free;
   FAliases.Free;
+  FIterates.Free;
   FUseWhenTrue.Free;
   FUseWhenFalse.Free;
   FUseWhenEvaluator.Free;
@@ -1764,6 +1782,10 @@ begin
     List := ' href '
   else if Local = 'import-schema' then
     List := ' namespace schema-location '
+  else if (Local = 'iterate') or (Local = 'break') or (Local = 'on-completion') then
+    List := ' select '
+  else if Local = 'next-iteration' then
+    List := ' '
   else if Local = 'key' then
     List := ' name match use composite collation '
   else if Local = 'message' then
@@ -3465,6 +3487,186 @@ begin
   end;
 end;
 
+{ whether E has content besides white space, comments and processing
+  instructions (white space xml:space keeps counts) }
+function HasContent(M: TModule; E: Integer): Boolean;
+var
+  C: Integer;
+begin
+  Result := True;
+  C := M.Tree.FirstChild(E);
+  while C >= 0 do
+  begin
+    if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and
+      ((Trim8(M.Tree.ValueUtf8(C)) <> '') or PreservesSpace(M.Tree, C)) then
+      Exit;
+    C := M.Tree.NextSibling[C];
+  end;
+  Result := False;
+end;
+
+{ the name of an element of the stylesheet for a message }
+function DisplayName(M: TModule; E: Integer): string;
+begin
+  if M.Tree.NamespaceUriUtf8(E) = XsltNamespace then
+    Result := 'xsl:' + LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(E))
+  else
+    Result := LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(E));
+end;
+
+{ xsl:iterate (XSLT 3.0): select, the parameters (each with a value: no
+  required, no tunnel, XTSE3520 for one that would need a value), the
+  xsl:on-completion after them (without the focus; it sees the
+  parameters, not the variables of the body), then the body }
+procedure TCompiler.CompileIterate(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+var
+  C, D, I, SavedCount: Integer;
+  P, W: TXsltInstr;
+  V, S: TLandrixXmlUtf8;
+  Started: Boolean;
+begin
+  Instr.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
+  SavedCount := Scope.Count;
+  try
+    Started := False;
+    C := M.Tree.FirstChild(E);
+    while C >= 0 do
+    begin
+      if IsXsl(M, C, 'param') then
+      begin
+        if Started then
+          Fail(M, C, 'XTSE0010', 'the xsl:param elements of xsl:iterate come first');
+        if YesNoAttr(M, C, 'tunnel') then
+          Fail(M, C, 'XTSE0020', 'a parameter of xsl:iterate cannot be a tunnel parameter');
+        if Attr(M, C, 'static', V) then
+          Fail(M, C, 'XTSE0090', 'a parameter of xsl:iterate has no attribute static');
+        P := CompileVariable(M, C, Scope, True);
+        Instr.Branches.Add(P);
+        { yes, true or 1 (XTSE0020 for another value) }
+        P.Required := YesNoAttr(M, C, 'required');
+        { required="yes" (XTDE0700 when it runs, as in Saxon) without a value }
+        if P.Required and ((P.Select <> nil) or (P.Body.Count > 0)) then
+          Fail(M, C, 'XTSE0010', 'a required parameter has no value');
+        for I := 0 to Integer(Instr.Branches.Count) - 2 do
+          if TXsltInstr(Instr.Branches[I]).VarName = P.VarName then
+            Fail(M, C, 'XTSE0580', 'two parameters of xsl:iterate have the same name');
+        if not P.Required and P.HasAs and (P.Select = nil) and (P.Body.Count = 0) and (P.AsType.Kind <> xtkEmpty) and
+          not (P.AsType.Occurrence in [xocOptional, xocMany]) then
+          Fail(M, E, 'XTSE3520', 'the parameter ' + LandrixXmlUtf8ToString(P.VarName) +
+            ' of xsl:iterate needs an initial value: its type does not allow the empty sequence');
+      end
+      else if IsXsl(M, C, 'on-completion') then
+      begin
+        if Started then
+          Fail(M, C, 'XTSE0010', 'xsl:on-completion comes first in xsl:iterate after the xsl:param elements');
+        Started := True;
+        W := NewInstr(xskSequence, M, C);
+        Instr.Completion := W;
+        W.Select := CompileAttr(M, C, 'select', Scope);
+        if W.Select = nil then
+          CompileBody(M, C, Scope, W.Body, -1)
+        else if HasContent(M, C) then
+          Fail(M, C, 'XTSE3125', 'xsl:on-completion with a select attribute must be empty');
+      end
+      else if M.Tree.Kind[C] = xnkElement then
+        Break
+      else if M.Tree.Kind[C] = xnkText then
+      begin
+        { the text up to the next element (comments and processing
+          instructions between): content if it is not white space, or
+          white space xml:space keeps that no declaration follows }
+        S := '';
+        D := C;
+        while (D >= 0) and (M.Tree.Kind[D] in [xnkText, xnkComment, xnkProcessingInstruction]) do
+        begin
+          if M.Tree.Kind[D] = xnkText then
+            S := S + M.Tree.ValueUtf8(D);
+          D := M.Tree.NextSibling[D];
+        end;
+        if (Trim8(S) <> '') or PreservesSpace(M.Tree, C) and not ((D >= 0) and (IsXsl(M, D, 'param') or
+          IsXsl(M, D, 'on-completion'))) then
+          Break;
+      end;
+      C := M.Tree.NextSibling[C];
+    end;
+    if C >= 0 then
+    begin
+      FIterates.Add(Instr);
+      try
+        CompileBody(M, E, Scope, Instr.Body, C);
+      finally
+        FIterates.Delete(FIterates.Count - 1);
+      end;
+    end;
+  finally
+    { the parameters are not visible after xsl:iterate }
+    Scope.Count := SavedCount;
+  end;
+end;
+
+{ xsl:break and xsl:next-iteration in a tail position of the body of an
+  xsl:iterate, checked as Saxon checks it (XTSE3120 also outside
+  xsl:iterate, where XTSE0010 would do too): the nearest ancestor other
+  than xsl:if, xsl:choose, xsl:when and xsl:otherwise is xsl:iterate, and
+  it is the last instruction of its parent (xsl:fallback aside), the
+  xsl:if or xsl:choose around it likewise up to the xsl:iterate }
+procedure TCompiler.CheckTail(M: TModule; E: Integer);
+var
+  P, N, A: Integer;
+  L: string;
+begin
+  L := DisplayName(M, E);
+  P := M.Tree.Parent[E];
+  while IsXsl(M, P, 'if') or IsXsl(M, P, 'choose') or IsXsl(M, P, 'when') or IsXsl(M, P, 'otherwise') do
+    P := M.Tree.Parent[P];
+  if not IsXsl(M, P, 'iterate') then
+    Fail(M, E, 'XTSE3120', L + ' is not allowed within ' + DisplayName(M, P));
+  N := E;
+  while True do
+  begin
+    A := M.Tree.NextSibling[N];
+    while A >= 0 do
+    begin
+      if (M.Tree.Kind[A] = xnkElement) and not IsXsl(M, A, 'fallback') or (M.Tree.Kind[A] = xnkText) and
+        ((Trim8(M.Tree.ValueUtf8(A)) <> '') or PreservesSpace(M.Tree, A)) then
+        Fail(M, E, 'XTSE3120', L + ' must be the last instruction of the xsl:iterate body');
+      A := M.Tree.NextSibling[A];
+    end;
+    P := M.Tree.Parent[N];
+    if IsXsl(M, P, 'iterate') then
+      Exit;
+    if IsXsl(M, P, 'if') then
+      N := P
+    else if IsXsl(M, P, 'when') or IsXsl(M, P, 'otherwise') then
+      N := M.Tree.Parent[P]
+    else
+      Fail(M, E, 'XTSE3120', L + ' must be the last instruction of the xsl:iterate body');
+  end;
+end;
+
+{ xsl:next-iteration: its xsl:with-param elements set parameters of the
+  xsl:iterate around it (XTSE3130 for another name), no tunnel ones }
+procedure TCompiler.CompileNextIteration(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
+var
+  I, J: Integer;
+  P: TXsltWithParam;
+  It: TXsltInstr;
+begin
+  CompileWithParams(M, E, Scope, Instr);
+  It := TXsltInstr(FIterates[FIterates.Count - 1]);
+  for I := 0 to Integer(Instr.Params.Count) - 1 do
+  begin
+    P := TXsltWithParam(Instr.Params[I]);
+    if P.Tunnel then
+      Fail(M, E, 'XTSE0020', 'xsl:with-param in xsl:next-iteration cannot be a tunnel parameter');
+    for J := 0 to Integer(It.Branches.Count) - 1 do
+      if TXsltInstr(It.Branches[J]).VarName = P.Name then
+        P.Target := TXsltInstr(It.Branches[J]);
+    if P.Target = nil then
+      Fail(M, E, 'XTSE3130', 'the xsl:iterate has no parameter ' + LandrixXmlUtf8ToString(P.Name));
+  end;
+end;
+
 procedure ScopeNamespaces(M: TModule; E: Integer; Instr: TXsltInstr);
 var
   Prefixes: TLandrixXmlUtf8Array;
@@ -3506,13 +3708,35 @@ begin
   if (L = 'matching-substring') or (L = 'non-matching-substring') then
     Fail(M, E, 'XTSE0010', 'xsl:' + LandrixXmlUtf8ToString(L) + ' is allowed in xsl:analyze-string only');
   if (L = 'try') or
-    (L = 'iterate') or (L = 'evaluate') or (L = 'where-populated') or (L = 'on-empty') or
+    (L = 'evaluate') or (L = 'where-populated') or (L = 'on-empty') or
     (L = 'on-non-empty') or (L = 'map') or (L = 'array') or (L = 'merge') or (L = 'fork') or
-    (L = 'assert') or (L = 'break') or (L = 'next-iteration') or (L = 'source-document') or
+    (L = 'assert') or (L = 'source-document') or
     (L = 'call-function') or (L = 'context-item') then
     Unsupported(M, E, 'xsl:' + LandrixXmlUtf8ToString(L));
+  { XSLT 3.0, also in a stylesheet of version 2.0 (as Saxon runs it) }
+  if (L = 'break') or (L = 'next-iteration') then
+    CheckTail(M, E);
   try
-    if L = 'text' then
+    if L = 'iterate' then
+    begin
+      Result := NewInstr(xskIterate, M, E);
+      CompileIterate(M, E, Scope, Result);
+    end
+    else if L = 'break' then
+    begin
+      Result := NewInstr(xskBreak, M, E);
+      Result.Select := CompileAttr(M, E, 'select', Scope);
+      if Result.Select = nil then
+        CompileBody(M, E, Scope, Result.Body, -1)
+      else if HasContent(M, E) then
+        Fail(M, E, 'XTSE3125', 'xsl:break with a select attribute must be empty');
+    end
+    else if L = 'next-iteration' then
+    begin
+      Result := NewInstr(xskNextIteration, M, E);
+      CompileNextIteration(M, E, Scope, Result);
+    end
+    else if L = 'text' then
     begin
       Result := NewInstr(xskText, M, E);
       C := M.Tree.FirstChild(E);
@@ -6187,6 +6411,8 @@ var
       Resolve(Instr.Body);
       for P := 0 to Integer(Instr.Branches.Count) - 1 do
         Resolve(TXsltInstr(Instr.Branches[P]).Body);
+      if Instr.Completion <> nil then
+        Resolve(Instr.Completion.Body);
       for P := 0 to Integer(Instr.Params.Count) - 1 do
         Resolve(TXsltWithParam(Instr.Params[P]).Body);
       if Instr.SortKeys <> nil then

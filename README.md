@@ -487,8 +487,12 @@ raise `xecUnsupported` when the instruction is evaluated. A stylesheet with
 `version="3.0"` is run with these rules (Saxon runs it as XSLT 3.0; the
 XSLT 3.0 instructions are rejected); XSLT 3.0 is to follow step by step.
 Of XSLT 3.0, `[xsl:]expand-text` (text value templates in sequence
-constructors and `xsl:text`) is supported, also in a stylesheet with
-`version="2.0"`, as Saxon runs it.
+constructors and `xsl:text`) and `xsl:iterate` (with `xsl:param`,
+`xsl:next-iteration`, `xsl:break` and `xsl:on-completion`; not
+streamed) are supported, also in a stylesheet with `version="2.0"`, as
+Saxon runs them. `xsl:break` and `xsl:next-iteration` outside a tail
+position of `xsl:iterate` are `XTSE3120` as in Saxon, also where they
+are not inside an `xsl:iterate` at all (`XTSE0010` would do there too).
 A version above 3.0 means forwards compatible processing as in Saxon (an
 unknown declaration is ignored, an unknown instruction runs its
 `xsl:fallback` and is `XTSE0010` without one, unknown attributes of XSLT
@@ -1013,8 +1017,8 @@ Differences from Xerces, also on purpose:
   follow one by one), without a feature the catalog names that this
   library leaves out (schema awareness, streaming, the namespace axis,
   DTDs and the like);
-  5,197 of them pass and 66 more raise an error where one is expected,
-  but with another code. 166 use an instruction or option that is not
+  5,229 of them pass and 69 more raise an error where one is expected,
+  but with another code. 124 use an instruction or option that is not
   supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.

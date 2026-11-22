@@ -327,6 +327,8 @@ type
       xsl:apply-imports and the built-in rules; none in functions and
       global variables) }
     FTunnel: TSuppliedArray;
+    { xsl:break ran in the current iteration of xsl:iterate }
+    FBreak: Boolean;
     FResults: TObjectList;
     FResultUris: TStringList;
     FPrincipal: TLandrixXmlXPathTree;
@@ -422,6 +424,9 @@ type
     function Test(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus): Boolean;
     function ChosenBody(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus): TObjectList;
     procedure DoForEach(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+    procedure DoIterate(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+    procedure DoBreak(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+    procedure DoNextIteration(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
     procedure DoSequence(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; R: TReceiver);
     procedure DoElement(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
     procedure DoAttribute(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
@@ -4137,6 +4142,116 @@ begin
     Exec(Instr.Body, ItemFocus(S.Items[I], I + 1, S.Count), Mode, R);
 end;
 
+{ xsl:iterate: the parameters get their initial values with the focus of
+  the instruction, the body runs for each item (no current template rule)
+  until an xsl:break; xsl:next-iteration sets the parameters for the next
+  item (a parameter it does not set keeps its value). Without a break,
+  xsl:on-completion runs without a focus. xsl:break and
+  xsl:next-iteration are in a tail position (checked when compiled):
+  nothing of the iteration runs after them. }
+procedure TRun.DoIterate(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+var
+  S: TLandrixXmlXPathSequence;
+  I: Integer;
+  SavedRule: TXsltRule;
+  P: TXsltInstr;
+  V: TLandrixXmlXPathSequence;
+  AnyType: TLandrixXmlXPathSequenceType;
+  Broken: Boolean;
+begin
+  S := Eval(Instr, Instr.Select, Focus);
+  for I := 0 to Integer(Instr.Branches.Count) - 1 do
+  begin
+    P := TXsltInstr(Instr.Branches[I]);
+    if P.Required then
+      raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTDE0700', 'the required parameter ' +
+        LandrixXmlUtf8ToString(P.VarName) + ' has no value', P.Module, P.Line, P.Column);
+    if not P.HasAs then
+      DoVariable(P, Focus, Mode)
+    else
+    begin
+      { the initial value converted to the type: XTTE0600, as Saxon
+        reports it }
+      AnyType := P.AsType;
+      AnyType.Declared := False;
+      V := VariableValue(P, P.BaseUri, P.Select, P.Body, True, AnyType, P.VarName, Focus, Mode);
+      try
+        V := FEvaluator.ConvertSequence(V, P.AsType, '$' + LandrixXmlUtf8ToString(P.VarName));
+      except
+        on E: ELandrixXmlXPathError do
+          raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTTE0600',
+            System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), P.Module, P.Line, P.Column);
+      end;
+      FEvaluator.BindValue(P.Slot, V);
+    end;
+  end;
+  SavedRule := FRule;
+  FRule := nil;
+  Broken := False;
+  try
+    for I := 0 to Integer(S.Count) - 1 do
+    begin
+      FBreak := False;
+      Exec(Instr.Body, ItemFocus(S.Items[I], I + 1, S.Count), Mode, R);
+      if FBreak then
+      begin
+        Broken := True;
+        Break;
+      end;
+    end;
+    FBreak := False;
+    if not Broken and (Instr.Completion <> nil) then
+    begin
+      if Instr.Completion.Select <> nil then
+        DoSequence(Instr.Completion, NoFocus, R)
+      else
+        Exec(Instr.Completion.Body, NoFocus, Mode, R);
+    end;
+  finally
+    FBreak := False;
+    FRule := SavedRule;
+  end;
+end;
+
+procedure TRun.DoBreak(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
+begin
+  if Instr.Select <> nil then
+    DoSequence(Instr, Focus, R)
+  else
+    Exec(Instr.Body, Focus, Mode, R);
+  FBreak := True;
+end;
+
+{ the values of all xsl:with-param first (with the parameters as they
+  are), then the parameters set, converted to their types (XTTE0590) }
+procedure TRun.DoNextIteration(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
+var
+  I: Integer;
+  P: TXsltWithParam;
+  Values: TSequenceArray;
+begin
+  Values := nil;
+  SetLength(Values, Instr.Params.Count);
+  for I := 0 to Integer(Instr.Params.Count) - 1 do
+  begin
+    P := TXsltWithParam(Instr.Params[I]);
+    Values[I] := VariableValue(Instr, P.BaseUri, P.Select, P.Body, P.HasAs, P.AsType, P.Name, Focus, Mode);
+  end;
+  for I := 0 to Integer(Instr.Params.Count) - 1 do
+  begin
+    P := TXsltWithParam(Instr.Params[I]);
+    if P.Target.HasAs then
+      try
+        Values[I] := FEvaluator.ConvertSequence(Values[I], P.Target.AsType, '$' + LandrixXmlUtf8ToString(P.Name));
+      except
+        on E: ELandrixXmlXPathError do
+          raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTTE0590',
+            System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), Instr.Module, Instr.Line, Instr.Column);
+      end;
+    FEvaluator.BindValue(P.Target.Slot, Values[I]);
+  end;
+end;
+
 procedure TRun.DoSequence(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; R: TReceiver);
 var
   S: TLandrixXmlXPathSequence;
@@ -5635,6 +5750,12 @@ begin
       DoUseAttributeSets(Instr, Focus, Mode, R);
     xskNamespace:
       DoNamespace(Instr, Focus, Mode, R);
+    xskIterate:
+      DoIterate(Instr, Focus, Mode, R);
+    xskBreak:
+      DoBreak(Instr, Focus, Mode, R);
+    xskNextIteration:
+      DoNextIteration(Instr, Focus, Mode);
     xskExtension:
       if Instr.HasFallback then
         Exec(Instr.Body, Focus, Mode, R)

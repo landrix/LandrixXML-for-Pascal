@@ -29,6 +29,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   XSLT processor formats them (Saxon HE, English). In `xppXPath20` they
   stay unknown (XPST0017); XSLT keeps its own (xsl:decimal-format).
   QT3 (Saxon profile): 317 more cases pass.
+- XSLT: `xsl:iterate` of XSLT 3.0 with its parameters,
+  `xsl:next-iteration`, `xsl:break` and `xsl:on-completion` (not
+  streamed), also in stylesheets of version 2.0, as Saxon runs it, with
+  its static rules (XTSE3120, XTSE3125, XTSE3130, XTSE3520). The W3C
+  XSLT suite now runs the XSLT 3.0 cases of the test sets `iterate`,
+  `mode` and `initial-mode`; 31 of the 44 `iterate` cases pass (the
+  others need `xsl:try` or the initial template `xsl:initial-template`,
+  or give the error code Saxon gives).
 
 ### Changed
 
