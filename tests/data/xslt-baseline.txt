@@ -1738,6 +1738,7 @@ for-each-group/for-each-group-066 pass
 for-each-group/for-each-group-067 pass
 for-each-group/for-each-group-071 pass
 for-each-group/for-each-group-083 pass
+for-each-group/for-each-group-084 pass
 for-each-group/for-each-group-088 pass
 for/for-001 pass
 for/for-002 pass
@@ -2203,10 +2204,12 @@ match/match-126 pass
 match/match-242 pass
 match/match-245 pass
 match/match-247 pass
+match/match-248 pass
 match/match-249 pass
 match/match-250 pass
 match/match-251 pass
 match/match-252 pass
+match/match-254 pass
 math/math-0101 pass
 math/math-0102 pass
 math/math-0103 pass
@@ -4847,7 +4850,9 @@ string/string-132 pass
 string/string-133 pass
 strip-space/strip-space-001 pass
 strip-space/strip-space-002 pass
+strip-space/strip-space-003 pass
 strip-space/strip-space-004 pass
+strip-space/strip-space-005 pass
 strip-space/strip-space-006 pass
 strip-space/strip-space-010 pass
 strip-space/strip-space-011 pass

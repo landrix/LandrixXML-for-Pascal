@@ -17,6 +17,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   so in a comment. Set `MaxResults := 0` for the complete report Saxon
   and the KoSIT validator give.
 
+- XPath profile `xppSaxon`: the simple map operator `!` of XPath 3.0
+  (`E1 ! E2` evaluates `E2` with each item of `E1` as the context item
+  and concatenates the results in order, duplicates included; a sign
+  binds weaker: `-a!b` is `-(a!b)`). In `xppXPath20` it stays a syntax
+  error (XPST0003). QT3 (Saxon profile): 32 more cases pass.
 - XPath profile `xppSaxon`: the `let` expression of XPath 3.0
   (`let $a := E, $b := E return E`). As in Saxon, a binding is evaluated
   when its variable is first read, so one the result does not use raises

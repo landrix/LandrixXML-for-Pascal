@@ -94,7 +94,8 @@ type
     xakFunction,      { Op = function id (built-in) or -1 - user function index; Children = arguments }
     xakLet,           { let (XPath 3.0): as for, last = return; Slots }
     xakInstanceOf,    { Children = operand; SequenceType }
-    xakTreat          { Children = operand; SequenceType }
+    xakTreat,         { Children = operand; SequenceType }
+    xakSimpleMap      { E1 ! E2 ! ... (XPath 3.0): Children = the operands }
   );
 
   TLandrixXmlXPathCompare = (xpcEq, xpcNe, xpcLt, xpcLe, xpcGt, xpcGe);
@@ -878,6 +879,7 @@ type
     function ParseCastable: Integer;
     function ParseCast: Integer;
     function ParseUnary: Integer;
+    function ParseSimpleMap: Integer;
     function ParsePath: Integer;
     function ParseRelativePath(Path: Integer): Integer;
     function ParseRelativeSteps(Path: Integer): Integer;
@@ -1244,7 +1246,7 @@ begin
       if PeekChar(1) = '=' then
         Symbol(2)
       else
-        Error('unexpected character "!"', Start);
+        Symbol(1);
     '<', '>':
       if (PeekChar(1) = '=') or (PeekChar(1) = FSource[FPos]) then
         Symbol(2)
@@ -2116,7 +2118,29 @@ begin
     Result := N;
   end
   else
-    Result := ParsePath;
+    Result := ParseSimpleMap;
+end;
+
+{ E1 ! E2 ! ... (XPath 3.0, only in the Saxon profile): the operands are
+  path expressions (a sign binds weaker: -a!b is -(a!b)); a chain is one
+  node, evaluated from the left }
+function TParser.ParseSimpleMap: Integer;
+var
+  N: Integer;
+begin
+  Result := ParsePath;
+  if not IsSymbol('!') then
+    Exit;
+  if FContext.Profile = xppXPath20 then
+    Error('"!" is XPath 3.0', FToken.Position);
+  N := NewNode(xakSimpleMap, FNodes[Result].Position);
+  AddChild(N, Result);
+  while IsSymbol('!') do
+  begin
+    Next;
+    AddChild(N, ParsePath);
+  end;
+  Result := N;
 end;
 
 { descendant-or-self::node(), what "//" stands for }

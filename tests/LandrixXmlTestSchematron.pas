@@ -808,6 +808,11 @@ begin
     xecUnsupported, 'intersect in a context');
   CheckLoadError('<pattern id="A"><rule context="p:a | (p:b except p:c)" id="" line="1"/></pattern>',
     xecUnsupported, 'except in a branch of a context');
+  CheckLoadError('<pattern id="A"><rule context="p:a ! ." id="" line="1"/></pattern>', xecXPath,
+    'a simple map in a context');
+  { "!" in a predicate of a context }
+  Rules := SmallRules('<pattern id="A"><rule context="p:a[@k ! (. = 1)]" id="" line="1"/></pattern>');
+  Rules.Free;
   CheckLoadError('<ns prefix="q" uri="urn:p"/><let name="p:g" value="1" line="1"/>' +
     '<function name="p:f" as="" line="2"><param name="q:g" as=""/><result value="$q:g"/></function>',
     xecSchema, 'a parameter hides a global through another prefix');

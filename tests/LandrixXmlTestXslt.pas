@@ -171,7 +171,7 @@ begin
     T.SetParameter(U('s'), U('str'));
     T.SetParameter(U('i'), U('41'));
     T.SetParameterTree(U('{urn:n}doc'), Param);
-    T.SetParameterXPath(U('x'), U('(1, 2) ! string()'));
+    T.SetParameterXPath(U('x'), U('(1, 2) +'));
     Raised := '';
     try
       T.TransformToUtf8(Source);
@@ -179,7 +179,7 @@ begin
       on E: ELandrixXmlXPathError do
         Raised := E.XPathCode;
     end;
-    CheckEqualsStr('XPST0003', Raised, 'an XPath parameter in the XPath 2.0 profile');
+    CheckEqualsStr('XPST0003', Raised, 'a syntax error in an XPath parameter');
     T.SetParameterXPath(U('x'), U('(1, 2)'));
     CheckEqualsUtf8(U('<r s="str" i="42" d="tree" x="1 2"/>'), T.TransformToUtf8(Source), 'the parameters');
     CheckEquals(1, T.MessageCount, 'a message');

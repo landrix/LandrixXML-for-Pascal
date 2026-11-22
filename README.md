@@ -944,7 +944,9 @@ Differences from Xerces, also on purpose:
   `tests/data/xpath/profiles.txt`. `xppSaxon` grows towards XPath 3.1:
   its QT3 run takes the cases of an XPath 3.1 processor (spec XP20+,
   XP30+, XP31 or XP31+, so the XPath 2.0 only cases drop out); of 19,090
-  applicable cases 17,136 pass today. The XPath 3.0 parts it has so far:
+  applicable cases 17,169 pass today. The XPath 3.0 parts it has so far:
+  the simple map operator `!` (`E1 ! E2`: `E2` for each item of `E1` as
+  the context item, the results in order with duplicates, unlike `/`);
   `let` (a binding is evaluated when its variable is first read, as in
   Saxon: one the result does not use raises no dynamic error; static
   errors such as an unknown variable are reported as always); the

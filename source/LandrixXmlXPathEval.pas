@@ -379,6 +379,8 @@ type
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalFilter(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+    procedure EvalSimpleMap(Index: Integer; Context: Integer; Position, Size: Integer;
+      const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalLet(Index: Integer; Context: Integer; Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
     procedure EvalForSomeEvery(Index: Integer; Context: Integer; Position, Size: Integer;
@@ -1346,6 +1348,13 @@ begin
         Deps := [xdFocus];
         for I := 0 to Integer(High(Nodes[Index].Predicates)) do
           Inner(Nodes[Index].Predicates[I]);
+      end;
+    xakSimpleMap:
+      begin
+        { the operands after the first have the items as their focus }
+        Deps := Dependencies(Nodes, Nodes[Index].Children[0], GlobalCount, FirstLocalSlot, Free, Rooted);
+        for I := 1 to Integer(High(Nodes[Index].Children)) do
+          Inner(Nodes[Index].Children[I]);
       end;
     xakPath:
       begin
@@ -3323,6 +3332,89 @@ begin
     Result := E.Code in [xecArithmetic, xecConversion, xecRegex];
 end;
 
+function MayBeNumeric(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Boolean; forward;
+
+{ True if the value of Index may contain its context item: "." where the
+  result is taken from (not in a comparison, an arithmetic operation or a
+  path step) }
+function MayReturnContext(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Boolean;
+const
+  { the items of the first argument }
+  PassOn = [xfnReverse, xfnDistinctValues, xfnSubsequence, xfnData, xfnExactlyOne, xfnZeroOrOne,
+    xfnOneOrMore, xfnRemove, xfnUnordered, xfnTrace];
+var
+  J, R: Integer;
+begin
+  Result := False;
+  case Nodes[Index].Kind of
+    xakContextItem:
+      Result := True;
+    xakSequence:
+      for J := 0 to Integer(High(Nodes[Index].Children)) do
+        if MayReturnContext(Nodes, Nodes[Index].Children[J]) then
+          Result := True;
+    xakIf:
+      Result := MayReturnContext(Nodes, Nodes[Index].Children[1]) or
+        MayReturnContext(Nodes, Nodes[Index].Children[2]);
+    xakFilter, xakTreat:
+      Result := MayReturnContext(Nodes, Nodes[Index].Children[0]);
+    { an inner simple map passes on the outer "." if each operand passes
+      on its own }
+    xakSimpleMap:
+      begin
+        Result := True;
+        for J := 0 to Integer(High(Nodes[Index].Children)) do
+          if not MayReturnContext(Nodes, Nodes[Index].Children[J]) then
+            Result := False;
+      end;
+    xakFor:
+      Result := MayReturnContext(Nodes, Nodes[Index].Children[Integer(High(Nodes[Index].Children))]);
+    xakLet:
+      begin
+        { the return expression; a variable of this let: its binding (as
+          in MayBeNumeric) }
+        R := Nodes[Index].Children[Integer(High(Nodes[Index].Children))];
+        J := Integer(High(Nodes[Index].Slots));
+        while (J >= 0) and (Nodes[R].Kind = xakVariable) do
+        begin
+          if Nodes[Index].Slots[J] = Nodes[R].Slot then
+            R := Nodes[Index].Children[J];
+          Dec(J);
+        end;
+        Result := MayReturnContext(Nodes, R);
+      end;
+    xakFunction:
+      if Nodes[Index].Op < 0 then
+        Result := True
+      else if TLandrixXmlXPathFunctionId(Nodes[Index].Op) in PassOn then
+        Result := (Length(Nodes[Index].Children) > 0) and MayReturnContext(Nodes, Nodes[Index].Children[0])
+      { insert-before: the items of the first and the third argument }
+      else if TLandrixXmlXPathFunctionId(Nodes[Index].Op) = xfnInsertBefore then
+        Result := (Length(Nodes[Index].Children) = 3) and (MayReturnContext(Nodes, Nodes[Index].Children[0]) or
+          MayReturnContext(Nodes, Nodes[Index].Children[2]));
+    xakVariable:
+      { a let binding of "." }
+      Result := True;
+  else
+    { comparisons, arithmetic, literals, steps, paths, casts: no }
+  end;
+end;
+
+{ MayBeNumeric of the simple map Index up to its operand Last: from the
+  last operand back as long as each may pass on the items before }
+function MapMayBeNumeric(const Nodes: TLandrixXmlXPathAstNodes; Index, Last: Integer): Boolean;
+var
+  K: Integer;
+begin
+  K := Last;
+  Result := MayBeNumeric(Nodes, Nodes[Index].Children[K]);
+  while not Result and (K > 0) and MayReturnContext(Nodes, Nodes[Index].Children[K]) do
+  begin
+    Dec(K);
+    Result := MayBeNumeric(Nodes, Nodes[Index].Children[K]);
+  end;
+end;
+
 { True if the value of Index may be a number (a predicate then compares
   it with the position); only for the predicates of a pattern. }
 function MayBeNumeric(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Boolean;
@@ -3368,6 +3460,10 @@ begin
     { a filter keeps items of its input }
     xakFilter:
       Result := MayBeNumeric(Nodes, Nodes[Index].Children[0]);
+    { a simple map: the items of its last operand, which may pass on
+      those of the operands before as "." }
+    xakSimpleMap:
+      Result := MapMayBeNumeric(Nodes, Index, Integer(High(Nodes[Index].Children)));
     xakSequence:
       begin
         Result := False;
@@ -3410,6 +3506,11 @@ begin
   begin
     if not Nodes[Index].RootStart then
       Result := UsesOwnPosition(Nodes, Nodes[Index].Children[0]);
+    Exit;
+  end;
+  if Nodes[Index].Kind = xakSimpleMap then
+  begin
+    Result := UsesOwnPosition(Nodes, Nodes[Index].Children[0]);
     Exit;
   end;
   J := 0;
@@ -4551,6 +4652,8 @@ begin
       PathInto(Index, Context, Position, Size, ContextItem, Output);
     xakFilter:
       EvalFilter(Index, Context, Position, Size, ContextItem, Output);
+    xakSimpleMap:
+      EvalSimpleMap(Index, Context, Position, Size, ContextItem, Output);
     xakFor, xakSome, xakEvery:
       EvalForSomeEvery(Index, Context, Position, Size, ContextItem, Output);
     xakLet:
@@ -4869,6 +4972,31 @@ begin
     FMinFailed := Mark;
   end;
   Output := ApplyPredicates(FNodes[Index].Predicates, A, Split);
+end;
+
+{ E1 ! E2 ! ...: each operand after the first is evaluated with every
+  item of the value so far as the context item (position and size of
+  that value); the results are concatenated in order, duplicates and
+  all (no sorting into document order as with "/"). }
+procedure TLandrixXmlXPathEvaluator.EvalSimpleMap(Index: Integer; Context: Integer; Position, Size: Integer;
+  const ContextItem: TLandrixXmlXPathSequence; var Output: TLandrixXmlXPathSequence);
+var
+  K, I, Operand: Integer;
+  Current, Next, Ctx: TLandrixXmlXPathSequence;
+begin
+  Current := Eval(FNodes[Index].Children[0], Context, Position, Size, ContextItem);
+  for K := 1 to Integer(High(FNodes[Index].Children)) do
+  begin
+    Operand := FNodes[Index].Children[K];
+    Next := LandrixXmlXPathEmpty;
+    for I := 0 to Current.Count - 1 do
+    begin
+      Ctx := SingleSeq(Current.Items[I]);
+      AppendAll(Next, Eval(Operand, Current.Items[I].Node, I + 1, Current.Count, Ctx));
+    end;
+    Current := Next;
+  end;
+  Output := Current;
 end;
 
 procedure TLandrixXmlXPathEvaluator.EvalForSomeEvery(Index: Integer; Context: Integer; Position, Size: Integer;

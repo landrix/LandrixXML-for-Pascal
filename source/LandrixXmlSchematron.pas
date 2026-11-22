@@ -778,6 +778,20 @@ var
     end;
   end;
 
+  { "!" outside the predicates: no XSLT pattern (Saxon: XTSE0340) }
+  function UsesSimpleMap(Expr: TLandrixXmlXPathExpression; Index: Integer): Boolean;
+  var
+    J: Integer;
+  begin
+    Result := Expr.Nodes[Index].Kind = xakSimpleMap;
+    J := 0;
+    while not Result and (J < Length(Expr.Nodes[Index].Children)) do
+    begin
+      Result := UsesSimpleMap(Expr, Expr.Nodes[Index].Children[J]);
+      Inc(J);
+    end;
+  end;
+
   procedure DeclareFunctions(Target: TLandrixXmlXPathStaticContext; CheckDuplicates: Boolean);
   var
     X, Y: TLandrixXmlNode;
@@ -1026,6 +1040,9 @@ begin
               if UsesSetOperator(Rule.Context, Rule.Context.Root) then
                 raise ELandrixXmlError.CreateCode(xecUnsupported, 'Schematron rules: ' + Rule.SourceLine +
                   ': intersect and except in a rule context are not supported');
+              if UsesSimpleMap(Rule.Context, Rule.Context.Root) then
+                raise ELandrixXmlXPathError.CreateXPathAt(xecXPath, 'XTSE0340', 'Schematron rules: ' +
+                  Rule.SourceLine + ': "!" is not allowed in a rule context (an XSLT pattern)', 0, 0);
               C := R.FirstChildElement;
               while C <> nil do
               begin
