@@ -1099,6 +1099,53 @@ begin
   Result.Add(Rest);
 end;
 
+{ A type of a loaded schema document of the XML Schema namespace needs an
+  import in every document that refers to it (Xerces: src-resolve.4.2 in
+  the included document c, which does not import the namespace itself) }
+procedure TestXsNamespaceImport;
+const
+  XsNs = 'http://www.w3.org/2001/XMLSchema';
+var
+  Dir, A, B, C: string;
+  S: TLandrixXmlXsdSchemaSet;
+begin
+  Dir := ExtractFilePath(ParamStr(0));
+  A := Dir + 'xsns-a.xsd';
+  B := Dir + 'xsns-b.xsd';
+  C := Dir + 'xsns-c.xsd';
+  WriteTestFile(B, '<xs:schema xmlns:xs="' + XsNs + '" targetNamespace="' + XsNs + '">' +
+    '<xs:simpleType name="myT"><xs:restriction base="xs:string"/></xs:simpleType></xs:schema>');
+  WriteTestFile(C, '<xs:schema xmlns:xs="' + XsNs + '"><xs:element name="c" type="xs:myT"/></xs:schema>');
+  WriteTestFile(A, '<xs:schema xmlns:xs="' + XsNs + '"><xs:import namespace="' + XsNs +
+    '" schemaLocation="xsns-b.xsd"/><xs:include schemaLocation="xsns-c.xsd"/>' +
+    '<xs:element name="r" type="xs:myT"/></xs:schema>');
+  S := nil;
+  try
+    try
+      S := LandrixXmlXsdLoadSchema(A);
+      S.Free;
+      S := nil;
+      FailNotRaised('src-resolve.4.2 for xs:myT without an import');
+    except
+      on E: ELandrixXmlXsdSchemaError do
+      begin
+        CheckEqualsStr('src-resolve.4.2', E.ConstraintCode, 'xs:myT without an import: ' + E.Message);
+        CheckEqualsStr(ExpandFileName(C), E.SchemaFile, 'xs:myT without an import: file');
+      end;
+    end;
+    { with the import in c as well, it loads }
+    WriteTestFile(C, '<xs:schema xmlns:xs="' + XsNs + '"><xs:import namespace="' + XsNs +
+      '"/><xs:element name="c" type="xs:myT"/></xs:schema>');
+    S := LandrixXmlXsdLoadSchema(A);
+    Check(S.FindElement('', 'c') <> nil, 'xs:myT with an import');
+  finally
+    S.Free;
+    DeleteFile(A);
+    DeleteFile(B);
+    DeleteFile(C);
+  end;
+end;
+
 { tests/data/xsdschema/rules.txt: schemas with the constraint code Xerces
   reports (a sixth field holds Xerces' code where it is known to differ),
   and valid forms that must load (tools/check-xsdrules.py checks the codes
@@ -1241,6 +1288,7 @@ begin
   RegisterTest('XsdValidator.ContentLimits', TestContentLimits);
   RegisterTest('XsdValidator.Unresolved', TestUnresolved);
   RegisterTest('XsdValidator.SchemaRules', TestSchemaRules);
+  RegisterTest('XsdValidator.XsNamespaceImport', TestXsNamespaceImport);
   {$IFDEF MSWINDOWS}
   RegisterTest('XsdValidator.FileCase', TestFileCase);
   {$ENDIF}

@@ -358,6 +358,17 @@ type
     ConstraintActual: TLandrixXmlXsdValue;
   end;
 
+  { An attribute use the loader built, with the xs:attribute element it
+    comes from. Xerces compares the uses of a type and its extension by
+    identity: the uses of one attribute group are the same objects in every
+    type that references it, so a base and its extension may both reference
+    the group (not ct-props-correct.4). }
+  TLoaderAttributeUse = class(TLandrixXmlXsdAttributeUse)
+  public
+    Source: TLandrixXmlNode;
+    SourceDoc: TSchemaDoc;
+  end;
+
   { an element declaration with a value constraint or a substitution
     group head, checked when every type is complete }
   TElementValueCheck = class
@@ -489,6 +500,8 @@ type
       const Name: TLandrixXmlUtf8);
     procedure CheckAttributeGroupRestriction(P: TPending; Items: TObjectList; Wildcard: TLandrixXmlXsdWildcard);
     procedure CheckGroupIds(P: TPending; Items: TObjectList);
+    function ComplexPending(const NamespaceUri, LocalName: TLandrixXmlUtf8;
+      SelfOwner: TLandrixXmlNode = nil): TPending;
     function GroupAsType(const Name: TLandrixXmlUtf8; Items: TObjectList;
       Wildcard: TLandrixXmlXsdWildcard): TLandrixXmlXsdComplexType;
     procedure CheckAllowedNamespace(Doc: TSchemaDoc; Node: TLandrixXmlNode; const Value,
@@ -1352,6 +1365,32 @@ end;
 
 { An attribute group as the attribute uses of a complex type (not owned
   by the schema set); prohibited uses are left out, as in Xerces. }
+function NewUse(Source: TLandrixXmlNode; SourceDoc: TSchemaDoc): TLandrixXmlXsdAttributeUse;
+var
+  U: TLoaderAttributeUse;
+begin
+  U := TLoaderAttributeUse.Create;
+  U.Source := Source;
+  U.SourceDoc := SourceDoc;
+  Result := U;
+end;
+
+{ a new use with the origin of Use (an inherited or kept use of the base) }
+function CopyUse(Use: TLandrixXmlXsdAttributeUse): TLandrixXmlXsdAttributeUse;
+begin
+  if Use is TLoaderAttributeUse then
+    Result := NewUse(TLoaderAttributeUse(Use).Source, TLoaderAttributeUse(Use).SourceDoc)
+  else
+    Result := NewUse(nil, nil);
+end;
+
+{ Use and Item come from the same xs:attribute element of one document }
+function IsSameUse(Use: TLandrixXmlXsdAttributeUse; Item: TAttributeItem): Boolean;
+begin
+  Result := (Use is TLoaderAttributeUse) and (Item.Source <> nil) and
+    (TLoaderAttributeUse(Use).Source = Item.Source) and (TLoaderAttributeUse(Use).SourceDoc = Item.SourceDoc);
+end;
+
 function TLoader.GroupAsType(const Name: TLandrixXmlUtf8; Items: TObjectList;
   Wildcard: TLandrixXmlXsdWildcard): TLandrixXmlXsdComplexType;
 var
@@ -1367,7 +1406,7 @@ begin
     Item := TAttributeItem(Items[I]);
     if Item.Prohibited then
       Continue;
-    Use := TLandrixXmlXsdAttributeUse.Create;
+    Use := NewUse(Item.Source, Item.SourceDoc);
     Use.Decl := Item.Decl;
     Use.Required := Item.Required;
     Use.ValueConstraint := Item.ValueConstraint;
@@ -1942,16 +1981,29 @@ begin
   if NamespaceUri = LandrixXmlXsdNamespace then
   begin
     Result := LandrixXmlXsdBuiltinType(LocalName);
+    { a type of a schema whose target namespace is the XML Schema
+      namespace (the built-in types come first, as in Xerces) }
     if Result = nil then
     begin
+      { as Xerces for a restriction base or a list item type }
       if LocalName = 'anyType' then
-        Fail(Doc, Node, 'xs:anyType is not a simple type');
-      { Xerces deviation: vc014. Another name is no type: only the built-in
-        types are taken from the XML Schema namespace without an import
-        (versioning attributes such as vc:typeAvailable are not read) }
+        FailCheck(Doc.FileName, Node, 'cos-st-restricts.1.1', 'xs:anyType is not a simple type');
+      { Xerces deviation: vc014. Only the built-in types are taken from the
+        XML Schema namespace without an import (versioning attributes such
+        as vc:typeAvailable are not read); a type of a loaded schema
+        document of that namespace needs one, as any other namespace }
       CheckAllowedNamespace(Doc, Node, 'xs:' + LocalName, NamespaceUri, False);
-      FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('type', NamespaceUri, LocalName));
+      P := FindPending(pkSimpleType, NamespaceUri, LocalName, SelfOwner);
+      if P <> nil then
+      begin
+        Result := ResolveSimpleType(P);
+        Exit;
+      end;
+      if FindPending(pkComplexType, NamespaceUri, LocalName, SelfOwner) <> nil then
+        Fail(Doc, Node, QualifiedText(NamespaceUri, LocalName) + ' is not a simple type');
     end;
+    if Result = nil then
+      FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('type', NamespaceUri, LocalName));
     Exit;
   end;
   P := FindPending(pkSimpleType, NamespaceUri, LocalName, SelfOwner);
@@ -1964,6 +2016,19 @@ begin
     FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('type', NamespaceUri, LocalName));
   end;
   Result := ResolveSimpleType(P);
+end;
+
+{ The complex type of that name, nil for a built-in type name of the XML
+  Schema namespace (a built-in type comes first, as in Xerces, also when a
+  loaded document of that namespace declares the name) }
+function TLoader.ComplexPending(const NamespaceUri, LocalName: TLandrixXmlUtf8;
+  SelfOwner: TLandrixXmlNode): TPending;
+begin
+  if (NamespaceUri = LandrixXmlXsdNamespace) and
+    ((LocalName = 'anyType') or (LandrixXmlXsdBuiltinType(LocalName) <> nil)) then
+    Result := nil
+  else
+    Result := FindPending(pkComplexType, NamespaceUri, LocalName, SelfOwner);
 end;
 
 procedure TLoader.ResolveTypeRef(Doc: TSchemaDoc; Node: TLandrixXmlNode; const AttrName: TLandrixXmlUtf8;
@@ -1980,11 +2045,14 @@ begin
     Complex := FSet.AnyType;
     Exit;
   end;
-  if Ns = LandrixXmlXsdNamespace then
+  if (Ns = LandrixXmlXsdNamespace) and (LandrixXmlXsdBuiltinType(LocalName) <> nil) then
   begin
-    Simple := SimpleTypeRef(Doc, Node, Ns, LocalName);
+    Simple := LandrixXmlXsdBuiltinType(LocalName);
     Exit;
   end;
+  { another name of the XML Schema namespace needs an import }
+  if Ns = LandrixXmlXsdNamespace then
+    CheckAllowedNamespace(Doc, Node, 'xs:' + LocalName, Ns, False);
   Pending := FindPending(pkComplexType, Ns, LocalName);
   if Pending <> nil then
   begin
@@ -3075,7 +3143,7 @@ begin
   if not IsXs(Derivation, 'restriction') then
   begin
     QNameAttr(Doc, Derivation, 'base', Ns, LocalName);
-    BasePending := FindPending(pkComplexType, Ns, LocalName, TypeNode);
+    BasePending := ComplexPending(Ns, LocalName, TypeNode);
   end;
   Own := ParticleOfChildren(Doc, Derivation);
   if (Own <> nil) and IsEmptyCompositor(Derivation) then
@@ -3659,11 +3727,17 @@ begin
       BaseType := FSet.AnyType
     else
     begin
-      BasePending := FindPending(pkComplexType, Ns, LocalName, Node);
+      if (Ns = LandrixXmlXsdNamespace) and (LandrixXmlXsdBuiltinType(LocalName) = nil) then
+        CheckAllowedNamespace(Doc, Derivation, 'xs:' + LocalName, Ns, False);
+      BasePending := ComplexPending(Ns, LocalName, Node);
       if BasePending <> nil then
         BaseType := ResolveComplexType(BasePending, True)
       else if IsSimpleContent then
         BaseSimple := SimpleTypeRef(Doc, Derivation, Ns, LocalName, Node)
+      else if ((Ns = LandrixXmlXsdNamespace) and (LandrixXmlXsdBuiltinType(LocalName) <> nil)) or
+        (FindPending(pkSimpleType, Ns, LocalName, Node) <> nil) then
+        FailCheck(Doc.FileName, Derivation, 'src-ct.1', 'the base ' + QualifiedText(Ns, LocalName) +
+          ' of complex content is a simple type')
       else
         FailCheck(Doc.FileName, Derivation, 'src-resolve', MissingText('complex type', Ns, LocalName));
     end;
@@ -3815,7 +3889,7 @@ begin
       begin
         for I := 0 to BaseType.AttributeCount - 1 do
         begin
-          Use := TLandrixXmlXsdAttributeUse.Create;
+          Use := CopyUse(BaseType.Attributes[I]);
           Use.Decl := BaseType.Attributes[I].Decl;
           Use.Required := BaseType.Attributes[I].Required;
           Use.ValueConstraint := BaseType.Attributes[I].ValueConstraint;
@@ -3844,7 +3918,7 @@ begin
           end;
           if not Found then
           begin
-            Use := TLandrixXmlXsdAttributeUse.Create;
+            Use := CopyUse(BaseType.Attributes[I]);
             Use.Decl := BaseType.Attributes[I].Decl;
             Use.Required := BaseType.Attributes[I].Required;
             Use.ValueConstraint := BaseType.Attributes[I].ValueConstraint;
@@ -3870,10 +3944,17 @@ begin
         fixed value, so only a wildcard can allow the attribute }
       if Item.Prohibited then
         Continue;
-      if IsExtension and (T.FindAttribute(Item.Decl.NamespaceUri, Item.Decl.Name) <> nil) then
-        FailCheck(Doc.FileName, Derivation, 'ct-props-correct.4', 'the extension redeclares the attribute ' +
-          QualifiedText(Item.Decl.NamespaceUri, Item.Decl.Name));
-      Use := TLandrixXmlXsdAttributeUse.Create;
+      if IsExtension then
+      begin
+        Use := T.FindAttribute(Item.Decl.NamespaceUri, Item.Decl.Name);
+        { the same use again (one attribute group in the base and here) }
+        if (Use <> nil) and IsSameUse(Use, Item) then
+          Continue;
+        if Use <> nil then
+          FailCheck(Doc.FileName, Derivation, 'ct-props-correct.4', 'the extension redeclares the attribute ' +
+            QualifiedText(Item.Decl.NamespaceUri, Item.Decl.Name));
+      end;
+      Use := NewUse(Item.Source, Item.SourceDoc);
       Use.Decl := Item.Decl;
       Use.Required := Item.Required;
       Use.ValueConstraint := Item.ValueConstraint;
@@ -4912,7 +4993,7 @@ begin
   if IsXs(Derivation, 'extension') then
   begin
     QNameAttr(Doc, Derivation, 'base', Ns, LocalName);
-    BasePending := FindPending(pkComplexType, Ns, LocalName, TypeNode);
+    BasePending := ComplexPending(Ns, LocalName, TypeNode);
   end;
   if IsXs(Derivation, 'extension') and (Ns = LandrixXmlXsdNamespace) and (LocalName = 'anyType') then
     BaseParticle := AnyTypeParticle(FSet.AnyType)

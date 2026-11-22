@@ -80,6 +80,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema: a type of a schema document whose target namespace is the
+  XML Schema namespace (imported, or the schema for schemas itself) is
+  found by its name; before, every name of that namespace other than a
+  built-in type was src-resolve. As in Xerces, the built-in types still
+  come first (also as the base of a complex type), and a document of
+  another target namespace that refers to such a type needs its own
+  import of the XML Schema namespace (src-resolve.4.2).
+- XML Schema: the constraint codes of Xerces for two wrong base types:
+  `xs:anyType` as the base, list item type or union member of a simple
+  type is cos-st-restricts.1.1, and complex content whose base is a
+  simple type (`<xs:extension base="xs:string"/>`) is src-ct.1 (both
+  were rejected before, with no code or src-resolve).
+- XML Schema: an extension that references the same attribute group as
+  its base type is no longer rejected with ct-props-correct.4. As in
+  Xerces, the attributes of one attribute group are the same uses in
+  every type; only an attribute declared again is a duplicate.
 - Stack budgets (XPath parser and evaluator, XSLT templates, tree copies
   and serializer): the stack distance is computed with the full pointer
   width. On a 64-bit target a frame on another stack more than 4 GB away
