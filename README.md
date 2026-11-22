@@ -708,6 +708,13 @@ both the mark and an entry here):
 - A field `@*` matches the first attribute of an element only, so an
   element with two attributes (one of them `xsi:nil`) gives one value
   (`idL100`).
+- A field whose union branches match one element or attributes of one
+  element (`@a|@b` with both attributes, `.|@a`) gives one value, that of
+  the first branch that matches; the specification asks for
+  `cvc-identity-constraint.3` (more than one node). Nodes of different
+  elements (`a|b`, `a|@b`) are reported (no test of the suite covers
+  this; in the source code the mark reads `Xerces deviation, not in the
+  test suite`).
 - An element whose content model is an empty `xs:choice` may be empty
   (`complex022`).
 - A prohibited attribute use with a fixed value (`use="prohibited"

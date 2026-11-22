@@ -1003,6 +1003,11 @@ begin
           if M.CurrentStep[I] = N then
           begin
             M.Matched[I] := IdcMatchedAttribute;
+            { Xerces deviation, not in the test suite. Branches of a union
+              that match one element, or attributes of one element
+              ("@a|@b", ".|@a"), give one value, that of the first branch
+              that matches; nodes of different elements ("p|r", "p|@a")
+              are cvc-identity-constraint.3 }
             J := 0;
             while (J < I) and ((M.Matched[J] and IdcMatched) <> IdcMatched) do
               Inc(J);
