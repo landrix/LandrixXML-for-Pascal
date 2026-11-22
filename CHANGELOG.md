@@ -80,6 +80,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT: the runtime's own limits (`MaxTemplateDepth`, `MaxStackBytes`)
+  met in the left operand of `and`/`or` are raised at once, and a
+  variable does not keep them, as for the evaluator's limits since the
+  entry below; before, `f:rec() or true()` was true when the stylesheet
+  function hit the limit.
 - XPath `and`/`or`: a resource limit in the left operand (MaxDepth,
   MaxStackBytes, the depth of lazy variables) is raised at once. Before,
   the right operand decided (`f() or true()` was true although `f()` hit

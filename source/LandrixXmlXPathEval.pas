@@ -2080,10 +2080,17 @@ begin
   Result := E is ELandrixXmlXPathLimitStop;
   if Result or (E is ELandrixXmlXPathRaised) or (E.XPathCode <> 'FOER0000') then
     Exit;
-  { raised again by the XSLT runtime with the instruction's position (a
-    new exception, not of the class): the message still starts with the
-    words of the limit; only the start counts, as a message may hold
-    text of the input further on (a calendar name of format-date) }
+  { every other run-time limit raises FOER0000 with xecLimit (the XSLT
+    runtime's MaxTemplateDepth and MaxStackBytes, the evaluator's own
+    limits raised again by the XSLT runtime, which keeps xecLimit) }
+  Result := E.Code = xecLimit;
+  if Result then
+    Exit;
+  { MaxDepth (xecXPath) raised again by the XSLT runtime with the
+    instruction's position (a new exception, not of the class): the
+    message still starts with the words of the limit; only the start
+    counts, as a message may hold text of the input further on (a
+    calendar name of format-date) }
   Msg := Copy(E.Message, Length(E.XPathCode) + 3, MaxInt);
   Result := StartsWith(LimitStopText) or StartsWith(LazyStopText) or
     StartsWith('expressions or ' + LimitStopText);

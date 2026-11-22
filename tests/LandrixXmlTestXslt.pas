@@ -1032,6 +1032,10 @@ begin
     T.MaxDepth := 1;
     Text := Run;
     CheckEqualsStr('FOER0000', Copy(Text, 1, 8), 'or: MaxDepth in a stylesheet function (' + Text + ')');
+    { the runtime's own MaxTemplateDepth (xecLimit): a limit too }
+    T.MaxDepth := 500;
+    T.MaxTemplateDepth := 1;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run, 'or: MaxTemplateDepth in a stylesheet function');
   finally
     T.Free;
     Source.Free;
