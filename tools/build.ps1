@@ -17,12 +17,21 @@
                                              and tests/ is compiled, nothing is
                                              linked or run (no macOS SDK imported)
     mac                                      FPC 3.2.4 on the Mac via SSH
+    x86                                      runs the Win32 runners built before
+                                             (d6, d6-checked, d7, fpc322-win32) on
+                                             real x86 hardware (SSH alias
+                                             ai-rtx5090): x87 results are not
+                                             reliable in the x86 emulator here
   Append "-checked" to any local toolchain (e.g. fpc322-linux-checked,
   d6-checked) to build with overflow and range checking, as consuming
   projects may do in debug builds.
   Sets: min (fpc322-linux, fpc322-linux-checked, d6, d13-win32),
-        all (everything above plus d6-checked, d13-win64-checked and
-        d13-osxarm64).
+        dev (before every commit: fpc322-win64, fpc322-win32,
+        fpc322-linux-checked, d6, d13-win32, d13-win64),
+        all (before a release: everything above plus d6-checked,
+        d13-win64-checked, d13-osxarm64, mac and x86 at the end).
+  With x86 in the list, d7 is only built here: the x86 emulator of this
+  ARM machine computes some x87 results wrongly, its tests run on x86.
 
 .EXAMPLE
   ./tools/build.ps1                 # minimum set
@@ -44,14 +53,17 @@ $Delphi6  = 'D:\Projekte\Borland\Delphi6'
 $Delphi7  = 'D:\Projekte\Borland\Delphi7'
 $Delphi13 = 'C:\Program Files (x86)\Embarcadero\Studio\37.0'
 $LocalBin = Join-Path $env:USERPROFILE '.local\bin'
+$X86Host = 'ai-rtx5090'
+$X86Runners = @('d6', 'd6-checked', 'd7', 'fpc322-win32')
 $MacRunner = Join-Path $env:USERPROFILE '.local\share\remote-toolchains\macos-fpc\Run-PascalProgram.ps1'
 
 $Sets = @{
   'min' = @('fpc322-linux', 'fpc322-linux-checked', 'd6', 'd13-win32')
+  'dev' = @('fpc322-win64', 'fpc322-win32', 'fpc322-linux-checked', 'd6', 'd13-win32', 'd13-win64')
   'all' = @('fpc322-linux', 'fpc322-linux-checked', 'fpc324-linux', 'fpc331-linux',
             'fpc322-win32', 'fpc322-win64', 'fpc331-winarm',
             'd6', 'd6-checked', 'd7', 'd13-win32', 'd13-win64', 'd13-win64-checked',
-            'd13-osxarm64', 'mac')
+            'd13-osxarm64', 'mac', 'x86')
 }
 
 $expanded = @()
@@ -150,6 +162,66 @@ function Invoke-Toolchain([string]$Name) {
       $log | Where-Object { $_ -match 'test\(s\)|^FAIL|^ERROR|Fatal|Error:' } | ForEach-Object { Write-Host $_ }
       return @{ Name = $Name; Build = $code; Diag = (Count-OwnDiagnostics $log).Count; Run = $code; Log = $log }
     }
+    '^x86$' {
+      # The runners built before (in this call or an earlier one) and the
+      # committed test data (never tests/data/local) go into a fresh folder
+      # on the x86 machine; the folder is removed afterwards.
+      if ($NoRun) { return @{ Name = $Name; Build = 0; Diag = 0; Run = $null; Log = @() } }
+      if ($ProgramName -match '[^A-Za-z0-9_.-]') { throw "x86: the program name '$ProgramName' needs quoting on the remote side" }
+      $files = @()
+      foreach ($r in $X86Runners) {
+        $f = "build/$r/$ProgramName.exe"
+        if (-not (Test-Path $f)) { throw "$f missing: build $r first" }
+        $files += $f
+      }
+      $data = @(git -c core.quotepath=off ls-files tests/data)
+      if ($LASTEXITCODE -ne 0) { throw 'git ls-files failed' }
+      $files += @($data | Where-Object { ($_ -ne 'tests/data/local') -and ($_ -notlike 'tests/data/local/*') })
+      $id = "$(Get-Date -Format 'yyyyMMdd-HHmmss')-$([guid]::NewGuid().ToString('N').Substring(0, 8))"
+      $dir = "landrix-xml-$id"
+      $list = "$out/x86-$id.txt"
+      $tar = "$out/x86-$id.tar"
+      $ssh = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=8')
+      $code = 0
+      $log = @()
+      $created = $false
+      try {
+        [IO.File]::WriteAllLines((Join-Path $Root $list), [string[]]$files)
+        & tar.exe --no-recursion -cf $tar -T $list | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw 'tar failed' }
+        & ssh.exe @ssh $X86Host "mkdir D:\AI-Work\$dir" | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "ssh to $X86Host failed (exit code $LASTEXITCODE; switched off?)" }
+        $created = $true
+        & scp.exe -q @ssh $tar "${X86Host}:D:/AI-Work/$dir/x86.tar" | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw 'scp failed' }
+        & ssh.exe @ssh $X86Host "cd /d D:\AI-Work\$dir && tar -xf x86.tar && del x86.tar" | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw 'unpacking failed' }
+        foreach ($r in $X86Runners) {
+          $rlog = @(& ssh.exe @ssh $X86Host "cd /d D:\AI-Work\$dir && build\$r\$ProgramName.exe ." 2>&1 | ForEach-Object { "$_" })
+          $rcode = $LASTEXITCODE
+          if ($rcode -ne 0) { $code = $rcode }
+          $log += "--- $r (exit code $rcode)"
+          $log += $rlog
+          Write-Host "  $r" -ForegroundColor Cyan
+          $rlog | Where-Object { $_ -match 'test\(s\)|^FAIL|^ERROR' } | ForEach-Object { Write-Host "    $_" }
+          if ($rcode -ne 0) { $rlog | Select-Object -Last 15 | ForEach-Object { Write-Host "    $_" } }
+        }
+      } finally {
+        try {
+          if ($created) {
+            & ssh.exe @ssh $X86Host "rmdir /s /q D:\AI-Work\$dir" | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "  could not remove D:\AI-Work\$dir on $X86Host" -ForegroundColor Red
+              $code = 1
+            }
+          }
+        } finally {
+          Remove-Item -Force -ErrorAction SilentlyContinue $tar, $list
+        }
+      }
+      $log | Set-Content -Encoding utf8 "$out/build.log"
+      return @{ Name = $Name; Build = 0; Diag = 0; Run = $code; Log = $log }
+    }
     default { throw "Unknown toolchain: $Name" }
   }
 
@@ -162,13 +234,16 @@ function Invoke-Toolchain([string]$Name) {
     return $result
   }
   $diag | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
-  if (-not $NoRun) {
+  if (-not $NoRun -and -not ($X86Present -and $X86Runners -contains $Name -and $Name -like 'd7*')) {
     if ($runCmd) { & $runCmd | Out-Host } else { & $exe $Root | Out-Host }
     $result.Run = $LASTEXITCODE
   }
   return $result
 }
 
+# x86 runs the runners built in this call, so it comes last
+$X86Present = $expanded -contains 'x86'
+if ($X86Present) { $expanded = @($expanded | Where-Object { $_ -ne 'x86' }) + @('x86') }
 $results = @()
 foreach ($t in $expanded) {
   Write-Host "=== $t ===" -ForegroundColor Cyan

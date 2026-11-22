@@ -1076,7 +1076,8 @@ Delphi 2007 and Delphi 2009 to 12 are expected to work but are not tested.
 
 ```powershell
 ./tools/build.ps1          # minimum set: FPC 3.2.2, Delphi 6, Delphi 13 Win32
-./tools/build.ps1 all      # every local toolchain
+./tools/build.ps1 dev      # development set: FPC 3.2.2 Win32/Win64/Linux, Delphi 6, Delphi 13 Win32/Win64
+./tools/build.ps1 all      # every toolchain incl. the Mac (SSH); the d6, d6-checked, d7 and fpc322-win32 runners run on a real x86 machine (maintainer setup)
 ```
 
 Or directly with Free Pascal:
