@@ -3788,3 +3788,72 @@ durWrap	P29DT20H	cvc-enumeration-valid
 durWrap	-P7M145DT35893S	cvc-enumeration-valid
 durWrap	P8M45DT17245S	cvc-enumeration-valid
 durWrap	P12M149DT16H83606S	cvc-enumeration-valid
+gDayEnum	---31	cvc-enumeration-valid
+gDayEnum	---32	cvc-datatype-valid.1.2.1
+gDayEnum	---00	cvc-datatype-valid.1.2.1
+gDayEnum	--31	cvc-datatype-valid.1.2.1
+gDayEnum	---31Z	cvc-enumeration-valid
+gDayEnum	---01+14:00	
+gDayEnum	---31-10:00	
+gDayEnum	---01-10:00	cvc-enumeration-valid
+gDayEnum	---15+00:00	
+gDayEnum	---14-10:00	cvc-enumeration-valid
+gDayRange	---31	cvc-maxInclusive-valid
+gDayRange	---32	cvc-datatype-valid.1.2.1
+gDayRange	---00	cvc-datatype-valid.1.2.1
+gDayRange	--31	cvc-datatype-valid.1.2.1
+gDayRange	---31Z	
+gDayRange	---01+14:00	cvc-maxInclusive-valid
+gDayRange	---01	cvc-minInclusive-valid
+gDayRange	---31-10:00	cvc-maxInclusive-valid
+gDayRange	---02+05:00	cvc-minInclusive-valid
+gDayRange	---31+01:00	
+gDayMaxTz	---31	cvc-maxInclusive-valid
+gDayMaxTz	---32	cvc-datatype-valid.1.2.1
+gDayMaxTz	---00	cvc-datatype-valid.1.2.1
+gDayMaxTz	--31	cvc-datatype-valid.1.2.1
+gDayMaxTz	---31Z	
+gDayMaxTz	---30	cvc-maxInclusive-valid
+gDayMaxTz	---31-10:00	
+gDayMaxTz	---31-09:00	
+gDayMaxTz	---01+13:00	cvc-maxInclusive-valid
+gMonthDayEnum	--02-29	cvc-enumeration-valid
+gMonthDayEnum	--02-30	cvc-datatype-valid.1.2.1
+gMonthDayEnum	--12-31	cvc-enumeration-valid
+gMonthDayEnum	--13-01	cvc-datatype-valid.1.2.1
+gMonthDayEnum	02-29	cvc-datatype-valid.1.2.1
+gMonthDayEnum	--1-01	cvc-datatype-valid.1.2.1
+gMonthDayEnum	--01-01+14:00	
+gMonthDayEnum	--02-29-10:00	
+gMonthDayEnum	--02-28-10:00	cvc-enumeration-valid
+gMonthDayEnum	--03-01-10:00	cvc-enumeration-valid
+gMonthDayRange	--02-29	cvc-minExclusive-valid
+gMonthDayRange	--02-30	cvc-datatype-valid.1.2.1
+gMonthDayRange	--12-31	cvc-maxExclusive-valid
+gMonthDayRange	--13-01	cvc-datatype-valid.1.2.1
+gMonthDayRange	02-29	cvc-datatype-valid.1.2.1
+gMonthDayRange	--1-01	cvc-datatype-valid.1.2.1
+gMonthDayRange	--01-01+14:00	cvc-maxExclusive-valid
+gMonthDayRange	--06-01+14:00	cvc-minExclusive-valid
+gMonthDayRange	--12-30Z	
+gMonthDayRange	--06-02-14:00	
+gMonthMax	--12	cvc-maxInclusive-valid
+gMonthMax	--13	cvc-datatype-valid.1.2.1
+gMonthMax	--00	cvc-datatype-valid.1.2.1
+gMonthMax	-12	cvc-datatype-valid.1.2.1
+gMonthMax	--12Z	cvc-maxInclusive-valid
+gMonthMax	--12--	cvc-maxInclusive-valid
+gMonthMax	--01+14:00	cvc-maxInclusive-valid
+gMonthMax	--06Z	
+gMonthMax	--06	cvc-maxInclusive-valid
+gMonthMax	--07+14:00	cvc-maxInclusive-valid
+gMonthMax	--05-10:00	
+gMonthMin	--12	
+gMonthMin	--13	cvc-datatype-valid.1.2.1
+gMonthMin	--00	cvc-datatype-valid.1.2.1
+gMonthMin	-12	cvc-datatype-valid.1.2.1
+gMonthMin	--12Z	cvc-minInclusive-valid
+gMonthMin	--12--	
+gMonthMin	--01+14:00	
+gMonthMin	--11-10:00	cvc-minInclusive-valid
+gMonthMin	--12+01:00	cvc-minInclusive-valid

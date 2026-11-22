@@ -1,0 +1,4 @@
+file a.xml
+error 3 57 cvc-identity-constraint.4.1 Duplicate unique value [---31Z] declared for identity constraint "D" of element "R".
+error 3 57 cvc-identity-constraint.4.1 Duplicate unique value [--12-31Z] declared for identity constraint "MD" of element "R".
+error 5 45 cvc-identity-constraint.4.1 Duplicate unique value [--02-29Z] declared for identity constraint "MD" of element "R".

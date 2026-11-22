@@ -99,3 +99,10 @@ durPat	duration	pattern=P[0-9]+D
 durMax2M	durMax1M	maxExclusive=P20D
 durQuirk	duration	maxInclusive=PT1048576H59M
 durWrap	duration	enumeration=P2147481800Y33D
+gDayEnum	gDay	enumeration=---01+14:00	enumeration=---15Z
+gDayRange	gDay	minInclusive=---02	maxInclusive=---31Z
+gDayMaxTz	gDay	maxInclusive=---01+14:00
+gMonthDayEnum	gMonthDay	enumeration=--12-31-10:00	enumeration=--03-01+14:00
+gMonthDayRange	gMonthDay	minExclusive=--06-01	maxExclusive=--12-31Z
+gMonthMax	gMonth	maxInclusive=--06Z
+gMonthMin	gMonth	minInclusive=--12

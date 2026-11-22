@@ -840,6 +840,18 @@ both the mark and an entry here):
   T24:00:00 equals 00:00:00 of the next day (no test of the suite covers
   this; in the source code the mark reads `Xerces deviation, not in the
   test suite`).
+- `xs:gDay`, `xs:gMonthDay` and `xs:gMonth` values with a time zone are
+  moved to UTC on Xerces' placeholder date (2000-01-01), and then only
+  their own fields count: the month and day for `gMonthDay` and `gMonth`,
+  the day for `gDay`, together with the time of day. So `---01+14:00` (the
+  31st at 10:00 UTC) equals `---31-10:00` and `--01-01+14:00` equals
+  `--12-31-10:00` and comes after `--06-01Z` (in enumerations, ranges and
+  identity constraints). If only one of two values has a time zone, the
+  other is moved by +14:00 and -14:00 first; when that is the instance
+  value, all its fields count, also the year and month of the bound the
+  time zone carried over. XML Schema 1.0 orders these values on one time
+  line (no test of the suite covers this; in the source code the mark
+  reads `Xerces deviation, not in the test suite`).
 - A value that fails a facet other than pattern is still the value of
   identity constraints (a failed list item gives its own value, or that
   of the item before it; a union no member type matches gives that of

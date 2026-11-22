@@ -1826,11 +1826,211 @@ begin
     Result := LandrixXmlDecimalCompare(SecondA, SecondB);
 end;
 
+{ --- date and time values as Xerces has them ---------------------------- }
+
+function XercesMaxDay(Year, Month: Integer): Integer;
+begin
+  if (Month = 4) or (Month = 6) or (Month = 9) or (Month = 11) then
+    Result := 30
+  else if Month = 2 then
+  begin
+    if (Year mod 4 = 0) and ((Year mod 100 <> 0) or (Year mod 400 = 0)) then
+      Result := 29
+    else
+      Result := 28;
+  end
+  else
+    Result := 31;
+end;
+
+function FloorDiv(A, B: Integer): Integer;
+begin
+  Result := A div B;
+  if (A mod B <> 0) and ((A < 0) <> (B < 0)) then
+    Dec(Result);
+end;
+
+{ The fields of a date or time value as Xerces keeps them: missing parts
+  get its placeholders (year 2000, month 1, day 1, or 15 for xs:time),
+  24:00:00 is the start of the next day, and a value with a time zone is
+  moved to UTC the way Xerces' normalize does it.
+  Xerces deviation, not in the test suite: so xs:time 24:00:00 is
+  00:00:00 of the day after the placeholder, unequal to 00:00:00 and
+  after 23:59:59, where XML Schema 1.0 makes it the same time of day as
+  00:00:00. }
+function XercesFields(const D: TLandrixXmlXsdDateTime; Kind: TLandrixXmlXsdPrimitive): TLandrixXmlXsdDateTime;
+var
+  Temp, Carry, MaxDay: Integer;
+begin
+  Result := D;
+  if not (Kind in [xspDateTime, xspDate, xspGYearMonth, xspGYear]) then
+    Result.Year := 2000;
+  if Result.Month = 0 then
+    Result.Month := 1;
+  if Result.Day = 0 then
+  begin
+    if Kind = xspTime then
+      Result.Day := 15
+    else
+      Result.Day := 1;
+  end;
+  if Result.Hour = 24 then
+  begin
+    Result.Hour := 0;
+    Inc(Result.Day);
+    if Result.Day > XercesMaxDay(Result.Year, Result.Month) then
+    begin
+      Result.Day := 1;
+      Inc(Result.Month);
+      if Result.Month > 12 then
+      begin
+        Result.Month := 1;
+        { the year wraps as Java's int does (Q+ safe) }
+        Result.Year := Wrap32(Int64(Result.Year) + 1);
+        if Result.Year = 0 then
+          Result.Year := 1;
+      end;
+    end;
+  end;
+  if not Result.HasTimeZone or (Result.TimeZone = 0) then
+    Exit;
+  Temp := Result.Minute - Result.TimeZone mod 60;
+  Carry := FloorDiv(Temp, 60);
+  Result.Minute := Temp - Carry * 60;
+  Temp := Result.Hour - Result.TimeZone div 60 + Carry;
+  Carry := FloorDiv(Temp, 24);
+  Result.Hour := Temp - Carry * 24;
+  Result.Day := Result.Day + Carry;
+  while True do
+  begin
+    MaxDay := XercesMaxDay(Result.Year, Result.Month);
+    if Result.Day < 1 then
+    begin
+      Result.Day := Result.Day + XercesMaxDay(Result.Year, Result.Month - 1);
+      Carry := -1;
+    end
+    else if Result.Day > MaxDay then
+    begin
+      Result.Day := Result.Day - MaxDay;
+      Carry := 1;
+    end
+    else
+      Break;
+    Temp := Result.Month + Carry;
+    Result.Month := Temp - 1 - FloorDiv(Temp - 1, 12) * 12 + 1;
+    Result.Year := Wrap32(Int64(Result.Year) + FloorDiv(Temp - 1, 12));
+    if Result.Year = 0 then
+    begin
+      if Result.TimeZone < 0 then
+        Result.Year := 1
+      else
+        Result.Year := -1;
+    end;
+  end;
+end;
+
+{ The fields of an identity key as Xerces' equals compares them: those of
+  XercesFields from the type's position on (CompareWithoutYear), so the
+  types without a year drop the year a time zone carried the value into,
+  and xs:gDay also the month; ---01+14:00 is the 31st at 10:00 UTC, the
+  same key as ---31-10:00 (Xerces deviation, not in the test suite). }
+function XercesComparable(const D: TLandrixXmlXsdDateTime; Kind: TLandrixXmlXsdPrimitive): TLandrixXmlXsdDateTime;
+begin
+  Result := XercesFields(D, Kind);
+  if Kind in [xspGMonthDay, xspGDay, xspGMonth] then
+    Result.Year := 2000;
+  if Kind = xspGDay then
+    Result.Month := 1;
+  if Result.HasTimeZone then
+    Result.TimeZone := 0;
+end;
+
+{ Xerces' compareOrder: the fields from Position on (0 the year, 1 the
+  month, 2 the day). }
+function XercesFieldOrder(const X, Y: TLandrixXmlXsdDateTime; Position: Integer): Integer;
+begin
+  Result := 0;
+  if Position < 1 then
+    Result := CompareInt(X.Year, Y.Year);
+  if (Result = 0) and (Position < 2) then
+    Result := CompareInt(X.Month, Y.Month);
+  if Result = 0 then
+    Result := CompareInt(X.Day, Y.Day);
+  if Result = 0 then
+    Result := CompareInt(X.Hour, Y.Hour);
+  if Result = 0 then
+    Result := CompareInt(X.Minute, Y.Minute);
+  if Result = 0 then
+    Result := LandrixXmlDecimalCompare(X.Second, Y.Second);
+end;
+
+{ D (without time zone) at the time zone Zone (minutes), moved to UTC. }
+function XercesAtZone(const D: TLandrixXmlXsdDateTime; Zone: Integer;
+  Kind: TLandrixXmlXsdPrimitive): TLandrixXmlXsdDateTime;
+var
+  T: TLandrixXmlXsdDateTime;
+begin
+  T := D;
+  T.HasTimeZone := True;
+  T.TimeZone := Zone;
+  Result := XercesFields(T, Kind);
+end;
+
+{ The order of two values of a type without a year as Xerces' compareDates
+  gives it (A the instance value, B the facet): the fields of the values
+  moved to UTC (XercesFields) from A's position on (the month for gMonth
+  and gMonthDay, the day for gDay). If only one has a time zone, the other
+  lies between itself at +14:00 and at -14:00; when that one is B, the
+  copies are compared from A's position on, when it is A, the moved copy
+  of A has position 0 and every field counts, also the year and month a
+  time zone carried B into. Xerces deviation, not in the test suite: XML
+  Schema 1.0 orders the values on one time line, so ---01+14:00 (the last
+  day of the month before at 10:00 UTC) is not ---31-10:00, which Xerces
+  takes as equal, and --01-01+14:00 is before --06-01Z, after it for
+  Xerces. }
+function CompareWithoutYear(const A, B: TLandrixXmlXsdDateTime; Kind: TLandrixXmlXsdPrimitive): Integer;
+var
+  Position: Integer;
+  NA, NB: TLandrixXmlXsdDateTime;
+begin
+  if Kind = xspGDay then
+    Position := 2
+  else
+    Position := 1;
+  NA := XercesFields(A, Kind);
+  NB := XercesFields(B, Kind);
+  if A.HasTimeZone = B.HasTimeZone then
+    Result := XercesFieldOrder(NA, NB, Position)
+  else if A.HasTimeZone then
+  begin
+    if XercesFieldOrder(NA, XercesAtZone(B, 14 * 60, Kind), Position) < 0 then
+      Result := -1
+    else if XercesFieldOrder(NA, XercesAtZone(B, -14 * 60, Kind), Position) > 0 then
+      Result := 1
+    else
+      Result := LandrixXmlXsdIncomparable;
+  end
+  else
+  begin
+    if XercesFieldOrder(XercesAtZone(A, -14 * 60, Kind), NB, 0) < 0 then
+      Result := -1
+    else if XercesFieldOrder(XercesAtZone(A, 14 * 60, Kind), NB, 0) > 0 then
+      Result := 1
+    else
+      Result := LandrixXmlXsdIncomparable;
+  end;
+end;
+
 function CompareDateTime(const A, B: TLandrixXmlXsdDateTime; Kind: TLandrixXmlXsdPrimitive): Integer;
 var
   MA, MB: Int64;
   YA, YB, DA, DB: Integer;
 begin
+  if Kind in [xspGMonthDay, xspGDay, xspGMonth] then
+  begin
+    Result := CompareWithoutYear(A, B, Kind);
+    Exit;
+  end;
   { missing parts get fixed reference values }
   YA := A.Year;
   YB := B.Year;
@@ -2753,28 +2953,6 @@ end;
 
 { --- canonical forms and keys as Xerces has them ---------------------- }
 
-function XercesMaxDay(Year, Month: Integer): Integer;
-begin
-  if (Month = 4) or (Month = 6) or (Month = 9) or (Month = 11) then
-    Result := 30
-  else if Month = 2 then
-  begin
-    if (Year mod 4 = 0) and ((Year mod 100 <> 0) or (Year mod 400 = 0)) then
-      Result := 29
-    else
-      Result := 28;
-  end
-  else
-    Result := 31;
-end;
-
-function FloorDiv(A, B: Integer): Integer;
-begin
-  Result := A div B;
-  if (A mod B <> 0) and ((A < 0) <> (B < 0)) then
-    Dec(Result);
-end;
-
 function ValuePrimitive(const Value: TLandrixXmlXsdValue): TLandrixXmlXsdPrimitive;
 begin
   Result := Value.Primitive;
@@ -2782,85 +2960,9 @@ begin
     Result := Value.MemberType.Primitive;
 end;
 
-{ The fields of a date or time value as Xerces keeps them: missing parts
-  get its placeholders (year 2000, month 1, day 1, or 15 for xs:time),
-  24:00:00 is the start of the next day, and a value with a time zone is
-  moved to UTC the way Xerces' normalize does it.
-  Xerces deviation, not in the test suite: so xs:time 24:00:00 is
-  00:00:00 of the day after the placeholder, unequal to 00:00:00 and
-  after 23:59:59, where XML Schema 1.0 makes it the same time of day as
-  00:00:00. }
 function XercesDateTime(const Value: TLandrixXmlXsdValue): TLandrixXmlXsdDateTime;
-var
-  Kind: TLandrixXmlXsdPrimitive;
-  Temp, Carry, MaxDay: Integer;
 begin
-  Kind := ValuePrimitive(Value);
-  Result := Value.DateTime;
-  if not (Kind in [xspDateTime, xspDate, xspGYearMonth, xspGYear]) then
-    Result.Year := 2000;
-  if Result.Month = 0 then
-    Result.Month := 1;
-  if Result.Day = 0 then
-  begin
-    if Kind = xspTime then
-      Result.Day := 15
-    else
-      Result.Day := 1;
-  end;
-  if Result.Hour = 24 then
-  begin
-    Result.Hour := 0;
-    Inc(Result.Day);
-    if Result.Day > XercesMaxDay(Result.Year, Result.Month) then
-    begin
-      Result.Day := 1;
-      Inc(Result.Month);
-      if Result.Month > 12 then
-      begin
-        Result.Month := 1;
-        { the year wraps as Java's int does (Q+ safe) }
-        Result.Year := Wrap32(Int64(Result.Year) + 1);
-        if Result.Year = 0 then
-          Result.Year := 1;
-      end;
-    end;
-  end;
-  if not Result.HasTimeZone or (Result.TimeZone = 0) then
-    Exit;
-  Temp := Result.Minute - Result.TimeZone mod 60;
-  Carry := FloorDiv(Temp, 60);
-  Result.Minute := Temp - Carry * 60;
-  Temp := Result.Hour - Result.TimeZone div 60 + Carry;
-  Carry := FloorDiv(Temp, 24);
-  Result.Hour := Temp - Carry * 24;
-  Result.Day := Result.Day + Carry;
-  while True do
-  begin
-    MaxDay := XercesMaxDay(Result.Year, Result.Month);
-    if Result.Day < 1 then
-    begin
-      Result.Day := Result.Day + XercesMaxDay(Result.Year, Result.Month - 1);
-      Carry := -1;
-    end
-    else if Result.Day > MaxDay then
-    begin
-      Result.Day := Result.Day - MaxDay;
-      Carry := 1;
-    end
-    else
-      Break;
-    Temp := Result.Month + Carry;
-    Result.Month := Temp - 1 - FloorDiv(Temp - 1, 12) * 12 + 1;
-    Result.Year := Wrap32(Int64(Result.Year) + FloorDiv(Temp - 1, 12));
-    if Result.Year = 0 then
-    begin
-      if Result.TimeZone < 0 then
-        Result.Year := 1
-      else
-        Result.Year := -1;
-    end;
-  end;
+  Result := XercesFields(Value.DateTime, ValuePrimitive(Value));
 end;
 
 function Digits2(Value: Integer): TLandrixXmlUtf8;
@@ -3193,7 +3295,7 @@ begin
         Result := LandrixXmlStringToUtf8(IntToHex(Value.DoubleValue.Bits, 16));
     xspDateTime, xspTime, xspDate, xspGYearMonth, xspGYear, xspGMonthDay, xspGDay, xspGMonth:
       begin
-        D := XercesDateTime(Value);
+        D := XercesComparable(Value.DateTime, ValuePrimitive(Value));
         if D.HasTimeZone then
           Result := 'Z'
         else

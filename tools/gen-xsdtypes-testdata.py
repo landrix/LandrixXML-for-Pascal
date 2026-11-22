@@ -123,6 +123,16 @@ TYPES = [
     ("durQuirk", "duration", [("maxInclusive", "PT1048576H59M")]),
     # years that wrap around the int range while days are added
     ("durWrap", "duration", [("enumeration", "P2147481800Y33D")]),
+    # the types without a year: Xerces compares the fields after the move to
+    # UTC from the month (gMonthDay, gMonth) or the day (gDay) on, so the
+    # year and month a time zone carries the value into do not count
+    ("gDayEnum", "gDay", [("enumeration", "---01+14:00"), ("enumeration", "---15Z")]),
+    ("gDayRange", "gDay", [("minInclusive", "---02"), ("maxInclusive", "---31Z")]),
+    ("gDayMaxTz", "gDay", [("maxInclusive", "---01+14:00")]),
+    ("gMonthDayEnum", "gMonthDay", [("enumeration", "--12-31-10:00"), ("enumeration", "--03-01+14:00")]),
+    ("gMonthDayRange", "gMonthDay", [("minExclusive", "--06-01"), ("maxExclusive", "--12-31Z")]),
+    ("gMonthMax", "gMonth", [("maxInclusive", "--06Z")]),
+    ("gMonthMin", "gMonth", [("minInclusive", "--12")]),
 ]
 
 VALUES = {
@@ -172,6 +182,13 @@ VALUES = {
 # extra values for single types (findings of reviews, checked by Xerces)
 EXTRA = {
     "enum123max2": ["5", "2", "3", "1.0"],
+    "gDayEnum": ["---01+14:00", "---31-10:00", "---31", "---01-10:00", "---15+00:00", "---14-10:00"],
+    "gDayRange": ["---01+14:00", "---01", "---31-10:00", "---02+05:00", "---31+01:00"],
+    "gDayMaxTz": ["---30", "---31", "---31-10:00", "---31-09:00", "---01+13:00"],
+    "gMonthDayEnum": ["--01-01+14:00", "--12-31", "--02-29-10:00", "--02-28-10:00", "--03-01-10:00"],
+    "gMonthDayRange": ["--01-01+14:00", "--06-01+14:00", "--12-31", "--12-30Z", "--06-02-14:00"],
+    "gMonthMax": ["--01+14:00", "--06Z", "--06", "--07+14:00", "--05-10:00"],
+    "gMonthMin": ["--01+14:00", "--12Z", "--11-10:00", "--12+01:00"],
     "max5len3": ["abcdef", "abcd", "abc", "ab"],
     "frac1tot3": ["1234.56", "12.5", "123.4", "1.25"],
     "timeMax": ["02:00:00Z", "02:00:01Z", "02:00:00.5Z", "01:59:59Z", "16:00:30", "16:00:31", "02:00:30Z",

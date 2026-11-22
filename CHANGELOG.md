@@ -80,6 +80,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema: `xs:gDay`, `xs:gMonthDay` and `xs:gMonth` values with a time
+  zone compare as Xerces compares them (enumeration, the bounds,
+  identity constraints): when both have a time zone, only the type's own
+  fields count after the move to UTC, so `---01+14:00` equals
+  `---31-10:00` and `--01-01+14:00` is after `--06-01Z`; against a value
+  without time zone the rules of Xerces' compareDates apply (see the
+  README). Checked against Xerces in 400 random cases; new
+  cases in `tests/data/xsdtypes` and `tests/data/xsdvalidator`. Listed as
+  a Xerces deviation in the README.
 - XSLT patterns with a union: a node the first branch failed on (a
   dynamic error in its predicate) no longer matches a later branch also
   in a second tree (`document()`, a tree parameter), as it did not in
