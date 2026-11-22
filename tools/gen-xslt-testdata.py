@@ -5,7 +5,10 @@ Every NAME.xsl in tests/data/xslt (not starting with "_": those are modules
 the cases import or include) is a case: Saxon runs it on NAME.xml (or on
 <doc/> if there is none) with the classes of the KoSIT validator jar and
 writes the output to NAME.out, or the error code to NAME.err. The time zone
-is UTC, as the processor's default implicit time zone.
+is UTC, as the processor's default implicit time zone. The replacement
+<doc/> lies in a temporary folder and the test runner loads it without a
+base URI, so a case without NAME.xml must not show the base URI of its
+source document (base-uri(/), document-uri(/)).
 
   python tools/gen-xslt-testdata.py --java PATH/java.exe --saxon validator-1.6.3-standalone.jar
 

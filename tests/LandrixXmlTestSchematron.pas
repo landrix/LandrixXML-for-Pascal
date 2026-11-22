@@ -139,7 +139,23 @@ var
   Doc: string;
   Want, Got: TLandrixXmlUtf8;
   SaxonError: Boolean;
+  SaxonCode: string;
   Report: string;
+
+  { a dynamic error of the last validation with the code Saxon stopped
+    with (Saxon stops at the first one; here every one is recorded) }
+  function HasSaxonCode: Boolean;
+  var
+    K: Integer;
+  begin
+    Result := False;
+    for K := 0 to V.ResultCount - 1 do
+      if (V.Results[K].Kind = xsrDynamicError) and (V.Results[K].ErrorCode = SaxonCode) then
+      begin
+        Result := True;
+        Exit;
+      end;
+  end;
 
   procedure Compare;
   begin
@@ -154,6 +170,11 @@ var
       begin
         Inc(Mismatches);
         Report := Report + #10 + '  ' + Doc + ': Saxon stops with a dynamic error, here none';
+      end
+      else if not HasSaxonCode then
+      begin
+        Inc(Mismatches);
+        Report := Report + #10 + '  ' + Doc + ': Saxon stops with ' + SaxonCode + ', here no such error';
       end;
     end
     else if (Got <> Want) or (Dynamic > 0) then
@@ -189,7 +210,10 @@ begin
         SaxonError := False;
       end
       else if Copy(Expected[I], 1, 12) = 'saxon-error ' then
-        SaxonError := True
+      begin
+        SaxonError := True;
+        SaxonCode := LandrixXmlUtf8ToString(Copy(Expected[I], 13, MaxInt));
+      end
       else
         Want := Want + Expected[I] + #10;
     Compare;

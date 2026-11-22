@@ -271,6 +271,14 @@ XML; a file that cannot be opened raises the RTL's stream error. A loaded
 `TLandrixXmlSchematronRules` is read-only and can be shared by validators
 in several threads; each validator belongs to one thread.
 
+Two differences from SchXslt, which none of the e-invoice rule sets
+notices: in the assertions of a rule, `position()` and `last()` are 1
+(the context node is checked on its own; SchXslt gives its position among
+its siblings), and an `xsl:variable` in an `xsl:function` with text
+content and neither `select` nor `as` is an `xs:untypedAtomic` of that
+text, not a document node (so `instance of document-node()` and path
+steps on it differ).
+
 `SaveSvrlToStream` and `SaveSvrlToFile` write the last validation as SVRL
 in the layout of SchXslt, which the KoSIT validator reports;
 `SaveSvrlToWriter` writes only the `svrl:schematron-output` element into
