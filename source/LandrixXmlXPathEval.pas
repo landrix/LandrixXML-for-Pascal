@@ -3051,24 +3051,6 @@ begin
   Inc(FFailedCount);
 end;
 
-{ S without the nodes FFailed[First .. Last - 1] }
-function TLandrixXmlXPathEvaluator.WithoutFailed(const S: TLandrixXmlXPathSequence;
-  First, Last: Integer): TLandrixXmlXPathSequence;
-var
-  Failed: array of Boolean;
-  I: Integer;
-begin
-  Failed := nil;
-  SetLength(Failed, FTree.Count);
-  for I := First to Last - 1 do
-    if FFailed[I] < FTree.Count then
-      Failed[FFailed[I]] := True;
-  Result := LandrixXmlXPathEmpty;
-  for I := 0 to S.Count - 1 do
-    if (S.Items[I].Node >= FTree.Count) or not Failed[S.Items[I].Node] then
-      LandrixXmlXPathAppend(Result, S.Items[I]);
-end;
-
 function TLandrixXmlXPathEvaluator.EvaluateShared(Expr: TLandrixXmlXPathExpression;
   ContextNode: Integer): TLandrixXmlXPathSequence;
 var
@@ -3161,12 +3143,13 @@ begin
   Result := TLandrixXmlXPathResult.Create;
   try
     Result.FTree := FTree;
-    { shared, not copied: trees added later only fill entries after
-      FDocCount (or go into new arrays when the evaluator's grow) }
+    Result.FItems := EvaluateSequence(Expr, ContextNode);
+    { after the evaluation, which may add trees (a host function calling
+      AddTree); shared, not copied: trees added later only fill entries
+      after FDocCount (or go into new arrays when the evaluator's grow) }
     Result.FDocTrees := FDocTrees;
     Result.FDocBases := FDocBases;
     Result.FDocCount := FDocCount;
-    Result.FItems := EvaluateSequence(Expr, ContextNode);
   except
     Result.Free;
     raise;
@@ -3237,6 +3220,60 @@ begin
       Inc(J);
     end;
   S.Count := J;
+end;
+
+{ The nodes of S without the nodes FFailed[First .. Last - 1], in document
+  order; the failed nodes may be in any tree (document(), a parameter
+  tree), so both lists are sorted and merged. }
+function TLandrixXmlXPathEvaluator.WithoutFailed(const S: TLandrixXmlXPathSequence;
+  First, Last: Integer): TLandrixXmlXPathSequence;
+var
+  Failed: array of Integer;
+  I, J, K, N, Count, T: Integer;
+begin
+  { a copy: S may be the storage of a variable }
+  Result := LandrixXmlXPathEmpty;
+  AppendAll(Result, S);
+  if Result.Count = 0 then
+    Exit;
+  SortNodes(Result);
+  Count := Last - First;
+  Failed := nil;
+  SetLength(Failed, Count);
+  for I := 0 to Count - 1 do
+    Failed[I] := FFailed[First + I];
+  { shell sort, as SortNodes }
+  N := 1;
+  while N < Count div 3 do
+    N := 3 * N + 1;
+  while N >= 1 do
+  begin
+    for I := N to Count - 1 do
+    begin
+      T := Failed[I];
+      J := I;
+      while (J >= N) and (Failed[J - N] > T) do
+      begin
+        Failed[J] := Failed[J - N];
+        Dec(J, N);
+      end;
+      Failed[J] := T;
+    end;
+    N := N div 3;
+  end;
+  J := 0;
+  K := 0;
+  for I := 0 to Result.Count - 1 do
+  begin
+    while (K < Count) and (Failed[K] < Result.Items[I].Node) do
+      Inc(K);
+    if (K = Count) or (Failed[K] <> Result.Items[I].Node) then
+    begin
+      Result.Items[J] := Result.Items[I];
+      Inc(J);
+    end;
+  end;
+  Result.Count := J;
 end;
 
 { An error in a pattern's predicate that means "no match": a dynamic

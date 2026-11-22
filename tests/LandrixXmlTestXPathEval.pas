@@ -778,22 +778,29 @@ end;
   the item; errors further inside are not caught there. }
 procedure TestPatterns;
 var
-  Tree: TLandrixXmlXPathTree;
+  Tree, Other: TLandrixXmlXPathTree;
   Evaluator: TLandrixXmlXPathEvaluator;
   Expr, Bound: TLandrixXmlXPathExpression;
   Context: TLandrixXmlXPathStaticContext;
   Raised: string;
+  Base: Integer;
 
-  function Count(const S: string): Integer;
+  function CountAt(const S: string; Node: Integer): Integer;
   begin
     Expr.Free;
     Expr := nil;
     Expr := TLandrixXmlXPathExpression.Create(U(S), nil);
-    Result := Evaluator.EvaluatePattern(Expr, 0).Count;
+    Result := Evaluator.EvaluatePattern(Expr, Node).Count;
+  end;
+
+  function Count(const S: string): Integer;
+  begin
+    Result := CountAt(S, 0);
   end;
 
 begin
   Tree := TLandrixXmlXPathTree.Create;
+  Other := TLandrixXmlXPathTree.Create;
   Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
   Context := TLandrixXmlXPathStaticContext.Create;
   Expr := nil;
@@ -807,6 +814,16 @@ begin
     CheckEquals(1, Count('//a[normalize-space(v) = ''1''] | //a[xs:integer(v[1]) > 0]'), 'each fails on one a');
     { as Saxon: a node the first branch failed on does not match the second }
     CheckEquals(2, Count('//a[xs:integer(v[1]) > 0] | //a[normalize-space(v) = ''x'']'), 'failed in the first branch');
+    { the same in a second tree (document(), a parameter tree), also
+      through a nested union }
+    Other.LoadFromUtf8(U('<r><a><v>1</v></a><a><v>1</v><v>2</v></a><a><v>x</v></a><b/></r>'));
+    Base := Evaluator.AddTree(Other);
+    CheckEquals(2, CountAt('//a[xs:integer(v[1]) > 0] | //a[normalize-space(v) = ''x'']', Base),
+      'failed in the first branch, second tree');
+    CheckEquals(3, CountAt('(//a[xs:integer(v[1]) > 0] | //b) | //a[normalize-space(v) = ''x'']', Base),
+      'failed in a nested union, second tree');
+    CheckEquals(1, CountAt('//a[normalize-space(v) = ''1''] | //a[xs:integer(v[1]) > 0]', Base),
+      'each fails on one a, second tree');
     CheckEquals(0, Count('//r[count(a[xs:integer(v[1]) > 0]) = 2]'), 'an error in a nested predicate drops r');
     { a position counts the failed item: as Saxon, nothing matches }
     CheckEquals(0, Count('//a[xs:integer(v[1]) > 0][last()]'), 'last() after an error');
@@ -907,6 +924,7 @@ begin
     Bound.Free;
     Context.Free;
     Evaluator.Free;
+    Other.Free;
     Tree.Free;
   end;
 end;
@@ -2647,6 +2665,7 @@ type
     NestedExpr: TLandrixXmlXPathExpression;
     NameExpr: TLandrixXmlXPathExpression;
     InterExpr: TLandrixXmlXPathExpression;
+    NewTree: TLandrixXmlXPathTree;
     function Call(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
       const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
   end;
@@ -2655,7 +2674,8 @@ type
   evaluated as ". * 2" with the argument as atomic context item; 3: the
   name of the context node (from the focus); 4: h:double(1); 5: the
   local name of the focus, evaluated in the focus passed on; 6: an
-  intersection (not allowed in a pattern) }
+  intersection (not allowed in a pattern); 7: the root of a tree added
+  with AddTree during the call }
 function THostFunctions.Call(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
   const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
 var
@@ -2678,6 +2698,12 @@ begin
     4: Result := Evaluator.EvaluateSequence(NestedExpr, -1);
     5: Result := Evaluator.EvaluateInFocus(NameExpr, Focus);
     6: Result := Evaluator.EvaluateSequence(InterExpr, 0);
+    7:
+      begin
+        NewTree := TLandrixXmlXPathTree.Create;
+        NewTree.LoadFromUtf8(U('<x>new</x>'));
+        Result := LandrixXmlXPathNodeItem(Evaluator.AddTree(NewTree));
+      end;
   else
     Result := LandrixXmlXPathStringItem(Evaluator.Tree.LocalNameUtf8(Focus.Node));
   end;
@@ -2695,6 +2721,7 @@ var
   Functions: TList;
   Expr: TLandrixXmlXPathExpression;
   F: TLandrixXmlXPathFocus;
+  R: TLandrixXmlXPathResult;
   I, K: Integer;
   Raised: Boolean;
   S: string;
@@ -2753,6 +2780,7 @@ begin
   Functions := TList.Create;
   Evaluator := nil;
   Expr := nil;
+  R := nil;
   try
     S := '<r><a/><b/><c>';
     for I := 1 to 20 do
@@ -2875,7 +2903,17 @@ begin
       end;
       Check(Raised, 'invalid focus ' + IntToStr(I));
     end;
+    { a tree the host function adds while Evaluate runs: the result
+      knows it }
+    Declare('new-tree', 0, 7, [xffVolatile]);
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U('h:new-tree()/x'), Context);
+    R := Evaluator.Evaluate(Expr, 0);
+    CheckEquals(1, R.Count, 'a node of the added tree');
+    CheckEqualsStr('new', LandrixXmlUtf8ToString(R.StringValueUtf8(0)), 'the string value from the added tree');
   finally
+    R.Free;
     Expr.Free;
     Evaluator.Free;
     for I := 0 to Integer(Functions.Count) - 1 do
@@ -2885,6 +2923,7 @@ begin
     Host.NestedExpr.Free;
     Host.NameExpr.Free;
     Host.InterExpr.Free;
+    Host.NewTree.Free;
     Host.Free;
     Context.Free;
     Tree.Free;

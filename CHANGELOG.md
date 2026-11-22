@@ -67,6 +67,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT patterns with a union: a node the first branch failed on (a
+  dynamic error in its predicate) no longer matches a later branch also
+  in a second tree (`document()`, a tree parameter), as it did not in
+  the source document; this holds for nested unions too.
+- `TLandrixXmlXPathEvaluator.Evaluate`: a result now knows the trees a
+  host function added with `AddTree` while the expression ran (before,
+  reading such a node from the result looked in the wrong tree).
 - XSLT patterns: the component functions of dates, times and durations
   (`day-from-date()`, `hours-from-time()`, `years-from-duration()` and
   the others, not the time zone ones) count as numbers in a predicate
