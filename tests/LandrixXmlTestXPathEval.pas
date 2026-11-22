@@ -735,6 +735,45 @@ begin
   end;
 end;
 
+{ The component functions of dates, times and durations give numbers:
+  after an error on an earlier sibling the positions are unknown, so a
+  later predicate with such a number matches nothing (Saxon 12.9:
+  match="a[xs:integer(@k) gt 0][day-from-date(xs:date(@d))]" on
+  <a k="bad" d="2000-01-01"/><a k="5" d="2000-01-01"/> matches
+  neither). }
+procedure TestPatternNumericComponents;
+const
+  Components: array[0..3] of string = ('day-from-date(xs:date(@d))',
+    'day-from-dateTime(xs:dateTime(''2000-01-01T00:00:00''))',
+    'hours-from-time(xs:time(''01:00:00''))', 'years-from-duration(xs:yearMonthDuration(''P1Y''))');
+var
+  Tree: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  I: Integer;
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  Expr := nil;
+  try
+    Tree.LoadFromUtf8(U('<r><a k="bad" d="2000-01-01"/><a k="5" d="2000-01-01"/></r>'));
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    for I := 0 to High(Components) do
+    begin
+      Expr.Free;
+      Expr := nil;
+      Expr := TLandrixXmlXPathExpression.Create(U('//a[xs:integer(@k) gt 0][' + Components[I] + ']'), nil);
+      CheckEquals(0, Evaluator.EvaluatePattern(Expr, 0).Count, Components[I]);
+      { the second a: document 0, r 1, a 2 with two attributes, a 5 }
+      Check(not Evaluator.MatchesPattern(Expr, 5, True), Components[I] + ' (MatchesPattern)');
+    end;
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    Tree.Free;
+  end;
+end;
+
 { EvaluatePattern: an error in a predicate of the pattern's steps drops
   the item; errors further inside are not caught there. }
 procedure TestPatterns;
@@ -3195,6 +3234,7 @@ begin
   RegisterTest('XPathEval.TemporaryTrees', TestTemporaryTrees);
   RegisterTest('XPathEval.HostFunctions', TestHostFunctions);
   RegisterTest('XPathEval.MatchesPattern', TestMatchesPattern);
+  RegisterTest('XPathEval.PatternNumericComponents', TestPatternNumericComponents);
   RegisterTest('XPathEval.AxisShortCuts', TestAxisShortCuts);
   RegisterTest('XPathEval.PatternStackBudget', TestPatternStackBudget);
   RegisterTest('XPathEval.Frames', TestFrames);

@@ -67,6 +67,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XSLT patterns: the component functions of dates, times and durations
+  (`day-from-date()`, `hours-from-time()`, `years-from-duration()` and
+  the others, not the time zone ones) count as numbers in a predicate
+  after one that failed on an earlier sibling, so that predicate no
+  longer matches a node at a shifted position (Saxon matches none:
+  `a[xs:integer(@k) gt 0][day-from-date(xs:date(@d))]`).
 - XPath speed with many siblings: a step whose first predicate is a
   number (`preceding-sibling::*[1]`, `following::x[2]`, a pattern
   `match="i[1]"`) stops at that node instead of building the whole axis

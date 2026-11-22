@@ -926,7 +926,10 @@ Differences from Xerces, also on purpose:
   `xs:double` (not for the other numeric types) and the string value for
   `xs:string` (a value of a string type stays as it is). All as in Saxon
   (except that a literal `()` is converted too, which Saxon leaves empty);
-  tested against it in `tests/data/xpath/compat10.txt`.
+  tested against it in `tests/data/xpath/compat10.txt`. The conversions
+  of `=` and `!=` are the same in both profiles: also with `xppXPath20`
+  a string beside a date is compared as a string, where the text of
+  XPath 2.0 has a type error (`XPTY0004`); Saxon follows XPath 3.1 there.
 - The [KoSIT XRechnung test suite](https://github.com/itplr-kosit/xrechnung-testsuite)
   (`tools/run-kosit-suite.py`, pinned release 2026-08-31 with the
   matching KoSIT validator configuration): all 86 invoices are validated
