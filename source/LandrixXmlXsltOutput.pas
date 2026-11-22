@@ -1235,9 +1235,8 @@ procedure TSerializer.CheckStack(Local: Pointer);
 var
   Used: Integer;
 begin
-  Used := Integer(FStackBase - PAnsiChar(Local));
-  { below zero or beyond 1 GB: another stack (a fiber), not checked }
-  if (Used > FStackBudget) and (Used < 1073741824) then
+  Used := LandrixXmlStackUsed(FStackBase, Local);
+  if Used > FStackBudget then
     raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'result tree too deep to serialize (more than ' +
       IntToStr(FStackBudget) + ' bytes of stack)', 0, 0);
 end;

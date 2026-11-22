@@ -999,9 +999,8 @@ var
   Used: Integer;
 begin
   Inc(FNesting);
-  Used := Integer(FStackBase - PAnsiChar(@Used));
-  { below zero or beyond 1 GB: another stack (a fiber), not checked }
-  if (FNesting > MaxNesting) or (Used > MaxParseStack) and (Used < 1073741824) then
+  Used := LandrixXmlStackUsed(FStackBase, @Used);
+  if (FNesting > MaxNesting) or (Used > MaxParseStack) then
     raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expression nested too deeply (' +
       IntToStr(FNesting) + ' levels) at offset ' + IntToStr(Position - 1), 0, 0);
 end;

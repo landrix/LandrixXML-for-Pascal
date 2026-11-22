@@ -589,6 +589,29 @@ begin
       on E: ELandrixXmlError do
         CheckErrorCode(xecInvalidOperation, E.Code, 'dead reader');
     end;
+
+    { a duplicate attribute names the element itself, lexical or after
+      namespace expansion }
+    Reader.LoadFromUtf8(A('<r><e a="1" a="2"/></r>'));
+    try
+      while Reader.Read do
+        ;
+      FailNotRaised('lexical duplicate');
+    except
+      on E: ELandrixXmlError do
+        CheckErrorCode(xecSyntax, E.Code, 'lexical duplicate code');
+    end;
+    CheckEqualsUtf8(A('/r/e'), Reader.ElementPathUtf8, 'path of a lexical duplicate');
+    Reader.LoadFromUtf8(A('<r xmlns:p="u" xmlns:q="u"><e p:a="1" q:a="2"/></r>'));
+    try
+      while Reader.Read do
+        ;
+      FailNotRaised('expanded duplicate');
+    except
+      on E: ELandrixXmlError do
+        CheckErrorCode(xecNamespace, E.Code, 'expanded duplicate code');
+    end;
+    CheckEqualsUtf8(A('/r/e'), Reader.ElementPathUtf8, 'path of an expanded duplicate');
   finally
     Reader.Free;
   end;

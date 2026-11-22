@@ -193,6 +193,16 @@ function LandrixXmlHashBytes(P: PAnsiChar; Len: Integer; Seed: Cardinal): Cardin
 function LandrixXmlHashSalt: Cardinal;
 function LandrixXmlHashFinish(H: Cardinal): Cardinal;
 
+{ --- Stack budgets ------------------------------------------------------ }
+
+{ The stack bytes between Base and Local, both addresses on the stack (it
+  grows down): Base taken when a recursion started, Local a variable of the
+  current frame. -1 when Local is above Base or 1 GB or more below it
+  (another stack, e.g. a fiber: not checked). The addresses are compared
+  with their full width, so a frame more than 4 GB away on a 64-bit
+  target is not mistaken for a near one. }
+function LandrixXmlStackUsed(Base, Local: Pointer): Integer;
+
 { --- Base64 ------------------------------------------------------------- }
 
 { Appends the base64 encoding (RFC 4648, with padding, no line breaks) of
@@ -548,6 +558,26 @@ begin
   H := H xor (H shr 13);
   H := MulMod32(H, $C2B2AE35);
   Result := H xor (H shr 16);
+end;
+
+function LandrixXmlStackUsed(Base, Local: Pointer): Integer;
+const
+  Limit = 1073741824;
+var
+  Floor: PAnsiChar;
+begin
+  { pointers are compared, never subtracted beyond the limit, so the
+    result is right on 32-bit and 64-bit targets alike (and no overflow
+    check can fire) }
+  Result := -1;
+  if PAnsiChar(Local) > PAnsiChar(Base) then
+    Exit;
+  Floor := nil;
+  Inc(Floor, Limit);
+  if (PAnsiChar(Base) >= Floor) and (PAnsiChar(Local) <= PAnsiChar(Base) - Limit) then
+    Exit;
+  { less than Limit apart: the difference fits an Integer }
+  Result := Integer(PAnsiChar(Base) - PAnsiChar(Local));
 end;
 
 var

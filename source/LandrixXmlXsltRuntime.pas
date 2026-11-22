@@ -3287,8 +3287,8 @@ var
 begin
   if FSettings.MaxStackBytes <= 0 then
     Exit;
-  Used := Integer(PAnsiChar(FStackBase) - PAnsiChar(Local));
-  if (Used > FSettings.MaxStackBytes) and (Used < 1073741824) then
+  Used := LandrixXmlStackUsed(FStackBase, Local);
+  if Used > FSettings.MaxStackBytes then
     raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates and functions nested ' +
       IntToStr(FTemplateDepth) + ' deep use more than ' + IntToStr(FSettings.MaxStackBytes) + ' bytes of stack',
       Module, Line, Column);
@@ -3308,8 +3308,8 @@ var
 begin
   if FSettings.MaxStackBytes > 0 then
   begin
-    Used := Integer(PAnsiChar(FStackBase) - PAnsiChar(Local));
-    if (Used > FSettings.MaxStackBytes) and (Used < 1073741824) then
+    Used := LandrixXmlStackUsed(FStackBase, Local);
+    if Used > FSettings.MaxStackBytes then
       raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'a tree ' + IntToStr(Depth) +
         ' levels deep is copied with more than ' + IntToStr(FSettings.MaxStackBytes) + ' bytes of stack', '', 0, 0);
   end

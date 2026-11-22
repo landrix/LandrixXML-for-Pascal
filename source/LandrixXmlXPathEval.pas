@@ -2911,8 +2911,7 @@ var
   begin
     Result := False;
     { one level per step (a/a/a/... with 100,000 steps) }
-    if (FEvalStackBase <> nil) and (Integer(FEvalStackBase - PAnsiChar(@Step)) > FMaxStackBytes) and
-      (Integer(FEvalStackBase - PAnsiChar(@Step)) < 1073741824) then
+    if (FEvalStackBase <> nil) and (LandrixXmlStackUsed(FEvalStackBase, @Step) > FMaxStackBytes) then
       raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expressions or ' +
         LimitStopText + ' use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
     if K < 0 then
@@ -4473,9 +4472,7 @@ begin
     Exit;
   end;
   FBypass := -1;
-  { below zero or beyond 1 GB: another stack (a fiber), not checked }
-  if (FEvalStackBase <> nil) and (Integer(FEvalStackBase - PAnsiChar(@N)) > FMaxStackBytes) and
-    (Integer(FEvalStackBase - PAnsiChar(@N)) < 1073741824) then
+  if (FEvalStackBase <> nil) and (LandrixXmlStackUsed(FEvalStackBase, @N) > FMaxStackBytes) then
     raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expressions or ' +
       LimitStopText + ' use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
   N := @FNodes[Index];
@@ -4642,8 +4639,8 @@ begin
   end;
   if FMaxStackBytes > 0 then
   begin
-    Used := Integer(PAnsiChar(FStackBase) - PAnsiChar(Local));
-    if (Used > FMaxStackBytes) and (Used < 1073741824) then
+    Used := LandrixXmlStackUsed(FStackBase, Local);
+    if Used > FMaxStackBytes then
       raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', LimitStopText + ' ' +
         IntToStr(FDepth) + ' deep use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
   end;

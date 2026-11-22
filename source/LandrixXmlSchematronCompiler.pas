@@ -95,7 +95,7 @@ type
     function Where(Node: TLandrixXmlNode): string;
     procedure Fail(Node: TLandrixXmlNode; const Msg: string);
     procedure Unsupported(Node: TLandrixXmlNode; const Msg: string);
-    function LoadDocument(const FileName: string): TLandrixXmlDocument;
+    function LoadDocument(const FileName: string; const Bytes: TLandrixXmlUtf8): TLandrixXmlDocument;
     procedure CheckAttributes(Node: TLandrixXmlNode);
     function Include(Node: TLandrixXmlNode): TLandrixXmlNode;
     procedure Walk(Node: TLandrixXmlNode);
@@ -550,16 +550,23 @@ begin
   List[N] := S;
 end;
 
+{ The whole file; as the reader's input, a file that does not fit is
+  refused before anything is allocated. ReadBuffer reports a file that
+  ends early (a read error). }
 function FileBytes(const FileName: string): TLandrixXmlUtf8;
 var
   Stream: TFileStream;
+  Size: Int64;
 begin
   Result := '';
   Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
   try
-    SetLength(Result, Integer(Stream.Size));
-    if Length(Result) > 0 then
-      Stream.ReadBuffer(Result[1], Length(Result));
+    Size := Stream.Size;
+    if Size > MaxInt - 1 then
+      raise ELandrixXmlError.CreateCode(xecLimit, 'Input too large: ' + FileName);
+    SetLength(Result, Integer(Size));
+    if Size > 0 then
+      Stream.ReadBuffer(Result[1], Integer(Size));
   finally
     Stream.Free;
   end;
@@ -658,7 +665,10 @@ begin
   raise ELandrixXmlError.CreateCode(xecUnsupported, 'Schematron: ' + Where(Node) + ': ' + Msg);
 end;
 
-function TLandrixXmlSchematronCompiler.LoadDocument(const FileName: string): TLandrixXmlDocument;
+{ Bytes is the content of FileName, read once (the hash of the main schema
+  is taken from the same bytes) }
+function TLandrixXmlSchematronCompiler.LoadDocument(const FileName: string;
+  const Bytes: TLandrixXmlUtf8): TLandrixXmlDocument;
 begin
   Result := TLandrixXmlDocument.Create;
   FDocuments.Add(Result);
@@ -666,7 +676,10 @@ begin
   Result.KeepComments := False;
   Result.KeepProcessingInstructions := False;
   Result.WhitespaceMode := xwmPreserve;
-  Result.LoadFromFile(FileName);
+  if Bytes = '' then
+    Result.LoadFromUtf8('')
+  else
+    Result.LoadFromBuffer(Bytes[1], Length(Bytes));
   CheckAttributes(Result.Root);
 end;
 
@@ -1081,7 +1094,7 @@ begin
     if SameFileName(FIncluding[I], Path) then
       Fail(Node, 'sch:include of ' + Href + ' is circular');
   FIncluding.Add(Path);
-  Result := LoadDocument(Path).Root;
+  Result := LoadDocument(Path, FileBytes(Path)).Root;
 end;
 
 procedure TLandrixXmlSchematronCompiler.Walk(Node: TLandrixXmlNode);
@@ -1924,7 +1937,7 @@ begin
     else
       Sha := LandrixXmlSha256Hex(Bytes[1], Length(Bytes));
     FIncluding.Add(Path);
-    Main := LoadDocument(Path).Root;
+    Main := LoadDocument(Path, Bytes).Root;
     if not IsSch(Main, 'schema') then
       Fail(nil, 'not a Schematron schema: ' + FileName);
     QueryBinding := S8(Attr(Main, 'queryBinding'));

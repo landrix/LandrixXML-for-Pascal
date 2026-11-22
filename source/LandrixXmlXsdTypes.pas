@@ -263,7 +263,9 @@ type
       Primitive: TLandrixXmlXsdPrimitive; WhiteSpace: TLandrixXmlXsdWhiteSpace;
       LexicalRule: TLandrixXmlXsdLexicalRule);
     { A type derived from Base by restriction; Name is '' for an anonymous
-      type. Facets are added afterwards. }
+      type. Facets are added afterwards. Base.Final is not checked here (as
+      Xerces' type factory; the schema loader reports st-props-correct.3);
+      DerivationOk honours it. }
     constructor CreateRestriction(Base: TLandrixXmlXsdSimpleType; const NamespaceUri, Name: TLandrixXmlUtf8);
     { A union of Members (tried in this order). Raises ELandrixXmlError
       (xecInvalidArgument) if Members is empty or contains nil. }

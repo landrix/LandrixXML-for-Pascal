@@ -105,9 +105,18 @@ var
   CodePoint: Cardinal;
 begin
   Result := nil;
+  { a string of 2 GB or more (64-bit) does not fit the Integer indexes }
+  if Int64(Length(S)) > MaxInt then
+    raise ELandrixXmlError.CreateCode(xecLimit, 'Text too long');
   Len := Length(S);
-  SetLength(Result, Len);
   P := PAnsiChar(S);
+  { one code point per byte that is no continuation byte (10xxxxxx): a
+    decoded sequence starts with such a byte, so this is an upper bound }
+  N := 0;
+  for Pos := 0 to Len - 1 do
+    if Ord(P[Pos]) and $C0 <> $80 then
+      Inc(N);
+  SetLength(Result, N);
   Pos := 0;
   N := 0;
   while Pos < Len do

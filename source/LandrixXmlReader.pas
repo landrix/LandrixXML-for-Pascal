@@ -1639,8 +1639,10 @@ begin
   for I := 0 to FAttrCount - 1 do
     if FAttrs[I].ValueOfs >= 0 then
       FAttrs[I].ValueP := FScratch.Data + FAttrs[I].ValueOfs;
-  CheckDuplicates(False);
+  { pushed first: the element path of an error in a complete start tag
+    (duplicate attribute, namespace error) ends with the element itself }
   Inc(FElemCount);
+  CheckDuplicates(False);
   ProcessNamespaces;
   E := @FElems[FElemCount - 1];
   FToken := xttStartElement;

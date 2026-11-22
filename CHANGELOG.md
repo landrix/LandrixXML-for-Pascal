@@ -80,6 +80,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Stack budgets (XPath parser and evaluator, XSLT templates, tree copies
+  and serializer): the stack distance is computed with the full pointer
+  width. On a 64-bit target a frame on another stack more than 4 GB away
+  could be taken for a small distance and stop a run with a wrong limit
+  error.
+- Reader: after a duplicate attribute the element path (`ElementPath`)
+  ends with the element itself, also for a lexical duplicate (before it
+  named the parent there, but the element for a duplicate found after
+  namespace expansion).
+- Schematron compiler: the schema file is read once; the hash in the
+  compiled result is that of the bytes compiled (a file replaced between
+  two reads gave the hash of the old content).
 - Regular expressions: a loop iteration that consumes nothing ends the
   loop with its captures also in the linear-time matcher (patterns without
   back-references), as it did in the backtracking one and does in Saxon.
