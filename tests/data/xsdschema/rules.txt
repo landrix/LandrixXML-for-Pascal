@@ -535,3 +535,9 @@ src-ct.1	1	simple type as a complex content base		<xs:simpleType name="s"><xs:re
 cos-st-restricts.1.1	1	anyType as a simple base		<xs:simpleType name="u"><xs:restriction base="xs:anyType"/></xs:simpleType>
 cos-st-restricts.1.1	1	anyType as a union member		<xs:simpleType name="u"><xs:union memberTypes="xs:anyType"/></xs:simpleType>
 cos-st-restricts.1.1	1	anyType as a list item type		<xs:simpleType name="u"><xs:list itemType="xs:anyType"/></xs:simpleType>
+cos-st-restricts.1.1	1	complex type as a restriction base		<xs:complexType name="c"/><xs:simpleType name="s"><xs:restriction base="c"/></xs:simpleType>
+cos-st-restricts.1.1	1	complex type as a list item type		<xs:complexType name="c"/><xs:simpleType name="s"><xs:list itemType="c"/></xs:simpleType>
+cos-st-restricts.1.1	1	complex type as a union member		<xs:complexType name="c"/><xs:simpleType name="s"><xs:union memberTypes="c"/></xs:simpleType>
+src-resolve	1	complex type as an attribute type		<xs:complexType name="c"/><xs:attribute name="a" type="c"/>
+src-resolve	1	complex type as a local attribute type		<xs:complexType name="c"/><xs:complexType name="d"><xs:attribute name="a" type="c"/></xs:complexType>
+src-resolve	1	anyType as an attribute type		<xs:attribute name="a" type="xs:anyType"/>

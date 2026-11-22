@@ -1861,8 +1861,9 @@ begin
   if Attr(Node, 'type', Value) then
   begin
     ResolveTypeRef(Doc, Node, 'type', Simple, Complex, TypePending);
+    { as Xerces: no simple type of that name }
     if Complex <> nil then
-      Fail(Doc, Node, 'attribute ' + Esc(Name) + ' has a complex type');
+      FailCheck(Doc.FileName, Node, 'src-resolve', 'attribute ' + Esc(Name) + ' has a complex type');
     D.SimpleType := Simple;
   end;
   Child := Node.FirstChildElement;
@@ -2000,7 +2001,8 @@ begin
         Exit;
       end;
       if FindPending(pkComplexType, NamespaceUri, LocalName, SelfOwner) <> nil then
-        Fail(Doc, Node, QualifiedText(NamespaceUri, LocalName) + ' is not a simple type');
+        FailCheck(Doc.FileName, Node, 'cos-st-restricts.1.1', QualifiedText(NamespaceUri, LocalName) +
+          ' is not a simple type');
     end;
     if Result = nil then
       FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('type', NamespaceUri, LocalName));
@@ -2009,8 +2011,10 @@ begin
   P := FindPending(pkSimpleType, NamespaceUri, LocalName, SelfOwner);
   if P = nil then
   begin
+    { as Xerces for a restriction base, a list item type or a union member }
     if FindPending(pkComplexType, NamespaceUri, LocalName, SelfOwner) <> nil then
-      Fail(Doc, Node, QualifiedText(NamespaceUri, LocalName) + ' is not a simple type');
+      FailCheck(Doc.FileName, Node, 'cos-st-restricts.1.1', QualifiedText(NamespaceUri, LocalName) +
+        ' is not a simple type');
     { Xerces deviation: missing001, missing006. A missing type is an error
       when the schema is loaded, also if nothing uses it }
     FailCheck(Doc.FileName, Node, 'src-resolve', MissingText('type', NamespaceUri, LocalName));

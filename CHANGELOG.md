@@ -80,6 +80,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema: a complex type where a simple type is needed is reported
+  with Xerces' code: cos-st-restricts.1.1 as the base, list item type or
+  union member of a simple type, src-resolve as the type of an attribute
+  (also `xs:anyType` there). Before, the schema was rejected without a
+  constraint code.
 - XML Schema: a value that fails the `pattern` facets of several types of
   a derivation is reported with the pattern Xerces reports: Xerces checks
   them from the end of its pattern list (a restriction with patterns puts
