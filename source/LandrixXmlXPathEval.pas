@@ -745,6 +745,12 @@ begin
 end;
 
 type
+  { The errors of MaxDepth, MaxStackBytes and MaxLazyDepth (IsLimitStop):
+    they depend on where the evaluation started, so a variable does not
+    keep them and "and"/"or" do not let the other operand hide them. }
+  ELandrixXmlXPathLimitStop = class(ELandrixXmlXPathError);
+
+type
   { raised by fn:error: an error of the expression itself, also with the
     code FOER0000, which otherwise marks what is not supported }
   ELandrixXmlXPathRaised = class(ELandrixXmlXPathError);
@@ -2048,7 +2054,8 @@ begin
 end;
 
 const
-  { the start of the message of MaxDepth and MaxStackBytes errors }
+  { the start of the message of MaxDepth and MaxStackBytes errors (raised
+    as ELandrixXmlXPathLimitStop) }
   LimitStopText = 'user functions nested';
   { the start of the message of the MaxLazyDepth error }
   LazyStopText = 'variables evaluated within each other';
@@ -2057,14 +2064,29 @@ const
     overflow a 1 MB stack) }
   MaxLazyDepth = 3000;
 
-{ An error from MaxDepth, MaxStackBytes or MaxLazyDepth (also as and/or
-  raise it again with its code and message); not one raised by fn:error.
-  It depends on where the evaluation started, so it is not kept as the
-  value of a variable. }
+{ An error from MaxDepth, MaxStackBytes or MaxLazyDepth; not one raised
+  by fn:error. It depends on where the evaluation started, so it is not
+  kept as the value of a variable. }
 function IsLimitStop(E: ELandrixXmlXPathError): Boolean;
+var
+  Msg: string;
+
+  function StartsWith(const Prefix: string): Boolean;
+  begin
+    Result := Copy(Msg, 1, Length(Prefix)) = Prefix;
+  end;
+
 begin
-  Result := not (E is ELandrixXmlXPathRaised) and (E.XPathCode = 'FOER0000') and
-    ((Pos(LimitStopText, E.Message) > 0) or (Pos(LazyStopText, E.Message) > 0));
+  Result := E is ELandrixXmlXPathLimitStop;
+  if Result or (E is ELandrixXmlXPathRaised) or (E.XPathCode <> 'FOER0000') then
+    Exit;
+  { raised again by the XSLT runtime with the instruction's position (a
+    new exception, not of the class): the message still starts with the
+    words of the limit; only the start counts, as a message may hold
+    text of the input further on (a calendar name of format-date) }
+  Msg := Copy(E.Message, Length(E.XPathCode) + 3, MaxInt);
+  Result := StartsWith(LimitStopText) or StartsWith(LazyStopText) or
+    StartsWith('expressions or ' + LimitStopText);
 end;
 
 function TLandrixXmlXPathEvaluator.SlotRef(Slot: Integer): Pointer;
@@ -2197,7 +2219,7 @@ begin
     xssLazy:
       begin
         if FLazyDepth + FLetDepth >= MaxLazyDepth then
-          raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', LazyStopText + ' deeper than ' +
+          raise ELandrixXmlXPathLimitStop.CreateXPathAt(xecLimit, 'FOER0000', LazyStopText + ' deeper than ' +
             IntToStr(MaxLazyDepth), 0, 0);
         P^.State := xssEvaluating;
         Node := P^.ContextNode;
@@ -2912,7 +2934,7 @@ var
     Result := False;
     { one level per step (a/a/a/... with 100,000 steps) }
     if (FEvalStackBase <> nil) and (LandrixXmlStackUsed(FEvalStackBase, @Step) > FMaxStackBytes) then
-      raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expressions or ' +
+      raise ELandrixXmlXPathLimitStop.CreateXPathAt(xecLimit, 'FOER0000', 'expressions or ' +
         LimitStopText + ' use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
     if K < 0 then
     begin
@@ -4473,7 +4495,7 @@ begin
   end;
   FBypass := -1;
   if (FEvalStackBase <> nil) and (LandrixXmlStackUsed(FEvalStackBase, @N) > FMaxStackBytes) then
-    raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', 'expressions or ' +
+    raise ELandrixXmlXPathLimitStop.CreateXPathAt(xecLimit, 'FOER0000', 'expressions or ' +
       LimitStopText + ' use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
   N := @FNodes[Index];
   case N^.Kind of
@@ -4629,7 +4651,7 @@ var
   Used: Integer;
 begin
   if FDepth >= FMaxDepth then
-    Fail('FOER0000', LimitStopText + ' deeper than ' + IntToStr(FMaxDepth));
+    raise ELandrixXmlXPathLimitStop.CreateXPath('FOER0000', LimitStopText + ' deeper than ' + IntToStr(FMaxDepth));
   if FDepth = 0 then
   begin
     if FFixedStackBase <> nil then
@@ -4641,7 +4663,7 @@ begin
   begin
     Used := LandrixXmlStackUsed(FStackBase, Local);
     if Used > FMaxStackBytes then
-      raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', LimitStopText + ' ' +
+      raise ELandrixXmlXPathLimitStop.CreateXPathAt(xecLimit, 'FOER0000', LimitStopText + ' ' +
         IntToStr(FDepth) + ' deep use more than ' + IntToStr(FMaxStackBytes) + ' bytes of stack', 0, 0);
   end;
 end;
@@ -4912,7 +4934,7 @@ begin
   Size := FLetBindings[K].Size;
   ContextItem := FLetBindings[K].ContextItem;
   if FLazyDepth + FLetDepth >= MaxLazyDepth then
-    raise ELandrixXmlXPathError.CreateXPathAt(xecLimit, 'FOER0000', LazyStopText + ' deeper than ' +
+    raise ELandrixXmlXPathLimitStop.CreateXPathAt(xecLimit, 'FOER0000', LazyStopText + ' deeper than ' +
       IntToStr(MaxLazyDepth), 0, 0);
   { a variable read in a pattern still has its value as an expression }
   SavedPattern := FPattern;
@@ -4969,6 +4991,11 @@ begin
         stops at its error (XPath 2.0, 3.6); Saxon (its profile) lets the
         right operand decide there too }
       if Xp10 and Xp20 then
+        raise;
+      { a limit stop depends on where the evaluation started: raised at
+        once, so that no ordinary error of the other operand replaces it
+        (a variable would keep that one as its value) }
+      if IsLimitStop(E) then
         raise;
       LeftError := E;
       LeftRaised := E is ELandrixXmlXPathRaised;

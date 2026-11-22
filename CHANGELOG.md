@@ -80,6 +80,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XPath `and`/`or`: a resource limit in the left operand (MaxDepth,
+  MaxStackBytes, the depth of lazy variables) is raised at once. Before,
+  the right operand decided (`f() or true()` was true although `f()` hit
+  the limit) or its error replaced the limit, and a variable kept that
+  error, although the limit depends on where the evaluation started.
+  An ordinary error whose message happens to contain the same words is
+  no longer taken for a limit.
 - XML Schema: a type of a schema document whose target namespace is the
   XML Schema namespace (imported, or the schema for schemas itself) is
   found by its name; before, every name of that namespace other than a

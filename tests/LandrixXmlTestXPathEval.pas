@@ -341,10 +341,10 @@ var
   Tree: TLandrixXmlXPathTree;
   Context, FnContext: TLandrixXmlXPathStaticContext;
   Evaluator: TLandrixXmlXPathEvaluator;
-  Body, Lazy: TLandrixXmlXPathExpression;
+  Body, Lazy, LazyOr: TLandrixXmlXPathExpression;
   Def: TLandrixXmlXPathFunctionDef;
   Functions: TList;
-  P, G: Integer;
+  P, G, H: Integer;
 
   function Run(const Text: string): string;
   var
@@ -372,10 +372,12 @@ begin
   Def := TLandrixXmlXPathFunctionDef.Create;
   Body := nil;
   Lazy := nil;
+  LazyOr := nil;
   try
     Tree.LoadFromUtf8(U('<r/>'));
-    { slot 0 stays free for the global $g below }
+    { slots 0 and 1 stay free for the globals $g and $h below }
     FnContext.DeclareVariable(U('unused'));
+    FnContext.DeclareVariable(U('unused2'));
     P := FnContext.DeclareVariable(U('n'));
     FnContext.AddNamespace(U('f'), U('urn:f'));
     FnContext.DeclareFunction(U('urn:f'), U('down'), 1);
@@ -425,7 +427,18 @@ begin
     CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecXPath)), Run('$g'), 'the lazy variable at MaxDepth 10');
     Evaluator.MaxDepth := 100;
     CheckEqualsStr('20', Run('$g'), 'the lazy variable evaluated again');
+    { a limit in the left operand of "or" is raised at once, not replaced
+      by the error of the right operand (which the variable would keep) }
+    H := Context.DeclareVariable(U('h'));
+    Evaluator.SetGlobalCount(Context.VariableCount);
+    LazyOr := TLandrixXmlXPathExpression.Create(U('f:down(20) or error()'), Context);
+    Evaluator.BindLazy(H, LazyOr, 0);
+    Evaluator.MaxDepth := 10;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecXPath)), Run('$h'), 'or: the limit of the left operand');
+    Evaluator.MaxDepth := 100;
+    CheckEqualsStr('true', Run('string($h)'), 'or: evaluated again after the limit');
   finally
+    LazyOr.Free;
     Lazy.Free;
     Body.Free;
     Def.Free;
@@ -2135,7 +2148,7 @@ end;
   with an xs:anyURI (cast to it, which collapses white space). }
 procedure TestFunctionReviewEdges;
 const
-  Cases: array[0..28, 0..3] of string = (
+  Cases: array[0..29, 0..3] of string = (
     ('s', '0', 'sum(1, (2, 3))', 'XPTY0004'),
     ('s', '0', 'sum((), (2, 3))', 'XPTY0004'),
     ('s', '0', 'sum((), 5)', '5'),
@@ -2164,7 +2177,11 @@ const
     ('s', '0', 'format-date(xs:date(''6000000-01-01''), ''[F]'')', 'Saturday'),
     ('s', '0', 'format-date(xs:date(''2024-05-21''), ''[Y01,2-4]'')', '2024'),
     ('s', '0', 'format-date(xs:date(''6000000-12-31''), ''[W]/[d]'')', '52/366'),
-    ('s', '0', 'format-date(xs:date(''-6000001-01-01''), ''[F]'')', 'Friday'));
+    ('s', '0', 'format-date(xs:date(''-6000001-01-01''), ''[F]'')', 'Friday'),
+    { an ordinary error whose message has the words of a limit stop: the
+      other operand still decides }
+    ('s', '0', 'format-date(xs:date(''2026-01-01''), ''[Y]'', (), ''user functions nested'', ()) or true()',
+      'true'));
 var
   Tree: TLandrixXmlXPathTree;
   Evaluator: TLandrixXmlXPathEvaluator;

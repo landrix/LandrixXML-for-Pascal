@@ -1014,6 +1014,24 @@ begin
     CheckEqualsStr('<r>101</r>', Run, 'nested global variables');
     T.MaxStackBytes := 4096;
     CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run, 'nested global variables beyond 4 KB of stack');
+    { MaxDepth met in a stylesheet function, raised again with the
+      instruction's position: still a limit, which "or" does not hide }
+    T.Free;
+    T := nil;
+    Sheet.Free;
+    Sheet := nil;
+    Sheet := TLandrixXmlXsltStylesheet.Create;
+    Sheet.LoadFromUtf8(U('<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
+      ' xmlns:f="urn:f" exclude-result-prefixes="f"><xsl:output omit-xml-declaration="yes"/>' +
+      '<xsl:function name="f:inner"><xsl:sequence select="1"/></xsl:function>' +
+      '<xsl:function name="f:outer"><xsl:sequence select="f:inner()"/></xsl:function>' +
+      '<xsl:template match="/"><r><xsl:value-of select="f:outer() or true()"/></r></xsl:template>' +
+      '</xsl:stylesheet>'), U('urn:test'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    CheckEqualsStr('<r>true</r>', Run, 'or: functions within MaxDepth');
+    T.MaxDepth := 1;
+    Text := Run;
+    CheckEqualsStr('FOER0000', Copy(Text, 1, 8), 'or: MaxDepth in a stylesheet function (' + Text + ')');
   finally
     T.Free;
     Source.Free;
