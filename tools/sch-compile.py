@@ -727,7 +727,9 @@ class Compiler:
 
     def check_phases(self):
         """SchXslt runs all patterns unless the schema names a default phase; such a
-        phase must activate every pattern with a rule."""
+        phase must activate every pattern with a rule. A pattern without rules that
+        it does not activate is dropped (no svrl:active-pattern), a let in it (also
+        through sch:include) is not supported."""
         main = self.docs[0][0]
         default = main.get("defaultPhase")
         if not default or default == "#ALL":
@@ -736,11 +738,28 @@ class Compiler:
             for ph in root.iter("{%s}phase" % SCH):
                 if ph.get("id") != default:
                     continue
-                active = {a.get("pattern") for a in ph.iter("{%s}active" % SCH)}
+                active = set()
+
+                def member(c, doc):
+                    """A member of the phase (an sch:include stands for the element it names;
+                    documentation is not looked into); an active without pattern names none."""
+                    if tag(c) == (SCH, "active"):
+                        if c.get("pattern") is not None:
+                            active.add(c.get("pattern"))
+                    elif tag(c) == (SCH, "let"):
+                        raise CompileError("%s: a let in the default phase is not supported" % self.where(c, doc))
+                    elif tag(c) == (SCH, "include"):
+                        inc, key = self.include(c, doc)
+                        self.including.append(key)
+                        member(inc[0], inc)
+                        self.including.pop()
+                for c in ph:
+                    member(c, (root, path, lines))
                 for pid, rules in self.patterns:
                     if rules and pid not in active:
                         raise CompileError("%s: the default phase %s does not activate pattern %s; phases are not "
                                            "supported" % (self.where(ph, (root, path, lines)), default, pid))
+                self.patterns = [(pid, rules) for pid, rules in self.patterns if pid in active]
                 return
         raise CompileError("the default phase %s is not defined" % default)
 

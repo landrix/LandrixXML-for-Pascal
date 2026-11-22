@@ -1639,13 +1639,15 @@ begin
 end;
 
 { SchXslt runs all patterns unless the schema names a default phase; such
-  a phase must activate every pattern with a rule. }
+  a phase must activate every pattern with a rule. A pattern without rules
+  that it does not activate is dropped (no svrl:active-pattern), a let in
+  it (also through sch:include) is not supported. }
 procedure TLandrixXmlSchematronCompiler.CheckPhases(Main: TLandrixXmlNode);
 var
   Default: TLandrixXmlUtf8;
-  Active: TStringList;
+  Active: TLandrixXmlUtf8Array;
   D, I: Integer;
-  Found: TLandrixXmlNode;
+  Found, C: TLandrixXmlNode;
 
   function FindPhase(Node: TLandrixXmlNode): TLandrixXmlNode;
   var
@@ -1665,19 +1667,39 @@ var
     end;
   end;
 
-  procedure CollectActive(Node: TLandrixXmlNode);
+  { a member of the phase (an sch:include stands for the element it names;
+    documentation is not looked into) }
+  procedure CheckMember(Node: TLandrixXmlNode);
   var
-    C: TLandrixXmlNode;
+    Included: TLandrixXmlNode;
   begin
     { an active without pattern names none (as the reference compiler) }
-    if IsSch(Node, 'active') and HasAttr(Node, 'pattern') then
-      Active.Add(S8(Attr(Node, 'pattern')));
-    C := Node.FirstChildElement;
-    while C <> nil do
+    if IsSch(Node, 'active') then
     begin
-      CollectActive(C);
-      C := C.NextSiblingElement;
+      if HasAttr(Node, 'pattern') then
+        AddUtf8(Active, Attr(Node, 'pattern'));
+    end
+    else if IsSch(Node, 'let') then
+      Unsupported(Node, 'a let in the default phase is not supported')
+    else if IsSch(Node, 'include') then
+    begin
+      Included := Include(Node);
+      CheckMember(Included);
+      FIncluding.Delete(FIncluding.Count - 1);
     end;
+  end;
+
+  function IsActive(const Id: TLandrixXmlUtf8): Boolean;
+  var
+    K: Integer;
+  begin
+    Result := False;
+    for K := 0 to Integer(Length(Active)) - 1 do
+      if Active[K] = Id then
+      begin
+        Result := True;
+        Exit;
+      end;
   end;
 
 begin
@@ -1693,17 +1715,20 @@ begin
   end;
   if Found = nil then
     Fail(nil, 'the default phase ' + S8(Default) + ' is not defined');
-  Active := TStringList.Create;
-  try
-    Active.CaseSensitive := True;
-    CollectActive(Found);
-    for I := 0 to Integer(FPatterns.Count) - 1 do
-      if (TPattern(FPatterns[I]).Rules.Count > 0) and (Active.IndexOf(S8(TPattern(FPatterns[I]).Id)) < 0) then
-        Unsupported(Found, 'the default phase ' + S8(Default) + ' does not activate pattern ' +
-          S8(TPattern(FPatterns[I]).Id) + '; phases are not supported');
-  finally
-    Active.Free;
+  Active := nil;
+  C := Found.FirstChildElement;
+  while C <> nil do
+  begin
+    CheckMember(C);
+    C := C.NextSiblingElement;
   end;
+  for I := 0 to Integer(FPatterns.Count) - 1 do
+    if (TPattern(FPatterns[I]).Rules.Count > 0) and not IsActive(TPattern(FPatterns[I]).Id) then
+      Unsupported(Found, 'the default phase ' + S8(Default) + ' does not activate pattern ' +
+        S8(TPattern(FPatterns[I]).Id) + '; phases are not supported');
+  for I := Integer(FPatterns.Count) - 1 downto 0 do
+    if not IsActive(TPattern(FPatterns[I]).Id) then
+      FPatterns.Delete(I);
 end;
 
 { Every function expression compiles with only the names visible where

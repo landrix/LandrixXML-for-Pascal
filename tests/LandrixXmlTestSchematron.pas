@@ -977,6 +977,9 @@ begin
     { documentation (other namespaces, sch:p) is not looked into }
     Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + 'documentation.sch'));
     CheckEquals(1, Rules.PatternCount, 'documentation.sch: one pattern');
+    Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + 'phase-empty.sch'));
+    CheckEquals(1, Rules.PatternCount, 'phase-empty.sch: the inactive pattern without rules is dropped');
+    CheckEqualsStr('A', LandrixXmlUtf8ToString(Rules.Patterns[0].Id), 'phase-empty.sch: the active pattern stays');
     Rules.LoadFromSchematronFile(DataPath('compiler' + PathDelim + 'ok.sch'));
     CheckEqualsStr('Small test rules', LandrixXmlUtf8ToString(Rules.Title), 'title');
     CheckEqualsStr('ok.sch', LandrixXmlUtf8ToString(Rules.Source), 'source');
@@ -1066,6 +1069,8 @@ begin
   CheckCompileError('xsl-in-rule.sch', xecUnsupported, 'xsl-in-rule.sch:3');
   CheckCompileError('two-ns.sch', xecSchema, 'two-ns.sch:4');
   CheckCompileError('phase.sch', xecUnsupported, 'phase.sch:3');
+  CheckCompileError('phase-let.sch', xecUnsupported, 'phase-let.sch:4');
+  CheckCompileError('phase-let-include.sch', xecUnsupported, 'phase-let.sch:2');
   CheckCompileError('function-text.sch', xecUnsupported, 'function-text.sch:4');
   CheckCompileError('function-scope.sch', xecUnsupported, 'function-scope.sch:7');
   CheckCompileError('function-as.sch', xecUnsupported, 'function-as.sch:5');

@@ -80,6 +80,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Schematron: with a default phase, a pattern without rules that the phase
+  does not activate no longer appears as `svrl:active-pattern` (as
+  SchXslt), and an `sch:let` in that phase is reported as unsupported
+  instead of being dropped silently.
 - Schematron: an `sch:include` inside an `sch:rule` (naming an assert,
   report or let) is resolved as everywhere else, in the compiler unit and
   in `tools/sch-compile.py`. Before, the schema was rejected.
