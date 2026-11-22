@@ -1179,6 +1179,27 @@ begin
     CheckEqualsStr('5', Run('count(/r/*/preceding-sibling::node())'), 'preceding siblings once');
     CheckEqualsStr('6', Run('count(/r/(@a|a|d)/descendant-or-self::node())'), 'an attribute is its own');
     CheckEqualsStr('3', Run('count(/r/(a|a/b|d)/descendant::node())'), 'descendants once');
+    { [last()] and position() as a first predicate }
+    CheckEqualsStr('g', Run('name(/r/*[last()])'), 'child::*[last()]');
+    CheckEqualsStr('g', Run('name(/r/node()[last()])'), 'child::node()[last()]');
+    CheckEqualsStr('g', Run('name(/r/a/following-sibling::*[last()])'), 'following-sibling::*[last()]');
+    CheckEqualsStr('0', Run('count(/r/g/following-sibling::*[last()])'), 'no following sibling');
+    CheckEqualsStr('a', Run('name(/r/f/preceding-sibling::*[last()])'), 'preceding-sibling::*[last()]');
+    CheckEqualsStr('a', Run('name(/r/f/preceding-sibling::*[position() = last()])'), 'position() = last()');
+    CheckEqualsStr('0', Run('count(/r/a/b/*[last()])'), 'no child');
+    CheckEqualsStr('g', Run('name(/r/*[last()][self::g])'), 'a later predicate after last()');
+    CheckEqualsStr('0', Run('count(/r/*[last()][self::f])'), 'a later predicate that fails');
+    CheckEqualsStr('d', Run('name(/r/*[position() = 2])'), 'position() = 2');
+    CheckEqualsStr('2', Run('count(/r/*[position() < 3])'), 'position() < 3');
+    CheckEqualsStr('3', Run('count(/r/*[position() le 3])'), 'position() le 3');
+    CheckEqualsStr('2', Run('count(/r/*[3 > position()])'), '3 > position()');
+    CheckEqualsStr('4', Run('count(/r/*[position() > 0])'), 'position() > 0 (no limit)');
+    CheckEqualsStr('7', Run('count(/r/(a|d|f)/preceding::node())'), 'preceding once');
+    CheckEqualsStr('7', Run('count(/r/(a/b|d|f)/following::node())'), 'following once');
+    CheckEqualsStr('9', Run('count(/r/(@a|f)/following::node())'), 'following of an attribute');
+    CheckEqualsStr('7', Run('count(/r/(@a|f)/preceding::node())'), 'preceding of an attribute');
+    CheckEqualsStr('2', Run('count(/r/(a/b|a)/following::d/descendant-or-self::node())'), 'nested contexts');
+    CheckEqualsStr('a', Run('name(/r/a[last()])'), 'a[last()] over other elements');
     { 20,000 siblings }
     Text := U('<r>');
     for I := 1 to 20000 do
@@ -1192,6 +1213,9 @@ begin
     CheckEqualsStr('19999 19999 19998', Run('string-join((string(count(/r/i/preceding-sibling::*[1])), ' +
       'string(count(/r/i/following-sibling::i)), string(count(/r/i/following-sibling::*[2]))), '' '')'),
       'many siblings');
+    CheckEqualsStr('1 1 19999 19999', Run('string-join((string(count(/r/i/following-sibling::*[last()])), ' +
+      'string(count(/r/i/preceding-sibling::*[last()])), string(count(/r/i/following::i)), ' +
+      'string(count(/r/i/preceding::i))), '' '')'), 'many siblings: last() and following/preceding');
     { the same parent 20,000 times: duplicates removed on the way }
     CheckEqualsStr('1', Run('count(/r/i/parent::r)'), 'one parent');
     { an atomic value after the nodes sorted on the way }

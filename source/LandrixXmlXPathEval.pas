@@ -3376,6 +3376,72 @@ begin
     Result := 0;
 end;
 
+function IsPositionCall(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer; Id: TLandrixXmlXPathFunctionId): Boolean;
+begin
+  Result := (Nodes[Index].Kind = xakFunction) and (Nodes[Index].Op = Ord(Id)) and (Length(Nodes[Index].Children) = 0);
+end;
+
+{ How many items of an axis a first predicate can keep, as it keeps
+  only the first ones and does not ask for their number (last()): [k],
+  [position() = k], [position() < k], [position() <= k] (also with
+  eq/lt/le and the operands swapped); 0 if it is none of these. }
+function PositionLimit(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Int64;
+var
+  L, R: Integer;
+  Op: TLandrixXmlXPathCompare;
+  K: Int64;
+begin
+  Result := LiteralPosition(Nodes, Index);
+  if Result > 0 then
+    Exit;
+  Result := 0;
+  if not (Nodes[Index].Kind in [xakGeneralCompare, xakValueCompare]) or (Length(Nodes[Index].Children) <> 2) then
+    Exit;
+  L := Nodes[Index].Children[0];
+  R := Nodes[Index].Children[1];
+  Op := TLandrixXmlXPathCompare(Nodes[Index].Op);
+  if IsPositionCall(Nodes, R, xfnPosition) then
+  begin
+    { k = position(), k > position(), k >= position() }
+    L := Nodes[Index].Children[1];
+    R := Nodes[Index].Children[0];
+    case Op of
+      xpcGt: Op := xpcLt;
+      xpcGe: Op := xpcLe;
+      xpcLt, xpcLe: Exit;
+    else
+      { = stays =, != limits nothing (below) }
+    end;
+  end;
+  if not IsPositionCall(Nodes, L, xfnPosition) then
+    Exit;
+  K := LiteralPosition(Nodes, R);
+  if K <= 0 then
+    Exit;
+  case Op of
+    xpcEq, xpcLe: Result := K;
+    xpcLt: Result := K - 1;
+  else
+    { !=, > and >= keep later items }
+  end;
+end;
+
+{ Whether a first predicate keeps only the last item: [last()],
+  [position() = last()] (eq too, either order). }
+function LastOnly(const Nodes: TLandrixXmlXPathAstNodes; Index: Integer): Boolean;
+var
+  L, R: Integer;
+begin
+  Result := IsPositionCall(Nodes, Index, xfnLast);
+  if Result or not (Nodes[Index].Kind in [xakGeneralCompare, xakValueCompare]) or
+    (Length(Nodes[Index].Children) <> 2) or (Nodes[Index].Op <> Ord(xpcEq)) then
+    Exit;
+  L := Nodes[Index].Children[0];
+  R := Nodes[Index].Children[1];
+  Result := IsPositionCall(Nodes, L, xfnPosition) and IsPositionCall(Nodes, R, xfnLast) or
+    IsPositionCall(Nodes, L, xfnLast) and IsPositionCall(Nodes, R, xfnPosition);
+end;
+
 { Removes the items of a pattern from the node FailAt on (patterns use
   forward axes, so node order is axis order), or all of them; on the
   last step of a branch they count as failed. }
@@ -3745,7 +3811,7 @@ var
   { a first predicate [k] (a literal): the axis stops after its k-th node
     (Done), as only that one can pass it }
   Limit: Int64;
-  Done: Boolean;
+  Done, Last, Skip: Boolean;
 
   function Test(I: Integer): Boolean;
   var
@@ -3803,6 +3869,22 @@ var
     end;
   end;
 
+  { the last child of P (-1: none): the last node of its subtree, or the
+    ancestor of that node below P; attributes are no children }
+  function LastChild(P: Integer): Integer;
+  begin
+    Result := T.SubtreeEnd[P];
+    if Result <= P then
+    begin
+      Result := -1;
+      Exit;
+    end;
+    while T.Parent[Result] <> P do
+      Result := T.Parent[Result];
+    if T.Kind[Result] = xnkAttribute then
+      Result := -1;
+  end;
+
   { the sibling before I (-1: none): the node before it, or the ancestor
     of that node below the parent P }
   function PrevSibling(I, P: Integer): Integer;
@@ -3838,13 +3920,59 @@ begin
     Expanded := T.FindExpandedName(N^.NamespaceUri, N^.LocalName);
   { not in a pattern's own evaluation, which tracks failed items }
   Limit := MaxInt;
+  Last := False;
   if not FPattern and (Length(N^.Predicates) > 0) then
   begin
-    Limit := LiteralPosition(FNodes, N^.Predicates[0]);
+    Limit := PositionLimit(FNodes, N^.Predicates[0]);
     if Limit <= 0 then
       Limit := MaxInt;
+    { [last()] on a child or sibling axis: only the farthest node that
+      passes the node test (the first of the parent for preceding-sibling) }
+    Last := (Axis in [xaxChild, xaxFollowingSibling, xaxPrecedingSibling]) and
+      LastOnly(FNodes, N^.Predicates[0]) and (T.Kind[Node] <> xnkAttribute);
   end;
   Done := False;
+  if Last then
+  begin
+    Limit := 1;
+    case Axis of
+      xaxChild:
+        if T.FirstChild(Node) >= 0 then
+        begin
+          I := LastChild(Node);
+          while (I >= 0) and not Done do
+          begin
+            Add(I);
+            I := PrevSibling(I, Node);
+          end;
+        end;
+      xaxFollowingSibling:
+        if (T.Parent[Node] >= 0) and (T.NextSibling[Node] >= 0) then
+        begin
+          I := LastChild(T.Parent[Node]);
+          while (I > Node) and not Done do
+          begin
+            Add(I);
+            I := PrevSibling(I, T.Parent[Node]);
+          end;
+        end;
+    else
+      { preceding-sibling: in axis order the last is the first child }
+      if T.Parent[Node] >= 0 then
+      begin
+        I := T.FirstChild(T.Parent[Node]);
+        while (I >= 0) and (I <> Node) and not Done do
+        begin
+          Add(I);
+          I := T.NextSibling[I];
+        end;
+      end;
+    end;
+    Skip := True;
+  end
+  else
+    Skip := False;
+  if not Skip then
   case Axis of
     xaxChild:
       begin
@@ -4013,7 +4141,8 @@ begin
   Result.Count := K;
 end;
 
-{ Whether a step without predicates on a sibling or descendant axis gets
+{ Whether a step without predicates on a sibling, descendant, following
+  or preceding axis gets
   contexts in document order (nodes only, no duplicates): then the result
   of one context contains that of others (Covered), which are skipped;
   not in a pattern's own evaluation, which tracks every item. }
@@ -4023,7 +4152,8 @@ var
   I: Integer;
 begin
   Result := not FPattern and (FNodes[Step].Kind = xakStep) and (Length(FNodes[Step].Predicates) = 0) and
-    (Axis in [xaxFollowingSibling, xaxPrecedingSibling, xaxDescendant, xaxDescendantOrSelf]) and
+    (Axis in [xaxFollowingSibling, xaxPrecedingSibling, xaxDescendant, xaxDescendantOrSelf, xaxFollowing,
+    xaxPreceding]) and
     (Current.Count > 1);
   if not Result then
     Exit;
@@ -4038,12 +4168,15 @@ end;
 { Whether the step's result for the context I is part of that of another
   one (CoveringAxis): following siblings of a later sibling, preceding
   ones of an earlier sibling, descendants of a descendant of the context
-  last taken (LastEnd: the end of its subtree, set here). }
+  last taken (LastEnd: the end of its subtree, set here), the following
+  nodes of a context whose subtree ends no earlier than that of one
+  taken (LastEnd: the smallest such end), the preceding nodes of any but
+  the last context of a tree. }
 function TLandrixXmlXPathEvaluator.Covered(Axis: TLandrixXmlXPathAxis; const Current: TLandrixXmlXPathSequence;
   I: Integer; var LastEnd: Integer): Boolean;
 var
   T: TLandrixXmlXPathTree;
-  Base, X: Integer;
+  Base, Other, X: Integer;
 
   { the parent of a sibling (-1 for an attribute, which has none: an
     attribute of the parent covers none of its children) }
@@ -4071,6 +4204,38 @@ begin
     xaxPrecedingSibling:
       Result := (I < Current.Count - 1) and (ParentOf(X) >= 0) and
         (ParentOf(Current.Items[I + 1].Node) = ParentOf(X));
+    { the nodes before an earlier context that are not its ancestors are
+      before the last one and not its ancestors either }
+    xaxPreceding:
+      begin
+        Result := I < Current.Count - 1;
+        if Result then
+        begin
+          { in the same tree only }
+          TreeOf(X, Base);
+          TreeOf(Current.Items[I + 1].Node, Other);
+          Result := Base = Other;
+        end;
+      end;
+    xaxFollowing:
+      begin
+        { after the subtree (an attribute: after the attribute) of a
+          context taken before in the same tree: its following nodes
+          contain this one's }
+        T := TreeOf(X, Base);
+        if LastEnd < Base then
+          LastEnd := -1;
+        if T.Kind[X - Base] = xnkAttribute then
+          Other := X
+        else
+          Other := T.SubtreeEnd[X - Base] + Base;
+        { its following nodes are those after Other: covered when Other
+          is not before the end of a context taken (a later context
+          with the same subtree end too) }
+        Result := (LastEnd >= 0) and (Other >= LastEnd);
+        if not Result then
+          LastEnd := Other;
+      end;
   else
     begin
       { descendant(-or-self): inside the subtree of the context last

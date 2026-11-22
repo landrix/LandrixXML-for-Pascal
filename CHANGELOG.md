@@ -77,7 +77,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   step collects its nodes, so its memory no longer grows with the square
   of the siblings. With 4,000 siblings `match="i[1]"` took 36 s and
   `preceding-sibling::*[1]` 19 s; both now take a fraction of a second,
-  also with 20,000.
+  also with 20,000. The same for `[position() = k]`, `[position() < k]`
+  and `[position() <= k]`; `[last()]` (and `[position() = last()]`) on a
+  child or sibling axis looks for the last node from the far end, and a
+  path step over `following` or `preceding` without predicates skips
+  the contexts another one covers.
 - Stack budget (`MaxStackBytes`) where it was missing: matching a
   pattern (`MatchesPattern`, one level per step, with its predicates)
   counts from the start of the match as an evaluation does, and the XSLT
