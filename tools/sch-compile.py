@@ -435,10 +435,13 @@ class Compiler:
         href = el.get("href")
         if not href or "#" in href:
             self.fail("sch:include needs a plain href", el, doc)
-        path = os.path.normcase(os.path.abspath(os.path.join(os.path.dirname(doc[1]), href)))
-        if path in self.including:
+        path = os.path.abspath(os.path.join(os.path.dirname(doc[1]), href))
+        # the case is folded for the cycle check only: the line attributes
+        # keep the file name as written (the Pascal compiler does the same)
+        key = os.path.normcase(path)
+        if key in self.including:
             self.fail("sch:include of %s is circular" % href, el, doc)
-        return self.load(path), path
+        return self.load(path), key
 
     def compile(self):
         self.including = [os.path.normcase(os.path.abspath(self.path))]
@@ -547,7 +550,8 @@ class Compiler:
             self.fail("the subject of a rule is not supported", el, doc)
         lets, checks = [], []
         names = set()
-        for c in el:
+
+        def member(c, doc):
             ns, local = tag(c)
             if (ns, local) == (SCH, "let"):
                 if not c.get("name"):
@@ -562,6 +566,11 @@ class Compiler:
                 lets.append((c.get("name"), collapse(c.get("value"))))
             elif (ns, local) in ((SCH, "assert"), (SCH, "report")):
                 checks.append(self.check(c, local, doc))
+            elif (ns, local) == (SCH, "include"):
+                inc, path = self.include(c, doc)
+                self.including.append(path)
+                member(inc[0], inc)
+                self.including.pop()
             elif (ns, local) == (SCH, "extends"):
                 self.fail("sch:extends is not supported", c, doc)
             elif ns == SCH:
@@ -570,6 +579,8 @@ class Compiler:
                 self.fail("xsl:%s in a rule is not supported" % local, c, doc)
             elif ns == "":
                 self.fail("element %s without namespace" % local, c, doc)
+        for c in el:
+            member(c, doc)
         return {"context": collapse(el.get("context")), "id": el.get("id") or "", "line": self.where(el, doc),
                 "flag": el.get("flag") or "", "role": el.get("role") or "", "lets": lets, "checks": checks}
 

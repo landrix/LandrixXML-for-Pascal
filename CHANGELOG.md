@@ -80,6 +80,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Schematron: an `sch:include` inside an `sch:rule` (naming an assert,
+  report or let) is resolved as everywhere else, in the compiler unit and
+  in `tools/sch-compile.py`. Before, the schema was rejected.
 - Free Pascal 3.3.1 builds the library without hints or warnings again
   (four "assigned but never used" notes and hints on values read by `Move`, one
   unreachable `else` in the XPath evaluator).

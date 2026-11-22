@@ -1246,10 +1246,54 @@ end;
 function TLandrixXmlSchematronCompiler.CompileRule(Node: TLandrixXmlNode): TObject;
 var
   R: TRule;
+
+  { a child of the rule; an sch:include stands for the element it names }
+  procedure Member(C: TLandrixXmlNode);
+  var
+    Inc: TLandrixXmlNode;
+    Name: TLandrixXmlUtf8;
+    I: Integer;
+    L: string;
+  begin
+    L := S8(C.LocalNameUtf8);
+    if C.NamespaceUriUtf8 = SchNs then
+    begin
+      if L = 'let' then
+      begin
+        if Attr(C, 'name') = '' then
+          Fail(C, 'a let needs a name');
+        if not HasAttr(C, 'value') then
+          Unsupported(C, 'a let without value is not supported');
+        if HasAttr(C, 'as') then
+          Unsupported(C, 'a let with "as" is not supported');
+        Name := Attr(C, 'name');
+        for I := 0 to Integer(Length(R.LetNames)) - 1 do
+          if R.LetNames[I] = Name then
+            Fail(C, 'rule variable $' + S8(Name) + ' is defined twice');
+        AddUtf8(R.LetNames, Name);
+        AddUtf8(R.LetValues, LandrixXmlSchematronCollapse(Attr(C, 'value')));
+      end
+      else if (L = 'assert') or (L = 'report') then
+        R.Checks.Add(CompileCheck(C))
+      else if L = 'include' then
+      begin
+        Inc := Include(C);
+        Member(Inc);
+        FIncluding.Delete(FIncluding.Count - 1);
+      end
+      else if L = 'extends' then
+        Unsupported(C, 'sch:extends is not supported')
+      else
+        Fail(C, 'unexpected sch:' + L + ' in a rule');
+    end
+    else if C.NamespaceUriUtf8 = XslNs then
+      Unsupported(C, 'xsl:' + L + ' in a rule is not supported')
+    else if C.NamespaceUriUtf8 = '' then
+      Fail(C, 'element ' + L + ' without namespace');
+  end;
+
+var
   C: TLandrixXmlNode;
-  Name: TLandrixXmlUtf8;
-  I: Integer;
-  L: string;
 begin
   if Attr(Node, 'abstract') = 'true' then
     Unsupported(Node, 'abstract rules are not supported');
@@ -1267,35 +1311,7 @@ begin
     C := Node.FirstChildElement;
     while C <> nil do
     begin
-      L := S8(C.LocalNameUtf8);
-      if C.NamespaceUriUtf8 = SchNs then
-      begin
-        if L = 'let' then
-        begin
-          if Attr(C, 'name') = '' then
-            Fail(C, 'a let needs a name');
-          if not HasAttr(C, 'value') then
-            Unsupported(C, 'a let without value is not supported');
-          if HasAttr(C, 'as') then
-            Unsupported(C, 'a let with "as" is not supported');
-          Name := Attr(C, 'name');
-          for I := 0 to Integer(Length(R.LetNames)) - 1 do
-            if R.LetNames[I] = Name then
-              Fail(C, 'rule variable $' + S8(Name) + ' is defined twice');
-          AddUtf8(R.LetNames, Name);
-          AddUtf8(R.LetValues, LandrixXmlSchematronCollapse(Attr(C, 'value')));
-        end
-        else if (L = 'assert') or (L = 'report') then
-          R.Checks.Add(CompileCheck(C))
-        else if L = 'extends' then
-          Unsupported(C, 'sch:extends is not supported')
-        else
-          Fail(C, 'unexpected sch:' + L + ' in a rule');
-      end
-      else if C.NamespaceUriUtf8 = XslNs then
-        Unsupported(C, 'xsl:' + L + ' in a rule is not supported')
-      else if C.NamespaceUriUtf8 = '' then
-        Fail(C, 'element ' + L + ' without namespace');
+      Member(C);
       C := C.NextSiblingElement;
     end;
   except

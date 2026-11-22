@@ -33,6 +33,8 @@
       <report id="R2" flag="information" test="true()"><value-of select="$total"/> <value-of select="$half"/></report>
       <!-- white space around emph belongs to the text: kept -->
       <report id="R3" flag="information" test="true()"><emph>A</emph> <emph>B</emph> <value-of select="1"/></report>
+      <!-- an include inside a rule stands for the element it names -->
+      <include href="parts/report.sch"/>
     </rule>
   </pattern>
 </schema>

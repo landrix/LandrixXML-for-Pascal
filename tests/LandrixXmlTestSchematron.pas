@@ -962,7 +962,7 @@ begin
     DataPath('compiler' + PathDelim + 'doc-alias.rules.xml'));
 end;
 
-{ A small schema with an include, a function, a text variable, emph and
+{ A small schema with includes (a pattern, a report in a rule), a function, a text variable, emph and
   name in messages, loaded straight from the .sch and run. }
 procedure TestCompilerRun;
 var
@@ -990,7 +990,8 @@ begin
         V.Results[I].Location + ' ' + V.Results[I].Message) + ' / ';
     CheckEqualsStr('A1 fatal  /Q{urn:p}r[1]/Q{urn:p}a[3] a with n = ''11'' is big / ' +
       'R1 information info /Q{urn:p}r[1] total 24, half of 12 in p:r / ' +
-      'R2 information  /Q{urn:p}r[1] 2412 / R3 information  /Q{urn:p}r[1] A B 1 / ', S, 'results');
+      'R2 information  /Q{urn:p}r[1] 2412 / R3 information  /Q{urn:p}r[1] A B 1 / ' +
+      'R4 information  /Q{urn:p}r[1] half is 12 / ', S, 'results');
   finally
     V.Free;
     Rules.Free;
@@ -1058,6 +1059,7 @@ end;
 procedure TestCompilerErrors;
 begin
   CheckCompileError('cycle.sch', xecSchema, 'cycle-pattern.sch:3');
+  CheckCompileError('cycle-rule.sch', xecSchema, 'cycle-rule-part.sch:2');
   CheckCompileError('xslt1.sch', xecUnsupported, 'xslt1.sch:2');
   CheckCompileError('abstract.sch', xecUnsupported, 'abstract.sch:3');
   CheckCompileError('properties.sch', xecUnsupported, 'properties.sch:3');
