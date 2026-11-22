@@ -1007,12 +1007,15 @@ Differences from Xerces, also on purpose:
   accident.
 - The [W3C XSLT test suite](https://github.com/w3c/xslt30-test)
   (`tools/run-xslt-tests.py`, pinned revision) measures how much of
-  XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,508 are XSLT 1.0
-  or 2.0 cases without features this library leaves out (schema
-  awareness, the namespace axis, DTDs and the like); 5,134 of them pass
-  and 69 more raise an error where one is expected, but with another
-  code. 56 use an instruction or option that is not supported yet and
-  are rejected as such. The test set
+  XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,643 are XSLT 1.0
+  or 2.0 cases, or XSLT 3.0 cases of the test sets `iterate`, `mode` and
+  `initial-mode` (the parts of XSLT 3.0 being added; the other sets
+  follow one by one), without a feature the catalog names that this
+  library leaves out (schema awareness, streaming, the namespace axis,
+  DTDs and the like);
+  5,197 of them pass and 66 more raise an error where one is expected,
+  but with another code. 166 use an instruction or option that is not
+  supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the
   stylesheet needs. The passing cases are a baseline for the CI.
 - The [W3C XML Schema Test Suite](https://github.com/w3c/xsdtests)

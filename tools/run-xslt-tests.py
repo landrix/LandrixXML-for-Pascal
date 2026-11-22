@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Run the W3C XSLT test suite (w3c/xslt30-test, XSLT 1.0 and 2.0 cases) against LandrixXml.
+"""Run the W3C XSLT test suite (w3c/xslt30-test, XSLT 1.0 and 2.0 cases and the XSLT 3.0
+cases of selected test sets) against LandrixXml.
 
 Downloads the suite at a pinned commit into tests/data/xslt30-suite/
 (git-ignored, not redistributed), selects the test cases that apply to
@@ -8,7 +9,10 @@ run them one by one; this script checks the assertions and compares the
 outcome with the committed baseline tests/data/xslt-baseline.txt.
 
 Applicability: the spec of the case (or its test set) names XSLT 1.0+,
-2.0+ or 2.0 (XSLT 3.0 cases follow later); no optional feature that is
+2.0+ or 2.0, or XSLT 3.0+ or 3.0 in a test set of XSLT30_SETS (the XSLT
+3.0 parts done so far; the other XSLT 3.0 cases follow set by set); an
+implementation-defined on-multiple-match only as "recover" (the last
+matching rule, as Saxon); no optional feature that is
 not provided (streaming, schema awareness, higher-order functions,
 XPath 3.1, XML 1.1, dynamic evaluation, the namespace axis,
 disable-output-escaping, DTD processing, HTML 4, the xml-stylesheet
@@ -75,6 +79,10 @@ NS = "{http://www.w3.org/2012/10/xslt-test-catalog}"
 TIMEOUT = 60
 
 SPECS = {"XSLT10+", "XSLT20+", "XSLT20"}
+# the test sets whose XSLT 3.0 cases are applicable too (named in the
+# baseline header): xsl:iterate and xsl:mode
+XSLT30_SETS = {"iterate", "mode", "initial-mode"}
+SPECS30 = {"XSLT30+", "XSLT30"}
 # features: provided (True) or not (False); a feature not listed is not
 # provided
 FEATURES = {"serialization": True, "HTML5": True, "disabling_output_escaping": True,
@@ -189,13 +197,19 @@ class Case:
         self.result = el.find(NS + "result")
 
 
-def dependency_problem(dep):
+def dependency_problem(dep, set_name):
     kind = local(dep)
     value = dep.get("value", "")
     satisfied = dep.get("satisfied", "true") == "true"
     if kind == "spec":
-        if not set(value.split()) & SPECS:
+        specs = set(value.split())
+        if not specs & SPECS and not (set_name in XSLT30_SETS and specs & SPECS30):
             return "spec " + value
+        return None
+    if kind == "on-multiple-match":
+        # the last matching rule is taken, as Saxon does
+        if (value.strip() == "recover") != satisfied:
+            return "on-multiple-match " + value + ("" if satisfied else " (not)")
         return None
     if kind == "feature":
         if FEATURES.get(value, False) != satisfied:
@@ -296,7 +310,7 @@ def plan(case, el, set_deps, envs):
         for dep in deps:
             if local(dep) == "spec":
                 has_spec = True
-            problem = dependency_problem(dep)
+            problem = dependency_problem(dep, case.set)
             if problem:
                 return problem
     if not has_spec:
@@ -321,6 +335,8 @@ def plan(case, el, set_deps, envs):
         elif tag == "initial-mode":
             if ch.get("select") is not None:
                 return "initial-mode select"
+            if len(ch):
+                return "initial-mode with parameters"
             try:
                 case.mode = clark(ch.get("name"), ch.ns)
             except ValueError as e:
@@ -729,6 +745,7 @@ def read_baseline():
 def write_baseline(cases):
     with open(BASELINE, "w", encoding="utf-8", newline="\n") as f:
         f.write("# W3C XSLT test suite baseline: the XSLT 1.0 and 2.0 cases that pass (or give another error code)\n")
+        f.write("# and the XSLT 3.0 cases of the test sets %s\n" % ", ".join(sorted(XSLT30_SETS)))
         f.write("# suite commit %s, harness %s; written by tools/run-xslt-tests.py --update-baseline\n"
                 % (COMMIT, HARNESS_VERSION))
         for c in sorted(cases, key=lambda c: c.key):

@@ -1,4 +1,5 @@
 # W3C XSLT test suite baseline: the XSLT 1.0 and 2.0 cases that pass (or give another error code)
+# and the XSLT 3.0 cases of the test sets initial-mode, iterate, mode
 # suite commit fddf1cf920087e791f13315d68dfbe874d97dc56, harness 1; written by tools/run-xslt-tests.py --update-baseline
 accessor/accessor-002 pass
 accessor/accessor-012 pass
@@ -59,10 +60,15 @@ analyze-string/analyze-string-095 pass
 analyze-string/analyze-string-096 pass
 apply-templates/apply-templates-001 wrong-code
 apply-templates/conflict-resolution-0101 pass
+apply-templates/conflict-resolution-0102a pass
+apply-templates/conflict-resolution-0104a pass
 apply-templates/conflict-resolution-0106 pass
 apply-templates/conflict-resolution-0107 pass
+apply-templates/conflict-resolution-0108a pass
+apply-templates/conflict-resolution-0110a pass
 apply-templates/conflict-resolution-0112 pass
 apply-templates/conflict-resolution-0201 pass
+apply-templates/conflict-resolution-0401a pass
 apply-templates/conflict-resolution-0501 pass
 apply-templates/conflict-resolution-0502 pass
 apply-templates/conflict-resolution-0503 pass
@@ -77,6 +83,7 @@ apply-templates/conflict-resolution-1001 pass
 apply-templates/conflict-resolution-1101 pass
 apply-templates/conflict-resolution-1102 pass
 apply-templates/conflict-resolution-1201 pass
+apply-templates/conflict-resolution-1202a pass
 apply-templates/conflict-resolution-1204 pass
 apply-templates/conflict-resolution-1205 pass
 apply-templates/conflict-resolution-1301 pass
@@ -675,6 +682,7 @@ bug/bug-4301 pass
 bug/bug-4401 pass
 bug/bug-4501 pass
 bug/bug-4601 pass
+bug/bug-4701 pass
 bug/bug-4801 pass
 bug/bug-4901 pass
 bug/bug-5001 pass
@@ -1914,12 +1922,14 @@ import/import-0301 pass
 import/import-0302 pass
 import/import-0401 pass
 import/import-0501 pass
+import/import-0502a pass
 import/import-0601 pass
 import/import-0701 pass
 import/import-0801 pass
 import/import-0802 pass
 import/import-0803 pass
 import/import-0901 pass
+import/import-0902a pass
 import/import-1001 pass
 import/import-1101 pass
 import/import-1201 pass
@@ -1949,6 +1959,7 @@ include/include-0401 pass
 include/include-0501 pass
 include/include-0601 pass
 include/include-0701 pass
+include/include-0702a pass
 include/include-0801 pass
 initial-mode/initial-mode-001 pass
 initial-mode/initial-mode-002 pass
@@ -1958,6 +1969,7 @@ initial-template/initial-template-002a pass
 initial-template/initial-template-003a pass
 initial-template/initial-template-901 pass
 initial-template/initial-template-902a pass
+iterate/iterate-024 wrong-code
 key/key-001 pass
 key/key-002 pass
 key/key-003 pass
@@ -2328,6 +2340,8 @@ mode/mode-0401 pass
 mode/mode-0501 pass
 mode/mode-0601 pass
 mode/mode-0701 pass
+mode/mode-0801a pass
+mode/mode-0801c pass
 mode/mode-0901 pass
 mode/mode-1001 pass
 mode/mode-1101 pass
