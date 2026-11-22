@@ -1001,6 +1001,10 @@ Differences from Xerces, also on purpose:
 - The XSLT cases in `tests/data/xslt` hold the output (or the error
   code) of Saxon HE for each stylesheet, generated with
   `tools/gen-xslt-testdata.py`, and are compared byte for byte.
+- Every tool that writes or compares reference data with Saxon checks
+  the jar it is given against `tests/data/saxon-oracle.txt` (Saxon HE
+  12.9, by SHA-256), so data from another Saxon is not mixed in by
+  accident.
 - The [W3C XSLT test suite](https://github.com/w3c/xslt30-test)
   (`tools/run-xslt-tests.py`, pinned revision) measures how much of
   XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,508 are XSLT 1.0

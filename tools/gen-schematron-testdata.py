@@ -26,6 +26,7 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "tests", "data", "schematron")
@@ -78,6 +79,7 @@ def main():
     ap.add_argument("--saxon", required=True)
     ap.add_argument("--kosit", required=True)
     args = ap.parse_args()
+    saxonjar.check(args.saxon)
     results = []
     for name, syntax, xsl in SETS:
         folder = os.path.join(DATA, syntax)

@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "source", "LandrixXmlCaseData.inc")
@@ -76,6 +77,7 @@ def main():
     ap.add_argument("--java", required=True)
     ap.add_argument("--saxon", required=True)
     args = ap.parse_args()
+    saxonjar.check(args.saxon)
     with tempfile.TemporaryDirectory() as tmp:
         q = os.path.join(tmp, "case.xq")
         with open(q, "w", encoding="ascii") as f:

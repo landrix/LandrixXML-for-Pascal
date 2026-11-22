@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import unicodedata
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "source", "LandrixXmlCaseVariantsData.inc")
@@ -89,6 +90,7 @@ def main():
     ap.add_argument("--saxon", required=True)
     ap.add_argument("--check")
     args = ap.parse_args()
+    saxonjar.check(args.saxon)
     pairs = []
     for g in candidate_groups():
         for d in g:

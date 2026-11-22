@@ -45,6 +45,7 @@ import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "tests", "data", "kosit-suite")
@@ -349,10 +350,12 @@ def main():
     ap.add_argument("--java")
     ap.add_argument("--jar")
     args = ap.parse_args()
-    fetch()
     if args.generate:
         if not args.java or not args.jar:
             sys.exit("--generate needs --java and --jar")
+        saxonjar.check(args.jar)
+    fetch()
+    if args.generate:
         generate(args.java, args.jar)
         return 0
     return compare(args.exe, args.verbose)

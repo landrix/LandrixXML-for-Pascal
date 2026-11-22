@@ -31,6 +31,7 @@ import os
 import random
 import subprocess
 import sys
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "tests", "data", "xpath-oracle", "dates")
@@ -285,6 +286,9 @@ def main():
     ap.add_argument("--classes")
     ap.add_argument("--jar")
     args = ap.parse_args()
+    if args.saxon and not (args.java and args.classes and args.jar):
+        ap.error("--saxon needs --java, --classes and --jar")
+    saxonjar.check(args.jar if args.saxon else None)
     data = cases(args.seed, args.count)
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, "d.xml"), "w", encoding="utf-8", newline="\n") as f:
@@ -298,7 +302,8 @@ def main():
                 f.write("# " + row[0] + "\n" + row[column] + "\n")
     print("%d cases" % len(data))
     if args.saxon:
-        cp = os.pathsep.join([args.classes, args.jar])
+        # the pinned jar first: no other Saxon from the classes folder
+        cp = os.pathsep.join([args.jar, args.classes])
         r = subprocess.run([args.java, "-Duser.timezone=UTC", "-cp", cp, "XPathOracle", os.path.join(OUT, "d.xml"),
                             os.path.join(OUT, "c.txt")], capture_output=True)
         if r.returncode != 0:

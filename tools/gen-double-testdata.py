@@ -43,6 +43,7 @@ import sys
 import tempfile
 from decimal import Decimal, localcontext, ROUND_FLOOR, ROUND_CEILING, ROUND_HALF_EVEN, \
     ROUND_HALF_UP, ROUND_HALF_DOWN
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "tests", "data", "double")
@@ -441,6 +442,9 @@ def main():
     ap.add_argument("--count", type=int, default=600)
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
+    if bool(args.java) != bool(args.saxon):
+        ap.error("--java and --saxon go together")
+    saxonjar.check(args.saxon)
     cases = build_cases(args.seed, args.count)
     if args.java and args.saxon:
         check_with_saxon(cases, args.java, args.saxon)

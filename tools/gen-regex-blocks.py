@@ -34,6 +34,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "source", "LandrixXmlBlockData.inc")
@@ -254,6 +255,7 @@ def main():
     ap.add_argument("--blocks", required=True)
     ap.add_argument("--check")
     args = ap.parse_args()
+    saxonjar.check(args.saxon)
     names, bounds = read_candidates(args.blocks)
     print("%d candidate names, %d boundaries" % (len(names), len(bounds)))
     print("Saxon:")

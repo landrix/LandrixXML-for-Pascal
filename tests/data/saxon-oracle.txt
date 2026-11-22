@@ -1,0 +1,7 @@
+# The Saxon jars that produced the committed reference data (XPath,
+# XSLT, Schematron, regex, decimal and double cases); checked by
+# tools/saxonjar.py in every tool that runs Saxon. Both hold the same
+# Saxon. A new jar goes in with the data regenerated from it.
+# sha256 file name and Saxon version
+799e64befca97d4080e03608c80b85dd5a5ecc5f4ae4f35d1116ec2855b9a7c9 validator-1.6.3-standalone.jar (KoSIT validator 1.6.3), SAXON-J-HE 12.9 build 98414833
+d07312efb12eab7b1d09c50073e28201b5c50054ae162d0e7b41a0d8ec6e6903 saxon-he-12.9.jar, SAXON-J-HE 12.9 build 98414833

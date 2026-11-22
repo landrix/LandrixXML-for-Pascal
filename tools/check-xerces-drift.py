@@ -27,6 +27,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RECORD = os.path.join("tests", "data", "xerces-oracle.txt")
@@ -98,6 +99,10 @@ def main():
     ap.add_argument("--in-place", action="store_true", help="run in the working tree instead of a worktree")
     ap.add_argument("--record", action="store_true", help="write tests/data/xerces-oracle.txt for this JDK")
     args = ap.parse_args()
+    # before any step: every step that runs Saxon checks its jar too, but
+    # earlier steps may have written files by then
+    saxonjar.check(args.kosit_jar)
+    saxonjar.check(args.saxon)
     # the steps run in another folder: absolute paths
     for name in ("jdk", "kosit_jar", "saxon", "blocks"):
         if getattr(args, name):

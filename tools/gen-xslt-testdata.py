@@ -21,6 +21,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "tests", "data", "xslt")
@@ -31,6 +32,7 @@ def main():
     ap.add_argument("--java", required=True)
     ap.add_argument("--saxon", required=True)
     args = ap.parse_args()
+    saxonjar.check(args.saxon)
     with tempfile.TemporaryDirectory(prefix="xslt-testdata-") as work:
         # the replacement source apart from the outputs (an xsl:result-document
         # of one case must not change the source of a later one)

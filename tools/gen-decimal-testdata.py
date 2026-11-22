@@ -42,6 +42,7 @@ import subprocess
 import sys
 import tempfile
 from fractions import Fraction
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "tests", "data", "decimal")
@@ -308,6 +309,9 @@ def main():
     ap.add_argument("--count", type=int, default=400)
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
+    if bool(args.java) != bool(args.saxon):
+        ap.error("--java and --saxon go together")
+    saxonjar.check(args.saxon)
     cases = build_cases(args.seed, args.count)
     if args.java and args.saxon:
         check_with_saxon(cases, args.java, args.saxon)

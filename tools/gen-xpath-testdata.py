@@ -23,6 +23,7 @@ import argparse
 import os
 import subprocess
 import sys
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "tests", "data", "xpath")
@@ -34,7 +35,9 @@ def main():
     ap.add_argument("--classes", required=True)
     ap.add_argument("--saxon", required=True)
     args = ap.parse_args()
-    cp = os.pathsep.join([args.classes, args.saxon])
+    saxonjar.check(args.saxon)
+    # the pinned jar first: no other Saxon from the classes folder
+    cp = os.pathsep.join([args.saxon, args.classes])
     for case in sorted(os.listdir(DATA)):
         folder = os.path.join(DATA, case)
         if not os.path.isfile(os.path.join(folder, "c.txt")):

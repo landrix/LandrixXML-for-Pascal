@@ -70,6 +70,7 @@ import subprocess
 import sys
 import time
 import zipfile
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORK = os.path.join(ROOT, "build", "xslt-crosscheck")
@@ -443,6 +444,7 @@ def main():
     ap.add_argument("--jobs", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
+    saxonjar.check(args.jar)
     args.stages = (args.only,) if args.only else STAGES
     if args.jobs < 1:
         sys.exit("--jobs must be at least 1")

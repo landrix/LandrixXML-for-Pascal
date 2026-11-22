@@ -42,6 +42,7 @@ import subprocess
 import sys
 import tempfile
 from fractions import Fraction
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "tests", "data", "double", "float-cases.txt")
@@ -348,7 +349,7 @@ def saxon_check(lines, args):
         with open(os.path.join(tmp, "c.txt"), "w") as f:
             for expr, _ in checks:
                 f.write("expr " + expr + "\n")
-        out = subprocess.run([args.java, "-cp", os.pathsep.join([args.classes, args.jar]), "XPathOracle",
+        out = subprocess.run([args.java, "-cp", os.pathsep.join([args.jar, args.classes]), "XPathOracle",
                               os.path.join(tmp, "d.xml"), os.path.join(tmp, "c.txt")], capture_output=True)
     if out.returncode != 0:
         sys.exit("oracle failed:\n" + out.stderr.decode("utf-8", "replace")[-2000:])
@@ -371,6 +372,9 @@ def main():
     ap.add_argument("--classes")
     ap.add_argument("--jar")
     args = ap.parse_args()
+    if args.saxon and not (args.java and args.classes and args.jar):
+        ap.error("--saxon needs --java, --classes and --jar")
+    saxonjar.check(args.jar if args.saxon else None)
     rnd = random.Random(args.seed)
     lines = []
     for op, a in generate(rnd):

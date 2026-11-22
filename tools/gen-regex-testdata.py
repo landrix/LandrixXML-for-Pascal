@@ -35,6 +35,7 @@ import random
 import subprocess
 import sys
 import tempfile
+import saxonjar
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "tests", "data", "regex")
@@ -201,6 +202,7 @@ def main():
     ap.add_argument("--saxon", required=True)
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
+    saxonjar.check(args.saxon)
     cases = build(args.seed)
     # results may contain line breaks (replace); evaluate one per line by
     # encoding the replace results as code points too
