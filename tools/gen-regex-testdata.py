@@ -86,6 +86,11 @@ REPLACE_CASES = [
     ("(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)", "$10-$11-$12"), ("(x)?y", "[$1]"), ("x*", "-"), ("(a)", "$2"),
     ("[0-9]+", "#"), (BS + "s+", " "), ("(a)", "$01"), ("(a)", "$00"),
     ("(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)", "$010|$100|$05"),
+    # loops whose iteration can consume nothing: such an iteration ends
+    # the loop with its captures
+    ("b(?:x*?)*", "[$0]"), ("b(x*?)*", "[$0|$1]"), ("(a*)+b", "[$1]"), ("(x*)*y", "[$0|$1]"),
+    ("(a|b?)*c", "[$0|$1]"), ("(?:(a)|b?)+c", "[$0|$1]"), ("(a?)+?b", "[$0|$1]"),
+    ("(a{0,2})*b", "[$0|$1]"), ("((a)|b*)*c", "[$0|$1|$2]"), ("(?:x?){2,}y", "[$0]"),
 ]
 
 TOKENIZE_PATTERNS = ["#.+#", "(" + BS + "r?" + BS + "n)", BS + "s", "-", "/", BS + "|", ",", BS + "s+", "x*"]
@@ -108,7 +113,7 @@ FIXED_INPUTS = ["", "a", "ab", "abc", "aaa", "b", "c", "12345678", "20261021", "
                 "info@landrix.de", "a.b@c.d", "http://x", "+49 30 1234", "NL123456789B01", "123456789MVA",
                 "#SKONTO#TAGE=14#PROZENT=2.00#\n", "#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#",
                 "x\n#SKONTO#TAGE=7#PROZENT=3.00#", "  20261021  ", "202610211230", "31/12/2026", "٣٤",
-                "éé", "ABCDEFGHIJKLMNOP"]
+                "éé", "ABCDEFGHIJKLMNOP", "bxx", "aaab", "xxy", "abab", "aabc", "bbc"]
 
 
 def xq_string(s):

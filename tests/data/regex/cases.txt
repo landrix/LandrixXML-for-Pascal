@@ -24,6 +24,12 @@ xsd	[a-zA-Z0-9]*	31/12/2026	false
 xsd	[a-zA-Z0-9]*	hex:D9A3D9A4	false
 xsd	[a-zA-Z0-9]*	hex:C3A9C3A9	false
 xsd	[a-zA-Z0-9]*	ABCDEFGHIJKLMNOP	true
+xsd	[a-zA-Z0-9]*	bxx	true
+xsd	[a-zA-Z0-9]*	aaab	true
+xsd	[a-zA-Z0-9]*	xxy	true
+xsd	[a-zA-Z0-9]*	abab	true
+xsd	[a-zA-Z0-9]*	aabc	true
+xsd	[a-zA-Z0-9]*	bbc	true
 xsd	[a-zA-Z0-9]*	hex:0934	false
 xsd	[a-zA-Z0-9]*	hex:37202F5FCC80	false
 xsd	[a-zA-Z0-9]*	hex:783620312E2BD9A3302F4279C3A9	false
@@ -75,6 +81,12 @@ xsd	[0-9]{0,17}	31/12/2026	false
 xsd	[0-9]{0,17}	hex:D9A3D9A4	false
 xsd	[0-9]{0,17}	hex:C3A9C3A9	false
 xsd	[0-9]{0,17}	ABCDEFGHIJKLMNOP	false
+xsd	[0-9]{0,17}	bxx	false
+xsd	[0-9]{0,17}	aaab	false
+xsd	[0-9]{0,17}	xxy	false
+xsd	[0-9]{0,17}	abab	false
+xsd	[0-9]{0,17}	aabc	false
+xsd	[0-9]{0,17}	bbc	false
 xsd	[0-9]{0,17}	A	false
 xsd	[0-9]{0,17}	hex:C2BD0A5F	false
 xsd	[0-9]{0,17}	hex:41620A7858637A3D	false
@@ -126,6 +138,12 @@ xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	31/12/2026	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	hex:D9A3D9A4	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	hex:C3A9C3A9	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	ABCDEFGHIJKLMNOP	false
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	bxx	true
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	aaab	true
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	xxy	true
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	abab	true
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	aabc	true
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	bbc	true
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	3x	true
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	hex:3233C2B7352C5F2C3D36593238	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,14}	hex:322FE281B038402F317C423541593558322E33415938412E37F09F988058362B7A2C0D785A5A2C40C3A95F3638CC80	false
@@ -177,6 +195,12 @@ xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	31/12/2026	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	hex:D9A3D9A4	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	hex:C3A9C3A9	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	ABCDEFGHIJKLMNOP	false
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	bxx	false
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	aaab	false
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	xxy	false
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	abab	false
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	aabc	false
+xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	bbc	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	hex:C3A943	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	A,C-B+Z x @+	false
 xsd	(_|[0-9]|[A-Z]|[a-z]){1,1}	4	true
@@ -228,6 +252,12 @@ xsd	 {2,2} {9,9}.{69,69}	31/12/2026	false
 xsd	 {2,2} {9,9}.{69,69}	hex:D9A3D9A4	false
 xsd	 {2,2} {9,9}.{69,69}	hex:C3A9C3A9	false
 xsd	 {2,2} {9,9}.{69,69}	ABCDEFGHIJKLMNOP	false
+xsd	 {2,2} {9,9}.{69,69}	bxx	false
+xsd	 {2,2} {9,9}.{69,69}	aaab	false
+xsd	 {2,2} {9,9}.{69,69}	xxy	false
+xsd	 {2,2} {9,9}.{69,69}	abab	false
+xsd	 {2,2} {9,9}.{69,69}	aabc	false
+xsd	 {2,2} {9,9}.{69,69}	bbc	false
 xsd	 {2,2} {9,9}.{69,69}	hex:39335AF09F9880372C620ACC80C2B7205A37C3A9315F782EC2B7624079367A5A5AE281B07AF09F98803A5F3D20CC80E281B0632B2F400A	false
 xsd	 {2,2} {9,9}.{69,69}	hex:09	false
 xsd	 {2,2} {9,9}.{69,69}	hex:423839302E2D3631CC8034623A2EE281B02C4339397C36	false
@@ -279,6 +309,12 @@ xsd	\d+(\.\d+)*	31/12/2026	false
 xsd	\d+(\.\d+)*	hex:D9A3D9A4	true
 xsd	\d+(\.\d+)*	hex:C3A9C3A9	false
 xsd	\d+(\.\d+)*	ABCDEFGHIJKLMNOP	false
+xsd	\d+(\.\d+)*	bxx	false
+xsd	\d+(\.\d+)*	aaab	false
+xsd	\d+(\.\d+)*	xxy	false
+xsd	\d+(\.\d+)*	abab	false
+xsd	\d+(\.\d+)*	aabc	false
+xsd	\d+(\.\d+)*	bbc	false
 xsd	\d+(\.\d+)*	@.x	false
 xsd	\d+(\.\d+)*	hex:39583D30F09F9880582F2061F09F988039313D2B0D5A2C2059D9A337C3A9CC80430DE281B0422B305835C2B720372C79D9A3CC80412B3D793336D9A32C2C2C61384333347830F09F9880332B31343330320A5A5A31C2BD300D785F634243C3A90D7C4179627840337A0D2F325A59	false
 xsd	\d+(\.\d+)*	hex:373109622CC2B7356278796258	false
@@ -330,6 +366,12 @@ xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	31/12/2026	false
 xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	hex:D9A3D9A4	false
 xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	hex:C3A9C3A9	false
 xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	ABCDEFGHIJKLMNOP	false
+xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	bxx	false
+xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	aaab	false
+xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	xxy	false
+xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	abab	false
+xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	aabc	false
+xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	bbc	false
 xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	/Z6.3:B-	false
 xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	hex:5A2C3661400A2BC2BD5F2C3959392338C2BD6379783A	false
 xsd	[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}	66	false
@@ -381,6 +423,12 @@ xsd	[a-z-[aeiou]]+	31/12/2026	false
 xsd	[a-z-[aeiou]]+	hex:D9A3D9A4	false
 xsd	[a-z-[aeiou]]+	hex:C3A9C3A9	false
 xsd	[a-z-[aeiou]]+	ABCDEFGHIJKLMNOP	false
+xsd	[a-z-[aeiou]]+	bxx	true
+xsd	[a-z-[aeiou]]+	aaab	false
+xsd	[a-z-[aeiou]]+	xxy	true
+xsd	[a-z-[aeiou]]+	abab	false
+xsd	[a-z-[aeiou]]+	aabc	false
+xsd	[a-z-[aeiou]]+	bbc	true
 xsd	[a-z-[aeiou]]+	hex:610A39	false
 xsd	[a-z-[aeiou]]+	x5,	false
 xsd	[a-z-[aeiou]]+	hex:092B42C2BD3843097A	false
@@ -432,6 +480,12 @@ xsd	[^a-z]*	31/12/2026	true
 xsd	[^a-z]*	hex:D9A3D9A4	true
 xsd	[^a-z]*	hex:C3A9C3A9	true
 xsd	[^a-z]*	ABCDEFGHIJKLMNOP	true
+xsd	[^a-z]*	bxx	false
+xsd	[^a-z]*	aaab	false
+xsd	[^a-z]*	xxy	false
+xsd	[^a-z]*	abab	false
+xsd	[^a-z]*	aabc	false
+xsd	[^a-z]*	bbc	false
 xsd	[^a-z]*	hex:400D2E437A230A0A7C794131E281B034412E6141C3A941	false
 xsd	[^a-z]*	hex:31615F377939372E336234363A0DCC803A31334233	false
 xsd	[^a-z]*	hex:5FCC807823D9A32F375A592ECC802E4335792F0D232B2B2BC3A9426239335A232E34C2B7C3A959096239C2B7370A78	false
@@ -483,6 +537,12 @@ xsd	\i\c*	31/12/2026	false
 xsd	\i\c*	hex:D9A3D9A4	false
 xsd	\i\c*	hex:C3A9C3A9	true
 xsd	\i\c*	ABCDEFGHIJKLMNOP	true
+xsd	\i\c*	bxx	true
+xsd	\i\c*	aaab	true
+xsd	\i\c*	xxy	true
+xsd	\i\c*	abab	true
+xsd	\i\c*	aabc	true
+xsd	\i\c*	bbc	true
 xsd	\i\c*		false
 xsd	\i\c*	cA	true
 xsd	\i\c*	4+=	false
@@ -534,6 +594,12 @@ xsd	[\p{Lu}\d]+	31/12/2026	false
 xsd	[\p{Lu}\d]+	hex:D9A3D9A4	true
 xsd	[\p{Lu}\d]+	hex:C3A9C3A9	false
 xsd	[\p{Lu}\d]+	ABCDEFGHIJKLMNOP	true
+xsd	[\p{Lu}\d]+	bxx	false
+xsd	[\p{Lu}\d]+	aaab	false
+xsd	[\p{Lu}\d]+	xxy	false
+xsd	[\p{Lu}\d]+	abab	false
+xsd	[\p{Lu}\d]+	aabc	false
+xsd	[\p{Lu}\d]+	bbc	false
 xsd	[\p{Lu}\d]+	/b	false
 xsd	[\p{Lu}\d]+	99A,.5,74._=x2|-y_ca	false
 xsd	[\p{Lu}\d]+	hex:637CE281B0	false
@@ -585,6 +651,12 @@ xsd	\w+	31/12/2026	false
 xsd	\w+	hex:D9A3D9A4	true
 xsd	\w+	hex:C3A9C3A9	true
 xsd	\w+	ABCDEFGHIJKLMNOP	true
+xsd	\w+	bxx	true
+xsd	\w+	aaab	true
+xsd	\w+	xxy	true
+xsd	\w+	abab	true
+xsd	\w+	aabc	true
+xsd	\w+	bbc	true
 xsd	\w+	hex:7843433A3A0D092C	false
 xsd	\w+	:.5	false
 xsd	\w+		false
@@ -636,6 +708,12 @@ xsd	a|ab|abc	31/12/2026	false
 xsd	a|ab|abc	hex:D9A3D9A4	false
 xsd	a|ab|abc	hex:C3A9C3A9	false
 xsd	a|ab|abc	ABCDEFGHIJKLMNOP	false
+xsd	a|ab|abc	bxx	false
+xsd	a|ab|abc	aaab	false
+xsd	a|ab|abc	xxy	false
+xsd	a|ab|abc	abab	false
+xsd	a|ab|abc	aabc	false
+xsd	a|ab|abc	bbc	false
 xsd	a|ab|abc	hex:D9A333434159	false
 xsd	a|ab|abc	hex:31380A3378593661582D7C39357C207C342B3DC2B7393A40C2BD59F09F988043200D347C3831C2B73578D9A3D9A33D5F	false
 xsd	a|ab|abc	hex:3962382B323423C2B758F09F9880413D3D582D405F2F3D59C2BD2D39385F41C2B7412B095FD9A333437C202320382F	false
@@ -687,6 +765,12 @@ xsd	(a|b)*c	31/12/2026	false
 xsd	(a|b)*c	hex:D9A3D9A4	false
 xsd	(a|b)*c	hex:C3A9C3A9	false
 xsd	(a|b)*c	ABCDEFGHIJKLMNOP	false
+xsd	(a|b)*c	bxx	false
+xsd	(a|b)*c	aaab	false
+xsd	(a|b)*c	xxy	false
+xsd	(a|b)*c	abab	false
+xsd	(a|b)*c	aabc	true
+xsd	(a|b)*c	bbc	true
 xsd	(a|b)*c	hex:3D62793243CC802F0A0D3AD9A3437A30585F39636362	false
 xsd	(a|b)*c	hex:34416140C2B7	false
 xsd	(a|b)*c	hex:58623A40F09F98803523D9A32379300AC2BD613AC2BD38432E395A5A413039634178C2B73033CC80323A43797CCC803734D9A3396362312B61612F59332FC2BD2C2343C3A9380AC2BD7C337A372F20792C5937E281B0583942C2B72D413731303D2C6233596132323141	false
@@ -738,6 +822,12 @@ xsd	x{2,4}	31/12/2026	false
 xsd	x{2,4}	hex:D9A3D9A4	false
 xsd	x{2,4}	hex:C3A9C3A9	false
 xsd	x{2,4}	ABCDEFGHIJKLMNOP	false
+xsd	x{2,4}	bxx	false
+xsd	x{2,4}	aaab	false
+xsd	x{2,4}	xxy	false
+xsd	x{2,4}	abab	false
+xsd	x{2,4}	aabc	false
+xsd	x{2,4}	bbc	false
 xsd	x{2,4}	z	false
 xsd	x{2,4}	Xy16x	false
 xsd	x{2,4}	hex:E281B04320425837C2B73A38425958	false
@@ -789,6 +879,12 @@ xsd	[-a]+	31/12/2026	false
 xsd	[-a]+	hex:D9A3D9A4	false
 xsd	[-a]+	hex:C3A9C3A9	false
 xsd	[-a]+	ABCDEFGHIJKLMNOP	false
+xsd	[-a]+	bxx	false
+xsd	[-a]+	aaab	false
+xsd	[-a]+	xxy	false
+xsd	[-a]+	abab	false
+xsd	[-a]+	aabc	false
+xsd	[-a]+	bbc	false
 xsd	[-a]+	A	false
 xsd	[-a]+	hex:36387A20593A2D352CC3A93A32	false
 xsd	[-a]+	hex:63400909F09F988041C2BDC2BD38382E33	false
@@ -840,6 +936,12 @@ xsd	[a-]+	31/12/2026	false
 xsd	[a-]+	hex:D9A3D9A4	false
 xsd	[a-]+	hex:C3A9C3A9	false
 xsd	[a-]+	ABCDEFGHIJKLMNOP	false
+xsd	[a-]+	bxx	false
+xsd	[a-]+	aaab	false
+xsd	[a-]+	xxy	false
+xsd	[a-]+	abab	false
+xsd	[a-]+	aabc	false
+xsd	[a-]+	bbc	false
 xsd	[a-]+	hex:CC8038E281B0D9A3780ACC8036	false
 xsd	[a-]+	hex:78410A0AE281B0C2B77A38E281B009E281B034	false
 xsd	[a-]+	hex:332F41C2B733E281B033D9A3	false
@@ -891,6 +993,12 @@ xsd	[+\-]?[0-9]+	31/12/2026	false
 xsd	[+\-]?[0-9]+	hex:D9A3D9A4	false
 xsd	[+\-]?[0-9]+	hex:C3A9C3A9	false
 xsd	[+\-]?[0-9]+	ABCDEFGHIJKLMNOP	false
+xsd	[+\-]?[0-9]+	bxx	false
+xsd	[+\-]?[0-9]+	aaab	false
+xsd	[+\-]?[0-9]+	xxy	false
+xsd	[+\-]?[0-9]+	abab	false
+xsd	[+\-]?[0-9]+	aabc	false
+xsd	[+\-]?[0-9]+	bbc	false
 xsd	[+\-]?[0-9]+	,	false
 xsd	[+\-]?[0-9]+	hex:2E6363C2BD3832C2B7393A2323F09F9880	false
 xsd	[+\-]?[0-9]+	A	false
@@ -942,6 +1050,12 @@ xsd	.*	31/12/2026	true
 xsd	.*	hex:D9A3D9A4	true
 xsd	.*	hex:C3A9C3A9	true
 xsd	.*	ABCDEFGHIJKLMNOP	true
+xsd	.*	bxx	true
+xsd	.*	aaab	true
+xsd	.*	xxy	true
+xsd	.*	abab	true
+xsd	.*	aabc	true
+xsd	.*	bbc	true
 xsd	.*	Y	true
 xsd	.*	hex:37617C0A2F2C35205A093759	false
 xsd	.*	6	true
@@ -993,6 +1107,12 @@ xsd	\S+	31/12/2026	true
 xsd	\S+	hex:D9A3D9A4	true
 xsd	\S+	hex:C3A9C3A9	true
 xsd	\S+	ABCDEFGHIJKLMNOP	true
+xsd	\S+	bxx	true
+xsd	\S+	aaab	true
+xsd	\S+	xxy	true
+xsd	\S+	abab	true
+xsd	\S+	aabc	true
+xsd	\S+	bbc	true
 xsd	\S+	hex:CC80	true
 xsd	\S+	hex:CC80612F7842	true
 xsd	\S+	hex:0A58	false
@@ -1044,6 +1164,12 @@ matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-
 matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	hex:D9A3D9A4	false
 matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	hex:C3A9C3A9	false
 matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	ABCDEFGHIJKLMNOP	false
+matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	bxx	false
+matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	aaab	false
+matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	xxy	false
+matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	abab	false
+matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	aabc	false
+matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	bbc	false
 matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	hex:0D0A2350524F5A454E543D332E35332E353134544147453D	false
 matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	-120.00-120.00	false
 matches	(^|\r?\n)#(SKONTO)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	14xTAGE=	false
@@ -1095,6 +1221,12 @@ matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[
 matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	hex:D9A3D9A4	false
 matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	hex:C3A9C3A9	false
 matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	ABCDEFGHIJKLMNOP	false
+matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	bxx	false
+matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	aaab	false
+matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	xxy	false
+matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	abab	false
+matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	aabc	false
+matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	bbc	false
 matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	hex:0A2342415349534245545241473D31342323534B4F4E544F232342415349534245545241473D	false
 matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	hex:322E30300A322E30302342415349534245545241473D2323	false
 matches	#(SKONTO|VERZUG)#TAGE=([0-9]+#PROZENT=[0-9]+\.[0-9]{2})(#BASISBETRAG=-?[0-9]+\.[0-9]{2})?#$	hex:0D0A235645525A554723780A	false
@@ -1146,6 +1278,12 @@ matches	.*([0-9].*){3,}.*	31/12/2026	true
 matches	.*([0-9].*){3,}.*	hex:D9A3D9A4	false
 matches	.*([0-9].*){3,}.*	hex:C3A9C3A9	false
 matches	.*([0-9].*){3,}.*	ABCDEFGHIJKLMNOP	false
+matches	.*([0-9].*){3,}.*	bxx	false
+matches	.*([0-9].*){3,}.*	aaab	false
+matches	.*([0-9].*){3,}.*	xxy	false
+matches	.*([0-9].*){3,}.*	abab	false
+matches	.*([0-9].*){3,}.*	aabc	false
+matches	.*([0-9].*){3,}.*	bbc	false
 matches	.*([0-9].*){3,}.*	hex:303358382C2E34430DC3A93859592E5FC2B7E281B0093941	true
 matches	.*([0-9].*){3,}.*	hex:7A2E09	false
 matches	.*([0-9].*){3,}.*	hex:C2BDC2BD0A33583A2C23	false
@@ -1197,6 +1335,12 @@ matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	31/12/2026	false
 matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	hex:D9A3D9A4	false
 matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	hex:C3A9C3A9	false
 matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	ABCDEFGHIJKLMNOP	false
+matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	bxx	false
+matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	aaab	false
+matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	xxy	false
+matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	abab	false
+matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	aabc	false
+matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	bbc	false
 matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	hex:09CC80	false
 matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	hex:340D2F435F3D635A	false
 matches	^[^@\s]+@([^@.\s]+\.)+[^@.\s]+$	hex:3D612F3D410A3879615AE281B030	false
@@ -1248,6 +1392,12 @@ matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	31/12/2026	false
 matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	hex:D9A3D9A4	false
 matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	hex:C3A9C3A9	false
 matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	ABCDEFGHIJKLMNOP	false
+matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	bxx	false
+matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	aaab	false
+matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	xxy	false
+matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	abab	false
+matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	aabc	false
+matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	bbc	false
 matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	hex:31D9A37979330DE281B00A436220430D34633762093059	false
 matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*	,9	false
 matches	^([a-zA-Z])([a-zA-Z0-9+.-])+:.*		false
@@ -1299,6 +1449,12 @@ matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	31/12/2026	false
 matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	hex:D9A3D9A4	false
 matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	hex:C3A9C3A9	false
 matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	ABCDEFGHIJKLMNOP	false
+matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	bxx	false
+matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	aaab	false
+matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	xxy	false
+matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	abab	false
+matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	aabc	false
+matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	bbc	false
 matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	Za-	false
 matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	hex:61403D3D584163233723C2BDE281B061093942627C7C41	false
 matches	^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{0,30}$	hex:7A79C2B73A78CC80F09F988041F09F988042CC80E281B02059613D5830CC80307CD9A32E2D43233938F09F98800937350909C2BD353662793D33793D2D2D0D412F2ECC80300AE281B0233A092E3423C3A9C2B736232F43372B43F09F98805F2B3A39633DD9A36340387C5932617C3634C2B7C2BD7830	false
@@ -1350,6 +1506,12 @@ matches	^\d+$	31/12/2026	false
 matches	^\d+$	hex:D9A3D9A4	true
 matches	^\d+$	hex:C3A9C3A9	false
 matches	^\d+$	ABCDEFGHIJKLMNOP	false
+matches	^\d+$	bxx	false
+matches	^\d+$	aaab	false
+matches	^\d+$	xxy	false
+matches	^\d+$	abab	false
+matches	^\d+$	aabc	false
+matches	^\d+$	bbc	false
 matches	^\d+$	hex:34410A632D61C3A92B	false
 matches	^\d+$	hex:0979	false
 matches	^\d+$	hex:30592E342BCC80C3A9372C207A5F	false
@@ -1401,6 +1563,12 @@ matches	^\d{8}$	31/12/2026	false
 matches	^\d{8}$	hex:D9A3D9A4	false
 matches	^\d{8}$	hex:C3A9C3A9	false
 matches	^\d{8}$	ABCDEFGHIJKLMNOP	false
+matches	^\d{8}$	bxx	false
+matches	^\d{8}$	aaab	false
+matches	^\d{8}$	xxy	false
+matches	^\d{8}$	abab	false
+matches	^\d{8}$	aabc	false
+matches	^\d{8}$	bbc	false
 matches	^\d{8}$		false
 matches	^\d{8}$	hex:333D0D432B432B7CF09F988042322E	false
 matches	^\d{8}$	hex:C2B73278	false
@@ -1452,6 +1620,12 @@ matches	^\d{4}-\d{2}-\d{2}$	31/12/2026	false
 matches	^\d{4}-\d{2}-\d{2}$	hex:D9A3D9A4	false
 matches	^\d{4}-\d{2}-\d{2}$	hex:C3A9C3A9	false
 matches	^\d{4}-\d{2}-\d{2}$	ABCDEFGHIJKLMNOP	false
+matches	^\d{4}-\d{2}-\d{2}$	bxx	false
+matches	^\d{4}-\d{2}-\d{2}$	aaab	false
+matches	^\d{4}-\d{2}-\d{2}$	xxy	false
+matches	^\d{4}-\d{2}-\d{2}$	abab	false
+matches	^\d{4}-\d{2}-\d{2}$	aabc	false
+matches	^\d{4}-\d{2}-\d{2}$	bbc	false
 matches	^\d{4}-\d{2}-\d{2}$	hex:410A	false
 matches	^\d{4}-\d{2}-\d{2}$		false
 matches	^\d{4}-\d{2}-\d{2}$	hex:0A42CC80620A23360A413262C2B7	false
@@ -1503,6 +1677,12 @@ matches	^\s*\n	31/12/2026	false
 matches	^\s*\n	hex:D9A3D9A4	false
 matches	^\s*\n	hex:C3A9C3A9	false
 matches	^\s*\n	ABCDEFGHIJKLMNOP	false
+matches	^\s*\n	bxx	false
+matches	^\s*\n	aaab	false
+matches	^\s*\n	xxy	false
+matches	^\s*\n	abab	false
+matches	^\s*\n	aabc	false
+matches	^\s*\n	bbc	false
 matches	^\s*\n	hex:2B376230E281B0C3A932353A092B23637C33235F353D62	false
 matches	^\s*\n	hex:7A357C410DC3A932092D392C42	false
 matches	^\s*\n	hex:79592B780D36783D0A200D61	false
@@ -1554,6 +1734,12 @@ matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	31/12/2026	
 matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	hex:D9A3D9A4	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	hex:C3A9C3A9	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	ABCDEFGHIJKLMNOP	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	bxx	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	aaab	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	xxy	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	abab	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	aabc	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	bbc	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	_	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	hex:623AE281B02B63F09F98805A4238412E5A30C2BD352F0A2F2320432E58373033313931416132202BC3A92D59402C78	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9]){1}(3[01]|[12][0-9]|0[1-9]){1}\s*$	hex:D9A3C3A9	false
@@ -1605,6 +1791,12 @@ matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5
 matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	hex:D9A3D9A4	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	hex:C3A9C3A9	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	ABCDEFGHIJKLMNOP	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	bxx	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	aaab	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	xxy	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	abab	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	aabc	false
+matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	bbc	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	hex:F09F98807842CC8032375F633079303A3A63095F39237C3223E281B039377942C2B7C3A97A35330D3A61363930612FC2BD383133403558400A43582C3D347ACC803330413409423D2FC2BD2C4161630A32630AD9A3D9A32C092B412E0A79433D367941375F2D40	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	hex:3D0A23093AF09F9880422D7A7C3D09C2BDC3A962616139353D63782BE281B0353659635F2E2E622CCC80412EC3A93D79612B37372B2E2E340D40397C62342F3463612E42390A390D0A5A5AC2BD4139372379613341623878620D307C7C2F320A435A637C	false
 matches	^\s*(\d{4})(1[0-2]|0[1-9])(3[01]|[12][0-9]|0[1-9])([01][0-9]|2[0-3])[0-5][0-9]\s*$	hex:6220D9A32D782CCC8033	false
@@ -1656,6 +1848,12 @@ matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2
 matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	hex:D9A3D9A4	false
 matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	hex:C3A9C3A9	false
 matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	ABCDEFGHIJKLMNOP	false
+matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	bxx	false
+matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	aaab	false
+matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	xxy	false
+matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	abab	false
+matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	aabc	false
+matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	bbc	false
 matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	hex:4209	false
 matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}		false
 matches	^(0?[1-9]|[12][0-9]|3[01])[-\\/ ]?(0?[1-9]|1[0-2])[-\\/ ]?(19|20)[0-9]{2}	hex:233D342F62C2BD2E414259CC803A7835235F3D43D9A33858F09F9880302D36C3A934CC80D9A32F2C092F63422C422C2F63	false
@@ -1707,6 +1905,12 @@ matches	^[0-9]+$	31/12/2026	false
 matches	^[0-9]+$	hex:D9A3D9A4	false
 matches	^[0-9]+$	hex:C3A9C3A9	false
 matches	^[0-9]+$	ABCDEFGHIJKLMNOP	false
+matches	^[0-9]+$	bxx	false
+matches	^[0-9]+$	aaab	false
+matches	^[0-9]+$	xxy	false
+matches	^[0-9]+$	abab	false
+matches	^[0-9]+$	aabc	false
+matches	^[0-9]+$	bbc	false
 matches	^[0-9]+$		false
 matches	^[0-9]+$	hex:43C2B7	false
 matches	^[0-9]+$	xc	false
@@ -1758,6 +1962,12 @@ matches	^[0-9]{10}$	31/12/2026	false
 matches	^[0-9]{10}$	hex:D9A3D9A4	false
 matches	^[0-9]{10}$	hex:C3A9C3A9	false
 matches	^[0-9]{10}$	ABCDEFGHIJKLMNOP	false
+matches	^[0-9]{10}$	bxx	false
+matches	^[0-9]{10}$	aaab	false
+matches	^[0-9]{10}$	xxy	false
+matches	^[0-9]{10}$	abab	false
+matches	^[0-9]{10}$	aabc	false
+matches	^[0-9]{10}$	bbc	false
 matches	^[0-9]{10}$	hex:62372F63CC80CC805F373435D9A33D5F09590D2F2B3D62	false
 matches	^[0-9]{10}$	. 4	false
 matches	^[0-9]{10}$	hex:205A0A3059F09F98802D3523C2B73D3837427C7840380D58597C0938C3A934783D5FE281B03633C2BD33E281B02E62412C20	false
@@ -1809,6 +2019,12 @@ matches	^[0-9]{7,8}$	31/12/2026	false
 matches	^[0-9]{7,8}$	hex:D9A3D9A4	false
 matches	^[0-9]{7,8}$	hex:C3A9C3A9	false
 matches	^[0-9]{7,8}$	ABCDEFGHIJKLMNOP	false
+matches	^[0-9]{7,8}$	bxx	false
+matches	^[0-9]{7,8}$	aaab	false
+matches	^[0-9]{7,8}$	xxy	false
+matches	^[0-9]{7,8}$	abab	false
+matches	^[0-9]{7,8}$	aabc	false
+matches	^[0-9]{7,8}$	bbc	false
 matches	^[0-9]{7,8}$	hex:33D9A30A37C3A9	false
 matches	^[0-9]{7,8}$	hex:4259435A3D426143D9A3D9A32E4063C2B72334C2B72F313AE281B058340D4042C2B77C41783A2F79E281B02F302B43CC8042	false
 matches	^[0-9]{7,8}$		false
@@ -1860,6 +2076,12 @@ matches	^NL[0-9]{9}B[0-9]{2}$	31/12/2026	false
 matches	^NL[0-9]{9}B[0-9]{2}$	hex:D9A3D9A4	false
 matches	^NL[0-9]{9}B[0-9]{2}$	hex:C3A9C3A9	false
 matches	^NL[0-9]{9}B[0-9]{2}$	ABCDEFGHIJKLMNOP	false
+matches	^NL[0-9]{9}B[0-9]{2}$	bxx	false
+matches	^NL[0-9]{9}B[0-9]{2}$	aaab	false
+matches	^NL[0-9]{9}B[0-9]{2}$	xxy	false
+matches	^NL[0-9]{9}B[0-9]{2}$	abab	false
+matches	^NL[0-9]{9}B[0-9]{2}$	aabc	false
+matches	^NL[0-9]{9}B[0-9]{2}$	bbc	false
 matches	^NL[0-9]{9}B[0-9]{2}$	hex:D9A3F09F98802BF09F9880D9A341624059303D4037327A626242587CE281B0382C3D393A3A235FC2B779C2B7F09F98804162592031C2BD3A40392B0AC2B75A61302CC3A92C2D35CC807830333638367A620A2DC2BD4133F09F9880413362C2B73D592CF09F988061C3A95F5A39CC80F09F9880332C34E281B0E281B03DC3A9	false
 matches	^NL[0-9]{9}B[0-9]{2}$	_C/x4	false
 matches	^NL[0-9]{9}B[0-9]{2}$	hex:D9A338785F4243C3A9CC80C2BD322C37623D583978304109402B232F2E382E632F3343414132E281B009632E3A790A7941380D5A32302037393932C2B72C4258307C30C2BDC2BDC2BD78F09F988040C3A937232B2C387835F09F988036D9A32FC2BD2F347C312C783632E281B03062	false
@@ -1911,6 +2133,12 @@ matches	^[A-Z0-9]{11,16}$	31/12/2026	false
 matches	^[A-Z0-9]{11,16}$	hex:D9A3D9A4	false
 matches	^[A-Z0-9]{11,16}$	hex:C3A9C3A9	false
 matches	^[A-Z0-9]{11,16}$	ABCDEFGHIJKLMNOP	true
+matches	^[A-Z0-9]{11,16}$	bxx	false
+matches	^[A-Z0-9]{11,16}$	aaab	false
+matches	^[A-Z0-9]{11,16}$	xxy	false
+matches	^[A-Z0-9]{11,16}$	abab	false
+matches	^[A-Z0-9]{11,16}$	aabc	false
+matches	^[A-Z0-9]{11,16}$	bbc	false
 matches	^[A-Z0-9]{11,16}$	hex:342D2E2B435F3AC2B72E090A09CC80372332207A3D78	false
 matches	^[A-Z0-9]{11,16}$	.	false
 matches	^[A-Z0-9]{11,16}$	hex:C2BD36402D636233342B323D40	false
@@ -1962,6 +2190,12 @@ matches	^[0-9]{9}MVA$	31/12/2026	false
 matches	^[0-9]{9}MVA$	hex:D9A3D9A4	false
 matches	^[0-9]{9}MVA$	hex:C3A9C3A9	false
 matches	^[0-9]{9}MVA$	ABCDEFGHIJKLMNOP	false
+matches	^[0-9]{9}MVA$	bxx	false
+matches	^[0-9]{9}MVA$	aaab	false
+matches	^[0-9]{9}MVA$	xxy	false
+matches	^[0-9]{9}MVA$	abab	false
+matches	^[0-9]{9}MVA$	aabc	false
+matches	^[0-9]{9}MVA$	bbc	false
 matches	^[0-9]{9}MVA$	hex:C2BDD9A3	false
 matches	^[0-9]{9}MVA$	hex:625F33352B2D36C2B74332F09F988078	false
 matches	^[0-9]{9}MVA$		false
@@ -2013,6 +2247,12 @@ matches	^[1-9]([0-9]*)	31/12/2026	true
 matches	^[1-9]([0-9]*)	hex:D9A3D9A4	false
 matches	^[1-9]([0-9]*)	hex:C3A9C3A9	false
 matches	^[1-9]([0-9]*)	ABCDEFGHIJKLMNOP	false
+matches	^[1-9]([0-9]*)	bxx	false
+matches	^[1-9]([0-9]*)	aaab	false
+matches	^[1-9]([0-9]*)	xxy	false
+matches	^[1-9]([0-9]*)	abab	false
+matches	^[1-9]([0-9]*)	aabc	false
+matches	^[1-9]([0-9]*)	bbc	false
 matches	^[1-9]([0-9]*)	hex:39623133D9A3	true
 matches	^[1-9]([0-9]*)		false
 matches	^[1-9]([0-9]*)	hex:623D790D78310D0A0A42C3A97920C3A90A323635592F	false
@@ -2064,6 +2304,12 @@ matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@(
 matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	hex:D9A3D9A4	false
 matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	hex:C3A9C3A9	false
 matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	ABCDEFGHIJKLMNOP	false
+matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	bxx	false
+matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	aaab	false
+matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	xxy	false
+matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	abab	false
+matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	aabc	false
+matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	bbc	false
 matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	hex:7C5A7A23323A0D32433A0DF09F988063590D4258315A23	false
 matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	hex:5920795978435AC3A92E5F617A20092D0959205933393A2D0D330938232B41F09F988079312B62C2BD627A2078	false
 matches	^[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#\$%&"*+/=?^_`{|}~-]+)*@([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$	hex:0D61	false
@@ -2115,6 +2361,12 @@ matches	a|ab	31/12/2026	false
 matches	a|ab	hex:D9A3D9A4	false
 matches	a|ab	hex:C3A9C3A9	false
 matches	a|ab	ABCDEFGHIJKLMNOP	false
+matches	a|ab	bxx	false
+matches	a|ab	aaab	true
+matches	a|ab	xxy	false
+matches	a|ab	abab	true
+matches	a|ab	aabc	true
+matches	a|ab	bbc	false
 matches	a|ab	hex:412E2C304340374309D9A3310A614332C3A93358592E	true
 matches	a|ab	Z0-	false
 matches	a|ab	hex:C2BD2C2359D9A37A2E59	false
@@ -2166,6 +2418,12 @@ matches	(a|ab)(c|bcd)	31/12/2026	false
 matches	(a|ab)(c|bcd)	hex:D9A3D9A4	false
 matches	(a|ab)(c|bcd)	hex:C3A9C3A9	false
 matches	(a|ab)(c|bcd)	ABCDEFGHIJKLMNOP	false
+matches	(a|ab)(c|bcd)	bxx	false
+matches	(a|ab)(c|bcd)	aaab	false
+matches	(a|ab)(c|bcd)	xxy	false
+matches	(a|ab)(c|bcd)	abab	false
+matches	(a|ab)(c|bcd)	aabc	true
+matches	(a|ab)(c|bcd)	bbc	false
 matches	(a|ab)(c|bcd)	hex:41592B416335403DC3A9620A59313D383632630A3441373431D9A32D593959C2B77C3D2F3D2D2B0D23632F3A7AE281B0334038C2B7C2B7615F375A38F09F9880CC80307A582F7CC2B7C2BD0A3AC2BDC2BD36C2B763413A410A33427A323730F09F9880E281B05F7C2B623D36412B7A	false
 matches	(a|ab)(c|bcd)	Zy|	false
 matches	(a|ab)(c|bcd)	hex:59CC807AC2BD0DC2BD3662637C3D2F4231E281B05F3031C2BD236223375863E281B041C2B72D302C34310A35582C786238	false
@@ -2217,6 +2475,12 @@ matches	(a*)*b	31/12/2026	false
 matches	(a*)*b	hex:D9A3D9A4	false
 matches	(a*)*b	hex:C3A9C3A9	false
 matches	(a*)*b	ABCDEFGHIJKLMNOP	false
+matches	(a*)*b	bxx	true
+matches	(a*)*b	aaab	true
+matches	(a*)*b	xxy	false
+matches	(a*)*b	abab	true
+matches	(a*)*b	aabc	true
+matches	(a*)*b	bbc	true
 matches	(a*)*b	9cx z	false
 matches	(a*)*b	hex:2B0934E281B07C38D9A337583536617C350937C2BD313D20CC802B4059E281B023C2B7CC807C2C5A2F31357C7943412E6261365A413035C2BD4237780D2B20202032D9A339D9A3594233E281B04034340A2331CC805978612C232D2C7A43CC802B0940CC8031CC80C2B7415F36	true
 matches	(a*)*b	hex:36413D392EC2B7423543E281B07C2023792B4178C3A92F3D5F7A5863C3A9353A33CC802D353420C3A942232D2E3A0A	false
@@ -2268,6 +2532,12 @@ matches	(a|b)*?c	31/12/2026	false
 matches	(a|b)*?c	hex:D9A3D9A4	false
 matches	(a|b)*?c	hex:C3A9C3A9	false
 matches	(a|b)*?c	ABCDEFGHIJKLMNOP	false
+matches	(a|b)*?c	bxx	false
+matches	(a|b)*?c	aaab	false
+matches	(a|b)*?c	xxy	false
+matches	(a|b)*?c	abab	false
+matches	(a|b)*?c	aabc	true
+matches	(a|b)*?c	bbc	true
 matches	(a|b)*?c	hex:3341092C43	false
 matches	(a|b)*?c	41	false
 matches	(a|b)*?c		false
@@ -2319,6 +2589,12 @@ matches	x*	31/12/2026	true
 matches	x*	hex:D9A3D9A4	true
 matches	x*	hex:C3A9C3A9	true
 matches	x*	ABCDEFGHIJKLMNOP	true
+matches	x*	bxx	true
+matches	x*	aaab	true
+matches	x*	xxy	true
+matches	x*	abab	true
+matches	x*	aabc	true
+matches	x*	bbc	true
 matches	x*	hex:F09F98802C	true
 matches	x*	hex:595939E281B031	true
 matches	x*	A	true
@@ -2370,6 +2646,12 @@ matches		31/12/2026	true
 matches		hex:D9A3D9A4	true
 matches		hex:C3A9C3A9	true
 matches		ABCDEFGHIJKLMNOP	true
+matches		bxx	true
+matches		aaab	true
+matches		xxy	true
+matches		abab	true
+matches		aabc	true
+matches		bbc	true
 matches		hex:F09F9880	true
 matches		hex:F09F988020202C363279336161395F23F09F9880C2BD61C2B72C63367A2CC2B736D9A3E281B00D093079235F0A35620D5A426178	true
 matches		4,/	true
@@ -2421,6 +2703,12 @@ matches	^	31/12/2026	true
 matches	^	hex:D9A3D9A4	true
 matches	^	hex:C3A9C3A9	true
 matches	^	ABCDEFGHIJKLMNOP	true
+matches	^	bxx	true
+matches	^	aaab	true
+matches	^	xxy	true
+matches	^	abab	true
+matches	^	aabc	true
+matches	^	bbc	true
 matches	^	@	true
 matches	^	BB	true
 matches	^	hex:F09F9880365F7963	true
@@ -2472,6 +2760,12 @@ matches	$	31/12/2026	true
 matches	$	hex:D9A3D9A4	true
 matches	$	hex:C3A9C3A9	true
 matches	$	ABCDEFGHIJKLMNOP	true
+matches	$	bxx	true
+matches	$	aaab	true
+matches	$	xxy	true
+matches	$	abab	true
+matches	$	aabc	true
+matches	$	bbc	true
 matches	$	hex:CC80	true
 matches	$		true
 matches	$	hex:5F2DCC802058	true
@@ -2523,6 +2817,12 @@ matches	a{0}	31/12/2026	true
 matches	a{0}	hex:D9A3D9A4	true
 matches	a{0}	hex:C3A9C3A9	true
 matches	a{0}	ABCDEFGHIJKLMNOP	true
+matches	a{0}	bxx	true
+matches	a{0}	aaab	true
+matches	a{0}	xxy	true
+matches	a{0}	abab	true
+matches	a{0}	aabc	true
+matches	a{0}	bbc	true
 matches	a{0}	hex:0D32203161783538313A312C	true
 matches	a{0}	4	true
 matches	a{0}	hex:D9A3	true
@@ -2574,6 +2874,12 @@ matches	(?:ab)+	31/12/2026	false
 matches	(?:ab)+	hex:D9A3D9A4	false
 matches	(?:ab)+	hex:C3A9C3A9	false
 matches	(?:ab)+	ABCDEFGHIJKLMNOP	false
+matches	(?:ab)+	bxx	false
+matches	(?:ab)+	aaab	true
+matches	(?:ab)+	xxy	false
+matches	(?:ab)+	abab	true
+matches	(?:ab)+	aabc	true
+matches	(?:ab)+	bbc	false
 matches	(?:ab)+		false
 matches	(?:ab)+	hex:387931C2BD32316331	false
 matches	(?:ab)+	hex:3758E281B0E281B0F09F9880	false
@@ -2625,6 +2931,12 @@ matches	[\s\S]	31/12/2026	true
 matches	[\s\S]	hex:D9A3D9A4	true
 matches	[\s\S]	hex:C3A9C3A9	true
 matches	[\s\S]	ABCDEFGHIJKLMNOP	true
+matches	[\s\S]	bxx	true
+matches	[\s\S]	aaab	true
+matches	[\s\S]	xxy	true
+matches	[\s\S]	abab	true
+matches	[\s\S]	aabc	true
+matches	[\s\S]	bbc	true
 matches	[\s\S]		false
 matches	[\s\S]	-,	true
 matches	[\s\S]	hex:0A59	true
@@ -2676,6 +2988,12 @@ matches	\p{Nd}	31/12/2026	true
 matches	\p{Nd}	hex:D9A3D9A4	true
 matches	\p{Nd}	hex:C3A9C3A9	false
 matches	\p{Nd}	ABCDEFGHIJKLMNOP	false
+matches	\p{Nd}	bxx	false
+matches	\p{Nd}	aaab	false
+matches	\p{Nd}	xxy	false
+matches	\p{Nd}	abab	false
+matches	\p{Nd}	aabc	false
+matches	\p{Nd}	bbc	false
 matches	\p{Nd}	7=5	true
 matches	\p{Nd}	hex:0D2C	false
 matches	\p{Nd}		false
@@ -2727,6 +3045,12 @@ matches	\P{L}+	31/12/2026	true
 matches	\P{L}+	hex:D9A3D9A4	true
 matches	\P{L}+	hex:C3A9C3A9	false
 matches	\P{L}+	ABCDEFGHIJKLMNOP	false
+matches	\P{L}+	bxx	false
+matches	\P{L}+	aaab	false
+matches	\P{L}+	xxy	false
+matches	\P{L}+	abab	false
+matches	\P{L}+	aabc	false
+matches	\P{L}+	bbc	false
 matches	\P{L}+	hex:6133235879094263432F41F09F988033382B3642207A580D782342413433C2B7D9A37C37F09F98800D2D5938317C0936	true
 matches	\P{L}+	Z	false
 matches	\P{L}+	hex:79583AC2BDC3A9632030383223630D34797A3A0D3434	true
@@ -2778,6 +3102,12 @@ matches	\p{IsBasicLatin}	31/12/2026	true
 matches	\p{IsBasicLatin}	hex:D9A3D9A4	false
 matches	\p{IsBasicLatin}	hex:C3A9C3A9	false
 matches	\p{IsBasicLatin}	ABCDEFGHIJKLMNOP	true
+matches	\p{IsBasicLatin}	bxx	true
+matches	\p{IsBasicLatin}	aaab	true
+matches	\p{IsBasicLatin}	xxy	true
+matches	\p{IsBasicLatin}	abab	true
+matches	\p{IsBasicLatin}	aabc	true
+matches	\p{IsBasicLatin}	bbc	true
 matches	\p{IsBasicLatin}	hex:09CC80C2B7CC8032	true
 matches	\p{IsBasicLatin}	hex:0A37593809F09F98807A4342325A320D5A30623761613D3058D9A3C3A93AC2B72D417C3AC2B723306259C2B763C3A92E2F2F59423D7C630A78205862F09F9880C3A92C09C3A92D7C79403631367A7A392B59203D39C2B7353034630D3079397A42373737415A3DE281B009	true
 matches	\p{IsBasicLatin}	cYx	true
@@ -2829,6 +3159,12 @@ matches	(a)\1	31/12/2026	false
 matches	(a)\1	hex:D9A3D9A4	false
 matches	(a)\1	hex:C3A9C3A9	false
 matches	(a)\1	ABCDEFGHIJKLMNOP	false
+matches	(a)\1	bxx	false
+matches	(a)\1	aaab	true
+matches	(a)\1	xxy	false
+matches	(a)\1	abab	false
+matches	(a)\1	aabc	true
+matches	(a)\1	bbc	false
 matches	(a)\1	hex:322D63C2B7CC8023C2B72C	false
 matches	(a)\1	hex:7958400AD9A32D620A	false
 matches	(a)\1		false
@@ -2880,6 +3216,12 @@ matches	a{3,2}	31/12/2026	error
 matches	a{3,2}	hex:D9A3D9A4	error
 matches	a{3,2}	hex:C3A9C3A9	error
 matches	a{3,2}	ABCDEFGHIJKLMNOP	error
+matches	a{3,2}	bxx	error
+matches	a{3,2}	aaab	error
+matches	a{3,2}	xxy	error
+matches	a{3,2}	abab	error
+matches	a{3,2}	aabc	error
+matches	a{3,2}	bbc	error
 matches	a{3,2}		error
 matches	a{3,2}	hex:33CC8035583A	error
 matches	a{3,2}	hex:612E2E30385A3741626162342B347C5FE281B0C3A959385A7CC3A9325878C3A939623DC2B72D62E281B063CC80302FC2B72E	error
@@ -2931,6 +3273,12 @@ matches	[z-a]	31/12/2026	error
 matches	[z-a]	hex:D9A3D9A4	error
 matches	[z-a]	hex:C3A9C3A9	error
 matches	[z-a]	ABCDEFGHIJKLMNOP	error
+matches	[z-a]	bxx	error
+matches	[z-a]	aaab	error
+matches	[z-a]	xxy	error
+matches	[z-a]	abab	error
+matches	[z-a]	aabc	error
+matches	[z-a]	bbc	error
 matches	[z-a]	hex:C2B72F365F38423A2ED9A30A422C	error
 matches	[z-a]	hex:2B3720C3A9327C2B79093DC3A9E281B0	error
 matches	[z-a]	hex:2BE281B039	error
@@ -2982,6 +3330,12 @@ matches	(	31/12/2026	error
 matches	(	hex:D9A3D9A4	error
 matches	(	hex:C3A9C3A9	error
 matches	(	ABCDEFGHIJKLMNOP	error
+matches	(	bxx	error
+matches	(	aaab	error
+matches	(	xxy	error
+matches	(	abab	error
+matches	(	aabc	error
+matches	(	bbc	error
 matches	(	00	error
 matches	(	hex:437A383ACC807AC2B73632F09F98803959	error
 matches	(	hex:E281B0C3A940362D340D30782B7A09	error
@@ -3033,6 +3387,12 @@ matches	)	31/12/2026	error
 matches	)	hex:D9A3D9A4	error
 matches	)	hex:C3A9C3A9	error
 matches	)	ABCDEFGHIJKLMNOP	error
+matches	)	bxx	error
+matches	)	aaab	error
+matches	)	xxy	error
+matches	)	abab	error
+matches	)	aabc	error
+matches	)	bbc	error
 matches	)	hex:3120CC80CC803A330D2E2C0AC2BD59F09F988061C3A97C2F59C2B77C0A0D2B3A7C433830622058613334322E793A404335C2BD36C2BD593D2E323278620D390A39333143786137337862590A23F09F98802F38C2BD2C330A310AC2BD79D9A3377C435F317C0D7A380D23	error
 matches	)	hex:5F0AD9A33339C2B737315A32090D233931320A3939E281B0363538610D2E235A39312D5F40376262D9A335347843C3A90A362F365FE281B05FC3A9346238F09F9880412F7A40CC802C7920D9A33131597A4134C3A9F09F98802E3659C3A97836C2BD35357A092CC2B737D9A33A09622C	error
 matches	)	hex:F09F98802ECC8038367A203D202F5A3D580A375A4061612E3DC3A92E432BC3A9635830417843CC8040E281B00D302D372E420A382C43403161587CC2B73359433D0AD9A378342F7C343035620A58412EF09F988040393436092BC2BD33D9A30A597A3434435A620D23F09F9880	error
@@ -3084,6 +3444,12 @@ matches	a**	31/12/2026	error
 matches	a**	hex:D9A3D9A4	error
 matches	a**	hex:C3A9C3A9	error
 matches	a**	ABCDEFGHIJKLMNOP	error
+matches	a**	bxx	error
+matches	a**	aaab	error
+matches	a**	xxy	error
+matches	a**	abab	error
+matches	a**	aabc	error
+matches	a**	bbc	error
 matches	a**	hex:59323D613330333863234230372B09C2B743380D3659782C0A30F09F9880C3A9C2B7364320792B62CC80205A582D36	error
 matches	a**	hex:0A3078	error
 matches	a**	hex:0D3D427963F09F9880372E6358635A5838CC802E2D3709E281B0636230580D7CC2B7396243D9A32F343141CC807C627A34	error
@@ -3135,6 +3501,12 @@ matches	[]	31/12/2026	error
 matches	[]	hex:D9A3D9A4	error
 matches	[]	hex:C3A9C3A9	error
 matches	[]	ABCDEFGHIJKLMNOP	error
+matches	[]	bxx	error
+matches	[]	aaab	error
+matches	[]	xxy	error
+matches	[]	abab	error
+matches	[]	aabc	error
+matches	[]	bbc	error
 matches	[]	hex:09D9A33A780DC2BD785AD9A3327861	error
 matches	[]	hex:3AC3A90A0D40637C42CC803D3DC2BD592D78CC80303039CC802E337C362E58E281B033300D2B203340C2BD430A36D9A32D	error
 matches	[]	hex:09	error
@@ -3186,6 +3558,12 @@ matches	[a-[b]	31/12/2026	error
 matches	[a-[b]	hex:D9A3D9A4	error
 matches	[a-[b]	hex:C3A9C3A9	error
 matches	[a-[b]	ABCDEFGHIJKLMNOP	error
+matches	[a-[b]	bxx	error
+matches	[a-[b]	aaab	error
+matches	[a-[b]	xxy	error
+matches	[a-[b]	abab	error
+matches	[a-[b]	aabc	error
+matches	[a-[b]	bbc	error
 matches	[a-[b]	hex:0932	error
 matches	[a-[b]	|	error
 matches	[a-[b]	hex:0D2B322D0A63C2BD7858CC80334236C3A934C3A92038385F	error
@@ -3237,6 +3615,12 @@ matches	{	31/12/2026	error
 matches	{	hex:D9A3D9A4	error
 matches	{	hex:C3A9C3A9	error
 matches	{	ABCDEFGHIJKLMNOP	error
+matches	{	bxx	error
+matches	{	aaab	error
+matches	{	xxy	error
+matches	{	abab	error
+matches	{	aabc	error
+matches	{	bbc	error
 matches	{	hex:3763335A35617A3D3DE281B03436	error
 matches	{	hex:33CC8030432E2E4262E281B00A362B594179595A59412E307C0DC2BD5A322D2F09F09F988035630DD9A30A2358617A5A41374020402F3DC3A9413A7C41372E7A2F2C2C0958205F61E281B02D207C0A09C2BD382E317A43302C35D9A323F09F988040613AE281B03959783858	error
 matches	{	hex:5FC3A95A63393530352C0A2DC2BD	error
@@ -3288,6 +3672,12 @@ matches	\q	31/12/2026	error
 matches	\q	hex:D9A3D9A4	error
 matches	\q	hex:C3A9C3A9	error
 matches	\q	ABCDEFGHIJKLMNOP	error
+matches	\q	bxx	error
+matches	\q	aaab	error
+matches	\q	xxy	error
+matches	\q	abab	error
+matches	\q	aabc	error
+matches	\q	bbc	error
 matches	\q	Y=	error
 matches	\q	hex:0A2F377A39796335352059792E2EC3A93D40317A2E33612E78363D302333395F34CC8031F09F9880370D402C3059C2BD2C433363CC80093232582B38423039416209C2B7CC80592C3A59C3A90D23E281B031C2BD2BE281B0795FC2B730205843583359F09F9880395AE281B05943E281B0	error
 matches	\q	hex:E281B030612F234378E281B0	error
@@ -3339,6 +3729,12 @@ matches	hex:C3A92B	31/12/2026	false
 matches	hex:C3A92B	hex:D9A3D9A4	false
 matches	hex:C3A92B	hex:C3A9C3A9	true
 matches	hex:C3A92B	ABCDEFGHIJKLMNOP	false
+matches	hex:C3A92B	bxx	false
+matches	hex:C3A92B	aaab	false
+matches	hex:C3A92B	xxy	false
+matches	hex:C3A92B	abab	false
+matches	hex:C3A92B	aabc	false
+matches	hex:C3A92B	bbc	false
 matches	hex:C3A92B	7	false
 matches	hex:C3A92B	hex:230DC2B72B383D7C303A2B7CD9A33941335F61340A423978E281B03930C2BD392C3A2E622C403D6136200D3231	false
 matches	hex:C3A92B	hex:E281B0C2BD43C2B7CC8037624235303459	false
@@ -3390,6 +3786,12 @@ matches	.	31/12/2026	true
 matches	.	hex:D9A3D9A4	true
 matches	.	hex:C3A9C3A9	true
 matches	.	ABCDEFGHIJKLMNOP	true
+matches	.	bxx	true
+matches	.	aaab	true
+matches	.	xxy	true
+matches	.	abab	true
+matches	.	aabc	true
+matches	.	bbc	true
 matches	.		false
 matches	.	hex:3D2C4332F09F9880	true
 matches	.	hex:7AE281B0343241E281B0582B2C2BE281B0D9A33278792D78E281B05838623935310D392B203ACC800DD9A3392C3659304036CC80C3A9387978F09F98804041332E3D7920407C0A2D2B5A782F2E417C3832203040232C7C34617830302E3A613439C2B75A40323AE281B0356337	true
@@ -3441,6 +3843,12 @@ matches	[^\n]+	31/12/2026	true
 matches	[^\n]+	hex:D9A3D9A4	true
 matches	[^\n]+	hex:C3A9C3A9	true
 matches	[^\n]+	ABCDEFGHIJKLMNOP	true
+matches	[^\n]+	bxx	true
+matches	[^\n]+	aaab	true
+matches	[^\n]+	xxy	true
+matches	[^\n]+	abab	true
+matches	[^\n]+	aabc	true
+matches	[^\n]+	bbc	true
 matches	[^\n]+	hex:3D2C3123F09F9880	true
 matches	[^\n]+	hex:D9A3C2B7C2BD3D7AD9A3635F	true
 matches	[^\n]+	hex:38CC8009307A	true
@@ -3492,6 +3900,12 @@ matches	((a)|b)+	31/12/2026	false
 matches	((a)|b)+	hex:D9A3D9A4	false
 matches	((a)|b)+	hex:C3A9C3A9	false
 matches	((a)|b)+	ABCDEFGHIJKLMNOP	false
+matches	((a)|b)+	bxx	true
+matches	((a)|b)+	aaab	true
+matches	((a)|b)+	xxy	false
+matches	((a)|b)+	abab	true
+matches	((a)|b)+	aabc	true
+matches	((a)|b)+	bbc	true
 matches	((a)|b)+	hex:0A38C3A93A593DD9A33A	false
 matches	((a)|b)+		false
 matches	((a)|b)+	hex:F09F98803D412063416158	true
@@ -3543,6 +3957,12 @@ matches	(a)|(b)	31/12/2026	false
 matches	(a)|(b)	hex:D9A3D9A4	false
 matches	(a)|(b)	hex:C3A9C3A9	false
 matches	(a)|(b)	ABCDEFGHIJKLMNOP	false
+matches	(a)|(b)	bxx	true
+matches	(a)|(b)	aaab	true
+matches	(a)|(b)	xxy	false
+matches	(a)|(b)	abab	true
+matches	(a)|(b)	aabc	true
+matches	(a)|(b)	bbc	true
 matches	(a)|(b)	hex:37C3A942782358D9A342D9A35F6258	true
 matches	(a)|(b)		false
 matches	(a)|(b)	hex:422EC3A9623A20394239352B5F38F09F98800D58C3A9433D2E	true
@@ -3594,6 +4014,12 @@ matches	[a-z-0-9]+	31/12/2026	true
 matches	[a-z-0-9]+	hex:D9A3D9A4	false
 matches	[a-z-0-9]+	hex:C3A9C3A9	false
 matches	[a-z-0-9]+	ABCDEFGHIJKLMNOP	false
+matches	[a-z-0-9]+	bxx	true
+matches	[a-z-0-9]+	aaab	true
+matches	[a-z-0-9]+	xxy	true
+matches	[a-z-0-9]+	abab	true
+matches	[a-z-0-9]+	aabc	true
+matches	[a-z-0-9]+	bbc	true
 matches	[a-z-0-9]+	x+	true
 matches	[a-z-0-9]+	hex:433D3AD9A37C	false
 matches	[a-z-0-9]+		false
@@ -3645,6 +4071,12 @@ matches	[\d-z]+	31/12/2026	true
 matches	[\d-z]+	hex:D9A3D9A4	true
 matches	[\d-z]+	hex:C3A9C3A9	false
 matches	[\d-z]+	ABCDEFGHIJKLMNOP	false
+matches	[\d-z]+	bxx	false
+matches	[\d-z]+	aaab	false
+matches	[\d-z]+	xxy	false
+matches	[\d-z]+	abab	false
+matches	[\d-z]+	aabc	false
+matches	[\d-z]+	bbc	false
 matches	[\d-z]+	hex:395FF09F9880E281B0E281B0	true
 matches	[\d-z]+	1	true
 matches	[\d-z]+		false
@@ -3696,6 +4128,12 @@ matches	[--z]	31/12/2026	error
 matches	[--z]	hex:D9A3D9A4	error
 matches	[--z]	hex:C3A9C3A9	error
 matches	[--z]	ABCDEFGHIJKLMNOP	error
+matches	[--z]	bxx	error
+matches	[--z]	aaab	error
+matches	[--z]	xxy	error
+matches	[--z]	abab	error
+matches	[--z]	aabc	error
+matches	[--z]	bbc	error
 matches	[--z]	hex:58C3A90A6259C3A9F09F9880632078E281B02B	error
 matches	[--z]	hex:D9A358C2B77923	error
 matches	[--z]		error
@@ -3747,6 +4185,12 @@ matches	[a-z--[x]]+	31/12/2026	false
 matches	[a-z--[x]]+	hex:D9A3D9A4	false
 matches	[a-z--[x]]+	hex:C3A9C3A9	false
 matches	[a-z--[x]]+	ABCDEFGHIJKLMNOP	false
+matches	[a-z--[x]]+	bxx	true
+matches	[a-z--[x]]+	aaab	true
+matches	[a-z--[x]]+	xxy	true
+matches	[a-z--[x]]+	abab	true
+matches	[a-z--[x]]+	aabc	true
+matches	[a-z--[x]]+	bbc	true
 matches	[a-z--[x]]+	hex:63C2B7353843D9A32C3A2F3DC3A962613D3933CC80345842	true
 matches	[a-z--[x]]+	hex:5F0A59582F	false
 matches	[a-z--[x]]+	hex:345F0D095A410A5F42F09F98803459	false
@@ -3798,6 +4242,12 @@ matches	[a--[x]]+	31/12/2026	false
 matches	[a--[x]]+	hex:D9A3D9A4	false
 matches	[a--[x]]+	hex:C3A9C3A9	false
 matches	[a--[x]]+	ABCDEFGHIJKLMNOP	false
+matches	[a--[x]]+	bxx	false
+matches	[a--[x]]+	aaab	true
+matches	[a--[x]]+	xxy	false
+matches	[a--[x]]+	abab	true
+matches	[a--[x]]+	aabc	true
+matches	[a--[x]]+	bbc	false
 matches	[a--[x]]+	hex:3379C3A9C2BD63370DCC807C796359352DD9A323F09F988041303D385879D9A3343D0A2B7ACC80387A2C39F09F98803935425978	true
 matches	[a--[x]]+	Y@xx8	false
 matches	[a--[x]]+		false
@@ -3849,6 +4299,12 @@ matches	[\w-.]+	31/12/2026	true
 matches	[\w-.]+	hex:D9A3D9A4	true
 matches	[\w-.]+	hex:C3A9C3A9	true
 matches	[\w-.]+	ABCDEFGHIJKLMNOP	true
+matches	[\w-.]+	bxx	true
+matches	[\w-.]+	aaab	true
+matches	[\w-.]+	xxy	true
+matches	[\w-.]+	abab	true
+matches	[\w-.]+	aabc	true
+matches	[\w-.]+	bbc	true
 matches	[\w-.]+	hex:6362430A0D2CC2BD63373641C3A9	true
 matches	[\w-.]+	hex:2F2D0A397C0AE281B02B352CD9A3390AC3A93033624240592D2B617C7C422F78387909427C623442F09F98803035C2B7	true
 matches	[\w-.]+	hex:42422B313A79595FC2B7342D423A2D352E5FC2B73A0D	true
@@ -3900,6 +4356,12 @@ matches	[A-Za-z0-9-_]+	31/12/2026	true
 matches	[A-Za-z0-9-_]+	hex:D9A3D9A4	false
 matches	[A-Za-z0-9-_]+	hex:C3A9C3A9	false
 matches	[A-Za-z0-9-_]+	ABCDEFGHIJKLMNOP	true
+matches	[A-Za-z0-9-_]+	bxx	true
+matches	[A-Za-z0-9-_]+	aaab	true
+matches	[A-Za-z0-9-_]+	xxy	true
+matches	[A-Za-z0-9-_]+	abab	true
+matches	[A-Za-z0-9-_]+	aabc	true
+matches	[A-Za-z0-9-_]+	bbc	true
 matches	[A-Za-z0-9-_]+	hex:4258353D5F0D6262	true
 matches	[A-Za-z0-9-_]+	hex:2DC3A93D35583161C2B741345F5ACC80090A7C626137E281B0205F2B357C2D78580923432F42E281B042402F097838	true
 matches	[A-Za-z0-9-_]+	hex:593840332C300A78793D7C617A2D2F3641202EC3A958C2BD3778F09F98802F63310A097930422B2C3D58C2B7377C40302C5842E281B03A30343638352C42432B43357842627C795F0D78395A3623363D38207C0A43787A4030E281B040C2B723380D0D6334	true
@@ -3951,6 +4413,12 @@ matches	[--]+	31/12/2026	error
 matches	[--]+	hex:D9A3D9A4	error
 matches	[--]+	hex:C3A9C3A9	error
 matches	[--]+	ABCDEFGHIJKLMNOP	error
+matches	[--]+	bxx	error
+matches	[--]+	aaab	error
+matches	[--]+	xxy	error
+matches	[--]+	abab	error
+matches	[--]+	aabc	error
+matches	[--]+	bbc	error
 matches	[--]+	hex:36393D787A2CD9A3787C5F7A4040C3A939353A612B5F	error
 matches	[--]+	hex:C3A90DCC80	error
 matches	[--]+	hex:7A0A6243CC80CC80622F	error
@@ -4002,6 +4470,12 @@ matches	[--[a]]+	31/12/2026	false
 matches	[--[a]]+	hex:D9A3D9A4	false
 matches	[--[a]]+	hex:C3A9C3A9	false
 matches	[--[a]]+	ABCDEFGHIJKLMNOP	false
+matches	[--[a]]+	bxx	false
+matches	[--[a]]+	aaab	false
+matches	[--[a]]+	xxy	false
+matches	[--[a]]+	abab	false
+matches	[--[a]]+	aabc	false
+matches	[--[a]]+	bbc	false
 matches	[--[a]]+	hex:D9A363352D3A	true
 matches	[--[a]]+	hex:41C2BD	false
 matches	[--[a]]+	hex:2E790920792B592C20592E0A3278787A32413609202C2D2BC2BD093461352C79387A2B37342D797A322BD9A37C2E34633A3D36422F405A433820202E207AC2B72C433A430A5AD9A3C2B72330C2B7415A38395AD9A33420350DC3A92B0D2342632C38	true
@@ -4053,6 +4527,12 @@ matches	[!--]	31/12/2026	error
 matches	[!--]	hex:D9A3D9A4	error
 matches	[!--]	hex:C3A9C3A9	error
 matches	[!--]	ABCDEFGHIJKLMNOP	error
+matches	[!--]	bxx	error
+matches	[!--]	aaab	error
+matches	[!--]	xxy	error
+matches	[!--]	abab	error
+matches	[!--]	aabc	error
+matches	[!--]	bbc	error
 matches	[!--]	=ac	error
 matches	[!--]	hex:2F0A79612F0A0D782D427A0A2DF09F988041396231CC802B2D380A5A637A3A2D3279612D3432C2BD2B4223323730D9A32BC3A90A2D0909360D363559F09F98806123422E5F3661633D2C312E7A7A2D0D0978CC803533C3A97843395A3431D9A3307A23D9A3346359	error
 matches	[!--]	Z	error
@@ -4104,6 +4584,12 @@ matches	[\d--z]	31/12/2026	error
 matches	[\d--z]	hex:D9A3D9A4	error
 matches	[\d--z]	hex:C3A9C3A9	error
 matches	[\d--z]	ABCDEFGHIJKLMNOP	error
+matches	[\d--z]	bxx	error
+matches	[\d--z]	aaab	error
+matches	[\d--z]	xxy	error
+matches	[\d--z]	abab	error
+matches	[\d--z]	aabc	error
+matches	[\d--z]	bbc	error
 matches	[\d--z]	hex:0AE281B02D	error
 matches	[\d--z]	hex:0D	error
 matches	[\d--z]		error
@@ -4155,6 +4641,12 @@ matches	[a-k-z]+	31/12/2026	false
 matches	[a-k-z]+	hex:D9A3D9A4	false
 matches	[a-k-z]+	hex:C3A9C3A9	false
 matches	[a-k-z]+	ABCDEFGHIJKLMNOP	false
+matches	[a-k-z]+	bxx	true
+matches	[a-k-z]+	aaab	true
+matches	[a-k-z]+	xxy	false
+matches	[a-k-z]+	abab	true
+matches	[a-k-z]+	aabc	true
+matches	[a-k-z]+	bbc	true
 matches	[a-k-z]+	hex:612F38382DC2B7374359C3A92341	true
 matches	[a-k-z]+		false
 matches	[a-k-z]+	_	false
@@ -4206,6 +4698,12 @@ matches	[a--]	31/12/2026	error
 matches	[a--]	hex:D9A3D9A4	error
 matches	[a--]	hex:C3A9C3A9	error
 matches	[a--]	ABCDEFGHIJKLMNOP	error
+matches	[a--]	bxx	error
+matches	[a--]	aaab	error
+matches	[a--]	xxy	error
+matches	[a--]	abab	error
+matches	[a--]	aabc	error
+matches	[a--]	bbc	error
 matches	[a--]	hex:61E281B0	error
 matches	[a--]		error
 matches	[a--]	hex:3278392F3338CC80332E2B373233795FD9A3207A3036	error
@@ -4257,6 +4755,12 @@ matches	[-]	31/12/2026	false
 matches	[-]	hex:D9A3D9A4	false
 matches	[-]	hex:C3A9C3A9	false
 matches	[-]	ABCDEFGHIJKLMNOP	false
+matches	[-]	bxx	false
+matches	[-]	aaab	false
+matches	[-]	xxy	false
+matches	[-]	abab	false
+matches	[-]	aabc	false
+matches	[-]	bbc	false
 matches	[-]	:|	false
 matches	[-]	hex:0A3358D9A35838782E5A3343D9A36239637C7C092B413D353D39373679300D345F33345A3D362C5833207820CC80CC80CC80317CF09F98802EE281B0D9A3303A593D362D2D322F312D412B2343612378E281B02CD9A3C2BDCC8030355A2D205A3140E281B02B2CC3A97C593AC3A9	true
 matches	[-]	Z4967	false
@@ -4308,6 +4812,12 @@ matches	[\d--]	31/12/2026	error
 matches	[\d--]	hex:D9A3D9A4	error
 matches	[\d--]	hex:C3A9C3A9	error
 matches	[\d--]	ABCDEFGHIJKLMNOP	error
+matches	[\d--]	bxx	error
+matches	[\d--]	aaab	error
+matches	[\d--]	xxy	error
+matches	[\d--]	abab	error
+matches	[\d--]	aabc	error
+matches	[\d--]	bbc	error
 matches	[\d--]	hex:C2B77AF09F9880	error
 matches	[\d--]		error
 matches	[\d--]	hex:3609C3A94237310A7C79353761	error
@@ -4359,6 +4869,12 @@ matches	[a-z--]	31/12/2026	error
 matches	[a-z--]	hex:D9A3D9A4	error
 matches	[a-z--]	hex:C3A9C3A9	error
 matches	[a-z--]	ABCDEFGHIJKLMNOP	error
+matches	[a-z--]	bxx	error
+matches	[a-z--]	aaab	error
+matches	[a-z--]	xxy	error
+matches	[a-z--]	abab	error
+matches	[a-z--]	aabc	error
+matches	[a-z--]	bbc	error
 matches	[a-z--]	hex:3DF09F988020092F3D34D9A32E322DC2BD0A322F5823204330	error
 matches	[a-z--]	hex:CC803663232DCC8042407809634233412B3A7931366131CC8037312B20626137C2B7C3A923C3A9625F0ACC8036630D3D5A342D2C302DC2BD31633D5F0AD9A3C2BD7A38412F2F2B342E5A300A6140334031C3A97A5820CC800D4132C2B77A374041377831630D79	error
 matches	[a-z--]	hex:330A790A31C2BD41D9A3	error
@@ -4410,6 +4926,12 @@ matches	[a-z-]	31/12/2026	false
 matches	[a-z-]	hex:D9A3D9A4	false
 matches	[a-z-]	hex:C3A9C3A9	false
 matches	[a-z-]	ABCDEFGHIJKLMNOP	false
+matches	[a-z-]	bxx	true
+matches	[a-z-]	aaab	true
+matches	[a-z-]	xxy	true
+matches	[a-z-]	abab	true
+matches	[a-z-]	aabc	true
+matches	[a-z-]	bbc	true
 matches	[a-z-]	hex:332BF09F988034792F5961E281B0C3A9590A362DC2B7F09F98803639343D	true
 matches	[a-z-]	hex:422059780D	true
 matches	[a-z-]	hex:2B7C7938612FE281B033	true
@@ -4461,6 +4983,12 @@ matches	[\d-]	31/12/2026	true
 matches	[\d-]	hex:D9A3D9A4	true
 matches	[\d-]	hex:C3A9C3A9	false
 matches	[\d-]	ABCDEFGHIJKLMNOP	false
+matches	[\d-]	bxx	false
+matches	[\d-]	aaab	false
+matches	[\d-]	xxy	false
+matches	[\d-]	abab	false
+matches	[\d-]	aabc	false
+matches	[\d-]	bbc	false
 matches	[\d-]	hex:E281B02E	false
 matches	[\d-]	-|	true
 matches	[\d-]	hex:C2BD5A392E34432B302B330D2BC2B7D9A3C2BDE281B0F09F988036627C	true
@@ -4512,6 +5040,12 @@ matches	[--a]	31/12/2026	error
 matches	[--a]	hex:D9A3D9A4	error
 matches	[--a]	hex:C3A9C3A9	error
 matches	[--a]	ABCDEFGHIJKLMNOP	error
+matches	[--a]	bxx	error
+matches	[--a]	aaab	error
+matches	[--a]	xxy	error
+matches	[--a]	abab	error
+matches	[--a]	aabc	error
+matches	[--a]	bbc	error
 matches	[--a]	hex:367A2C7C323DE281B0C2BD7A322B7A382B09613D2C6179	error
 matches	[--a]	hex:0963405FD9A3F09F98802F5F	error
 matches	[--a]	hex:62795F62592D7A43C2B759592BCC803A35610D37610D2E0DC2B7633679E281B05F33377C59623130CC8039CC803663	error
@@ -4563,6 +5097,12 @@ matches	[a-z---[x]]	31/12/2026	error
 matches	[a-z---[x]]	hex:D9A3D9A4	error
 matches	[a-z---[x]]	hex:C3A9C3A9	error
 matches	[a-z---[x]]	ABCDEFGHIJKLMNOP	error
+matches	[a-z---[x]]	bxx	error
+matches	[a-z---[x]]	aaab	error
+matches	[a-z---[x]]	xxy	error
+matches	[a-z---[x]]	abab	error
+matches	[a-z---[x]]	aabc	error
+matches	[a-z---[x]]	bbc	error
 matches	[a-z---[x]]	-Y	error
 matches	[a-z---[x]]	4,x3/+6=	error
 matches	[a-z---[x]]	/	error
@@ -4614,6 +5154,12 @@ matches	[a---[x]]	31/12/2026	error
 matches	[a---[x]]	hex:D9A3D9A4	error
 matches	[a---[x]]	hex:C3A9C3A9	error
 matches	[a---[x]]	ABCDEFGHIJKLMNOP	error
+matches	[a---[x]]	bxx	error
+matches	[a---[x]]	aaab	error
+matches	[a---[x]]	xxy	error
+matches	[a---[x]]	abab	error
+matches	[a---[x]]	aabc	error
+matches	[a---[x]]	bbc	error
 matches	[a---[x]]	By@Bb	error
 matches	[a---[x]]	hex:2D31374135423D7C5836C2BD307A413563400D433D35423D393D592D2F597A2D2D582C783D2336D9A32E4143307A3D632D403A2E2E2B5A2B31207A2F3836413A313179624330E281B0C3A92D6230303835323D20C3A9793A430A39323A41350A	error
 matches	[a---[x]]	hex:2D6137230D2062337C42300A2F382F2C7C23C3A9387C37D9A32F430A303A0A3458C2B74378336342C2B73735	error
@@ -4665,6 +5211,12 @@ matches	[^--]	31/12/2026	error
 matches	[^--]	hex:D9A3D9A4	error
 matches	[^--]	hex:C3A9C3A9	error
 matches	[^--]	ABCDEFGHIJKLMNOP	error
+matches	[^--]	bxx	error
+matches	[^--]	aaab	error
+matches	[^--]	xxy	error
+matches	[^--]	abab	error
+matches	[^--]	aabc	error
+matches	[^--]	bbc	error
 matches	[^--]		error
 matches	[^--]	hex:373A3A423DE281B05A32	error
 matches	[^--]	hex:3139C2BD232D5F3437CC80F09F98807A35325F33C2B741585A2F	error
@@ -4716,6 +5268,12 @@ matches	[a-z-[-]]	31/12/2026	false
 matches	[a-z-[-]]	hex:D9A3D9A4	false
 matches	[a-z-[-]]	hex:C3A9C3A9	false
 matches	[a-z-[-]]	ABCDEFGHIJKLMNOP	false
+matches	[a-z-[-]]	bxx	true
+matches	[a-z-[-]]	aaab	true
+matches	[a-z-[-]]	xxy	true
+matches	[a-z-[-]]	abab	true
+matches	[a-z-[-]]	aabc	true
+matches	[a-z-[-]]	bbc	true
 matches	[a-z-[-]]	hex:327A0D2032CC804335E281B009202E78CC802F3D2C097A42C3A94133C3A9C2B7342D7A367A203761587A23332F0959	true
 matches	[a-z-[-]]	96x#3	true
 matches	[a-z-[-]]	hex:2C0D	false
@@ -4767,6 +5325,12 @@ matches	[--[-]]	31/12/2026	false
 matches	[--[-]]	hex:D9A3D9A4	false
 matches	[--[-]]	hex:C3A9C3A9	false
 matches	[--[-]]	ABCDEFGHIJKLMNOP	false
+matches	[--[-]]	bxx	false
+matches	[--[-]]	aaab	false
+matches	[--[-]]	xxy	false
+matches	[--[-]]	abab	false
+matches	[--[-]]	aabc	false
+matches	[--[-]]	bbc	false
 matches	[--[-]]	hex:0A0D5F	false
 matches	[--[-]]	hex:36C2BD3A3A3A2D3861D9A3360A432F3D0A5935793361	false
 matches	[--[-]]	x	false
@@ -4818,6 +5382,12 @@ matches	\p{Cs}	31/12/2026	error
 matches	\p{Cs}	hex:D9A3D9A4	error
 matches	\p{Cs}	hex:C3A9C3A9	error
 matches	\p{Cs}	ABCDEFGHIJKLMNOP	error
+matches	\p{Cs}	bxx	error
+matches	\p{Cs}	aaab	error
+matches	\p{Cs}	xxy	error
+matches	\p{Cs}	abab	error
+matches	\p{Cs}	aabc	error
+matches	\p{Cs}	bbc	error
 matches	\p{Cs}	hex:6339403A35417A5F5830383A3A39CC802C2F20C2B7C3A9E281B05A2BC2B762C2BD43C2B7363D5FE281B07A387C3235612C30C2B72D610A325A34092B0DC2B742CC80C2BD392C310D2C33C2BDC2BD232DD9A32C0D2B7A0A2F6209343A2D42233DC3A941583023CC80390A3D3163	error
 matches	\p{Cs}	hex:5FC2B7583D7AF09F98802CC2B72DC2BD387A	error
 matches	\p{Cs}		error
@@ -4869,6 +5439,12 @@ matches	\p{Is}	31/12/2026	error
 matches	\p{Is}	hex:D9A3D9A4	error
 matches	\p{Is}	hex:C3A9C3A9	error
 matches	\p{Is}	ABCDEFGHIJKLMNOP	error
+matches	\p{Is}	bxx	error
+matches	\p{Is}	aaab	error
+matches	\p{Is}	xxy	error
+matches	\p{Is}	abab	error
+matches	\p{Is}	aabc	error
+matches	\p{Is}	bbc	error
 matches	\p{Is}	hex:C2B7	error
 matches	\p{Is}	hex:3540C2B7E281B0C2B7352061D9A3582FC2BD592C38592063372D3263615AC2BDC3A9D9A3C2BD7CE281B062413178C3A932790D20413240D9A361332E5F2379233AF09F98803AD9A379C3A90A583D383336402D7C61310A43F09F9880360AC2B76236F09F98803A2359787CC3A93A23423678344130	error
 matches	\p{Is}	hex:3623630A37CC800A2C314031335F41583261412E3A	error
@@ -4920,6 +5496,12 @@ matches	\0	31/12/2026	error
 matches	\0	hex:D9A3D9A4	error
 matches	\0	hex:C3A9C3A9	error
 matches	\0	ABCDEFGHIJKLMNOP	error
+matches	\0	bxx	error
+matches	\0	aaab	error
+matches	\0	xxy	error
+matches	\0	abab	error
+matches	\0	aabc	error
+matches	\0	bbc	error
 matches	\0	hex:D9A3342D232E2DF09F98800DC3A97A3243	error
 matches	\0	hex:0D	error
 matches	\0	hex:30C2BD	error
@@ -4971,6 +5553,12 @@ replace	([\s])	31/12/2026		31/12/2026
 replace	([\s])	hex:D9A3D9A4		hex:D9A3D9A4
 replace	([\s])	hex:C3A9C3A9		hex:C3A9C3A9
 replace	([\s])	ABCDEFGHIJKLMNOP		ABCDEFGHIJKLMNOP
+replace	([\s])	bxx		bxx
+replace	([\s])	aaab		aaab
+replace	([\s])	xxy		xxy
+replace	([\s])	abab		abab
+replace	([\s])	aabc		aabc
+replace	([\s])	bbc		bbc
 replace	([\s])	:		:
 replace	([\s])	.=		.=
 replace	([\s])	hex:200A39622B43782D		9b+Cx-
@@ -5007,6 +5595,12 @@ replace	([ \n\r\t\s])	31/12/2026		31/12/2026
 replace	([ \n\r\t\s])	hex:D9A3D9A4		hex:D9A3D9A4
 replace	([ \n\r\t\s])	hex:C3A9C3A9		hex:C3A9C3A9
 replace	([ \n\r\t\s])	ABCDEFGHIJKLMNOP		ABCDEFGHIJKLMNOP
+replace	([ \n\r\t\s])	bxx		bxx
+replace	([ \n\r\t\s])	aaab		aaab
+replace	([ \n\r\t\s])	xxy		xxy
+replace	([ \n\r\t\s])	abab		abab
+replace	([ \n\r\t\s])	aabc		aabc
+replace	([ \n\r\t\s])	bbc		bbc
 replace	([ \n\r\t\s])	hex:395F2FE281B0302FC2B7315F35C3A9E281B0		hex:395F2FE281B0302FC2B7315F35C3A9E281B0
 replace	([ \n\r\t\s])	hex:F09F9880		hex:F09F9880
 replace	([ \n\r\t\s])	hex:C3A9CC8020322B34C2BD30		hex:C3A9CC80322B34C2BD30
@@ -5043,6 +5637,12 @@ replace	(b)(c)	31/12/2026	[$2$1$0]	31/12/2026
 replace	(b)(c)	hex:D9A3D9A4	[$2$1$0]	hex:D9A3D9A4
 replace	(b)(c)	hex:C3A9C3A9	[$2$1$0]	hex:C3A9C3A9
 replace	(b)(c)	ABCDEFGHIJKLMNOP	[$2$1$0]	ABCDEFGHIJKLMNOP
+replace	(b)(c)	bxx	[$2$1$0]	bxx
+replace	(b)(c)	aaab	[$2$1$0]	aaab
+replace	(b)(c)	xxy	[$2$1$0]	xxy
+replace	(b)(c)	abab	[$2$1$0]	abab
+replace	(b)(c)	aabc	[$2$1$0]	aa[cbbc]
+replace	(b)(c)	bbc	[$2$1$0]	b[cbbc]
 replace	(b)(c)	hex:2D4337413520CC80377C2F6262	[$2$1$0]	hex:2D4337413520CC80377C2F6262
 replace	(b)(c)	hex:C3A961332F3A34393A0D353139	[$2$1$0]	hex:C3A961332F3A34393A0D353139
 replace	(b)(c)	=	[$2$1$0]	=
@@ -5079,6 +5679,12 @@ replace	a	31/12/2026	\$x\\	31/12/2026
 replace	a	hex:D9A3D9A4	\$x\\	hex:D9A3D9A4
 replace	a	hex:C3A9C3A9	\$x\\	hex:C3A9C3A9
 replace	a	ABCDEFGHIJKLMNOP	\$x\\	ABCDEFGHIJKLMNOP
+replace	a	bxx	\$x\\	bxx
+replace	a	aaab	\$x\\	$x\$x\$x\b
+replace	a	xxy	\$x\\	xxy
+replace	a	abab	\$x\\	$x\b$x\b
+replace	a	aabc	\$x\\	$x\$x\bc
+replace	a	bbc	\$x\\	bbc
 replace	a	hex:D9A378	\$x\\	hex:D9A378
 replace	a	,c#	\$x\\	,c#
 replace	a	y: 	\$x\\	y: 
@@ -5115,6 +5721,12 @@ replace	a	31/12/2026	$	error
 replace	a	hex:D9A3D9A4	$	error
 replace	a	hex:C3A9C3A9	$	error
 replace	a	ABCDEFGHIJKLMNOP	$	error
+replace	a	bxx	$	error
+replace	a	aaab	$	error
+replace	a	xxy	$	error
+replace	a	abab	$	error
+replace	a	aabc	$	error
+replace	a	bbc	$	error
 replace	a	Ab	$	error
 replace	a	 83 a	$	error
 replace	a	hex:30C2BD32CC800A	$	error
@@ -5151,6 +5763,12 @@ replace	a	31/12/2026	\x	error
 replace	a	hex:D9A3D9A4	\x	error
 replace	a	hex:C3A9C3A9	\x	error
 replace	a	ABCDEFGHIJKLMNOP	\x	error
+replace	a	bxx	\x	error
+replace	a	aaab	\x	error
+replace	a	xxy	\x	error
+replace	a	abab	\x	error
+replace	a	aabc	\x	error
+replace	a	bbc	\x	error
 replace	a	hex:5F31C3A97834	\x	error
 replace	a	hex:792363592FE281B0402B	\x	error
 replace	a	hex:C2BDCC80337AF09F9880597C432E31635F	\x	error
@@ -5187,6 +5805,12 @@ replace	a|ab	31/12/2026	X	31/12/2026
 replace	a|ab	hex:D9A3D9A4	X	hex:D9A3D9A4
 replace	a|ab	hex:C3A9C3A9	X	hex:C3A9C3A9
 replace	a|ab	ABCDEFGHIJKLMNOP	X	ABCDEFGHIJKLMNOP
+replace	a|ab	bxx	X	bxx
+replace	a|ab	aaab	X	XXXb
+replace	a|ab	xxy	X	xxy
+replace	a|ab	abab	X	XbXb
+replace	a|ab	aabc	X	XXbc
+replace	a|ab	bbc	X	bbc
 replace	a|ab	|=,6-	X	|=,6-
 replace	a|ab	hex:2C0D23D9A33D37592361325A354140407A61C2BD34397CC3A92B393D2BC2BDC2BD305932413A5F377CD9A37A0DCC806331CC8033E281B0403236CC805A41CC802E5AF09F98802F36612F422B33633536092F332C2CF09F988038620A0D322C6337305A7A3541F09F9880F09F9880C2B7374139	X	hex:2C0D23D9A33D37592358325A354140407A58C2BD34397CC3A92B393D2BC2BDC2BD305932413A5F377CD9A37A0DCC806331CC8033E281B0403236CC805A41CC802E5AF09F98802F36582F422B33633536092F332C2CF09F988038620A0D322C6337305A7A3541F09F9880F09F9880C2B7374139
 replace	a|ab		X	
@@ -5223,6 +5847,12 @@ replace	a{1,2}	31/12/2026	X	31/12/2026
 replace	a{1,2}	hex:D9A3D9A4	X	hex:D9A3D9A4
 replace	a{1,2}	hex:C3A9C3A9	X	hex:C3A9C3A9
 replace	a{1,2}	ABCDEFGHIJKLMNOP	X	ABCDEFGHIJKLMNOP
+replace	a{1,2}	bxx	X	bxx
+replace	a{1,2}	aaab	X	XXb
+replace	a{1,2}	xxy	X	xxy
+replace	a{1,2}	abab	X	XbXb
+replace	a{1,2}	aabc	X	Xbc
+replace	a{1,2}	bbc	X	bbc
 replace	a{1,2}	39ZyA	X	39ZyA
 replace	a{1,2}		X	
 replace	a{1,2}	hex:C2BD79	X	hex:C2BD79
@@ -5259,6 +5889,12 @@ replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	31/12/2026	$10-$11-$12	31/12/2026
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:D9A3D9A4	$10-$11-$12	hex:D9A3D9A4
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:C3A9C3A9	$10-$11-$12	hex:C3A9C3A9
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	ABCDEFGHIJKLMNOP	$10-$11-$12	ABCDEFGHIJKLMNOP
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	bxx	$10-$11-$12	bxx
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	aaab	$10-$11-$12	aaab
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	xxy	$10-$11-$12	xxy
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	abab	$10-$11-$12	abab
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	aabc	$10-$11-$12	aabc
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	bbc	$10-$11-$12	bbc
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:2FE281B034617C	$10-$11-$12	hex:2FE281B034617C
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	/	$10-$11-$12	/
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:CC802F413A5F	$10-$11-$12	hex:CC802F413A5F
@@ -5295,6 +5931,12 @@ replace	(x)?y	31/12/2026	[$1]	31/12/2026
 replace	(x)?y	hex:D9A3D9A4	[$1]	hex:D9A3D9A4
 replace	(x)?y	hex:C3A9C3A9	[$1]	hex:C3A9C3A9
 replace	(x)?y	ABCDEFGHIJKLMNOP	[$1]	ABCDEFGHIJKLMNOP
+replace	(x)?y	bxx	[$1]	bxx
+replace	(x)?y	aaab	[$1]	aaab
+replace	(x)?y	xxy	[$1]	x[x]
+replace	(x)?y	abab	[$1]	abab
+replace	(x)?y	aabc	[$1]	aabc
+replace	(x)?y	bbc	[$1]	bbc
 replace	(x)?y	x:X|=	[$1]	x:X|=
 replace	(x)?y	hex:435F32335A2B580DC3A942313963D9A3C2BD3339340A2E63D9A3F09F98807879F09F98805F40C3A92F23583D335A37400DD9A32339387A3538C2BD373261092E2D343136C3A95A59402062D9A340422C23D9A3D9A359412DCC806309D9A30D623D5909792B2D3AC2B737353235C3A9	[$1]	hex:435F32335A2B580DC3A942313963D9A3C2BD3339340A2E63D9A3F09F98805B785DF09F98805F40C3A92F23583D335A37400DD9A32339387A3538C2BD373261092E2D343136C3A95A59402062D9A340422C23D9A3D9A359412DCC806309D9A30D623D59095B5D2B2D3AC2B737353235C3A9
 replace	(x)?y	hex:4343C2BD782C404220310DC2B73D	[$1]	hex:4343C2BD782C404220310DC2B73D
@@ -5331,6 +5973,12 @@ replace	x*	31/12/2026	-	error
 replace	x*	hex:D9A3D9A4	-	error
 replace	x*	hex:C3A9C3A9	-	error
 replace	x*	ABCDEFGHIJKLMNOP	-	error
+replace	x*	bxx	-	error
+replace	x*	aaab	-	error
+replace	x*	xxy	-	error
+replace	x*	abab	-	error
+replace	x*	aabc	-	error
+replace	x*	bbc	-	error
 replace	x*	hex:62333232090D2D582B362D7C2CE281B03D7C0AD9A32D58360A7A3834786141412C2F2E622F2323C2BDC2B7C2BD2B	-	error
 replace	x*	hex:CC80	-	error
 replace	x*	hex:7C317C63CC802B5A79096142F09F988034092EF09F9880E281B037383D3AD9A3D9A3C3A92E5A2D39347C3D417831435F610A2B2CCC80C2B72B33417838D9A32E592C2C200D63363563C3A9430979CC805AC2B72D312C413663D9A337D9A3406338613D3937C3A95A0A32797A58422B	-	error
@@ -5367,6 +6015,12 @@ replace	(a)	31/12/2026	$2	31/12/2026
 replace	(a)	hex:D9A3D9A4	$2	hex:D9A3D9A4
 replace	(a)	hex:C3A9C3A9	$2	hex:C3A9C3A9
 replace	(a)	ABCDEFGHIJKLMNOP	$2	ABCDEFGHIJKLMNOP
+replace	(a)	bxx	$2	bxx
+replace	(a)	aaab	$2	b
+replace	(a)	xxy	$2	xxy
+replace	(a)	abab	$2	bb
+replace	(a)	aabc	$2	bc
+replace	(a)	bbc	$2	bbc
 replace	(a)		$2	
 replace	(a)	hex:5F35622342322B4040C2B72E375A31E281B061C2BD39C2B7612C09403339235A0A0A5F33582338795F58622DE281B0	$2	hex:5F35622342322B4040C2B72E375A31E281B0C2BD39C2B72C09403339235A0A0A5F33582338795F58622DE281B0
 replace	(a)	hex:3436E281B0232035D9A3E281B02F3A2FF09F9880C3A930C3A95AC3A9F09F988041C2BD392EC3A9CC80F09F9880402B332D7843C3A9C2BD7833323859795A	$2	hex:3436E281B0232035D9A3E281B02F3A2FF09F9880C3A930C3A95AC3A9F09F988041C2BD392EC3A9CC80F09F9880402B332D7843C3A9C2BD7833323859795A
@@ -5403,6 +6057,12 @@ replace	[0-9]+	31/12/2026	#	#/#/#
 replace	[0-9]+	hex:D9A3D9A4	#	hex:D9A3D9A4
 replace	[0-9]+	hex:C3A9C3A9	#	hex:C3A9C3A9
 replace	[0-9]+	ABCDEFGHIJKLMNOP	#	ABCDEFGHIJKLMNOP
+replace	[0-9]+	bxx	#	bxx
+replace	[0-9]+	aaab	#	aaab
+replace	[0-9]+	xxy	#	xxy
+replace	[0-9]+	abab	#	abab
+replace	[0-9]+	aabc	#	aabc
+replace	[0-9]+	bbc	#	bbc
 replace	[0-9]+	hex:0D092E	#	hex:0D092E
 replace	[0-9]+	hex:3D30C2BD30CC8032422F2D367CC2BD	#	hex:3D23C2BD23CC8023422F2D237CC2BD
 replace	[0-9]+	hex:33F09F9880797A61C3A9C2B77A2BE281B033633734612C43380A09377834592C783236CC805A78635F3A0D78412D785A	#	hex:23F09F9880797A61C3A9C2B77A2BE281B0236323612C43230A09237823592C7823CC805A78635F3A0D78412D785A
@@ -5439,6 +6099,12 @@ replace	\s+	31/12/2026	 	31/12/2026
 replace	\s+	hex:D9A3D9A4	 	hex:D9A3D9A4
 replace	\s+	hex:C3A9C3A9	 	hex:C3A9C3A9
 replace	\s+	ABCDEFGHIJKLMNOP	 	ABCDEFGHIJKLMNOP
+replace	\s+	bxx	 	bxx
+replace	\s+	aaab	 	aaab
+replace	\s+	xxy	 	xxy
+replace	\s+	abab	 	abab
+replace	\s+	aabc	 	aabc
+replace	\s+	bbc	 	bbc
 replace	\s+	z	 	z
 replace	\s+	hex:0A3436E281B033C2BD78383932D9A309C2BDD9A30AE281B0430A092E610AC3A9412B422B7C58582C332035403259432B343D5839323842D9A34223333020414230F09F988040092F7838797837315A58E281B031417C5AE281B0305F0A78383D3078392C637859423058C2BD	 	hex:203436E281B033C2BD78383932D9A320C2BDD9A320E281B043202E6120C3A9412B422B7C58582C332035403259432B343D5839323842D9A34223333020414230F09F988040202F7838797837315A58E281B031417C5AE281B0305F2078383D3078392C637859423058C2BD
 replace	\s+	hex:2BD9A379	 	hex:2BD9A379
@@ -5475,6 +6141,12 @@ replace	(a)	31/12/2026	$01	31/12/2026
 replace	(a)	hex:D9A3D9A4	$01	hex:D9A3D9A4
 replace	(a)	hex:C3A9C3A9	$01	hex:C3A9C3A9
 replace	(a)	ABCDEFGHIJKLMNOP	$01	ABCDEFGHIJKLMNOP
+replace	(a)	bxx	$01	bxx
+replace	(a)	aaab	$01	a1a1a1b
+replace	(a)	xxy	$01	xxy
+replace	(a)	abab	$01	a1ba1b
+replace	(a)	aabc	$01	a1a1bc
+replace	(a)	bbc	$01	bbc
 replace	(a)	hex:7936323A0D0A7932	$01	hex:7936323A0D0A7932
 replace	(a)	|	$01	|
 replace	(a)	 	$01	 
@@ -5511,6 +6183,12 @@ replace	(a)	31/12/2026	$00	31/12/2026
 replace	(a)	hex:D9A3D9A4	$00	hex:D9A3D9A4
 replace	(a)	hex:C3A9C3A9	$00	hex:C3A9C3A9
 replace	(a)	ABCDEFGHIJKLMNOP	$00	ABCDEFGHIJKLMNOP
+replace	(a)	bxx	$00	bxx
+replace	(a)	aaab	$00	a0a0a0b
+replace	(a)	xxy	$00	xxy
+replace	(a)	abab	$00	a0ba0b
+replace	(a)	aabc	$00	a0a0bc
+replace	(a)	bbc	$00	bbc
 replace	(a)	hex:3859D9A3	$00	hex:3859D9A3
 replace	(a)	5Z	$00	5Z
 replace	(a)	hex:385F3A090D2E3A30	$00	hex:385F3A090D2E3A30
@@ -5547,6 +6225,12 @@ replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	31/12/2026	$010|$100|$05	31/12/2026
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:D9A3D9A4	$010|$100|$05	hex:D9A3D9A4
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:C3A9C3A9	$010|$100|$05	hex:C3A9C3A9
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	ABCDEFGHIJKLMNOP	$010|$100|$05	ABCDEFGHIJKLMNOP
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	bxx	$010|$100|$05	bxx
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	aaab	$010|$100|$05	aaab
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	xxy	$010|$100|$05	xxy
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	abab	$010|$100|$05	abab
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	aabc	$010|$100|$05	aabc
+replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	bbc	$010|$100|$05	bbc
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)		$010|$100|$05	
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:E281B0	$010|$100|$05	hex:E281B0
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:39352F325F2D5F4259C2BDC2B72CCC80C2B72E2C3220402F2E42C3A9635F205F7AC2BD36392037433740E281B039D9A37C36F09F98803743363A5F5863C2B73AC3A92E2061D9A362C2BD5AC2BD383A40C2B7237A0A78C2B7587C3737203459C2B720CC80362359E281B00A63233323092C	$010|$100|$05	hex:39352F325F2D5F4259C2BDC2B72CCC80C2B72E2C3220402F2E42C3A9635F205F7AC2BD36392037433740E281B039D9A37C36F09F98803743363A5F5863C2B73AC3A92E2061D9A362C2BD5AC2BD383A40C2B7237A0A78C2B7587C3737203459C2B720CC80362359E281B00A63233323092C
@@ -5557,6 +6241,426 @@ replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:C3A9307A233236345FF09F98805A3337	$
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:410935	$010|$100|$05	hex:410935
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:236132583D20C2B72C2C32613323792C2C332FF09F988043	$010|$100|$05	hex:236132583D20C2B72C2C32613323792C2C332FF09F988043
 replace	(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)	hex:0A6131E281B061612E09E281B0390D583634320A322D7ACC80782D2B36F09F9880382D597C613763387C2C59302F0A37092E09E281B02D37413D2CC2B7302B5A202E423931630A392B095F2F5AF09F98805F2F333178CC80622D314038367C7A3D2D5F432E5A352B31	$010|$100|$05	hex:0A6131E281B061612E09E281B0390D583634320A322D7ACC80782D2B36F09F9880382D597C613763387C2C59302F0A37092E09E281B02D37413D2CC2B7302B5A202E423931630A392B095F2F5AF09F98805F2F333178CC80622D314038367C7A3D2D5F432E5A352B31
+replace	b(?:x*?)*		[$0]	
+replace	b(?:x*?)*	a	[$0]	a
+replace	b(?:x*?)*	ab	[$0]	a[b]
+replace	b(?:x*?)*	abc	[$0]	a[b]c
+replace	b(?:x*?)*	aaa	[$0]	aaa
+replace	b(?:x*?)*	b	[$0]	[b]
+replace	b(?:x*?)*	c	[$0]	c
+replace	b(?:x*?)*	12345678	[$0]	12345678
+replace	b(?:x*?)*	20261021	[$0]	20261021
+replace	b(?:x*?)*	2026-10-21	[$0]	2026-10-21
+replace	b(?:x*?)*	DE89370400440532013000	[$0]	DE89370400440532013000
+replace	b(?:x*?)*	info@landrix.de	[$0]	info@landrix.de
+replace	b(?:x*?)*	a.b@c.d	[$0]	a.[b]@c.d
+replace	b(?:x*?)*	http://x	[$0]	http://x
+replace	b(?:x*?)*	+49 30 1234	[$0]	+49 30 1234
+replace	b(?:x*?)*	NL123456789B01	[$0]	NL123456789B01
+replace	b(?:x*?)*	123456789MVA	[$0]	123456789MVA
+replace	b(?:x*?)*	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	b(?:x*?)*	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	b(?:x*?)*	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	b(?:x*?)*	  20261021  	[$0]	  20261021  
+replace	b(?:x*?)*	202610211230	[$0]	202610211230
+replace	b(?:x*?)*	31/12/2026	[$0]	31/12/2026
+replace	b(?:x*?)*	hex:D9A3D9A4	[$0]	hex:D9A3D9A4
+replace	b(?:x*?)*	hex:C3A9C3A9	[$0]	hex:C3A9C3A9
+replace	b(?:x*?)*	ABCDEFGHIJKLMNOP	[$0]	ABCDEFGHIJKLMNOP
+replace	b(?:x*?)*	bxx	[$0]	[b]xx
+replace	b(?:x*?)*	aaab	[$0]	aaa[b]
+replace	b(?:x*?)*	xxy	[$0]	xxy
+replace	b(?:x*?)*	abab	[$0]	a[b]a[b]
+replace	b(?:x*?)*	aabc	[$0]	aa[b]c
+replace	b(?:x*?)*	bbc	[$0]	[b][b]c
+replace	b(?:x*?)*	Y9X	[$0]	Y9X
+replace	b(?:x*?)*	hex:33C2B73AF09F9880F09F98803361097C382D2F35787A2B2C3230CC80	[$0]	hex:33C2B73AF09F9880F09F98803361097C382D2F35787A2B2C3230CC80
+replace	b(?:x*?)*	hex:38233A3230372035C2B75AC2B70A	[$0]	hex:38233A3230372035C2B75AC2B70A
+replace	b(?:x*?)*	hex:2D5A33F09F988032622CC2BD42403443	[$0]	hex:2D5A33F09F9880325B625D2CC2BD42403443
+replace	b(?:x*?)*	hex:C3A92E63C2B758204378CC807A7920622CC2BDD9A3C2BD3459370D343636407A37343D3330342358623D097A2D7C613D43E281B0613A093442333731C2B73D63340A09362B58397C5F63232EC2BDCC8059D9A3C2BDD9A358613542622B30D9A378C3A9C2B72EF09F988043C2BD7AE281B0	[$0]	hex:C3A92E63C2B758204378CC807A79205B625D2CC2BDD9A3C2BD3459370D343636407A37343D33303423585B625D3D097A2D7C613D43E281B0613A093442333731C2B73D63340A09362B58397C5F63232EC2BDCC8059D9A3C2BDD9A3586135425B625D2B30D9A378C3A9C2B72EF09F988043C2BD7AE281B0
+replace	b(?:x*?)*	hex:09C2BD	[$0]	hex:09C2BD
+replace	b(?:x*?)*	hex:7C5A3459402E0A2C5F7CD9A36131303A32347C367C0D33402F2E2D3439352BF09F98807C2DC3A9343761F09F98802B342B3062593D3932636258C2B743583137CC8030783AF09F98802332420A327C2E2E422E6134C2BD32797A416139312B373279203334334041	[$0]	hex:7C5A3459402E0A2C5F7CD9A36131303A32347C367C0D33402F2E2D3439352BF09F98807C2DC3A9343761F09F98802B342B305B625D593D3932635B625D58C2B743583137CC8030783AF09F98802332420A327C2E2E422E6134C2BD32797A416139312B373279203334334041
+replace	b(?:x*?)*	hex:353A63C2BD232D4031C3A9332F5AF09F98802CCC803D595F58D9A3	[$0]	hex:353A63C2BD232D4031C3A9332F5AF09F98802CCC803D595F58D9A3
+replace	b(?:x*?)*	hex:0D7C	[$0]	hex:0D7C
+replace	b(?:x*?)*	hex:62CC8035C2BD7CE281B0794239F09F988023C3A95830780DC3A92C2D2F	[$0]	hex:5B625DCC8035C2BD7CE281B0794239F09F988023C3A95830780DC3A92C2D2F
+replace	b(x*?)*		[$0|$1]	
+replace	b(x*?)*	a	[$0|$1]	a
+replace	b(x*?)*	ab	[$0|$1]	a[b|]
+replace	b(x*?)*	abc	[$0|$1]	a[b|]c
+replace	b(x*?)*	aaa	[$0|$1]	aaa
+replace	b(x*?)*	b	[$0|$1]	[b|]
+replace	b(x*?)*	c	[$0|$1]	c
+replace	b(x*?)*	12345678	[$0|$1]	12345678
+replace	b(x*?)*	20261021	[$0|$1]	20261021
+replace	b(x*?)*	2026-10-21	[$0|$1]	2026-10-21
+replace	b(x*?)*	DE89370400440532013000	[$0|$1]	DE89370400440532013000
+replace	b(x*?)*	info@landrix.de	[$0|$1]	info@landrix.de
+replace	b(x*?)*	a.b@c.d	[$0|$1]	a.[b|]@c.d
+replace	b(x*?)*	http://x	[$0|$1]	http://x
+replace	b(x*?)*	+49 30 1234	[$0|$1]	+49 30 1234
+replace	b(x*?)*	NL123456789B01	[$0|$1]	NL123456789B01
+replace	b(x*?)*	123456789MVA	[$0|$1]	123456789MVA
+replace	b(x*?)*	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0|$1]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	b(x*?)*	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0|$1]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	b(x*?)*	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0|$1]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	b(x*?)*	  20261021  	[$0|$1]	  20261021  
+replace	b(x*?)*	202610211230	[$0|$1]	202610211230
+replace	b(x*?)*	31/12/2026	[$0|$1]	31/12/2026
+replace	b(x*?)*	hex:D9A3D9A4	[$0|$1]	hex:D9A3D9A4
+replace	b(x*?)*	hex:C3A9C3A9	[$0|$1]	hex:C3A9C3A9
+replace	b(x*?)*	ABCDEFGHIJKLMNOP	[$0|$1]	ABCDEFGHIJKLMNOP
+replace	b(x*?)*	bxx	[$0|$1]	[b|]xx
+replace	b(x*?)*	aaab	[$0|$1]	aaa[b|]
+replace	b(x*?)*	xxy	[$0|$1]	xxy
+replace	b(x*?)*	abab	[$0|$1]	a[b|]a[b|]
+replace	b(x*?)*	aabc	[$0|$1]	aa[b|]c
+replace	b(x*?)*	bbc	[$0|$1]	[b|][b|]c
+replace	b(x*?)*	hex:33362E2B3DCC807932D9A33D5A0DE281B043C2B72EC2B740582D383D353641340D352F353631C2BDD9A32F3132E281B023230938C2B7E281B0C3A90A2D632BE281B03D387A632D2F3920332F2C0D2032425A2E2D3D58D9A32B20092C23200DCC80F09F988059C3A961CC803020C2B73D2E59	[$0|$1]	hex:33362E2B3DCC807932D9A33D5A0DE281B043C2B72EC2B740582D383D353641340D352F353631C2BDD9A32F3132E281B023230938C2B7E281B0C3A90A2D632BE281B03D387A632D2F3920332F2C0D2032425A2E2D3D58D9A32B20092C23200DCC80F09F988059C3A961CC803020C2B73D2E59
+replace	b(x*?)*	c/y6@	[$0|$1]	c/y6@
+replace	b(x*?)*		[$0|$1]	
+replace	b(x*?)*	hex:C2BD63340A633835232E372D35315A5F792D2338F09F98800A5FF09F98802E2FF09F988034323234F09F9880C2BD0D78C3A92D0DC2BD312BD9A37A39587C2F3D09E281B07C5ACC800D422C7C7A2B357AD9A332412B7A61592B7A7A61C2B763C2BD7A2F593A316231C2BD405A59620A43632B	[$0|$1]	hex:C2BD63340A633835232E372D35315A5F792D2338F09F98800A5FF09F98802E2FF09F988034323234F09F9880C2BD0D78C3A92D0DC2BD312BD9A37A39587C2F3D09E281B07C5ACC800D422C7C7A2B357AD9A332412B7A61592B7A7A61C2B763C2BD7A2F593A315B627C5D31C2BD405A595B627C5D0A43632B
+replace	b(x*?)*	hex:0DE281B04039E281B0	[$0|$1]	hex:0DE281B04039E281B0
+replace	b(x*?)*	hex:31360A0DC2B7CC80C3A9583633390D5F5A0A2C3DC2BD3909F09F988031402ED9A332412B323030314342433441C2BD3A7C	[$0|$1]	hex:31360A0DC2B7CC80C3A9583633390D5F5A0A2C3DC2BD3909F09F988031402ED9A332412B323030314342433441C2BD3A7C
+replace	b(x*?)*	hex:CC80C2B73D	[$0|$1]	hex:CC80C2B73D
+replace	b(x*?)*	hex:58E281B0313832E281B009D9A32F6120CC802CE281B0615A792E0958386159592C79583DF09F9880782E5F0A5A0A092BC2BDC3A93A	[$0|$1]	hex:58E281B0313832E281B009D9A32F6120CC802CE281B0615A792E0958386159592C79583DF09F9880782E5F0A5A0A092BC2BDC3A93A
+replace	b(x*?)*	hex:F09F988037623335C3A90A414239092D	[$0|$1]	hex:F09F9880375B627C5D3335C3A90A414239092D
+replace	b(x*?)*	Z..5-_1@	[$0|$1]	Z..5-_1@
+replace	(a*)+b		[$1]	
+replace	(a*)+b	a	[$1]	a
+replace	(a*)+b	ab	[$1]	[]
+replace	(a*)+b	abc	[$1]	[]c
+replace	(a*)+b	aaa	[$1]	aaa
+replace	(a*)+b	b	[$1]	[]
+replace	(a*)+b	c	[$1]	c
+replace	(a*)+b	12345678	[$1]	12345678
+replace	(a*)+b	20261021	[$1]	20261021
+replace	(a*)+b	2026-10-21	[$1]	2026-10-21
+replace	(a*)+b	DE89370400440532013000	[$1]	DE89370400440532013000
+replace	(a*)+b	info@landrix.de	[$1]	info@landrix.de
+replace	(a*)+b	a.b@c.d	[$1]	a.[]@c.d
+replace	(a*)+b	http://x	[$1]	http://x
+replace	(a*)+b	+49 30 1234	[$1]	+49 30 1234
+replace	(a*)+b	NL123456789B01	[$1]	NL123456789B01
+replace	(a*)+b	123456789MVA	[$1]	123456789MVA
+replace	(a*)+b	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$1]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	(a*)+b	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$1]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	(a*)+b	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$1]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	(a*)+b	  20261021  	[$1]	  20261021  
+replace	(a*)+b	202610211230	[$1]	202610211230
+replace	(a*)+b	31/12/2026	[$1]	31/12/2026
+replace	(a*)+b	hex:D9A3D9A4	[$1]	hex:D9A3D9A4
+replace	(a*)+b	hex:C3A9C3A9	[$1]	hex:C3A9C3A9
+replace	(a*)+b	ABCDEFGHIJKLMNOP	[$1]	ABCDEFGHIJKLMNOP
+replace	(a*)+b	bxx	[$1]	[]xx
+replace	(a*)+b	aaab	[$1]	[]
+replace	(a*)+b	xxy	[$1]	xxy
+replace	(a*)+b	abab	[$1]	[][]
+replace	(a*)+b	aabc	[$1]	[]c
+replace	(a*)+b	bbc	[$1]	[][]c
+replace	(a*)+b	hex:320A2D	[$1]	hex:320A2D
+replace	(a*)+b	hex:2F202C58302F38337935373343592E20D9A32B3163F09F9880623331312BD9A37C205F3A3D0A5F41394240432B	[$1]	hex:2F202C58302F38337935373343592E20D9A32B3163F09F98805B5D3331312BD9A37C205F3A3D0A5F41394240432B
+replace	(a*)+b	hex:235F3D430AE281B00A61633D36093DCC80632B333A0A34	[$1]	hex:235F3D430AE281B00A61633D36093DCC80632B333A0A34
+replace	(a*)+b	hex:E281B05F425F7861C2BD592D5A303D373559CC80393D3D59782E32C2B72F2E362B09D9A3C2B7F09F9880625F302E792F2C0A	[$1]	hex:E281B05F425F7861C2BD592D5A303D373559CC80393D3D59782E32C2B72F2E362B09D9A3C2B7F09F98805B5D5F302E792F2C0A
+replace	(a*)+b	hex:09D9A3D9A3610A5F5AD9A34059412C6232C3A9595F413D34	[$1]	hex:09D9A3D9A3610A5F5AD9A34059412C5B5D32C3A9595F413D34
+replace	(a*)+b	8	[$1]	8
+replace	(a*)+b	hex:C2BD42614220783840373378CC80	[$1]	hex:C2BD42614220783840373378CC80
+replace	(a*)+b	hex:D9A334783040353D3538433A20CC80350D323341790A	[$1]	hex:D9A334783040353D3538433A20CC80350D323341790A
+replace	(a*)+b	hex:5F5A406331C2BD5A307A3A2035	[$1]	hex:5F5A406331C2BD5A307A3A2035
+replace	(a*)+b	B	[$1]	B
+replace	(x*)*y		[$0|$1]	
+replace	(x*)*y	a	[$0|$1]	a
+replace	(x*)*y	ab	[$0|$1]	ab
+replace	(x*)*y	abc	[$0|$1]	abc
+replace	(x*)*y	aaa	[$0|$1]	aaa
+replace	(x*)*y	b	[$0|$1]	b
+replace	(x*)*y	c	[$0|$1]	c
+replace	(x*)*y	12345678	[$0|$1]	12345678
+replace	(x*)*y	20261021	[$0|$1]	20261021
+replace	(x*)*y	2026-10-21	[$0|$1]	2026-10-21
+replace	(x*)*y	DE89370400440532013000	[$0|$1]	DE89370400440532013000
+replace	(x*)*y	info@landrix.de	[$0|$1]	info@landrix.de
+replace	(x*)*y	a.b@c.d	[$0|$1]	a.b@c.d
+replace	(x*)*y	http://x	[$0|$1]	http://x
+replace	(x*)*y	+49 30 1234	[$0|$1]	+49 30 1234
+replace	(x*)*y	NL123456789B01	[$0|$1]	NL123456789B01
+replace	(x*)*y	123456789MVA	[$0|$1]	123456789MVA
+replace	(x*)*y	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0|$1]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	(x*)*y	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0|$1]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	(x*)*y	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0|$1]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	(x*)*y	  20261021  	[$0|$1]	  20261021  
+replace	(x*)*y	202610211230	[$0|$1]	202610211230
+replace	(x*)*y	31/12/2026	[$0|$1]	31/12/2026
+replace	(x*)*y	hex:D9A3D9A4	[$0|$1]	hex:D9A3D9A4
+replace	(x*)*y	hex:C3A9C3A9	[$0|$1]	hex:C3A9C3A9
+replace	(x*)*y	ABCDEFGHIJKLMNOP	[$0|$1]	ABCDEFGHIJKLMNOP
+replace	(x*)*y	bxx	[$0|$1]	bxx
+replace	(x*)*y	aaab	[$0|$1]	aaab
+replace	(x*)*y	xxy	[$0|$1]	[xxy|]
+replace	(x*)*y	abab	[$0|$1]	abab
+replace	(x*)*y	aabc	[$0|$1]	aabc
+replace	(x*)*y	bbc	[$0|$1]	bbc
+replace	(x*)*y	2,-yC	[$0|$1]	2,-[y|]C
+replace	(x*)*y	_	[$0|$1]	_
+replace	(x*)*y	/a	[$0|$1]	/a
+replace	(x*)*y	hex:2E2B0D	[$0|$1]	hex:2E2B0D
+replace	(x*)*y	hex:375F7941D9A33A2C310D43305F783943F09F98802C4231F09F9880E281B062632D58382063C2BDCC802C4278793031342CC3A9F09F9880	[$0|$1]	hex:375F5B797C5D41D9A33A2C310D43305F783943F09F98802C4231F09F9880E281B062632D58382063C2BDCC802C425B78797C5D3031342CC3A9F09F9880
+replace	(x*)*y	b@	[$0|$1]	b@
+replace	(x*)*y	3	[$0|$1]	3
+replace	(x*)*y	3	[$0|$1]	3
+replace	(x*)*y	hex:203020395AC2BDE281B05AC2B7587834	[$0|$1]	hex:203020395AC2BDE281B05AC2B7587834
+replace	(x*)*y	hex:237CE281B0390A2ED9A3622D365F3A58F09F98800DC2B73639C3A930	[$0|$1]	hex:237CE281B0390A2ED9A3622D365F3A58F09F98800DC2B73639C3A930
+replace	(a|b?)*c		[$0|$1]	
+replace	(a|b?)*c	a	[$0|$1]	a
+replace	(a|b?)*c	ab	[$0|$1]	ab
+replace	(a|b?)*c	abc	[$0|$1]	[abc|]
+replace	(a|b?)*c	aaa	[$0|$1]	aaa
+replace	(a|b?)*c	b	[$0|$1]	b
+replace	(a|b?)*c	c	[$0|$1]	[c|]
+replace	(a|b?)*c	12345678	[$0|$1]	12345678
+replace	(a|b?)*c	20261021	[$0|$1]	20261021
+replace	(a|b?)*c	2026-10-21	[$0|$1]	2026-10-21
+replace	(a|b?)*c	DE89370400440532013000	[$0|$1]	DE89370400440532013000
+replace	(a|b?)*c	info@landrix.de	[$0|$1]	info@landrix.de
+replace	(a|b?)*c	a.b@c.d	[$0|$1]	a.b@[c|].d
+replace	(a|b?)*c	http://x	[$0|$1]	http://x
+replace	(a|b?)*c	+49 30 1234	[$0|$1]	+49 30 1234
+replace	(a|b?)*c	NL123456789B01	[$0|$1]	NL123456789B01
+replace	(a|b?)*c	123456789MVA	[$0|$1]	123456789MVA
+replace	(a|b?)*c	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0|$1]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	(a|b?)*c	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0|$1]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	(a|b?)*c	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0|$1]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	(a|b?)*c	  20261021  	[$0|$1]	  20261021  
+replace	(a|b?)*c	202610211230	[$0|$1]	202610211230
+replace	(a|b?)*c	31/12/2026	[$0|$1]	31/12/2026
+replace	(a|b?)*c	hex:D9A3D9A4	[$0|$1]	hex:D9A3D9A4
+replace	(a|b?)*c	hex:C3A9C3A9	[$0|$1]	hex:C3A9C3A9
+replace	(a|b?)*c	ABCDEFGHIJKLMNOP	[$0|$1]	ABCDEFGHIJKLMNOP
+replace	(a|b?)*c	bxx	[$0|$1]	bxx
+replace	(a|b?)*c	aaab	[$0|$1]	aaab
+replace	(a|b?)*c	xxy	[$0|$1]	xxy
+replace	(a|b?)*c	abab	[$0|$1]	abab
+replace	(a|b?)*c	aabc	[$0|$1]	[aabc|]
+replace	(a|b?)*c	bbc	[$0|$1]	[bbc|]
+replace	(a|b?)*c		[$0|$1]	
+replace	(a|b?)*c	4	[$0|$1]	4
+replace	(a|b?)*c		[$0|$1]	
+replace	(a|b?)*c	A	[$0|$1]	A
+replace	(a|b?)*c	hex:5F782D59430DC2B731410D7CE281B0	[$0|$1]	hex:5F782D59430DC2B731410D7CE281B0
+replace	(a|b?)*c	hex:CC802F58C3A9092C3443	[$0|$1]	hex:CC802F58C3A9092C3443
+replace	(a|b?)*c	hex:595A40432CC2BD39D9A3F09F988061207C594231374141633D3D23633D0D78097C09352B2009235F372E62357A	[$0|$1]	hex:595A40432CC2BD39D9A3F09F988061207C5942313741415B637C5D3D3D235B637C5D3D0D78097C09352B2009235F372E62357A
+replace	(a|b?)*c	=-#	[$0|$1]	=-#
+replace	(a|b?)*c	Z	[$0|$1]	Z
+replace	(a|b?)*c	hex:4242622D3930CC804239413DC3A95F42C2BD32303042F09F9880	[$0|$1]	hex:4242622D3930CC804239413DC3A95F42C2BD32303042F09F9880
+replace	(?:(a)|b?)+c		[$0|$1]	
+replace	(?:(a)|b?)+c	a	[$0|$1]	a
+replace	(?:(a)|b?)+c	ab	[$0|$1]	ab
+replace	(?:(a)|b?)+c	abc	[$0|$1]	[abc|a]
+replace	(?:(a)|b?)+c	aaa	[$0|$1]	aaa
+replace	(?:(a)|b?)+c	b	[$0|$1]	b
+replace	(?:(a)|b?)+c	c	[$0|$1]	[c|]
+replace	(?:(a)|b?)+c	12345678	[$0|$1]	12345678
+replace	(?:(a)|b?)+c	20261021	[$0|$1]	20261021
+replace	(?:(a)|b?)+c	2026-10-21	[$0|$1]	2026-10-21
+replace	(?:(a)|b?)+c	DE89370400440532013000	[$0|$1]	DE89370400440532013000
+replace	(?:(a)|b?)+c	info@landrix.de	[$0|$1]	info@landrix.de
+replace	(?:(a)|b?)+c	a.b@c.d	[$0|$1]	a.b@[c|].d
+replace	(?:(a)|b?)+c	http://x	[$0|$1]	http://x
+replace	(?:(a)|b?)+c	+49 30 1234	[$0|$1]	+49 30 1234
+replace	(?:(a)|b?)+c	NL123456789B01	[$0|$1]	NL123456789B01
+replace	(?:(a)|b?)+c	123456789MVA	[$0|$1]	123456789MVA
+replace	(?:(a)|b?)+c	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0|$1]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	(?:(a)|b?)+c	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0|$1]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	(?:(a)|b?)+c	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0|$1]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	(?:(a)|b?)+c	  20261021  	[$0|$1]	  20261021  
+replace	(?:(a)|b?)+c	202610211230	[$0|$1]	202610211230
+replace	(?:(a)|b?)+c	31/12/2026	[$0|$1]	31/12/2026
+replace	(?:(a)|b?)+c	hex:D9A3D9A4	[$0|$1]	hex:D9A3D9A4
+replace	(?:(a)|b?)+c	hex:C3A9C3A9	[$0|$1]	hex:C3A9C3A9
+replace	(?:(a)|b?)+c	ABCDEFGHIJKLMNOP	[$0|$1]	ABCDEFGHIJKLMNOP
+replace	(?:(a)|b?)+c	bxx	[$0|$1]	bxx
+replace	(?:(a)|b?)+c	aaab	[$0|$1]	aaab
+replace	(?:(a)|b?)+c	xxy	[$0|$1]	xxy
+replace	(?:(a)|b?)+c	abab	[$0|$1]	abab
+replace	(?:(a)|b?)+c	aabc	[$0|$1]	[aabc|a]
+replace	(?:(a)|b?)+c	bbc	[$0|$1]	[bbc|]
+replace	(?:(a)|b?)+c	6|	[$0|$1]	6|
+replace	(?:(a)|b?)+c	hex:2B5878C2B72FE281B0792F58C2BD2C42	[$0|$1]	hex:2B5878C2B72FE281B0792F58C2BD2C42
+replace	(?:(a)|b?)+c	hex:0D37F09F9880340AC3A9C3A97C	[$0|$1]	hex:0D37F09F9880340AC3A9C3A97C
+replace	(?:(a)|b?)+c	hex:CC805A63	[$0|$1]	hex:CC805A5B637C5D
+replace	(?:(a)|b?)+c	hex:367C407AC3A9F09F98802B79097879C2B75A2E7A20C2B7347A314335F09F98802FD9A37A37C2BD2B31353736783D4131303042	[$0|$1]	hex:367C407AC3A9F09F98802B79097879C2B75A2E7A20C2B7347A314335F09F98802FD9A37A37C2BD2B31353736783D4131303042
+replace	(?:(a)|b?)+c	hex:C2BD3D0D61C2BD	[$0|$1]	hex:C2BD3D0D61C2BD
+replace	(?:(a)|b?)+c	2Y	[$0|$1]	2Y
+replace	(?:(a)|b?)+c	hex:2F63CC80F09F9880D9A335402D38582E797836782F3932383D	[$0|$1]	hex:2F5B637C5DCC80F09F9880D9A335402D38582E797836782F3932383D
+replace	(?:(a)|b?)+c	-	[$0|$1]	-
+replace	(?:(a)|b?)+c	7	[$0|$1]	7
+replace	(a?)+?b		[$0|$1]	
+replace	(a?)+?b	a	[$0|$1]	a
+replace	(a?)+?b	ab	[$0|$1]	[ab|a]
+replace	(a?)+?b	abc	[$0|$1]	[ab|a]c
+replace	(a?)+?b	aaa	[$0|$1]	aaa
+replace	(a?)+?b	b	[$0|$1]	[b|]
+replace	(a?)+?b	c	[$0|$1]	c
+replace	(a?)+?b	12345678	[$0|$1]	12345678
+replace	(a?)+?b	20261021	[$0|$1]	20261021
+replace	(a?)+?b	2026-10-21	[$0|$1]	2026-10-21
+replace	(a?)+?b	DE89370400440532013000	[$0|$1]	DE89370400440532013000
+replace	(a?)+?b	info@landrix.de	[$0|$1]	info@landrix.de
+replace	(a?)+?b	a.b@c.d	[$0|$1]	a.[b|]@c.d
+replace	(a?)+?b	http://x	[$0|$1]	http://x
+replace	(a?)+?b	+49 30 1234	[$0|$1]	+49 30 1234
+replace	(a?)+?b	NL123456789B01	[$0|$1]	NL123456789B01
+replace	(a?)+?b	123456789MVA	[$0|$1]	123456789MVA
+replace	(a?)+?b	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0|$1]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	(a?)+?b	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0|$1]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	(a?)+?b	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0|$1]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	(a?)+?b	  20261021  	[$0|$1]	  20261021  
+replace	(a?)+?b	202610211230	[$0|$1]	202610211230
+replace	(a?)+?b	31/12/2026	[$0|$1]	31/12/2026
+replace	(a?)+?b	hex:D9A3D9A4	[$0|$1]	hex:D9A3D9A4
+replace	(a?)+?b	hex:C3A9C3A9	[$0|$1]	hex:C3A9C3A9
+replace	(a?)+?b	ABCDEFGHIJKLMNOP	[$0|$1]	ABCDEFGHIJKLMNOP
+replace	(a?)+?b	bxx	[$0|$1]	[b|]xx
+replace	(a?)+?b	aaab	[$0|$1]	[aaab|a]
+replace	(a?)+?b	xxy	[$0|$1]	xxy
+replace	(a?)+?b	abab	[$0|$1]	[ab|a][ab|a]
+replace	(a?)+?b	aabc	[$0|$1]	[aab|a]c
+replace	(a?)+?b	bbc	[$0|$1]	[b|][b|]c
+replace	(a?)+?b		[$0|$1]	
+replace	(a?)+?b	1	[$0|$1]	1
+replace	(a?)+?b	hex:6338360D58	[$0|$1]	hex:6338360D58
+replace	(a?)+?b	hex:2F36D9A3315A2C3423	[$0|$1]	hex:2F36D9A3315A2C3423
+replace	(a?)+?b	hex:C3A95F	[$0|$1]	hex:C3A95F
+replace	(a?)+?b	hex:36CC80315F353A30C2B7343036E281B0372359325A302B61362E39232D32790936322061303D3630CC802D79E281B07C0D37794161303040422F7932413823E281B034203D2B596339C3A97AD9A3372D352363C2BDD9A3355F7C3A62353A3A37610A2B7837783A	[$0|$1]	hex:36CC80315F353A30C2B7343036E281B0372359325A302B61362E39232D32790936322061303D3630CC802D79E281B07C0D37794161303040422F7932413823E281B034203D2B596339C3A97AD9A3372D352363C2BDD9A3355F7C3A5B627C5D353A3A37610A2B7837783A
+replace	(a?)+?b	hex:7C397A34783D2F32315930335838403D3936C3A9380A0A580AE281B0373D3731C2B762422F0979402EC2B7E281B0C2BDC2B7C3A94033415AD9A3362D2CD9A3D9A3363779233DCC803A5834422B797AC2BD30400D5F2F78373D7A2032CC80355ACC8063585AE281B04240582030	[$0|$1]	hex:7C397A34783D2F32315930335838403D3936C3A9380A0A580AE281B0373D3731C2B75B627C5D422F0979402EC2B7E281B0C2BDC2B7C3A94033415AD9A3362D2CD9A3D9A3363779233DCC803A5834422B797AC2BD30400D5F2F78373D7A2032CC80355ACC8063585AE281B04240582030
+replace	(a?)+?b	hex:33342C7C314158302D200A2BD9A33AD9A32E34332F4323CC80096139432B342F38C3A92C2FCC80342B4339430D2339580D09CC800DC2B709612358230A7CC2B778CC807C23433863357A0962592F31E281B0CC8039204063F09F98804236C3A9422C204237C2BD315A410D	[$0|$1]	hex:33342C7C314158302D200A2BD9A33AD9A32E34332F4323CC80096139432B342F38C3A92C2FCC80342B4339430D2339580D09CC800DC2B709612358230A7CC2B778CC807C23433863357A095B627C5D592F31E281B0CC8039204063F09F98804236C3A9422C204237C2BD315A410D
+replace	(a?)+?b	hex:C2BD4133370A	[$0|$1]	hex:C2BD4133370A
+replace	(a?)+?b	hex:2B590AC2BD343363593739630A0A30393A3431313D	[$0|$1]	hex:2B590AC2BD343363593739630A0A30393A3431313D
+replace	(a{0,2})*b		[$0|$1]	
+replace	(a{0,2})*b	a	[$0|$1]	a
+replace	(a{0,2})*b	ab	[$0|$1]	[ab|]
+replace	(a{0,2})*b	abc	[$0|$1]	[ab|]c
+replace	(a{0,2})*b	aaa	[$0|$1]	aaa
+replace	(a{0,2})*b	b	[$0|$1]	[b|]
+replace	(a{0,2})*b	c	[$0|$1]	c
+replace	(a{0,2})*b	12345678	[$0|$1]	12345678
+replace	(a{0,2})*b	20261021	[$0|$1]	20261021
+replace	(a{0,2})*b	2026-10-21	[$0|$1]	2026-10-21
+replace	(a{0,2})*b	DE89370400440532013000	[$0|$1]	DE89370400440532013000
+replace	(a{0,2})*b	info@landrix.de	[$0|$1]	info@landrix.de
+replace	(a{0,2})*b	a.b@c.d	[$0|$1]	a.[b|]@c.d
+replace	(a{0,2})*b	http://x	[$0|$1]	http://x
+replace	(a{0,2})*b	+49 30 1234	[$0|$1]	+49 30 1234
+replace	(a{0,2})*b	NL123456789B01	[$0|$1]	NL123456789B01
+replace	(a{0,2})*b	123456789MVA	[$0|$1]	123456789MVA
+replace	(a{0,2})*b	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0|$1]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	(a{0,2})*b	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0|$1]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	(a{0,2})*b	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0|$1]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	(a{0,2})*b	  20261021  	[$0|$1]	  20261021  
+replace	(a{0,2})*b	202610211230	[$0|$1]	202610211230
+replace	(a{0,2})*b	31/12/2026	[$0|$1]	31/12/2026
+replace	(a{0,2})*b	hex:D9A3D9A4	[$0|$1]	hex:D9A3D9A4
+replace	(a{0,2})*b	hex:C3A9C3A9	[$0|$1]	hex:C3A9C3A9
+replace	(a{0,2})*b	ABCDEFGHIJKLMNOP	[$0|$1]	ABCDEFGHIJKLMNOP
+replace	(a{0,2})*b	bxx	[$0|$1]	[b|]xx
+replace	(a{0,2})*b	aaab	[$0|$1]	[aaab|]
+replace	(a{0,2})*b	xxy	[$0|$1]	xxy
+replace	(a{0,2})*b	abab	[$0|$1]	[ab|][ab|]
+replace	(a{0,2})*b	aabc	[$0|$1]	[aab|]c
+replace	(a{0,2})*b	bbc	[$0|$1]	[b|][b|]c
+replace	(a{0,2})*b	hex:58CC80C3A941590D3A63590A593AE281B0613D39232C23C2B7C2BD382D58382D39352B0ACC803032D9A3586379392B34CC805F355820365836327A0D372B3D2E6333343943427A2D3DE281B0393437410AC2B77A09327CF09F9880782D23357ACC802C2DC2B7E281B0C2B7403940	[$0|$1]	hex:58CC80C3A941590D3A63590A593AE281B0613D39232C23C2B7C2BD382D58382D39352B0ACC803032D9A3586379392B34CC805F355820365836327A0D372B3D2E6333343943427A2D3DE281B0393437410AC2B77A09327CF09F9880782D23357ACC802C2DC2B7E281B0C2B7403940
+replace	(a{0,2})*b	hex:CC80785F3335	[$0|$1]	hex:CC80785F3335
+replace	(a{0,2})*b	hex:4358CC80	[$0|$1]	hex:4358CC80
+replace	(a{0,2})*b	hex:2E7A5A4362352F0A	[$0|$1]	hex:2E7A5A435B627C5D352F0A
+replace	(a{0,2})*b	hex:593034380A5F6142372B2DD9A3E281B059782E2F40C2B75F32D9A32039432FE281B02B092C200DCC8036E281B023350D0A363262620D7C232041CC8036203158C2BD3640E281B033387A2CC3A9CC803A0D7A2B3D3D41F09F98805931403961D9A32D376136406336092BC3A9F09F988058CC80	[$0|$1]	hex:593034380A5F6142372B2DD9A3E281B059782E2F40C2B75F32D9A32039432FE281B02B092C200DCC8036E281B023350D0A36325B627C5D5B627C5D0D7C232041CC8036203158C2BD3640E281B033387A2CC3A9CC803A0D7A2B3D3D41F09F98805931403961D9A32D376136406336092BC3A9F09F988058CC80
+replace	(a{0,2})*b	hex:593AC3A9C2BD403135E281B0383331F09F9880C3A97C2F5A203D093841305F32C2B7315962395A7A2D096220CC80D9A32B6335	[$0|$1]	hex:593AC3A9C2BD403135E281B0383331F09F9880C3A97C2F5A203D093841305F32C2B731595B627C5D395A7A2D095B627C5D20CC80D9A32B6335
+replace	(a{0,2})*b	hex:423D3A0AC2BDC3A940417C203209	[$0|$1]	hex:423D3A0AC2BDC3A940417C203209
+replace	(a{0,2})*b		[$0|$1]	
+replace	(a{0,2})*b	hex:7A2C0A433237C3A933090A2040	[$0|$1]	hex:7A2C0A433237C3A933090A2040
+replace	(a{0,2})*b	hex:79F09F9880CC80	[$0|$1]	hex:79F09F9880CC80
+replace	((a)|b*)*c		[$0|$1|$2]	
+replace	((a)|b*)*c	a	[$0|$1|$2]	a
+replace	((a)|b*)*c	ab	[$0|$1|$2]	ab
+replace	((a)|b*)*c	abc	[$0|$1|$2]	[abc||a]
+replace	((a)|b*)*c	aaa	[$0|$1|$2]	aaa
+replace	((a)|b*)*c	b	[$0|$1|$2]	b
+replace	((a)|b*)*c	c	[$0|$1|$2]	[c||]
+replace	((a)|b*)*c	12345678	[$0|$1|$2]	12345678
+replace	((a)|b*)*c	20261021	[$0|$1|$2]	20261021
+replace	((a)|b*)*c	2026-10-21	[$0|$1|$2]	2026-10-21
+replace	((a)|b*)*c	DE89370400440532013000	[$0|$1|$2]	DE89370400440532013000
+replace	((a)|b*)*c	info@landrix.de	[$0|$1|$2]	info@landrix.de
+replace	((a)|b*)*c	a.b@c.d	[$0|$1|$2]	a.b@[c||].d
+replace	((a)|b*)*c	http://x	[$0|$1|$2]	http://x
+replace	((a)|b*)*c	+49 30 1234	[$0|$1|$2]	+49 30 1234
+replace	((a)|b*)*c	NL123456789B01	[$0|$1|$2]	NL123456789B01
+replace	((a)|b*)*c	123456789MVA	[$0|$1|$2]	123456789MVA
+replace	((a)|b*)*c	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0|$1|$2]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	((a)|b*)*c	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0|$1|$2]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	((a)|b*)*c	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0|$1|$2]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	((a)|b*)*c	  20261021  	[$0|$1|$2]	  20261021  
+replace	((a)|b*)*c	202610211230	[$0|$1|$2]	202610211230
+replace	((a)|b*)*c	31/12/2026	[$0|$1|$2]	31/12/2026
+replace	((a)|b*)*c	hex:D9A3D9A4	[$0|$1|$2]	hex:D9A3D9A4
+replace	((a)|b*)*c	hex:C3A9C3A9	[$0|$1|$2]	hex:C3A9C3A9
+replace	((a)|b*)*c	ABCDEFGHIJKLMNOP	[$0|$1|$2]	ABCDEFGHIJKLMNOP
+replace	((a)|b*)*c	bxx	[$0|$1|$2]	bxx
+replace	((a)|b*)*c	aaab	[$0|$1|$2]	aaab
+replace	((a)|b*)*c	xxy	[$0|$1|$2]	xxy
+replace	((a)|b*)*c	abab	[$0|$1|$2]	abab
+replace	((a)|b*)*c	aabc	[$0|$1|$2]	[aabc||a]
+replace	((a)|b*)*c	bbc	[$0|$1|$2]	[bbc||]
+replace	((a)|b*)*c		[$0|$1|$2]	
+replace	((a)|b*)*c	hex:E281B05F3309625A2020	[$0|$1|$2]	hex:E281B05F3309625A2020
+replace	((a)|b*)*c	hex:F09F98805A0A79C3A9C3A940CC8032375930E281B020D9A33D357AC3A97C36790A317AE281B0304235C3A9420D612F3A20315A207C2D3320F09F988037322E417A2DD9A3362E42C3A93220CC8059C2BDCC802F2D7A5F36410A43347C5A63362078793A394059D9A333C2B7413AC3A93A4179	[$0|$1|$2]	hex:F09F98805A0A79C3A9C3A940CC8032375930E281B020D9A33D357AC3A97C36790A317AE281B0304235C3A9420D612F3A20315A207C2D3320F09F988037322E417A2DD9A3362E42C3A93220CC8059C2BDCC802F2D7A5F36410A43347C5A5B637C7C5D362078793A394059D9A333C2B7413AC3A93A4179
+replace	((a)|b*)*c	09Y65	[$0|$1|$2]	09Y65
+replace	((a)|b*)*c	hex:E281B02C2B207940435933C2B70D40	[$0|$1|$2]	hex:E281B02C2B207940435933C2B70D40
+replace	((a)|b*)*c	hex:3436C2BDC2BD5A7A79F09F98803636CC8059	[$0|$1|$2]	hex:3436C2BDC2BD5A7A79F09F98803636CC8059
+replace	((a)|b*)*c	hex:F09F988041D9A3C3A92043C2BDE281B0362E7A310A327CCC8041405F34332F593DC2BD0934092E322FD9A33430587936F09F9880353A0A63787941582E400D382379C3A9437A095F3D2CD9A37A0A622B7C2E5FC2BD340DE281B0417C7C62417836F09F98803838317A30357CC2B720F09F9880CC80	[$0|$1|$2]	hex:F09F988041D9A3C3A92043C2BDE281B0362E7A310A327CCC8041405F34332F593DC2BD0934092E322FD9A33430587936F09F9880353A0A5B637C7C5D787941582E400D382379C3A9437A095F3D2CD9A37A0A622B7C2E5FC2BD340DE281B0417C7C62417836F09F98803838317A30357CC2B720F09F9880CC80
+replace	((a)|b*)*c	hex:D9A3	[$0|$1|$2]	hex:D9A3
+replace	((a)|b*)*c		[$0|$1|$2]	
+replace	((a)|b*)*c	0Z	[$0|$1|$2]	0Z
+replace	(?:x?){2,}y		[$0]	
+replace	(?:x?){2,}y	a	[$0]	a
+replace	(?:x?){2,}y	ab	[$0]	ab
+replace	(?:x?){2,}y	abc	[$0]	abc
+replace	(?:x?){2,}y	aaa	[$0]	aaa
+replace	(?:x?){2,}y	b	[$0]	b
+replace	(?:x?){2,}y	c	[$0]	c
+replace	(?:x?){2,}y	12345678	[$0]	12345678
+replace	(?:x?){2,}y	20261021	[$0]	20261021
+replace	(?:x?){2,}y	2026-10-21	[$0]	2026-10-21
+replace	(?:x?){2,}y	DE89370400440532013000	[$0]	DE89370400440532013000
+replace	(?:x?){2,}y	info@landrix.de	[$0]	info@landrix.de
+replace	(?:x?){2,}y	a.b@c.d	[$0]	a.b@c.d
+replace	(?:x?){2,}y	http://x	[$0]	http://x
+replace	(?:x?){2,}y	+49 30 1234	[$0]	+49 30 1234
+replace	(?:x?){2,}y	NL123456789B01	[$0]	NL123456789B01
+replace	(?:x?){2,}y	123456789MVA	[$0]	123456789MVA
+replace	(?:x?){2,}y	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A	[$0]	hex:23534B4F4E544F23544147453D31342350524F5A454E543D322E3030230A
+replace	(?:x?){2,}y	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#	[$0]	#SKONTO#TAGE=14#PROZENT=2.00#BASISBETRAG=-120.00#
+replace	(?:x?){2,}y	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023	[$0]	hex:780A23534B4F4E544F23544147453D372350524F5A454E543D332E303023
+replace	(?:x?){2,}y	  20261021  	[$0]	  20261021  
+replace	(?:x?){2,}y	202610211230	[$0]	202610211230
+replace	(?:x?){2,}y	31/12/2026	[$0]	31/12/2026
+replace	(?:x?){2,}y	hex:D9A3D9A4	[$0]	hex:D9A3D9A4
+replace	(?:x?){2,}y	hex:C3A9C3A9	[$0]	hex:C3A9C3A9
+replace	(?:x?){2,}y	ABCDEFGHIJKLMNOP	[$0]	ABCDEFGHIJKLMNOP
+replace	(?:x?){2,}y	bxx	[$0]	bxx
+replace	(?:x?){2,}y	aaab	[$0]	aaab
+replace	(?:x?){2,}y	xxy	[$0]	[xxy]
+replace	(?:x?){2,}y	abab	[$0]	abab
+replace	(?:x?){2,}y	aabc	[$0]	aabc
+replace	(?:x?){2,}y	bbc	[$0]	bbc
+replace	(?:x?){2,}y	hex:2C0AC2BD3278582ED9A3	[$0]	hex:2C0AC2BD3278582ED9A3
+replace	(?:x?){2,}y	hex:3A3141393879333A0A363931	[$0]	hex:3A314139385B795D333A0A363931
+replace	(?:x?){2,}y		[$0]	
+replace	(?:x?){2,}y	hex:39363DC2B73578C3A9354220F09F988020637A3A35362343C2BD	[$0]	hex:39363DC2B73578C3A9354220F09F988020637A3A35362343C2BD
+replace	(?:x?){2,}y	hex:D9A33A0A393740637A61792D09305F3A31782B2F5F	[$0]	hex:D9A33A0A393740637A615B795D2D09305F3A31782B2F5F
+replace	(?:x?){2,}y	hex:34582F2C2B312D20E281B0F09F98803436	[$0]	hex:34582F2C2B312D20E281B0F09F98803436
+replace	(?:x?){2,}y	Z	[$0]	Z
+replace	(?:x?){2,}y	hex:09342F790D5F3539593278302D7AE281B0C3A92E613778	[$0]	hex:09342F5B795D0D5F3539593278302D7AE281B0C3A92E613778
+replace	(?:x?){2,}y	hex:430A	[$0]	hex:430A
+replace	(?:x?){2,}y		[$0]	
 tokenize	#.+#		0
 tokenize	#.+#	a	1	a
 tokenize	#.+#	ab	1	ab
@@ -5583,16 +6687,22 @@ tokenize	#.+#	31/12/2026	1	31/12/2026
 tokenize	#.+#	hex:D9A3D9A4	1	hex:D9A3D9A4
 tokenize	#.+#	hex:C3A9C3A9	1	hex:C3A9C3A9
 tokenize	#.+#	ABCDEFGHIJKLMNOP	1	ABCDEFGHIJKLMNOP
-tokenize	#.+#	Y9X	1	Y9X
-tokenize	#.+#	hex:33C2B73AF09F9880F09F98803361097C382D2F35787A2B2C3230CC80	1	hex:33C2B73AF09F9880F09F98803361097C382D2F35787A2B2C3230CC80
-tokenize	#.+#	hex:38233A3230372035C2B75AC2B70A	1	hex:38233A3230372035C2B75AC2B70A
-tokenize	#.+#	hex:2D5A33F09F988032622CC2BD42403443	1	hex:2D5A33F09F988032622CC2BD42403443
-tokenize	#.+#	hex:C3A92E63C2B758204378CC807A7920622CC2BDD9A3C2BD3459370D343636407A37343D3330342358623D097A2D7C613D43E281B0613A093442333731C2B73D63340A09362B58397C5F63232EC2BDCC8059D9A3C2BDD9A358613542622B30D9A378C3A9C2B72EF09F988043C2BD7AE281B0	1	hex:C3A92E63C2B758204378CC807A7920622CC2BDD9A3C2BD3459370D343636407A37343D3330342358623D097A2D7C613D43E281B0613A093442333731C2B73D63340A09362B58397C5F63232EC2BDCC8059D9A3C2BDD9A358613542622B30D9A378C3A9C2B72EF09F988043C2BD7AE281B0
-tokenize	#.+#	hex:09C2BD	1	hex:09C2BD
-tokenize	#.+#	hex:7C5A3459402E0A2C5F7CD9A36131303A32347C367C0D33402F2E2D3439352BF09F98807C2DC3A9343761F09F98802B342B3062593D3932636258C2B743583137CC8030783AF09F98802332420A327C2E2E422E6134C2BD32797A416139312B373279203334334041	1	hex:7C5A3459402E0A2C5F7CD9A36131303A32347C367C0D33402F2E2D3439352BF09F98807C2DC3A9343761F09F98802B342B3062593D3932636258C2B743583137CC8030783AF09F98802332420A327C2E2E422E6134C2BD32797A416139312B373279203334334041
-tokenize	#.+#	hex:353A63C2BD232D4031C3A9332F5AF09F98802CCC803D595F58D9A3	1	hex:353A63C2BD232D4031C3A9332F5AF09F98802CCC803D595F58D9A3
-tokenize	#.+#	hex:0D7C	1	hex:0D7C
-tokenize	#.+#	hex:62CC8035C2BD7CE281B0794239F09F988023C3A95830780DC3A92C2D2F	1	hex:62CC8035C2BD7CE281B0794239F09F988023C3A95830780DC3A92C2D2F
+tokenize	#.+#	bxx	1	bxx
+tokenize	#.+#	aaab	1	aaab
+tokenize	#.+#	xxy	1	xxy
+tokenize	#.+#	abab	1	abab
+tokenize	#.+#	aabc	1	aabc
+tokenize	#.+#	bbc	1	bbc
+tokenize	#.+#	hex:78437C2F622C412030302E32597A33306140093AF09F98802E2B2F2F20310D782D362C40303878C2B732382F	1	hex:78437C2F622C412030302E32597A33306140093AF09F98802E2B2F2F20310D782D362C40303878C2B732382F
+tokenize	#.+#		0
+tokenize	#.+#	93	1	93
+tokenize	#.+#	hex:2B2C327A0D3163432F2F3AC2BD352D792FC2BD0D317C630D63C2B72E322C7A422F7A2C097C7C7A09C2B72B2B3A3D2379232023617A23384209C2BD7C342FF09F988063310D58323D2D6123F09F98802E392FC2B7D9A342F09F9880353D37617C2B23CC802F4262F09F9880237842	3	hex:2B2C327A0D3163432F2F3AC2BD352D792FC2BD0D317C630D63C2B72E322C7A422F7A2C097C7C7A09C2B72B2B3A3D	hex:384209C2BD7C342FF09F988063310D58323D2D61	xB
+tokenize	#.+#	02	1	02
+tokenize	#.+#	z6:c|10_	1	z6:c|10_
+tokenize	#.+#	3Cb4C21@	1	3Cb4C21@
+tokenize	#.+#	hex:F09F988031C3A9D9A342	1	hex:F09F988031C3A9D9A342
+tokenize	#.+#	hex:7A34302038352BC2B7	1	hex:7A34302038352BC2B7
+tokenize	#.+#	hex:C2B7E281B0	1	hex:C2B7E281B0
 tokenize	(\r?\n)		0
 tokenize	(\r?\n)	a	1	a
 tokenize	(\r?\n)	ab	1	ab
@@ -5619,16 +6729,22 @@ tokenize	(\r?\n)	31/12/2026	1	31/12/2026
 tokenize	(\r?\n)	hex:D9A3D9A4	1	hex:D9A3D9A4
 tokenize	(\r?\n)	hex:C3A9C3A9	1	hex:C3A9C3A9
 tokenize	(\r?\n)	ABCDEFGHIJKLMNOP	1	ABCDEFGHIJKLMNOP
-tokenize	(\r?\n)	hex:33362E2B3DCC807932D9A33D5A0DE281B043C2B72EC2B740582D383D353641340D352F353631C2BDD9A32F3132E281B023230938C2B7E281B0C3A90A2D632BE281B03D387A632D2F3920332F2C0D2032425A2E2D3D58D9A32B20092C23200DCC80F09F988059C3A961CC803020C2B73D2E59	2	hex:33362E2B3DCC807932D9A33D5A0DE281B043C2B72EC2B740582D383D353641340D352F353631C2BDD9A32F3132E281B023230938C2B7E281B0C3A9	hex:2D632BE281B03D387A632D2F3920332F2C0D2032425A2E2D3D58D9A32B20092C23200DCC80F09F988059C3A961CC803020C2B73D2E59
-tokenize	(\r?\n)	c/y6@	1	c/y6@
+tokenize	(\r?\n)	bxx	1	bxx
+tokenize	(\r?\n)	aaab	1	aaab
+tokenize	(\r?\n)	xxy	1	xxy
+tokenize	(\r?\n)	abab	1	abab
+tokenize	(\r?\n)	aabc	1	aabc
+tokenize	(\r?\n)	bbc	1	bbc
+tokenize	(\r?\n)	hex:C2BD	1	hex:C2BD
+tokenize	(\r?\n)	hex:6142C2B7F09F98803963617978E281B04042342C402DCC803D205F2FCC805F785839343A3961612C7A353643092CC2B70AE281B05F0978593009C2B761D9A32B4332C3A931C2B7D9A3362C2ED9A3380A367A593D39332C40CC8036C2B778C2BD362C4338D9A358362F5FC2BD34C2B72E20	3	hex:6142C2B7F09F98803963617978E281B04042342C402DCC803D205F2FCC805F785839343A3961612C7A353643092CC2B7	hex:E281B05F0978593009C2B761D9A32B4332C3A931C2B7D9A3362C2ED9A338	hex:367A593D39332C40CC8036C2B778C2BD362C4338D9A358362F5FC2BD34C2B72E20
+tokenize	(\r?\n)	hex:4335C2BD5F3637E281B02D0A352D42	2	hex:4335C2BD5F3637E281B02D	5-B
+tokenize	(\r?\n)	hex:E281B058312B41792BC2BD363942594131402EC2BD79CC80CC802DE281B038786161C2B7637A353563E281B0307C617A3D2D40	1	hex:E281B058312B41792BC2BD363942594131402EC2BD79CC80CC802DE281B038786161C2B7637A353563E281B0307C617A3D2D40
+tokenize	(\r?\n)	6	1	6
+tokenize	(\r?\n)	hex:E281B033093858	1	hex:E281B033093858
 tokenize	(\r?\n)		0
-tokenize	(\r?\n)	hex:C2BD63340A633835232E372D35315A5F792D2338F09F98800A5FF09F98802E2FF09F988034323234F09F9880C2BD0D78C3A92D0DC2BD312BD9A37A39587C2F3D09E281B07C5ACC800D422C7C7A2B357AD9A332412B7A61592B7A7A61C2B763C2BD7A2F593A316231C2BD405A59620A43632B	4	hex:C2BD6334	hex:633835232E372D35315A5F792D2338F09F9880	hex:5FF09F98802E2FF09F988034323234F09F9880C2BD0D78C3A92D0DC2BD312BD9A37A39587C2F3D09E281B07C5ACC800D422C7C7A2B357AD9A332412B7A61592B7A7A61C2B763C2BD7A2F593A316231C2BD405A5962	Cc+
-tokenize	(\r?\n)	hex:0DE281B04039E281B0	1	hex:0DE281B04039E281B0
-tokenize	(\r?\n)	hex:31360A0DC2B7CC80C3A9583633390D5F5A0A2C3DC2BD3909F09F988031402ED9A332412B323030314342433441C2BD3A7C	3	16	hex:0DC2B7CC80C3A9583633390D5F5A	hex:2C3DC2BD3909F09F988031402ED9A332412B323030314342433441C2BD3A7C
-tokenize	(\r?\n)	hex:CC80C2B73D	1	hex:CC80C2B73D
-tokenize	(\r?\n)	hex:58E281B0313832E281B009D9A32F6120CC802CE281B0615A792E0958386159592C79583DF09F9880782E5F0A5A0A092BC2BDC3A93A	3	hex:58E281B0313832E281B009D9A32F6120CC802CE281B0615A792E0958386159592C79583DF09F9880782E5F	Z	hex:092BC2BDC3A93A
-tokenize	(\r?\n)	hex:F09F988037623335C3A90A414239092D	2	hex:F09F988037623335C3A9	hex:414239092D
-tokenize	(\r?\n)	Z..5-_1@	1	Z..5-_1@
+tokenize	(\r?\n)	|	1	|
+tokenize	(\r?\n)	hex:2E302038D9A3233763	1	hex:2E302038D9A3233763
+tokenize	(\r?\n)	hex:2B237A3AE281B07AC2BD6231093739412C5A417878610D3DC3A959592DC2B7785A592F2D7863433333590AE281B0327C237C5AC3A9234178433A300D090D5835E281B03559CC8031343161C2B7C2BD580A387A2F36382D32E281B00A590A323D3D2C2F5A2C78797CC3A9	5	hex:2B237A3AE281B07AC2BD6231093739412C5A417878610D3DC3A959592DC2B7785A592F2D786343333359	hex:E281B0327C237C5AC3A9234178433A300D090D5835E281B03559CC8031343161C2B7C2BD58	hex:387A2F36382D32E281B0	Y	hex:323D3D2C2F5A2C78797CC3A9
 tokenize	\s		0
 tokenize	\s	a	1	a
 tokenize	\s	ab	1	ab
@@ -5655,16 +6771,22 @@ tokenize	\s	31/12/2026	1	31/12/2026
 tokenize	\s	hex:D9A3D9A4	1	hex:D9A3D9A4
 tokenize	\s	hex:C3A9C3A9	1	hex:C3A9C3A9
 tokenize	\s	ABCDEFGHIJKLMNOP	1	ABCDEFGHIJKLMNOP
-tokenize	\s	hex:320A2D	2	2	-
-tokenize	\s	hex:2F202C58302F38337935373343592E20D9A32B3163F09F9880623331312BD9A37C205F3A3D0A5F41394240432B	5	/	,X0/83y573CY.	hex:D9A32B3163F09F9880623331312BD9A37C	_:=	_A9B@C+
-tokenize	\s	hex:235F3D430AE281B00A61633D36093DCC80632B333A0A34	5	#_=C	hex:E281B0	ac=6	hex:3DCC80632B333A	4
-tokenize	\s	hex:E281B05F425F7861C2BD592D5A303D373559CC80393D3D59782E32C2B72F2E362B09D9A3C2B7F09F9880625F302E792F2C0A	3	hex:E281B05F425F7861C2BD592D5A303D373559CC80393D3D59782E32C2B72F2E362B	hex:D9A3C2B7F09F9880625F302E792F2C	
-tokenize	\s	hex:09D9A3D9A3610A5F5AD9A34059412C6232C3A9595F413D34	3		hex:D9A3D9A361	hex:5F5AD9A34059412C6232C3A9595F413D34
-tokenize	\s	8	1	8
-tokenize	\s	hex:C2BD42614220783840373378CC80	2	hex:C2BD426142	hex:783840373378CC80
-tokenize	\s	hex:D9A334783040353D3538433A20CC80350D323341790A	4	hex:D9A334783040353D3538433A	hex:CC8035	23Ay	
-tokenize	\s	hex:5F5A406331C2BD5A307A3A2035	2	hex:5F5A406331C2BD5A307A3A	5
-tokenize	\s	B	1	B
+tokenize	\s	bxx	1	bxx
+tokenize	\s	aaab	1	aaab
+tokenize	\s	xxy	1	xxy
+tokenize	\s	abab	1	abab
+tokenize	\s	aabc	1	aabc
+tokenize	\s	bbc	1	bbc
+tokenize	\s	ab_az	1	ab_az
+tokenize	\s	hex:78C2BD0A2F3A422E415979C2BD0AE281B0C2BD0D32352D2C61C2B7596233300DC2B7582B3A5940CC8031322EC2B7394063	5	hex:78C2BD	hex:2F3A422E415979C2BD	hex:E281B0C2BD	hex:32352D2C61C2B759623330	hex:C2B7582B3A5940CC8031322EC2B7394063
+tokenize	\s	hex:232E34380A373430385F427C2CD9A339E281B0790D2B7A	3	#.48	hex:373430385F427C2CD9A339E281B079	+z
+tokenize	\s	c94	1	c94
+tokenize	\s	/	1	/
+tokenize	\s	.C	1	.C
+tokenize	\s	A_	1	A_
+tokenize	\s	hex:F09F98807843362D302E2079E281B0580A	3	hex:F09F98807843362D302E	hex:79E281B058	
+tokenize	\s	hex:23333D2D3A39590D0936347A	3	#3=-:9Y		64z
+tokenize	\s	hex:3661323142F09F98806320C2BD7A5F302D31C2BD302C333034797C2F0D4134C2B7623141090AE281B0582C385F0A207A	7	hex:3661323142F09F988063	hex:C2BD7A5F302D31C2BD302C333034797C2F	hex:4134C2B7623141		hex:E281B0582C385F		z
 tokenize	-		0
 tokenize	-	a	1	a
 tokenize	-	ab	1	ab
@@ -5691,16 +6813,22 @@ tokenize	-	31/12/2026	1	31/12/2026
 tokenize	-	hex:D9A3D9A4	1	hex:D9A3D9A4
 tokenize	-	hex:C3A9C3A9	1	hex:C3A9C3A9
 tokenize	-	ABCDEFGHIJKLMNOP	1	ABCDEFGHIJKLMNOP
-tokenize	-	2,-yC	2	2,	yC
-tokenize	-	_	1	_
-tokenize	-	/a	1	/a
-tokenize	-	hex:2E2B0D	1	hex:2E2B0D
-tokenize	-	hex:375F7941D9A33A2C310D43305F783943F09F98802C4231F09F9880E281B062632D58382063C2BDCC802C4278793031342CC3A9F09F9880	2	hex:375F7941D9A33A2C310D43305F783943F09F98802C4231F09F9880E281B06263	hex:58382063C2BDCC802C4278793031342CC3A9F09F9880
-tokenize	-	b@	1	b@
-tokenize	-	3	1	3
-tokenize	-	3	1	3
-tokenize	-	hex:203020395AC2BDE281B05AC2B7587834	1	hex:203020395AC2BDE281B05AC2B7587834
-tokenize	-	hex:237CE281B0390A2ED9A3622D365F3A58F09F98800DC2B73639C3A930	2	hex:237CE281B0390A2ED9A362	hex:365F3A58F09F98800DC2B73639C3A930
+tokenize	-	bxx	1	bxx
+tokenize	-	aaab	1	aaab
+tokenize	-	xxy	1	xxy
+tokenize	-	abab	1	abab
+tokenize	-	aabc	1	aabc
+tokenize	-	bbc	1	bbc
+tokenize	-	hex:C2B72FC2BDC2B735623D417C595A3340D9A32E35333A6332	1	hex:C2B72FC2BDC2B735623D417C595A3340D9A32E35333A6332
+tokenize	-	hex:61F09F9880CC80630D2D2D323139393959207A7C30593142	3	hex:61F09F9880CC80630D		21999Y z|0Y1B
+tokenize	-	hex:2DC2BD40780D0935360D0963C3A9	2		hex:C2BD40780D0935360D0963C3A9
+tokenize	-	hex:F09F98803335C2B762CC8030207A2B392B	1	hex:F09F98803335C2B762CC8030207A2B392B
+tokenize	-	hex:3133432D38C2B7622D5834373A393A4230413A2C5F	3	13C	hex:38C2B762	X47:9:B0A:,_
+tokenize	-	hex:353D61CC8037334134	1	hex:353D61CC8037334134
+tokenize	-	hex:F09F9880405A3142432335	1	hex:F09F9880405A3142432335
+tokenize	-	hex:E281B0C2B77C7936580D5F2C317AF09F9880CC8020385FF09F98800A2B2C407C310D2F3633C2BD634023387C2F3A32340A63CC80	1	hex:E281B0C2B77C7936580D5F2C317AF09F9880CC8020385FF09F98800A2B2C407C310D2F3633C2BD634023387C2F3A32340A63CC80
+tokenize	-	9#A@yZBa26|4	1	9#A@yZBa26|4
+tokenize	-	hex:412C39596323CC8040C2B73A612CC2B7437C612F09203D425859797C7933202C633D3179C3A9F09F9880625F623234	1	hex:412C39596323CC8040C2B73A612CC2B7437C612F09203D425859797C7933202C633D3179C3A9F09F9880625F623234
 tokenize	/		0
 tokenize	/	a	1	a
 tokenize	/	ab	1	ab
@@ -5727,16 +6855,22 @@ tokenize	/	31/12/2026	3	31	12	2026
 tokenize	/	hex:D9A3D9A4	1	hex:D9A3D9A4
 tokenize	/	hex:C3A9C3A9	1	hex:C3A9C3A9
 tokenize	/	ABCDEFGHIJKLMNOP	1	ABCDEFGHIJKLMNOP
-tokenize	/		0
-tokenize	/	4	1	4
-tokenize	/		0
-tokenize	/	A	1	A
-tokenize	/	hex:5F782D59430DC2B731410D7CE281B0	1	hex:5F782D59430DC2B731410D7CE281B0
-tokenize	/	hex:CC802F58C3A9092C3443	2	hex:CC80	hex:58C3A9092C3443
-tokenize	/	hex:595A40432CC2BD39D9A3F09F988061207C594231374141633D3D23633D0D78097C09352B2009235F372E62357A	1	hex:595A40432CC2BD39D9A3F09F988061207C594231374141633D3D23633D0D78097C09352B2009235F372E62357A
-tokenize	/	=-#	1	=-#
-tokenize	/	Z	1	Z
-tokenize	/	hex:4242622D3930CC804239413DC3A95F42C2BD32303042F09F9880	1	hex:4242622D3930CC804239413DC3A95F42C2BD32303042F09F9880
+tokenize	/	bxx	1	bxx
+tokenize	/	aaab	1	aaab
+tokenize	/	xxy	1	xxy
+tokenize	/	abab	1	abab
+tokenize	/	aabc	1	aabc
+tokenize	/	bbc	1	bbc
+tokenize	/	hex:2B7A78425F43390A38D9A32B425A7A33367A310934590DC3A9402D095F20E281B02E5920335F4020C2B762E281B041	1	hex:2B7A78425F43390A38D9A32B425A7A33367A310934590DC3A9402D095F20E281B02E5920335F4020C2B762E281B041
+tokenize	/	hex:2EC2B758CC800D79342039783658	1	hex:2EC2B758CC800D79342039783658
+tokenize	/	hex:40C2B7312F4178613243374158	2	hex:40C2B731	Axa2C7AX
+tokenize	/	hex:5A5A3562F09F9880590DC2B709787A3135637A2B3061D9A30931614343312D3D5F0A793A3A7C352B317CCC80C2BD2F	2	hex:5A5A3562F09F9880590DC2B709787A3135637A2B3061D9A30931614343312D3D5F0A793A3A7C352B317CCC80C2BD	
+tokenize	/	hex:59612D623262F09F98802D2B20630DCC802E627A3120202E	1	hex:59612D623262F09F98802D2B20630DCC802E627A3120202E
+tokenize	/	hex:6235C3A9CC803A782D357C0D3736C3A959784337423436C2BDC2BD792C7CC3A9090A363D2C62CC80310D355F5F58F09F9880	1	hex:6235C3A9CC803A782D357C0D3736C3A959784337423436C2BDC2BD792C7CC3A9090A363D2C62CC80310D355F5F58F09F9880
+tokenize	/	hex:4259582E39C3A9302E432E583D	1	hex:4259582E39C3A9302E432E583D
+tokenize	/	hex:33E281B078	1	hex:33E281B078
+tokenize	/	1	1	1
+tokenize	/	hex:337C3532312E2D30C2BD7A4109	1	hex:337C3532312E2D30C2BD7A4109
 tokenize	\|		0
 tokenize	\|	a	1	a
 tokenize	\|	ab	1	ab
@@ -5763,16 +6897,22 @@ tokenize	\|	31/12/2026	1	31/12/2026
 tokenize	\|	hex:D9A3D9A4	1	hex:D9A3D9A4
 tokenize	\|	hex:C3A9C3A9	1	hex:C3A9C3A9
 tokenize	\|	ABCDEFGHIJKLMNOP	1	ABCDEFGHIJKLMNOP
-tokenize	\|	6|	2	6	
-tokenize	\|	hex:2B5878C2B72FE281B0792F58C2BD2C42	1	hex:2B5878C2B72FE281B0792F58C2BD2C42
-tokenize	\|	hex:0D37F09F9880340AC3A9C3A97C	2	hex:0D37F09F9880340AC3A9C3A9	
-tokenize	\|	hex:CC805A63	1	hex:CC805A63
-tokenize	\|	hex:367C407AC3A9F09F98802B79097879C2B75A2E7A20C2B7347A314335F09F98802FD9A37A37C2BD2B31353736783D4131303042	2	6	hex:407AC3A9F09F98802B79097879C2B75A2E7A20C2B7347A314335F09F98802FD9A37A37C2BD2B31353736783D4131303042
-tokenize	\|	hex:C2BD3D0D61C2BD	1	hex:C2BD3D0D61C2BD
-tokenize	\|	2Y	1	2Y
-tokenize	\|	hex:2F63CC80F09F9880D9A335402D38582E797836782F3932383D	1	hex:2F63CC80F09F9880D9A335402D38582E797836782F3932383D
-tokenize	\|	-	1	-
-tokenize	\|	7	1	7
+tokenize	\|	bxx	1	bxx
+tokenize	\|	aaab	1	aaab
+tokenize	\|	xxy	1	xxy
+tokenize	\|	abab	1	abab
+tokenize	\|	aabc	1	aabc
+tokenize	\|	bbc	1	bbc
+tokenize	\|	hex:400D3338332E0931F09F9880383DC3A95AE281B035CC80C3A931203163F09F9880237A3D63C3A979353D622FC2B74337F09F9880C3A9344036C3A90A7AC3A93278F09F98802C7937780A352D302D30C3A9425F79C3A93758CC805F2F2D2E5F61C2B738C2BD2E78583537F09F9880417A322F437CF09F9880305F2B	2	hex:400D3338332E0931F09F9880383DC3A95AE281B035CC80C3A931203163F09F9880237A3D63C3A979353D622FC2B74337F09F9880C3A9344036C3A90A7AC3A93278F09F98802C7937780A352D302D30C3A9425F79C3A93758CC805F2F2D2E5F61C2B738C2BD2E78583537F09F9880417A322F43	hex:F09F9880305F2B
+tokenize	\|	hex:5F3063587C3A2E41E281B0790DCC802E387C30352CC2B739	3	_0cX	hex:3A2E41E281B0790DCC802E38	hex:30352CC2B739
+tokenize	\|	=76	1	=76
+tokenize	\|	 7z|#	2	 7z	#
+tokenize	\|	hex:3AC3A9365F39372B3D373D7A3932353A7CC2B7797978	2	hex:3AC3A9365F39372B3D373D7A3932353A	hex:C2B7797978
+tokenize	\|	hex:6336383830310AD9A3D9A32C59620D633343C3A943C2B734	1	hex:6336383830310AD9A3D9A32C59620D633343C3A943C2B734
+tokenize	\|	hex:C3A93130373A302332	1	hex:C3A93130373A302332
+tokenize	\|	1	1	1
+tokenize	\|	-C7_-X-x	1	-C7_-X-x
+tokenize	\|		0
 tokenize	,		0
 tokenize	,	a	1	a
 tokenize	,	ab	1	ab
@@ -5799,16 +6939,22 @@ tokenize	,	31/12/2026	1	31/12/2026
 tokenize	,	hex:D9A3D9A4	1	hex:D9A3D9A4
 tokenize	,	hex:C3A9C3A9	1	hex:C3A9C3A9
 tokenize	,	ABCDEFGHIJKLMNOP	1	ABCDEFGHIJKLMNOP
+tokenize	,	bxx	1	bxx
+tokenize	,	aaab	1	aaab
+tokenize	,	xxy	1	xxy
+tokenize	,	abab	1	abab
+tokenize	,	aabc	1	aabc
+tokenize	,	bbc	1	bbc
+tokenize	,	@0	1	@0
+tokenize	,	hex:202FE281B042632F377A2B7A35F09F98802E63C3A936F09F98802361385A33595A3409422B0A0D2BC3A93720385F5A38332F0D37402D31C2BD787A4041332E2F2B78403930D9A3362C62E281B02C41367C7A0ACC8037372B31353DE281B0E281B05A09793D354336593832592E	3	hex:202FE281B042632F377A2B7A35F09F98802E63C3A936F09F98802361385A33595A3409422B0A0D2BC3A93720385F5A38332F0D37402D31C2BD787A4041332E2F2B78403930D9A336	hex:62E281B0	hex:41367C7A0ACC8037372B31353DE281B0E281B05A09793D354336593832592E
 tokenize	,		0
-tokenize	,	1	1	1
-tokenize	,	hex:6338360D58	1	hex:6338360D58
-tokenize	,	hex:2F36D9A3315A2C3423	2	hex:2F36D9A3315A	4#
-tokenize	,	hex:C3A95F	1	hex:C3A95F
-tokenize	,	hex:36CC80315F353A30C2B7343036E281B0372359325A302B61362E39232D32790936322061303D3630CC802D79E281B07C0D37794161303040422F7932413823E281B034203D2B596339C3A97AD9A3372D352363C2BDD9A3355F7C3A62353A3A37610A2B7837783A	1	hex:36CC80315F353A30C2B7343036E281B0372359325A302B61362E39232D32790936322061303D3630CC802D79E281B07C0D37794161303040422F7932413823E281B034203D2B596339C3A97AD9A3372D352363C2BDD9A3355F7C3A62353A3A37610A2B7837783A
-tokenize	,	hex:7C397A34783D2F32315930335838403D3936C3A9380A0A580AE281B0373D3731C2B762422F0979402EC2B7E281B0C2BDC2B7C3A94033415AD9A3362D2CD9A3D9A3363779233DCC803A5834422B797AC2BD30400D5F2F78373D7A2032CC80355ACC8063585AE281B04240582030	2	hex:7C397A34783D2F32315930335838403D3936C3A9380A0A580AE281B0373D3731C2B762422F0979402EC2B7E281B0C2BDC2B7C3A94033415AD9A3362D	hex:D9A3D9A3363779233DCC803A5834422B797AC2BD30400D5F2F78373D7A2032CC80355ACC8063585AE281B04240582030
-tokenize	,	hex:33342C7C314158302D200A2BD9A33AD9A32E34332F4323CC80096139432B342F38C3A92C2FCC80342B4339430D2339580D09CC800DC2B709612358230A7CC2B778CC807C23433863357A0962592F31E281B0CC8039204063F09F98804236C3A9422C204237C2BD315A410D	4	34	hex:7C314158302D200A2BD9A33AD9A32E34332F4323CC80096139432B342F38C3A9	hex:2FCC80342B4339430D2339580D09CC800DC2B709612358230A7CC2B778CC807C23433863357A0962592F31E281B0CC8039204063F09F98804236C3A942	hex:204237C2BD315A410D
-tokenize	,	hex:C2BD4133370A	1	hex:C2BD4133370A
-tokenize	,	hex:2B590AC2BD343363593739630A0A30393A3431313D	1	hex:2B590AC2BD343363593739630A0A30393A3431313D
+tokenize	,	hex:0A7A5A3D593A3378	1	hex:0A7A5A3D593A3378
+tokenize	,	hex:092B7879427A407AD9A331623839592332C2B7C3A95F332C632D33C3A92E583D2035232D32C2B7F09F98805F2B7935432B7C3DD9A36132433843E281B0612F5841422C7C3A37C2BD5A307961585A625F393D09312FF09F9880C2BDC2BDD9A3C3A9C3A9597A2C305F31422F382B40	4	hex:092B7879427A407AD9A331623839592332C2B7C3A95F33	hex:632D33C3A92E583D2035232D32C2B7F09F98805F2B7935432B7C3DD9A36132433843E281B0612F584142	hex:7C3A37C2BD5A307961585A625F393D09312FF09F9880C2BDC2BDD9A3C3A9C3A9597A	0_1B/8+@
+tokenize	,	hex:432F335AF09F9880CC802C38D9A37AE281B00A0D417C35094059C3A9	2	hex:432F335AF09F9880CC80	hex:38D9A37AE281B00A0D417C35094059C3A9
+tokenize	,		0
+tokenize	,	hex:2B5879C3A97A3979093579C2BDC3A97A2C0D6234200A7938387A5AD9A3C2B7E281B061092FE281B041CC80397C0D5F593733	2	hex:2B5879C3A97A3979093579C2BDC3A97A	hex:0D6234200A7938387A5AD9A3C2B7E281B061092FE281B041CC80397C0D5F593733
+tokenize	,	hex:58E281B07A	1	hex:58E281B07A
+tokenize	,	hex:2C6330F09F988058D9A32B37622C2330622CC3A97CD9A35F7A33F09F9880D9A343C2B7D9A3F09F98805F625842C3A93A2B592D3038432D59	4		hex:6330F09F988058D9A32B3762	#0b	hex:C3A97CD9A35F7A33F09F9880D9A343C2B7D9A3F09F98805F625842C3A93A2B592D3038432D59
 tokenize	\s+		0
 tokenize	\s+	a	1	a
 tokenize	\s+	ab	1	ab
@@ -5835,16 +6981,22 @@ tokenize	\s+	31/12/2026	1	31/12/2026
 tokenize	\s+	hex:D9A3D9A4	1	hex:D9A3D9A4
 tokenize	\s+	hex:C3A9C3A9	1	hex:C3A9C3A9
 tokenize	\s+	ABCDEFGHIJKLMNOP	1	ABCDEFGHIJKLMNOP
-tokenize	\s+	hex:58CC80C3A941590D3A63590A593AE281B0613D39232C23C2B7C2BD382D58382D39352B0ACC803032D9A3586379392B34CC805F355820365836327A0D372B3D2E6333343943427A2D3DE281B0393437410AC2B77A09327CF09F9880782D23357ACC802C2DC2B7E281B0C2B7403940	8	hex:58CC80C3A94159	:cY	hex:593AE281B0613D39232C23C2B7C2BD382D58382D39352B	hex:CC803032D9A3586379392B34CC805F3558	6X62z	hex:372B3D2E6333343943427A2D3DE281B039343741	hex:C2B77A	hex:327CF09F9880782D23357ACC802C2DC2B7E281B0C2B7403940
-tokenize	\s+	hex:CC80785F3335	1	hex:CC80785F3335
-tokenize	\s+	hex:4358CC80	1	hex:4358CC80
-tokenize	\s+	hex:2E7A5A4362352F0A	2	.zZCb5/	
-tokenize	\s+	hex:593034380A5F6142372B2DD9A3E281B059782E2F40C2B75F32D9A32039432FE281B02B092C200DCC8036E281B023350D0A363262620D7C232041CC8036203158C2BD3640E281B033387A2CC3A9CC803A0D7A2B3D3D41F09F98805931403961D9A32D376136406336092BC3A9F09F988058CC80	11	Y048	hex:5F6142372B2DD9A3E281B059782E2F40C2B75F32D9A3	hex:39432FE281B02B	,	hex:CC8036E281B02335	62bb	|#	hex:41CC8036	hex:3158C2BD3640E281B033387A2CC3A9CC803A	hex:7A2B3D3D41F09F98805931403961D9A32D376136406336	hex:2BC3A9F09F988058CC80
-tokenize	\s+	hex:593AC3A9C2BD403135E281B0383331F09F9880C3A97C2F5A203D093841305F32C2B7315962395A7A2D096220CC80D9A32B6335	5	hex:593AC3A9C2BD403135E281B0383331F09F9880C3A97C2F5A	=	hex:3841305F32C2B7315962395A7A2D	b	hex:CC80D9A32B6335
-tokenize	\s+	hex:423D3A0AC2BDC3A940417C203209	4	B=:	hex:C2BDC3A940417C	2	
-tokenize	\s+		0
-tokenize	\s+	hex:7A2C0A433237C3A933090A2040	3	z,	hex:433237C3A933	@
-tokenize	\s+	hex:79F09F9880CC80	1	hex:79F09F9880CC80
+tokenize	\s+	bxx	1	bxx
+tokenize	\s+	aaab	1	aaab
+tokenize	\s+	xxy	1	xxy
+tokenize	\s+	abab	1	abab
+tokenize	\s+	aabc	1	aabc
+tokenize	\s+	bbc	1	bbc
+tokenize	\s+	/z_	1	/z_
+tokenize	\s+	hex:CC80C3A95F625F20380A	3	hex:CC80C3A95F625F	8	
+tokenize	\s+	#|	1	#|
+tokenize	\s+	hex:2C413140203932F09F9880783736E281B0	2	,A1@	hex:3932F09F9880783736E281B0
+tokenize	\s+	4B	1	4B
+tokenize	\s+	 	2		
+tokenize	\s+	hex:43D9A32F2E37	1	hex:43D9A32F2E37
+tokenize	\s+	6yy	1	6yy
+tokenize	\s+	hex:0933E281B0332D58383D623D7C340DC2B75F3137593030614358F09F98802F37422B3A0A405832347C395A7C20C2B70D2309E281B0382F2B0D632DD9A30A6279090D3A3661620D2058587A402B342C413DC2BD380A412B20202009437A5A2E382F634009D9A3	14		hex:33E281B0332D58383D623D7C34	hex:C2B75F3137593030614358F09F98802F37422B3A	@X24|9Z|	hex:C2B7	#	hex:E281B0382F2B	hex:632DD9A3	by	:6ab	hex:58587A402B342C413DC2BD38	A+	CzZ.8/c@	hex:D9A3
+tokenize	\s+	hex:7A20E281B037595A7935393635586137335A38344233097AE281B05A402DF09F988038347A2DF09F988062790D622D3537632C5A395A42CC8041394339393A4159363763435861367A5F582D2DD9A35AC2B738C2BD32437A3533D9A3373778322C407A090D2E2BD9A3C2B7	5	z	hex:E281B037595A7935393635586137335A38344233	hex:7AE281B05A402DF09F988038347A2DF09F98806279	hex:622D3537632C5A395A42CC8041394339393A4159363763435861367A5F582D2DD9A35AC2B738C2BD32437A3533D9A3373778322C407A	hex:2E2BD9A3C2B7
 tokenize	x*		0
 tokenize	x*	a	error
 tokenize	x*	ab	error
@@ -5871,13 +7023,19 @@ tokenize	x*	31/12/2026	error
 tokenize	x*	hex:D9A3D9A4	error
 tokenize	x*	hex:C3A9C3A9	error
 tokenize	x*	ABCDEFGHIJKLMNOP	error
-tokenize	x*		0
-tokenize	x*	hex:E281B05F3309625A2020	error
-tokenize	x*	hex:F09F98805A0A79C3A9C3A940CC8032375930E281B020D9A33D357AC3A97C36790A317AE281B0304235C3A9420D612F3A20315A207C2D3320F09F988037322E417A2DD9A3362E42C3A93220CC8059C2BDCC802F2D7A5F36410A43347C5A63362078793A394059D9A333C2B7413AC3A93A4179	error
-tokenize	x*	09Y65	error
-tokenize	x*	hex:E281B02C2B207940435933C2B70D40	error
-tokenize	x*	hex:3436C2BDC2BD5A7A79F09F98803636CC8059	error
-tokenize	x*	hex:F09F988041D9A3C3A92043C2BDE281B0362E7A310A327CCC8041405F34332F593DC2BD0934092E322FD9A33430587936F09F9880353A0A63787941582E400D382379C3A9437A095F3D2CD9A37A0A622B7C2E5FC2BD340DE281B0417C7C62417836F09F98803838317A30357CC2B720F09F9880CC80	error
-tokenize	x*	hex:D9A3	error
-tokenize	x*		0
-tokenize	x*	0Z	error
+tokenize	x*	bxx	error
+tokenize	x*	aaab	error
+tokenize	x*	xxy	error
+tokenize	x*	abab	error
+tokenize	x*	aabc	error
+tokenize	x*	bbc	error
+tokenize	x*	hex:7931347A0A612E413D32E281B039420A7A7923CC802359	error
+tokenize	x*	hex:0D63782D313362402F3123E281B05937375F0D7CD9A3420979632C59E281B032357CF09F9880F09F9880432339782D61415F35	error
+tokenize	x*	6b+	error
+tokenize	x*	hex:0A3A	error
+tokenize	x*	B00bY	error
+tokenize	x*	hex:3D40C2B7202DC3A9370AC2BDC2B761423D6261232F5AC2B72F0962CC8038C2BD34396140097CD9A331D9A3D9A3383A355FC3A94043782C383841E281B02D0D5AC2B731205FF09F98805F362C435F31E281B0353A43432F2FC2B7C2B779F09F9880205F34F09F9880C2B737795F2F2B5F37590A3D352D	error
+tokenize	x*	6c	error
+tokenize	x*	.	error
+tokenize	x*	hex:3134F09F9880C3A90D43374039332B7938352D2C207C38610D336263CC803143312C2B2E2FE281B032793D425F3739	error
+tokenize	x*	hex:5F33635A61302C610D38D9A3095F413531E281B04341383630342F2B31232C31350A7861E281B0417932C2B75F7A	error

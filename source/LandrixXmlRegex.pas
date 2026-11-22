@@ -14,9 +14,10 @@
   catastrophic backtracking. Patterns with back-references (XPath modes)
   run on a backtracking matcher over the same program instead, limited
   to BacktrackSteps steps per call of Matches, Replace or Tokenize
-  (ELandrixXmlError with xecLimit beyond, never a silent mismatch); an
-  iteration of a loop that consumes nothing ends the loop, keeping its
-  captures (as Saxon). Every character a back-reference compares counts
+  (ELandrixXmlError with xecLimit beyond, never a silent mismatch). In
+  both matchers an iteration of a loop that consumes nothing ends the
+  loop, keeping its captures (as Saxon: "(a*)+b" on "aaab" gives an
+  empty group 1). Every character a back-reference compares counts
   as a step; a search that is quadratic in the input (such as
   <([a-z]+)>.*</\1> without a match) reaches the limit at a few thousand
   characters. Its undo trail grows with the steps (a few hundred MB at
@@ -77,9 +78,11 @@
   are only allowed before '['. In both modes a range cannot start or end
   with an unescaped hyphen.
 
-  Known differences from Saxon (and other backtracking engines): a group
-  inside a repetition keeps the text of the last non-empty iteration ("(a*)+b" on "aaab" gives "aaa"
-  for group 1, Saxon an empty string), and the category Cs is not
+  Known differences from Saxon: a reluctant repetition whose body can
+  match nothing reluctantly, as "(?:a*?)+?b" or "(b*?)*?c", may match
+  further left: in "ab" and "abc" these find "ab" and "bc", Saxon only
+  "b" and "c" (it gives up a body after an empty iteration); and the
+  category Cs is not
   known in the XPath modes (Saxon has no table for it either, and UTF-8
   input never contains surrogates; xrmXsd takes it, as Xerces). }
 
@@ -139,6 +142,13 @@ type
     FGroupClosed: array of Boolean;
     FHasBackRef: Boolean;
     FLoopHead: array of Boolean;
+    { the number of loop bodies around each PC (for a loop head the depth
+      of its loop), and where the marks of the Pike VM start for each PC
+      (FLoopDepth[PC] + 1 of them, see AddThread; one for a set or match,
+      and for every PC of a pattern with back-references, which the Pike
+      VM does not run); one entry more at the end }
+    FLoopDepth: array of Integer;
+    FMarkBase: array of Integer;
     procedure Error(const Msg: string);
     function CharSet(Lo, Hi: Integer): TLandrixXmlRegexSet;
     procedure Nest;
@@ -204,6 +214,8 @@ const
   MaxCodePoint = $10FFFF;
   { Limit of the compiled program; counted repetitions are written out. }
   MaxInstructions = 100000;
+  { the marks of the Pike VM: instructions times enclosing loops }
+  MaxMarks = 4000000;
   { Limit of nested groups and class subtractions (recursive parser). }
   MaxDepth = 1000;
   { Steps of the backtracking matcher per call of Matches, Replace or
@@ -689,6 +701,9 @@ type
   TThread = record
     PC: Integer;
     Captures: TLandrixXmlCodePoints;
+    { AddThread: the outermost loop enclosing PC whose current iteration
+      started at this position (its depth), -1 for none }
+    Ctx: Integer;
   end;
   { Kind 0: a choice point (A = PC, B = position); 1: undo a capture
     (A = slot, B = old value); 2: undo a loop entry (A = PC, B = old
@@ -727,8 +742,8 @@ var
   I: Integer;
 begin
   State.Marks := nil;
-  SetLength(State.Marks, Length(R.FCode));
-  for I := 0 to Integer(Length(R.FCode)) - 1 do
+  SetLength(State.Marks, R.FMarkBase[Length(R.FCode)]);
+  for I := 0 to Integer(Length(State.Marks)) - 1 do
     State.Marks[I] := -1;
   State.Generation := 0;
   State.Stack := nil;
@@ -752,46 +767,93 @@ begin
   end;
 end;
 
-procedure Push(var State: TVmState; PC: Integer; const Captures: TLandrixXmlCodePoints);
+procedure Push(var State: TVmState; PC: Integer; const Captures: TLandrixXmlCodePoints; Ctx: Integer);
 begin
   if State.StackCount = Length(State.Stack) then
     SetLength(State.Stack, 2 * State.StackCount + 16);
   State.Stack[State.StackCount].PC := PC;
   State.Stack[State.StackCount].Captures := Captures;
+  State.Stack[State.StackCount].Ctx := Ctx;
   Inc(State.StackCount);
 end;
 
 { Follows the jumps, splits, saves and assertions from PC and adds the
   threads that wait for a character (or match) to List, in priority
   order. Depth first with an explicit stack: a recursive walk would need
-  stack space in proportion to the program. }
-procedure AddThread(const Code: TLandrixXmlRegexCode; var State: TVmState; var List: TThreadList;
+  stack space in proportion to the program.
+  An iteration of a loop that consumes nothing ends the loop with its
+  captures, as in the backtracking matcher (and Saxon), so a state is the
+  PC together with Ctx, the outermost enclosing loop whose current
+  iteration started at this position (the loops inside it did too): a
+  PC is taken once per Ctx, a waiting thread (set, match) once. }
+procedure AddThread(R: TLandrixXmlRegex; var State: TVmState; var List: TThreadList;
   StartPC: Integer; const StartCaptures: TLandrixXmlCodePoints; const Text: TLandrixXmlCodePoints;
   Position: Integer);
 var
-  PC, I: Integer;
+  PC, I, G, Ctx, Slot, ExitPC, Depth: Integer;
   Captures, Copied: TLandrixXmlCodePoints;
+  Code: TLandrixXmlRegexCode;
 begin
+  Code := R.FCode;
   Copied := nil;
   Captures := nil;
-  Push(State, StartPC, StartCaptures);
+  Push(State, StartPC, StartCaptures, -1);
   while State.StackCount > 0 do
   begin
     Dec(State.StackCount);
     PC := State.Stack[State.StackCount].PC;
     Captures := State.Stack[State.StackCount].Captures;
+    Ctx := State.Stack[State.StackCount].Ctx;
     State.Stack[State.StackCount].Captures := nil;
-    if State.Marks[PC] = State.Generation then
+    if Code[PC].Op in [xroSet, xroMatch] then
+      Slot := R.FMarkBase[PC]
+    else
+      Slot := R.FMarkBase[PC] + Ctx + 1;
+    if State.Marks[Slot] = State.Generation then
       Continue;
-    State.Marks[PC] := State.Generation;
+    State.Marks[Slot] := State.Generation;
     case Code[PC].Op of
       xroJump:
-        Push(State, PC + Code[PC].A, Captures);
+        begin
+          G := PC + Code[PC].A;
+          Depth := R.FLoopDepth[G];
+          if (Code[PC].A < 0) and R.FLoopHead[G] and (Ctx >= 0) then
+          begin
+            { the iteration consumed nothing: the loop ends here }
+            if Code[G].A = 1 then
+              ExitPC := G + Code[G].B
+            else
+              ExitPC := G + Code[G].A;
+            if Ctx >= Depth then
+              Push(State, ExitPC, Captures, -1)
+            else
+              Push(State, ExitPC, Captures, Ctx);
+          end
+          else
+            Push(State, G, Captures, Ctx);
+        end;
       xroSplit:
         begin
-          { the preferred target is taken from the stack first }
-          Push(State, PC + Code[PC].B, Captures);
-          Push(State, PC + Code[PC].A, Captures);
+          { the preferred target is taken from the stack first; at a loop
+            head the body (PC + 1) starts an iteration at this position }
+          if R.FLoopHead[PC] and (Ctx < 0) then
+          begin
+            if Code[PC].A = 1 then
+            begin
+              Push(State, PC + Code[PC].B, Captures, Ctx);
+              Push(State, PC + 1, Captures, R.FLoopDepth[PC]);
+            end
+            else
+            begin
+              Push(State, PC + 1, Captures, R.FLoopDepth[PC]);
+              Push(State, PC + Code[PC].A, Captures, Ctx);
+            end;
+          end
+          else
+          begin
+            Push(State, PC + Code[PC].B, Captures, Ctx);
+            Push(State, PC + Code[PC].A, Captures, Ctx);
+          end;
         end;
       xroSave:
         if State.WantCaptures then
@@ -801,19 +863,19 @@ begin
           for I := 0 to Integer(Length(Captures)) - 1 do
             Copied[I] := Captures[I];
           Copied[Code[PC].A] := Position;
-          Push(State, PC + 1, Copied);
+          Push(State, PC + 1, Copied, Ctx);
         end
         else
-          Push(State, PC + 1, Captures);
+          Push(State, PC + 1, Captures, Ctx);
       xroStart:
         { A = 1: multi-line, also after an LF that is not the last character }
         if (Position = 0) or ((Code[PC].A = 1) and (Text[Position - 1] = CharLf) and
           (Position < Length(Text))) then
-          Push(State, PC + 1, Captures);
+          Push(State, PC + 1, Captures, Ctx);
       xroEnd:
         { A = 1: multi-line, also before an LF }
         if (Position = Length(Text)) or ((Code[PC].A = 1) and (Text[Position] = CharLf)) then
-          Push(State, PC + 1, Captures);
+          Push(State, PC + 1, Captures, Ctx);
     else
       { xroSet, xroMatch: wait for the next step }
       if List.Count = Length(List.Items) then
@@ -851,7 +913,7 @@ begin
     { a new attempt at Position has the lowest priority; none once a
       match is known, because matches are leftmost }
     if (Position = StartPos) or (Search and not Result) then
-      AddThread(R.FCode, State, State.Current, 0, Initial, Text, Position);
+      AddThread(R, State, State.Current, 0, Initial, Text, Position);
     { no thread left: done, unless a search can still start further on }
     if (State.Current.Count = 0) and (Result or not Search) then
       Break;
@@ -871,7 +933,7 @@ begin
       end;
       { xroSet }
       if (Position < TextLength) and SetContains(R.FSets[R.FCode[J].A], Text[Position]) then
-        AddThread(R.FCode, State, State.Next, J + 1, State.Current.Items[I].Captures, Text,
+        AddThread(R, State, State.Next, J + 1, State.Current.Items[I].Captures, Text,
           Position + 1);
     end;
     if Position >= TextLength then
@@ -1155,6 +1217,7 @@ var
   Empty: TLandrixXmlCodePoints;
   Captures: TLandrixXmlCodePoints;
   Count, I: Integer;
+  Marks: Int64;
   State: TVmState;
 begin
   inherited Create;
@@ -1201,17 +1264,42 @@ begin
   AppendInstr(FCode, Count, xroMatch, 0, 0);
   SetLength(FCode, Count);
   Empty := nil;
-  { the loop heads of the backtracking matcher: splits that a backward
-    jump returns to }
-  if FHasBackRef then
+  { the loop heads (both matchers): splits that a backward jump returns to }
+  SetLength(FLoopHead, Count);
+  for I := 0 to Count - 1 do
+    FLoopHead[I] := False;
+  for I := 0 to Count - 1 do
+    if (FCode[I].Op = xroJump) and (FCode[I].A < 0) and (FCode[I + FCode[I].A].Op = xroSplit) then
+      FLoopHead[I + FCode[I].A] := True;
+  { a loop's body runs from its head + 1 to the backward jump }
+  SetLength(FLoopDepth, Count + 1);
+  for I := 0 to Count do
+    FLoopDepth[I] := 0;
+  for I := 0 to Count - 1 do
+    if (FCode[I].Op = xroJump) and (FCode[I].A < 0) and FLoopHead[I + FCode[I].A] then
+    begin
+      Inc(FLoopDepth[I + FCode[I].A + 1]);
+      Dec(FLoopDepth[I + 1]);
+    end;
+  for I := 1 to Count do
+    FLoopDepth[I] := FLoopDepth[I] + FLoopDepth[I - 1];
+  { the marks of the Pike VM (the backtracking matcher has none): one per
+    waiting instruction, one per enclosing loop and one more for the
+    others }
+  SetLength(FMarkBase, Count + 1);
+  Marks := 0;
+  for I := 0 to Count - 1 do
   begin
-    SetLength(FLoopHead, Count);
-    for I := 0 to Count - 1 do
-      FLoopHead[I] := False;
-    for I := 0 to Count - 1 do
-      if (FCode[I].Op = xroJump) and (FCode[I].A < 0) and (FCode[I + FCode[I].A].Op = xroSplit) then
-        FLoopHead[I + FCode[I].A] := True;
+    FMarkBase[I] := Integer(Marks);
+    if FHasBackRef or (FCode[I].Op in [xroSet, xroMatch]) then
+      Marks := Marks + 1
+    else
+      Marks := Marks + FLoopDepth[I] + 1;
+    { deeply nested loops around many instructions }
+    if Marks > MaxMarks then
+      RaiseTooLarge;
   end;
+  FMarkBase[Count] := Integer(Marks);
   InitVm(Self, State, False);
   FMatchesEmpty := RunMatch(Self, State, Empty, 0, False, Captures);
 end;

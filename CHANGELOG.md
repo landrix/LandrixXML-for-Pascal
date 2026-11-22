@@ -80,6 +80,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Regular expressions: a loop iteration that consumes nothing ends the
+  loop with its captures also in the linear-time matcher (patterns without
+  back-references), as it did in the backtracking one and does in Saxon.
+  Before, the iteration was dropped, so `b(?:x*?)*` matched `bx` in `bxx`
+  (Saxon: `b`) and `(a*)+b` gave `aaa` for group 1 in `aaab` (Saxon: an
+  empty string). The matcher now tells states apart by the outermost
+  enclosing loop whose iteration started at the current position, which
+  keeps it linear. Saxon differs for a reluctant repetition of a body
+  that can match nothing reluctantly (`(?:a*?)+?b`, documented). New
+  generated cases and `Regex.EmptyIterations`.
 - XML Schema: `xsi:noNamespaceSchemaLocation` is checked as an
   `xs:anyURI` and `xsi:schemaLocation` as a list of them
   (`cvc-datatype-valid.1.2.1` and `cvc-attribute.3` for a value that is

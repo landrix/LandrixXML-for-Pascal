@@ -329,6 +329,55 @@ begin
   end;
 end;
 
+{ A loop iteration that consumes nothing ends the loop with its captures,
+  in the Pike VM as in the backtracking matcher (forced here by a
+  back-reference to an empty group) and Saxon; "(?:a*?)+?b" and
+  "(b*?)*?c" on "abc" are the known differences from Saxon, which matches
+  at the "b" and the "c" only. }
+procedure TestEmptyIterations;
+const
+  Cases: array[0..12, 0..3] of string = (
+    ('b(?:x*?)*', 'bxx', '[$0]', '[b]xx'),
+    ('(a*)+b', 'aaab', '[$1]', '[]'),
+    ('(x*)*y', 'xxy', '[$0|$1]', '[xxy|]'),
+    ('(a{0,2})*b', 'aaab', '[$0|$1]', '[aaab|]'),
+    ('((a)|b*)*c', 'abbc', '[$0|$1|$2]', '[abbc||a]'),
+    ('(b*?)*?c', 'bbc', '[$0|$1]', '[bbc|b]'),
+    ('(?:a*?)+?b', 'ab', '[$0]', '[ab]'),
+    ('(b*?)*?c', 'abc', '[$0|$1]', 'a[bc|b]'),
+    { nested loops: the outermost iteration that started here counts }
+    ('(?:(a*)*)*b', 'aaab', '[$0|$1]', '[aaab|]'),
+    ('((a*)+)*c', 'aac', '[$0|$1|$2]', '[aac||]'),
+    ('(?:(?:a?)*b?)*c', 'abc', '[$0]', '[abc]'),
+    ('(?:(a?)*(b?))*c', 'abc', '[$0|$1|$2]', '[abc||]'),
+    ('(?:a*b*)*c', 'abac', '[$0]', '[abac]'));
+var
+  I, J: Integer;
+  R: TLandrixXmlRegex;
+  P: string;
+begin
+  for I := 0 to High(Cases) do
+    for J := 0 to 1 do
+    begin
+      P := Cases[I, 0];
+      if J = 1 then
+      begin
+        R := TLandrixXmlRegex.Create(U(P), xrmXPath);
+        try
+          P := '(?:' + P + ')()\' + IntToStr(R.GroupCount + 1);
+        finally
+          R.Free;
+        end;
+      end;
+      R := TLandrixXmlRegex.Create(U(P), xrmXPath);
+      try
+        CheckEqualsUtf8(U(Cases[I, 3]), R.Replace(U(Cases[I, 1]), U(Cases[I, 2])), P);
+      finally
+        R.Free;
+      end;
+    end;
+end;
+
 { The flags s, m, x, q and the reluctant quantifiers (results as Saxon). }
 procedure TestFlags;
 begin
@@ -420,6 +469,13 @@ begin
   R := TLandrixXmlRegex.Create(U('(a*)*b'), xrmXPath);
   try
     Check(not R.Matches(U(S)), '(a*)*b on a...a');
+  finally
+    R.Free;
+  end;
+  { three nested loops: a few states per position and loop }
+  R := TLandrixXmlRegex.Create(U('(?:(?:(a*)*)*)*b'), xrmXPath);
+  try
+    Check(not R.Matches(U(S)), '(?:(?:(a*)*)*)*b on a...a');
   finally
     R.Free;
   end;
@@ -743,6 +799,7 @@ begin
   RegisterTest('Regex.XsdDialect', TestXsdDialect);
   RegisterTest('Regex.XPath20Dialect', TestXPath20Dialect);
   RegisterTest('Regex.Blocks', TestBlocks);
+  RegisterTest('Regex.EmptyIterations', TestEmptyIterations);
   RegisterTest('Regex.Flags', TestFlags);
   RegisterTest('Regex.Properties', TestProperties);
   RegisterTest('Regex.LinearTime', TestLinearTime);
