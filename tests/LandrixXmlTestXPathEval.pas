@@ -1130,6 +1130,87 @@ end;
 
 { deep-equal across two trees and on documents nested deeper than the
   stack would allow for one call per level. }
+{ The short cuts of axis steps: a first predicate [k] stops the axis
+  after its k-th node (preceding-sibling walks backwards), and a step
+  without predicates skips contexts whose result another one contains;
+  the results as without them. Many siblings: linear, not quadratic. }
+procedure TestAxisShortCuts;
+var
+  Tree, Wide: TLandrixXmlXPathTree;
+  Evaluator: TLandrixXmlXPathEvaluator;
+  Expr: TLandrixXmlXPathExpression;
+  Text: TLandrixXmlUtf8;
+  I: Integer;
+  Raised: string;
+
+  function Run(const S: string): string;
+  begin
+    Expr.Free;
+    Expr := nil;
+    Expr := TLandrixXmlXPathExpression.Create(U(S), nil);
+    Result := LandrixXmlUtf8ToString(Evaluator.EvaluateString(Expr, 0));
+  end;
+
+begin
+  Tree := TLandrixXmlXPathTree.Create;
+  Wide := TLandrixXmlXPathTree.Create;
+  Evaluator := nil;
+  Expr := nil;
+  try
+    Tree.LoadFromUtf8(U('<r a="1"><a><b/><c/></a>t<d><e/></d><!--x--><f/><g/></r>'));
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Tree);
+    CheckEqualsStr('d', Run('name(/r/f/preceding-sibling::*[1])'), 'preceding-sibling::*[1]');
+    CheckEqualsStr('a', Run('name(/r/f/preceding-sibling::*[2])'), 'preceding-sibling::*[2]');
+    CheckEqualsStr('d', Run('name(/r/f/preceding-sibling::node()[2])'), 'after the comment');
+    CheckEqualsStr('t', Run('string(/r/f/preceding-sibling::node()[3])'), 'the text');
+    CheckEqualsStr('a', Run('name(/r/f/preceding-sibling::node()[4])'), 'over a subtree');
+    CheckEqualsStr('0', Run('count(/r/f/preceding-sibling::node()[5])'), 'none before the first');
+    CheckEqualsStr('0', Run('count(/r/a/preceding-sibling::node()[1])'), 'no attribute as a sibling');
+    CheckEqualsStr('f', Run('name(/r/a/following-sibling::*[2])'), 'following-sibling::*[2]');
+    CheckEqualsStr('0', Run('count(/r/g/following-sibling::*[1])'), 'none after the last');
+    CheckEqualsStr('d', Run('name(/r/f/preceding::*[2])'), 'preceding::*[2]');
+    CheckEqualsStr('e', Run('name(/r/a/c/following::*[2])'), 'following::*[2]');
+    CheckEqualsStr('r', Run('name(/r/d/e/ancestor::*[2])'), 'ancestor::*[2]');
+    CheckEqualsStr('c', Run('name(/r/descendant::*[3])'), 'descendant::*[3]');
+    CheckEqualsStr('3', Run('count(/r/*/preceding-sibling::*[1])'), 'per context');
+    CheckEqualsStr('a', Run('name(/r/@*[1])'), 'attribute::*[1]');
+    CheckEqualsStr('b', Run('name(/r/a/*[1][self::b])'), 'a later predicate on the k-th');
+    CheckEqualsStr('5', Run('count(/r/(@a|*)/following-sibling::node())'), 'an attribute covers no sibling');
+    CheckEqualsStr('5', Run('count(/r/*/preceding-sibling::node())'), 'preceding siblings once');
+    CheckEqualsStr('6', Run('count(/r/(@a|a|d)/descendant-or-self::node())'), 'an attribute is its own');
+    CheckEqualsStr('3', Run('count(/r/(a|a/b|d)/descendant::node())'), 'descendants once');
+    { 20,000 siblings }
+    Text := U('<r>');
+    for I := 1 to 20000 do
+      Text := Text + U('<i/>');
+    Text := Text + U('</r>');
+    Wide.LoadFromUtf8(Text);
+    Expr.Free;
+    Expr := nil;
+    Evaluator.Free;
+    Evaluator := TLandrixXmlXPathEvaluator.Create(Wide);
+    CheckEqualsStr('19999 19999 19998', Run('string-join((string(count(/r/i/preceding-sibling::*[1])), ' +
+      'string(count(/r/i/following-sibling::i)), string(count(/r/i/following-sibling::*[2]))), '' '')'),
+      'many siblings');
+    { the same parent 20,000 times: duplicates removed on the way }
+    CheckEqualsStr('1', Run('count(/r/i/parent::r)'), 'one parent');
+    { an atomic value after the nodes sorted on the way }
+    Raised := '';
+    try
+      Run('count(/r/i/(if (. is /r/i[last()]) then 0 else .))');
+    except
+      on E: ELandrixXmlXPathError do
+        Raised := E.XPathCode;
+    end;
+    CheckEqualsStr('XPTY0018', Raised, 'nodes and an atomic value');
+  finally
+    Expr.Free;
+    Evaluator.Free;
+    Wide.Free;
+    Tree.Free;
+  end;
+end;
+
 procedure TestDeepEqual;
 const
   Levels = 17;
@@ -3090,6 +3171,7 @@ begin
   RegisterTest('XPathEval.TemporaryTrees', TestTemporaryTrees);
   RegisterTest('XPathEval.HostFunctions', TestHostFunctions);
   RegisterTest('XPathEval.MatchesPattern', TestMatchesPattern);
+  RegisterTest('XPathEval.AxisShortCuts', TestAxisShortCuts);
   RegisterTest('XPathEval.PatternStackBudget', TestPatternStackBudget);
   RegisterTest('XPathEval.Frames', TestFrames);
   RegisterTest('XPathEval.StackBudget', TestStackBudget);

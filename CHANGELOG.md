@@ -65,6 +65,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XPath speed with many siblings: a step whose first predicate is a
+  number (`preceding-sibling::*[1]`, `following::x[2]`, a pattern
+  `match="i[1]"`) stops at that node instead of building the whole axis
+  for every context (`preceding-sibling` now walks backwards), and a
+  path step without predicates on a sibling or descendant axis skips
+  the contexts whose nodes another context already gives
+  (`/r/item/following-sibling::item`); duplicates are removed while a
+  step collects its nodes, so its memory no longer grows with the square
+  of the siblings. With 4,000 siblings `match="i[1]"` took 36 s and
+  `preceding-sibling::*[1]` 19 s; both now take a fraction of a second,
+  also with 20,000.
 - Stack budget (`MaxStackBytes`) where it was missing: matching a
   pattern (`MatchesPattern`, one level per step, with its predicates)
   counts from the start of the match as an evaluation does, and the XSLT

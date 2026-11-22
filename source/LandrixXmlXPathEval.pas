@@ -404,6 +404,10 @@ type
     function EvalStep(Index: Integer; Node: Integer; Axis: TLandrixXmlXPathAxis): TLandrixXmlXPathSequence;
     function EvalIntersectExcept(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
+    function CoveringAxis(Step: Integer; Axis: TLandrixXmlXPathAxis;
+      const Current: TLandrixXmlXPathSequence): Boolean;
+    function Covered(Axis: TLandrixXmlXPathAxis; const Current: TLandrixXmlXPathSequence;
+      I: Integer; var LastEnd: Integer): Boolean;
     function EvalPath(Index: Integer; Context, Position, Size: Integer;
       const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     function ApplyPredicates(const Predicates: array of Integer;
@@ -3738,6 +3742,10 @@ var
   { the node's tree, its numbers from Base on; the step runs in it }
   T: TLandrixXmlXPathTree;
   Base: Integer;
+  { a first predicate [k] (a literal): the axis stops after its k-th node
+    (Done), as only that one can pass it }
+  Limit: Int64;
+  Done: Boolean;
 
   function Test(I: Integer): Boolean;
   var
@@ -3777,6 +3785,8 @@ var
     begin
       Item.Node := I + Base;
       LandrixXmlXPathAppend(Out1, Item);
+      if Out1.Count >= Limit then
+        Done := True;
     end;
   end;
 
@@ -3784,9 +3794,29 @@ var
   var
     J: Integer;
   begin
-    for J := From + 1 to T.SubtreeEnd[From] do
+    J := From + 1;
+    while (J <= T.SubtreeEnd[From]) and not Done do
+    begin
       if T.Kind[J] <> xnkAttribute then
         Add(J);
+      Inc(J);
+    end;
+  end;
+
+  { the sibling before I (-1: none): the node before it, or the ancestor
+    of that node below the parent P }
+  function PrevSibling(I, P: Integer): Integer;
+  begin
+    Result := I - 1;
+    if Result <= P then
+    begin
+      Result := -1;
+      Exit;
+    end;
+    while T.Parent[Result] <> P do
+      Result := T.Parent[Result];
+    if T.Kind[Result] = xnkAttribute then
+      Result := -1;
   end;
 
 begin
@@ -3806,11 +3836,20 @@ begin
   Expanded := -1;
   if N^.NodeTest = xntName then
     Expanded := T.FindExpandedName(N^.NamespaceUri, N^.LocalName);
+  { not in a pattern's own evaluation, which tracks failed items }
+  Limit := MaxInt;
+  if not FPattern and (Length(N^.Predicates) > 0) then
+  begin
+    Limit := LiteralPosition(FNodes, N^.Predicates[0]);
+    if Limit <= 0 then
+      Limit := MaxInt;
+  end;
+  Done := False;
   case Axis of
     xaxChild:
       begin
         I := T.FirstChild(Node);
-        while I >= 0 do
+        while (I >= 0) and not Done do
         begin
           Add(I);
           I := T.NextSibling[I];
@@ -3828,7 +3867,11 @@ begin
     xaxAttribute:
       if T.Kind[Node] = xnkElement then
         for I := Node + 1 to Node + T.AttributeCount[Node] do
+        begin
           Add(I);
+          if Done then
+            Break;
+        end;
     xaxSelf:
       Add(Node);
     xaxParent:
@@ -3840,7 +3883,7 @@ begin
         if Axis = xaxAncestorOrSelf then
           Add(Node);
         I := T.Parent[Node];
-        while I >= 0 do
+        while (I >= 0) and not Done do
         begin
           Add(I);
           I := T.Parent[I];
@@ -3850,14 +3893,27 @@ begin
       if T.Kind[Node] <> xnkAttribute then
       begin
         I := T.NextSibling[Node];
-        while I >= 0 do
+        while (I >= 0) and not Done do
         begin
           Add(I);
           I := T.NextSibling[I];
         end;
       end;
     xaxPrecedingSibling:
-      if (T.Kind[Node] <> xnkAttribute) and (T.Parent[Node] >= 0) then
+      if (T.Kind[Node] <> xnkAttribute) and (T.Parent[Node] >= 0) and (Limit < MaxInt) then
+      begin
+        { [k]: backwards from Node, nearest first, up to the k-th }
+        Reverse := True;
+        I := PrevSibling(Node, T.Parent[Node]);
+        while I >= 0 do
+        begin
+          Add(I);
+          if Done then
+            Break;
+          I := PrevSibling(I, T.Parent[Node]);
+        end;
+      end
+      else if (T.Kind[Node] <> xnkAttribute) and (T.Parent[Node] >= 0) then
       begin
         Reverse := True;
         { nearest first }
@@ -3884,9 +3940,13 @@ begin
           I := Node + 1
         else
           I := T.SubtreeEnd[Node] + 1;
-        for E := I to T.Count - 1 do
+        E := I;
+        while (E < T.Count) and not Done do
+        begin
           if T.Kind[E] <> xnkAttribute then
             Add(E);
+          Inc(E);
+        end;
       end;
     xaxPreceding:
       begin
@@ -3896,7 +3956,7 @@ begin
         if T.Kind[I] = xnkAttribute then
           I := T.Parent[I];
         E := I - 1;
-        while E > 0 do
+        while (E > 0) and not Done do
         begin
           if (T.Kind[E] <> xnkAttribute) and (T.SubtreeEnd[E] < I) then
             Add(E);
@@ -3953,13 +4013,89 @@ begin
   Result.Count := K;
 end;
 
+{ Whether a step without predicates on a sibling or descendant axis gets
+  contexts in document order (nodes only, no duplicates): then the result
+  of one context contains that of others (Covered), which are skipped;
+  not in a pattern's own evaluation, which tracks every item. }
+function TLandrixXmlXPathEvaluator.CoveringAxis(Step: Integer; Axis: TLandrixXmlXPathAxis;
+  const Current: TLandrixXmlXPathSequence): Boolean;
+var
+  I: Integer;
+begin
+  Result := not FPattern and (FNodes[Step].Kind = xakStep) and (Length(FNodes[Step].Predicates) = 0) and
+    (Axis in [xaxFollowingSibling, xaxPrecedingSibling, xaxDescendant, xaxDescendantOrSelf]) and
+    (Current.Count > 1);
+  if not Result then
+    Exit;
+  for I := 0 to Current.Count - 1 do
+    if (Current.Items[I].Kind <> xikNode) or (I > 0) and (Current.Items[I].Node <= Current.Items[I - 1].Node) then
+    begin
+      Result := False;
+      Exit;
+    end;
+end;
+
+{ Whether the step's result for the context I is part of that of another
+  one (CoveringAxis): following siblings of a later sibling, preceding
+  ones of an earlier sibling, descendants of a descendant of the context
+  last taken (LastEnd: the end of its subtree, set here). }
+function TLandrixXmlXPathEvaluator.Covered(Axis: TLandrixXmlXPathAxis; const Current: TLandrixXmlXPathSequence;
+  I: Integer; var LastEnd: Integer): Boolean;
+var
+  T: TLandrixXmlXPathTree;
+  Base, X: Integer;
+
+  { the parent of a sibling (-1 for an attribute, which has none: an
+    attribute of the parent covers none of its children) }
+  function ParentOf(Y: Integer): Integer;
+  var
+    B: Integer;
+    U: TLandrixXmlXPathTree;
+  begin
+    U := TreeOf(Y, B);
+    if U.Kind[Y - B] = xnkAttribute then
+      Result := -1
+    else
+    begin
+      Result := U.Parent[Y - B];
+      if Result >= 0 then
+        Inc(Result, B);
+    end;
+  end;
+
+begin
+  X := Current.Items[I].Node;
+  case Axis of
+    xaxFollowingSibling:
+      Result := (I > 0) and (ParentOf(X) >= 0) and (ParentOf(Current.Items[I - 1].Node) = ParentOf(X));
+    xaxPrecedingSibling:
+      Result := (I < Current.Count - 1) and (ParentOf(X) >= 0) and
+        (ParentOf(Current.Items[I + 1].Node) = ParentOf(X));
+  else
+    begin
+      { descendant(-or-self): inside the subtree of the context last
+        taken; an attribute is its own descendant-or-self but not one
+        of an element (taken, LastEnd kept) }
+      T := TreeOf(X, Base);
+      if T.Kind[X - Base] = xnkAttribute then
+        Result := (Axis = xaxDescendant) and (X <= LastEnd)
+      else
+      begin
+        Result := X <= LastEnd;
+        if not Result then
+          LastEnd := T.SubtreeEnd[X - Base] + Base;
+      end;
+    end;
+  end;
+end;
+
 function TLandrixXmlXPathEvaluator.EvalPath(Index: Integer; Context, Position, Size: Integer;
   const ContextItem: TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
 var
   N: ^TLandrixXmlXPathAstNode;
-  K, I, Step, First: Integer;
+  K, I, J, Step, First, Sorted, Dedup, LastEnd: Integer;
   Current, Next, Part, Ctx: TLandrixXmlXPathSequence;
-  AllNodes, AllAtomic, Final: Boolean;
+  AllNodes, AllAtomic, Final, Covering: Boolean;
   Axis: TLandrixXmlXPathAxis;
 begin
   N := @FNodes[Index];
@@ -4004,10 +4140,16 @@ begin
     Next := LandrixXmlXPathEmpty;
     AllNodes := True;
     AllAtomic := True;
+    Sorted := 0;
+    Dedup := 4096;
+    Covering := CoveringAxis(Step, Axis, Current);
+    LastEnd := -1;
     for I := 0 to Current.Count - 1 do
     begin
       if Current.Items[I].Kind <> xikNode then
         Fail('XPTY0019', 'the left side of "/" contains an atomic value');
+      if Covering and Covered(Axis, Current, I, LastEnd) then
+        Continue;
       if FNodes[Step].Kind = xakStep then
         Part := EvalStep(Step, Current.Items[I].Node, Axis)
       else
@@ -4016,6 +4158,23 @@ begin
         Part := Eval(Step, Current.Items[I].Node, I + 1, Current.Count, Ctx);
       end;
       AppendAll(Next, Part);
+      { overlapping parts (/r/item/following-sibling::item): duplicates
+        removed on the way, so the peak stays near the result's size;
+        only while every item is a node (the end sorts them anyway) }
+      if Next.Count >= Dedup then
+      begin
+        J := Sorted;
+        while (J < Next.Count) and (Next.Items[J].Kind = xikNode) do
+          Inc(J);
+        if J = Next.Count then
+        begin
+          SortNodes(Next);
+          Sorted := Next.Count;
+          Dedup := 2 * Next.Count + 4096;
+        end
+        else
+          Dedup := MaxInt;
+      end;
     end;
     for I := 0 to Next.Count - 1 do
       if Next.Items[I].Kind = xikNode then
