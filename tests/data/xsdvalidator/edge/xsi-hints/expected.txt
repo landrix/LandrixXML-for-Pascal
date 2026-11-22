@@ -1,0 +1,23 @@
+file a.xml
+error 2 45 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "L".
+error 3 53 cvc-identity-constraint.4.1 Duplicate unique value [x.xsd] declared for identity constraint "N" of element "r".
+error 3 53 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "L".
+error 4 16 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "L".
+error 5 5 cvc-identity-constraint.4.3 Key 'R' with value 'y.xsd' not found for identity constraint of element 'r'.
+
+file b.xml
+error 3 39 cvc-identity-constraint.4.2.2 Duplicate key value [urn:a x.xsd] declared for identity constraint "L" of element "r".
+error 6 11 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "L".
+
+file c.xml
+error 2 52 cvc-datatype-valid.1.2.1 'http://[::1]x/' is not a valid value for 'anyURI'.
+error 2 52 cvc-attribute.3 The value 'http://[::1]x/' of attribute 'xsi:noNamespaceSchemaLocation' on element 'k' is not valid with respect to its type, 'anyURI'.
+error 2 52 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "L".
+error 3 47 cvc-datatype-valid.1.2.1 'http://[::1]x/' is not a valid value for 'anyURI'.
+error 3 47 cvc-attribute.3 The value 'urn:a http://[::1]x/' of attribute 'xsi:schemaLocation' on element 'k' is not valid with respect to its type, '#AnonType_schemaLocation'.
+error 4 47 cvc-datatype-valid.1.2.1 'http://[::1]x/' is not a valid value for 'anyURI'.
+error 4 47 cvc-attribute.3 The value 'urn:a http://[::1]x/' of attribute 'xsi:schemaLocation' on element 'k' is not valid with respect to its type, '#AnonType_schemaLocation'.
+error 4 47 cvc-identity-constraint.4.2.2 Duplicate key value [urn:a] declared for identity constraint "L" of element "r".
+error 5 21 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "L".
+error 6 17 cvc-identity-constraint.4.1 Duplicate unique value [false] declared for identity constraint "B" of element "r".
+error 6 17 cvc-identity-constraint.4.2.1.a Element "r" has no value for the key "L".

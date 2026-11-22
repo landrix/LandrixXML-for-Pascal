@@ -175,6 +175,10 @@ type
     FEntitiesRead: Boolean;
     FQNameType: TLandrixXmlXsdSimpleType;
     FBooleanType: TLandrixXmlXsdSimpleType;
+    { the types of the location hints, as Xerces: xs:anyURI and a list of
+      it (owned) }
+    FAnyUriType: TLandrixXmlXsdSimpleType;
+    FAnyUriListType: TLandrixXmlXsdSimpleType;
     FAttrValues: TLandrixXmlXsdValueArray;
     FAttrValid: array of Boolean;
     { the text of the current element as Xerces buffers it }
@@ -1388,6 +1392,9 @@ begin
   FEntities := TLandrixXmlXsdNameMap.Create;
   FQNameType := LandrixXmlXsdBuiltinType('QName');
   FBooleanType := LandrixXmlXsdBuiltinType('boolean');
+  FAnyUriType := LandrixXmlXsdBuiltinType('anyURI');
+  FAnyUriListType := TLandrixXmlXsdSimpleType.CreateList('', '', FAnyUriType);
+  FAnyUriListType.AnonymousName := '#AnonType_schemaLocation';
   FStores := TObjectList.Create(True);
   FStoreIndex := TLandrixXmlXsdNameMap.Create;
   FMatchers := TObjectList.Create(True);
@@ -1408,6 +1415,7 @@ begin
   FStoreIndex.Free;
   FStores.Free;
   FValueContext.Free;
+  FAnyUriListType.Free;
   inherited Destroy;
 end;
 
@@ -1714,9 +1722,10 @@ end;
 
 { The xsi attributes every element may have. Xerces deviation: schA1,
   ctL021, attgD034, particlesB013, targetNS00101m1_p, ST_targetNS00101m2_p.
-  The location hints are allowed but never read (the schema is the one
-  given, as a preloaded schema in Xerces), so an xsi:type naming a type
-  of a hinted schema cannot be resolved. }
+  The location hints are type-checked (CheckAttribute) but never
+  followed (the schema is the one given, as a preloaded schema in
+  Xerces), so an xsi:type naming a type of a hinted schema cannot be
+  resolved. }
 function IsXsiBuiltin(const A: TLandrixXmlXsdEventAttribute): Boolean;
 begin
   Result := (A.NamespaceUri = LandrixXmlXsiNamespace) and ((A.LocalName = 'type') or (A.LocalName = 'nil') or
@@ -1924,29 +1933,34 @@ begin
   T := F.ComplexType;
   if IsXsiBuiltin(FAttrs[I]) then
   begin
-    { as Xerces: xsi:type is a QName, xsi:nil a boolean; the location
-      hints are not looked at }
+    { as Xerces: xsi:type is a QName, xsi:nil a boolean,
+      xsi:noNamespaceSchemaLocation an anyURI and xsi:schemaLocation a list
+      of anyURI (also empty, also with an odd number of items); the
+      location hints are not followed. Their values are those of identity
+      constraints too. }
     if FAttrs[I].LocalName = 'type' then
       XsiType := FQNameType
     else if FAttrs[I].LocalName = 'nil' then
       XsiType := FBooleanType
+    else if FAttrs[I].LocalName = 'noNamespaceSchemaLocation' then
+      XsiType := FAnyUriType
     else
-      XsiType := nil;
-    if XsiType <> nil then
+      XsiType := FAnyUriListType;
+    Valid := XsiType.Validate(FAttrs[I].Value, FValueContext, Value, Error, HasValue);
+    if not Valid then
     begin
-      if XsiType.Validate(FAttrs[I].Value, FValueContext, Value, Error) then
-      begin
-        FAttrValid[I] := True;
-        if KeepValues then
-          FAttrValues[I] := Value;
-      end
-      else
-      begin
-        Report(Error.Code, Error.Message, Line, Column, F.Decl);
-        Report('cvc-attribute.3', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
-          ' on element ' + Q(F.Name) + ' is not valid with respect to its type, ''' + XsiType.DisplayName + '''.',
-          Line, Column, F.Decl);
-      end;
+      Report(Error.Code, Error.Message, Line, Column, F.Decl);
+      Report('cvc-attribute.3', 'The value ' + Q(FAttrs[I].Value) + ' of attribute ' + Q(FAttrs[I].Name) +
+        ' on element ' + Q(F.Name) + ' is not valid with respect to its type, ''' + XsiType.DisplayName + '''.',
+        Line, Column, F.Decl);
+    end;
+    { as Xerces: the value computed before an item failed (the last valid
+      item of a list) is still the value of identity constraints }
+    if Valid or HasValue then
+    begin
+      FAttrValid[I] := True;
+      if KeepValues then
+        FAttrValues[I] := Value;
     end;
     Exit;
   end;

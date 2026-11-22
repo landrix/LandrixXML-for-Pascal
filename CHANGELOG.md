@@ -80,6 +80,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- XML Schema: `xsi:noNamespaceSchemaLocation` is checked as an
+  `xs:anyURI` and `xsi:schemaLocation` as a list of them
+  (`cvc-datatype-valid.1.2.1` and `cvc-attribute.3` for a value that is
+  not one, as Xerces), and an identity constraint field that selects one
+  of them now gets that typed value; before, such a field had no value,
+  so duplicates went unnoticed.
 - XML Schema: `xs:gDay`, `xs:gMonthDay` and `xs:gMonth` values with a time
   zone compare as Xerces compares them (enumeration, the bounds,
   identity constraints): when both have a time zone, only the type's own

@@ -1,0 +1,5 @@
+<r xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<k xsi:noNamespaceSchemaLocation=" x.xsd "/>
+<k xsi:noNamespaceSchemaLocation="x.xsd" u="x.xsd"/>
+<k u=" y.xsd"/>
+</r>
