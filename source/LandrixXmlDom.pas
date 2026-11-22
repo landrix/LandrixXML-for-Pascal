@@ -703,7 +703,7 @@ var
   Low: Cardinal;
 begin
   Low := 0;
-  Move(P, Low, 4);
+  Move(Pointer(@P)^, Low, 4);
   Result := LandrixXmlHashFinish(Low);
 end;
 

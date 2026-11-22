@@ -4575,10 +4575,6 @@ begin
       EvalCast(Index, Context, Position, Size, ContextItem, Output);
     xakFunction:
       CallFunctionInto(Index, Context, Position, Size, ContextItem, Output);
-  else
-    Fail('FOER0000', 'expression kind not supported');
-    Output.Items := nil;
-    Output.Count := 0;
   end;
 end;
 

@@ -292,7 +292,7 @@ function UriKey(Id: Integer): TLandrixXmlUtf8;
 begin
   Result := '';
   SetLength(Result, 4);
-  Move(Id, PAnsiChar(Result)^, 4);
+  Move(Pointer(@Id)^, PAnsiChar(Result)^, 4);
 end;
 
 { Finds Key in Keys/Slots (slot value = id + 1, 0 = free); returns the
@@ -419,7 +419,7 @@ var
   Low: Cardinal;
 begin
   Low := 0;
-  Move(P, Low, 4);
+  Move(Pointer(@P)^, Low, 4);
   Result := Integer(LandrixXmlHashFinish(Low) and Cardinal(Mask));
 end;
 

@@ -607,7 +607,9 @@ begin
   Move(P, Parts[2], SizeOf(Pointer));
   FreeMem(P);
   Q := @T;
-  Move(Q, Parts[4], SizeOf(Pointer));
+  { through the address: FPC 3.3.1 does not count an untyped Move source
+    as a read }
+  Move(Pointer(@Q)^, Parts[4], SizeOf(Pointer));
   HashSalt := LandrixXmlHashSeed;
   for I := 0 to 5 do
     HashSalt := LandrixXmlHashFinish(HashSalt xor Parts[I]);

@@ -80,6 +80,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Free Pascal 3.3.1 builds the library without hints or warnings again
+  (four "assigned but never used" notes and hints on values read by `Move`, one
+  unreachable `else` in the XPath evaluator).
 - XML Schema: `xs:redefine` with a simple type that redefines a complex
   type of the same name, or the other way round, is checked as Xerces
   does: the original is the base of the redefinition (cos-st-restricts.1.1,
