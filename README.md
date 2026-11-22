@@ -493,6 +493,10 @@ streamed) are supported, also in a stylesheet with `version="2.0"`, as
 Saxon runs them. `xsl:break` and `xsl:next-iteration` outside a tail
 position of `xsl:iterate` are `XTSE3120` as in Saxon, also where they
 are not inside an `xsl:iterate` at all (`XTSE0010` would do there too).
+The `select` of `xsl:iterate` is evaluated completely before the first
+iteration (as that of `xsl:for-each`), where Saxon reads it item by item:
+an `xsl:break` does not save evaluating the rest, and an error in an
+item after the break still fails the instruction.
 A version above 3.0 means forwards compatible processing as in Saxon (an
 unknown declaration is ignored, an unknown instruction runs its
 `xsl:fallback` and is `XTSE0010` without one, unknown attributes of XSLT
@@ -1016,10 +1020,11 @@ Differences from Xerces, also on purpose:
   XSLT 2.0 the XSLT units cover: of its 14,601 cases 5,643 are XSLT 1.0
   or 2.0 cases, or XSLT 3.0 cases of the test sets `iterate`, `mode` and
   `initial-mode` (the parts of XSLT 3.0 being added; the other sets
-  follow one by one), without a feature the catalog names that this
+  follow one by one; a case that needs `on-multiple-match="recover"`
+  runs, as Saxon takes the last matching rule), without a feature the catalog names that this
   library leaves out (schema awareness, streaming, the namespace axis,
   DTDs and the like);
-  5,229 of them pass and 69 more raise an error where one is expected,
+  5,234 of them pass and 69 more raise an error where one is expected,
   but with another code. 124 use an instruction or option that is not
   supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the

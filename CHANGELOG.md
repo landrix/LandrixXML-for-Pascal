@@ -41,7 +41,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   XSLT suite now runs the XSLT 3.0 cases of the test sets `iterate`,
   `mode` and `initial-mode`; 31 of the 44 `iterate` cases pass (the
   others need `xsl:try` or the initial template `xsl:initial-template`,
-  or give the error code Saxon gives).
+  or give the error code Saxon gives). Unlike Saxon, the `select` is evaluated
+  completely before the first iteration, as that of `xsl:for-each`.
 
 ### Changed
 
