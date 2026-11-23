@@ -7,6 +7,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `tools/fuzz-xpath.py`: a differential fuzzer for the XPath evaluator. It
+  generates random valid expressions from the constructs of the Saxon
+  profile, evaluates them on a small document with the QT3 helper and
+  with Saxon HE (`tools/XPathOracle.java`, which can now write nodes by
+  kind, name and string value, and reports a Java exception, a stack
+  overflow or an out-of-memory error of Saxon as `error internal`) and
+  sorts the differences into crashes, values, error codes and errors only
+  one side raises. A crash or a value difference that
+  `tests/data/xpath/fuzz-known.txt` does not explain fails the run, as do
+  errors only the evaluator raises or Saxon failures in more than 1 % of
+  the expressions, fewer than 97 % equal results or another exit code of
+  the helper; the
+  rest is listed in `build/fuzz-xpath/findings.txt`. 100,000 expressions
+  found no defect of the evaluator; the known list holds defects of Saxon
+  12.9 and one deliberate difference (the exact integer quotient of
+  `div`).
+
 ### Changed
 
 - `tools/x86-suites.ps1` runs the test suites (QT3 in both profiles, the

@@ -1076,6 +1076,20 @@ Differences from Xerces, also on purpose:
   the writer and DOM round trips. 50,000 variants per run, built with range
   and overflow checking: no crash, no other exception, no unexplained
   difference.
+- `tools/fuzz-xpath.py` generates random XPath expressions (arithmetic,
+  comparisons, strings, sequences, paths, the common functions, casts,
+  `for`/`let`/`some`/`every`/`if`, `!` and `||`) and compares the results
+  of the evaluator (Saxon profile) on a small document with Saxon HE.
+  100,000 expressions per run: no crash and no difference in a value
+  except the known ones of `tests/data/xpath/fuzz-known.txt` (defects of
+  Saxon, such as the type of `xs:decimal(1)` or the order after a parent
+  step, and the evaluator's exact integer quotient of `div`, which follows
+  the values where Saxon follows the static type). Expressions where
+  only one side raises an error (XPath lets an implementation skip an
+  error whose value it does not need, and Saxon raises type errors from
+  static types), where both raise different errors, or where Saxon
+  itself fails (well below 1 %, not compared) are listed for review; the run
+  fails if the evaluator alone raises an error in more than 1 % of them.
 
 ## Performance
 

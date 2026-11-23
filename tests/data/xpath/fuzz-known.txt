@@ -1,0 +1,40 @@
+# Known differences of tools/fuzz-xpath.py (the evaluator, profile saxon,
+# against Saxon HE 12.9): "CATEGORY REGEX", optionally a tab and a second
+# regular expression for the results ("OURS || SAXON", items separated by
+# " | "), "=same items" (the same items in another order) or "=types A B"
+# (the same items, but some of type A here and B in Saxon with the same
+# value), one per line;
+# a value or error code difference of an expression the regular expression
+# finds (and whose results match) is counted under CATEGORY instead of as
+# a finding, and listed under it in build/fuzz-xpath/findings.txt. Every
+# entry was checked by hand. Keep the patterns narrow: what they match is
+# not compared.
+#
+# Saxon casts an xs:integer (also one it reads from a string, xs:decimal(
+# string(1))) to xs:decimal without changing the type: xs:decimal(count(//a))
+# is an xs:integer there (F&O 3.1 19.1.1: the result has the target type)
+saxon-decimal-cast xs:decimal\(	=types xs:decimal xs:integer
+# Not a Saxon defect: Saxon chooses the arithmetic by the static type (an
+# integer div an integer is an xs:integer when it divides exactly, a value
+# typed only as numeric or decimal is divided as xs:decimal; F&O says
+# xs:decimal in both cases); the evaluator imitates Saxon's exact integer
+# quotient by the values, so it differs where Saxon's static type is wider
+evaluator-integer-div  div 	=types xs:integer xs:decimal
+# Saxon's optimizer: a quantified expression over one item returns the
+# operand of satisfies, not a boolean (also when it is empty)
+saxon-quantified-single ^\((some|every) \$	^xs:boolean [^|]*\|\| (?!xs:boolean |error )
+# Saxon's optimizer: contains() whose second argument is a substring-before()
+# with a zero-length second argument is false
+saxon-contains-substring-before contains\((?:[^(),]|\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\))*, substring-before\(	^xs:boolean true \|\| xs:boolean false$
+# Saxon's optimizer: after a parent step, the children of several parents
+# are not sorted again: ((//text())/..)/node() lists the text after b/c
+# before the text inside it (here in document order)
+saxon-order-after-parent /\.\.\)*/	=same items
+#
+# Not listed, kept out by the generator instead (Gen.position): Saxon
+# converts a large position or length to a Java int, which wraps:
+# insert-before(1 to 3, 12345678901, 'x') puts 'x' first, subsequence(1 to
+# 3, 1, 12345678901) and substring('10', -1, 12345678901) are empty. And
+# substring() with a fractional start: '' (substring('ax', 2.2)) or a Java
+# exception (substring('10', 0.1)) in Saxon; and an infinite length
+# (substring('abc', 2, xs:double('INF'))), also a Java exception there.

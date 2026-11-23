@@ -14,11 +14,17 @@
  *   node LOCATION       one line per node, location as SchXslt writes it
  *   map, array, function  one line per map, array or other function item
  *   error CODE          a static or dynamic error (XPTY0004, FORG0001, ...)
+ *   error internal      a Java exception inside Saxon, or it ran out of stack
+ *                       or memory (exit code 1 at the end)
  *
  * Control characters and the backslash in values appear as \xHH.
  * The cases file has lines "ns PREFIX URI", "compat on" or "compat off"
- * (XPath 1.0 compatibility mode for the expressions that follow) and
- * "expr EXPRESSION"; the context item is the document node.
+ * (XPath 1.0 compatibility mode for the expressions that follow), "nodes
+ * value" (nodes from then on as "node KIND Q{URI}LOCAL VALUE", KIND as
+ * XPath names it, "-" for a node without a name, VALUE the string value,
+ * spaces in the name as \x20: the format of tests/LandrixXmlQt3.dpr, for
+ * tools/fuzz-xpath.py) and "expr EXPRESSION"; the context item is the
+ * document node.
  *
  *   javac -cp validator-1.6.3-standalone.jar -d OUT tools/XPathOracle.java
  *   java -cp OUT;validator-1.6.3-standalone.jar XPathOracle doc.xml cases.txt
@@ -59,10 +65,13 @@ public class XPathOracle {
         xc.setLanguageVersion("3.1");
         List<String> lines = Files.readAllLines(new File(args[1]).toPath(), StandardCharsets.UTF_8);
         boolean internal = false;
+        boolean nodeValues = false;
         for (String line : lines) {
             if (line.startsWith("ns ")) {
                 String[] p = line.substring(3).split(" ", 2);
                 xc.declareNamespace(p[0], p[1]);
+            } else if (line.equals("nodes value")) {
+                nodeValues = true;
             } else if (line.startsWith("compat ")) {
                 xc.setBackwardsCompatible(line.substring(7).trim().equals("on"));
             } else if (line.startsWith("expr ")) {
@@ -73,7 +82,9 @@ public class XPathOracle {
                     sel.setContextItem(doc);
                     XdmValue v = sel.evaluate();
                     for (XdmItem item : v) {
-                        if (item instanceof XdmNode) {
+                        if (item instanceof XdmNode && nodeValues) {
+                            out.println("node " + nodeValue((XdmNode) item));
+                        } else if (item instanceof XdmNode) {
                             out.println("node " + esc(location((XdmNode) item)));
                         } else if (item instanceof XdmMap) {
                             out.println("map");
@@ -89,10 +100,11 @@ public class XPathOracle {
                 } catch (SaxonApiException e) {
                     String code = e.getErrorCode() == null ? "unknown" : e.getErrorCode().getLocalName();
                     out.println("error " + code);
-                } catch (RuntimeException e) {
+                } catch (RuntimeException | StackOverflowError | OutOfMemoryError e) {
                     // an unexpected item kind or a Saxon internal failure: keep
                     // going, but end with exit code 1 so no reference is written
-                    out.println("error unknown");
+                    out.println("error internal");
+                    System.err.println("internal failure: " + expr + ": " + e);
                     internal = true;
                 }
             }
@@ -125,6 +137,25 @@ public class XPathOracle {
             }
         }
         return b.toString();
+    }
+
+    /* KIND NAME VALUE as tests/LandrixXmlQt3.dpr writes a node. */
+    static String nodeValue(XdmNode n) {
+        String kind;
+        switch (n.getNodeKind()) {
+            case DOCUMENT: kind = "document-node"; break;
+            case ELEMENT: kind = "element"; break;
+            case ATTRIBUTE: kind = "attribute"; break;
+            case TEXT: kind = "text"; break;
+            case COMMENT: kind = "comment"; break;
+            case PROCESSING_INSTRUCTION: kind = "processing-instruction"; break;
+            default: kind = "namespace";
+        }
+        String name = "-";
+        if (n.getNodeName() != null) {
+            name = esc("Q{" + uri(n) + "}" + n.getNodeName().getLocalName()).replace(" ", "\\x20");
+        }
+        return kind + " " + name + " " + esc(n.getStringValue());
     }
 
     /* The location as SchXslt's schxslt:location writes it. */
