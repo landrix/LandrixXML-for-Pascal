@@ -1042,6 +1042,126 @@ begin
   end;
 end;
 
+{ The default stack budget (3/4 of the program's stack on Windows) against
+  every kind of recursion, with MaxDepth and MaxTemplateDepth out of the
+  way: each stops with FOER0000 (xecLimit) instead of overflowing the
+  stack. And the budget of a 1 MB stack holds 200 function levels and 400
+  template levels with a literal result element on every toolchain
+  (Delphi Win64, where a level takes the most: about 240 and 550). Elsewhere there is no
+  default budget, only the depth limits. }
+procedure TestStackDefault;
+const
+  Head = '<xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
+    ' xmlns:f="urn:f" xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="f xs">' +
+    '<xsl:output omit-xml-declaration="yes"/>';
+  Down = '<xsl:function name="f:down" as="xs:integer"><xsl:param name="k" as="xs:integer"/>' +
+    '<xsl:sequence select="if ($k le 0) then 0 else f:down($k - 1) + 1"/></xsl:function>';
+  Tail = '<xsl:function name="f:tail" as="xs:integer"><xsl:param name="k" as="xs:integer"/>' +
+    '<xsl:sequence select="if ($k le 0) then 0 else f:tail($k - 1)"/></xsl:function>';
+  CallT = '<xsl:template name="t"><xsl:param name="k" as="xs:integer"/><xsl:if test="$k gt 0"><x>' +
+    '<xsl:call-template name="t"><xsl:with-param name="k" select="$k - 1"/></xsl:call-template>' +
+    '</x></xsl:if></xsl:template>';
+  ApplyT = '<xsl:template match="/" mode="m"><xsl:param name="k" as="xs:integer"/><xsl:if test="$k gt 0">' +
+    '<xsl:apply-templates select="." mode="m"><xsl:with-param name="k" select="$k - 1"/>' +
+    '</xsl:apply-templates></xsl:if></xsl:template>';
+  Mixed = '<xsl:function name="f:a"><xsl:param name="k" as="xs:integer"/><xsl:variable name="v">' +
+    '<xsl:call-template name="b"><xsl:with-param name="k" select="$k"/></xsl:call-template></xsl:variable>' +
+    '<xsl:sequence select="string($v)"/></xsl:function><xsl:template name="b">' +
+    '<xsl:param name="k" as="xs:integer"/><xsl:value-of select="if ($k le 0) then 0 else f:a($k - 1)"/>' +
+    '</xsl:template>';
+  Pred = '<xsl:function name="f:p" as="xs:integer"><xsl:param name="k" as="xs:integer"/>' +
+    '<xsl:sequence select="if ($k le 0) then 0 else count((1, 2)[f:p($k - 1) ge 0])"/></xsl:function>';
+  SortKey = '<xsl:function name="f:s"><xsl:param name="k" as="xs:integer"/><xsl:choose>' +
+    '<xsl:when test="$k le 0"><xsl:sequence select="0"/></xsl:when><xsl:otherwise>' +
+    '<xsl:perform-sort select="(1, 2)"><xsl:sort select="f:s($k - 1)"/></xsl:perform-sort>' +
+    '</xsl:otherwise></xsl:choose></xsl:function>';
+  Group = '<xsl:function name="f:g"><xsl:param name="k" as="xs:integer"/><xsl:choose>' +
+    '<xsl:when test="$k le 0"><xsl:sequence select="0"/></xsl:when><xsl:otherwise>' +
+    '<xsl:for-each-group select="(1, 2)" group-by="f:g($k - 1)">' +
+    '<xsl:sequence select="current-grouping-key()"/></xsl:for-each-group></xsl:otherwise></xsl:choose>' +
+    '</xsl:function>';
+  Avt = '<xsl:function name="f:v"><xsl:param name="k" as="xs:integer"/><xsl:variable name="e">' +
+    '<x a="{if ($k le 0) then 0 else f:v($k - 1)}"/></xsl:variable><xsl:sequence select="string($e/x/@a)"/>' +
+    '</xsl:function>';
+  Build = '<xsl:function name="f:e"><xsl:param name="k" as="xs:integer"/><e><xsl:if test="$k gt 0">' +
+    '<xsl:sequence select="f:e($k - 1)"/></xsl:if></e></xsl:function>';
+  Analyze = '<xsl:function name="f:r"><xsl:param name="k" as="xs:integer"/><xsl:choose>' +
+    '<xsl:when test="$k le 0"><xsl:sequence select="0"/></xsl:when><xsl:otherwise>' +
+    '<xsl:analyze-string select="''a''" regex="a"><xsl:matching-substring>' +
+    '<xsl:sequence select="f:r($k - 1)"/></xsl:matching-substring></xsl:analyze-string>' +
+    '</xsl:otherwise></xsl:choose></xsl:function>';
+  Deep = '100000000';
+var
+  Source: TLandrixXmlXPathTree;
+
+  function Run(const Decl, Start: string; Unlimited: Boolean): string;
+  var
+    Sheet: TLandrixXmlXsltStylesheet;
+    T: TLandrixXmlXsltTransformer;
+  begin
+    Sheet := TLandrixXmlXsltStylesheet.Create;
+    T := nil;
+    try
+      Sheet.LoadFromUtf8(U(Head + Decl + '<xsl:template match="/"><r>' + Start + '</r></xsl:template>' +
+        '</xsl:stylesheet>'), U('urn:test'));
+      T := TLandrixXmlXsltTransformer.Create(Sheet);
+      if Unlimited then
+      begin
+        T.MaxDepth := MaxInt;
+        T.MaxTemplateDepth := MaxInt;
+      end;
+      try
+        Result := LandrixXmlUtf8ToString(T.TransformToUtf8(Source));
+      except
+        on E: ELandrixXmlError do
+          { the stack budget, not another limit }
+          if (E.Code = xecLimit) and (E is ELandrixXmlXPathError) and
+            (ELandrixXmlXPathError(E).XPathCode = 'FOER0000') and (Pos('bytes of stack', E.Message) > 0) then
+            Result := 'limit'
+          else
+            Result := E.Message;
+      end;
+    finally
+      T.Free;
+      Sheet.Free;
+    end;
+  end;
+
+  procedure Limit(const Decl, Start, What: string);
+  begin
+    CheckEqualsStr('limit', Run(Decl, Start, True), What);
+  end;
+
+begin
+  Source := TLandrixXmlXPathTree.Create;
+  try
+    Source.LoadFromUtf8(U('<doc/>'));
+    CheckEqualsStr('<r>200</r>', Run(Down, '<xsl:value-of select="f:down(200)"/>', False),
+      '200 function levels with the defaults');
+    CheckEqualsStr('<r>400</r>', Run(CallT, '<xsl:variable name="v"><xsl:call-template name="t">' +
+      '<xsl:with-param name="k" select="400"/></xsl:call-template></xsl:variable>' +
+      '<xsl:value-of select="count($v//x)"/>', False), '400 template levels with the defaults');
+    if LandrixXmlDefaultMaxStackBytes > 0 then
+    begin
+      Limit(Down, '<xsl:value-of select="f:down(' + Deep + ')"/>', 'a function');
+      Limit(Tail, '<xsl:value-of select="f:tail(' + Deep + ')"/>', 'a tail call');
+      Limit(CallT, '<xsl:call-template name="t"><xsl:with-param name="k" select="' + Deep + '"/>' +
+        '</xsl:call-template>', 'call-template');
+      Limit(ApplyT, '<xsl:apply-templates select="." mode="m"><xsl:with-param name="k" select="' + Deep + '"/>' +
+        '</xsl:apply-templates>', 'apply-templates');
+      Limit(Mixed, '<xsl:value-of select="f:a(' + Deep + ')"/>', 'a function through a template');
+      Limit(Pred, '<xsl:value-of select="f:p(' + Deep + ')"/>', 'a function in a predicate');
+      Limit(SortKey, '<xsl:value-of select="f:s(' + Deep + ')"/>', 'a sort key');
+      Limit(Group, '<xsl:value-of select="f:g(' + Deep + ')"/>', 'a grouping key');
+      Limit(Avt, '<xsl:value-of select="f:v(' + Deep + ')"/>', 'an attribute value template');
+      Limit(Build, '<xsl:value-of select="count(f:e(' + Deep + ')//*)"/>', 'a growing result tree');
+      Limit(Analyze, '<xsl:value-of select="f:r(' + Deep + ')"/>', 'analyze-string');
+    end;
+  finally
+    Source.Free;
+  end;
+end;
+
 { file: URIs of the default resolver: an empty host and localhost are the
   local machine; another host is no file (neither the local path without
   the host nor a UNC path). }
@@ -1714,6 +1834,7 @@ begin
   RegisterTest('Xslt.DocumentWithoutBase', TestDocumentWithoutBase);
   RegisterTest('Xslt.StackBudget', TestStackBudget);
   RegisterTest('Xslt.DeepApiTree', TestDeepApiTree);
+  RegisterTest('Xslt.StackDefault', TestStackDefault);
   RegisterTest('Xslt.ManyAttributesCopy', TestManyAttributesCopy);
   RegisterTest('Xslt.RuntimeReviewEdges', TestRuntimeReviewEdges);
   RegisterTest('Xslt.OutputReviewEdges', TestOutputReviewEdges);

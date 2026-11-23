@@ -553,8 +553,9 @@ functions). Beyond a limit the run stops with `FOER0000` (`xecLimit` for
 stack size (the `SizeOfStackReserve` of its PE header, 1 MB unless set
 with `{$MAXSTACKSIZE}` or a linker option) and 0 (no budget) elsewhere,
 where the 8 MB main stack holds the depth limits. A level takes about
-0.5 KB (template) and 1.5 KB (function) with Delphi Win32 and 1 KB and
-3 KB with Delphi Win64, so 1 MB allows some 800 nested templates or 250
+0.5 KB (template) and 1.5 KB (function) with Delphi Win32 and 1 to 1.4
+KB (template; more with a literal result element in it) and 3.2 KB with
+Delphi Win64, so 1 MB allows some 550 to 850 nested templates or 240
 nested functions there; for deeper recursion give the program a larger
 stack. Set
 `MaxStackBytes` for a thread with a stack of its own size. Stripping
@@ -1090,6 +1091,14 @@ Differences from Xerces, also on purpose:
   static types), where both raise different errors, or where Saxon
   itself fails (well below 1 %, not compared) are listed for review; the run
   fails if the evaluator alone raises an error in more than 1 % of them.
+- With the default stack budget (on Windows three quarters of the
+  program's stack) and the depth limits lifted, every kind of recursion
+  tested (stylesheet functions, also tail calls, in predicates, sort and
+  grouping keys and attribute value templates; named and applied
+  templates; functions through templates; `xsl:analyze-string`; a growing
+  result tree) stops with `FOER0000` instead of overflowing the stack, and
+  the budget of a 1 MB stack holds 200 nested functions and 400 nested
+  templates on every toolchain.
 
 ## Performance
 
@@ -1106,6 +1115,13 @@ Measured with `tools/perf.ps1` on a 47 MB indented GAEB-like document
 The peaks include the generated test document in memory several times
 (source, reader input, saved output). The peak of a run with the pull
 reader only was about 110 MB, most of it the generated document itself.
+
+`tools/bench.py` guards against slowdowns: it times fixed scenarios
+(writer, reader and DOM; XPath expressions; regular expressions with
+category escapes and class subtraction over 55,000 code points; an XSLT
+transformation with keys, grouping, sorting and numbering; the KoSIT
+suite) and fails if one takes more than 20 % (and 0.05 s) longer than
+the time stored for that machine.
 
 ## Supported compilers
 

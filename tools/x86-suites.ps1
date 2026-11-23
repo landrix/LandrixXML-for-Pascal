@@ -32,10 +32,17 @@
   The XSLT cross-check is not among them: it needs Saxon and Java and runs
   on this machine as before.
 
+  bench (not in the default list, and only alone: the times need an idle
+  machine) runs tools/bench.py there with the stored times of that machine
+  in D:\AI-Work\landrix-xml-bench-times.json (outside the work tree, so
+  they survive the cleaning); -UpdateBaseline passes --update. Its result
+  is the console output in build/x86-suites/bench.log.
+
 .EXAMPLE
   ./tools/x86-suites.ps1                       # every suite
   ./tools/x86-suites.ps1 xslt,qt3-saxon
   ./tools/x86-suites.ps1 xslt -UpdateBaseline
+  ./tools/x86-suites.ps1 bench
 #>
 param(
   [string[]]$Suites = @('qt3', 'qt3-saxon', 'xslt', 'xsts', 'kosit', 'xmlconf'),
@@ -68,6 +75,9 @@ $Known = [ordered]@{
                    Back = @('build/kosit/results.txt'); Baseline = $null }
   'xmlconf'   = @{ Helper = 'LandrixXmlConformance'; Args = 'tools\run-xmlconf.py'; Jobs = $false; SetsOption = $false
                    Back = @(); Baseline = $null }
+  'bench'     = @{ Helper = @('LandrixXmlPerf', 'LandrixXmlQt3', 'LandrixXmlXsltRun', 'LandrixXmlKosit')
+                   Args = 'tools\bench.py --times D:\AI-Work\landrix-xml-bench-times.json'; Jobs = $false
+                   SetsOption = $false; Back = @(); Baseline = $null; Build = $true }
 }
 
 $list = @()
@@ -78,6 +88,7 @@ foreach ($s in ($Suites -join ',').Split(',')) {
   if ($list -notcontains $s) { $list += $s }
 }
 if ($list.Count -eq 0) { throw 'no suite' }
+if ($list -contains 'bench' -and $list.Count -gt 1) { throw 'bench runs alone (other suites would slow it down)' }
 
 # remote commands go through cmd; an error on stderr must not end the script
 function Invoke-Remote([string]$Command) {
@@ -187,7 +198,12 @@ try {
   $perSuite = [Math]::Max(2, [Math]::Floor($Threads / [Math]::Max(1, $parallel)))
   foreach ($s in $list) {
     $k = $Known[$s]
-    $cmd = "cd /d $Tree && python $($k.Args) --exe build\$Toolchain\$($k.Helper).exe"
+    if ($k.Build) {
+      $cmd = "cd /d $Tree && python $($k.Args) --build build\$Toolchain"
+      if ($UpdateBaseline) { $cmd += ' --update' }
+    } else {
+      $cmd = "cd /d $Tree && python $($k.Args) --exe build\$Toolchain\$($k.Helper).exe"
+    }
     if ($k.Jobs) { $cmd += " --jobs $perSuite" }
     if ($k.SetsOption -and $Sets -gt 0) { $cmd += " --sets $Sets" }
     if ($UpdateBaseline -and $k.Baseline) { $cmd += ' --update-baseline' }
@@ -258,5 +274,5 @@ foreach ($s in $list) {
   $state = if (-not $codes.Contains($s)) { 'NOT RUN' } elseif ($codes[$s] -eq 0) { 'OK' } else { 'FAILED' }
   '{0,-10} {1}' -f $s, $state | Write-Host
 }
-if ($UpdateBaseline) { Write-Host 'baselines: see git diff tests/data/*baseline*' }
+if ($UpdateBaseline -and $list -notcontains 'bench') { Write-Host 'baselines: see git diff tests/data/*baseline*' }
 if ($failed) { exit 1 } else { exit 0 }

@@ -416,6 +416,14 @@ begin
     CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run('f:down(3)'), 'a budget of one byte');
     Evaluator.MaxStackBytes := 0;
     CheckEqualsStr('3', Run('f:down(3)'), 'no budget');
+{$IFDEF MSWINDOWS}
+    { the default budget alone stops a recursion that MaxDepth lets run
+      (without it the stack would overflow) }
+    Evaluator.MaxStackBytes := LandrixXmlDefaultMaxStackBytes;
+    Evaluator.MaxDepth := MaxInt;
+    CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecLimit)), Run('f:down(100000000)'), 'the default budget');
+    Evaluator.MaxStackBytes := 0;
+{$ENDIF}
     Evaluator.MaxDepth := 10;
     CheckEqualsStr('FOER0000 ' + IntToStr(Ord(xecXPath)), Run('f:down(20)'), 'MaxDepth still counts');
     { a lazy variable that hits MaxDepth keeps no error: read again with

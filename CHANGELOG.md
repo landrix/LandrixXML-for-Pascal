@@ -25,6 +25,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   found no defect of the evaluator; the known list holds defects of Saxon
   12.9 and one deliberate difference (the exact integer quotient of
   `div`).
+- `tools/bench.py`: a benchmark of fixed scenarios (writer, reader and
+  DOM through `LandrixXmlPerf`; XPath expressions and regular expressions
+  through the QT3 helper; an XSLT transformation through the cross-check
+  helper; the KoSIT suite) against the times stored per machine and build
+  folder in `build/bench`; a measurement more than 20 % slower fails the
+  run. `tools/x86-suites.ps1 bench` runs it alone on the x86 machine.
+- Tests `Xslt.StackDefault` and a case of `XPathEval.StackBudget`: with
+  the default stack budget and the depth limits lifted, recursion through
+  functions, templates, predicates, sort and grouping keys, attribute
+  value templates and `xsl:analyze-string` stops with `FOER0000` (limit)
+  instead of overflowing the stack, and the budget of a 1 MB stack holds
+  200 function and 400 template levels on every toolchain (Delphi Win64,
+  with the largest frames, stops at about 240 function and 550 template
+  levels; the README now gives these numbers).
 
 ### Changed
 
