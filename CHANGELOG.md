@@ -7,6 +7,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `tools/check-suite-updates.py` also reports newer versions of the
+  oracles the reference data comes from: Saxon HE (Maven Central) and the
+  KoSIT validator (GitHub releases) of `tests/data/saxon-oracle.txt`, the
+  Java runtime of `tests/data/xerces-oracle.txt` (updates of its feature
+  release and a newer LTS release, Adoptium API) and Free Pascal (the
+  newest release `tools/build.ps1` builds with, release tags on GitLab).
+  As for the suites, a newer version is only reported; a newer Java LTS
+  release is a note that does not change the exit code. A release check
+  whose reply does not list the pinned release now fails instead of
+  reporting "current".
+
 ## Releases
 
 - [0.5.1](docs/changelog/0.5.1.md) - 2026-11-23

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Report whether the pinned test suites and reference packages have
-newer versions upstream. Nothing is downloaded or changed; moving a pin
+"""Report whether the pinned test suites, reference packages and
+oracles have newer versions upstream. Nothing is downloaded or changed; moving a pin
 is a decision (new pin and SHA-256 in the script, rerun of the suite,
 new baseline).
 
@@ -14,12 +14,20 @@ The pins are read from the scripts that use them:
   other     the W3C XML conformance archive (run-xmlconf.py), the
             XRechnung Schematron package (gen-schematron-rules.py) and
             the SHA-256 of xml.xsd and xlink.xsd (run-xsts.py)
+  oracles   Saxon HE and the KoSIT validator (tests/data/saxon-oracle.txt,
+            Maven Central and GitHub releases), the Java runtime of the
+            Xerces reference data (tests/data/xerces-oracle.txt, newer
+            updates of its feature release and a newer LTS release from
+            the Adoptium API) and Free Pascal (the newest release
+            tools/build.ps1 builds with, release tags on GitLab)
 For a commit pin it prints how many commits the default branch is ahead
 and the changed files; for a release, the newer releases with the same
 tag prefix (v2026-08-31 is compared with v2027-..., validation-1.3.16
 with validation-1.3.16.1; tags with letters after the prefix, such as
 rc1, do not count). The Unicode data versions are fixed by the
-specifications and are not checked; new JDKs: check-xerces-drift.py.
+specifications and are not checked. A newer oracle is reported only:
+moving to it regenerates the reference data (tools/saxonjar.py with
+LANDRIX_OTHER_SAXON=1, tools/check-xerces-drift.py for a JDK).
 GitHub allows 60 requests an hour without a token; GITHUB_TOKEN or
 GH_TOKEN in the environment raises that.
 Exit code 0 if everything is current, 1 if something is newer, 2 if a
@@ -33,6 +41,7 @@ import re
 import sys
 import urllib.error
 import urllib.request
+from xml.etree import ElementTree
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.path.join(ROOT, "tools")
@@ -49,6 +58,11 @@ RELEASE_SCRIPTS = ["run-kosit-suite.py", "xslt-crosscheck.py", "gen-schematron-r
 RELEASE_URL = re.compile(r'https://github\.com/([\w.-]+/[\w.-]+)/releases/download/(?:"\s*")?([^/"]+)/')
 XMLCONF_PAGE = "https://www.w3.org/XML/Test/"
 KOSIT_MAVEN = "https://projekte.kosit.org/api/v4/projects/356/packages/maven/de/xeinkauf/%s/maven-metadata.xml"
+SAXON_ORACLE = os.path.join(ROOT, "tests", "data", "saxon-oracle.txt")
+XERCES_ORACLE = os.path.join(ROOT, "tests", "data", "xerces-oracle.txt")
+SAXON_MAVEN = "https://repo1.maven.org/maven2/net/sf/saxon/Saxon-HE/maven-metadata.xml"
+ADOPTIUM = "https://api.adoptium.net/v3/"
+FPC_TAGS = "https://gitlab.com/api/v4/projects/freepascal.org%2Ffpc%2Fsource/repository/tags?search=release_&per_page=100"
 
 
 def source(script):
@@ -119,6 +133,9 @@ def check_release(repo, tag, scripts):
     prefix = prefix_of(tag)
     same = [r["tag_name"] for r in releases
             if not r.get("draft") and not r.get("prerelease") and is_release_tag(r["tag_name"], prefix)]
+    if tag not in same:
+        # an incomplete reply must not look current
+        return "error", "%s: the pinned release %s is not listed" % (repo, tag)
     newer = sorted((t for t in same if version_key(t) > version_key(tag)), key=version_key)
     where = ", ".join(scripts)
     if not newer:
@@ -190,6 +207,95 @@ def check_xsts_schemas():
     return "current", "XSTS schemas xml.xsd, xlink.xsd (run-xsts.py): current"
 
 
+def read(path):
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
+def check_saxon():
+    pins = set(re.findall(r"SAXON-J-HE (\d+(?:\.\d+)+)", read(SAXON_ORACLE)))
+    if len(pins) != 1:
+        return "error", "Saxon HE: expected one Saxon version in tests/data/saxon-oracle.txt"
+    pin = pins.pop()
+    # parsed, so a cut-off reply fails instead of looking current
+    root = ElementTree.fromstring(fetch(SAXON_MAVEN, "application/xml"))
+    listed = root.findall("./versioning/versions/version")
+    if not listed:
+        return "error", "Saxon HE: no version list in the Maven metadata"
+    versions = [v.text for v in listed if v.text and re.match(r"^[\d.]+$", v.text)]
+    if pin not in versions:
+        return "error", "Saxon HE: the pinned version %s is not on Maven Central" % pin
+    newer = sorted((v for v in versions if version_key(v) > version_key(pin)), key=version_key)
+    where = "Saxon HE %s (saxon-oracle.txt)" % pin
+    if not newer:
+        return "current", where + ": current"
+    return "newer", "%s: newer release(s) %s on Maven Central" % (where, ", ".join(reversed(newer)))
+
+
+def check_kosit_validator():
+    m = re.search(r"\(KoSIT validator (\d+(?:\.\d+)+)\)", read(SAXON_ORACLE))
+    if not m:
+        return "error", "KoSIT validator: no version found in tests/data/saxon-oracle.txt"
+    return check_release("itplr-kosit/validator", "v" + m.group(1), ["saxon-oracle.txt"])
+
+
+def check_jdk():
+    # 21.0.6+7, 21.0.13.1+2 or 25+36: feature, interim, update, patch, build
+    m = re.search(r"^runtime (\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?\+(\d+)", read(XERCES_ORACLE), re.M)
+    if not m:
+        return "error", "Java runtime: no runtime line found in tests/data/xerces-oracle.txt"
+    pin = [int(g or 0) for g in m.groups()]
+    feature = pin[0]
+    listed = json.loads(fetch(ADOPTIUM + "info/release_versions?release_type=ga&vendor=eclipse&sort_order=DESC"
+                              "&page_size=50&version=%%5B%d%%2C%d%%29" % (feature, feature + 1),
+                              "application/json").decode("utf-8"))["versions"]
+    if not listed or any(v["major"] != feature for v in listed):
+        return "error", "Java runtime: no usable list of %d releases from the Adoptium API" % feature
+    newer = []
+    for v in listed:
+        key = [v["major"], v["minor"], v["security"], v.get("patch", 0), v.get("build", 0)]
+        if key > pin and v["openjdk_version"] not in newer:
+            newer.append(v["openjdk_version"])
+    lts = json.loads(fetch(ADOPTIUM + "info/available_releases", "application/json").decode("utf-8"))["most_recent_lts"]
+    pinned = m.group(0)[len("runtime "):]
+    where = "Java runtime %s (xerces-oracle.txt)" % pinned
+    # a newer LTS release is a note only: moving the oracle to it is a
+    # decision of its own and would keep every run at exit code 1
+    note = "; LTS release %d exists" % lts if lts > feature else ""
+    if not newer:
+        return "current", where + ": current" + note
+    return "newer", "%s: newer update(s) %s%s" % (where, ", ".join(newer[:3]), note)
+
+
+def check_fpc():
+    # the toolchains of the set "all" (fpc324-linux: 3.2.4); releases have
+    # an even minor version (3.3.x is the development branch)
+    m = re.search(r"'all' = @\(([^)]*)\)", source("build.ps1"))
+    built = []
+    if m:
+        built = [(int(a), int(b), int(c)) for a, b, c in re.findall(r"'fpc(\d)(\d)(\d+)-", m.group(1))]
+    built = [v for v in built if v[1] % 2 == 0]
+    if not built:
+        return "error", "Free Pascal: no release toolchain in the set 'all' of tools/build.ps1"
+    pin = max(built)
+    releases = set()
+    for page in range(1, 11):
+        tags = json.loads(fetch(FPC_TAGS + "&page=%d" % page, "application/json").decode("utf-8"))
+        for t in tags:
+            r = re.match(r"^release_(\d+)_(\d+)_(\d+)$", t["name"])
+            if r:
+                releases.add(tuple(int(n) for n in r.groups()))
+        if len(tags) < 100:
+            break
+    if pin not in releases:
+        return "error", "Free Pascal: the release %d.%d.%d is not among the GitLab tags" % pin
+    newer = sorted((v for v in releases if v > pin), reverse=True)
+    where = "Free Pascal %d.%d.%d (newest release in build.ps1)" % pin
+    if not newer:
+        return "current", where + ": current"
+    return "newer", "%s: newer release(s) %s" % (where, ", ".join("%d.%d.%d" % v for v in newer))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--verbose", action="store_true", help="list every changed file")
@@ -213,6 +319,10 @@ def main():
     checks.append(("xmlconf", check_xmlconf))
     checks.append(("XRechnung Schematron", check_kosit_schematron))
     checks.append(("XSTS schemas", check_xsts_schemas))
+    checks.append(("Saxon HE", check_saxon))
+    checks.append(("KoSIT validator", check_kosit_validator))
+    checks.append(("Java runtime", check_jdk))
+    checks.append(("Free Pascal", check_fpc))
     worst = 0
     for label, check in checks:
         try:
