@@ -43,6 +43,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   others need `xsl:try` or the initial template `xsl:initial-template`,
   or give the error code Saxon gives). Unlike Saxon, the `select` is evaluated
   completely before the first iteration, as that of `xsl:for-each`.
+- XSLT: `xsl:mode` declarations of XSLT 3.0 (`on-no-match` with all six
+  built-in behaviours, `on-multiple-match="fail"`, `typed`, `visibility`;
+  no warnings for `warning-on-*`, `streamable` ignored as by Saxon HE) and
+  `[xsl:]default-mode`. `TLandrixXmlXsltTransformer.InitialMode = ''` now
+  means the stylesheet's default mode (the principal module's
+  `default-mode`, else the unnamed mode), as in Saxon.
 
 ### Changed
 

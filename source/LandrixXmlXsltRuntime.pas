@@ -457,12 +457,19 @@ type
     procedure BindParams(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       const Params: TSuppliedArray);
     procedure TypedBody(T: TXsltTemplate; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
-    function FindRule(Mode: TXsltMode; Node: Integer; After: TXsltRule; Lowest, Highest: Integer): TXsltRule;
+    function FindRule(Mode: TXsltMode; Node: Integer; After: TXsltRule; Lowest, Highest: Integer;
+      Same: TXsltRule = nil): TXsltRule;
     procedure DoNextMatch(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode; R: TReceiver);
     procedure DoResultDocument(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode);
     function CallFunction(T: TXsltTemplate; const Args: array of TLandrixXmlXPathSequence): TLandrixXmlXPathSequence;
     procedure BuiltIn(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
       const Params: TSuppliedArray; R: TReceiver);
+    procedure BuiltInApply(Instr: TXsltInstr; Node: Integer; Attributes: Boolean; Mode: TXsltMode;
+      const Params: TSuppliedArray; R: TReceiver);
+    procedure ShallowCopy(Instr: TXsltInstr; Node: Integer; Mode: TXsltMode; const Params: TSuppliedArray;
+      R: TReceiver);
+    procedure CheckAmbiguous(Instr: TXsltInstr; Mode: TXsltMode; Node: Integer; Rule: TXsltRule);
+    function CheckInitialMode: TXsltMode;
     procedure BindGlobals;
   public
     constructor Create(Compiled: TXsltCompiled; Settings: TXsltRunSettings; Source: TLandrixXmlXPathTree);
@@ -1225,6 +1232,9 @@ begin
     FLastAtomic := True;
     Exit;
   end;
+  { a node keeps the atomic values around it apart, also an empty document
+    node (Saxon) }
+  FLastAtomic := False;
   if FRun.IsRawText(It.Node) and not FRawIgnored then
   begin
     { Saxon keeps it raw in a temporary tree too (implementation-defined) }
@@ -3061,7 +3071,8 @@ end;
 { The first rule of Mode that matches Node, in the order rules are
   tried; only those after After (if not nil) and with a precedence from
   Lowest to Highest. }
-function TRun.FindRule(Mode: TXsltMode; Node: Integer; After: TXsltRule; Lowest, Highest: Integer): TXsltRule;
+function TRun.FindRule(Mode: TXsltMode; Node: Integer; After: TXsltRule; Lowest, Highest: Integer;
+  Same: TXsltRule): TXsltRule;
 var
   T: TLandrixXmlXPathTree;
   Base, I, A, B: Integer;
@@ -3122,6 +3133,10 @@ begin
       Passed := Cand = After;
       Continue;
     end;
+    { the rules are tried by precedence, then priority: none after a lower
+      one has those of Same }
+    if (Same <> nil) and ((Cand.Precedence <> Same.Precedence) or (Cand.Priority <> Same.Priority)) then
+      Exit;
     if (Cand.Precedence < Lowest) or (Cand.Precedence > Highest) then
       Continue;
     if (After <> nil) and After.Explicit and (Cand.Template = After.Template) then
@@ -3344,13 +3359,126 @@ begin
   end;
 end;
 
-{ the built-in template rules }
-procedure TRun.BuiltIn(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+{ The implicit xsl:apply-templates of a built-in rule (mode #current, the
+  parameters passed on): to the attributes (Attributes) or the children
+  of Node, counted as a template (the depth of a tree is not limited). }
+procedure TRun.BuiltInApply(Instr: TXsltInstr; Node: Integer; Attributes: Boolean; Mode: TXsltMode;
   const Params: TSuppliedArray; R: TReceiver);
 var
   T: TLandrixXmlXPathTree;
   Base, C: Integer;
-  Children: TLandrixXmlXPathSequence;
+  Nodes: TLandrixXmlXPathSequence;
+begin
+  T := FEvaluator.TreeOfNode(Node, Base);
+  Nodes := LandrixXmlXPathEmpty;
+  if Attributes then
+  begin
+    for C := Node - Base + 1 to Node - Base + T.AttributeCount[Node - Base] do
+      LandrixXmlXPathAppend(Nodes, LandrixXmlXPathNodeItem(C + Base).Items[0]);
+  end
+  else
+  begin
+    C := T.FirstChild(Node - Base);
+    while C >= 0 do
+    begin
+      LandrixXmlXPathAppend(Nodes, LandrixXmlXPathNodeItem(C + Base).Items[0]);
+      C := T.NextSibling[C];
+    end;
+  end;
+  if Nodes.Count = 0 then
+    Exit;
+  if FTemplateDepth >= FSettings.MaxTemplateDepth then
+  begin
+    if Instr = nil then
+      raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates nested deeper than ' +
+        IntToStr(FSettings.MaxTemplateDepth), '', 0, 0);
+    raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates nested deeper than ' +
+      IntToStr(FSettings.MaxTemplateDepth), Instr.Module, Instr.Line, Instr.Column);
+  end;
+  if Instr = nil then
+    CheckStack(@Base, '', 0, 0)
+  else
+    CheckStack(@Base, Instr.Module, Instr.Line, Instr.Column);
+  Inc(FTemplateDepth);
+  try
+    ApplyTemplates(Instr, Nodes, Mode, Params, R);
+  finally
+    Dec(FTemplateDepth);
+  end;
+end;
+
+{ on-no-match="shallow-copy": the node copied without its attributes and
+  children (a document node, an element with its namespaces), templates
+  applied to them in the mode, attributes first }
+procedure TRun.ShallowCopy(Instr: TXsltInstr; Node: Integer; Mode: TXsltMode; const Params: TSuppliedArray;
+  R: TReceiver);
+var
+  T, Doc: TLandrixXmlXPathTree;
+  Base, I, K: Integer;
+  Prefixes, Uris: TLandrixXmlUtf8Array;
+  Uri: TLandrixXmlUtf8;
+  D: TTreeReceiver;
+begin
+  Prefixes := nil;
+  Uris := nil;
+  T := FEvaluator.TreeOfNode(Node, Base);
+  I := Node - Base;
+  case T.Kind[I] of
+    xnkDocument:
+      begin
+        { a document node of its own, as xsl:copy makes it (an attribute
+          at its top is XTDE0420, adjacent atomic values stay apart); raw
+          text: ignored in a sequence (Saxon writes it escaped), else not
+          supported (Saxon keeps it), as with xsl:copy }
+        Doc := TLandrixXmlXPathTree.Create;
+        try
+          Doc.BeginBuild(True);
+          D := TTreeReceiver.Create(Self, Doc, True);
+          D.FRawFails := not (R is TSequenceReceiver);
+          try
+            BuiltInApply(Instr, Node, False, Mode, Params, D);
+            D.Finish;
+          finally
+            D.Free;
+          end;
+          Doc.BaseUri := T.BaseUri;
+        except
+          Doc.Free;
+          raise;
+        end;
+        R.Item(LandrixXmlXPathNodeItem(AddTree(Doc)).Items[0], False);
+      end;
+    xnkElement:
+      begin
+        if R is TSequenceReceiver then
+        begin
+          if not LandrixXmlXPathNodeBaseUri(T, I, Uri) then
+            Uri := '';
+          TSequenceReceiver(R).SetNextBase(Uri);
+        end;
+        R.StartElement(T.NamespaceUriUtf8(I), T.PrefixUtf8(I), T.LocalNameUtf8(I));
+        T.InScopeNamespacesUtf8(I, Prefixes, Uris);
+        for K := 0 to Integer(Length(Prefixes)) - 1 do
+          if Prefixes[K] <> 'xml' then
+            R.NamespaceNode(Prefixes[K], Uris[K]);
+        BuiltInApply(Instr, Node, True, Mode, Params, R);
+        BuiltInApply(Instr, Node, False, Mode, Params, R);
+        R.EndElement;
+      end;
+  else
+    CopyNode(Node, R);
+  end;
+end;
+
+{ the built-in template rules of the mode's on-no-match (XSLT 3.0;
+  text-only-copy those of XSLT 2.0) }
+procedure TRun.BuiltIn(Instr: TXsltInstr; const Focus: TLandrixXmlXPathFocus; Mode: TXsltMode;
+  const Params: TSuppliedArray; R: TReceiver);
+var
+  T: TLandrixXmlXPathTree;
+  Base: Integer;
+  Kind: TLandrixXmlXPathNodeKind;
+  Uri: TLandrixXmlUtf8;
 begin
   if Focus.Node < 0 then
   begin
@@ -3358,49 +3486,99 @@ begin
     Exit;
   end;
   T := FEvaluator.TreeOfNode(Focus.Node, Base);
-  case T.Kind[Focus.Node - Base] of
-    xnkDocument, xnkElement:
+  Kind := T.Kind[Focus.Node - Base];
+  case Mode.OnNoMatch of
+    xnmFail:
+      Fail(Instr, 'XTDE0555', 'no template rule of the mode matches the node (on-no-match="fail")');
+    xnmDeepCopy:
       begin
-        Children := LandrixXmlXPathEmpty;
-        C := T.FirstChild(Focus.Node - Base);
-        while C >= 0 do
+        { as xsl:copy-of; a copied xml:base resolved against the base URI of
+          the original's parent (no instruction gives a static one), as in
+          Saxon }
+        if R is TSequenceReceiver then
         begin
-          LandrixXmlXPathAppend(Children, LandrixXmlXPathNodeItem(C + Base).Items[0]);
-          C := T.NextSibling[C];
+          Uri := '';
+          if T.Parent[Focus.Node - Base] >= 0 then
+          begin
+            if not LandrixXmlXPathNodeBaseUri(T, T.Parent[Focus.Node - Base], Uri) then
+              Uri := '';
+          end
+          else
+            Uri := T.BaseUri;
+          TSequenceReceiver(R).CopyBase := Uri;
         end;
-        { counted as a template (the depth of a tree is not limited) }
-        if FTemplateDepth >= FSettings.MaxTemplateDepth then
-        begin
-          if Instr = nil then
-            raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates nested deeper than ' +
-              IntToStr(FSettings.MaxTemplateDepth), '', 0, 0);
-          raise ELandrixXmlXsltError.CreateXslt(xecLimit, 'FOER0000', 'templates nested deeper than ' +
-            IntToStr(FSettings.MaxTemplateDepth), Instr.Module, Instr.Line, Instr.Column);
-        end;
-        if Instr = nil then
-          CheckStack(@Base, '', 0, 0)
-        else
-          CheckStack(@Base, Instr.Module, Instr.Line, Instr.Column);
-        Inc(FTemplateDepth);
-        try
-          ApplyTemplates(Instr, Children, Mode, Params, R);
-        finally
-          Dec(FTemplateDepth);
-        end;
+        R.Item(LandrixXmlXPathNodeItem(Focus.Node).Items[0], True);
       end;
-    xnkText, xnkAttribute:
-      R.Characters(T.ValueUtf8(Focus.Node - Base));
+    xnmShallowCopy:
+      ShallowCopy(Instr, Focus.Node, Mode, Params, R);
+    xnmDeepSkip:
+      { a document node as with shallow-skip }
+      if Kind = xnkDocument then
+        BuiltInApply(Instr, Focus.Node, False, Mode, Params, R);
+    xnmShallowSkip:
+      if Kind in [xnkDocument, xnkElement] then
+      begin
+        BuiltInApply(Instr, Focus.Node, True, Mode, Params, R);
+        BuiltInApply(Instr, Focus.Node, False, Mode, Params, R);
+      end;
   else
-    { comments and processing instructions: nothing }
+    case Kind of
+      xnkDocument, xnkElement:
+        BuiltInApply(Instr, Focus.Node, False, Mode, Params, R);
+      xnkText, xnkAttribute:
+        R.Characters(T.ValueUtf8(Focus.Node - Base));
+    else
+      { comments and processing instructions: nothing }
+    end;
   end;
+end;
+
+{ on-multiple-match="fail": XTDE0540 if a rule of another template with
+  the precedence and priority of Rule matches too }
+procedure TRun.CheckAmbiguous(Instr: TXsltInstr; Mode: TXsltMode; Node: Integer; Rule: TXsltRule);
+var
+  Prev, Other: TXsltRule;
+begin
+  Prev := Rule;
+  while True do
+  begin
+    Other := FindRule(Mode, Node, Prev, Rule.Precedence, Rule.Precedence, Rule);
+    if Other = nil then
+      Exit;
+    if Other.Template <> Rule.Template then
+      Fail(Instr, 'XTDE0540', 'two template rules of the same precedence and priority match the node ' +
+        '(on-multiple-match="fail")');
+    Prev := Other;
+  end;
+end;
+
+{ The initial mode the settings name, XTDE0045 unless eligible as in
+  Saxon: the stylesheet has it, and unless it is the default mode it is
+  not private (visibility="private" given) and has a template rule or an
+  on-no-match (Saxon: "contains no template rules"). }
+function TRun.CheckInitialMode: TXsltMode;
+var
+  Name: string;
+begin
+  Name := LandrixXmlUtf8ToString(FSettings.InitialMode);
+  Result := FC.FindMode(FSettings.InitialMode);
+  if Result = nil then
+    Fail(nil, 'XTDE0045', 'the stylesheet has no mode ' + Name);
+  if FSettings.InitialMode = FC.DefaultMode then
+    Exit;
+  if Result.IsPrivate then
+    Fail(nil, 'XTDE0045', 'the mode ' + Name + ' is private');
+  if (Result.Named.Count = 0) and (Result.Others.Count = 0) and not Result.NoMatchGiven then
+    Fail(nil, 'XTDE0045', 'the mode ' + Name + ' has no template rule');
 end;
 
 procedure TRun.ApplyTemplates(Instr: TXsltInstr; const Nodes: TLandrixXmlXPathSequence; Mode: TXsltMode;
   const Params: TSuppliedArray; R: TReceiver);
 var
-  I: Integer;
+  I, Base: Integer;
   Rule, SavedRule: TXsltRule;
   F: TLandrixXmlXPathFocus;
+  T: TLandrixXmlXPathTree;
 begin
   Rule := nil;
   SavedRule := FRule;
@@ -3414,8 +3592,18 @@ begin
           Saxon difference: apply-templates-atomic }
         Fail(Instr, 'XTTE0520', 'xsl:apply-templates selects an atomic value');
       end;
+      { typed: no element or attribute of a tree is typed (a document node
+        is no error, as in Saxon) }
+      if Mode.Typed then
+      begin
+        T := FEvaluator.TreeOfNode(Nodes.Items[I].Node, Base);
+        if T.Kind[Nodes.Items[I].Node - Base] in [xnkElement, xnkAttribute] then
+          Fail(Instr, 'XTTE3100', 'the mode (typed) selects an untyped node');
+      end;
       try
         Rule := FindRule(Mode, Nodes.Items[I].Node, nil, 0, MaxInt);
+        if (Rule <> nil) and Mode.FailOnMultiple then
+          CheckAmbiguous(Instr, Mode, Nodes.Items[I].Node, Rule);
       except
         on E: ELandrixXmlXsltError do
           raise;
@@ -3584,6 +3772,8 @@ begin
       Rule := FindRule(Mode, Focus.Node, FRule, 0, MaxInt)
     else
       Rule := FindRule(Mode, Focus.Node, nil, FC.ImportLow[FRule.Precedence], FRule.Precedence - 1);
+    if (Rule <> nil) and Mode.FailOnMultiple then
+      CheckAmbiguous(Instr, Mode, Focus.Node, Rule);
   except
     on E: ELandrixXmlXsltError do
       raise;
@@ -5897,6 +6087,9 @@ begin
   try
     if FSettings.InitialTemplate <> '' then
     begin
+      { the initial mode first (Saxon) }
+      if FSettings.InitialMode <> '' then
+        CheckInitialMode;
       if not FC.NamedTemplates.Find(LandrixXmlUtf8ToKey(FSettings.InitialTemplate), I) then
         Fail(nil, 'XTDE0040', 'no template named ' + LandrixXmlUtf8ToString(FSettings.InitialTemplate));
       T := TXsltTemplate(FC.NamedTemplates.Objects[I]);
@@ -5905,9 +6098,9 @@ begin
         if TXsltInstr(T.Params[I]).Required then
           Fail(TXsltInstr(T.Params[I]), 'XTDE0060', 'the initial template has the required parameter ' +
             LandrixXmlUtf8ToString(TXsltInstr(T.Params[I]).VarName));
-      Mode := FC.FindMode(FSettings.InitialMode);
-      if Mode = nil then
-        Mode := FC.FindMode('');
+      { the current mode of the initial template: the unnamed mode, also
+        with an initial mode (checked above), as in Saxon }
+      Mode := FC.FindMode('');
       if FEmpty = nil then
         Invoke(T, NodeFocus(0, 1, 1), Mode, Params, R)
       else
@@ -5917,9 +6110,11 @@ begin
     begin
       if FEmpty <> nil then
         Fail(nil, 'XTDE0040', 'neither a source document nor an initial template');
-      Mode := FC.FindMode(FSettings.InitialMode);
-      if Mode = nil then
-        Fail(nil, 'XTDE0045', 'the stylesheet has no mode ' + LandrixXmlUtf8ToString(FSettings.InitialMode));
+      { none given: the default mode, else an eligible one }
+      if FSettings.InitialMode = '' then
+        Mode := FC.FindMode(FC.DefaultMode)
+      else
+        Mode := CheckInitialMode;
       ApplyTemplates(nil, LandrixXmlXPathNodeItem(0), Mode, Params, R);
     end;
     R.Finish;

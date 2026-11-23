@@ -789,9 +789,8 @@ end;
 procedure TestRejected;
 const
   Head = '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">';
-  Cases: array[0..11] of string = (
+  Cases: array[0..10] of string = (
     '<xsl:accumulator name="a" initial-value="0"/><xsl:template match="/"/>',
-    '<xsl:mode name="m"/><xsl:template match="/"/>',
     '<xsl:output html-version="5"/><xsl:template match="/"/>',
     '<xsl:output encoding="UTF-16"/><xsl:template match="/"/>',
     '<xsl:template match="/"><xsl:for-each select="1"><xsl:sort lang="de"/></xsl:for-each></xsl:template>',
@@ -1529,9 +1528,125 @@ begin
   end;
 end;
 
+{ the initial mode: without one the default-mode of the stylesheet;
+  XTDE0045 for an unknown mode, one an xsl:mode says is private and one
+  without template rules or on-no-match (as in Saxon; the default
+  visibility does not count); an initial template starts in the unnamed
+  mode, also with an initial mode (as in Saxon) }
+{ the result of Sheet (in the namespace m = urn:m) on <doc/> with the
+  initial mode Mode }
+function InitialModeResult(const Sheet, Mode: string): string;
+var
+  S: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+begin
+  S := TLandrixXmlXsltStylesheet.Create;
+  T := nil;
+  Source := TLandrixXmlXPathTree.Create;
+  try
+    S.LoadFromUtf8(U('<xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' +
+      ' xmlns:m="urn:m" ' + Sheet + '<xsl:output omit-xml-declaration="yes"/></xsl:stylesheet>'), U('urn:test'));
+    Source.LoadFromUtf8(U('<doc>t</doc>'));
+    T := TLandrixXmlXsltTransformer.Create(S);
+    T.InitialMode := U(Mode);
+    try
+      Result := LandrixXmlUtf8ToString(T.TransformToUtf8(Source));
+    except
+      on E: ELandrixXmlXsltError do
+        Result := E.XPathCode;
+    end;
+  finally
+    Source.Free;
+    T.Free;
+    S.Free;
+  end;
+end;
+
+procedure TestInitialMode;
+const
+  Bad: array[0..3] of string = ('{urn:m}none', '{urn:m}hidden', '{urn:m}empty', '{urn:m}used');
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+  Raised: string;
+  I: Integer;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  T := nil;
+  Source := TLandrixXmlXPathTree.Create;
+  try
+    Sheet.LoadFromUtf8(U(
+      '<xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:m="urn:m"' +
+      ' default-mode="m:d">' +
+      '<xsl:mode name="m:pub" visibility="public"/><xsl:mode name="m:priv"/>' +
+      '<xsl:mode name="m:hidden" visibility="private"/><xsl:mode name="m:empty" visibility="public"/>' +
+      '<xsl:mode name="m:copy" on-no-match="shallow-copy"/>' +
+      '<xsl:template match="/" mode="m:hidden">hidden</xsl:template>' +
+      '<xsl:template match="x"><xsl:apply-templates mode="m:used"/></xsl:template>' +
+      '<xsl:output omit-xml-declaration="yes"/>' +
+      '<xsl:template match="/">d</xsl:template>' +
+      '<xsl:template match="/" mode="m:pub">pub</xsl:template>' +
+      '<xsl:template match="/" mode="m:priv">priv</xsl:template>' +
+      '<xsl:template match="/" mode="m:other">other</xsl:template>' +
+      '<xsl:template match="/" mode="#unnamed">unnamed</xsl:template>' +
+      '<xsl:template name="main"><xsl:apply-templates select="." mode="#current"/></xsl:template>' +
+      '</xsl:stylesheet>'), U('urn:test'));
+    Source.LoadFromUtf8(U('<doc/>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    CheckEqualsUtf8(U('d'), T.TransformToUtf8(Source), 'the default mode');
+    T.InitialMode := U('{urn:m}pub');
+    CheckEqualsUtf8(U('pub'), T.TransformToUtf8(Source), 'a public mode');
+    T.InitialMode := U('{urn:m}other');
+    CheckEqualsUtf8(U('other'), T.TransformToUtf8(Source), 'a mode no xsl:mode declares');
+    T.InitialMode := U('{urn:m}priv');
+    CheckEqualsUtf8(U('priv'), T.TransformToUtf8(Source), 'a mode of the default visibility');
+    T.InitialMode := U('{urn:m}copy');
+    CheckEqualsUtf8(U('<doc/>'), T.TransformToUtf8(Source), 'a mode with on-no-match only');
+    for I := 0 to High(Bad) do
+    begin
+      T.InitialMode := U(Bad[I]);
+      Raised := '';
+      try
+        T.TransformToUtf8(Source);
+      except
+        on E: ELandrixXmlXsltError do
+          Raised := E.XPathCode;
+      end;
+      CheckEqualsStr('XTDE0045', Raised, 'not eligible: ' + Bad[I]);
+    end;
+    T.InitialMode := '';
+    T.InitialTemplate := U('main');
+    CheckEqualsUtf8(U('unnamed'), T.TransformToUtf8(Source), 'an initial template');
+    T.InitialMode := U('{urn:m}pub');
+    CheckEqualsUtf8(U('unnamed'), T.TransformToUtf8(Source), 'an initial template and mode');
+    T.InitialMode := U('{urn:m}none');
+    Raised := '';
+    try
+      T.TransformToUtf8(Source);
+    except
+      on E: ELandrixXmlXsltError do
+        Raised := E.XPathCode;
+    end;
+    CheckEqualsStr('XTDE0045', Raised, 'an initial template and an unknown mode');
+    { the default mode without rules, chosen explicitly; a mode only a
+      default-mode names, with the mode="#all" rules (as in Saxon) }
+    CheckEqualsStr('t', InitialModeResult('default-mode="m:z"><xsl:mode name="m:z"/>', '{urn:m}z'),
+      'the empty default mode');
+    CheckEqualsStr('ALL', InitialModeResult('><xsl:template name="u" default-mode="m:y"/>' +
+      '<xsl:template match="/" mode="#all">ALL</xsl:template>', '{urn:m}y'), 'a mode default-mode names');
+  finally
+    Source.Free;
+    T.Free;
+    Sheet.Free;
+  end;
+end;
+
 procedure Register;
 begin
   RegisterTest('Xslt.FileUris', TestFileUris);
+  RegisterTest('Xslt.InitialMode', TestInitialMode);
   RegisterTest('Xslt.KeysOutsideCodePage', TestKeysOutsideCodePage);
   RegisterTest('Xslt.Cases', TestCases);
   RegisterTest('Xslt.Api', TestApi);

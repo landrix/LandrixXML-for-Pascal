@@ -350,9 +350,23 @@ type
     Explicit: Boolean;
   end;
 
+  { on-no-match of xsl:mode: the built-in template rules }
+  TXsltOnNoMatch = (xnmTextOnlyCopy, xnmDeepCopy, xnmShallowCopy, xnmDeepSkip, xnmShallowSkip, xnmFail);
+
   TXsltMode = class
   public
     Name: TLandrixXmlUtf8;
+    { the properties xsl:mode declarations give (XSLT 3.0): the built-in
+      rules, on-multiple-match="fail" (XTDE0540), typed yes, lax or strict
+      (XTTE3100 for an element or attribute node xsl:apply-templates
+      selects; no node is typed); for the initial mode (Saxon): an xsl:mode
+      says visibility="private" (no default visibility: Saxon starts
+      such a mode), an xsl:mode gives on-no-match }
+    OnNoMatch: TXsltOnNoMatch;
+    FailOnMultiple: Boolean;
+    Typed: Boolean;
+    IsPrivate: Boolean;
+    NoMatchGiven: Boolean;
     { the rules whose pattern names an element or attribute (by kind and
       Clark name: "e" or "a" before the Clark name), each a TList of TXsltRule
       in the order they are tried; the others in Others }
@@ -463,6 +477,10 @@ type
       precedence of the modules imported into it (xsl:apply-imports
       considers the rules from there to the precedence below its own) }
     ImportLow: array of Integer;
+    { the mode of the transformation when no initial mode is given: the
+      [xsl:]default-mode of the principal module's root element ('' the
+      unnamed mode) }
+    DefaultMode: TLandrixXmlUtf8;
     constructor Create;
     destructor Destroy; override;
     function FindMode(const Name: TLandrixXmlUtf8): TXsltMode;
@@ -595,14 +613,14 @@ function XsltElementAvailable(const Local: TLandrixXmlUtf8): Boolean;
 const
   { the XSLT elements CompileInstruction and the declaration loop
     translate (the others are rejected) }
-  Names: array[0..49] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
+  Names: array[0..50] of string = ('stylesheet', 'transform', 'import', 'include', 'output', 'key',
     'decimal-format', 'template', 'function', 'variable', 'param', 'with-param', 'apply-templates',
     'call-template', 'choose', 'when', 'otherwise', 'if', 'for-each', 'for-each-group', 'number',
     'sequence', 'copy', 'copy-of', 'element', 'attribute', 'comment', 'processing-instruction',
     'message', 'document', 'text', 'value-of', 'fallback', 'sort', 'perform-sort', 'analyze-string',
     'strip-space', 'preserve-space', 'next-match', 'apply-imports', 'result-document',
     'attribute-set', 'character-map', 'output-character', 'namespace', 'namespace-alias', 'iterate',
-    'next-iteration', 'break', 'on-completion');
+    'next-iteration', 'break', 'on-completion', 'mode');
 var
   I: Integer;
 begin
@@ -1016,7 +1034,13 @@ type
     { the xsl:iterate instructions being compiled, innermost last (the
       parameters xsl:next-iteration sets) }
     FIterates: TList;
+    { the xsl:mode declarations (TDecl, not owned) }
+    FModeDecls: TList;
     function VarName(const Clark: TLandrixXmlUtf8): TLandrixXmlUtf8;
+    function ModeName(M: TModule; E: Integer; const Value: TLandrixXmlUtf8): TLandrixXmlUtf8;
+    function DefaultModeOf(M: TModule; E: Integer): TLandrixXmlUtf8;
+    function ModeDeclValue(D: TDecl; const Local: TLandrixXmlUtf8; out Value: TLandrixXmlUtf8): Boolean;
+    procedure CompileModes;
     procedure CheckStandard(M: TModule; E: Integer; Data: Boolean);
     procedure CheckExcludedPrefixes(M: TModule; E: Integer; const V: TLandrixXmlUtf8);
     procedure CheckModule(M: TModule);
@@ -1181,6 +1205,7 @@ begin
   FAliases.CaseSensitive := True;
   FAliases.Sorted := True;
   FIterates := TList.Create;
+  FModeDecls := TList.Create;
 end;
 
 destructor TCompiler.Destroy;
@@ -1195,6 +1220,7 @@ begin
     FAliases.Objects[I].Free;
   FAliases.Free;
   FIterates.Free;
+  FModeDecls.Free;
   FUseWhenTrue.Free;
   FUseWhenFalse.Free;
   FUseWhenEvaluator.Free;
@@ -1321,6 +1347,44 @@ begin
   while (B >= A) and (S[B] in [#9, #10, #13, ' ']) do
     Dec(B);
   Result := Copy(S, A, B - A + 1);
+end;
+
+{ S with its white space collapsed: runs of tab, line feed, carriage
+  return and space one space, none at the ends }
+function Collapse8(const S: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  I, N: Integer;
+  Space: Boolean;
+begin
+  Result := '';
+  SetLength(Result, Length(S));
+  N := 0;
+  Space := False;
+  for I := 1 to Length(S) do
+    if S[I] in [#9, #10, #13, ' '] then
+      Space := N > 0
+    else
+    begin
+      if Space then
+      begin
+        Inc(N);
+        Result[N] := ' ';
+        Space := False;
+      end;
+      Inc(N);
+      Result[N] := S[I];
+    end;
+  SetLength(Result, N);
+end;
+
+{ the namespaces reserved for XSLT, XPath, XML Schema and XML (XTSE0080) }
+function ReservedNamespace(const Uri: TLandrixXmlUtf8): Boolean;
+begin
+  Result := (Uri = XsltNamespace) or (Uri = LandrixXmlNamespaceXml) or (Uri = 'http://www.w3.org/2001/XMLSchema') or
+    (Uri = 'http://www.w3.org/2001/XMLSchema-instance') or (Uri = 'http://www.w3.org/2005/xqt-errors') or
+    (Uri = LandrixXmlXPathFunctionNamespace) or (Uri = 'http://www.w3.org/2005/xpath-functions/math') or
+    (Uri = 'http://www.w3.org/2005/xpath-functions/map') or (Uri = 'http://www.w3.org/2005/xpath-functions/array') or
+    (Uri = 'http://www.w3.org/2000/xmlns/');
 end;
 
 { disable-output-escaping of xsl:text and xsl:value-of: yes or no (as
@@ -1674,10 +1738,7 @@ begin
         Exit;
       end;
       { a reserved namespace (Saxon: XTSE0085) }
-      if (U = XsltNamespace) or (U = LandrixXmlNamespaceXml) or (U = 'http://www.w3.org/2001/XMLSchema') or
-        (U = 'http://www.w3.org/2001/XMLSchema-instance') or (U = 'http://www.w3.org/2005/xqt-errors') or
-        (U = 'http://www.w3.org/2005/xpath-functions') or (U = 'http://www.w3.org/2005/xpath-functions/math') or
-        (U = 'http://www.w3.org/2005/xpath-functions/map') or (U = 'http://www.w3.org/2005/xpath-functions/array') then
+      if ReservedNamespace(U) then
       begin
         Result := '#' + W;
         Exit;
@@ -1790,6 +1851,9 @@ begin
     List := ' name match use composite collation '
   else if Local = 'message' then
     List := ' select terminate error-code '
+  else if Local = 'mode' then
+    List := ' name streamable use-accumulators on-no-match on-multiple-match warning-on-no-match ' +
+      'warning-on-multiple-match typed visibility '
   else if Local = 'namespace' then
     List := ' name select '
   else if Local = 'namespace-alias' then
@@ -1932,7 +1996,12 @@ begin
     if (L = 'expand-text') and (V <> 'yes') and (V <> 'no') and (V <> 'true') and (V <> 'false') and
       (V <> '1') and (V <> '0') then
       Fail(M, E, 'XTSE0020', 'expand-text="' + LandrixXmlUtf8ToString(V) + '" is neither yes nor no');
-    if (L = 'default-mode') or (L = 'default-validation') or (L = 'input-type-annotations') or
+    { #unnamed or a mode name (EQName): XTSE0020, XTSE0280 (not in a
+      user-defined data element, as in Saxon) }
+    if (L = 'default-mode') and (V <> '#unnamed') and not Data then
+      { a mode of the stylesheet (with the mode="#all" rules) }
+      ModeOf(ModeName(M, E, V));
+    if (L = 'default-validation') or (L = 'input-type-annotations') or
       ((L = 'inherit-namespaces') and (V = 'no')) or
       ((L = 'validation') and (V <> 'strip') and (V <> 'preserve')) or (L = 'type') then
       Unsupported(M, E, LandrixXmlUtf8ToString(L) + '="' + LandrixXmlUtf8ToString(V) + '"');
@@ -2431,6 +2500,227 @@ begin
       CheckStandard(M, I, I < DataEnd);
     end;
     Inc(I);
+  end;
+end;
+
+{ the Clark name of a mode name: a QName (no default namespace) or an
+  EQName (Q, the URI in braces with its white space collapsed, the local
+  name); XTSE0020 if it is neither (#unnamed, #default too), XTSE0280 for
+  an undeclared prefix, XTSE0080 for a reserved namespace }
+function TCompiler.ModeName(M: TModule; E: Integer; const Value: TLandrixXmlUtf8): TLandrixXmlUtf8;
+var
+  V, Uri: TLandrixXmlUtf8;
+  K: Integer;
+begin
+  V := Trim8(Value);
+  if Copy(V, 1, 2) = 'Q{' then
+  begin
+    K := Pos8('}', V);
+    if (K = 0) or not IsNCName8(Copy(V, K + 1, MaxInt)) or (Pos8('{', Copy(V, 3, K - 3)) > 0) then
+      Fail(M, E, 'XTSE0020', 'not a mode name: "' + LandrixXmlUtf8ToString(Value) + '"');
+    Uri := Collapse8(Copy(V, 3, K - 3));
+    Result := XsltClarkOf(Uri, Copy(V, K + 1, MaxInt));
+  end
+  else
+  begin
+    Result := QNameToClark(M, E, V, False);
+    Uri := '';
+    if Copy(Result, 1, 1) = '{' then
+      Uri := Copy(Result, 2, Pos8('}', Result) - 2);
+  end;
+  if ReservedNamespace(Uri) then
+    Fail(M, E, 'XTSE0080', 'a mode in a reserved namespace: "' + LandrixXmlUtf8ToString(Value) + '"');
+end;
+
+{ the default mode at E: the [xsl:]default-mode of E or of the nearest
+  ancestor that has one (default-mode on an XSLT element, xsl:default-mode
+  on another), '' (the unnamed mode) for #unnamed or none }
+function TCompiler.DefaultModeOf(M: TModule; E: Integer): TLandrixXmlUtf8;
+var
+  A, I: Integer;
+  Xsl: Boolean;
+  V: TLandrixXmlUtf8;
+begin
+  Result := '';
+  A := E;
+  while A >= 0 do
+  begin
+    if M.Tree.Kind[A] = xnkElement then
+    begin
+      Xsl := M.Tree.NamespaceUriUtf8(A) = XsltNamespace;
+      for I := A + 1 to A + M.Tree.AttributeCount[A] do
+        if (M.Tree.LocalNameUtf8(I) = 'default-mode') and
+          (Xsl and (M.Tree.NamespaceUriUtf8(I) = '') or not Xsl and (M.Tree.NamespaceUriUtf8(I) = XsltNamespace)) then
+        begin
+          V := Trim8(M.Tree.ValueUtf8(I));
+          if V <> '#unnamed' then
+            Result := ModeName(M, A, V);
+          Exit;
+        end;
+    end;
+    A := M.Tree.Parent[A];
+  end;
+end;
+
+{ an attribute of an xsl:mode declaration, normalized: white space
+  trimmed, a boolean as yes or no (XTSE0020 for another value), the names
+  of use-accumulators sorted }
+function TCompiler.ModeDeclValue(D: TDecl; const Local: TLandrixXmlUtf8; out Value: TLandrixXmlUtf8): Boolean;
+var
+  V, B: TLandrixXmlUtf8;
+  K: Integer;
+
+  procedure Check(const Allowed: string);
+  begin
+    if (V = '') or (Pos8(' ', V) > 0) or (Pos(' ' + LandrixXmlUtf8ToString(V) + ' ', ' ' + Allowed + ' ') = 0) then
+      Fail(D.Module, D.Element, 'XTSE0020', 'xsl:mode ' + LandrixXmlUtf8ToString(Local) + ' is one of ' + Allowed +
+        ', not "' + LandrixXmlUtf8ToString(V) + '"');
+  end;
+
+begin
+  Result := Attr(D.Module, D.Element, Local, V);
+  if not Result then
+    Exit;
+  V := Trim8(V);
+  if (Local = 'streamable') or (Local = 'warning-on-no-match') or (Local = 'warning-on-multiple-match') or
+    (Local = 'typed') and (V <> 'strict') and (V <> 'lax') and (V <> 'unspecified') then
+  begin
+    if YesNoAttr(D.Module, D.Element, Local) then
+      V := 'yes'
+    else
+      V := 'no';
+  end
+  else if Local = 'on-no-match' then
+    Check('deep-copy shallow-copy deep-skip shallow-skip text-only-copy fail')
+  else if Local = 'on-multiple-match' then
+    Check('use-last fail')
+  else if Local = 'visibility' then
+    Check('public private final')
+  else if Local = 'use-accumulators' then
+  begin
+    { no accumulator is declared (xsl:accumulator is not supported): the
+      first name is XTSE3300, XTSE0280 if its prefix is undeclared (as in
+      Saxon); #all and none are the same then }
+    V := Collapse8(V);
+    if (V <> '') and (V <> '#all') then
+    begin
+      B := V;
+      K := Pos8(' ', B);
+      if K > 0 then
+        B := Copy(B, 1, K - 1);
+      K := Pos8(':', B);
+      if (Copy(B, 1, 2) <> 'Q{') and (K > 0) and IsNCName8(Copy(B, 1, K - 1)) and
+        IsNCName8(Copy(B, K + 1, MaxInt)) then
+        QNameToClark(D.Module, D.Element, B, False);
+      Fail(D.Module, D.Element, 'XTSE3300', 'no accumulator is declared: "' + LandrixXmlUtf8ToString(V) + '"');
+    end;
+  end;
+  Value := V;
+end;
+
+{ The xsl:mode declarations (XSLT 3.0): each attribute of a mode from the
+  declaration of the highest import precedence that has it (XTSE0545 for
+  two of that precedence with different values, except streamable and
+  use-accumulators, which change nothing here: Saxon HE does not stream
+  and no accumulator is declared). An xsl:mode is empty (XTSE0260, white
+  space xml:space keeps counts); the unnamed mode is private (XTSE0020).
+  An initial mode must not say visibility="private" (Saxon; the default
+  visibility does not restrict it); typed="strict" is typed="yes" without
+  a schema, as in Saxon HE. }
+procedure TCompiler.CompileModes;
+const
+  AttrCount = 8;
+  AttrNames: array[0..AttrCount - 1] of string = ('streamable', 'use-accumulators', 'on-no-match',
+    'on-multiple-match', 'warning-on-no-match', 'warning-on-multiple-match', 'typed', 'visibility');
+var
+  I, J, K, C: Integer;
+  D, E2: TDecl;
+  Name, V: TLandrixXmlUtf8;
+  Names: TXsltStringList;
+  Done: array of Boolean;
+  Mode: TXsltMode;
+  Values: array[0..AttrCount - 1] of TLandrixXmlUtf8;
+  Precs: array[0..AttrCount - 1] of Integer;
+  Conflicts: array[0..AttrCount - 1] of TDecl;
+begin
+  Done := nil;
+  Names := TXsltStringList.Create;
+  try
+    SetLength(Done, FModeDecls.Count);
+    { the name of each declaration, checked in declaration order }
+    for I := 0 to Integer(FModeDecls.Count) - 1 do
+    begin
+      D := TDecl(FModeDecls[I]);
+      C := D.Module.Tree.FirstChild(D.Element);
+      while C >= 0 do
+      begin
+        if (D.Module.Tree.Kind[C] = xnkElement) or (D.Module.Tree.Kind[C] = xnkText) and
+          ((Trim8(D.Module.Tree.ValueUtf8(C)) <> '') or PreservesSpace(D.Module.Tree, C)) then
+          Fail(D.Module, D.Element, 'XTSE0260', 'xsl:mode is empty');
+        C := D.Module.Tree.NextSibling[C];
+      end;
+      Name := '';
+      if Attr(D.Module, D.Element, 'name', V) then
+        Name := ModeName(D.Module, D.Element, V);
+      Names.Add(LandrixXmlUtf8ToKey(Name));
+      if (Name = '') and Attr(D.Module, D.Element, 'visibility', V) and (Trim8(V) <> 'private') then
+        Fail(D.Module, D.Element, 'XTSE0020', 'the unnamed mode is private');
+      for K := 0 to AttrCount - 1 do
+        ModeDeclValue(D, LandrixXmlStringToUtf8(AttrNames[K]), V);
+    end;
+    for I := 0 to Integer(FModeDecls.Count) - 1 do
+    begin
+      if Done[I] then
+        Continue;
+      for K := 0 to AttrCount - 1 do
+      begin
+        Values[K] := '';
+        Precs[K] := -1;
+        Conflicts[K] := nil;
+      end;
+      for J := I to Integer(FModeDecls.Count) - 1 do
+        if Names[J] = Names[I] then
+        begin
+          Done[J] := True;
+          E2 := TDecl(FModeDecls[J]);
+          for K := 0 to AttrCount - 1 do
+            if ModeDeclValue(E2, LandrixXmlStringToUtf8(AttrNames[K]), V) then
+            begin
+              if E2.Precedence > Precs[K] then
+              begin
+                Precs[K] := E2.Precedence;
+                Values[K] := V;
+                Conflicts[K] := nil;
+              end
+              else if (E2.Precedence = Precs[K]) and (V <> Values[K]) and (Conflicts[K] = nil) then
+                Conflicts[K] := E2;
+            end;
+        end;
+      Name := LandrixXmlKeyToUtf8(Names[I]);
+      for K := 2 to AttrCount - 1 do
+        if Conflicts[K] <> nil then
+          Fail(Conflicts[K].Module, Conflicts[K].Element, 'XTSE0545', 'two xsl:mode declarations of one import ' +
+            'precedence give the mode "' + LandrixXmlUtf8ToString(Name) + '" different values of ' + AttrNames[K]);
+      Mode := ModeOf(Name);
+      Mode.IsPrivate := Values[7] = 'private';
+      Mode.NoMatchGiven := Values[2] <> '';
+      Mode.FailOnMultiple := Values[3] = 'fail';
+      Mode.Typed := (Values[6] = 'yes') or (Values[6] = 'lax') or (Values[6] = 'strict');
+      if Values[2] = 'deep-copy' then
+        Mode.OnNoMatch := xnmDeepCopy
+      else if Values[2] = 'shallow-copy' then
+        Mode.OnNoMatch := xnmShallowCopy
+      else if Values[2] = 'deep-skip' then
+        Mode.OnNoMatch := xnmDeepSkip
+      else if Values[2] = 'shallow-skip' then
+        Mode.OnNoMatch := xnmShallowSkip
+      else if Values[2] = 'fail' then
+        Mode.OnNoMatch := xnmFail
+      else
+        Mode.OnNoMatch := xnmTextOnlyCopy;
+    end;
+  finally
+    Names.Free;
   end;
 end;
 
@@ -3769,15 +4059,22 @@ begin
         Result.Select := Compile(M, E, V, Scope)
       else
         Result.Select := Compile(M, E, 'child::node()', Scope);
-      V := '';
-      Attr(M, E, 'mode', V);
+      { none: the default mode; an empty one is XTSE0020 (Saxon) }
+      if not Attr(M, E, 'mode', V) then
+        V := '#default';
       V := Trim8(V);
       if V = '#current' then
         Result.CurrentMode := True
-      else if (V = '') or (V = '#default') or (V = '#unnamed') then
+      else if V = '#default' then
+        Result.Mode := ModeOf(DefaultModeOf(M, E))
+      else if V = '#unnamed' then
         Result.Mode := ModeOf('')
       else
-        Result.Mode := ModeOf(QNameToClark(M, E, V, False));
+      begin
+        if (V = '') or (Pos8(' ', Collapse8(V)) > 0) then
+          Fail(M, E, 'XTSE0020', 'not a mode name: "' + LandrixXmlUtf8ToString(V) + '"');
+        Result.Mode := ModeOf(ModeName(M, E, V));
+      end;
       CompileWithParams(M, E, Scope, Result);
     end
     else if L = 'result-document' then
@@ -5180,7 +5477,8 @@ begin
     if (L = 'name') or (L = 'infinity') or (L = 'NaN') then
       { strings }
     else if (L = 'xpath-default-namespace') or (L = 'exclude-result-prefixes') or
-      (L = 'extension-element-prefixes') or (L = 'use-when') or (L = 'expand-text') or (L = 'version') then
+      (L = 'extension-element-prefixes') or (L = 'use-when') or (L = 'expand-text') or (L = 'version') or
+      (L = 'default-mode') or (L = 'default-collation') then
       { standard attributes (CheckStandard): no property }
       Continue
     else if (L = 'decimal-separator') or (L = 'grouping-separator') or (L = 'minus-sign') or (L = 'percent') or
@@ -5293,13 +5591,17 @@ begin
         { XTSE0550: #all alone, no mode twice, no other #token }
         if B = '#all' then
           All := True
-        { #unnamed (XSLT 3.0) is the default mode in Saxon, also in 2.0 }
-        else if (B = '#default') or (B = '#unnamed') then
+        { #default: the default mode at the template ([xsl:]default-mode,
+          XSLT 3.0); #unnamed (XSLT 3.0) the unnamed mode, in Saxon also
+          in 2.0 }
+        else if B = '#default' then
+          Mode := ModeOf(DefaultModeOf(D.Module, D.Element))
+        else if B = '#unnamed' then
           Mode := ModeOf('')
-        else if (B[1] = '#') or not IsQName8(B) then
+        else if (B[1] = '#') or not IsQName8(B) and (Copy(B, 1, 2) <> 'Q{') then
           Fail(D.Module, D.Element, 'XTSE0550', 'the mode ' + LandrixXmlUtf8ToString(B) + ' is not allowed here')
         else
-          Mode := ModeOf(QNameToClark(D.Module, D.Element, B, False));
+          Mode := ModeOf(ModeName(D.Module, D.Element, B));
         if B <> '#all' then
         begin
           if ModeNames.IndexOf(Mode) >= 0 then
@@ -5311,8 +5613,10 @@ begin
       Fail(D.Module, D.Element, 'XTSE0550', 'mode="#all" cannot be combined with other modes');
     if HasModes and (Count = 0) then
       Fail(D.Module, D.Element, 'XTSE0550', 'an empty mode attribute');
+    { the default mode (that of a simplified stylesheet's literal result
+      element too, the mode it starts in) }
     if Count = 0 then
-      ModeNames.Add(ModeOf(''));
+      ModeNames.Add(ModeOf(DefaultModeOf(D.Module, D.Element)));
     Branches := SplitPattern(Match);
     FSingleBranch := Length(Branches) = 1;
     for I := 0 to Integer(Length(Branches)) - 1 do
@@ -5373,9 +5677,7 @@ begin
         Uri := Copy(Name, 2, Pos8('}', Name) - 2);
       if Uri = '' then
         Fail(M, D.Element, 'XTSE0740', 'a stylesheet function needs a name in a namespace');
-      if (Uri = XsltNamespace) or (Uri = LandrixXmlXPathFunctionNamespace) or
-        (Uri = 'http://www.w3.org/2001/XMLSchema') or (Uri = 'http://www.w3.org/2001/XMLSchema-instance') or
-        (Uri = LandrixXmlNamespaceXml) then
+      if ReservedNamespace(Uri) then
         Fail(M, D.Element, 'XTSE0080', 'a stylesheet function in a reserved namespace');
       Arity := 0;
       C := M.Tree.FirstChild(D.Element);
@@ -6223,7 +6525,8 @@ begin
     L := M.Tree.LocalNameUtf8(I);
     { standard attributes (CheckStandard) }
     if (L = 'exclude-result-prefixes') or (L = 'extension-element-prefixes') or (L = 'expand-text') or
-      (L = 'xpath-default-namespace') or (L = 'use-when') then
+      (L = 'xpath-default-namespace') or (L = 'use-when') or (L = 'default-mode') or
+      (L = 'default-collation') then
       Continue;
     if L = 'name' then
       Continue;
@@ -6609,7 +6912,9 @@ begin
       else if (L = 'variable') or (L = 'param') or (L = 'import') or (L = 'include') or
         (L = 'function') then
         { done }
-      else if (L = 'import-schema') or (L = 'mode') or (L = 'accumulator') or
+      else if L = 'mode' then
+        FModeDecls.Add(D)
+      else if (L = 'import-schema') or (L = 'accumulator') or
         (L = 'use-package') or (L = 'global-context-item') then
         Unsupported(D.Module, D.Element, 'xsl:' + LandrixXmlUtf8ToString(L))
       else if IgnoredDeclaration(D.Module, D.Element) then
@@ -6624,6 +6929,10 @@ begin
           'two templates named ' + LandrixXmlUtf8ToString(TXsltTemplate(FDupTemplates[I]).Name));
     for I := 0 to Integer(FC.UserFunctions.Count) - 1 do
       CompileFunction(TXsltTemplate(FC.UserFunctions[I]), TDecl(FFunctionDecls[I]));
+    CompileModes;
+    { the initial mode when none is given }
+    FC.DefaultMode := DefaultModeOf(Main, Main.Tree.DocumentElement);
+    ModeOf(FC.DefaultMode);
     Finish;
     Result := FC;
     FC := nil;

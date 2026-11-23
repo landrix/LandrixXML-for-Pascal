@@ -219,8 +219,9 @@ type
     { the principal result as a tree (with a document node); xsl:output
       does not matter }
     procedure TransformToTree(Source, Target: TLandrixXmlXPathTree);
-    { Clark names; '' = the default mode and applying templates to the
-      source }
+    { Clark names; '' = the stylesheet's default mode (the default-mode
+      of the principal module, else the unnamed mode, as in Saxon) and
+      applying templates to the source }
     property InitialMode: TLandrixXmlUtf8 read FInitialMode write FInitialMode;
     property InitialTemplate: TLandrixXmlUtf8 read FInitialTemplate write FInitialTemplate;
     { doc(), document() and unparsed-text(); nil: the default }
