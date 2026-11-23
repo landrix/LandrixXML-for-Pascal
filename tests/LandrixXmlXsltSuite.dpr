@@ -47,6 +47,7 @@ program LandrixXmlXsltSuite;
 {$ENDIF}
 
 uses
+  LandrixXmlLeakCheck,
   SysUtils,
   Classes,
   LandrixXmlBase,
@@ -470,4 +471,11 @@ begin
     Sheet.Free;
     Output.Free;
   end;
+  { Delphi 6 and 7 do not finalize the variables of the program: cleared
+    for the leak check (LandrixXmlLeakCheck) }
+  NsPrefixes := nil; NsUris := nil; Lines := nil; ParamNames := nil; ParamExprs := nil;
+  Checks := nil; DocUris := nil; DocSerialize := nil; DocXml := nil; DocChecks := nil;
+  DocCheckOwners := nil; OneChecks := nil; StylesheetFile := ''; SourceFile := '';
+  SerializeFile := ''; XmlFile := ''; Template := ''; Mode := ''; Head := ''; Rest := '';
+  Name := ''; BaseOutput := ''; Number := ''; SourceBase := '';
 end.

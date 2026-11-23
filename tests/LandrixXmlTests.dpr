@@ -17,6 +17,7 @@ program LandrixXmlTests;
 {$ENDIF}
 
 uses
+  LandrixXmlLeakCheck,
   {$IFDEF FPC}
   {$IFDEF UNIX}
   { threads for Schematron.Threads }

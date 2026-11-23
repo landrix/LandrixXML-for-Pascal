@@ -21,6 +21,7 @@ program LandrixXmlSchematronPerf;
 {$ENDIF}
 
 uses
+  LandrixXmlLeakCheck,
   SysUtils,
   Classes,
   Contnrs,

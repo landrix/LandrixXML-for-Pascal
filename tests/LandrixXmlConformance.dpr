@@ -28,6 +28,7 @@ program LandrixXmlConformance;
 {$ENDIF}
 
 uses
+  LandrixXmlLeakCheck,
   SysUtils,
   Classes,
   LandrixXmlBase,
@@ -233,4 +234,7 @@ begin
     Reader.Free;
     List.Free;
   end;
+  { Delphi 6 and 7 do not finalize the variables of the program: cleared
+    for the leak check (LandrixXmlLeakCheck) }
+  Path := ''; Msg := '';
 end.

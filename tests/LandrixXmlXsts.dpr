@@ -37,6 +37,7 @@ program LandrixXmlXsts;
 {$ENDIF}
 
 uses
+  LandrixXmlLeakCheck,
   SysUtils,
   Classes,
   LandrixXmlBase,

@@ -22,6 +22,7 @@ program LandrixXmlPerf;
 {$ENDIF}
 
 uses
+  LandrixXmlLeakCheck,
   SysUtils,
   Classes,
   LandrixXmlBase,
@@ -155,4 +156,7 @@ begin
     end;
     WriteLn('free (DOM): ', Ms(T), ' ms');
   end;
+  { Delphi 6 and 7 do not finalize the variables of the program: cleared
+    for the leak check (LandrixXmlLeakCheck) }
+  Phase := ''; Xml := ''; Saved := '';
 end.

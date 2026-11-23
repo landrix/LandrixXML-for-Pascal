@@ -31,6 +31,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   helper; the KoSIT suite) against the times stored per machine and build
   folder in `build/bench`; a measurement more than 20 % slower fails the
   run. `tools/x86-suites.ps1 bench` runs it alone on the x86 machine.
+- Leak check in every test program (`tests/LandrixXmlLeakCheck.pas`,
+  first in the uses clause of the test runner and the suite helpers): the
+  heap at the end, after every other unit is finalized, must be what it
+  was at the start, also for memory of other threads, or the program
+  ends with exit code 7 and names what is left. Free Pascal counts the
+  live blocks through a memory manager in front of its own (its heap
+  status is per thread); Delphi on Windows reads the memory manager's
+  state (no check on other Delphi platforms). So `build.ps1` and every
+  suite run check it. A test of the XML Schema validator built a file
+  name in a `finally` part, which leaked a string temporary with Free
+  Pascal 3.3.1; the names are now built before the `try`.
 - Tests `Xslt.StackDefault` and a case of `XPathEval.StackBudget`: with
   the default stack budget and the depth limits lifted, recursion through
   functions, templates, predicates, sort and grouping keys, attribute

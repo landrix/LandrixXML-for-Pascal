@@ -762,7 +762,7 @@ end;
   automaton is taken as unambiguous (README, Limitations). }
 procedure TestContentLimits;
 var
-  FileName, Body: string;
+  FileName, Body, Cham, ChamB: string;
   S: TLandrixXmlXsdSchemaSet;
   V: TLandrixXmlXsdValidator;
   Reader: TLandrixXmlReader;
@@ -883,11 +883,15 @@ begin
     DeleteFile(FileName);
   end;
   { one chameleon attribute group in two namespaces: two attribute uses }
+  { the names before the try: a string expression in the finally part
+    leaks a temporary with FPC 3.3.1 }
   Body := ExtractFilePath(ParamStr(0));
-  WriteTestFile(Body + 'xsdtest-cham.xsd', '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">' +
+  Cham := Body + 'xsdtest-cham.xsd';
+  ChamB := Body + 'xsdtest-cham-b.xsd';
+  WriteTestFile(Cham, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">' +
     '<xs:attributeGroup name="g"><xs:attribute name="x" form="qualified" use="required"/>' +
     '</xs:attributeGroup></xs:schema>');
-  WriteTestFile(Body + 'xsdtest-cham-b.xsd', '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" ' +
+  WriteTestFile(ChamB, '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" ' +
     'targetNamespace="urn:b"><xs:include schemaLocation="xsdtest-cham.xsd"/></xs:schema>');
   FileName := TempSchema('<xs:include schemaLocation="xsdtest-cham.xsd"/><xs:import namespace="urn:b" ' +
     'schemaLocation="xsdtest-cham-b.xsd"/><xs:element name="r"><xs:complexType><xs:attributeGroup ref="a:g"/>' +
@@ -898,8 +902,8 @@ begin
     Check(not IsValid(FileName, '<a:r xmlns:a="urn:a" xmlns:b="urn:b" a:x="1"/>'), 'b:x is required');
   finally
     DeleteFile(FileName);
-    DeleteFile(Body + 'xsdtest-cham.xsd');
-    DeleteFile(Body + 'xsdtest-cham-b.xsd');
+    DeleteFile(Cham);
+    DeleteFile(ChamB);
   end;
   { 3000 optional elements and the ambiguous a?, a: too costly for the
     check, so taken as unambiguous (with 10 the ambiguity is reported) }

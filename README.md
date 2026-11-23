@@ -1097,6 +1097,16 @@ Differences from Xerces, also on purpose:
   static types), where both raise different errors, or where Saxon
   itself fails (well below 1 %, not compared) are listed for review; the run
   fails if the evaluator alone raises an error in more than 1 % of them.
+- Every test program (the test runner and the suite helpers) checks for
+  leaks: the unit `LandrixXmlLeakCheck`, first in its uses clause, compares
+  the heap at the start with the heap after every other unit is finalized
+  and ends the program with exit code 7 (unless it already ends with
+  another code) if anything is left, also memory allocated in another
+  thread (Free Pascal: live blocks counted by a memory manager in front
+  of the program's one; Delphi on Windows: the memory manager's state).
+  The test runner runs without a leak on every toolchain, every suite
+  with the Free Pascal Win64 helpers, and the XSTS, QT3 and KoSIT runs
+  with the Delphi 6 and 13 helpers.
 - With the default stack budget (on Windows three quarters of the
   program's stack) and the depth limits lifted, every kind of recursion
   tested (stylesheet functions, also tail calls, in predicates, sort and

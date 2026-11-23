@@ -45,6 +45,7 @@ program LandrixXmlQt3;
 {$ENDIF}
 
 uses
+  LandrixXmlLeakCheck,
   SysUtils,
   Classes,
   LandrixXmlBase,
@@ -556,4 +557,7 @@ begin
     C.Free;
     Output.Free;
   end;
+  { Delphi 6 and 7 do not finalize the variables of the program: cleared
+    for the leak check (LandrixXmlLeakCheck) }
+  Lines := nil; Head := ''; Rest := ''; Name := '';
 end.

@@ -28,6 +28,7 @@ program LandrixXmlXsltRun;
 {$ENDIF}
 
 uses
+  LandrixXmlLeakCheck,
   SysUtils,
   Classes,
   Contnrs,
@@ -120,6 +121,9 @@ begin
     Trees.Free;
     Sheet.Free;
   end;
+  { Delphi 6 and 7 do not finalize the variables of the program: cleared
+    for the leak check (LandrixXmlLeakCheck) }
+  Option := ''; Name := ''; Value := '';
   if Failed then
     Halt(1);
 end.
