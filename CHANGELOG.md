@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `tools/x86-suites.ps1` runs the test suites (QT3 in both profiles, the
+  W3C XSLT suite, XSTS, KoSIT, the W3C XML conformance suite) on the x86
+  machine, all at once, and brings their per-case results (per set too
+  for QT3 and XSLT; the console output of each suite) and, with
+  `-UpdateBaseline`, the baselines of the suites that passed back; the
+  helpers are built here. There only the downloaded suites last between
+  calls, everything else is sent anew. All six suites take about 2
+  minutes instead of more than 15 one after the other on the development
+  machine.
 - `tools/build.ps1` runs the toolchains in parallel, each in a child
   process (`-Jobs`, default processor count minus 2; output in
   `build/<toolchain>/worker.log`), and runs the test runners of the Windows
