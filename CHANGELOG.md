@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `tools/run-qt3.py` and `tools/run-xslt-tests.py` report each test set:
+  pass / applicable, rate and the change to the baseline go into
+  `build/qt3/sets-PROFILE.txt` and `build/xslt-tests/sets.txt`; a set in
+  which a passing case of the baseline no longer passes is printed as
+  `SET DOWN` even when the set or the run as a whole has more passing
+  cases, and `--sets [N]` lists the sets with the most cases that do not
+  pass (shared module `tools/suitesets.py`).
 - `tools/check-suite-updates.py` also reports newer versions of the
   oracles the reference data comes from: Saxon HE (Maven Central) and the
   KoSIT validator (GitHub releases) of `tests/data/saxon-oracle.txt`, the

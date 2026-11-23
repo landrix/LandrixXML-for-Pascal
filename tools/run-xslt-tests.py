@@ -40,14 +40,17 @@ harness-error (crash, timeout, setup).
 
 Usage:
   python tools/run-xslt-tests.py [--exe PATH] [--filter PREFIX] [--jobs N]
-                                 [--update-baseline [--force-baseline]] [--verbose]
+                                 [--update-baseline [--force-baseline]] [--verbose] [--sets [N]]
 Build the helper first, e.g.
   ./tools/build.ps1 fpc322-win64 -Program tests/LandrixXmlXsltSuite.dpr -NoRun
 Exit code: 0 if no baseline case got worse or disappeared from the case
 list and no harness error occurred; a missing or empty baseline file fails
 the run. --update-baseline needs the whole suite and refuses on harness
 errors and, without --force-baseline, when cases got worse.
-Results per case: build/xslt-tests/results.txt.
+Results per case: build/xslt-tests/results.txt; per test set (pass /
+applicable, rate, change to the baseline): build/xslt-tests/sets.txt. A
+set with fewer passing cases than its baseline is printed as SET DOWN;
+--sets lists the N sets (default 25) with the most cases that do not pass.
 """
 
 import argparse
@@ -65,6 +68,10 @@ import sys
 import tarfile
 import urllib.parse
 import xml.etree.ElementTree as ET
+
+# the shared module next to this script (also with python -m)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import suitesets  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 COMMIT = "fddf1cf920087e791f13315d68dfbe874d97dc56"
@@ -773,6 +780,8 @@ def main():
     ap.add_argument("--force-baseline", action="store_true",
                     help="with --update-baseline: write it even if baseline cases got worse")
     ap.add_argument("--verbose", action="store_true")
+    ap.add_argument("--sets", type=suitesets.count, nargs="?", const=25, default=0, metavar="N",
+                    help="list the N test sets (default 25) with the most cases that do not pass")
     args = ap.parse_args()
     if args.update_baseline and args.filter:
         sys.exit("--update-baseline needs the whole suite (no --filter)")
@@ -830,6 +839,9 @@ def main():
     harness = [c for c in applicable if c.outcome == "harness-error"]
     for c in harness[:20]:
         print("HARNESS %s: %s" % (c.key, c.detail))
+    suitesets.report([(c.key, c.outcome) for c in cases],
+                     {k: o for k, o in base.items() if k.startswith(args.filter)},
+                     os.path.join(WORK, "sets.txt"), args.sets)
     print("baseline: %d cases, %d worse, %d missing, %d better"
           % (len(base), len(worse), len(gone), len(better)))
     if args.update_baseline:

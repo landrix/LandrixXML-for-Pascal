@@ -42,7 +42,7 @@ harness-error (crash, timeout, setup).
 Usage:
   python tools/run-qt3.py [--exe PATH] [--filter PREFIX] [--jobs N]
                           [--profile xpath20|saxon] [--update-baseline]
-                          [--force-baseline] [--verbose] [--self-test]
+                          [--force-baseline] [--verbose] [--sets [N]] [--self-test]
 Build the helper first, e.g.
   ./tools/build.ps1 fpc322-win64 -Program tests/LandrixXmlQt3.dpr -NoRun
 Exit code: 0 if no baseline case got worse and no harness error occurred
@@ -50,8 +50,11 @@ Exit code: 0 if no baseline case got worse and no harness error occurred
 missing or empty baseline file fails the run. --update-baseline needs the
 whole suite and refuses on harness errors and, without --force-baseline,
 when baseline cases got worse.
-Results per case: build/qt3/results-PROFILE.txt. --self-test checks the assertion
-checks on made-up results.
+Results per case: build/qt3/results-PROFILE.txt; per test set (pass /
+applicable, rate, change to the baseline): build/qt3/sets-PROFILE.txt. A
+set with fewer passing cases than its baseline is printed as SET DOWN;
+--sets lists the N sets (default 25) with the most cases that do not pass.
+--self-test checks the assertion checks on made-up results.
 """
 
 import argparse
@@ -72,6 +75,10 @@ import urllib.request
 import xml.etree.ElementTree as ET
 import xml.parsers.expat
 from fractions import Fraction
+
+# the shared module next to this script (also with python -m)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import suitesets  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 COMMIT = "201a6e466940cdfc727f4babfedcde5332b9f578"
@@ -1294,6 +1301,8 @@ def main():
     ap.add_argument("--force-baseline", action="store_true",
                     help="with --update-baseline: write it even if baseline cases got worse")
     ap.add_argument("--verbose", action="store_true")
+    ap.add_argument("--sets", type=suitesets.count, nargs="?", const=25, default=0, metavar="N",
+                    help="list the N test sets (default 25) with the most cases that do not pass")
     ap.add_argument("--self-test", action="store_true", help="only check the assertion checks")
     args = ap.parse_args()
     if args.self_test:
@@ -1402,6 +1411,8 @@ def main():
             worse.append("%s: %s -> %s %s" % (k, o, c.outcome if c else "missing", c.detail if c else ""))
     better = [c for c in applicable if c.outcome in ("pass", "wrong-code") and c.key not in PLATFORM_DEPENDENT and
               (c.key not in base or RANK[c.outcome] < RANK[base[c.key]])]
+    suitesets.report([(c.key, c.outcome) for c in cases], base,
+                     os.path.join(WORK, "sets-%s.txt" % PROFILE), args.sets, PLATFORM_DEPENDENT)
     print("baseline: %d cases, %d worse, %d better" % (len(base), len(worse), len(better)))
     for w in worse[:50]:
         print("  WORSE " + w)
