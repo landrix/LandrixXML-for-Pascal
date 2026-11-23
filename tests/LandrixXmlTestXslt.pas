@@ -1563,6 +1563,55 @@ begin
   end;
 end;
 
+{ the result of the pattern stylesheet below with FunctionBody as the
+  sequence constructor of f:t that sets $r (a string) }
+function RunPatternSheet(const FunctionBody: string): string;
+var
+  Sheet: TLandrixXmlXsltStylesheet;
+  T: TLandrixXmlXsltTransformer;
+  Source: TLandrixXmlXPathTree;
+begin
+  Sheet := TLandrixXmlXsltStylesheet.Create;
+  Source := TLandrixXmlXPathTree.Create;
+  T := nil;
+  try
+    Sheet.LoadFromUtf8(U(
+      '<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:f="urn:f"' +
+      ' xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="f xs">' +
+      '<xsl:output omit-xml-declaration="yes"/>' +
+      '<xsl:function name="f:t" as="xs:boolean"><xsl:param name="n" as="node()"/>' +
+      '<xsl:variable name="r">' + FunctionBody + '</xsl:variable>' +
+      '<xsl:sequence select="string($r) != ''never''"/></xsl:function>' +
+      '<xsl:template match="r/(a | zz)" mode="m">x</xsl:template>' +
+      '<xsl:template match="/"><out><xsl:apply-templates select="r/a"/></out></xsl:template>' +
+      '<xsl:template match="r/(a[f:t(.) and xs:integer(@v) = 1] | a[@w])"><hit v="{@v}"/></xsl:template>' +
+      '<xsl:template match="a" priority="-9"><miss v="{@v}"/></xsl:template>' +
+      '</xsl:stylesheet>'), U('urn:test'));
+    Source.LoadFromUtf8(U('<r><a v="x" w="1"/><a v="1"/></r>'));
+    T := TLandrixXmlXsltTransformer.Create(Sheet);
+    Result := LandrixXmlUtf8ToString(T.TransformToUtf8(Source));
+  finally
+    T.Free;
+    Source.Free;
+    Sheet.Free;
+  end;
+end;
+
+{ A pattern matched while another one is evaluated (the function in a
+  predicate applies templates) leaves the outer one's state alone: the
+  result is that of the same function without apply-templates (the first
+  a fails in the first branch, so it does not match the second one, see
+  the unit comment of LandrixXmlXPathEval) }
+procedure TestNestedPattern;
+var
+  Direct: string;
+begin
+  Direct := RunPatternSheet('k');
+  CheckEqualsStr('<out><miss v="x"/><hit v="1"/></out>', Direct, 'the pattern without nesting');
+  CheckEqualsStr(Direct, RunPatternSheet('<xsl:apply-templates select="$n" mode="m"/>'),
+    'a pattern matched inside a predicate of another');
+end;
+
 procedure TestInitialMode;
 const
   Bad: array[0..3] of string = ('{urn:m}none', '{urn:m}hidden', '{urn:m}empty', '{urn:m}used');
@@ -1647,6 +1696,7 @@ procedure Register;
 begin
   RegisterTest('Xslt.FileUris', TestFileUris);
   RegisterTest('Xslt.InitialMode', TestInitialMode);
+  RegisterTest('Xslt.NestedPattern', TestNestedPattern);
   RegisterTest('Xslt.KeysOutsideCodePage', TestKeysOutsideCodePage);
   RegisterTest('Xslt.Cases', TestCases);
   RegisterTest('Xslt.Api', TestApi);

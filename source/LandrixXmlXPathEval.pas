@@ -167,10 +167,15 @@ type
     ContextNode: Integer;
     ErrorCode: string;
     ErrorMessage: string;
+    { the library error code of the error (xecUnsupported stays so) }
+    ErrorLibCode: TLandrixXmlErrorCode;
     { the error came from fn:error }
     ErrorRaised: Boolean;
     { the declared type the value is converted to (xsl:variable as=) }
     DeclaredType: TLandrixXmlXPathSequenceType;
+    { the error code when the value does not match DeclaredType ('': that
+      of the conversion) }
+    TypeErrorCode: string;
   end;
   TLandrixXmlXPathSlots = array of TLandrixXmlXPathSlot;
 
@@ -544,9 +549,10 @@ type
     procedure BindLazy(Slot: Integer; Expr: TLandrixXmlXPathExpression; ContextNode: Integer);
     { BindLazy, the value converted to T when it is evaluated (an XSLT
       variable with "as"; for the XSLT units, not part of the documented
-      API yet) }
+      API yet); TypeCode: the error code when it does not match ('': that
+      of the conversion) }
     procedure BindLazyAs(Slot: Integer; Expr: TLandrixXmlXPathExpression; ContextNode: Integer;
-      const T: TLandrixXmlXPathSequenceType);
+      const T: TLandrixXmlXPathSequenceType; const TypeCode: string = '');
     procedure UnbindFrame;
     { A new frame of Size unbound slots for a call (an XSLT template or
       stylesheet function; for the XSLT units, not part of the documented
@@ -1997,8 +2003,10 @@ begin
   Slot.ContextNode := -1;
   Slot.ErrorCode := '';
   Slot.ErrorMessage := '';
+  Slot.ErrorLibCode := xecXPath;
   Slot.ErrorRaised := False;
   Slot.DeclaredType.Declared := False;
+  Slot.TypeErrorCode := '';
 end;
 
 procedure TLandrixXmlXPathEvaluator.SetGlobalCount(Count: Integer);
@@ -2151,10 +2159,11 @@ begin
 end;
 
 procedure TLandrixXmlXPathEvaluator.BindLazyAs(Slot: Integer; Expr: TLandrixXmlXPathExpression;
-  ContextNode: Integer; const T: TLandrixXmlXPathSequenceType);
+  ContextNode: Integer; const T: TLandrixXmlXPathSequenceType; const TypeCode: string);
 begin
   BindLazy(Slot, Expr, ContextNode);
   PSlot(SlotRef(Slot))^.DeclaredType := T;
+  PSlot(SlotRef(Slot))^.TypeErrorCode := TypeCode;
 end;
 
 procedure TLandrixXmlXPathEvaluator.EnterExpression(Expr: TLandrixXmlXPathExpression;
@@ -2278,6 +2287,7 @@ begin
             P^.State := xssError;
             P^.ErrorCode := E.XPathCode;
             P^.ErrorMessage := E.Message;
+            P^.ErrorLibCode := E.Code;
             P^.ErrorRaised := E is ELandrixXmlXPathRaised;
             raise;
           end;
@@ -2302,7 +2312,16 @@ begin
               P^.State := xssError;
               P^.ErrorCode := E.XPathCode;
               P^.ErrorMessage := E.Message;
+              P^.ErrorLibCode := E.Code;
               P^.ErrorRaised := E is ELandrixXmlXPathRaised;
+              if (P^.TypeErrorCode <> '') and not P^.ErrorRaised and (E.Code <> xecLimit) then
+              begin
+                { the declared type's own code (XTTE0570 of XSLT) }
+                P^.ErrorCode := P^.TypeErrorCode;
+                P^.ErrorMessage := P^.TypeErrorCode + ': ' + Copy(E.Message, Length(E.XPathCode) + 3, MaxInt);
+                raise ELandrixXmlXPathError.CreateXPathAt(E.Code, P^.ErrorCode,
+                  Copy(P^.ErrorMessage, Length(P^.ErrorCode) + 3, MaxInt), 0, 0);
+              end;
               raise;
             end;
             on Exception do
@@ -2327,11 +2346,11 @@ begin
     xssError:
       begin
         if P^.ErrorRaised then
-          raise ELandrixXmlXPathRaised.CreateXPath(P^.ErrorCode, Copy(P^.ErrorMessage, Length(P^.ErrorCode) + 3,
-            MaxInt))
+          raise ELandrixXmlXPathRaised.CreateXPathAt(P^.ErrorLibCode, P^.ErrorCode,
+            Copy(P^.ErrorMessage, Length(P^.ErrorCode) + 3, MaxInt), 0, 0)
         else
-          raise ELandrixXmlXPathError.CreateXPath(P^.ErrorCode, Copy(P^.ErrorMessage, Length(P^.ErrorCode) + 3,
-            MaxInt));
+          raise ELandrixXmlXPathError.CreateXPathAt(P^.ErrorLibCode, P^.ErrorCode,
+            Copy(P^.ErrorMessage, Length(P^.ErrorCode) + 3, MaxInt), 0, 0);
       end;
   else
     Fail('XPDY0002', 'variable slot ' + IntToStr(Slot) + ' is not bound');
@@ -2669,17 +2688,27 @@ end;
 
 function TLandrixXmlXPathEvaluator.EvaluatePattern(Expr: TLandrixXmlXPathExpression;
   ContextNode: Integer): TLandrixXmlXPathSequence;
+var
+  SavedPattern, SavedFinal: Boolean;
+  SavedCount, SavedMin: Integer;
 begin
+  { a pattern may be matched while another one is evaluated (a function
+    in a predicate that applies templates): the outer one's state and its
+    failed nodes are kept (the inner one adds its own after them) }
+  SavedPattern := FPattern;
+  SavedFinal := FFinal;
+  SavedCount := FFailedCount;
+  SavedMin := FMinFailed;
   FPattern := True;
   FFinal := True;
-  FFailedCount := 0;
   FMinFailed := MaxInt;
   try
     Result := EvaluateSequence(Expr, ContextNode);
   finally
-    FPattern := False;
-    FFinal := False;
-    FFailedCount := 0;
+    FPattern := SavedPattern;
+    FFinal := SavedFinal;
+    FFailedCount := SavedCount;
+    FMinFailed := SavedMin;
   end;
 end;
 

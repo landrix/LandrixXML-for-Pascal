@@ -229,6 +229,9 @@ type
       call-template: the template (TXsltTemplate) }
     Mode: TObject;
     CurrentMode: Boolean;
+    { apply-templates without select (child::node(): XTTE0510 for an
+      atomic context item) }
+    ImplicitSelect: Boolean;
     Template: TObject;
     { with-param (TXsltWithParam, owned) }
     Params: TObjectList;
@@ -923,6 +926,19 @@ type
     Simplified: Boolean;
   end;
 
+  { an output property set by xsl:output (Key: the Clark name of the
+    output definition, a space and the attribute): the declaration of the
+    highest import precedence so far, its value, and another one of the
+    same precedence with a different value (XTSE1560 unless a higher one
+    follows) }
+  TOutputSeen = class
+  public
+    Key: TLandrixXmlUtf8;
+    Decl: TDecl;
+    Value: TLandrixXmlUtf8;
+    Conflict: TDecl;
+  end;
+
   { an xsl:character-map: its maps (use-character-maps, Clark names) and
     its characters with their strings }
   TCharMap = class
@@ -1036,6 +1052,7 @@ type
     FIterates: TList;
     { the xsl:mode declarations (TDecl, not owned) }
     FModeDecls: TList;
+    FOutputSeen: TObjectList;
     function VarName(const Clark: TLandrixXmlUtf8): TLandrixXmlUtf8;
     function ModeName(M: TModule; E: Integer; const Value: TLandrixXmlUtf8): TLandrixXmlUtf8;
     function DefaultModeOf(M: TModule; E: Integer): TLandrixXmlUtf8;
@@ -1067,6 +1084,7 @@ type
     function Attr(M: TModule; E: Integer; const Local: TLandrixXmlUtf8; out Value: TLandrixXmlUtf8): Boolean;
     function ReqAttr(M: TModule; E: Integer; const Local: TLandrixXmlUtf8): TLandrixXmlUtf8;
     function QNameToClark(M: TModule; E: Integer; const QName: TLandrixXmlUtf8; UseDefault: Boolean): TLandrixXmlUtf8;
+    function DeclName(M: TModule; E: Integer; const QName: TLandrixXmlUtf8): TLandrixXmlUtf8;
     function LoadModule(M: TModule; E: Integer; const Href: TLandrixXmlUtf8): TModule;
     procedure Collect(M: TModule);
     function NewContext(M: TModule; E: Integer; Scope: TScope): TLandrixXmlXPathStaticContext;
@@ -1088,6 +1106,7 @@ type
     function CompileSorts(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr): Integer;
     function SortFollows(M: TModule; C: Integer): Boolean;
     function CompileVariable(M: TModule; E: Integer; Scope: TScope; Param: Boolean): TXsltInstr;
+    procedure CheckSelectOnly(M: TModule; E: Integer; const Code: string);
     procedure CompileIterate(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
     procedure CheckTail(M: TModule; E: Integer);
     procedure CompileNextIteration(M: TModule; E: Integer; Scope: TScope; Instr: TXsltInstr);
@@ -1106,6 +1125,7 @@ type
       HasModes: Boolean);
     function ModeOf(const Name: TLandrixXmlUtf8): TXsltMode;
     procedure CompileOutput(D: TDecl);
+    procedure OutputSeen(D: TDecl; const Key, Value: TLandrixXmlUtf8);
     procedure CheckRoot(M: TModule);
     procedure CompileSimplified(D: TDecl);
     function UseAttributeSets(M: TModule; E: Integer; const Names: TLandrixXmlUtf8): TXsltInstr;
@@ -1206,6 +1226,7 @@ begin
   FAliases.Sorted := True;
   FIterates := TList.Create;
   FModeDecls := TList.Create;
+  FOutputSeen := TObjectList.Create;
 end;
 
 destructor TCompiler.Destroy;
@@ -1221,6 +1242,7 @@ begin
   FAliases.Free;
   FIterates.Free;
   FModeDecls.Free;
+  FOutputSeen.Free;
   FUseWhenTrue.Free;
   FUseWhenFalse.Free;
   FUseWhenEvaluator.Free;
@@ -1441,6 +1463,19 @@ begin
   Result := XsltClarkOf(Uri, Local);
 end;
 
+{ the Clark name of a declared object (a template, variable, parameter,
+  key, attribute set, character map or output definition): XTSE0080 in a
+  reserved namespace (but for the template xsl:initial-template of XSLT
+  3.0) }
+function TCompiler.DeclName(M: TModule; E: Integer; const QName: TLandrixXmlUtf8): TLandrixXmlUtf8;
+begin
+  Result := QNameToClark(M, E, QName, False);
+  if (Result = XsltClarkOf(XsltNamespace, 'initial-template')) and IsXsl(M, E, 'template') then
+    Exit;
+  if (Copy(Result, 1, 1) = '{') and ReservedNamespace(Copy(Result, 2, Pos8('}', Result) - 2)) then
+    Fail(M, E, 'XTSE0080', 'the name "' + LandrixXmlUtf8ToString(Trim8(QName)) + '" is in a reserved namespace');
+end;
+
 { --- modules and declarations ------------------------------------------------ }
 
 function TCompiler.LoadModule(M: TModule; E: Integer; const Href: TLandrixXmlUtf8): TModule;
@@ -1455,10 +1490,15 @@ begin
     Fail(M, E, 'XTSE0165', 'the stylesheet module ' + LandrixXmlUtf8ToString(Href) + ' cannot be read');
   try
     { a cycle: the module is being included or imported already (the same
-      module imported twice elsewhere is no cycle) }
+      module imported twice elsewhere is no cycle); closed by an xsl:import
+      XTSE0210, by an xsl:include XTSE0180 }
     for I := 0 to Integer(FChain.Count) - 1 do
       if FChain[I] = LandrixXmlUtf8ToKey(Uri) then
-        Fail(M, E, 'XTSE0180', 'the module ' + LandrixXmlUtf8ToString(Uri) + ' includes or imports itself');
+      begin
+        if IsXsl(M, E, 'import') then
+          Fail(M, E, 'XTSE0210', 'the module ' + LandrixXmlUtf8ToString(Uri) + ' imports itself');
+        Fail(M, E, 'XTSE0180', 'the module ' + LandrixXmlUtf8ToString(Uri) + ' includes itself');
+      end;
     Result := TModule.Create;
     Result.Tree := TLandrixXmlXPathTree.Create;
     Result.Owned := True;
@@ -2460,8 +2500,36 @@ begin
   M.Owned := True;
 end;
 
+{ whether E has content besides white space, comments and processing
+  instructions (white space xml:space keeps counts) }
+function HasContent(M: TModule; E: Integer): Boolean;
+var
+  C: Integer;
+begin
+  Result := True;
+  C := M.Tree.FirstChild(E);
+  while C >= 0 do
+  begin
+    if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and
+      ((Trim8(M.Tree.ValueUtf8(C)) <> '') or PreservesSpace(M.Tree, C)) then
+      Exit;
+    C := M.Tree.NextSibling[C];
+  end;
+  Result := False;
+end;
+
+{ the name of an element of the stylesheet for a message }
+function DisplayName(M: TModule; E: Integer): string;
+begin
+  if M.Tree.NamespaceUriUtf8(E) = XsltNamespace then
+    Result := 'xsl:' + LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(E))
+  else
+    Result := LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(E));
+end;
+
 { CheckStandard for every element of a module (also those the compiler
-  never looks at as instructions, such as xsl:when or xsl:param) }
+  never looks at as instructions, such as xsl:when or xsl:param);
+  XTSE0130 and XTSE0260 for its top-level elements }
 procedure TCompiler.CheckModule(M: TModule);
 var
   I, DataEnd: Integer;
@@ -2500,6 +2568,26 @@ begin
       CheckStandard(M, I, I < DataEnd);
     end;
     Inc(I);
+  end;
+  if M.Simplified then
+    Exit;
+  I := M.Tree.FirstChild(M.Tree.DocumentElement);
+  while I >= 0 do
+  begin
+    if M.Tree.Kind[I] = xnkElement then
+    begin
+      { a top-level element in no namespace: XTSE0130 }
+      if M.Tree.NamespaceUriUtf8(I) = '' then
+        Fail(M, I, 'XTSE0130', 'the top-level element ' + LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(I)) +
+          ' is in no namespace');
+      { declarations that must be empty (xsl:mode is checked where it is
+        compiled; xsl:namespace-alias with content is accepted, as Saxon) }
+      if (IsXsl(M, I, 'include') or IsXsl(M, I, 'import') or IsXsl(M, I, 'strip-space') or
+        IsXsl(M, I, 'preserve-space') or IsXsl(M, I, 'output') or IsXsl(M, I, 'decimal-format')) and
+        HasContent(M, I) then
+        Fail(M, I, 'XTSE0260', DisplayName(M, I) + ' must be empty');
+    end;
+    I := M.Tree.NextSibling[I];
   end;
 end;
 
@@ -3494,7 +3582,7 @@ begin
       P := TXsltWithParam.Create;
       Instr.Params.Add(P);
       P.BaseUri := StaticBase(M, C);
-      P.Name := QNameToClark(M, C, ReqAttr(M, C, 'name'), False);
+      P.Name := DeclName(M, C, ReqAttr(M, C, 'name'));
       P.Tunnel := YesNoAttr(M, C, 'tunnel');
       for I := 0 to Integer(Instr.Params.Count) - 2 do
         if TXsltWithParam(Instr.Params[I]).Name = P.Name then
@@ -3502,7 +3590,9 @@ begin
       P.Select := CompileAttr(M, C, 'select', Scope);
       P.HasAs := ParseType(M, C, Scope, P.AsType);
       if P.Select = nil then
-        CompileBody(M, C, Scope, P.Body, -1);
+        CompileBody(M, C, Scope, P.Body, -1)
+      else
+        CheckSelectOnly(M, C, 'XTSE0620');
     end
     else if IsXsl(M, C, 'sort') and (Instr.Kind = xskApplyTemplates) then
       CompileSortKey(M, C, Scope, Instr)
@@ -3755,7 +3845,7 @@ begin
   try
     Result.IsParam := Param;
     Lexical := Trim8(ReqAttr(M, E, 'name'));
-    Result.VarName := QNameToClark(M, E, Lexical, False);
+    Result.VarName := DeclName(M, E, Lexical);
     if Param then
     begin
       Result.Required := Attr(M, E, 'required', V) and (V = 'yes');
@@ -3764,7 +3854,9 @@ begin
     Result.Select := CompileAttr(M, E, 'select', Scope);
     Result.HasAs := ParseType(M, E, Scope, Result.AsType);
     if Result.Select = nil then
-      CompileBody(M, E, Scope, Result.Body, -1);
+      CompileBody(M, E, Scope, Result.Body, -1)
+    else
+      CheckSelectOnly(M, E, 'XTSE0620');
     { visible after the declaration }
     Result.Slot := Scope.NextSlot;
     Inc(Scope.NextSlot);
@@ -3777,31 +3869,22 @@ begin
   end;
 end;
 
-{ whether E has content besides white space, comments and processing
-  instructions (white space xml:space keeps counts) }
-function HasContent(M: TModule; E: Integer): Boolean;
+{ an element with a select attribute must be empty (white space that
+  xml:space keeps counts; comments and processing instructions do not):
+  Code is the error code of the element; xsl:sequence may hold
+  xsl:fallback (XSLT 3.0, as Saxon) }
+procedure TCompiler.CheckSelectOnly(M: TModule; E: Integer; const Code: string);
 var
   C: Integer;
 begin
-  Result := True;
   C := M.Tree.FirstChild(E);
   while C >= 0 do
   begin
-    if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and
-      ((Trim8(M.Tree.ValueUtf8(C)) <> '') or PreservesSpace(M.Tree, C)) then
-      Exit;
+    if ((M.Tree.Kind[C] = xnkElement) and not ((Code = 'XTSE3185') and IsXsl(M, C, 'fallback'))) or
+      (M.Tree.Kind[C] = xnkText) and ((Trim8(M.Tree.ValueUtf8(C)) <> '') or PreservesSpace(M.Tree, C)) then
+      Fail(M, E, Code, DisplayName(M, E) + ' with a select attribute must be empty');
     C := M.Tree.NextSibling[C];
   end;
-  Result := False;
-end;
-
-{ the name of an element of the stylesheet for a message }
-function DisplayName(M: TModule; E: Integer): string;
-begin
-  if M.Tree.NamespaceUriUtf8(E) = XsltNamespace then
-    Result := 'xsl:' + LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(E))
-  else
-    Result := LandrixXmlUtf8ToString(M.Tree.LocalNameUtf8(E));
 end;
 
 { xsl:iterate (XSLT 3.0): select, the parameters (each with a value: no
@@ -3842,7 +3925,7 @@ begin
             Fail(M, C, 'XTSE0580', 'two parameters of xsl:iterate have the same name');
         if not P.Required and P.HasAs and (P.Select = nil) and (P.Body.Count = 0) and (P.AsType.Kind <> xtkEmpty) and
           not (P.AsType.Occurrence in [xocOptional, xocMany]) then
-          Fail(M, E, 'XTSE3520', 'the parameter ' + LandrixXmlUtf8ToString(P.VarName) +
+          Fail(M, C, 'XTSE3520', 'the parameter ' + LandrixXmlUtf8ToString(P.VarName) +
             ' of xsl:iterate needs an initial value: its type does not allow the empty sequence');
       end
       else if IsXsl(M, C, 'on-completion') then
@@ -4050,7 +4133,9 @@ begin
         Result.Separator := CompileAvt(M, E, V, Scope);
       Result.NoEscape := NoEscape(M, E);
       if Result.Select = nil then
-        CompileBody(M, E, Scope, Result.Body, -1);
+        CompileBody(M, E, Scope, Result.Body, -1)
+      else
+        CheckSelectOnly(M, E, 'XTSE0870');
     end
     else if L = 'apply-templates' then
     begin
@@ -4058,7 +4143,10 @@ begin
       if Attr(M, E, 'select', V) then
         Result.Select := Compile(M, E, V, Scope)
       else
+      begin
         Result.Select := Compile(M, E, 'child::node()', Scope);
+        Result.ImplicitSelect := True;
+      end;
       { none: the default mode; an empty one is XTSE0020 (Saxon) }
       if not Attr(M, E, 'mode', V) then
         V := '#default';
@@ -4183,11 +4271,14 @@ begin
     begin
       Result := NewInstr(xskSequence, M, E);
       Result.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
+      { xsl:fallback is allowed here (XSLT 3.0), as in Saxon }
+      CheckSelectOnly(M, E, 'XTSE3185');
     end
     else if L = 'copy-of' then
     begin
       Result := NewInstr(xskCopyOf, M, E);
       Result.Select := Compile(M, E, ReqAttr(M, E, 'select'), Scope);
+      CheckSelectOnly(M, E, 'XTSE0260');
       Result.NoNamespaces := Attr(M, E, 'copy-namespaces', V) and not YesNoAttr(M, E, 'copy-namespaces');
     end
     else if L = 'copy' then
@@ -4224,7 +4315,9 @@ begin
           Unsupported(M, E, 'a type or validation of xsl:attribute');
       end;
       if Result.Select = nil then
-        CompileBody(M, E, Scope, Result.Body, -1);
+        CompileBody(M, E, Scope, Result.Body, -1)
+      else
+        CheckSelectOnly(M, E, 'XTSE0840');
     end
     else if L = 'namespace' then
     begin
@@ -4234,24 +4327,16 @@ begin
       if Result.Select = nil then
         CompileBody(M, E, Scope, Result.Body, -1)
       else
-      begin
-        { select and a sequence constructor: XTSE0910 }
-        C := M.Tree.FirstChild(E);
-        while C >= 0 do
-        begin
-          if (M.Tree.Kind[C] = xnkElement) or (M.Tree.Kind[C] = xnkText) and
-            ((Trim8(M.Tree.ValueUtf8(C)) <> '') or PreservesSpace(M.Tree, C)) then
-            Fail(M, E, 'XTSE0910', 'xsl:namespace has a select attribute and content');
-          C := M.Tree.NextSibling[C];
-        end;
-      end;
+        CheckSelectOnly(M, E, 'XTSE0910');
     end
     else if L = 'comment' then
     begin
       Result := NewInstr(xskComment, M, E);
       Result.Select := CompileAttr(M, E, 'select', Scope);
       if Result.Select = nil then
-        CompileBody(M, E, Scope, Result.Body, -1);
+        CompileBody(M, E, Scope, Result.Body, -1)
+      else
+        CheckSelectOnly(M, E, 'XTSE0940');
     end
     else if L = 'processing-instruction' then
     begin
@@ -4259,7 +4344,9 @@ begin
       Result.NameAvt := CompileAvt(M, E, ReqAttr(M, E, 'name'), Scope);
       Result.Select := CompileAttr(M, E, 'select', Scope);
       if Result.Select = nil then
-        CompileBody(M, E, Scope, Result.Body, -1);
+        CompileBody(M, E, Scope, Result.Body, -1)
+      else
+        CheckSelectOnly(M, E, 'XTSE0880');
     end
     else if L = 'message' then
     begin
@@ -4330,7 +4417,7 @@ begin
       D := TDecl(FDecls[I]);
       if not (IsXsl(D.Module, D.Element, 'variable') or IsXsl(D.Module, D.Element, 'param')) then
         Continue;
-      Name := QNameToClark(D.Module, D.Element, ReqAttr(D.Module, D.Element, 'name'), False);
+      Name := DeclName(D.Module, D.Element, ReqAttr(D.Module, D.Element, 'name'));
       Found := False;
       for J := 0 to Integer(Names.Count) - 1 do
         if Names[J] = LandrixXmlUtf8ToKey(Name) then
@@ -4390,7 +4477,9 @@ begin
         G.Select := CompileAttr(D.Module, D.Element, 'select', Scope);
         G.HasAs := ParseType(D.Module, D.Element, Scope, G.AsType);
         if G.Select = nil then
-          CompileBody(D.Module, D.Element, Scope, G.Body, -1);
+          CompileBody(D.Module, D.Element, Scope, G.Body, -1)
+        else
+          CheckSelectOnly(D.Module, D.Element, 'XTSE0620');
         G.FrameSize := Scope.MaxSlot;
         if (G.Select = nil) and (G.Body.Count > 0) then
         begin
@@ -4496,7 +4585,7 @@ begin
   end;
 end;
 
-{ the default priority of a pattern branch (XSLT 2.0, 6.4) }
+{ the default priority of a pattern branch (XSLT 2.0, 6.4; XSLT 3.0, 6.6) }
 function DefaultPriority(const Branch: TLandrixXmlUtf8): Double;
 var
   S, Test: TLandrixXmlUtf8;
@@ -4524,6 +4613,17 @@ begin
   if (S = '/') then
   begin
     Result := -0.5;
+    Exit;
+  end;
+  { a predicate pattern (XSLT 3.0, 6.6): "." -1, with predicates +1 }
+  if S = '.' then
+  begin
+    Result := -1;
+    Exit;
+  end;
+  if Copy(S, 1, 2) = '.[' then
+  begin
+    Result := 1;
     Exit;
   end;
   { several steps or a predicate }
@@ -5370,7 +5470,7 @@ begin
   V := Trim8(ReqAttr(M, E, 'name'));
   if not IsQName8(V) then
     Fail(M, E, 'XTSE0020', 'the name of xsl:key is not a QName: "' + LandrixXmlUtf8ToString(V) + '"');
-  Name := QNameToClark(M, E, V, False);
+  Name := DeclName(M, E, V);
   if Attr(M, E, 'collation', V) then
     CheckCollation(Self, M, E, Trim8(V), 'XTSE1210');
   HasUse := Attr(M, E, 'use', V);
@@ -5815,7 +5915,7 @@ begin
   T.Column := M.ColumnOf(E);
   T.Precedence := D.Precedence;
   if Attr(M, E, 'name', V) then
-    T.Name := QNameToClark(M, E, V, False);
+    T.Name := DeclName(M, E, V);
   Match := '';
   HasMatch := Attr(M, E, 'match', Match);
   if not HasMatch and (T.Name = '') then
@@ -5826,6 +5926,8 @@ begin
   HasModes := Attr(M, E, 'mode', Modes);
   if HasModes and not HasMatch then
     Fail(M, E, 'XTSE0500', 'xsl:template with a mode needs a match attribute');
+  if not HasMatch and Attr(M, E, 'priority', V) then
+    Fail(M, E, 'XTSE0500', 'xsl:template with a priority needs a match attribute');
   Scope := TScope.Create;
   try
     Scope.NextSlot := FC.GlobalCount;
@@ -5958,7 +6060,7 @@ begin
     Fail(M, E, 'XTSE0020', 'the name of xsl:attribute-set is not a QName: "' + LandrixXmlUtf8ToString(V) + '"');
   T := TXsltTemplate.Create;
   FC.Templates.Add(T);
-  T.Name := QNameToClark(M, E, V, False);
+  T.Name := DeclName(M, E, V);
   T.Module := M.Uri;
   T.Line := M.LineOf(E);
   T.Column := M.ColumnOf(E);
@@ -6072,7 +6174,7 @@ begin
   V := Trim8(ReqAttr(M, E, 'name'));
   if not IsQName8(V) then
     Fail(M, E, 'XTSE0020', 'the name of xsl:character-map is not a QName: "' + LandrixXmlUtf8ToString(V) + '"');
-  Name := QNameToClark(M, E, V, False);
+  Name := DeclName(M, E, V);
   Map := TCharMap.Create;
   try
     Map.Module := M;
@@ -6507,9 +6609,11 @@ begin
       Name := XsltFormatClark(Trim8(Name), nil, nil);
       if Name = '' then
         Fail(M, D.Element, 'XTSE0020', 'the name of xsl:output is not a valid EQName');
+      if (Copy(Name, 1, 1) = '{') and ReservedNamespace(Copy(Name, 2, Pos8('}', Name) - 2)) then
+        Fail(M, D.Element, 'XTSE0080', 'the name of xsl:output is in a reserved namespace');
     end
     else
-      Name := QNameToClark(M, D.Element, Trim8(Name), False);
+      Name := DeclName(M, D.Element, Trim8(Name));
     if FC.NamedOutputs.Find(LandrixXmlUtf8ToKey(Name), P) then
       Target := TXsltOutputProperties(FC.NamedOutputs.Objects[P])
     else
@@ -6566,8 +6670,43 @@ begin
     else
       { supported }
     end;
+    { compared as stored: yes, true and 1 are equal for the yes/no
+      properties only }
     Target.SetValue(L, V);
+    OutputSeen(D, Name + ' ' + L, Target.Value(L, V));
   end;
+end;
+
+{ records an explicit output property; D comes in ascending import
+  precedence, so a higher one replaces the earlier ones and their conflict }
+procedure TCompiler.OutputSeen(D: TDecl; const Key, Value: TLandrixXmlUtf8);
+var
+  I: Integer;
+  S: TOutputSeen;
+  V: TLandrixXmlUtf8;
+begin
+  V := Value;
+  for I := 0 to Integer(FOutputSeen.Count) - 1 do
+  begin
+    S := TOutputSeen(FOutputSeen[I]);
+    if S.Key = Key then
+    begin
+      if D.Precedence > S.Decl.Precedence then
+      begin
+        S.Decl := D;
+        S.Value := V;
+        S.Conflict := nil;
+      end
+      else if (D.Precedence = S.Decl.Precedence) and (V <> S.Value) and (S.Conflict = nil) then
+        S.Conflict := D;
+      Exit;
+    end;
+  end;
+  S := TOutputSeen.Create;
+  FOutputSeen.Add(S);
+  S.Key := Key;
+  S.Decl := D;
+  S.Value := V;
 end;
 
 { Call targets, modes for #all, rule order. }
@@ -6929,6 +7068,12 @@ begin
           'two templates named ' + LandrixXmlUtf8ToString(TXsltTemplate(FDupTemplates[I]).Name));
     for I := 0 to Integer(FC.UserFunctions.Count) - 1 do
       CompileFunction(TXsltTemplate(FC.UserFunctions[I]), TDecl(FFunctionDecls[I]));
+    for I := 0 to Integer(FOutputSeen.Count) - 1 do
+      if TOutputSeen(FOutputSeen[I]).Conflict <> nil then
+        Fail(TOutputSeen(FOutputSeen[I]).Conflict.Module, TOutputSeen(FOutputSeen[I]).Conflict.Element, 'XTSE1560',
+          'two xsl:output declarations of one import precedence give different values of ' +
+          LandrixXmlUtf8ToString(Copy(TOutputSeen(FOutputSeen[I]).Key,
+          Pos8(' ', TOutputSeen(FOutputSeen[I]).Key) + 1, MaxInt)));
     CompileModes;
     { the initial mode when none is given }
     FC.DefaultMode := DefaultModeOf(Main, Main.Tree.DocumentElement);

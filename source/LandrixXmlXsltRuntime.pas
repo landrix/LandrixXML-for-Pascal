@@ -308,6 +308,10 @@ type
       its properties; the tree and receiver of the implicit principal
       result }
     FTemporary: Boolean;
+    { in the body of a stylesheet function (not in a global variable it
+      reads): current() without a current item is XTDE1360 there, as Saxon,
+      XPDY0002 elsewhere }
+    FInFunction: Boolean;
     { set by HostCompatible for the Host call it makes with the converted
       arguments }
     FArgumentsConverted: Boolean;
@@ -2088,13 +2092,21 @@ begin
   Result := Host(Evaluator, Def, A, Focus);
 end;
 
+const
+  NoCurrentCode: array[Boolean] of string = ('XPDY0002', 'XTDE1360');
+  { a global variable or parameter whose value does not match its type
+    (as Saxon) }
+  GlobalTypeCode: array[Boolean] of string = ('XTTE0570', 'XTTE0590');
+  { an xsl:iterate parameter: its content or its select default }
+  IterateTypeCode: array[Boolean] of string = ('XTTE0570', 'XTTE0600');
+
 function TRun.Host(Evaluator: TLandrixXmlXPathEvaluator; Def: TLandrixXmlXPathFunctionDef;
   const Args: array of TLandrixXmlXPathSequence; const Focus: TLandrixXmlXPathFocus): TLandrixXmlXPathSequence;
 var
   G: TXsltGlobal;
   Slot, SavedNode: Integer;
   Arg, SavedCurrent: TLandrixXmlXPathSequence;
-  SavedRegex: Boolean;
+  SavedRegex, SavedInFunction: Boolean;
   SavedRule: TXsltRule;
   SavedTunnel: TSuppliedArray;
 begin
@@ -2181,11 +2193,11 @@ begin
         if Evaluator.CurrentNode >= 0 then
           Result := LandrixXmlXPathNodeItem(Evaluator.CurrentNode)
         else if (Focus.Node < 0) and (Focus.Item.Count = 0) then
-          raise ELandrixXmlXPathError.CreateXPath('XPDY0002', 'current(): there is no current item')
+          raise ELandrixXmlXPathError.CreateXPath(NoCurrentCode[FInFunction], 'current(): there is no current item')
         else if FCurrent.Count > 0 then
           Result := FCurrent
         else
-          raise ELandrixXmlXPathError.CreateXPath('XPDY0002', 'current(): there is no current item');
+          raise ELandrixXmlXPathError.CreateXPath(NoCurrentCode[FInFunction], 'current(): there is no current item');
       end;
     XfnGlobal:
       begin
@@ -2201,18 +2213,22 @@ begin
         { nor the captured substrings of the instruction that needs it }
         SavedRegex := FRegexActive;
         FRegexActive := False;
+        SavedInFunction := FInFunction;
+        FInFunction := False;
         SavedRule := FRule;
         FRule := nil;
         SavedTunnel := FTunnel;
         FTunnel := nil;
         FEvaluator.PushFrame(G.FrameSize);
         try
+          { XTTE0570 also for a parameter with content (as Saxon) }
           Result := VariableValue(nil, G.BaseUri, nil, G.Body, G.HasAs, G.AsType, G.Name, Focus, FC.FindMode(''));
         finally
           FEvaluator.PopFrame;
           FEvaluator.CurrentNode := SavedNode;
           FCurrent := SavedCurrent;
           FRegexActive := SavedRegex;
+          FInFunction := SavedInFunction;
           FRule := SavedRule;
           FTunnel := SavedTunnel;
         end;
@@ -2474,6 +2490,7 @@ function TRun.VariableValue(Instr: TXsltInstr; const BaseUri: TLandrixXmlUtf8; S
   const Focus: TLandrixXmlXPathFocus; const Mode: TXsltMode): TLandrixXmlXPathSequence;
 var
   Saved: Boolean;
+  Code: string;
 begin
   { variables and parameters: a temporary output state }
   Saved := FTemporary;
@@ -2495,11 +2512,43 @@ begin
       Result := FEvaluator.ConvertSequence(Result, AsType, '$' + LandrixXmlUtf8ToString(Name));
     except
       on E: ELandrixXmlXPathError do
-        if Instr <> nil then
-          raise ELandrixXmlXsltError.CreateXslt(XsltCodeOf(E), E.XPathCode,
+      begin
+        { the code of the declaration (as Saxon): XTTE0570 for a variable
+          (also a global one with content, Instr nil) and for a parameter
+          whose default is content, XTTE0600 for a select default of a
+          parameter, XTDE0700 for a parameter without a default whose type
+          does not allow the empty sequence (a required one), XTTE0590 for
+          xsl:with-param with select }
+        Code := E.XPathCode;
+        if E.Code <> xecLimit then
+        begin
+          if Instr = nil then
+            Code := 'XTTE0570'
+          else if Instr.Kind = xskVariable then
+          begin
+            if not Instr.IsParam or (Body.Count > 0) then
+              Code := 'XTTE0570'
+            else if Select = nil then
+              Code := 'XTDE0700'
+            else
+              Code := 'XTTE0600';
+          end
+          else if Select <> nil then
+            { xsl:with-param with its own as (Instr: the call or
+              xsl:next-iteration); XTTE0570 for content }
+            Code := 'XTTE0590'
+          else
+            Code := 'XTTE0570';
+        end;
+        if (Instr = nil) and (Code = E.XPathCode) then
+          raise
+        else if Instr <> nil then
+          raise ELandrixXmlXsltError.CreateXslt(XsltCodeOf(E), Code,
             System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), Instr.Module, Instr.Line, Instr.Column)
         else
-          raise;
+          raise ELandrixXmlXPathError.CreateXPathAt(E.Code, Code,
+            System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), 0, 0);
+      end;
     end;
 end;
 
@@ -3206,8 +3255,12 @@ begin
     try
       V := FEvaluator.ConvertSequence(S.Items, T.AsType, 'template ' + LandrixXmlUtf8ToString(T.Name));
     except
+      { XTTE0505, as Saxon }
       on E: ELandrixXmlXPathError do
-        raise ELandrixXmlXsltError.CreateXslt(XsltCodeOf(E), E.XPathCode,
+        if E.Code = xecLimit then
+          raise
+        else
+          raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTTE0505',
           System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), T.Module, T.Line, T.Column);
     end;
   finally
@@ -3226,7 +3279,7 @@ var
   P: TXsltInstr;
   V, SavedCurrent: TLandrixXmlXPathSequence;
   S: TSequenceReceiver;
-  SavedGroupActive, SavedRegexActive, SavedTemporary: Boolean;
+  SavedGroupActive, SavedRegexActive, SavedTemporary, SavedInFunction: Boolean;
   SavedRule: TXsltRule;
   SavedTunnel: TSuppliedArray;
 begin
@@ -3249,6 +3302,8 @@ begin
   FRule := nil;
   SavedTemporary := FTemporary;
   FTemporary := True;
+  SavedInFunction := FInFunction;
+  FInFunction := True;
   SavedTunnel := FTunnel;
   FTunnel := nil;
   FEvaluator.PushFrame(T.FrameSize);
@@ -3292,6 +3347,7 @@ begin
     FRegexActive := SavedRegexActive;
     FRule := SavedRule;
     FTemporary := SavedTemporary;
+    FInFunction := SavedInFunction;
     FTunnel := SavedTunnel;
     Dec(FTemplateDepth);
   end;
@@ -4368,9 +4424,13 @@ begin
       try
         V := FEvaluator.ConvertSequence(V, P.AsType, '$' + LandrixXmlUtf8ToString(P.VarName));
       except
+        { XTTE0570 for content, as for a template parameter }
         on E: ELandrixXmlXPathError do
-          raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTTE0600',
-            System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), P.Module, P.Line, P.Column);
+          if E.Code = xecLimit then
+            raise
+          else
+            raise ELandrixXmlXsltError.CreateXslt(xecXslt, IterateTypeCode[P.Select <> nil],
+              System.Copy(E.Message, Length(E.XPathCode) + 3, MaxInt), P.Module, P.Line, P.Column);
       end;
       FEvaluator.BindValue(P.Slot, V);
     end;
@@ -4557,6 +4617,10 @@ begin
   M := TXsltMode(Instr.Mode);
   if Instr.CurrentMode then
     M := Mode;
+  { no select: the children of the context item, which must be a node }
+  if Instr.ImplicitSelect and (Focus.Node < 0) and (Focus.Item.Count > 0) then
+    raise ELandrixXmlXsltError.CreateXslt(xecXslt, 'XTTE0510', 'xsl:apply-templates without select needs a node ' +
+      'as the context item', Instr.Module, Instr.Line, Instr.Column);
   S := Sorted(Instr, Focus, Mode, Eval(Instr, Instr.Select, Focus));
   Params := Supplied(Instr, Focus, Mode);
   Tunnel := Tunnelled(Instr, Focus, Mode);
@@ -6051,15 +6115,28 @@ begin
     if G.Select <> nil then
     begin
       if G.HasAs then
-        FEvaluator.BindLazyAs(G.Slot, G.Select, Root, G.AsType)
+        FEvaluator.BindLazyAs(G.Slot, G.Select, Root, G.AsType, GlobalTypeCode[G.IsParam])
       else
         FEvaluator.BindLazy(G.Slot, G.Select, Root);
     end
     else if G.Call <> nil then
       FEvaluator.BindLazy(G.Slot, G.Call, Root)
     else if G.HasAs then
-      FEvaluator.BindValue(G.Slot, FEvaluator.ConvertSequence(LandrixXmlXPathEmpty, G.AsType,
-        '$' + LandrixXmlUtf8ToString(G.Name)))
+      try
+        FEvaluator.BindValue(G.Slot, FEvaluator.ConvertSequence(LandrixXmlXPathEmpty, G.AsType,
+          '$' + LandrixXmlUtf8ToString(G.Name)));
+      except
+        { a parameter without a default whose type needs a value XTDE0700,
+          a variable without a value XTTE0570 (as Saxon) }
+        on E: ELandrixXmlXPathError do
+          if G.IsParam then
+            raise ELandrixXmlXsltError.CreateXslt(XsltCodeOf(E), 'XTDE0700', 'the parameter ' +
+              LandrixXmlUtf8ToString(G.Name) + ' needs a value: ' + System.Copy(E.Message, Length(E.XPathCode) + 3,
+              MaxInt), G.Module, G.Line, G.Column)
+          else
+            raise ELandrixXmlXsltError.CreateXslt(XsltCodeOf(E), 'XTTE0570', System.Copy(E.Message,
+              Length(E.XPathCode) + 3, MaxInt), G.Module, G.Line, G.Column);
+      end
     else
       FEvaluator.BindValue(G.Slot, LandrixXmlXPathStringItem(''));
   end;

@@ -1040,7 +1040,7 @@ Differences from Xerces, also on purpose:
   runs, as Saxon takes the last matching rule), without a feature the catalog names that this
   library leaves out (schema awareness, streaming, the namespace axis,
   DTDs and the like);
-  5,294 of them pass and 70 more raise an error where one is expected,
+  5,343 of them pass and 39 more raise an error where one is expected,
   but with another code. 109 use an instruction or option that is not
   supported yet and are rejected as such. The test set
   `unicode-90` is left out: its cases never pass the parameter the

@@ -46,6 +46,50 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   whose reply does not list the pinned release now fails instead of
   reporting "current".
 
+### Fixed
+
+- XSLT static errors the compiler did not report, now as Saxon does: a
+  `select` attribute together with content on `xsl:variable`,
+  `xsl:param`, `xsl:with-param` (XTSE0620), `xsl:value-of` (XTSE0870),
+  `xsl:attribute` (XTSE0840), `xsl:comment` (XTSE0940),
+  `xsl:processing-instruction` (XTSE0880), `xsl:sequence` (XTSE3185;
+  `xsl:fallback` stays allowed) and `xsl:copy-of` (XTSE0260), whose
+  content was silently dropped; `xsl:output` declarations of one import
+  precedence with different values for a property (XTSE1560, the last
+  one won); a top-level element in no namespace (XTSE0130, skipped);
+  content in `xsl:include`, `xsl:import`, `xsl:strip-space`,
+  `xsl:preserve-space`, `xsl:output` and `xsl:decimal-format` (XTSE0260); a named template, variable, parameter,
+  key, attribute set, character map, output definition or `xsl:with-param`
+  in a reserved namespace (XTSE0080; `xsl:initial-template` stays
+  allowed); `priority` without `match` (XTSE0500).
+- XSLT error codes as Saxon gives them: a module that imports itself
+  XTSE0210 (was XTSE0180); a variable whose value does not match its
+  `as` type XTTE0570, also a global one and when the conversion fails
+  (was XPTY0004 or FORG0001), also the content default of a parameter;
+  the `select` default of a parameter XTTE0600 (also of an `xsl:iterate`
+  parameter, whose content gives XTTE0570); `xsl:with-param` with its own
+  `as` XTTE0590 for `select`, XTTE0570 for content; a global variable with
+  `as` and no value XTTE0570; a
+  parameter without a default whose type needs a value XTDE0700 (both
+  XPTY0004 before); the result of a template with `as` XTTE0505;
+  `current()` without a current item inside an expression in a
+  stylesheet function XTDE1360 (XPDY0002 stays for a global without a
+  source); `xsl:apply-templates`
+  without `select` on an atomic context item XTTE0510 (was XPTY0020); a
+  global parameter whose default does not match its type XTTE0590, one
+  without a default whose type needs a value XTDE0700.
+  XTSE3520 of an `xsl:iterate` parameter now points at the parameter.
+- The default priority of the XSLT 3.0 pattern `.` is -1 and of `.[...]`
+  +1 (both were 0.5, so `match="."` won over `match="/"` and element
+  names).
+- A match pattern evaluated while another one is (a stylesheet function in
+  a predicate that applies templates) reset the other's record of the
+  nodes its union branches failed on, so its result depended on whether
+  the function matched templates.
+- An error stored for a variable kept its library error code only on the
+  first read: later reads raised `xecXPath` (an unsupported construct
+  became an ordinary XPath error).
+
 ## Releases
 
 - [0.5.1](docs/changelog/0.5.1.md) - 2026-11-23
