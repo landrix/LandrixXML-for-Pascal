@@ -27,7 +27,8 @@
   there, as with Saxon. Matches are leftmost-first, as with a backtracking
   engine such as Saxon's. Compiled programs are limited to about 100000
   instructions and groups and class subtractions to a nesting depth of
-  1000 (ELandrixXmlError with xecLimit); a single character counted
+  1000 and, on Windows, to 64 KB of stack while parsing (ELandrixXmlError
+  with xecLimit); a single character counted
   2147483647 or more times never matches (no string is that long).
 
   Supported: alternation, groups (xrmXPath also non-capturing (?:...)),
@@ -135,6 +136,8 @@ type
     FMatchesEmpty: Boolean;
     FSource: TLandrixXmlUtf8;
     FDepth: Integer;
+    { the stack at the start of the constructor (MaxParseStack) }
+    FStackBase: Pointer;
     FDotAll: Boolean;
     FMultiLine: Boolean;
     FLiteral: Boolean;
@@ -218,6 +221,20 @@ const
   MaxMarks = 4000000;
   { Limit of nested groups and class subtractions (recursive parser). }
   MaxDepth = 1000;
+  { The stack the recursive parser may use: on Windows a pattern may be
+    compiled at run time near the end of the stack budget of an XPath or
+    XSLT run (LandrixXmlDefaultMaxStackBytes), which leaves a quarter of
+    the stack (256 KB of 1 MB). A group level takes about 0.5 KB with
+    Delphi Win64, so 1000 levels would not fit there; 64 KB hold about
+    120 nested groups with Win64 and 230 to 300 with Win32 (class
+    subtractions take less). Elsewhere there is no
+    default budget and the stack is 8 MB: only MaxDepth counts there in
+    practice. }
+{$IFDEF MSWINDOWS}
+  MaxParseStack = 64 * 1024;
+{$ELSE}
+  MaxParseStack = 4 * 1024 * 1024;
+{$ENDIF}
   { Steps of the backtracking matcher per call of Matches, Replace or
     Tokenize (patterns with back-references only). }
   BacktrackSteps = 10000000;
@@ -1221,6 +1238,7 @@ var
   State: TVmState;
 begin
   inherited Create;
+  FStackBase := @Body;
   FMode := Mode;
   FSource := Pattern;
   if not LandrixXmlRegexFlagsValid(Flags, Mode) then
@@ -1311,11 +1329,15 @@ begin
 end;
 
 { Called on entering a group or a class subtraction; the parser is
-  recursive, so the depth must stay well within the stack. }
+  recursive, so the depth (MaxDepth) and the stack it uses (MaxParseStack)
+  are limited. }
 procedure TLandrixXmlRegex.Nest;
+var
+  Used: Integer;
 begin
   Inc(FDepth);
-  if FDepth > MaxDepth then
+  Used := LandrixXmlStackUsed(FStackBase, @Used);
+  if (FDepth > MaxDepth) or (Used > MaxParseStack) then
     raise ELandrixXmlError.CreateCode(xecLimit, 'Regular expression nested too deeply');
 end;
 

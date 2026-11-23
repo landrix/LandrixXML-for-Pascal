@@ -649,6 +649,12 @@ without such a comment and on a comment without an entry.
   `1+1+...`); the evaluator stops a deep expression at `MaxStackBytes`
   and a chain of more than 3000 variables evaluated within each other.
   All raise FOER0000 (`xecLimit`).
+- **Nesting of regular expressions** (groups and class subtractions) is
+  limited to 1000 levels and on Windows to 64 KB of stack while parsing
+  (about 120 nested groups with Win64, 230 to 300 with Win32; more
+  class subtractions), so a pattern compiled at run
+  time deep in a recursion still fits into the rest of the stack;
+  `xecLimit`, FOER0000 in XPath.
 - **xs:decimal arithmetic** (XPath, XSLT, Schematron) refuses a
   multiplication, division, `idiv` or `mod` whose operands have more than
   about 400,000,000 as the product of their digit counts

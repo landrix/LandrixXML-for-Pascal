@@ -607,6 +607,12 @@ begin
   Check(not XPathMatches('a{99999999999999999999}', 'aaa'), 'a character more often than any string is long');
   Check(not XsdMatches('a{2147483647}', 'a'), 'the same in XSD');
   CheckLimit(StringOfChar('(', 1001) + 'a' + StringOfChar(')', 1001), 'nested groups');
+  Check(XPathMatches(StringOfChar('(', 50) + 'a' + StringOfChar(')', 50), 'a'), '50 nested groups within the parser''s stack');
+{$IFDEF MSWINDOWS}
+  { 64 KB of parser stack on Windows: fewer than 300 group levels with every
+    compiler there }
+  CheckLimit(StringOfChar('(', 400) + 'a' + StringOfChar(')', 400), 'nested groups beyond the parser''s stack');
+{$ENDIF}
   S := '[a';
   for I := 1 to 1001 do
     S := S + '-[a';

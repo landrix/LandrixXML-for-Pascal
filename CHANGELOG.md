@@ -81,6 +81,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- A regular expression with hundreds of nested groups, compiled at run
+  time deep in a recursion (`matches`, `replace`, `tokenize`,
+  `xsl:analyze-string`), could overflow the stack with Delphi Win64: the
+  parser kept only to 1000 levels, about 0.5 KB each there, while a run
+  near its stack budget has a quarter of the stack left. The parser now
+  also stops at 64 KB of stack on Windows (about 120 nested groups with Win64, 230
+  to 300 with Win32) with `xecLimit`.
 - XSLT static errors the compiler did not report, now as Saxon does: a
   `select` attribute together with content on `xsl:variable`,
   `xsl:param`, `xsl:with-param` (XTSE0620), `xsl:value-of` (XTSE0870),
