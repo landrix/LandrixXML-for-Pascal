@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `tools/build.ps1` runs the toolchains in parallel, each in a child
+  process (`-Jobs`, default processor count minus 2; output in
+  `build/<toolchain>/worker.log`), and runs the test runners of the Windows
+  toolchains on the x86 machine (SSH alias `ai-rtx5090`) all at once as soon
+  as they are built, natively instead of in the x86 emulator of the ARM
+  development machine (not `fpc331-winarm`, which runs natively here);
+  `-Here` runs them locally, and they run locally with a warning when the
+  machine does not answer. With the toolchain `x86` in the list (the x87
+  check of `all`) the machine stays required. The development set takes
+  about 2.5 instead of 14 minutes.
 - `tools/run-qt3.py` and `tools/run-xslt-tests.py` report each test set:
   pass / applicable, rate and the change to the baseline go into
   `build/qt3/sets-PROFILE.txt` and `build/xslt-tests/sets.txt`; a set in
